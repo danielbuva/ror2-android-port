@@ -110,6 +110,21 @@ class TrackedCameraSourcesTests(unittest.TestCase):
         d540["lineage"]["composed_api_sha256"] = hook.HASHES["composed_api"]
         self.assertEqual(hook._select_point_sound_profile(d540, game_hash, hook.HASHES["composed_api"])[0], "post-audio-point-sound-6f96-api-d540")
 
+    def test_lightning_r3_camera_profile_accepts_full_bank_roster(self):
+        hook = load("camera_hook_full_bank_roster", CANDIDATE / "scripts/lab/native_view_camera_build_hook.py")
+        game_hash = hook.HASHES["lightning_r3_point_sound_composed_game"]
+        api_hash = hook.HASHES["pcm_composed_api"]
+        with patch.object(sys, "path", [str(CANDIDATE / "scripts/lab"), *sys.path]):
+            from original_game_audio_stage import COMPLETE_BANK_RECEIPT_SHA256
+
+            receipt = {
+                "requested": True,
+                "stage_receipt_sha256": COMPLETE_BANK_RECEIPT_SHA256,
+                "lineage": {"composed_game_sha256": game_hash, "composed_api_sha256": api_hash},
+                "outputs": [{"target": hook.GAME_RELATIVE.as_posix(), "sha256": game_hash}],
+            }
+            self.assertEqual(hook._select_point_sound_profile(receipt, game_hash, api_hash)[0], "post-audio-r10-1ced-game-lightning-r3")
+
 
 class BuildHookPinCommandTests(unittest.TestCase):
     def setUp(self):

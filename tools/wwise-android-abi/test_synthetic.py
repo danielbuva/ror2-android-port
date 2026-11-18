@@ -302,6 +302,42 @@ class WriterRoundTripTests(unittest.TestCase):
         self.assertIn('"managed_call_rewrites":1', result.stdout)
         self.assertIn(b"fixture-payload-v1", candidate.read_bytes())
 
+        with tempfile.TemporaryDirectory() as temporary:
+            app = Path(temporary).resolve()
+            work, game = app / "owner-work", app / "game"
+            (work / "config").mkdir(parents=True)
+            game.mkdir()
+            (work / "config/local.json").write_text(json.dumps({"game_path": str(game)}))
+            policy = shared / "synthetic-policy.json"
+
+            def run_staged(destination):
+                return subprocess.run(
+                    [
+                        str(DOTNET),
+                        str(self.writer / "CecilAbiWriter.dll"),
+                        "--synthetic-test",
+                        str(self.assembly),
+                        str(plan_path),
+                        str(policy),
+                        str(destination),
+                        "--owner-work",
+                        str(work),
+                    ],
+                    cwd=app,
+                    env={**os.environ, "PATH": str(app)},
+                    capture_output=True,
+                    text=True,
+                )
+
+            private = work / "candidate.dll"
+            result = run_staged(private)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(private.read_bytes(), candidate.read_bytes())
+            result = run_staged(game / "candidate.dll")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Output must be beneath owner work", result.stderr)
+            self.assertFalse((game / "candidate.dll").exists())
+
         (self.repo / ".gitignore").write_text("")
         public_output = shared / "public-output.dll"
         refused_public = self.invoke_writer(plan_path, public_output)

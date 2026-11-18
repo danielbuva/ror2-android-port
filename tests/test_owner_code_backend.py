@@ -18,6 +18,37 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def test_android_signed_source_runs_through_conversion_and_native_plan(self):
+        specification = importlib.util.spec_from_file_location("android_signed_route_test", PATH.parent / "run_android.py")
+        runner = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(runner.os.environ):
+            inputs = Path(temporary).resolve()
+            for name in ("work/inventory", "packages", "runtime", "installed"):
+                (inputs / name).mkdir(parents=True)
+            (inputs / "input-hashes.json").write_text("{}")
+            (inputs / "work/inventory/files.json").write_text('{"files": []}')
+            request = inputs / "request.json"
+            request.write_text(json.dumps(dict(source_inputs={"packages": "packages"}, audio_members=["Init.bnk"], output="conversion")))
+
+            def convert(production, *, stop_after_conversion):
+                self.assertTrue(stop_after_conversion)
+                self.assertNotIn("target", production)
+                self.assertEqual(production["audio_members"], ["Init.bnk"])
+                self.assertEqual(production["source_inputs"]["packages"], str(inputs / "packages"))
+                self.assertEqual(production["android_tools"]["dotnet"], str(inputs / "installed/libdotnetmuxer.so"))
+                Path(production["output"]).mkdir()
+                return dict(success=True)
+
+            backend = SimpleNamespace(native=BACKEND.native, run=convert)
+            loader = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: None))
+            with (
+                patch.object(runner.importlib.util, "spec_from_file_location", return_value=loader),
+                patch.object(runner.importlib.util, "module_from_spec", return_value=backend),
+            ):
+                runner.run(request, inputs / "runtime", inputs / "installed")
+            self.assertTrue((inputs / "work/conversion/android-measurements.json").is_file())
+
     def test_audio_members_must_match_the_locally_produced_stage(self):
         with tempfile.TemporaryDirectory() as temporary:
             managed = Path(temporary)

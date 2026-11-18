@@ -37,6 +37,34 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(first, dict(encoded, tree=b"\x12\x34", hash=b"\xab" * 16))
             self.assertEqual(encoded["tree"], "1234")
 
+    def test_qualification_passes_the_resolved_script_descriptor_to_baseline(self):
+        endpoints = P.module("bundle_endpoints")
+        member = ("authored", "CAB-authored")
+        target = (*member, 12)
+        identity = ["Example.dll", "Example", "Definition"]
+        owner = Node(pointers=lambda *_: {("m_Script",): (0, target[2])}, O=Node(script_fields=lambda _: (8, tuple(reversed(identity)))))
+        body, typ = b"behaviour", {"class_id": 114}
+        descriptor = {"destination": [*member, 11]}
+        script_descriptor = {}
+
+        def baseline(value, raw, native_type, read):
+            self.assertEqual((raw, native_type), (body, typ))
+            self.assertEqual(value["current_registry_identity"], identity)
+            value, raw, native_type = read(target)
+            self.assertEqual(value["current_registry_identity"], identity)
+            self.assertEqual((raw, native_type["class_id"]), (b"script", 115))
+            return tuple(identity)
+
+        with closing(endpoints.Qualification(Node(**(vars(P) | vars(owner))), None, dict(bundle=member[0], member=member[1]), {}, {}, {})) as check:
+            check.universe = Node(registry=lambda seen: self.assertEqual(seen, identity))
+            check.baseline = baseline
+            with patch.object(check, "tables", return_value=[]) as tables:
+                result = check.check(descriptor, body, typ, lambda _: (script_descriptor, b"script", {"class_id": 115}))
+                tables.assert_not_called()
+            self.assertEqual(result, tuple(identity))
+        self.assertEqual(descriptor, {"destination": [*member, 11]})
+        self.assertEqual(script_descriptor, {})
+
     def test_bulk_descriptors_preserve_order_and_duplicate_contracts(self):
         with tempfile.TemporaryDirectory() as tmp, closing(P.DiskIndexes(tmp)) as store:
             rows = store.mapping()
@@ -284,6 +312,27 @@ class BundlePreloadTests(unittest.TestCase):
                     inputs["qualified_types"][key]["hash"] = "cd" * 16
                 with self.assertRaisesRegex(ValueError, "body provenance|full type identity"):
                     P.repack_canonical_aliases(output=root / "repacked", **inputs)
+
+    def test_canonical_repack_resolves_record_backed_body_by_producer_and_endpoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            profile = root / "record-profile.json"
+            target = dict(bundle="canonical", member="CAB-canonical", path_id=100)
+            member = dict(name="CAB-original", objects=[dict(path_id=1, outputs=[target])])
+            profile.write_text(json.dumps(dict(bundles=[dict(path="original.bundle", members=[member])])))
+            canonical = inputs["canonical_profile"]["objects"][0]
+            canonical.update(record=P.O.B.sha(profile), type_source=canonical.pop("source"))
+            inputs["canonical_record_profiles"] = [profile]
+            result = P.repack_canonical_aliases(output=root / "repacked", **inputs)
+            self.assertEqual(result["changed_fields"], 1)
+            target["path_id"] = 101
+            profile.write_text(json.dumps(dict(bundles=[dict(path="original.bundle", members=[member])])))
+            with self.assertRaisesRegex(ValueError, "does not supply any requested alias"):
+                P.repack_canonical_aliases(output=root / "unmatched-digest", **inputs)
+            canonical["record"] = P.O.B.sha(profile)
+            with self.assertRaisesRegex(ValueError, "needs original body provenance"):
+                P.repack_canonical_aliases(output=root / "unmatched-endpoint", **inputs)
 
     def test_canonical_repack_cache_binds_alias_plan_and_checks_retained_bundle(self):
         with tempfile.TemporaryDirectory() as tmp:

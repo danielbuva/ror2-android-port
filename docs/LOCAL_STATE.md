@@ -31,7 +31,9 @@ producer or acquisition reason must be recorded with the request.
 | `pc`, `inventory` | Legitimate installation and reviewed inventory; existing inventory/acceptance tooling produces the inventory, never the original files. |
 | `sdk`, `sdk_contents`, `sdk_install`, `sdk_binary`, `legacy_sdk`, `ugui_source` | Separately acquired exact SDK/package sources; SDK metadata and binaries cannot be generated or distributed by this repository. |
 | `acquired/unity-android-support.pkg` | Private owner-supplied Unity Android Support archive for `--sdk-component`. The existing `sdk_inputs.py` job verifies it and generates the private AndroidPlayer files for player defaults and APK packaging. |
+| `acquired/unity-linux-editor.tar.xz`, `acquired/android-sdk/linux/` | Private Unity Linux Editor archive and GNU guest sysroot. `sdk_inputs.py --linux-shader` verifies and extracts the required compiler files. Shader jobs witness the acquired loader and libraries used by installed QEMU. |
 | `asset_ripper`, `codec`, `jpeg_codec`, `etc_codec`, `sdk_toolchain` | Explicit pinned public sources/tools or generated helper manifests; existing Shader/texture/codec owners document acquisition and helper construction. No retained content output substitutes for a tool. |
+| `acquired/asset-ripper/<revision>/` | Locally staged pinned public AssetRipper templates and `LICENSE.md`, with original paths preserved. The fresh release graph lists the required files as cache witnesses. The Shader owner checks each template against its recipe before use. |
 | `converter`, `converter_receipt`, `managed`, `converter_sources`, `converter_metadata` | Existing `owner-code/produce.py`, `managed.py` and converter owners generate the managed cohort, C++/metadata and receipts. Paths must select the matching source-produced cohort. |
 | `code_request` | Explicit caller-authored owner-code request selecting originals/toolchain and output; required local orchestration state unless supplied as a generated prerequisite request. |
 | `sprite_native_<profile SHA-256>` | `sprite_produce.py prepare` generates source PNG/request inputs; `sprite_native_fixture.py` generates native geometry consumed by `sprite_produce.py produce`. |
@@ -277,8 +279,9 @@ remain required local state until that separate generator is promoted.
 `tools/unity/support/audio/generators/stage_original_game_banks.py` produces
 the selected stage root/receipt from those explicit inputs and an explicit
 `--soundbanks-info` path to the accepted installation's metadata. The current
-R2 receipt contains 153 original banks, adapted Init and the complete 120-file
-streamed-media closure with original bytes; all stay ignored. The pure
+R2 receipt contains all 247 source banks, including adapted Init, and the
+120-file streamed-media closure. The 153 WwiseGlobal names define startup
+readiness. Existing startup-only R2 receipts remain readable. The pure
 `original_media_plan.py` planner binds metadata and full-inventory hashes,
 rejecting missing files, inconsistent modes, aliases and changed bytes.
 The old bank-only R1 stage remains a historical rollback input, not a complete
@@ -2054,8 +2057,16 @@ library providers from Maven Central. The SDK component is extracted by
 are required local tool inputs rather than generated game content. The private
 request supplies every path explicitly; no run-directory discovery occurs.
 Android additionally supplies the existing app-host JVM/QEMU and GNU loader
-closure. Retain these providers and their acquisition/hash receipts under
+closure. The signed phone request `recipe/owner-sdk-android-job-inputs.json`
+uses the installed JVM and QEMU with private `acquired/android-sdk/` inputs.
+Stage the API-30 platform as `android-30.jar`, recognized Linux AAPT2 as
+`aapt2-linux`, and pinned Maven tools under `jars/`. Stage the Linux interpreter
+under `linux/lib64/` and the runtime libraries named in the request under
+`linux/lib/x86_64-linux-gnu/`. Retain these providers and acquisition receipts under
 ignored local storage; the public repository distributes no provider binaries.
+The signed shader jobs use this same GNU runtime. Their `--linux-shader`
+extractor reads `acquired/unity-linux-editor.tar.xz` and supplies the four
+verified compiler files in a private job artifact.
 [Setup and output lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
 explain their use. Host Java 11 and phone Java 21 produce the documented J1109
 class-checksum-only DEX difference; accepted DEX bytes never supply production.

@@ -85,7 +85,7 @@ class BatteryRuleTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {})
             runner.devices = {"synthetic": "synthetic-device"}
-            runner.worktree = lambda ref: Path(repo)
+            runner.worktree = lambda ref, *, local_ref=False: Path(repo)
 
             def run(*args, **kwargs):
                 if kwargs.get("extra_env"):
@@ -172,7 +172,7 @@ class RefusedLeaseTest(unittest.TestCase):
                 out.mkdir(parents=True)
                 remote = root + "/synthetic-run"
                 tar = out / "stage.tar"
-                toolhost_build.stage_archive(tar, *plan[:-1], remote, lab_runner.TEST_PACKAGE)
+                toolhost_build.stage_archive(tar, *plan[:4], remote, lab_runner.TEST_PACKAGE)
                 with open_tar(tar) as archive:
                     backend = json.load(archive.extractfile("stage/backend-tools.json"))
                     path = "providers/libpyext__socket.so/_socket.so"
@@ -181,6 +181,7 @@ class RefusedLeaseTest(unittest.TestCase):
                 self.assertEqual(backend["package"], lab_runner.TEST_PACKAGE)
                 apk = out / "signed.apk"
                 apk.write_bytes(apk_data)
+                (out / "build-receipt.json").write_text(json.dumps({"apk_sha256": toolhost_build.digest(apk)}))
                 outputs.append(out)
                 return 0, {"success": True, "apk_sha256": toolhost_build.digest(apk)}
 
@@ -190,6 +191,7 @@ class RefusedLeaseTest(unittest.TestCase):
             with (
                 mock.patch.object(lab_runner.subprocess, "check_output", side_effect=command),
                 mock.patch.object(lab_runner.Runner, "execute", side_effect=run),
+                mock.patch.object(toolhost_build, "verify_apk") as verify,
             ):
                 for attempt, source in enumerate(("first", "first", "second")):
                     receipt.write_text(json.dumps(dict(success=True, game_inputs=False, files=files, source_hint=source)))
@@ -210,7 +212,17 @@ class RefusedLeaseTest(unittest.TestCase):
                     )
                     self.assertEqual(lab_runner.local_packaging(request), 0)
                     self.assertEqual(json.loads(done.read_bytes()).get("cached", False), attempt == 1)
+                    result = outputs[-1] / "result.json"
+                    cached = json.loads(result.read_bytes())
+                    self.assertEqual(cached["source_commit"], "synthetic-commit")
+                    self.assertEqual(cached["cache_key"], outputs[-1].name)
+                    self.assertEqual(cached["package"], lab_runner.TEST_PACKAGE)
+                    self.assertEqual(cached["signer_sha256"], inputs["signer_sha256"])
+                    if attempt == 0:
+                        result.write_text(json.dumps({"success": True, "apk_sha256": cached["apk_sha256"], "cache_key": cached["cache_key"]}))
                 self.assertEqual(len(set(outputs)), 2)
+                verify.assert_called_once()
+                self.assertEqual(verify.call_args.args[-1], lab_runner.TEST_PACKAGE)
                 provider.write_bytes(b"changed")
                 inputs = json.loads(request.read_bytes())["toolhost_inputs"]
                 with self.assertRaisesRegex(ValueError, "input pin mismatch"):
@@ -270,9 +282,11 @@ class RefusedLeaseTest(unittest.TestCase):
             repo = Path(directory).resolve()
             request = repo / "request.json"
             done = repo / "work/terminal.json"
-            request.write_text(json.dumps(dict(runner=dict(repo=str(repo), ref="main", device="synthetic"), done_file=str(done))))
-            with mock.patch.object(lab_runner.Runner, "execute", side_effect=RuntimeError("synthetic failure")):
-                self.assertEqual(lab_runner.local_emission(request), 1)
+            request.write_text(json.dumps(dict(runner=dict(repo=str(repo), ref="c" * 40, local_ref=True, device="synthetic"), done_file=str(done))))
+            with mock.patch.object(lab_runner.Runner, "execute", side_effect=RuntimeError("synthetic failure")) as execute:
+                self.assertEqual(lab_runner.local_emission(request, workstream="fixture-worker"), 1)
+            self.assertEqual(execute.call_args.kwargs["workstream"], "fixture-worker")
+            self.assertTrue(execute.call_args.kwargs["local_ref"])
             self.assertEqual(json.loads(done.read_text())["error"], "synthetic failure")
 
     def test_resume_claims_only_its_retained_lease_after_previous_runner_exits(self):
@@ -284,11 +298,13 @@ class RefusedLeaseTest(unittest.TestCase):
             job = {"directory": "synthetic-job"}
             runner.resume_state.write_text(json.dumps({"job": job}))
             (lease / "retain.json").write_text(json.dumps({"job": job, "state": str(runner.resume_state)}))
-            (lease / "lab-runner.json").write_text(json.dumps({"workstream": "lab-runner", "pid": 12}))
-            with mock.patch.object(lab_runner.os, "kill", return_value=None), self.assertRaisesRegex(lab_runner.CommandError, "still alive"):
+            (lease / "lab-runner.json").write_text(json.dumps({"workstream": "fixture-worker", "pid": 12}))
+            with self.assertRaisesRegex(lab_runner.CommandError, "identity mismatch"):
                 runner.take_lease("synthetic", "synthetic")
+            with mock.patch.object(lab_runner.os, "kill", return_value=None), self.assertRaisesRegex(lab_runner.CommandError, "still alive"):
+                runner.take_lease("synthetic", "synthetic", workstream="fixture-worker")
             with mock.patch.object(lab_runner.os, "kill", side_effect=ProcessLookupError):
-                self.assertEqual(runner.take_lease("synthetic", "synthetic"), lease)
+                self.assertEqual(runner.take_lease("synthetic", "synthetic", workstream="fixture-worker"), lease)
             self.assertTrue(runner.reattached)
             self.assertEqual(json.loads((lease / "lab-runner.json").read_text())["pid"], os.getpid())
 
@@ -296,7 +312,7 @@ class RefusedLeaseTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {"LAB_RUN_ID": "t"})
             runner.devices = {"nova-b": "SERIAL"}
-            runner.worktree = lambda ref: Path(repo)
+            runner.worktree = lambda ref, *, local_ref=False: Path(repo)
             runner.run = lambda *a, **k: 0
             (Path(repo) / ".local/orchestrator/leases/SERIAL").mkdir(parents=True)
             with mock.patch.object(lab_runner.subprocess, "run") as run:
@@ -326,7 +342,7 @@ class TransportIntegrationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {"LAB_RUN_ID": "synthetic"})
             runner.devices = {"synthetic-alias": "synthetic-target"}
-            runner.worktree = lambda ref: Path(repo)
+            runner.worktree = lambda ref, *, local_ref=False: Path(repo)
             with mock.patch.object(runner, "battery", return_value=(70, 0, 260)), mock.patch.object(runner, "run", return_value=0) as job:
                 with mock.patch.object(lab_runner.subprocess, "run", return_value=subprocess.CompletedProcess([], -9, b"", b"")) as adb:
                     with mock.patch.object(lab_runner._TRANSPORT.time, "sleep"):

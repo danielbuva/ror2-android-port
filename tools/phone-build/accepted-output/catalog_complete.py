@@ -181,9 +181,9 @@ def il2cpp_type_identities(metadata):
 
 
 def prefab_script_bindings(members, player_types):
-    """Check every GameObject-owned MonoBehaviour in the supplied members."""
-    failures, scriptless = [], []
-    checked = 0
+    """Check managed records with a serialized script in the supplied members."""
+    failures, scriptless, ownerless_scriptless = [], [], []
+    behaviours = ownerless = 0
     identities = set()
     resolved = {}
     for member, (_, layout, objects) in sorted(members.members.items()):
@@ -196,13 +196,15 @@ def prefab_script_bindings(members, player_types):
                 failures.append(dict(member=member, path_id=path_id, error="truncated serialized MonoBehaviour"))
                 continue
             game_object = struct.unpack_from("<iq", body)
-            if game_object == (0, 0):
-                continue
             pointer = struct.unpack_from("<iq", body, 16)
             if pointer == (0, 0):
-                scriptless.append(dict(member=member, path_id=path_id, game_object=game_object))
+                missing = ownerless_scriptless if game_object == (0, 0) else scriptless
+                missing.append(dict(member=member, path_id=path_id, game_object=game_object))
                 continue
-            checked += 1
+            if game_object == (0, 0):
+                ownerless += 1
+            else:
+                behaviours += 1
             identity = None
             try:
                 key = (member, pointer, typ["script_id"])
@@ -217,7 +219,9 @@ def prefab_script_bindings(members, player_types):
                     raise ValueError("type absent from Android player image")
             except ValueError as exc:
                 failures.append(dict(member=member, path_id=path_id, game_object=game_object, script=pointer, identity=identity, error=str(exc)))
-    return dict(behaviours=checked, scriptless=scriptless, types=len(identities), failures=failures)
+    return dict(
+        behaviours=behaviours, ownerless=ownerless, scriptless=scriptless, ownerless_scriptless=ownerless_scriptless, types=len(identities), failures=failures
+    )
 
 
 class ProducedMembers:
@@ -581,8 +585,7 @@ def include_source_locations(metadata, source, location_ids):
         raise ValueError("catalog addition location selection differs")
     if any(row["id"] in selected for row in metadata["locations"]):
         raise ValueError("catalog addition location already exists")
-    if any(row["root"] for row in locations):
-        raise ValueError("catalog additions require non-root locations")
+    roots = {row["id"] for row in locations if row["root"]}
 
     def identity(row):
         return row["key"], row.get("keyType", "System.String")
@@ -593,8 +596,89 @@ def include_source_locations(metadata, source, location_ids):
         if additions:
             key = identity(row)
             existing = keys.get(key)
-            keys[key] = dict(existing or row, locations=(existing["locations"] if existing else []) + additions)
-    return dict(metadata, locations=metadata["locations"] + locations, keys=list(keys.values()))
+            present = existing["locations"] if existing else []
+            if roots.intersection(additions):
+                present_ids = set(present) | selected
+                source_order = [location for location in row["locations"] if location in present_ids]
+                source_ids = set(source_order)
+                locations_for_key = source_order + [location for location in present if location not in source_ids]
+            else:
+                locations_for_key = present + additions
+            keys[key] = dict(existing or row, locations=locations_for_key)
+    result = dict(metadata, locations=metadata["locations"] + locations, keys=list(keys.values()))
+    if roots:
+        for field in ("roots", "provider_roots", "runtime_roots"):
+            present = metadata[field]
+            present_ids = set(present) | roots
+            source_order = [location for location in source[field] if location in present_ids]
+            source_ids = set(source_order)
+            result[field] = source_order + [location for location in present if location not in source_ids]
+    return result
+
+
+def project_source_catalog(source, policy, builds, *, input_id, attempt):
+    """Select source locations by the produced asset paths and explicit relocations."""
+    from whole_catalog import integration_metadata
+
+    if (
+        set(policy) != {"schema", "source_catalog_sha256", "remaps", "exclusions", "provider_roots", "runtime_roots", "extra_roots", "mesh_subobjects"}
+        or policy["schema"] != "owner-catalog-projection-v1"
+    ):
+        raise ValueError("unsupported catalog projection policy")
+    if source["input_id"] != input_id or source["source_catalog_sha256"] != policy["source_catalog_sha256"]:
+        raise ValueError("catalog projection source identity differs")
+
+    paths = {path.casefold(): path for build in builds for path in build["assetNames"]}
+    excluded = set(policy["exclusions"])
+    remaps = policy["remaps"]
+    known = {row["id"] for row in source["locations"]}
+    if not excluded <= known or not remaps.keys() <= {str(n) for n in known - excluded}:
+        raise ValueError("catalog projection names an unknown or excluded source location")
+    mapped = {}
+    for row in source["locations"]:
+        location, original = row["id"], row["internalId"]
+        if location in excluded or row.get("bundle") is not None:
+            continue
+        selector = str(location)
+        if selector in remaps:
+            path = paths.get(remaps[selector].casefold())
+            if path is None:
+                raise ValueError("catalog projection remap has no produced owner: " + selector)
+            mapped[selector] = path
+            continue
+        original_key = original.casefold()
+        candidates = {original_key}
+        if original_key.startswith("assets/"):
+            candidates.add("assets/wholegame/" + original_key.removeprefix("assets/"))
+        matches = {candidate for candidate in candidates if candidate in paths}
+        if len(matches) > 1:
+            raise ValueError("catalog projection has ambiguous produced owners: " + selector)
+        if matches:
+            mapped[selector] = paths[matches.pop()]
+    if not remaps.keys() <= mapped.keys():
+        raise ValueError("catalog projection remap must select an asset location")
+
+    location_ids = {int(selector) for selector in mapped}
+    keys = []
+    for row in source["keys"]:
+        selected = [location for location in row["locations"] if location in location_ids]
+        if selected:
+            keys.append(dict(row, locations=selected))
+    mesh_subobjects = []
+    for row in policy["mesh_subobjects"]:
+        path = row["path"].casefold()
+        if path not in paths:
+            raise ValueError("catalog projection mesh alias has no produced owner: " + row["key"])
+        mapped[path] = paths[path]
+        mesh_subobjects.append(dict(source=path, key=row["key"], type=row["type"]))
+    closure = dict(
+        input_id=input_id,
+        source_catalog_sha256=source["source_catalog_sha256"],
+        roots=policy["provider_roots"],
+        runtime_roots=policy["runtime_roots"],
+        converted={str(location): dict(source=str(location)) for location in location_ids},
+    )
+    return integration_metadata(dict(source, keys=keys), closure, mapped, mesh_subobjects, attempt=attempt, camera_roots=policy["extra_roots"])
 
 
 def audit_player_bindings(player_apk, members, files, registry, resources, pins):
@@ -631,10 +715,9 @@ def produce(inputs, output, player_apk=None):
     inputs = Path(inputs).resolve(strict=True)
     request_bytes = inputs.read_bytes()
     request = json.loads(request_bytes)
-    if (
-        set(request) - {"resources", "source_additions"} != {"schema", "metadata", "profiles", "bundles", "registry", "input_id", "attempt"}
-        or request["schema"] != "owner-catalog-inputs-v1"
-    ):
+    common = {"schema", "profiles", "bundles", "registry", "input_id", "attempt"}
+    mode = set(request) - common - {"resources", "source_additions"}
+    if mode not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
         raise ValueError("unsupported catalog completion input contract")
     pins = {}
 
@@ -649,7 +732,19 @@ def produce(inputs, output, player_apk=None):
         pins[path] = pin
         return path
 
-    metadata = json.loads(pinned(request["metadata"]).read_bytes())
+    profiles = [json.loads(pinned(row).read_bytes()) for row in request["profiles"]]
+    sys.path.insert(0, str(ROOT / "scripts/lab"))
+    from whole_catalog import integration_bundle_metadata, integration_catalog, integration_profile_builds, produced_bundle_metadata
+
+    builds = integration_profile_builds(profiles)
+    if "projection" in request:
+        projection = request["projection"]
+        if set(projection) != {"source", "policy"}:
+            raise ValueError("unsupported catalog projection inputs")
+        source, policy = (json.loads(pinned(projection[key]).read_bytes()) for key in ("source", "policy"))
+        metadata = project_source_catalog(source, policy, builds, input_id=request["input_id"], attempt=request["attempt"])
+    else:
+        metadata = json.loads(pinned(request["metadata"]).read_bytes())
     if any(metadata[key] != request[key] for key in ("input_id", "attempt")):
         raise ValueError("catalog input/startup identity differs")
     if "source_additions" in request:
@@ -658,16 +753,11 @@ def produce(inputs, output, player_apk=None):
             raise ValueError("unsupported catalog addition contract")
         source = json.loads(pinned(additions["metadata"]).read_bytes())
         metadata = include_source_locations(metadata, source, additions["locations"])
-    profiles = [json.loads(pinned(row).read_bytes()) for row in request["profiles"]]
     files = {name: pinned(row) for name, row in request["bundles"].items()}
     registry = pinned(request["registry"])
     resources = {name: pinned(row) for name, row in request.get("resources", {}).items()}
     if not set(resources) <= {"unity_builtin_extra", "unity default resources"}:
         raise ValueError("unsupported player resource member")
-    sys.path.insert(0, str(ROOT / "scripts/lab"))
-    from whole_catalog import integration_bundle_metadata, integration_catalog, integration_profile_builds, produced_bundle_metadata
-
-    builds = integration_profile_builds(profiles)
     metadata = integration_bundle_metadata(metadata, builds)
     names = {row["assetBundleName"] for row in builds} | {row["bundle"] for row in metadata["locations"]}
     if set(files) != names:
@@ -717,7 +807,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inputs", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--player-apk", type=Path, help="Audit prefab script bindings against an assembled Android player")
+    parser.add_argument("--player-apk", type=Path, help="Audit serialized script bindings against an assembled Android player")
     args = parser.parse_args()
     result = produce(args.inputs, args.output, args.player_apk)
     print(json.dumps(result))

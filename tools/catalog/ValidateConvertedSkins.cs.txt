@@ -20,6 +20,9 @@ var pins=(Newtonsoft.Json.Linq.JObject)request["bundles"];
 var startupOwners=fixture==null?pins.Properties().Select(row=>row.Name).ToArray():new[]{"whole-game-content","commando-prefab-lab","objective-support-lab"};
 var bundles=new System.Collections.Generic.Dictionary<string,UnityEngine.AssetBundle>();
 var rows=new System.Collections.Generic.List<object>();var failures=new System.Collections.Generic.List<object>();
+var identityFailures = new System.Collections.Generic.List<object>();
+System.Action<object> failIdentity = row => { identityFailures.Add(row); failures.Add(row); };
+bool identityComplete = false;
 var typedBodies=new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string,UnityEngine.GameObject>>();
 int bodies=0,controllers=0,slots=0;
 int checkedTransforms = 0;
@@ -28,6 +31,13 @@ var projectileConfigPin = request["projectile_config"];
 var checkedProjectileKeys = new System.Collections.Generic.HashSet<string>();
 int checkedSupportPrefabs = 0, checkedEffectPrefabs = 0;
 int checkedObjectiveActors = 0, checkedDirectorPools = 0, checkedDirectorCards = 0;
+int checkedMasters = 0;
+var definitionFailures = new System.Collections.Generic.List<object>();
+System.Action<object> failDefinition = row => { definitionFailures.Add(row); failures.Add(row); };
+var definitionFamilies = new System.Collections.Generic.List<object>();
+var definitionPublication = new System.Collections.Generic.List<object>();
+string definitionSourceHash = null;
+bool definitionsComplete = false;
 
 System.Func<string, UnityEngine.AssetBundle> openBundle = owner =>
 {
@@ -139,8 +149,11 @@ try{
  foreach(int id in groups.SelectMany(group=>group).Distinct()){
   var row=locations[id];string path=(string)row["path"],owner=(string)row["bundle"];
   try{
-   typedBodies.Add(new System.Collections.Generic.KeyValuePair<string,UnityEngine.GameObject>(path,loadBody(owner,path)));
-  }catch(System.Exception error){failures.Add(new{path,owner,error=error.ToString()});}
+   var body = loadBody(owner, path);
+   if (!body.GetComponent<RoR2.CharacterBody>())
+       throw new System.Exception("Typed CharacterBody missing");
+   typedBodies.Add(new System.Collections.Generic.KeyValuePair<string,UnityEngine.GameObject>(path,body));
+  }catch(System.Exception error){failIdentity(new{path,owner,error=error.ToString()});}
  }
  if(commandoPath!=null&&!earlyCommando)loadBody("commando-prefab-lab",commandoPath);
  if(wardPath!=null&&!earlyWard)loadBody("objective-support-lab",wardPath);
@@ -378,10 +391,120 @@ try{
              foreach (var entry in entries)
                  checkDeck(entry.dccs, key);
          }
+ }
+ }
+ var catalogBodies = new System.Collections.Generic.HashSet<UnityEngine.GameObject>(typedBodies.Select(entry => entry.Value));
+ foreach (int id in WholeCatalogComposed.FamilyLocationGroups(manifest, "CharacterMaster").SelectMany(group => group).Distinct())
+ {
+     var row = locations[id];
+     string path = (string)row["path"], owner = (string)row["bundle"];
+     var prefab = openBundle(owner).LoadAsset<UnityEngine.GameObject>(path);
+     var master = prefab ? prefab.GetComponent<RoR2.CharacterMaster>() : null;
+     if (!master)
+     {
+         failIdentity(new { path, owner, error = "Typed CharacterMaster missing" });
+         continue;
      }
+     checkedMasters++;
+     var body = master.bodyPrefab;
+     if (body && (!body.GetComponent<RoR2.CharacterBody>() || !catalogBodies.Contains(body)))
+         failIdentity(new { path, owner, master = prefab.name, body = body.name,
+             bodyInstanceId = body.GetInstanceID(), error = "CharacterMaster bodyPrefab is outside the typed CharacterBody family" });
+ }
+ identityComplete = true;
+ var definitionSource = request["definition_source"];
+ if (definitionSource != null)
+ {
+     var source = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(pin(definitionSource["metadata"])));
+     var contract = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(pin(definitionSource["provider_contract"])));
+     definitionSourceHash = (string)definitionSource["metadata"]["sha256"];
+     foreach (var field in new[] { "input_id", "source_catalog_sha256", "providers" })
+         if (!Newtonsoft.Json.Linq.JToken.DeepEquals(manifest[field], source[field]))
+             throw new System.Exception("Definition source catalog identity differs: " + field);
+     var providerIds = new System.Collections.Generic.HashSet<int>(manifest["provider_roots"].Select(id => (int)id));
+     var runtimeIds = new System.Collections.Generic.HashSet<int>(manifest["runtime_roots"].Select(id => (int)id));
+     var sourceProviderIds = new System.Collections.Generic.HashSet<int>(source["provider_roots"].Select(id => (int)id));
+     var sourceRuntimeIds = new System.Collections.Generic.HashSet<int>(source["runtime_roots"].Select(id => (int)id));
+     var typedDefinitions = new System.Collections.Generic.Dictionary<int, UnityEngine.ScriptableObject>();
+     var definitionIds = new System.Collections.Generic.HashSet<int>();
+     foreach (var family in source["locations"].Where(row => (bool)row["root"]).GroupBy(row => (string)row["type"]))
+     {
+         var type = System.Type.GetType(family.Key, false);
+         if (type == null)
+         {
+             failDefinition(new { type = family.Key, error = "Source root type unavailable in exact editor" });
+             continue;
+         }
+         if (!typeof(UnityEngine.ScriptableObject).IsAssignableFrom(type))
+             continue;
+         int loaded = 0, published = 0;
+         foreach (var expected in family)
+         {
+             int id = (int)expected["id"];
+             definitionIds.Add(id);
+             if (!locations.TryGetValue(id, out var actual) || !(bool)actual["root"] || (string)actual["type"] != family.Key ||
+                 sourceProviderIds.Contains(id) != providerIds.Contains(id) || sourceRuntimeIds.Contains(id) != runtimeIds.Contains(id))
+             {
+                 failDefinition(new { id, type = family.Key, path = (string)expected["path"], error = "Source definition root publication differs" });
+                 continue;
+             }
+             published++;
+             string owner = (string)actual["bundle"], path = (string)actual["path"];
+             foreach (var dependency in manifest["bundles"][owner]["dependencies"])
+                 openBundle((string)dependency);
+             var asset = openBundle(owner).LoadAsset(path, type) as UnityEngine.ScriptableObject;
+             if (!asset || asset.GetType() != type)
+             {
+                 failDefinition(new { id, type = family.Key, path, owner, error = "Typed definition missing or declared type differs" });
+                 continue;
+             }
+             typedDefinitions.Add(id, asset);
+             loaded++;
+         }
+         definitionFamilies.Add(new { type = family.Key, source = family.Count(), published, loaded });
+     }
+     var labels = typeof(RoR2.ContentManagement.AddressablesLoadHelper).Assembly.GetType("RoR2.ContentManagement.AddressablesLabels", true);
+     var definitionKeys = new System.Collections.Generic.HashSet<string>(source["keys"]
+         .Where(row => ((string)row["keyType"] == "System.String" || row["keyType"] == null) &&
+             row["locations"].Any(id => definitionIds.Contains((int)id)))
+         .Select(row => (string)row["key"]));
+     foreach (var category in contract["categories"])
+     {
+         var key = (string)labels.GetField((string)category).GetValue(null);
+         if (!definitionKeys.Contains(key))
+             continue;
+         var expected = WholeCatalogComposed.FamilyLocationGroups(source, key)
+             .Select(group => group.Where(definitionIds.Contains).ToArray()).ToArray();
+         if (expected.All(group => group.Length == 0))
+             continue;
+         var actual = stringKeys.ContainsKey(key) ? WholeCatalogComposed.FamilyLocationGroups(manifest, key)
+             .Select(group => group.Where(definitionIds.Contains).ToArray()).ToArray() : new int[0][];
+         if (expected.Length != actual.Length || expected.Where((group, i) => !group.SequenceEqual(actual[i])).Any())
+             failDefinition(new { category = key, expected, actual, error = "Native provider definition publication differs" });
+         definitionPublication.Add(new { category = key, source = expected.Select(group => group.Length), published = actual.Select(group => group.Length) });
+     }
+     var itemDefs = new System.Collections.Generic.HashSet<RoR2.ItemDef>(typedDefinitions.Values.OfType<RoR2.ItemDef>());
+     var relationshipTypes = new System.Collections.Generic.HashSet<RoR2.ItemRelationshipType>(typedDefinitions.Values.OfType<RoR2.ItemRelationshipType>());
+     foreach (var provider in typedDefinitions.Values.OfType<RoR2.ItemRelationshipProvider>().Distinct())
+     {
+         var relationships = provider.relationships;
+         var badPairs = relationships?.Select((pair, index) => new { index, pair.itemDef1, pair.itemDef2 })
+             .Where(pair => !itemDefs.Contains(pair.itemDef1) || !itemDefs.Contains(pair.itemDef2))
+             .Select(pair => new { pair.index, first = pair.itemDef1 ? pair.itemDef1.name : null,
+                 second = pair.itemDef2 ? pair.itemDef2.name : null }).ToArray();
+         if (!provider.relationshipType || !relationshipTypes.Contains(provider.relationshipType) || badPairs == null || badPairs.Length != 0)
+             failDefinition(new { name = provider.name, relationshipType = provider.relationshipType ? provider.relationshipType.name : null,
+                 pairs = relationships?.Length, badPairs, error = "Item relationship points outside the typed definition families" });
+     }
+     definitionsComplete = true;
  }
 }catch(System.Exception error){failures.Add(new{error=error.ToString()});}
 finally{foreach(var bundle in bundles.Values.Reverse())bundle.Unload(true);}
-var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,checkedObjectiveActors,checkedDirectorPools,checkedDirectorCards,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
-var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures};
+var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,checkedObjectiveActors,checkedDirectorPools,checkedDirectorCards,checkedMasters,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
+var masterBodyIdentity = new { complete = identityComplete, bodies = typedBodies.Count, masters = checkedMasters,
+    metadataSha256 = (string)request["metadata"]["sha256"],
+    bundles = bundles.Keys.ToDictionary(owner => owner, owner => (string)pins[owner]["sha256"]), failures = identityFailures };
+var definitionIdentity = definitionSourceHash == null ? null : new { complete = definitionsComplete, families = definitionFamilies,
+    publication = definitionPublication, sourceMetadataSha256 = definitionSourceHash, failures = definitionFailures };
+var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures,masterBodyIdentity,definitionIdentity};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;

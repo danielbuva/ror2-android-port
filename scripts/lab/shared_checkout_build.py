@@ -41,7 +41,13 @@ def invoke(root, arguments, *, env, pass_fds):
 
 
 def build_shared_checkout(
-    code_only=True, android_symbols="none", capture_player_linker_inputs=False, capture_il2cpp_invocation=False, root=None, iteration_mode=""
+    code_only=True,
+    android_symbols="none",
+    capture_player_linker_inputs=False,
+    capture_il2cpp_invocation=False,
+    root=None,
+    iteration_mode="",
+    audio_selection=None,
 ):
     """Temporarily select this exact HEAD in the clean primary working tree.
 
@@ -89,6 +95,10 @@ def build_shared_checkout(
         finally:
             build_lock.HOST_BUILD_LOCK = prior_lock
         environment = dict(os.environ, **inherited_env)
+        if audio_selection is not None:
+            from original_game_audio_build_hook import SELECTION_ENV
+
+            environment[SELECTION_ENV] = str(audio_selection)
         switched = target != original
         try:
             if switched:
@@ -156,6 +166,13 @@ def run_request(request_path, *, dry_run=False, detach=False):
         clean(primary)
         if type(request["full"]) is not bool:
             raise ValueError("full must be a boolean")
+        audio_selection = None
+        if "audio_selection" in request:
+            from original_game_audio_build_hook import read_selection, work_path
+
+            work = (primary / "work").resolve(strict=True)
+            audio_selection = request["audio_selection"]
+            read_selection(work, work_path(work, audio_selection, "audio_selection"))
         storage_wait = request.get("storage_wait_seconds", 0)
         if type(storage_wait) is not int or not 0 <= storage_wait <= 3600:
             raise ValueError("storage_wait_seconds must be an integer between 0 and 3600")
@@ -192,7 +209,7 @@ def run_request(request_path, *, dry_run=False, detach=False):
             wait_for_storage(primary, storage_wait)
         if git(root, "rev-parse", "HEAD") != request["source_commit"]:
             raise RuntimeError("Requested build source changed during storage wait")
-        result.update(build_shared_checkout(root=root, code_only=not request["full"]))
+        result.update(build_shared_checkout(root=root, code_only=not request["full"], audio_selection=audio_selection))
     except BaseException:
         if dry_run or detach:
             raise

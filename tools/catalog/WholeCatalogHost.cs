@@ -382,12 +382,65 @@ public static class WholeCatalogHost
                 main.scale != new Vector2(2, 3) || material.GetTexture("_MainTex") != texture || material.renderQueue != 3123 ||
                 method.Invoke(observer, new object[] { null }) != null)
                 throw new Exception("Live surface material observation contract failed");
-            return new JObject { ["liveMaterialState"] = true, ["nullSlot"] = true, ["sourceUnchanged"] = true };
+            VerifyEffectiveSurfaceProperties(type, material);
+            return new JObject { ["liveMaterialState"] = true, ["nullSlot"] = true, ["sourceUnchanged"] = true,
+                                 ["effectiveSlotProperties"] = true };
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(material);
             UnityEngine.Object.DestroyImmediate(texture);
+        }
+    }
+    static void VerifyEffectiveSurfaceProperties(Type observerType, Material material)
+    {
+        var observe = observerType.GetMethod("ObserveVagrantProperties",
+                                             System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        var root = new GameObject("Authored property block fixture");
+        try
+        {
+            var renderer = root.AddComponent<MeshRenderer>();
+            renderer.sharedMaterials = new[] { material, material };
+            var savedFade = new PortSession.SurfacePropertyObservation { name = "_Fade", value = Vector4.one };
+            var saved = new PortSession.SurfaceMaterialObservation { properties = new[] { savedFade } };
+            var materials = new[] { saved, saved };
+            var rendererBlock = new MaterialPropertyBlock();
+            var slotBlock = new MaterialPropertyBlock();
+            PortSession.EffectiveSurfaceSlotObservation[] Read() =>
+                (PortSession.EffectiveSurfaceSlotObservation[])observe.Invoke(null, new object[] { renderer, materials, rendererBlock, slotBlock });
+            PortSession.EffectiveSurfacePropertyObservation Property(PortSession.EffectiveSurfaceSlotObservation slot, string name) =>
+                slot.properties.Single(property => property.name == name);
+
+            var block = new MaterialPropertyBlock();
+            block.SetColor("_FlashColor", Color.clear);
+            block.SetFloat("_Fade", 0);
+            renderer.SetPropertyBlock(block);
+            block.Clear();
+            block.SetFloat("_EliteIndex", 0);
+            renderer.SetPropertyBlock(block, 0);
+            var rows = Read();
+            if (rows.Length != 2 || rows[0].slot != 0 || rows[1].slot != 1 ||
+                rows[0].propertyBlock != "slot-block" || rows[1].propertyBlock != "renderer-block" ||
+                Property(rows[0], "_EliteIndex").source != "slot-block" || Property(rows[0], "_EliteIndex").value.x != 0 ||
+                Property(rows[0], "_Fade").source != "material" || Property(rows[0], "_Fade").value != savedFade.value ||
+                Property(rows[0], "_FlashColor").source != "absent" || Property(rows[1], "_EmColor").source != "absent" ||
+                Property(rows[1], "_FlashColor").source != "renderer-block" || Property(rows[1], "_FlashColor").value != Vector4.zero ||
+                Property(rows[1], "_Fade").source != "renderer-block" || Property(rows[1], "_Fade").value.x != 0)
+                throw new Exception("Live effective surface property precedence failed");
+            renderer.GetPropertyBlock(block, 0);
+            if (!block.HasFloat("_EliteIndex") || block.HasFloat("_Fade"))
+                throw new Exception("Surface observation changed the live slot block");
+            renderer.SetPropertyBlock(null, 0);
+            if (Property(Read()[0], "_Fade").source != "renderer-block")
+                throw new Exception("Clearing the slot block did not restore renderer-wide precedence");
+            renderer.SetPropertyBlock(null);
+            rows = Read();
+            if (rows[0].propertyBlock != "none" || Property(rows[0], "_Fade").source != "material" || savedFade.value != Vector4.one)
+                throw new Exception("Clearing the renderer block did not restore the original material value");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
         }
     }
     static JObject AddCombatMaterial(JArray rows, int id, string category, string root, Renderer renderer, List<string> hierarchy,

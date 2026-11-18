@@ -144,6 +144,19 @@ public sealed partial class PortSession
         public SurfacePropertyObservation[] properties;
     }
     [Serializable]
+    public class EffectiveSurfaceSlotObservation
+    {
+        public int slot;
+        public string propertyBlock;
+        public EffectiveSurfacePropertyObservation[] properties;
+    }
+    [Serializable]
+    public class EffectiveSurfacePropertyObservation
+    {
+        public string name, source;
+        public Vector4 value;
+    }
+    [Serializable]
     public class ObjectiveRendererObservation
     {
         public string path, kind;
@@ -159,6 +172,7 @@ public sealed partial class PortSession
         public string[] particleMeshes;
         public SurfaceMaterialObservation trailMaterial, billboardMaterial;
         public SurfaceMaterialObservation[] materialState;
+        public EffectiveSurfaceSlotObservation[] effectiveProperties;
     }
     [Serializable]
     public class ObjectiveReport
@@ -179,6 +193,7 @@ public sealed partial class PortSession
         public string exitTraceFirstError;
         public bool exitTraceIdle, exitTraceCharging, exitTraceCharged, exitTraceFinished;
         public ObjectiveRendererObservation[] rendererViews, ownedSurfaceViews, presentedSurfaceViews;
+        public ObjectiveRendererObservation titanPreFistView;
         public int lateNativeMaterials, ownedSurfaceCount;
         public int nativeHostCombatSquads, nativeHostDeathListenersBefore, nativeHostDeathListenersAfter, nativeHostSummonListenersBefore,
             nativeHostSummonListenersAfter;
@@ -383,11 +398,15 @@ public sealed partial class PortSession
         int objectiveExitPostFinishTicks;
         float objectiveExitTraceNextSampleAt;
         float objectiveRewardApproachAt = -1;
+        MaterialPropertyBlock surfaceRendererBlock, surfaceSlotBlock;
+        static readonly string[] VagrantPropertyNames = { "_FlashColor", "_EliteIndex", "_LimbPrimeMask", "_Fade", "_EmColor" };
         GameObject[] objectiveEffectSources;
         string[] deferredObjectiveEffectPaths;
         bool ownsObjectiveBundlePreload;
         readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences =
             new HashSet<AssetOrDirectReference<GameObject>>();
+        readonly Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]> nativeTeamAreaMaterials =
+            new Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]>();
         readonly List<CharacterMaster> pendingObjectiveActors = new List<CharacterMaster>();
         readonly Dictionary<CharacterMaster, int> objectiveAmbientExpected = new Dictionary<CharacterMaster, int>();
         readonly HashSet<CharacterMaster> objectiveDirectorActors = new HashSet<CharacterMaster>();
@@ -514,6 +533,34 @@ public sealed partial class PortSession
             foreach (var reference in nativeEffectReferences)
                 reference.onValidReferenceDiscovered -= PresentNativeEffectSource;
             nativeEffectReferences.Clear();
+            foreach (var pair in nativeTeamAreaMaterials)
+                if (pair.Key)
+                    pair.Key.teamMaterialPairs = pair.Value;
+            nativeTeamAreaMaterials.Clear();
+        }
+        void PrepareNativeTeamAreaMaterials(TeamAreaIndicator indicator)
+        {
+            var originals = indicator.teamMaterialPairs;
+            if (originals == null || originals.Length == 0 || nativeTeamAreaMaterials.ContainsKey(indicator))
+                return;
+            // Native Start selects a team material after the prefab's renderer
+            // slots have been prepared. Keep the native selection and order.
+            var prepared = (TeamAreaIndicator.TeamMaterialPair[])originals.Clone();
+            bool changed = false;
+            for (int i = 0; i < prepared.Length; i++)
+            {
+                var source = originals[i].sharedMaterial;
+                var material = AndroidMaterialPresentation.RecoverIntersectionMaterial(source, coordinator.worldMaterials);
+                if (material == source)
+                    continue;
+                prepared[i].sharedMaterial = material;
+                changed = true;
+            }
+            if (changed)
+            {
+                nativeTeamAreaMaterials.Add(indicator, originals);
+                indicator.teamMaterialPairs = prepared;
+            }
         }
         public void PresentNativeEffectSource(GameObject source)
         {
@@ -522,6 +569,8 @@ public sealed partial class PortSession
             {
                 if (!root || !visited.Add(root))
                     return;
+                foreach (var indicator in root.GetComponentsInChildren<TeamAreaIndicator>(true))
+                    PrepareNativeTeamAreaMaterials(indicator);
                 foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
                 {
                     if (coordinator.worldLootSourceMaterials.ContainsKey(renderer))
@@ -529,7 +578,7 @@ public sealed partial class PortSession
                     var originals = renderer.sharedMaterials;
                     var particle = renderer as ParticleSystemRenderer;
                     var trail = particle ? particle.trailMaterial : null;
-                    int changed = AndroidMaterialPresentation.ApplyRecovered(renderer, coordinator.worldMaterials);
+                    int changed = AndroidMaterialPresentation.ApplyRecovered(renderer, coordinator.worldMaterials, includeIntersection: true);
                     if (changed == 0)
                         continue;
                     coordinator.worldLootSourceMaterials.Add(renderer, originals);
@@ -1721,6 +1770,8 @@ public sealed partial class PortSession
                     Resources.FindObjectsOfTypeAll<Renderer>()
                         .Where(x => x && x.gameObject.scene.IsValid() && x.gameObject.activeInHierarchy && x.enabled && x.isVisible)
                         .ToArray();
+                if (coordinator.r.objective.titanPreFistView == null)
+                    ObserveTitanPreFist(visible);
                 var owned = visible
                                 .Where(x => coordinator.worldPresented.Contains(x.GetInstanceID()) ||
                                             x.sharedMaterials.Any(m => m && ownedMaterials.Contains(m)))
@@ -1910,6 +1961,27 @@ public sealed partial class PortSession
                 return true;
             }
         }
+        void ObserveTitanPreFist(Renderer[] visible)
+        {
+            foreach (var renderer in visible)
+            {
+                if (renderer.name != "Mesh")
+                    continue;
+                var indicator = renderer.GetComponentInParent<TeamAreaIndicator>();
+                if (!indicator || indicator.name != "TeamAreaIndicator, GroundOnly")
+                    continue;
+                var projectile = indicator.GetComponentInParent<RoR2.Projectile.ProjectileController>();
+                if (!projectile || projectile.name != "TitanPreFistProjectile(Clone)")
+                    continue;
+                var view = ObserveOwnedSurface(renderer);
+                if (view.projectedBoundsFraction <= 0)
+                    continue;
+                coordinator.r.objective.titanPreFistView = view;
+                Debug.Log("lab-titan-prefist-visible frame=" + view.unityFrame);
+                return;
+            }
+        }
+
         public ObjectiveRendererObservation ObserveOwnedSurface(Renderer renderer)
         {
             var materials = renderer.sharedMaterials;
@@ -1942,6 +2014,18 @@ public sealed partial class PortSession
             if (particleRenderer)
                 particleRenderer.GetMeshes(meshes);
             var billboardRenderer = renderer as BillboardRenderer;
+            var materialState = materials.Select(ObserveSurfaceMaterial).ToArray();
+            var path = PortSession.StageObjectPath(renderer.transform);
+            EffectiveSurfaceSlotObservation[] effectiveProperties = null;
+            if (renderer.name == "VagrantMesh" && path.StartsWith("VagrantBody(Clone)/", StringComparison.Ordinal))
+            {
+                if (surfaceRendererBlock == null)
+                {
+                    surfaceRendererBlock = new MaterialPropertyBlock();
+                    surfaceSlotBlock = new MaterialPropertyBlock();
+                }
+                effectiveProperties = ObserveVagrantProperties(renderer, materialState, surfaceRendererBlock, surfaceSlotBlock);
+            }
             return new ObjectiveRendererObservation { unityFrame = Time.frameCount,
                                                       particleRenderMode = particleRenderer ? particleRenderer.renderMode.ToString() : null,
                                                       particleAlignment = particleRenderer ? particleRenderer.alignment.ToString() : null,
@@ -1950,8 +2034,9 @@ public sealed partial class PortSession
                                                       trailMaterial = particleRenderer ? ObserveSurfaceMaterial(particleRenderer.trailMaterial) : null,
                                                       billboardMaterial = billboardRenderer && billboardRenderer.billboard
                                                           ? ObserveSurfaceMaterial(billboardRenderer.billboard.material) : null,
-                                                      materialState = materials.Select(ObserveSurfaceMaterial).ToArray(),
-                                                      path = PortSession.StageObjectPath(renderer.transform),
+                                                      materialState = materialState,
+                                                      effectiveProperties = effectiveProperties,
+                                                      path = path,
                                                       kind = renderer.GetType().Name,
                                                       materials = materials.Select(m => m ? m.name : "missing").ToArray(),
                                                       shaders = materials.Select(m => m && m.shader ? m.shader.name : "missing").ToArray(),
@@ -1965,6 +2050,44 @@ public sealed partial class PortSession
                                                       size = bounds.size,
                                                       particles = particle ? particle.particleCount : 0,
                                                       projectedBoundsFraction = area };
+        }
+        static EffectiveSurfaceSlotObservation[] ObserveVagrantProperties(Renderer renderer, SurfaceMaterialObservation[] materials,
+                                                                           MaterialPropertyBlock rendererBlock, MaterialPropertyBlock slotBlock)
+        {
+            renderer.GetPropertyBlock(rendererBlock);
+            var slots = new EffectiveSurfaceSlotObservation[materials.Length];
+            for (int slot = 0; slot < slots.Length; slot++)
+            {
+                renderer.GetPropertyBlock(slotBlock, slot);
+                // Unity chooses one whole block for the slot. A missing value in the
+                // chosen block comes from the material, even if the other block has it.
+                bool hasSlotBlock = !slotBlock.isEmpty;
+                var block = hasSlotBlock ? slotBlock : rendererBlock;
+                string blockSource = hasSlotBlock ? "slot-block" : rendererBlock.isEmpty ? "none" : "renderer-block";
+                var properties = new EffectiveSurfacePropertyObservation[VagrantPropertyNames.Length];
+                for (int i = 0; i < properties.Length; i++)
+                {
+                    string name = VagrantPropertyNames[i];
+                    bool color = name == "_FlashColor" || name == "_EmColor";
+                    var property = new EffectiveSurfacePropertyObservation { name = name };
+                    if (color ? block.HasColor(name) : block.HasFloat(name))
+                    {
+                        property.source = blockSource;
+                        property.value = color ? (Vector4)block.GetColor(name) : new Vector4(block.GetFloat(name), 0, 0, 0);
+                    }
+                    else
+                    {
+                        var material = materials[slot];
+                        var saved = material == null ? null : Array.Find(material.properties, x => x.name == name);
+                        property.source = saved == null ? "absent" : "material";
+                        if (saved != null)
+                            property.value = saved.value;
+                    }
+                    properties[i] = property;
+                }
+                slots[slot] = new EffectiveSurfaceSlotObservation { slot = slot, propertyBlock = blockSource, properties = properties };
+            }
+            return slots;
         }
         public SurfaceMaterialObservation ObserveSurfaceMaterial(Material material)
         {

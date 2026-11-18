@@ -1,5 +1,11 @@
 # Build recipes
 
+2026-11-18 original-audio packaging audit: the audio and camera recipes refresh
+authored source hashes for the full bank roster. The shared stager copies
+only accepted local game inputs, with the existing adapted Init. Provenance,
+privacy, licensing and sensitive-content review found only repository source
+hash changes in these recipes. Bank and media contents stay in ignored work.
+
 The staged Commando and objective-support recipes select the authored
 `SilentProjectileBoundary` from the source-produced player registry. The
 source prefab transformation in `scripts/lab/integrated_objective.py` attaches
@@ -163,7 +169,7 @@ No clear recipe boundary violations or unresolved publication findings remain.
 | `owner-objective-support-objects.json` | SDK EventSystem policy, script identity and supplier pins | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
 | `owner-outro-whole-objects.json` | Existing source-produced supplier hash references | `0b3707206ccb85b269b4ffb7fdbc2281e29996f6102b823b1a5f3a8e4939f5b7` |
 | `owner-player-menu.json` | 591 path/type/object IDs and 20 external provider identities | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
-| `owner-player-phases.json` | Five source profiles and complete output filename sets | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
+| `owner-player-phases.json` | Five source profiles, original scene environment selection and complete output filename sets | `51cdf7d29ffff7c47293318244c6007e3f8468ee638301492d7e3f5c5a0cf004` |
 | `owner-promorailgunner-whole-objects.json` | Existing source-produced supplier hash references | `465ee55dcb13fd58aaeacb0aec4e620756444822c43e4eaaccb8547e08dd3509` |
 | `owner-promovoidsurvivor-source-lighting-objects.json` | Existing source-produced supplier hash references | `3a3f55032bc988f25fca554416d433ee2c9d1860a2649f79c475ea30a161013a` |
 | `owner-satellitescene-whole-objects.json` | Existing source-produced supplier hash references | `80531ba46512543942b88c586f2c31700e39ae5cda3cb4d43dc292603123e676` |
@@ -183,7 +189,7 @@ No clear recipe boundary violations or unresolved publication findings remain.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-sdk-job-inputs.json` | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
-| `owner-player-phases.json` | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
+| `owner-player-phases.json` | `51cdf7d29ffff7c47293318244c6007e3f8468ee638301492d7e3f5c5a0cf004` |
 
 `owner-player-phases.json` declares the five existing source phase recipe hashes
 and their complete output filename sets (including UUID5 Sprite/texture names).
@@ -191,7 +197,8 @@ These are minimum reconstruction/layout identities from the current source
 producer receipts, without file bodies, target hashes, images or private paths.
 The declaration supplies no content; all files must be regenerated from original
 inputs and checked by their existing owners. Provenance, privacy, licensing and
-sensitive-content audit: 2026-11-04. No entitlement or historical-byte claim.
+sensitive-content audit: 2026-11-04. On 2026-11-18, the scene phase selected
+the original stream using its existing source owner.
 
 
 `owner-j850-code.json` additionally names the 69 legitimate debug-symbol
@@ -2703,6 +2710,15 @@ the Unity fingerprint serializes fixed authored build settings in the exact SDK
 field order. No accepted metadata bytes, SDK implementation or game-derived
 content is embedded in the caller. Provenance/privacy/licensing and sensitive
 content audit: 2026-10-25; provider redistribution remains a separate gate.
+`owner-sdk-android-job-inputs.json` adds an authored phone invocation and
+cache witnesses for the same SDK producer. It names installed JVM/QEMU tools
+and separately acquired platform, guest and Maven inputs. The tracked request
+contains paths and arguments only. Provenance, privacy, licensing and
+sensitive-content audit: 2026-11-18.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sdk-android-job-inputs.json` | `74f247b398d4d3f473117bf70aa816d6cb6f27ff73290805dc8ebbc847a128f8` |
 
 The generic UnityFS/serialized writer and LZ4 helper contain authored wire-format
 orchestration only. The separately acquired unchanged public LZ4 v1.9.4 provider
@@ -5347,9 +5363,9 @@ graph differences remain explicit; full phone/runtime acceptance remains open.
 
 | Recipe | Source | Audit | Consumer |
 | --- | --- | --- | --- |
-| `owner-default-scene.json` | Original native record selectors, public Lab scene policy and exact SDK/source pins. | Identifiers, hashes and authored configuration only; audit below, 2026-10-29. | `player_scene.py`; native lighting/load qualification remains open. |
+| `owner-default-scene.json` | Original native record selectors, probe stream pin, public Lab scene policy and exact SDK/source pins. | Identifiers, hashes and authored configuration only; audit below, 2026-11-18. | `player_scene.py`; native lighting/load qualification remains open. |
 
-Profile SHA-256: `c02e13f130379c3d33eaf35260f28cc09173cd4e33179f6771013a0585c44a6d`.
+Profile SHA-256: `7d87265081ba77ee17d468ec378c5efa43594506160bac3cee62162f23cc31bf`.
 This profile names the minimum original native suppliers and the public camera,
 light and primitive policy. Built-in tag numbers and Cube identity are read from
 the supplied SDK; local object IDs follow independent construction order. Native
@@ -6969,6 +6985,22 @@ MonoScriptExtensions full-name comparison informs identity selection. The
 producer retains receipt/file/native-type checks and records historical body
 equality as a diagnostic; generated bodies remain ignored.
 
+## Whole-game source registry bindings (2026-11-18)
+
+`owner-whole-game-source-registry.json` pins 1,200 original MonoScript selectors
+and binds each to the current source-produced player registry by assembly,
+namespace and class. ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions
+inform the identity checks. Preparation verifies the original layout and the
+registry's receipt, native type and body before structural bundle emission.
+Historical body hashes are diagnostic. The recipe contains authored selectors
+and hashes. The original bundle and generated script bodies stay local.
+Provenance, licensing, privacy and sensitive-content review found no code,
+serialized bodies, account data or private paths in the recipe.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-source-registry.json` | `0905584adc493c52234da6fc972a67e73097d50e94810b365f90be8eb6df1f8c` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison
@@ -7127,3 +7159,12 @@ implementation, private paths or credentials.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-game-prefab-component-source-records.json` | `d0fea0b51e8f32ca83e6fd71ca8d501f93814a6d9dd7c0d194877e5906244f80` |
+
+### Signed managed SDK compiler
+
+The direct compiler uses the installed, hash-checked Unity Roslyn and Android
+references to build authored tools and runtime code. It pins the authored
+observer build and verifies the established Wwise and game transform hashes.
+Provenance, privacy, licensing and sensitive-content review found authored
+compiler wiring, reference names and hashes only. SDK files, original game
+and middleware files, compiled outputs and private evidence stay local.

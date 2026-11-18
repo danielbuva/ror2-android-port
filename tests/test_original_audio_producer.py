@@ -58,6 +58,17 @@ class ProducerManifestTests(unittest.TestCase):
     def temporary_directory(self):
         return tempfile.TemporaryDirectory()
 
+    def test_staged_producer_import_uses_source_layout(self):
+        with self.temporary_directory() as temporary:
+            checkout = Path(temporary).resolve()
+            script = checkout / SCRIPT.relative_to(ROOT)
+            script.parent.mkdir(parents=True)
+            script.write_bytes(SCRIPT.read_bytes())
+            spec = importlib.util.spec_from_file_location("staged_audio_producer", script)
+            staged = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(staged)
+            self.assertEqual(staged.SOURCE, checkout / "tools/unity/support/audio")
+
     def test_new_native_output_pin_replaces_old_pin_for_producer_artifacts(self):
         self.assertEqual(
             "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
@@ -129,6 +140,17 @@ class ProducerManifestTests(unittest.TestCase):
                 mock.patch.object(producer, "CURRENT_COMPOSED_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
             ):
                 joined = producer.verify_managed_output_manifest(manifest, root)
+                with self.assertRaisesRegex(ValueError, "exact Android ABI inputs"):
+                    producer.verify_managed_output_manifest(manifest, root, native_abi_reader=True)
+                abi_inputs = manifest["android_abi_input_hashes"]
+                del abi_inputs["llvm_nm"]
+                abi_inputs["native_export_set"] = producer.ABI_NATIVE_EXPORT_SET_SHA256
+                self.assertEqual(producer.verify_managed_output_manifest(manifest, root, native_abi_reader=True), joined)
+                with self.assertRaisesRegex(ValueError, "exact Android ABI inputs"):
+                    producer.verify_managed_output_manifest(manifest, root)
+                abi_inputs["native_export_set"] = "0" * 64
+                with self.assertRaisesRegex(ValueError, "exact Android ABI inputs"):
+                    producer.verify_managed_output_manifest(manifest, root, native_abi_reader=True)
             self.assertEqual(set(outputs), set(joined))
             self.assertEqual("api-instrumented-composed.dll", next(p.name for p in joined.values() if p.name == "api-instrumented-composed.dll"))
             self.assertIn("game-original-owner-point-sound-composed.dll", {p.name for p in joined.values()})

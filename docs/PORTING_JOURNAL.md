@@ -6,6 +6,98 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1500 — Package the complete accepted Wwise bank roster
+
+2026-11-18. The shared stager packages 247 banks and 120 WEMs, restoring
+93 banks while preserving the 153 original WwiseGlobal startup requests.
+The assisted Commando run completed those requests, dispatched source
+music states in Verdant Falls, Wetland Aspect and Scorched Acres, and
+captured nonzero mixed Wwise output. The launch log had no missing-bank errors.
+APK SHA-256 `56840f9b2c1a4921ae6ee7ac8b594604b587b477435da28fcc7b5cad6d46ac57` (source `0f35c164`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/wwise-complete-multistage/`
+includes `terminal.done.json` and screenshots, logs and reports in samples 60, 240 and 360.
+The runner observed 763.223 s. CPU/GPU peaked at 95.9 °C without a sustained
+limit trip, with 717.251 s above 80 °C. Battery peaked at 34 °C. OLED sleep
+and cleanup passed. Individual bank callbacks, isolated SFX audibility and
+converted APK playback remain open.
+
+## J1499 — Restore Mercenary's native normal slash material
+
+2026-11-18. The body visual owner prepares Mercenary's shared normal
+slash prefab before GroundLight state configuration. On assisted Titanic
+Plains, GroundLight2 and GroundLight1 SwingTrail emitters used the supported
+Android Cloud Remap variant 0/36, source queue 3000 and One/One blend.
+APK SHA-256 `3d3d06629839b09a7570459b171c21d90b8601d1b6b8d7b989964cddaf37f992` (source `d2939a0e`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/merc-normal-slash-live/`
+includes `terminal.done.json` and the renderer report, screenshot and Unity
+log for `sample-89/` (frame 4080) and `sample-118/` (frame 5760).
+Native authority held for 101.087 s. Terminal snapshot was 55.76 FPS at
+17.93 ms. SoC peaked at 83.2 °C with 1.825 s above 80 °C. Battery peaked at
+25 °C. Scratch cleanup and OLED sleep passed. Matched PC pixels remain open.
+
+## J1498 — Restore the original collision policy in the converted APK
+
+2026-11-18. The converter preserves the source PhysicsManager collision matrix
+at the original TagManager layer indices. The signed readback verified all
+528 layer pairs and the device confirmed the original collision policy.
+Ordinary Commando Start loaded Titanic Plains and passed all 27 objective actors.
+APK SHA-256: `58ad500f4d63450a180e24bea082f12df47f21cfab00c241140e99d8baea6fa3`.
+Evidence: `work/coordination/p1-scenes-w/source-collision-policy-v23/v23-ordinary-start-retry/`,
+`terminal.done.json` and the native report. Adopted placement, OLED sleep and
+lease release passed. CPU/GPU peaked at 70.1 C, with no time above 80 C.
+Results initialization still needs the original item-relationship families.
+Ordinary stage play, sustained FPS and End Run remain open.
+## J1497 — Restore native Vagrant cannon intersection material
+
+2026-11-18. The native effect owner prepares Cloud Intersection Remap slots
+and particle trails before pooled effects spawn. The Vagrant cannon Nova
+Sphere used the supported Android intersection pass, queue 3000 and One/One
+blend with two live emitters at frame 5040.
+APK SHA-256 `8235f795cab2afd14da0fb37b689742dd792b751f4fcbe058509bebefb782ecf` (source `00640b65`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/merc-finisher-owner-dense-live/`
+includes the PID-matched `sample-87/` screenshot, Unity log and renderer
+report. The assisted Titanic Plains run held native authority for 98.298 s.
+Vagrant body brightness, black-sheet attribution and matched PC pixels remain open.
+
+## J1496 — Prepare Mercenary's native finisher visual before state configuration
+
+2026-11-18. The body visual owner prepares the same owned finisher prefab
+that native GroundLight uses. Assisted Titanic Plains frame 5040 shows 10
+live Sparks on Android variant 0/111, the live SwingTrail on 0/36 and
+live distortion on 7/0. Sparks and trail use queue 3000 and One/One blend.
+APK SHA-256 `8235f795cab2afd14da0fb37b689742dd792b751f4fcbe058509bebefb782ecf` (source `00640b65`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/merc-finisher-owner-dense-live/`
+includes `sample-87/` and `terminal.done.json`. The terminal recorded
+40.64 FPS at 24.61 ms. SoC peaked at 86 C with 14.591 s above 80 C.
+Scratch cleanup, OLED sleep and lease release passed. Normal slash remains open.
+
+## J1494 — Overlap Android bundle encoding and verification
+
+2026-11-18. The UnityFS writer overlaps native LZ4 encoding with decoded-byte
+checks and hashes the final write. A one-worker Thor replay passed structural
+and required-set checks for all 290,498 records, matching J1478's 571,046,138-byte
+bundle SHA-256 `1117c73fb1ca756d3769af25c066cecaabac620eb9ad8bf9bf13dda517fabc8b`.
+Producer time fell from 10,245.374 to 9,732.853 s (5.0%), with serialization
+and compression down from 1,963.407 to 1,379.129 s (29.8%). Peak stage RSS
+was 2.381 GB against 3 GB. Recorded CPU/GPU peak was 62.1 C at admission,
+with zero thermal pauses. The runner removed 1.828 GB of replay scratch.
+Evidence: `work/coordination/alpha-converter-serial-20261118/terminal.done.json`.
+Unity typed load, converted gameplay and full phone install/update remain open.
+
+## J1493 — Restore the Stone Titan's pre-fist ground warning
+
+2026-11-18. The native effect owner prepares Android intersection materials in
+the team table before native startup picks the enemy entry, then restores it at teardown.
+Assisted Verdant Falls captured the red ground warning with native player authority.
+The PID-matched frame 8850 report records a supported intersection shader, queue 3000,
+blend 5/10, alpha 1 and the source cloud and enemy ramp textures.
+APK SHA-256: `639efb032eedbbc1afbd1ea5aaf22f70cd4e0a92758335b6d7501313724bec27` (source `d056c0ee`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/verdant-acrid-titan-indicator-event/`,
+`titan-indicator/`, `terminal-capture/` and `terminal.done.json`.
+CPU/GPU peaked at 88.4 C with 38.235 s above 80 C. Battery peaked at 27 C.
+Scratch cleanup, stopped process, OLED sleep and lease release passed.
+Matched PC pixels and the attack's remaining smoke materials still need attribution.
+
 ## J1490 — Build a pinned managed installer stage on Android
 
 2026-11-18. The shared runner verified 1,249 staged inputs and built the

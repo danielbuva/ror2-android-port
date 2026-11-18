@@ -5,8 +5,10 @@ import importlib.util
 import io
 from pathlib import Path
 import struct
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import lz4.block
 import UnityPy
@@ -88,8 +90,9 @@ class UnityWriteTests(unittest.TestCase):
                 with self.subTest(version=version, flags=flags), tempfile.TemporaryDirectory() as temporary:
                     path = Path(temporary) / "bundle"
                     with path.open("xb") as output:
-                        report = W.write_bundle(output, members, compress, version=version, flags=flags, block_size=256)
+                        report = W.write_bundle(output, members, compress, version=version, flags=flags, block_size=256, hash_output=True)
                     self.assertEqual(report["bytes"], path.stat().st_size)
+                    self.assertEqual(report["sha256"], hashlib.sha256(path.read_bytes()).hexdigest())
                     parsed = W.B.Bundle(path)
                     self.assertEqual([parsed.member(name).read() for name, *_ in members], list(data))
                     if flags & 63:
@@ -139,6 +142,37 @@ class UnityWriteTests(unittest.TestCase):
                 process = child.child
                 self.assertIsNone(process.poll())
             self.assertEqual(process.returncode, 0)
+
+    def test_native_codec_pipeline_preserves_scalar_layout_and_checked_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            tool = Path(temporary) / "codec"
+            tool.write_text(
+                f"#!{sys.executable}\n"
+                "import struct, sys, lz4.block\n"
+                "while header := sys.stdin.buffer.read(8):\n"
+                "    size, method = struct.unpack('<II', header)\n"
+                "    data = sys.stdin.buffer.read(size)\n"
+                "    assert len(data) == size and method == 3\n"
+                "    encoded = lz4.block.compress(data, store_size=False, mode='high_compression', compression=12)\n"
+                "    sys.stdout.buffer.write(struct.pack('<I', len(encoded)) + encoded)\n"
+                "    sys.stdout.buffer.flush()\n"
+            )
+            tool.chmod(0o700)
+            data = (b"authored content" * 12_000, hashlib.shake_256(b"authored entropy").digest(300_000))
+            members = [(str(i), 0, len(part), lambda part=part: io.BytesIO(part)) for i, part in enumerate(data)]
+            expected, actual = io.BytesIO(), io.BytesIO()
+            pin = hashlib.sha256(tool.read_bytes()).hexdigest()
+            with W.codec(tool, pin) as child:
+                W.write_bundle(expected, members, lambda raw, method: child(raw, method))
+            with W.codec(tool, pin) as child:
+                report = W.write_bundle(actual, members, child, hash_output=True)
+            self.assertEqual(actual.getvalue(), expected.getvalue())
+            self.assertEqual(report["sha256"], hashlib.sha256(expected.getvalue()).hexdigest())
+
+            with self.assertRaisesRegex(ValueError, "roundtrip differs"), patch.object(W.B, "decompress", return_value=b"invalid"):
+                with W.codec(tool, pin) as child:
+                    W.write_bundle(io.BytesIO(), members, child)
+            self.assertIsNotNone(child.child.poll())
 
     def test_serialized_metadata_requires_v22_and_valid_identity_extents(self):
         with self.assertRaises(ValueError):

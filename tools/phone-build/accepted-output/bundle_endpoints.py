@@ -857,6 +857,7 @@ class Qualification:
     def check(self, value, raw, typ, endpoint):
         fields = self.owner.pointers(raw, typ, {})
         script = fields.get(("m_Script",), fields.get(("#490",)))
+        scripts = {}
         if script and script[1]:
             fid, pid = script
             member = tuple(value["destination"][:2])
@@ -865,13 +866,16 @@ class Qualification:
                 if not 1 <= fid <= len(tables):
                     raise ValueError("actual script file ID outside member table")
                 member = tables[fid - 1]
-            script_value, script_raw, _ = endpoint((*member, pid))
+            target = (*member, pid)
+            script_value, script_raw, script_type = endpoint(target)
             _, (name, namespace, assembly) = self.owner.O.script_fields(script_raw)
             identity = [assembly, namespace, name]
-            value.setdefault("current_registry_identity", identity)
-            script_value.setdefault("current_registry_identity", identity)
+            # Persisted endpoint descriptors also serve as cache keys and evidence.
+            value = {"current_registry_identity": identity, **value}
+            script_value = {"current_registry_identity": identity, **script_value}
+            scripts[target] = script_value, script_raw, script_type
             self.universe.registry(identity)
-        return self.baseline(value, raw, typ, endpoint)
+        return self.baseline(value, raw, typ, scripts.__getitem__)
 
     def check_final(self, path):
         if self.final is not None:

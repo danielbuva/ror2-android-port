@@ -71,6 +71,11 @@ def input_description(plan, manifest):
     """Bound the entire cross-language UI document, not only its input JSON."""
     importer = module("install_game_import", HERE / "game_import.py")
     catalog = importer.validate_catalog(manifest)
+    for supported in catalog["supported"]:
+        names = {row["path"] for row in supported["files"]}
+        for name, path in plan["configuration"]["bindings"].items():
+            if path != "." and path not in names and not any(candidate.startswith(path + "/") for candidate in names):
+                raise ValueError(f"supported game version {supported['game_version']} has no admitted original for binding {name}: {path}")
     manifest = catalog["supported"][0]
     manifest_sha256 = hashlib.sha256(UPDATES.RELEASE.signed_bytes(manifest)).hexdigest()
     description = {
@@ -135,8 +140,6 @@ def prepare(index, repo, inputs):
         raise ValueError("private import contains files from another selection; import into a fresh version-bound folder")
     bindings = {}
     for name, relative in index["install_plan"]["configuration"]["bindings"].items():
-        if relative != "." and relative not in names and not any(n.startswith(relative + "/") for n in names):
-            raise ValueError("binding does not select admitted original files: " + name)
         bindings[name] = "import/files" + ("/" + relative if relative != "." else "")
         UPDATES.within(inputs, bindings[name], exists=True)
     bindings.setdefault("inventory", "input-hashes.json")

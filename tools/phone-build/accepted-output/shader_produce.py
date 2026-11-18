@@ -16,6 +16,7 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import struct
+import subprocess
 import sys
 import time
 
@@ -1062,6 +1063,46 @@ def relative(root, name):
     return root / path
 
 
+ASSET_RIPPER_TEMPLATES = "Source/AssetRipper.Export.UnityProjects/Shaders/Templates/"
+
+
+def asset_ripper_file(source, revision, name):
+    """Read the pinned public Git object or its revision-scoped staged file."""
+    if source is None or not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("explicit pinned AssetRipper revision and source required")
+    source = Path(source).resolve(strict=True)
+    path = relative(source / revision, name)
+    if (source / ".git").exists():
+        return subprocess.check_output(["git", "-C", str(source), "show", revision + ":" + name])
+    if path.resolve(strict=True) != path or not path.is_file():
+        raise ValueError("redirected AssetRipper file: " + name)
+    return path.read_bytes()
+
+
+def asset_ripper_templates(source, profile, *, prefix=ASSET_RIPPER_TEMPLATES):
+    templates = {}
+    for name, pin in profile["template_inputs"].items():
+        data = asset_ripper_file(source, profile["exporter_revision"], prefix + name)
+        if len(data) != pin["bytes"] or hashlib.sha256(data).hexdigest() != pin["sha256"]:
+            raise ValueError("pinned public AssetRipper template differs: " + name)
+        templates[Path(name).name] = data.decode().replace("\r", "")
+    return templates
+
+
+def compiler_session(compiler, sdk, output, *, compiler_command=None, compiler_data=None, includes=None):
+    return compiler.compiler(
+        compiler_command if compiler_command is not None else [sdk / "Tools/UnityShaderCompiler"],
+        compiler_data if compiler_data is not None else sdk,
+        output,
+        includes=includes if includes is not None else [sdk / "CGIncludes"],
+    )
+
+
+def add_compiler_arguments(parser):
+    parser.add_argument("--compiler-command", type=json.loads, help="explicit compiler argv as a JSON array, including an Android GNU runner when required")
+    parser.add_argument("--compiler-data", type=Path, help="acquired compiler SDK data root; --sdk still supplies the pinned metadata/includes")
+
+
 def includes(directory):
     """Pin names and contents; return native hash's sorted file-content stream."""
     digest, contents = hashlib.sha256(), []
@@ -1333,15 +1374,17 @@ def produce(
     hlsl_source=None,
     asset_ripper_source=None,
     *,
+    hlsl_tool=None,
+    hlsl_tool_sha256=None,
     compiler_command=None,
     compiler_data=None,
     authored_files=None,
 ):
     """Reproduce all selected standalone shaders from original PC/public inputs.
 
-    The SDK compiler executes without the Editor/project. Public source providers
-    are explicit pinned Git object trees; expected file hashes compare only fully
-    persisted independent output. No retained generated source/body is read.
+    The SDK compiler executes without the Editor/project. Public recovery tools
+    are built from pinned source or supplied as pinned executables. Expected file
+    hashes compare fully persisted independent output.
     """
     root = Path(__file__).resolve().parents[3]
     sys.path.insert(0, str(root / "scripts/lab"))
@@ -1376,7 +1419,7 @@ def produce(
     pins = [(profile_path, profile_pin), (codec_path, codec_pin), (source_path, source)]
     pins.extend((relative(sdk, name), pin) for name, pin in profile["sdk"].items())
     pins.extend((relative(root, name), pin) for name, pin in profile["authored_inputs"].items())
-    if "native_ui" in profile or "native_materials" in profile:
+    if any(key in profile for key in ("native_ui", "native_materials", "native_internal", "native_intersection")):
         if d3dasm_path is None or d3dasm_sha256 is None:
             raise ValueError("native recovery requires the explicit pinned public d3dasm tool")
         d3dasm_path = Path(d3dasm_path).absolute()
@@ -1384,8 +1427,13 @@ def produce(
     if "native_ui" in profile:
         pins.extend((relative(pc, row["path"]), row) for row in [profile["native_ui"]["source"], *profile["native_ui"]["materials"]])
     if "native_internal" in profile:
-        if hlsl_source is None:
-            raise ValueError("custom lighting requires the explicit pinned public HLSLDecompiler source repository")
+        if hlsl_tool is not None:
+            if hlsl_source is not None or hlsl_tool_sha256 is None:
+                raise ValueError("supply one pinned HLSLDecompiler executable or source repository")
+            hlsl_tool = Path(hlsl_tool).absolute()
+            pins.append((hlsl_tool, {"bytes": hlsl_tool.stat().st_size, "sha256": hlsl_tool_sha256}))
+        elif hlsl_source is None:
+            raise ValueError("custom lighting requires a pinned public HLSLDecompiler executable or source repository")
         pins.append((relative(pc, profile["native_internal"]["path"]), profile["native_internal"]))
     if "tmp_dummy" in profile:
         if asset_ripper_source is None:
@@ -1453,6 +1501,8 @@ def produce(
     }
     if d3dasm_path is not None:
         result["inputs"]["d3dasm_sha256"] = d3dasm_sha256
+    if hlsl_tool is not None:
+        result["inputs"]["hlsl_tool_sha256"] = hlsl_tool_sha256
     started = time.monotonic()
     try:
         if "native_ui" in profile:
@@ -1489,21 +1539,21 @@ def produce(
             tmp_material_keywords = [row["m_ValidKeywords"] for row in original_materials(pc, selection["materials"])]
         if "tmp_dummy" in profile:
             selected = profile["tmp_dummy"]
-            for name, pin in selected["template_inputs"].items():
-                data = recovery.pinned_source(asset_ripper_source, selected["exporter_revision"], name)
-                if len(data) != pin["bytes"] or hashlib.sha256(data).hexdigest() != pin["sha256"]:
-                    raise ValueError("pinned public TMP template resource differs")
-                template_inputs[Path(name).name] = data.decode().replace("\r", "")
+            template_inputs = asset_ripper_templates(asset_ripper_source, selected, prefix="")
             # GPL source remains caller supplied. Keep its notice with local outputs.
-            (output / "AssetRipper-LICENSE.md").write_bytes(recovery.pinned_source(asset_ripper_source, selected["exporter_revision"], "LICENSE.md"))
+            (output / "AssetRipper-LICENSE.md").write_bytes(asset_ripper_file(asset_ripper_source, selected["exporter_revision"], "LICENSE.md"))
             selected = selected["source"]
             tmp_objects = {obj.path_id: obj for obj in UnityPy.load(str(relative(pc, selected["path"]))).objects if obj.assets_file.name == selected["member"]}
-        core = recovery.build_native_hlsl(hlsl_source, output / "native-hlsl-tool") if "native_internal" in profile else None
+        core = hlsl_tool
+        if "native_internal" in profile and core is None:
+            core = recovery.build_native_hlsl(hlsl_source, output / "native-hlsl-tool")
         with (
-            compiler.compiler(
-                compiler_command if compiler_command is not None else [sdk / "Tools/UnityShaderCompiler"],
-                compiler_data if compiler_data is not None else sdk,
+            compiler_session(
+                compiler,
+                sdk,
                 output / "compiler",
+                compiler_command=compiler_command,
+                compiler_data=compiler_data,
                 includes=include_dirs,
             ) as connection,
             W.codec(codec_path, codec_sha256) as compress,
@@ -1621,9 +1671,10 @@ def main():
     parser.add_argument("--d3dasm", type=Path, help="explicit tool built from the pinned public source; required for native source recovery")
     parser.add_argument("--d3dasm-sha256", help="expected SHA-256 of the caller-supplied public tool")
     parser.add_argument("--hlsl-source", type=Path, help="caller-supplied pinned public HLSLDecompiler Git repository; native core builds into new output")
-    parser.add_argument("--asset-ripper-source", type=Path, help="caller-supplied pinned public AssetRipper Git repository; template bodies stay local")
-    parser.add_argument("--compiler-command", type=json.loads, help="explicit compiler argv as a JSON array, including an Android GNU runner when required")
-    parser.add_argument("--compiler-data", type=Path, help="acquired compiler SDK data root; --sdk still supplies the pinned metadata/includes")
+    parser.add_argument("--hlsl-tool", type=Path, help="executable built from the pinned public HLSLDecompiler source")
+    parser.add_argument("--hlsl-tool-sha256", help="expected SHA-256 of the HLSLDecompiler executable")
+    parser.add_argument("--asset-ripper-source", type=Path, help="pinned public AssetRipper Git repository or staged revision tree")
+    add_compiler_arguments(parser)
     parser.add_argument(
         "--authored-file",
         action="append",
@@ -1642,6 +1693,8 @@ def main():
         args.d3dasm_sha256,
         args.hlsl_source,
         args.asset_ripper_source,
+        hlsl_tool=args.hlsl_tool,
+        hlsl_tool_sha256=args.hlsl_tool_sha256,
         compiler_command=args.compiler_command,
         compiler_data=args.compiler_data,
         authored_files=args.authored_file,

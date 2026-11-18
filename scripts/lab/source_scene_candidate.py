@@ -119,10 +119,10 @@ def stage_unavailable_audio():
 
 def prepare(names=("lakes",), io=None):
     from composition_io import StageIO
-    from original_game_audio_build_hook import SELECTION, read_selection
+    from original_game_audio_build_hook import build_selection_path, read_selection
 
     io = io or StageIO()
-    _, _, audio_variant = read_selection(io.work, io.physical(io.work / SELECTION))
+    _, _, audio_variant = read_selection(io.work, io.physical(io.work / build_selection_path()))
     preserve_audio = audio_variant == "requested"
     project = io.project
     export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0])
@@ -255,7 +255,7 @@ def prepare(names=("lakes",), io=None):
 
 def synchronize_audio(io, *, code_only):
     """Align existing source scenes before stage maps and build-cache hashing."""
-    from original_game_audio_build_hook import SELECTION, read_selection
+    from original_game_audio_build_hook import build_selection_path, read_selection
 
     receipt_path = io.work / "experiments/source-scenes/candidate.json"
     if not io.is_file(receipt_path):
@@ -263,7 +263,7 @@ def synchronize_audio(io, *, code_only):
     rows = io.read(receipt_path)["staged"]
     if not rows:
         return
-    _, _, variant = read_selection(io.work, io.physical(io.work / SELECTION))
+    _, _, variant = read_selection(io.work, io.physical(io.work / build_selection_path()))
     requested = variant == "requested"
     if all((row["omitted_unavailable_audio_components"] == 0) == requested for row in rows):
         return

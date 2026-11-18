@@ -34,7 +34,7 @@ STAGE_SCHEMA = "native-view-camera-project-stage-r1"
 AUDIO_SCHEMA = "original-game-audio-project-stage-r1"
 HASHES = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-    "r4_manifest_sha256": "4091c3c40784855b90b784aeb00b404fbd63b765a8fd8c003851245d9d55d844",
+    "r4_manifest_sha256": "a4e5b392906641c49019383d8c6de9fb345a5234c728bfdafecfbd26ec654c33",
     "stage_receipt_sha256": "db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978",
     "ordinary_api": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
     "ordinary_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
@@ -359,6 +359,8 @@ def _verify_stage_manifest_rows(stage: dict, manifest: dict, project: Path) -> N
 def _select_point_sound_profile(audio: dict, game_hash: str, api_hash: str) -> tuple[str, str]:
     """Select a receipt-bound exact PointSound lineage, independent of PCM state."""
     if game_hash == HASHES["lightning_r3_point_sound_composed_game"]:
+        from original_game_audio_stage import COMPLETE_BANK_RECEIPT_SHA256
+
         if api_hash != HASHES["pcm_composed_api"]:
             raise ValueError("R3 PointSound continuation requires the exact 1ced API")
         lineage = audio.get("lineage")
@@ -368,7 +370,7 @@ def _select_point_sound_profile(audio: dict, game_hash: str, api_hash: str) -> t
         )
         if (
             audio.get("requested") is not True
-            or audio.get("stage_receipt_sha256") != HASHES["stage_receipt_sha256"]
+            or audio.get("stage_receipt_sha256") not in {HASHES["stage_receipt_sha256"], COMPLETE_BANK_RECEIPT_SHA256}
             or not isinstance(lineage, dict)
             or lineage.get("composed_game_sha256") != game_hash
             or lineage.get("composed_api_sha256") != api_hash

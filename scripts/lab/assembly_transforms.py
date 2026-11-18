@@ -40,10 +40,10 @@ class RebuiltAssemblyDrift(RuntimeError):
         self.checked = checked
 
 
-def generate(managed, temporary, recipe, *, dotnet=None, unity_editor=None):
+def generate(managed, temporary, recipe, *, dotnet=None, unity_editor=None, sdk_compiler=None, run_env=None):
     """Replay J563 into caller-owned scratch; never write inputs or checkout tool outputs."""
-    editor = Path(unity_editor if unity_editor is not None else os.environ["UNITY_EDITOR"])
-    cecil = editor.parent.parent / "MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll"
+    contents = sdk_compiler.contents if sdk_compiler else Path(unity_editor if unity_editor is not None else os.environ["UNITY_EDITOR"]).parent.parent
+    cecil = contents / "MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll"
     if sha(cecil) != recipe["cecil_sha256"]:
         raise RuntimeError("Mono.Cecil drift")
     inputs = {name: value for step in recipe["steps"] for name, value in step["inputs"].items()}
@@ -64,7 +64,7 @@ def generate(managed, temporary, recipe, *, dotnet=None, unity_editor=None):
     # local as well, without consulting or initializing a user's NuGet config.
     nuget_config = temporary / "NuGet.Config"
     nuget_config.write_text("<configuration><packageSources><clear /></packageSources></configuration>\n")
-    environment = dict(os.environ)
+    environment = dict(os.environ if run_env is None else run_env)
     environment.update(
         DOTNET_CLI_HOME=str(temporary / "dotnet-home"),
         NUGET_PACKAGES=str(temporary / "nuget"),
@@ -80,20 +80,24 @@ def generate(managed, temporary, recipe, *, dotnet=None, unity_editor=None):
         DOTNET_CLI_USE_MSBUILD_SERVER="0",
     )
     process = dict(timeout=120, cwd=temporary, env=environment)
-    run(
-        [
-            dotnet,
-            "build",
-            sources / "AssemblyProbe.csproj",
-            "-o",
-            tool,
-            "-p:CecilPath=" + str(cecil),
-            "-p:RestoreConfigFile=" + str(nuget_config),
-            "-p:UseSharedCompilation=false",
-            "--nologo",
-        ],
-        **process,
-    )
+    if sdk_compiler:
+        sdk_compiler.tool(tool / "AssemblyProbe.dll", sorted(sources.glob("*.cs")), cecil, env=environment)
+        process["env"] = sdk_compiler.tool_environment(environment)
+    else:
+        run(
+            [
+                dotnet,
+                "build",
+                sources / "AssemblyProbe.csproj",
+                "-o",
+                tool,
+                "-p:CecilPath=" + str(cecil),
+                "-p:RestoreConfigFile=" + str(nuget_config),
+                "-p:UseSharedCompilation=false",
+                "--nologo",
+            ],
+            **process,
+        )
     checked = 0
     for step in recipe["steps"]:
         tokens = {"{managed}": original}

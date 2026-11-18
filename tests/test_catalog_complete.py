@@ -10,6 +10,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,6 +39,32 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_physics_route_follows_asset_and_ordered_siblings_across_new_ids(self):
+        dependencies = {name: module("physics_" + name, name + ".py") for name in ("manager_graph", "manager_settings", "player_ui")}
+        with patch.dict(sys.modules, dependencies):
+            physics = module("physics_routes", "catalog_physics.py")
+        index = physics.PhysicsObjects.__new__(physics.PhysicsObjects)
+
+        def pointer(pid=0):
+            return dict(m_FileID=0, m_PathID=pid)
+
+        def routes(member, base):
+            root, first, second = [(member, base + i) for i in range(3)]
+            index.catalog = SimpleNamespace(endpoint=lambda member, ptr: (member, ptr[1]) if ptr[1] else None)
+            objects = {root: {"m_Name": "Prefab"}, first: {"m_Name": "Collider"}, second: {"m_Name": "Collider"}}
+            transforms = {
+                (member, base + 10): dict(m_GameObject=pointer(base), m_Father=pointer(), m_Children=[pointer(base + 12), pointer(base + 11)]),
+                (member, base + 11): dict(m_GameObject=pointer(first[1]), m_Father=pointer(base + 10)),
+                (member, base + 12): dict(m_GameObject=pointer(second[1]), m_Father=pointer(base + 10)),
+            }
+            indexed = index.game_object_routes(objects, transforms, {root: ["asset.prefab"]})
+            return indexed[root], indexed[first], indexed[second]
+
+        root, first, second = routes("original", 1)
+        self.assertEqual((root, first, second), routes("rebuilt", 100))
+        self.assertEqual(first, root + (("Collider", 2),))
+        self.assertEqual(second, root + (("Collider", 1),))
+
     def test_objective_slot_uses_ordered_indices_and_confirmed_hierarchy(self):
         mesh = module("objective_slot_mesh", "unity_mesh.py")
         records = module("objective_slot_records", "record_produce.py")
@@ -103,6 +130,34 @@ class CatalogCompletionTests(unittest.TestCase):
         self.assertEqual(catalog.endpoint("base", (1, 8)), ("missing-target", "CAB", 8))
         self.assertIsNone(catalog.endpoint("base", (0, 0)))
 
+    def test_differential_joins_identity_only_for_matching_candidate_catalog(self):
+        mesh = module("catalog_identity_mesh", "unity_mesh.py")
+        with patch.dict(sys.modules, catalog_complete=C, unity_mesh=mesh):
+            compare = module("catalog_identity_comparison", "catalog_compare.py")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            metadata = root / "catalog.json"
+            metadata.write_text("{}")
+            apk, receipt = root / "candidate.apk", root / "typed.json"
+            with ZipFile(apk, "w") as archive:
+                archive.write(metadata, "assets/owner-bootstrap/data/whole-catalog.json")
+            evidence = dict(complete=True, bodies=2, masters=1, metadataSha256=pin(metadata)["sha256"], bundles={"fixture": "digest"}, failures=[])
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence)))
+            request = dict(bundles={"fixture": dict(sha256="digest")})
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, None))
+            with self.assertRaisesRegex(ValueError, "bundle pins differ"):
+                compare.typed_catalog_identity(receipt, dict(bundles={}), apk)
+            definitions = dict(sourceMetadataSha256="original")
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence, definitionIdentity=definitions)))
+            with self.assertRaisesRegex(ValueError, "definition source metadata differs"):
+                compare.typed_catalog_identity(receipt, request, apk)
+            request["source_additions"] = dict(metadata=dict(sha256="original"))
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, definitions))
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=dict(evidence, metadataSha256="wrong"))))
+            with self.assertRaisesRegex(ValueError, "metadata differs"):
+                compare.typed_catalog_identity(receipt, request, apk)
+
     def test_player_binding_uses_image_identity_and_serialized_script_table(self):
         def text(value):
             raw = struct.pack("<I", len(value)) + value.encode()
@@ -124,17 +179,30 @@ class CatalogCompletionTests(unittest.TestCase):
 
         members = C.ProducedMembers()
         component = struct.pack("<iqIiq", 0, 1, 1, 1, 3)
+        definition = struct.pack("<iqIiq", 0, 0, 1, 1, 3)
         script = text(identity[0]) + bytes(20) + b"".join(map(text, identity))
         typ = dict(class_id=114, script_type=0, script_id=C.S.md4("".join(identity).encode()))
         layout = dict(data_offset=0, types=[typ], externals=[dict(path="CAB-plugin")], scripts=[(1, 3)])
-        members.members["CAB-prefab"] = (io.BytesIO(component), layout, {2: dict(type_id=0, offset=0, bytes=len(component))})
+        members.members["CAB-prefab"] = (
+            io.BytesIO(component + definition),
+            layout,
+            {2: dict(type_id=0, offset=0, bytes=len(component)), 4: dict(type_id=0, offset=len(component), bytes=len(definition))},
+        )
         members.members["CAB-plugin"] = (io.BytesIO(script), dict(data_offset=0, types=[dict(class_id=115)]), {3: dict(type_id=0, offset=0, bytes=len(script))})
-        self.assertEqual(C.prefab_script_bindings(members, {identity}), dict(behaviours=1, scriptless=[], types=1, failures=[]))
+        self.assertEqual(
+            C.prefab_script_bindings(members, {identity}), dict(behaviours=1, ownerless=1, scriptless=[], ownerless_scriptless=[], types=1, failures=[])
+        )
         absent = C.prefab_script_bindings(members, {("Behaviour", "Package", "Other.dll")})
-        self.assertEqual([(row["identity"], row["error"]) for row in absent["failures"]], [(identity, "type absent from Android player image")])
+        self.assertEqual(
+            [(row["path_id"], row["identity"], row["error"]) for row in absent["failures"]],
+            [
+                (2, identity, "type absent from Android player image"),
+                (4, identity, "type absent from Android player image"),
+            ],
+        )
         layout["scripts"] = [(1, 4)]
         mismatched = C.prefab_script_bindings(members, {identity})
-        self.assertEqual([row["error"] for row in mismatched["failures"]], ["serialized script table disagrees with m_Script"])
+        self.assertEqual([row["error"] for row in mismatched["failures"]], ["serialized script table disagrees with m_Script"] * 2)
 
     def test_model_skin_slots_follow_actual_external_scripts_and_reject_nulls(self):
         def text(value):
@@ -360,6 +428,49 @@ class CatalogCompletionTests(unittest.TestCase):
             self.assertEqual(emitted["locations"][0]["bundle"], "generated-android-data")
             self.assertEqual(emitted["bundles"]["generated-android-data"]["sha256"], result["bundles"]["generated-android-data"]["sha256"])
 
+    def test_managed_catalog_projects_keys_and_checks_actual_container(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, request = self.fixture(root)
+            staged = json.loads(Path(request.pop("metadata")["path"]).read_text())["locations"][0]
+            source = root / "original-catalog.json"
+            row = dict(id=1, internalId="Assets/Authored.asset", type=staged["type"], primaryKey="authored")
+            source.write_text(
+                json.dumps(
+                    dict(
+                        input_id=request["input_id"],
+                        source_catalog_sha256="catalog-hash",
+                        locations=[row, dict(row, id=2, internalId="assetbundlemanifest", type="Unsupported"), dict(row, id=3, internalId="unowned")],
+                        keys=[dict(key="alias", keyType="System.String", locations=[2, 1, 3]), dict(key="excluded", keyType="System.String", locations=[2])],
+                        providers=[],
+                    )
+                )
+            )
+            policy = root / "policy.json"
+            projection = dict(
+                schema="owner-catalog-projection-v1",
+                source_catalog_sha256="catalog-hash",
+                remaps={"1": "assetbundlemanifest"},
+                exclusions=[2],
+                provider_roots=[1],
+                runtime_roots=[],
+                extra_roots=[],
+                mesh_subobjects=[],
+            )
+            policy.write_text(json.dumps(projection))
+            request["projection"] = dict(source=pin(source), policy=pin(policy))
+            path.write_text(json.dumps(request))
+            result = C.produce(path, root / "output")
+            self.assertEqual(result["checks"]["locations"], 1)
+            emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
+            self.assertEqual(emitted["locations"], [dict(staged, primaryKey="authored", root=True, bundle="generated-android-data")])
+            self.assertEqual(emitted["keys"], [dict(key="alias", keyType="System.String", locations=[1])])
+            policy.write_text(json.dumps(dict(projection, source_catalog_sha256="other")))
+            request["projection"]["policy"] = pin(policy)
+            path.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "catalog projection source identity differs"):
+                C.produce(path, root / "other")
+
     def test_player_resource_is_pinned_and_loaded_for_pointer_resolution(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -417,6 +528,30 @@ class CatalogCompletionTests(unittest.TestCase):
             path.write_text(json.dumps(request))
             with self.assertRaisesRegex(ValueError, "location selection differs"):
                 C.produce(path, root / "missing")
+
+    def test_source_root_additions_restore_catalog_membership_and_alias_order(self):
+        identity = dict(input_id="fixture", source_catalog_sha256="source-catalog", providers=["provider"])
+        staged = dict(
+            identity,
+            locations=[dict(id=1, root=True), dict(id=3, root=True), dict(id=9, root=False)],
+            keys=[dict(key="family", locations=[3, 9, 1]), dict(key="other", locations=[3, 1])],
+            roots=[1, 3],
+            provider_roots=[1, 3],
+            runtime_roots=[],
+        )
+        source = dict(
+            identity,
+            locations=[dict(id=1, root=True), dict(id=2, root=True), dict(id=3, root=True), dict(id=4, root=True), dict(id=5, root=False)],
+            keys=[dict(key="family", locations=[2, 1, 3]), dict(key="other", locations=[5, 1, 3]), dict(key="runtime", locations=[4])],
+            roots=[1, 2, 3, 4],
+            provider_roots=[1, 2, 3],
+            runtime_roots=[4],
+        )
+        result = C.include_source_locations(staged, source, [2, 4, 5])
+        self.assertEqual(result["roots"], [1, 2, 3, 4])
+        self.assertEqual(result["provider_roots"], [1, 2, 3])
+        self.assertEqual(result["runtime_roots"], [4])
+        self.assertEqual([(row["key"], row["locations"]) for row in result["keys"]], [("family", [2, 1, 3, 9]), ("other", [3, 1, 5]), ("runtime", [4])])
 
     def test_final_type_mismatch_refuses_output(self):
         with tempfile.TemporaryDirectory() as folder:

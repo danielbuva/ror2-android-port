@@ -39,6 +39,10 @@ Siren's Call still enters through its native transition owner.
 three-frame bursts under `golem-attacks/` on live Unity Golem clap or laser
 entry logs. Each burst records the triggering line and capture times. Clap
 entry cues the windup, and a missing log yields no burst.
+`capture_titan_indicator: true` uses the same capture path under
+`titan-indicator/`. Enable `selection.detailedVisualDiagnostics` so the
+stage report retains the first visible Titan pre-fist GroundOnly renderer
+and emits its Unity frame as the capture trigger.
 `pacing_diagnostics: true` retains read-only Unity, Android display, compositor
 and OS frame-rate intervention evidence during sustained observations. The
 settings failure workload owns its attempt-bound selector and injects one

@@ -172,6 +172,10 @@ the priority; these gates must pass before any public release.
       the largest regressions and set per-device budgets; no fidelity reduction
       without an explicit, documented user decision.
 
+The [Thor bundle replay](PORTING_JOURNAL.md#j1494--overlap-android-bundle-encoding-and-verification)
+measures the strict whole-game bundle producer. End-to-end converter budgets
+still need measurements across import, APK assembly and installation.
+
 Game baseline and attribution plan: [retained sustained report](performance-game.md),
 qualified as host-only in [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report).
 The 30-minute Main Nova observation averages 49.06 FPS; 1.537% of active frames

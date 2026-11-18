@@ -31,6 +31,115 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(actual[("pack", "CAB-pack", 8)], {("original.bundle", "CAB-source", 11)})
             self.assertEqual(source_files, {"original.bundle": "a" * 64})
 
+    def test_source_registry_remap_restores_original_layout_without_copying_original_body(self):
+        root_repo = Path(__file__).resolve().parents[1]
+        G = P.O.module("_registry_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
+        R, M = P.module("record_remap"), P.module("bundle_manifest")
+        identity = ["Authored.dll", "Fixture", "CurrentScript"]
+
+        def script(name, properties):
+            stream = io.BytesIO()
+            P.O.aligned_string(stream, name)
+            stream.write(bytes(4) + properties * 16)
+            for value in (name, identity[1], identity[0]):
+                P.O.aligned_string(stream, value)
+            return stream.getvalue()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, _, pin = self.fixture(root)
+            original = root / "original/registry.assets"
+            old, current = script(identity[2], b"o"), script(identity[2], b"n")
+            nodes = [M.S._node("MonoScript", "Base", -1, level=0), M.S._node("UInt8", "body", len(old))]
+            native = dict(class_id=115, stripped=0, script_type=-1, hash=b"s" * 16, tree=M.S._tree(nodes), dependencies=[])
+            original.write_bytes(
+                self.serialized(
+                    [
+                        dict(path_id=7, type=native, body=old),
+                        dict(path_id=8, type=native, body=script("AnotherScript", b"o")),
+                    ],
+                    platform=19,
+                )
+            )
+            player = root / "player"
+            player.mkdir()
+            registry = player / original.name
+            registry.write_bytes(self.serialized([dict(path_id=11, type=native, body=current)], trees=False))
+            player_profile = "a" * 64
+            player_receipt = player / "result.json"
+            player_receipt.write_text(
+                json.dumps(
+                    dict(
+                        success=True,
+                        input_id=P.O.M.INPUT_ID,
+                        profile_sha256=player_profile,
+                        files={registry.name: pin(registry)},
+                    )
+                )
+            )
+            profile = root / "recipe/owner-registry.json"
+            profile.parent.mkdir()
+            destination = ["content", "CAB-content", 100]
+            selected = dict(
+                source_profile_sha256=player_profile,
+                source=[registry.name, 99],
+                destination=destination,
+                original=[original.name, original.name, 7],
+                class_id=115,
+                script_identity=identity,
+                bytes=len(old),
+                sha256=P.hashlib.sha256(old).hexdigest(),
+                native_type_hash=native["hash"].hex(),
+            )
+            recipe = dict(input_id=P.O.M.INPUT_ID, original_sources={original.name: P.O.B.sha(original)}, records=[selected])
+            policy = root / "policy.json"
+            policy.write_text(
+                json.dumps(
+                    dict(
+                        bundle=destination[0],
+                        member=destination[1],
+                        bindings=[dict(supplier="registry", record_source=destination, destination=destination)],
+                        asset_groups=[dict(guid="12" * 16, path="Assets/Registry.asset", roots=[100])],
+                        assets=[dict(name="assets/registry.asset", type="MonoScript")],
+                    )
+                )
+            )
+            for source_id in (7, 8):
+                selected["original"][2] = source_id
+                profile.write_text(json.dumps(recipe))
+                profile_sha = P.O.B.sha(profile)
+                pack = root / f"remap-{source_id}"
+                R.produce(profile, profile_sha, [], pack, [(player, P.O.B.sha(player_receipt))], comparison="diagnostic")
+                request.update(
+                    policy=pin(policy),
+                    staged=[],
+                    suppliers=[
+                        dict(
+                            name="registry",
+                            profile=pin(profile),
+                            receipt=pin(pack / "result.json"),
+                            index=pin(pack / "index.jsonl"),
+                            objects=pin(pack / "objects.bin"),
+                            types=pin(pack / "types.json"),
+                        )
+                    ],
+                )
+                inputs.write_text(json.dumps(request))
+                if source_id == 8:
+                    with self.assertRaisesRegex(ValueError, "current script identity differs"):
+                        P.prepare_request(inputs, root / "bad")
+                    continue
+                source = tuple(selected["original"])
+                self.assertEqual(G.Graph(root, {}).source_suppliers([profile_sha], {source}), {source: {(profile_sha, tuple(destination))}})
+                prepared = P.prepare_request(inputs, root / "prepared")
+                emitted = P.produce_request(prepared["request"]["path"], root / "emitted")
+                with P.O.B.Bundle(Path(emitted["bundle"])).member(destination[1]) as stream:
+                    layout = P.O.W.read_serialized(stream)
+                    row = next(row for row in layout["objects"] if row["path_id"] == destination[2])
+                    self.assertEqual(layout["types"][row["type_id"]]["tree"], native["tree"])
+                    stream.seek(layout["data_offset"] + row["offset"])
+                    self.assertEqual(P.O.B.exact(stream, row["bytes"]), current)
+
     def test_signed_dispatch_prepares_fresh_suppliers_catalog_and_runtime_donor(self):
         root_repo = Path(__file__).resolve().parents[1]
         G = P.O.module("_prepare_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")

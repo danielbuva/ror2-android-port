@@ -29,7 +29,8 @@ public static class PayloadCopyReceiptHarness
     private static void Set(object target, string field, object value)
     { target.GetType().GetField(field).SetValue(target, value); }
 
-    private static object Receipt(string badMediaPath = null, bool duplicateMedia = false, bool badReference = false, bool wrongInfoHash = false)
+    private static object Receipt(string badMediaPath = null, bool duplicateMedia = false, bool badReference = false,
+        bool wrongInfoHash = false, bool additionalBank = false, bool missingStartupBank = false)
     {
         object receipt = Make("Receipt");
         Set(receipt, "schema", "original-game-wwise-bank-cohort-r2");
@@ -38,21 +39,21 @@ public static class PayloadCopyReceiptHarness
         Set(receipt, "requested_banks", 153);
         Set(receipt, "output_relative_directory", "Audio/GeneratedSoundBanks/Android");
         Set(receipt, "runtime_private_copy_required", true);
-        string[] names = new string[153];
+        const int StartupBankCount = 153;
         Type entryType = typeof(GameAudioOriginalPayloadCopy).GetNestedType("Entry", BindingFlags.NonPublic);
-        Array outputs = Array.CreateInstance(entryType, 154);
+        Array outputs = Array.CreateInstance(entryType, StartupBankCount + (additionalBank ? 2 : 1));
         outputs.SetValue(Make("Entry"), 0);
         Set(outputs.GetValue(0), "filename", "Init.bnk");
         Set(outputs.GetValue(0), "sha256", new string('a', 64));
         Set(outputs.GetValue(0), "size_bytes", 1L);
-        for (int i = 0; i < names.Length; i++)
+        for (int i = 0; i < outputs.Length - 1; i++)
         {
-            names[i] = "Bank" + i;
+            string name = i == StartupBankCount ? "SceneBank" : i == 0 && missingStartupBank ? "ReplacementBank" : "Bank" + i;
             outputs.SetValue(Make("Entry"), i + 1);
-            Set(outputs.GetValue(i + 1), "filename", names[i] + ".bnk");
+            Set(outputs.GetValue(i + 1), "filename", name + ".bnk");
             Set(outputs.GetValue(i + 1), "sha256", new string('b', 64));
             Set(outputs.GetValue(i + 1), "size_bytes", 1L);
-            Set(outputs.GetValue(i + 1), "requested_name", names[i]);
+            Set(outputs.GetValue(i + 1), "requested_name", name);
         }
         Set(receipt, "outputs", outputs);
         Type mediaType = typeof(GameAudioOriginalPayloadCopy).GetNestedType("MediaEntry", BindingFlags.NonPublic);
@@ -65,7 +66,7 @@ public static class PayloadCopyReceiptHarness
             Set(media.GetValue(i), "relative_path", i == 0 && badMediaPath != null ? badMediaPath : "Media/" + id + ".wem");
             Set(media.GetValue(i), "sha256", new string('c', 64));
             Set(media.GetValue(i), "size_bytes", 5L);
-            Set(media.GetValue(i), "referenced_by", new[] { "Bank0" });
+            Set(media.GetValue(i), "referenced_by", new[] { additionalBank ? "SceneBank" : "Bank0" });
         }
         if (duplicateMedia) Set(media.GetValue(1), "media_id", 1000L);
         if (badReference) Set(media.GetValue(0), "referenced_by", new[] { "UnselectedBank" });
@@ -252,6 +253,8 @@ public static class PayloadCopyReceiptHarness
         Check(!GameAudioOriginalPayloadCopy.NativeSearchRootMatches("/owned/app-other", "/owned/app"), "different persistent root refused");
         Check(!GameAudioOriginalPayloadCopy.NativeSearchRootMatches("", "/owned/app"), "empty bank root refused");
         Check(Validate(Receipt()), "exact 154-bank and 120-media receipt accepted");
+        Check(Validate(Receipt(additionalBank: true)), "scene banks and their media are admitted");
+        Check(!Validate(Receipt(additionalBank: true, missingStartupBank: true)), "scene bank cannot replace a required startup bank");
         Check(!Validate(Receipt("Media/../1000.wem")), "traversal media path refused");
         object zeroIdReceipt = Receipt();
         Array zeroIdRows = (Array)zeroIdReceipt.GetType().GetField("streamed_media").GetValue(zeroIdReceipt);

@@ -145,17 +145,28 @@ def extend_selection(owner, member, required, selected, types, routes, extension
     required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
 
 
-def original_identities(owner, path, source_files=None):
-    """Reverse body-producing profile selectors, never schema-only type_source."""
+def original_identities(owner, path, source_files=None, *, destinations=None):
+    """Reverse original body selectors and identity-bound MonoScript remaps."""
     result = {}
 
     def add(record, source):
-        result.setdefault(tuple(record), set()).add(tuple(source))
+        if destinations is None or record in destinations:
+            result.setdefault(record, set()).add(tuple(source))
 
     if str(path).endswith(".jsonl.gz"):
         bundles = owner.A.profile_bundles(path)
     else:
         profile = json.loads(path.read_bytes())
+        if "original_sources" in profile:
+            originals = profile["original_sources"]
+            for row in profile["records"]:
+                source = row.get("original", ())
+                if row["class_id"] != 115 or not row.get("script_identity") or len(source) != 3 or source[0] not in originals:
+                    raise ValueError("registry remap requires a pinned original MonoScript identity")
+                if source_files is not None and source_files.setdefault(source[0], originals[source[0]]) != originals[source[0]]:
+                    raise ValueError("original source file pins disagree")
+                add(tuple(row["destination"]), source)
+            return result
         if "bundles" not in profile:
             bundle = profile["bundle"]
             if source_files is not None:
@@ -179,6 +190,25 @@ def original_identities(owner, path, source_files=None):
                     for target in row["outputs"]:
                         add((target["bundle"], target["member"], target["path_id"]), (bundle["path"], member["name"], row["path_id"]))
     return result
+
+
+def canonical_record_sources(owner, canonical, paths, destinations):
+    """Resolve record-backed canonical rows through their exact body producers."""
+    if not paths:
+        return {}
+    bundle = canonical["bundle"]
+    by_producer = {}
+    for row in canonical["objects"]:
+        endpoint = bundle["name"], bundle["member"], row["path_id"]
+        if endpoint in destinations and "record" in row and "source" not in row and "behaviour" not in row.get("properties_hash", {}):
+            by_producer.setdefault(row["record"], set()).add(endpoint)
+    sources = {}
+    for path in paths:
+        digest = owner.O.B.sha(path)
+        if digest not in by_producer:
+            raise ValueError("Canonical record profile does not supply any requested alias")
+        sources.update(original_identities(owner, path, destinations=by_producer.pop(digest)))
+    return sources
 
 
 def prepare(owner, inputs, output):
@@ -359,12 +389,26 @@ def prepare(owner, inputs, output):
                 actual, body = producer.record(value)
                 if actual != row:
                     raise ValueError("supplier record changed")
+                original_body, original_type, _ = original(binding["source"])
+                identity = row.get("source_produced", {}).get("script_identity")
+                if identity is not None:
+                    if not original_type.get("tree") or original_type["dependencies"]:
+                        raise ValueError("registry MonoScript requires an original leaf layout and verified identity")
+                    expected_type = (
+                        original_type if "tree" in typ else {key: value for key, value in original_type.items() if key not in {"tree", "dependencies"}}
+                    )
+                    if typ != expected_type:
+                        raise ValueError("registry MonoScript native type differs from original")
+                    owner.O.current_script_identity(original_body, original_type["class_id"], identity)
+                    owner.O.current_script_identity(body, typ["class_id"], identity)
+                    if owner.pointers(original_body, original_type, {}):
+                        raise ValueError("original registry MonoScript layout contains pointers")
+                    typ = original_type
                 value = descriptor(
                     target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, source=binding["source"]
                 )
                 if "resource" in row:
                     value["resource"] = row["resource"]
-                original(binding["source"])
             else:
                 if target in staged_descriptors:
                     value, body, typ = staged.record(target)
@@ -417,6 +461,16 @@ def prepare(owner, inputs, output):
             routes[target] = edges
         if used != overrides.keys():
             raise ValueError("unused exceptional field route")
+        # The emitted endpoint index contains only the reachable SDK witnesses.
+        for row in normalized_staged:
+            if row["bundle"] != "sdk":
+                continue
+            for key in ("leaves", "full"):
+                if key in row:
+                    witnesses = pins.read(row[key])
+                    reachable = [witness for witness in witnesses if tuple(witness["destination"]) in selected]
+                    if len(reachable) != len(witnesses):
+                        row[key] = write(f"sdk-{Path(row['member']).name}-{key}.json", reachable)
         externals = sorted({target[1] for target in selected if target[:2] != member})
         canonical = policy.get("canonical")
         if canonical is not None:
@@ -558,6 +612,9 @@ def prepare(owner, inputs, output):
         )
         if canonical:
             donor_sources = original_identities(owner, pins.pin(canonical["profile"]))
+            record_profiles = [pins.pin(pin) for pin in canonical.get("record_profiles", [])]
+            destinations = {tuple(pair["canonical"]) for pair in canonical["pairs"]}
+            donor_sources.update(canonical_record_sources(owner, canonical_profile, record_profiles, destinations))
             aliases = []
             for pair in canonical["pairs"]:
                 duplicate, endpoint = tuple(pair["duplicate"]), tuple(pair["canonical"])
@@ -581,6 +638,10 @@ def prepare(owner, inputs, output):
                 profile=dict(canonical["profile"], path=str(pins.pin(canonical["profile"]))),
                 bundle=dict(canonical["bundle"], path=str(pins.pin(canonical["bundle"]))),
             )
+            if record_profiles:
+                prepared["canonical"]["record_profiles"] = [
+                    dict(pin, path=str(path)) for pin, path in zip(canonical["record_profiles"], record_profiles, strict=True)
+                ]
         pins.check()
         result = dict(
             success=True,

@@ -18,7 +18,7 @@ KEY_DIR = Path("keys/installer-test")
 KEY_FILES = ("owner.p12", "password")
 MANAGED = Path("tools/phone-build/managed-host")
 SIGNER = Path("tools/phone-build/owner-apk/build_owner_apk.py")
-REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "AGENTS.md", "dev")
+REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "dev")
 RUNTIME_INPUTS = (
     MANAGED / "build_fixture.py",
     MANAGED / "NativePythonHost.c",
@@ -100,11 +100,13 @@ def base_receipt(base):
     receipt = json.loads((base / "result.json").read_bytes())
     built = json.loads((base / "build-receipt.json").read_bytes())
     apk = base / "signed.apk"
+    commit = receipt.get("source_commit") or ""
+    request_key = receipt.get("cache_key") or ""
     if (
         receipt.get("success") is not True
         or receipt.get("package") != PACKAGE
-        or receipt.get("source_commit") != base.name
-        or not re.fullmatch(r"[0-9a-f]{40}", base.name)
+        or not re.fullmatch(r"[0-9a-f]{40}", commit)
+        or (base.name != commit and (base.name != request_key or not re.fullmatch(r"[0-9a-f]{64}", request_key)))
         or not re.fullmatch(r"[0-9a-f]{64}", receipt.get("signer_sha256") or "")
         or built.get("success") is not True
         or built.get("game_inputs") is not False
@@ -168,7 +170,7 @@ def build(checkout, base, zipalign, check=False):
     base = base.resolve()
     receipt, native_hashes = base_receipt(base)
     git(checkout, "diff", "--quiet", "HEAD", "--", *REPO_ASSETS)
-    git(checkout, "diff", "--quiet", base.name, version, "--", *RUNTIME_INPUTS)
+    git(checkout, "diff", "--quiet", receipt["source_commit"], version, "--", *RUNTIME_INPUTS)
     java = Path(os.environ["JAVA_HOME"]) / "bin/java"
     sdk = Path(os.environ["ANDROID_HOME"])
     tools = sdk / "build-tools/34.0.0"
@@ -256,7 +258,7 @@ def build(checkout, base, zipalign, check=False):
             "success": True,
             "game_inputs": False,
             "source_commit": version,
-            "base_commit": base.name,
+            "base_commit": receipt["source_commit"],
             "base_apk_sha256": receipt["apk_sha256"],
             "apk_sha256": digest(apk),
             "apk_bytes": apk.stat().st_size,

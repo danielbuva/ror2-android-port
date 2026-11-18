@@ -372,7 +372,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
             receipt.accepted_input_id != ExpectedInput || receipt.requested_banks != 153 ||
             receipt.soundbanks_info_sha256 != ExpectedSoundbanksInfo ||
             receipt.output_relative_directory != ExpectedDirectory || !receipt.runtime_private_copy_required ||
-            receipt.outputs == null || receipt.outputs.Length != 154 || receipt.streamed_media == null || receipt.streamed_media.Length != 120)
+            receipt.outputs == null || receipt.outputs.Length < 154 || receipt.streamed_media == null || receipt.streamed_media.Length != 120)
         { refusal = "stage_receipt_contract_mismatch"; return false; }
         var names = new HashSet<string>(StringComparer.Ordinal);
         var banks = new HashSet<string>(StringComparer.Ordinal);
@@ -385,8 +385,8 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
                 row.requested_name == null || row.filename != row.requested_name + ".bnk" || !banks.Add(row.requested_name))
             { refusal = "stage_receipt_bank_name_invalid"; return false; }
         }
-        if (!names.Contains("Init.bnk") || !banks.SetEquals(expectedNames))
-        { refusal = "stage_receipt_missing_or_extra_bank"; return false; }
+        if (!names.Contains("Init.bnk") || !expectedNames.IsSubsetOf(banks))
+        { refusal = "stage_receipt_missing_startup_bank"; return false; }
         var mediaIds = new HashSet<long>();
         foreach (MediaEntry row in receipt.streamed_media)
         {
@@ -396,7 +396,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
             { refusal = "stage_receipt_media_entry_invalid"; return false; }
             var references = new HashSet<string>(StringComparer.Ordinal);
             foreach (string name in row.referenced_by)
-                if (!expectedNames.Contains(name) || !references.Add(name))
+                if (!banks.Contains(name) || !references.Add(name))
                 { refusal = "stage_receipt_media_reference_invalid"; return false; }
         }
         return true;

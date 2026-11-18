@@ -82,9 +82,35 @@ namespace EntityStates.Croco
         public GameObject swingEffectPrefab = configuredNormal;
     }
 }
+namespace EntityStates.Merc
+{
+    public static class GroundLight
+    {
+        public static GameObject comboSwingEffectPrefab;
+        public static GameObject comboFinisherSwingEffectPrefab;
+    }
+}
+public static class WholeCatalogComposed
+{
+    public static GameObject mercNormal;
+    public static GameObject mercFinisher;
+    public static T LoadOwnedContent<T>(string path) where T : UnityEngine.Object
+    {
+        if (path == "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordSlash.prefab")
+            return mercNormal as T;
+        if (path == "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab")
+            return mercFinisher as T;
+        throw new InvalidOperationException("Unexpected owned swing path: " + path);
+    }
+}
 namespace RoR2
 {
     public class DamageTrail : UnityEngine.Object { public GameObject segmentPrefab; }
+    public class TeamAreaIndicator : UnityEngine.Object
+    {
+        public struct TeamMaterialPair { public int teamIndex; public Material sharedMaterial; }
+        public TeamMaterialPair[] teamMaterialPairs;
+    }
     public class EffectComponent : UnityEngine.Object { }
     public class EffectDef
     {
@@ -135,6 +161,8 @@ public static class PortSession
 public partial class SourceSession
 {
     readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences = new HashSet<AssetOrDirectReference<GameObject>>();
+    readonly Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]> nativeTeamAreaMaterials =
+        new Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]>();
     public readonly List<AsyncOperationHandle<GameObject>> ownedOriginalVisualHandles = new List<AsyncOperationHandle<GameObject>>();
     public SourceSession coordinator => this;
     public SourceSession GetTeleporterWorldSession() => this;
@@ -148,7 +176,7 @@ public partial class SourceSession
     public GameObject OriginalProjectileGhost(RoR2.Projectile.ProjectileController controller) => controller.ghostPrefab;
     public void Prepare(GameObject root) => PresentNativeEffectSource(root);
     public void Stop() => StopPresentingNativeEffectReferences();
-    public IEnumerator PrepareSwings(List<string> unavailable) => PrepareCrocoSwingEffects(unavailable);
+    public IEnumerator PrepareSwings(List<string> unavailable) => PrepareNativeSwingEffects(unavailable);
 }
 public static partial class AndroidNativeDeferredPresentation
 {
@@ -175,6 +203,13 @@ public static partial class AndroidMaterialPresentation
     public static Report report = new Report();
     static readonly Shader fallback = new Shader("Fallback");
     static Shader LoadShader(string name) => fallback;
+    public static bool Apply(Material source, Material copy)
+    {
+        if (source.properties == "missing shader")
+            return false;
+        copy.shader = new Shader("Recovered/Intersection");
+        return true;
+    }
 }
 static class Fixture
 {
@@ -206,11 +241,15 @@ static class Fixture
         Check(lazy.subscribers == 0 && loaded.subscribers == 0 && pending.subscribers == 0 && pendingRenderer.sharedMaterials[0] == original,
             "late acquisition changed material after teardown");
     }
-    static void CheckCrocoSwingAdmission(Material original)
+    static void CheckSwingAdmission(Material original)
     {
+        var mercNormal = new Renderer { sharedMaterials = new[] { original } };
+        var mercFinisher = new Renderer { sharedMaterials = new[] { original } };
         var normal = new Renderer { sharedMaterials = new[] { original } };
         var finisher = new Renderer { sharedMaterials = new[] { original } };
         var fallback = new Renderer { sharedMaterials = new[] { original } };
+        WholeCatalogComposed.mercNormal = new GameObject { components = new[] { mercNormal } };
+        WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { mercFinisher } };
         EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
         EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab = new EntityStates.Croco.Slash.SwingReference {
             addressableReference = new AssetReference { RuntimeKey = "native-finisher" },
@@ -223,12 +262,72 @@ static class Fixture
         var prepare = session.PrepareSwings(unavailable);
         Check(prepare.MoveNext() && normal.sharedMaterials[0] != original && finisher.sharedMaterials[0] == original,
               "normal source should be prepared while native finisher loads");
+        Check(!EntityStates.Merc.GroundLight.comboSwingEffectPrefab && !EntityStates.Merc.GroundLight.comboFinisherSwingEffectPrefab,
+              "Merc presentation must leave native state configuration to the game");
+        foreach (var renderer in new[] { mercNormal, mercFinisher })
+        {
+            var material = renderer.sharedMaterials[0];
+            Check(material.shader.name == "Recovered/" + original.shader.name &&
+                  material.srcBlend == original.srcBlend && material.dstBlend == original.dstBlend &&
+                  material.zWrite == original.zWrite && material.renderQueue == original.renderQueue &&
+                  session.worldLootSourceMaterials[renderer][0] == original,
+                  "owned Merc swing did not preserve source render state before native state configuration");
+        }
         operation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 && finisher.sharedMaterials[0] != original,
               "native finisher source should be prepared after loading");
         Check((string)Addressables.requestedKey == "native-finisher" && session.ownedOriginalVisualHandles[0] == operation &&
-              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 2,
+              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 4,
               "native address and source ownership must be preserved");
+    }
+    static void CheckIntersectionEffectAdmission()
+    {
+        var source = new Material("Hopoo Games/FX/Cloud Intersection Remap", "source sphere properties") {
+            srcBlend = 1, dstBlend = 1, renderQueue = 3000
+        };
+        var renderer = new ParticleSystemRenderer { sharedMaterials = new[] { source }, trailMaterial = source };
+        var root = new GameObject { components = new[] { renderer } };
+        var session = new SourceSession();
+        Check(AndroidMaterialPresentation.ApplyRecovered(renderer, session.worldMaterials) == 0,
+              "actor-only recovery should retain intersection");
+        session.Prepare(root);
+        session.Prepare(root);
+        foreach (var material in new[] { renderer.sharedMaterials[0], renderer.trailMaterial })
+            Check(material.shader.name == "Recovered/Intersection" && material.properties == source.properties &&
+                  material.srcBlend == 1 && material.dstBlend == 1 && material.renderQueue == 3000,
+                  "effect intersection lost its source blend, queue or material properties");
+        Check(session.worldMaterials.Count == 2 && session.worldLootSourceMaterials[renderer][0] == source &&
+              session.worldLootSourceTrails[renderer] == source && source.shader.name == "Hopoo Games/FX/Cloud Intersection Remap",
+              "intersection selection did not retain source slots and trail");
+    }
+    static void CheckTeamAreaAdmission(Material unrelated)
+    {
+        const string shader = "Hopoo Games/FX/Cloud Intersection Remap";
+        var enemy = new Material(shader, "enemy ramp and fade keyword") { srcBlend = 5, dstBlend = 10, renderQueue = 3000 };
+        var unrenderable = new Material(shader, "missing shader");
+        var pairs = new[] {
+            new TeamAreaIndicator.TeamMaterialPair { teamIndex = 3, sharedMaterial = enemy },
+            new TeamAreaIndicator.TeamMaterialPair { teamIndex = 1, sharedMaterial = unrelated },
+            new TeamAreaIndicator.TeamMaterialPair { teamIndex = 2, sharedMaterial = unrenderable },
+        };
+        var indicator = new TeamAreaIndicator { teamMaterialPairs = pairs };
+        var root = new GameObject { components = new[] { indicator } };
+        var session = new SourceSession();
+        session.Prepare(root);
+        var prepared = indicator.teamMaterialPairs;
+        var selected = prepared[0].sharedMaterial;
+        Check(prepared != pairs && prepared[0].teamIndex == pairs[0].teamIndex && pairs[0].sharedMaterial == enemy &&
+              prepared[1].sharedMaterial == unrelated && prepared[2].sharedMaterial == unrenderable,
+              "native team selection or source table changed");
+        Check(session.worldMaterials.Count == 1 && selected == session.worldMaterials[0] &&
+              selected.shader.name == "Recovered/Intersection" && selected.properties == enemy.properties &&
+              selected.srcBlend == enemy.srcBlend && selected.dstBlend == enemy.dstBlend && selected.renderQueue == enemy.renderQueue,
+              "native team selection did not receive a run-owned presentation copy with original properties");
+        session.Prepare(root);
+        Check(indicator.teamMaterialPairs == prepared && session.worldMaterials.Count == 1, "team table prepared twice");
+        session.Stop();
+        foreach (var copy in session.worldMaterials) UnityEngine.Object.Destroy(copy);
+        Check(indicator.teamMaterialPairs == pairs && enemy && unrelated && unrenderable, "team material source ownership did not unwind");
     }
     static void Main()
     {
@@ -268,7 +367,9 @@ static class Fixture
         var alpha = new Material("Hopoo Games/FX/Cloud Remap", "alpha mask") {
             srcBlend = 5, dstBlend = 10, zWrite = 0, renderQueue = 3050 };
         CheckBakedEffectAdmission(alpha);
-        CheckCrocoSwingAdmission(alpha);
+        CheckSwingAdmission(alpha);
+        CheckIntersectionEffectAdmission();
+        CheckTeamAreaAdmission(unknown);
         var segmentRenderer = new ParticleSystemRenderer { sharedMaterials = new[] { fire }, trailMaterial = alpha };
         var segment = new GameObject { components = new UnityEngine.Object[] { segmentRenderer } };
         var ghostRenderer = new Renderer { sharedMaterials = new[] { alpha } };
