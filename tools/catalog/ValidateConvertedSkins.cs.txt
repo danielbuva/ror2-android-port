@@ -41,6 +41,7 @@ bool definitionsComplete = false;
 var displayFailures = new System.Collections.Generic.List<object>();
 System.Action<object> failDisplay = row => { displayFailures.Add(row); failures.Add(row); };
 var bodyDisplays = new System.Collections.Generic.List<object>();
+var displaySlots = new System.Collections.Generic.List<object>();
 var displayPrefabs = new System.Collections.Generic.HashSet<UnityEngine.GameObject>();
 bool displaysComplete = false;
 
@@ -550,17 +551,22 @@ try{
              continue;
          }
          int rules = 0;
+         var groupSlots = new System.Collections.Generic.List<object>();
          for (int i = 0; i < displayGroups.Length; i++)
          {
              var group = displayGroups[i];
              var key = group.keyAsset;
+             var keyAddress = group.keyAssetAddress?.RuntimeKey;
              if (!key && (group.keyAssetAddress?.RuntimeKeyIsValid() ?? false))
-                 key = loadDisplayAddress(group.keyAssetAddress.RuntimeKey, typeof(UnityEngine.ScriptableObject));
-             if (!(key is RoR2.ItemDef item && itemDefs.Contains(item)) &&
-                 !(key is RoR2.EquipmentDef equipment && equipmentDefs.Contains(equipment)) &&
-                 !(key is RoR2.KeyItemDef keyItem && keyItemDefs.Contains(keyItem)))
+                 key = loadDisplayAddress(keyAddress, typeof(UnityEngine.ScriptableObject));
+             var registered = (key is RoR2.ItemDef item && itemDefs.Contains(item)) ||
+                 (key is RoR2.EquipmentDef equipment && equipmentDefs.Contains(equipment)) ||
+                 (key is RoR2.KeyItemDef keyItem && keyItemDefs.Contains(keyItem));
+             var keyName = key ? key.name : null;
+             var keyType = key ? key.GetType().FullName : null;
+             if (!registered)
                  failDisplay(new { path, ruleSet = ruleSet.name, group = i, key = key ? key.name : null,
-                     keyType = key ? key.GetType().FullName : null, address = group.keyAssetAddress?.RuntimeKey,
+                     keyType, address = keyAddress, check = "key",
                      error = "Display key is outside the typed item, equipment and key item families" });
              var groupRules = group.displayRuleGroup.rules;
              if (groupRules == null)
@@ -569,23 +575,38 @@ try{
                  continue;
              }
              rules += groupRules.Length;
+             var ruleSlots = new System.Collections.Generic.List<object>();
              for (int j = 0; j < groupRules.Length; j++)
              {
                  var rule = groupRules[j];
+                 var ruleType = rule.ruleType.ToString();
                  if (rule.ruleType != RoR2.ItemDisplayRuleType.ParentedPrefab)
+                 {
+                     ruleSlots.Add(new { rule = j, ruleType });
                      continue;
+                 }
                  var follower = rule.followerPrefab;
+                 var address = rule.followerPrefabAddress?.RuntimeKey;
                  if (!follower && (rule.followerPrefabAddress?.RuntimeKeyIsValid() ?? false))
-                     follower = loadDisplayAddress(rule.followerPrefabAddress.RuntimeKey, typeof(UnityEngine.GameObject)) as UnityEngine.GameObject;
+                     follower = loadDisplayAddress(address, typeof(UnityEngine.GameObject)) as UnityEngine.GameObject;
+                 var child = rule.childName;
+                 var attachment = children ? children.FindChild(child) : null;
+                 var followerName = follower ? follower.name : null;
+                 ruleSlots.Add(new { rule = j, ruleType, follower = followerName, address, child,
+                     attachment = describeTransform(attachment) });
                  if (follower)
                      displayPrefabs.Add(follower);
-                 if (!follower || !children || !children.FindChild(rule.childName))
-                     failDisplay(new { path, ruleSet = ruleSet.name, group = i, rule = j, key = key ? key.name : null,
-                         follower = follower ? follower.name : null, address = rule.followerPrefabAddress?.RuntimeKey,
-                         child = rule.childName, error = "Display follower prefab or model attachment is missing" });
+                 else
+                     failDisplay(new { path, ruleSet = ruleSet.name, group = i, rule = j, key = keyName,
+                         follower = followerName, address, child, check = "follower", error = "Typed display follower is missing" });
+                 if (!attachment)
+                     failDisplay(new { path, ruleSet = ruleSet.name, group = i, rule = j, key = keyName,
+                         follower = followerName, address, child, check = "child", error = "Typed display attachment is missing" });
              }
+             groupSlots.Add(new { group = i, key = keyName, keyType, keyAddress, registered, rules = ruleSlots });
          }
          bodyDisplays.Add(new { path, ruleSet = ruleSet.name, groups = displayGroups.Length, rules });
+         displaySlots.Add(new { path, ruleSet = ruleSet.name, model = describeTransform(target), groups = groupSlots });
      }
      displaysComplete = bodyDisplays.Count == typedBodies.Count;
  }
@@ -598,6 +619,6 @@ var masterBodyIdentity = new { complete = identityComplete, bodies = typedBodies
 var definitionIdentity = definitionSourceHash == null ? null : new { complete = definitionsComplete, families = definitionFamilies,
     publication = definitionPublication, sourceMetadataSha256 = definitionSourceHash, failures = definitionFailures };
 var displayIdentity = definitionSourceHash == null ? null : new { complete = displaysComplete, bodies = bodyDisplays,
-    prefabs = displayPrefabs.Count, failures = displayFailures };
+    prefabs = displayPrefabs.Count, slots = displaySlots, failures = displayFailures };
 var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures,masterBodyIdentity,definitionIdentity,displayIdentity};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;

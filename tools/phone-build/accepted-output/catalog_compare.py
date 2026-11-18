@@ -17,6 +17,7 @@ import unity_mesh as M
 CHARACTER_MASTER = ("CharacterMaster", "RoR2", "RoR2.dll")
 ITEM_DISPLAY_RULE_SET = ("ItemDisplayRuleSet", "RoR2", "RoR2.dll")
 DISPLAY_STRING_FIELDS = {"childName", "m_AssetGUID", "m_SubObjectName"}
+DISPLAY_FIXED_FIELDS = {"ruleType", "limbMask", "localPos", "localAngles", "localScale"}
 DISPLAY_POINTER_FIELDS = {"itemDisplayRuleSet", "keyAsset", "followerPrefab"}
 
 
@@ -40,39 +41,46 @@ def schema(tree):
         fields.add((path, node.kind))
         node.has_pointer = node.pointer or any(child.has_pointer for child in node.children)
         node.display_string = node.kind == "string" and node.name in DISPLAY_STRING_FIELDS
-        node.has_display_string = node.display_string or any(child.has_display_string for child in node.children)
+        node.display_fixed = node.name in DISPLAY_FIXED_FIELDS
+        node.has_display_field = node.display_string or node.display_fixed or any(child.has_display_field for child in node.children)
 
     visit(root, ())
     return root, fields
 
 
-def pointers(body, root, display_strings=None):
-    """Retain indexed PPtrs and, when requested, display children and addresses."""
+def pointers(body, root, display_fields=None):
+    """Retain indexed PPtrs and, when requested, serialized display rule values."""
     cursor = 0
     found = {}
 
     def read(node, field):
         nonlocal cursor
-        end = None if node.has_pointer or (display_strings is not None and node.has_display_string) else M.fixed_end(node, cursor)
+        end = None if node.has_pointer or (display_fields is not None and node.has_display_field) else M.fixed_end(node, cursor)
         if end is not None:
             cursor = end
         elif node.pointer:
             found[field] = struct.unpack_from("<iq", body, cursor)
             cursor += 12
-        elif display_strings is not None and node.display_string:
+        elif display_fields is not None and node.display_string:
             size = struct.unpack_from("<I", body, cursor)[0]
             cursor += 4
-            display_strings[field] = body[cursor : cursor + size].decode("utf-8")
+            display_fields[field] = body[cursor : cursor + size].decode("utf-8")
             cursor += size
             if node.children[0].meta & 0x4000:
                 cursor = (cursor + 3) & ~3
+        elif display_fields is not None and node.display_fixed:
+            end = M.fixed_end(node, cursor)
+            if end is None:
+                raise ValueError("unknown display value extent")
+            display_fields[field] = body[cursor:end].hex()
+            cursor = end
         elif node.flags & 1:
             count = struct.unpack_from("<I", body, cursor)[0]
             cursor += 4
             if len(node.children) != 2 or count > len(body):
                 raise ValueError("invalid serialized array")
             element = node.children[1]
-            end = None if element.has_pointer or (display_strings is not None and element.has_display_string) else M.fixed_end(element, cursor)
+            end = None if element.has_pointer or (display_fields is not None and element.has_display_field) else M.fixed_end(element, cursor)
             if end is not None and count:
                 cursor = end + (count - 1) * (M.fixed_end(element, end) - end)
             else:
@@ -261,6 +269,17 @@ def source_game_objects(game, bundle, pin, expected_paths):
     return roots
 
 
+def missing_display_addresses(displays):
+    addresses = {
+        row["address"]
+        for row in displays["failures"]
+        if row.get("check") == "follower" or ("check" not in row and row.get("rule") is not None and not row["follower"])
+    }
+    if any(not isinstance(address, str) or not address for address in addresses):
+        raise ValueError("unresolved display follower has no address")
+    return addresses
+
+
 def source_display_roots(inputs, fixture, candidate_apk, inventory, game):
     """Select missing follower locations and their source GameObject records."""
     sys.path.insert(0, str(C.ROOT / "scripts/lab"))
@@ -286,7 +305,7 @@ def source_display_roots(inputs, fixture, candidate_apk, inventory, game):
         if Path(row["path"]).suffix == ".bundle":
             files.setdefault(Path(row["path"]).name, []).append(row)
 
-    addresses = {row["address"] for row in displays["failures"] if row.get("rule") is not None and not row["follower"]}
+    addresses = missing_display_addresses(displays)
     locations = {row["id"]: row for row in metadata["locations"] if row["type"].split(",", 1)[0] == "UnityEngine.GameObject"}
     original = {row["id"]: row for row in source["locations"]}
     source_keys = {row["key"]: row["locations"] for row in metadata["keys"] if row.get("keyType", "System.String") == "System.String"}
@@ -504,7 +523,7 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
     if definitions is not None:
         summary["typed_definition_identity"] = {key: value for key, value in definitions.items() if key != "failures"}
     if displays is not None:
-        summary["typed_item_display_identity"] = {key: value for key, value in displays.items() if key != "failures"}
+        summary["typed_item_display_identity"] = {key: value for key, value in displays.items() if key not in {"failures", "slots"}}
     (output / "result.json").write_text(json.dumps(summary, indent=2) + "\n")
 
 

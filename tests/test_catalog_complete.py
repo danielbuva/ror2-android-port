@@ -128,12 +128,22 @@ class CatalogCompletionTests(unittest.TestCase):
         child.children = [mesh.Node(2, 1, "Array", "Array", -1, 0x4000)]
         child.children[0].children = [mesh.Node(3, 0, "int", "size", 4, 0), mesh.Node(3, 0, "char", "data", 1, 0)]
         record = mesh.Node(0, 0, "ItemDisplayRule", "Base", -1, 0)
-        record.children = [child, element]
+        rule_type = mesh.Node(1, 0, "int", "ruleType", 4, 0)
+        angles = mesh.Node(1, 0, "Vector3f", "localAngles", 12, 0)
+        angles.children = [mesh.Node(2, 0, "float", name, 4, 0) for name in ("x", "y", "z")]
+        record.children = [child, element, rule_type, angles]
         with patch.object(mesh, "type_tree", return_value=record):
             root, _ = compare.schema(b"display-field-fixture")
         display = {}
-        self.assertEqual(compare.pointers(struct.pack("<I3sxiq", 3, b"Gun", 1, 7), root, display), {("data",): (1, 7)})
-        self.assertEqual(display, {("childName",): "Gun"})
+        transform = struct.pack("<3f", 0, 90, 180)
+        self.assertEqual(compare.pointers(struct.pack("<I3sxiqi", 3, b"Gun", 1, 7, 1) + transform, root, display), {("data",): (1, 7)})
+        self.assertEqual(display, {("childName",): "Gun", ("ruleType",): "01000000", ("localAngles",): transform.hex()})
+
+        failures = [dict(check="child", rule=0, follower=None, address="child-only"), dict(check="follower", rule=0, address="follower")]
+        failures.extend([dict(rule=0, follower=None, address="legacy"), dict(rule=0, follower="loaded", address="legacy-child")])
+        self.assertEqual(compare.missing_display_addresses(dict(failures=failures)), {"follower", "legacy"})
+        with self.assertRaisesRegex(ValueError, "has no address"):
+            compare.missing_display_addresses(dict(failures=[dict(check="follower", address=None)]))
 
         catalog = compare.Catalog.__new__(compare.Catalog)
         catalog.members = {"base": (None, {"externals": [{"path": "archive:/other/CAB"}]}, {8: {}}), "CAB": (None, {}, {7: {}})}

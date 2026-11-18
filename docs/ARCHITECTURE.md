@@ -7861,6 +7861,10 @@ payload. Its private report groups differences in component slots, referenced
 objects, script bindings, fields and container preloads by bundle, member and
 object ID. Reused IDs with different classes carry the available candidate
 source witness. A shared ID alone does not establish object identity.
+The exact-editor item display check captures typed keys and rules by body and
+array slot, with separate failures for key registration, follower loading and
+ChildLocator attachment resolution. The bundle differential also reports
+serialized rule type, limb mask, and local transform values for matched records.
 
 The physics comparison in `accepted-output/catalog_physics.py` follows named
 prefabs and scene GameObject hierarchies to compare layers, colliders, rigidbodies
