@@ -1246,8 +1246,10 @@ stride, regenerates each face from its top level without a vertical flip, and
 writes CompleteImageSize per face. Existing BC decoding, float mip filtering,
 public ETC and SDK RGBA encoders share the same pack/checkpoint contract. The
 native pixel helper owns BC6 byte conversion and HDR export-half/DoubleLDR mip
-handling. Source identity and unresolved native reflections remain explicit
-gates; no target pixel fallback is available.
+handling. Its `bc6-half` pipe mode decodes one unsigned BC6H mip into little-endian
+RGBAHalf with opaque alpha. It crops edge blocks to the requested dimensions and
+streams four rows at a time. The default-scene owner still consumes the native
+capture while source reflection and ambient compatibility are evaluated.
 The opt-in `cube-preserve` operation retains original BC6H/RGBAHalf face/mip
 bytes, format, color space and usage with per-face CompleteImageSize. The audited
 `recipe/owner-source-baked-reflections.json` selects two original baked probes;
@@ -2664,7 +2666,9 @@ changes the existing refusal probe or reports security qualification.
 
 `tools/phone-build/managed-host/` owns the connected experimental app-host
 support. `stage.py` checks the public source/native metadata contract and stages
-new owner-supplied SDK inputs; its builder owns the separate phone-built APK.
+owner-supplied SDK inputs and an optional private backend plan into canonical
+ignored work, including shared worktree storage. Its builder checks the plan's
+provider bytes and owns the separate phone-built APK.
 `NativePythonHost.c` selects the existing interpreter's isolated configuration;
 `NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
 `NativeJavaHost.c` invokes the separately acquired headless JDK through JNI;
@@ -3255,6 +3259,15 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Reconciled raw windows also report strictly >50 ms consecutive hitch bursts,
+longest within-window run and worst absolute frame index (earliest on ties).
+Incomplete raw windows remain unavailable; boundary bursts may extend outside
+the window, and covered-tail observations do not certify the full ten minutes.
+No causal attribution is inferred.
+Its clock/cooling summary reports per-channel observed ranges, missing/gap coverage
+and adjacent observed changes from existing CPU/GPU frequency/limit and cooling
+state samples. Missing channels remain unavailable; valid cooling state zero is
+retained. No new sampler, policy, time weighting or causal throttling inference.
 Its battery summary uses existing sustained samples only: signed current × voltage
 at the battery terminals, equally weighted sample means, endpoint charge/level
 changes, per-metric missing/gap coverage and observed external-power transitions.

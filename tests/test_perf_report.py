@@ -33,6 +33,35 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def test_clock_cooling_sparse_channels_and_valid_zero_state(self):
+        rows = [
+            dict(host_seconds=0, cpu_frequency_khz={"policy0": 1000}, cpu_limit_khz={"policy0": 2000}, cooling_states={"fan": 0}, gpu_limit_hz=500),
+            dict(
+                host_seconds=1, cpu_frequency_khz={"policy0": 500, "policy4": 900}, cpu_limit_khz={"policy0": 1500}, cooling_states={"fan": 1}, gpu_limit_hz=400
+            ),
+            dict(host_seconds=9),
+            dict(host_seconds=20, cpu_frequency_khz={"policy0": 100}, cooling_states={"fan": 2}, gpu_limit_hz=200),
+        ]
+        result = perf.clock_cooling_summary(rows)["channels"]
+        self.assertEqual(result["cpu_frequency_khz"]["policy0"]["adjacent_observed_changes"], 1)
+        self.assertEqual(result["cpu_frequency_khz"]["policy4"]["missing_samples"], 3)
+        self.assertEqual(result["gpu_limit_hz"]["largest_unobserved_gap_seconds"], 19)
+        self.assertEqual(result["gpu_limit_hz"]["unit"], "Hz")
+        self.assertEqual(result["cooling_states"]["fan"]["minimum"], 0)
+        self.assertEqual(result["cooling_states"]["fan"]["adjacent_observed_changes"], 1)
+
+    def test_clock_cooling_legacy_absence_and_invalid_readings(self):
+        session, _ = fixture()
+        session["samples"][0].update(cpu_frequency_khz={"policy0": True}, cooling_states={"fan": -1}, gpu_frequency_hz=0)
+        session["samples"][1].update(cpu_frequency_khz=[], gpu_frequency_hz=float("nan"))
+        report = perf.analyze(session, [])
+        channels = report["clock_cooling"]["channels"]
+        self.assertEqual(channels["gpu_frequency_hz"]["valid_samples"], 0)
+        self.assertIsNone(channels["cpu_frequency_khz"]["policy0"]["minimum"])
+        self.assertEqual(channels["cooling_states"]["fan"]["valid_samples"], 0)
+        self.assertEqual(channels["cpu_limit_khz"], {})
+        self.assertIn("not throttling attribution", perf.markdown(report))
+
     def test_energy_external_power_keeps_signed_discharge_and_endpoint_changes(self):
         session, _ = fixture()
         for index, row in enumerate(session["samples"]):
@@ -214,6 +243,26 @@ class PerfReportTests(unittest.TestCase):
         data = perf.RAW_HEADER.pack(b"ROR2FRAM", 1, len(durations), len(durations), 0) + struct.pack("<6f", *durations)
         return dict(samples=samples, raw_frame_trace=dict(file="authored.bin")), perf.read_raw_frames(data)
 
+    def test_hitch_bursts_are_window_local_and_use_absolute_frame_indices(self):
+        durations = [60, 70, 50, 80, 80, 80, 10, 90]
+
+        def endpoint(n):
+            return dict(
+                pacing_frames=100 + n,
+                pacing_total_ms=sum(durations[:n]),
+                pacing_total_ms_exact=True,
+                pacing_over33=sum(x > perf.HITCH33_MS for x in durations[:n]),
+                pacing_over50=sum(x > 50 for x in durations[:n]),
+            )
+
+        trace = dict(first_frame=101, retained_frames=8, durations_ms=durations)
+        whole = perf.raw_frame_window(endpoint(0), endpoint(8), trace)["hitch_bursts"]
+        self.assertEqual((whole["count"], whole["longest_frames"], whole["worst_frame"], whole["worst_frame_ms"]), (3, 3, 108, 90))
+        tail = perf.raw_frame_window(endpoint(4), endpoint(7), trace)["hitch_bursts"]
+        self.assertEqual((tail["count"], tail["longest_frames"], tail["worst_frame"]), (1, 2, 105))
+        clean = perf.raw_frame_window(endpoint(2), endpoint(3), trace)["hitch_bursts"]
+        self.assertEqual((clean["count"], clean["longest_frames"], clean["worst_frame_ms"]), (0, 0, 50))
+
     def test_raw_exact_duration_frame_and_hitch_reconciliation_with_full_tail(self):
         session, trace = self.raw_fixture()
         result = perf.analyze(session, [], trace)
@@ -221,6 +270,8 @@ class PerfReportTests(unittest.TestCase):
         self.assertAlmostEqual(result["true_frame_time_percentiles_ms"]["p50"], (perf.HITCH33_MS + 50) / 2)
         self.assertEqual(result["raw_frame_window"]["over33ms"], 3)
         self.assertEqual(result["raw_frame_window"]["over50ms"], 2)
+        self.assertEqual(result["raw_frame_window"]["hitch_bursts"]["longest_frames"], 2)
+        self.assertIn("Whole counter window >50 ms hitch bursts: 1", perf.markdown(result))
         tail = result["final_ten_minutes"]
         self.assertEqual(tail["true_frame_time_percentiles_ms"]["samples"], 3)
         self.assertEqual(tail["true_frame_time_percentiles_ms"]["p50"], 51.25)
@@ -250,6 +301,7 @@ class PerfReportTests(unittest.TestCase):
         ):
             result = perf.analyze(session, [], changed)
             self.assertFalse(result["raw_frame_window"]["complete"])
+            self.assertIsNone(result["raw_frame_window"]["hitch_bursts"])
             self.assertIsNone(result["true_frame_time_percentiles_ms"])
             if not result["final_ten_minutes"]["raw_frame_window"]["complete"]:
                 self.assertIn("Covered-tail individual-frame p50/p95/p99: unavailable", perf.markdown(result))
