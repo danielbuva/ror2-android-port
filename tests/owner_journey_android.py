@@ -28,7 +28,9 @@ def literal(value):
     return json.dumps(value)
 
 
-def install(journey, previous=None):
+def install(journey, previous=None, *, outcome="success"):
+    if outcome not in {"success", "declined", "failed", "missing", "mismatch"}:
+        raise ValueError("unknown synthetic installer outcome")
     java = shutil.which("java")
     if not java:
         raise unittest.SkipTest("Java runtime absent")
@@ -74,9 +76,27 @@ c.manager.next.packageName=OwnerAlphaInstall.PACKAGE;c.manager.next.versionCode=
 if(previous!=null){put(c,"installed-release.json",previous);c.manager.current=new PackageInfo();c.manager.current.packageName=OwnerAlphaInstall.PACKAGE;c.manager.current.versionCode=(int)previous.getLong("version_code");c.manager.current.applicationInfo.sourceDir=previous.getString("apk");}
 File stream=new File(ready.getString("apk"));OwnerInstaller.install(c,stream,ready.getString("sha256"),OwnerAlphaInstall.PACKAGE,ready.getLong("version_code"));
 check(!"INSTALLED".equals(OwnerInstaller.state(c)));
+if(!"failed".equals(OUTCOME)) {
 c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,new Intent());
 check("AWAITING_CONFIRMATION".equals(OwnerInstaller.state(c)));
 check(previous!=null || !new File(c.root,"owner-input/installed-release.json").exists());
+}
+PackageInfo old=c.manager.current;
+if("declined".equals(OUTCOME)||"failed".equals(OUTCOME)){
+c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_FAILURE,null);
+check("ERROR".equals(OwnerInstaller.state(c)));check(!OwnerAlphaInstall.pending(c));
+check(!new File(c.root,"owner-input/owner-apk-ready.json").exists());return;
+}
+if("missing".equals(OUTCOME)||"mismatch".equals(OUTCOME)){
+c.manager.current="missing".equals(OUTCOME)?null:c.manager.next;
+if(c.manager.current!=null){c.manager.current.applicationInfo.sourceDir=stream.getPath();c.manager.current.signatures=new Signature[]{new Signature("wrong-simulated-key")};}
+c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_SUCCESS,null);
+check("RECOVERY_REQUIRED".equals(OwnerInstaller.state(c)));check(OwnerAlphaInstall.pending(c));
+check(previous!=null);check(ToolHostActivity.readJson(new File(c.root,"owner-input/installed-release.json")).getLong("version_code")==previous.getLong("version_code"));
+c.manager.current=old;OwnerInstaller.recoverProfiles(c);
+check("ERROR".equals(OwnerInstaller.state(c)));check(!OwnerAlphaInstall.pending(c));
+return;
+}
 c.manager.current=c.manager.next;c.manager.current.applicationInfo.sourceDir=stream.getPath();
 c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_SUCCESS,null);
 check("INSTALLED".equals(OwnerInstaller.state(c)));check(!OwnerAlphaInstall.pending(c));
@@ -85,6 +105,7 @@ System.out.println("consent -> verified installed receipt PASS");}}
 """.replace("READY", literal(ready))
         .replace("PREVIOUS", literal(previous))
         .replace("LEDGER", literal(ledger))
+        .replace("OUTCOME", json.dumps(outcome))
     )
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
