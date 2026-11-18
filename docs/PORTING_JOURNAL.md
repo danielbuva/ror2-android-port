@@ -20,6 +20,18 @@ Native authority held for 101.087 s. Terminal snapshot was 55.76 FPS at
 17.93 ms. SoC peaked at 83.2 °C with 1.825 s above 80 °C. Battery peaked at
 25 °C. Scratch cleanup and OLED sleep passed. Matched PC pixels remain open.
 
+## J1498 — Restore the original collision policy in the converted APK
+
+2026-11-18. The converter preserves the source PhysicsManager collision matrix
+at the original TagManager layer indices. The signed readback verified all
+528 layer pairs and the device confirmed the original collision policy.
+Ordinary Commando Start loaded Titanic Plains and passed all 27 objective actors.
+APK SHA-256: `58ad500f4d63450a180e24bea082f12df47f21cfab00c241140e99d8baea6fa3`.
+Evidence: `work/coordination/p1-scenes-w/source-collision-policy-v23/v23-ordinary-start-retry/`,
+`terminal.done.json` and the native report. Adopted placement, OLED sleep and
+lease release passed. CPU/GPU peaked at 70.1 C, with no time above 80 C.
+Results initialization still needs the original item-relationship families.
+Ordinary stage play, sustained FPS and End Run remain open.
 ## J1497 — Restore native Vagrant cannon intersection material
 
 2026-11-18. The native effect owner prepares Cloud Intersection Remap slots

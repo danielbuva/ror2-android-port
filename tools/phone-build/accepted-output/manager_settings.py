@@ -18,6 +18,7 @@ PATHS = {
     "Physics2DSettings": "Physics2DSettings",
 }
 RAW = {"TagManager", "VFXManager", "DelayedCallManager", "RuntimeInitializeOnLoadManager", "StreamingManager"}
+COLLISION_MATRIX = "m_LayerCollisionMatrix"
 
 
 def yaml_settings(raw):
@@ -72,6 +73,24 @@ def project(value, selected):
     return value
 
 
+def project_physics(fields, settings, layers, require):
+    rows = fields.get(COLLISION_MATRIX)
+    require(
+        isinstance(rows, list) and len(rows) == 32 and all(type(row) is int and 0 <= row <= 0xFFFFFFFF for row in rows),
+        "Original physics collision matrix must contain 32 uint32 rows",
+    )
+    require(
+        isinstance(layers, list) and len(layers) == 32 and all(isinstance(name, str) for name in layers),
+        "Original physics collision matrix requires its complete layer table",
+    )
+    require(
+        all(bool(rows[a] & (1 << b)) == bool(rows[b] & (1 << a)) for a in range(32) for b in range(a)),
+        "Original physics collision matrix is not symmetric",
+    )
+    # The emitted TagManager retains the source indices used by these rows.
+    return project(fields, {key: value for key, value in settings.items() if key != COLLISION_MATRIX})
+
+
 def single(text, pattern, message, require):
     values = re.findall(pattern, text, re.M)
     require(len(values) == 1, message)
@@ -109,7 +128,11 @@ def produce(U, store, inputs, originals):
             out[name] = fields
         elif name in PATHS:
             settings = parse(PATHS[name])
-            fields = project(fields, settings)
+            if name == "PhysicsManager":
+                layers = store.native_fields(originals["TagManager"]).get("layers")
+                fields = project_physics(fields, settings, layers, U.require)
+            else:
+                fields = project(fields, settings)
             if name == "QualitySettings":
                 fields["m_CurrentQuality"] = settings["m_PerPlatformDefaultQuality"]["Android"]
             if name == "PlayerSettings":
