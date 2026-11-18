@@ -977,6 +977,8 @@ source-only EffectManagerHelper case; complete content and phone qualification
 remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
 production through the same object-pack interface.
+It retains original MonoScript bodies and native types for local script targets.
+Bundle qualification checks their identities against the current player registry.
 It retains the final complete serialized definitions in receipt-pinned `types.json`;
 each index row's `type_id` selects that pack-local table after managed schema/hash
 changes. `record_remap.py` reindexes available supplier definitions into its own
