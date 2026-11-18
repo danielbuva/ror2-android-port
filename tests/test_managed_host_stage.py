@@ -122,6 +122,8 @@ class ManagedHostStageTests(unittest.TestCase):
         self.assertEqual(provider.attrib[android + "authorities"], "dev.ror2lab.authoredtool.apk")
         self.assertEqual(provider.attrib[android + "exported"], "false")
         self.assertEqual(provider.attrib[android + "grantUriPermissions"], "true")
+        self.assertEqual(len(value.findall("application/provider")), 1)
+        self.assertEqual(len(value.findall("application/activity")), 1)
         self.assertEqual(source.read_bytes(), before)
         receiver = value.find("application/receiver")
         self.assertEqual(receiver.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.OwnerInstaller$Result")
@@ -138,6 +140,18 @@ class ManagedHostStageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "separate lab tool"):
                 stage.tool_manifest(source, self.root / "refused.xml", package)
         self.assertFalse((self.root / "refused.xml").exists())
+
+    def test_disposable_installer_has_a_protected_document_fixture(self):
+        output = self.root / "AndroidManifest.xml"
+        stage.tool_manifest(stage.SOURCE / "AndroidManifest.xml", output, "dev.ror2lab.installertest")
+        application = ET.parse(output).getroot().find("application")
+        android = "{http://schemas.android.com/apk/res/android}"
+        fixture = next(node for node in application.findall("provider") if node.get(android + "authorities").endswith(".acquisition"))
+        self.assertTrue(fixture.get(android + "name").endswith(".AcquisitionFixture$Provider"))
+        self.assertEqual(fixture.get(android + "permission"), "android.permission.MANAGE_DOCUMENTS")
+        self.assertEqual(fixture.get(android + "grantUriPermissions"), "true")
+        result = next(node for node in application.findall("activity") if node.get(android + "name").endswith(".AcquisitionFixture$Result"))
+        self.assertEqual(result.get(android + "exported"), "false")
 
     def test_manifest_queries_only_configured_game_without_broad_visibility(self):
         output = self.root / "configured-manifest.xml"

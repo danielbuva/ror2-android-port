@@ -9,7 +9,6 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
-import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("tested_alpha_packaging", ROOT / "scripts/lab-alpha-packaging.py")
@@ -53,27 +52,15 @@ class AlphaPackagingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "acquisition-hash-listing-invalid"):
                 ACQUISITION.hash_listing(corrupt)
 
-    def test_acquisition_uses_only_the_enabled_visible_provider_control(self):
-        package = ACQUISITION.DOCUMENTS[0]
-        tree = ET.fromstring(
-            f'<hierarchy><node package="{package}"><node package="other" text="Older" enabled="true" />'
-            f'<node package="{package}" resource-id="{package}:id/title" text="Older" enabled="false" />'
-            f'<node package="{package}" resource-id="{package}:id/title" text="Older" enabled="true" /></node></hierarchy>'
-        )
-        self.assertIs(ACQUISITION.select_node(tree, ("older",), ids=("title",)), list(tree.iter("node"))[-1])
-        self.assertIsNone(ACQUISITION.select_node(tree, ("older",), ids=("title",), clickable=True))
-        list(tree.iter("node"))[-2].set("enabled", "true")
-        with self.assertRaisesRegex(ValueError, "acquisition-ambiguous-visible-control"):
-            ACQUISITION.select_node(tree, ("older",), ids=("title",))
-
     def test_acquisition_requires_the_persisted_document_and_source_kind(self):
-        provider = "content://com.android.externalstorage.documents"
-        tree = f'<map><string name="source_kind">tree</string><string name="source_uri">{provider}/tree/primary%3ADownload%2FLab%2FSupported</string></map>'
+        provider = "content://dev.ror2lab.installertest.acquisition"
+        tree = f'<map><string name="source_kind">tree</string><string name="source_uri">{provider}/tree/Lab%2FSupported</string></map>'
         archive = tree.replace(">tree<", ">zip<").replace("/tree/", "/document/").replace("Supported<", "Supported.zip<")
-        self.assertTrue(ACQUISITION.selected_document(tree, "tree", "Download/Lab/Supported"))
-        self.assertTrue(ACQUISITION.selected_document(archive, "zip", "Download/Lab/Supported.zip"))
-        self.assertFalse(ACQUISITION.selected_document(tree, "zip", "Download/Lab/Supported.zip"))
-        self.assertFalse(ACQUISITION.selected_document(archive, "zip", "Download/Lab/Older.zip"))
+        self.assertTrue(ACQUISITION.selected_document(tree, "tree", "Lab/Supported"))
+        self.assertTrue(ACQUISITION.selected_document(archive, "zip", "Lab/Supported.zip"))
+        self.assertFalse(ACQUISITION.selected_document(tree, "zip", "Lab/Supported.zip"))
+        self.assertFalse(ACQUISITION.selected_document(archive, "zip", "Lab/Older.zip"))
+        self.assertFalse(ACQUISITION.selected_document(tree.replace("installertest.acquisition", "other"), "tree", "Lab/Supported"))
 
     def test_thermal_cancellation_refuses_more_acceptance_commands(self):
         phone = A.Phone("synthetic-test-device", 20)

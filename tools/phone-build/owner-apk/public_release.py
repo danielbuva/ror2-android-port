@@ -118,6 +118,7 @@ PUBLISHING_SOURCE_FILES = {
         for name in (
             "AndroidManifest.xml",
             "ToolHostActivity.java",
+            "AcquisitionFixture.java",
             "OwnerInstaller.java",
             "OwnerAlphaInstall.java",
             "OwnerUpdateState.java",

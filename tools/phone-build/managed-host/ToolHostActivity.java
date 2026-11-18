@@ -82,8 +82,11 @@ public final class ToolHostActivity extends Activity {
         Intent pick = new Intent(tree ? Intent.ACTION_OPEN_DOCUMENT_TREE : Intent.ACTION_OPEN_DOCUMENT);
         pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         if (!tree) { pick.setType("application/zip"); pick.addCategory(Intent.CATEGORY_OPENABLE); pick.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip", "application/x-zip-compressed", "application/octet-stream"}); }
-        try { startActivityForResult(pick, tree ? PICK_TREE : PICK_ZIP); }
-        catch (RuntimeException error) { updateStatus(this, "ERROR", "File picker unavailable: " + error.getMessage()); }
+        try {
+            Intent fixture = AcquisitionFixture.selection(this);
+            startActivityForResult(fixture == null ? pick : fixture, tree ? PICK_TREE : PICK_ZIP);
+        }
+        catch (Exception error) { updateStatus(this, "ERROR", "File picker unavailable: " + error.getMessage()); }
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);

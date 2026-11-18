@@ -1566,11 +1566,14 @@ installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending
 consent checks, refusing pregrant; setup and cleanup remain with the installer
 owner. `AlphaPackagingHarness.java` uses generated input only.
-`scripts/lab/alpha_acquisition.py` drives the real folder and ZIP picker from
-the same entry point. It signs test plans for two local inventories and observes
-the installer's import service through the visible UI and durable receipts.
-It owns only its temporary archive and Downloads subtree. It verifies both
-staged sources and successful private imports by file hash, then removes its
+`scripts/lab/alpha_acquisition.py` signs test plans for two local inventories
+and observes the import service through the visible UI and durable receipts.
+It checks Android picker cancellation with Back. For deterministic selection,
+`AcquisitionFixture.java` returns read-only tree and ZIP grants through the
+installer's normal activity-result handler. Only the disposable test APK
+registers the fixture, and a one-use private request selects its document.
+The runner owns its temporary archive and an external-files subtree on the
+phone. It hashes staged sources and successful private imports, then removes
 staging and disposes of the fresh installer through the existing cleanup owner.
 The [local packaging request](LAB_RUNNER.md#current-local-packaging-request)
 uses the shared lab runner for a granted device and records the installed version

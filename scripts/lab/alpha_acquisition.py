@@ -1,4 +1,4 @@
-"""Exercise the installer’s signed input plan through the Android file picker."""
+"""Exercise the installer’s signed input plan with Android document grants."""
 
 import hashlib
 import json
@@ -49,31 +49,14 @@ def hash_listing(raw):
     return result
 
 
-def select_node(tree, texts, *, ids=(), clickable=False):
-    package = tree.find("node").get("package")
-    matches = [
-        node
-        for node in tree.iter("node")
-        if node.get("package") == package
-        and node.get("enabled") == "true"
-        and (not clickable or node.get("clickable") == "true")
-        and (node.get("text", "").casefold() in texts or node.get("content-desc", "").casefold() in texts)
-        and (not ids or node.get("resource-id") in {package + ":id/" + name for name in ids})
-    ]
-    if len(matches) > 1:
-        raise ValueError("acquisition-ambiguous-visible-control")
-    return matches[0] if matches else None
-
-
 def selected_document(preferences, kind, relative_path):
     values = {entry.get("name"): entry.text for entry in ET.fromstring(preferences).findall("string")}
     uri = urlsplit(values.get("source_uri") or "")
-    if values.get("source_kind") != kind or uri.scheme != "content" or uri.netloc != "com.android.externalstorage.documents":
+    if values.get("source_kind") != kind or uri.scheme != "content" or uri.netloc != "dev.ror2lab.installertest.acquisition":
         return False
     segment = "tree" if kind == "tree" else "document"
     prefix, _, document = uri.path.rpartition("/")
-    volume, _, path = unquote(document).partition(":")
-    return prefix == "/" + segment and bool(volume) and path == relative_path
+    return prefix == "/" + segment and unquote(document) == relative_path and not (uri.query or uri.fragment)
 
 
 class Acquisition:
@@ -82,11 +65,16 @@ class Acquisition:
         self.apk = config["installer_apk"]
         self.apk_hash = config["installer_sha256"]
         self.stage_name = "LabAcquisition-" + secrets.token_hex(8)
-        self.stage_root = "/sdcard/Download/" + self.stage_name
+        self.external_root = f"/sdcard/Android/data/{installer.PACKAGE}/files"
+        self.stage_root = f"{self.external_root}/{self.stage_name}"
         self.owned_stage = False
         tools = installer.HostTools(config)
         manifest = installer.run([tools.build / "aapt", "dump", "badging", self.apk], label="inspect-cached-installer-manifest").decode()
         installer.require_installer_manifest(manifest, config["installer_version"])
+        components = installer.run(
+            [tools.build / "aapt", "dump", "xmltree", self.apk, "AndroidManifest.xml"], label="inspect-acquisition-document-fixture"
+        ).decode()
+        require("AcquisitionFixture$Result" in components and "AcquisitionFixture$Provider" in components, "acquisition-fixture-apk-required")
         with zipfile.ZipFile(self.apk) as archive:
             trust = json.loads(archive.read("assets/release-trust.json"))
         require(installer.KEY_ID not in trust["keys"], "acquisition-test-publisher-collides")
@@ -136,9 +124,9 @@ class Acquisition:
         reserve = 20 * GIB + 2 * self.apk.stat().st_size + staged + 2 * self.current[3]
         phone.storage_reserve = reserve
         phone.storage()
-        free = phone.available(phone.shell("df", "-k", "/sdcard/Download", label="acquisition-shared-free-before"))
+        free = phone.available(phone.shell("df", "-k", self.external_root, label="acquisition-shared-free-before"))
         self.require(free >= reserve, "acquisition-shared-storage-reserve")
-        phone.shell("mkdir", self.stage_root, label="acquisition-owned-download-directory")
+        phone.shell("mkdir", self.stage_root, label="acquisition-owned-external-directory")
         self.owned_stage = True
         for folder, entry in (("Supported", self.current), ("Older", self.older)):
             target = self.stage_root + "/" + folder
@@ -153,43 +141,18 @@ class Acquisition:
 
     def cleanup(self, phone):
         if self.owned_stage:
-            phone.shell("rm", "-rf", self.stage_root, label="acquisition-remove-owned-download-directory")
-            phone.shell("test", "!", "-e", self.stage_root, label="acquisition-download-directory-absent")
-
-    def picker(self, phone):
-        return phone.ui_windows(DOCUMENTS, recovery=False)
-
-    def click_document(self, phone, name):
-        tree = self.picker(phone)
-        node = select_node(tree, (name.casefold(),), ids=("title",))
-        self.require(node is not None, "acquisition-document-not-visible")
-        phone.tap_prompt_node(node, "acquisition-select-document")
+            phone.shell("rm", "-rf", self.stage_root, label="acquisition-remove-owned-external-directory")
+            phone.shell("test", "!", "-e", self.stage_root, label="acquisition-external-directory-absent")
 
     def choose(self, phone, kind, name=None):
+        if name is not None:
+            phone.put("acquisition-selection.json", self.installer.encoded({"document": f"{self.stage_name}/{name}"}))
         phone.tap("Choose game folder" if kind == "tree" else "Choose game ZIP")
-        tree = self.picker(phone)
         if name is None:
+            phone.ui_windows(DOCUMENTS, recovery=False)
             phone.shell("input", "keyevent", "KEYCODE_BACK", label="acquisition-cancel-focused-picker")
             phone.ui_windows((self.installer.PACKAGE,), recovery=False)
             return
-        # Use the local storage provider. Downloads can also be indexed by a
-        # different provider whose root listing omits files staged by ADB.
-        drawer = select_node(tree, ("show roots",), clickable=True)
-        self.require(drawer is not None, "acquisition-picker-location-drawer-unavailable")
-        phone.tap_prompt_node(drawer, "acquisition-show-picker-locations")
-        model = phone.shell("getprop", "ro.product.model", label="acquisition-local-storage-label").decode().strip().casefold()
-        roots = self.picker(phone)
-        local = select_node(roots, (model, "internal storage", "internal shared storage", "sd card"), ids=("title",))
-        self.require(local is not None, "acquisition-local-storage-root-unavailable")
-        phone.tap_prompt_node(local, "acquisition-open-local-storage-root")
-        self.click_document(phone, "Download")
-        self.click_document(phone, self.stage_name)
-        self.click_document(phone, name)
-        if kind == "tree":
-            for text in ("use this folder", "allow"):
-                button = select_node(self.picker(phone), (text,), clickable=True)
-                self.require(button is not None, "acquisition-folder-grant-control-unavailable")
-                phone.tap_prompt_node(button, "acquisition-confirm-folder-grant")
         phone.ui_windows((self.installer.PACKAGE,), recovery=False)
         observed = phone.read("update-state.json")
         self.require(
@@ -199,7 +162,7 @@ class Acquisition:
         preferences = phone.command(
             "shell", "run-as", self.installer.PACKAGE, "cat", "shared_prefs/owner-phone-flow.xml", label="acquisition-selected-document", idempotent=True
         )
-        self.require(selected_document(preferences, kind, f"Download/{self.stage_name}/{name}"), "acquisition-selected-document-mismatch")
+        self.require(selected_document(preferences, kind, f"{self.stage_name}/{name}"), "acquisition-selected-document-mismatch")
 
     def prepare_plan(self, phone, service, version):
         self.installer.publish(service, self.releases[version], version)
@@ -294,7 +257,8 @@ class Acquisition:
         installer = self.installer
         installer.set_phase("acquisition-storage-and-staging")
         self.require(not phone.occupied(installer.GAME) and not phone.occupied(installer.PACKAGE), "occupied-package-no-fresh-run-ownership")
-        self.stage(phone)
+        phone.storage_reserve = 20 * GIB + 2 * self.apk.stat().st_size + self.current[3] * 3 + self.older[3] + self.archive.stat().st_size
+        phone.storage()
         installer.set_phase("acquisition-fresh-installer")
         phone.install(self.apk)
         phone.require_owned_installer()
@@ -302,45 +266,51 @@ class Acquisition:
         installer.DIAGNOSTICS.write("acquisition-installer-owned.json", installer.encoded({"package": installer.PACKAGE, "sha256": self.apk_hash}))
         phone.storage_reserve = 20 * GIB + 2 * self.current[3]
         phone.storage()
+        with installer.server() as service:
+            self.run_import_flow(phone, passed, service)
+        installer.set_phase("acquisition-source-readback")
+        self.staged_unchanged(phone)
+        passed("saf-sources-unchanged")
+        installer.DIAGNOSTICS.write("acquisition-result.json", installer.encoded(self.results))
+
+    def run_import_flow(self, phone, passed, service):
+        installer = self.installer
+        base = f"http://127.0.0.1:{service.server_port}/"
+        phone.command("reverse", "--no-rebind", "tcp:" + str(service.server_port), "tcp:" + str(service.server_port), label="acquisition-reverse-create")
+        phone.reverse_port = service.server_port
+        phone.put(
+            "debug-release-source.json", installer.encoded({"enabled": True, "base_url": base, "key_id": installer.KEY_ID, "public_key": self.key.decode()})
+        )
+        installer.set_phase("acquisition-storage-and-staging")
+        phone.shell("mkdir", "-p", self.external_root, label="acquisition-external-files")
+        self.stage(phone)
         local_code = phone.package_paths(installer.PACKAGE)[0][8:]
         self.results["installed_storage"] = {
             "code_free": phone.available(phone.shell("df", "-k", local_code, label="acquisition-installed-code-free")),
             "private_free": phone.available(phone.shell("run-as", installer.PACKAGE, "df", "-k", ".", label="acquisition-installed-private-free")),
             "shared_free": phone.available(phone.shell("df", "-k", self.stage_root, label="acquisition-installed-shared-free")),
         }
-        with installer.server() as service:
-            base = f"http://127.0.0.1:{service.server_port}/"
-            phone.command("reverse", "--no-rebind", "tcp:" + str(service.server_port), "tcp:" + str(service.server_port), label="acquisition-reverse-create")
-            phone.reverse_port = service.server_port
-            phone.put(
-                "debug-release-source.json", installer.encoded({"enabled": True, "base_url": base, "key_id": installer.KEY_ID, "public_key": self.key.decode()})
-            )
-            phone.start()
-            self.prepare_plan(phone, service, 1)
-            installer.set_phase("saf-picker-cancelled")
-            prior = phone.read("update-state.json")
-            self.choose(phone, "tree")
-            self.require(phone.read("update-state.json") == prior and phone.read("import-state.json") is None, "acquisition-picker-cancellation-changed-state")
-            self.no_admitted_output(phone, no_import=True)
-            passed("saf-picker-cancelled")
-            supported = self.current[1]["game_version"]
-            self.run_case(
-                phone, "saf-unknown-refused", "tree", "Older", "ERROR", passed, message=("unknown (no complete reviewed fingerprint matched)", supported)
-            )
-            self.prepare_plan(phone, service, 2)
-            self.run_case(
-                phone,
-                "saf-unsupported-refused",
-                "tree",
-                "Older",
-                "ERROR",
-                passed,
-                message=("Found version: " + self.older[1]["game_version"], "Supported versions: [" + supported + "]", "Input refused."),
-            )
-            self.run_case(phone, "saf-import-cancelled", "tree", "Supported", "CANCELLED", passed)
-            self.run_case(phone, "saf-folder-validated", "tree", "Supported", "IMPORTED", passed, message=("Imported verified game files locally",))
-            self.run_case(phone, "saf-zip-validated", "zip", "Supported.zip", "IMPORTED", passed, message=("Imported verified game files locally",))
-        installer.set_phase("acquisition-source-readback")
-        self.staged_unchanged(phone)
-        passed("saf-sources-unchanged")
-        installer.DIAGNOSTICS.write("acquisition-result.json", installer.encoded(self.results))
+        phone.start()
+        self.results["document_delivery"] = "android-documents-provider-fixture"
+        self.prepare_plan(phone, service, 1)
+        installer.set_phase("saf-picker-cancelled")
+        prior = phone.read("update-state.json")
+        self.choose(phone, "tree")
+        self.require(phone.read("update-state.json") == prior and phone.read("import-state.json") is None, "acquisition-picker-cancellation-changed-state")
+        self.no_admitted_output(phone, no_import=True)
+        passed("saf-picker-cancelled")
+        supported = self.current[1]["game_version"]
+        self.run_case(phone, "saf-unknown-refused", "tree", "Older", "ERROR", passed, message=("unknown (no complete reviewed fingerprint matched)", supported))
+        self.prepare_plan(phone, service, 2)
+        self.run_case(
+            phone,
+            "saf-unsupported-refused",
+            "tree",
+            "Older",
+            "ERROR",
+            passed,
+            message=("Found version: " + self.older[1]["game_version"], "Supported versions: [" + supported + "]", "Input refused."),
+        )
+        self.run_case(phone, "saf-import-cancelled", "tree", "Supported", "CANCELLED", passed)
+        self.run_case(phone, "saf-folder-validated", "tree", "Supported", "IMPORTED", passed, message=("Imported verified game files locally",))
+        self.run_case(phone, "saf-zip-validated", "zip", "Supported.zip", "IMPORTED", passed, message=("Imported verified game files locally",))
