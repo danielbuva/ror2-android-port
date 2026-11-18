@@ -13,8 +13,10 @@ counterparts remain unavailable; full-enable mode is refused.
 assembly recipe, configured legitimate game path, and exact managed assembly hash. It extracts
 retained P/Invoke declarations from that assembly with the authored Cecil inspector, parses
 the reviewed Android declarations from the local Integration, verifies the hash-pinned
-Android `AkOSChar*` string-decoder source, then checks the native plugin hash and exported-name
-set. Export membership does not establish a function prototype or implementation behavior.
+Android `AkOSChar*` string-decoder source, then hashes a native plugin snapshot and reads its
+defined exports from the ARM64 ELF dynamic symbol and string tables. The pinned names include
+functions, weak definitions and data. Export membership does not establish a function prototype
+or implementation behavior.
 
 The authored writer pins the source assembly, policy, and deterministic plan. It refuses
 output under the configured game installation, symlinked paths, and overwrites; writes to a
@@ -39,8 +41,8 @@ content is included.
 Use the repository toolchain through `scripts/env.sh`. The generator resolves `dotnet` from
 `PATH` or `--dotnet`, and Unity-bundled Mono.Cecil from `UNITY_EDITOR`, `WWISE_CECIL`, or
 `--cecil`. Multiple bundled Cecil versions require an explicit selection; the command below
-selects the pinned 0.11.1 assembly. The Integration source, native plugin, and NDK `llvm-nm`
-are local inputs and are never copied by this tool.
+selects the pinned 0.11.1 assembly. The Integration source and native plugin are local inputs.
+An explicit `--llvm-nm` also cross-checks the exact export set with the local NDK tool.
 
 ```sh
 source scripts/env.sh
@@ -49,7 +51,6 @@ python3 tools/wwise-android-abi/generate.py \
   --android-source work/wwise/unity-android-3208-extracted/Wwise/API/Runtime/Generated/Android/AkSoundEnginePINVOKE_Android.cs \
   --android-os-string-source work/wwise/unity-android-3208-extracted/Wwise/API/Runtime/Handwritten/Android/AkSoundEngine.cs \
   --native-so work/wwise/unity-android-3208-extracted/Wwise/API/Runtime/Plugins/Android/arm64-v8a/Release/libAkSoundEngine.so \
-  --llvm-nm "$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-nm" \
   --cecil "$(dirname "$UNITY_EDITOR")/../MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll" \
   --output work/coordination/wwise-abi-generator/plan.json \
   --candidate work/coordination/wwise-abi-generator/candidate.dll
