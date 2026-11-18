@@ -1345,11 +1345,13 @@ keeps this owner separate from content, game-code production and final signing.
 `accepted-output/phone_runner.py` now owns shared experimental on-device
 producer duty cycling for shell commands and the managed host
 owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
-zones, checks thermal admission and selects inherited efficiency-core affinity
+and readable SoC zones, checks thermal admission and selects inherited efficiency-core affinity
 with two-worker runtime limits. Its independent supervisor pauses the owned
-process group and nested-session descendants at 70/55 C by default (explicit
-Thor profile 75/60 C), using the current 95 C/3 s CPU/GPU and 46 C battery limits with 250 ms sampling.
-Teardown kills owned processes; receipts retain pause time and failures. The
+process group and nested-session descendants at CPU/GPU 70/55 C. A separate
+ceiling pauses the same family at 85 C on any readable CPU, GPU or SoC zone,
+releases below 70 C, and aborts after 15 min at the ceiling. The 250 ms sampler
+also enforces the CPU/GPU 95 C/3 s and battery 43 C limits. Teardown kills owned
+processes. Receipts retain pause time, SoC peak and phase, and failures. The
 atomic BOOTTIME clock feeds the existing native active-time contract through
 `run_android.py`. Phone sensor access and sustained qualification remain open.
 [Interface and limits](../tools/phone-build/accepted-output/README.md#shared-on-device-producer-thermal-runner).
