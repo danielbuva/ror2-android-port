@@ -503,6 +503,10 @@ loads each declared type, checks provider and runtime root membership, and compa
 original native provider groups. Item relationship pointers must resolve to the
 typed catalog objects. The catalog differential ties the fixture to the candidate
 catalog and bundles, and the signed script audit covers ownerless records.
+For each typed body, the fixture follows its `CharacterModel` display rule set,
+checks item and equipment keys against the typed definitions, and resolves
+follower prefabs and model attachments. The differential reports these checks
+and compares serialized display pointers, address keys and attachment names.
 The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
 After the skin checks, the fixture loads the objective state configs from
 `commando-prefab-lab`. It follows projectile and trail references from those

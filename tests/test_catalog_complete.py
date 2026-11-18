@@ -124,6 +124,17 @@ class CatalogCompletionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "incomplete serialized object"):
             compare.pointers(body + bytes(4), root)
 
+        child = mesh.Node(1, 0, "string", "childName", -1, 0)
+        child.children = [mesh.Node(2, 1, "Array", "Array", -1, 0x4000)]
+        child.children[0].children = [mesh.Node(3, 0, "int", "size", 4, 0), mesh.Node(3, 0, "char", "data", 1, 0)]
+        record = mesh.Node(0, 0, "ItemDisplayRule", "Base", -1, 0)
+        record.children = [child, element]
+        with patch.object(mesh, "type_tree", return_value=record):
+            root, _ = compare.schema(b"display-field-fixture")
+        display = {}
+        self.assertEqual(compare.pointers(struct.pack("<I3sxiq", 3, b"Gun", 1, 7), root, display), {("data",): (1, 7)})
+        self.assertEqual(display, {("childName",): "Gun"})
+
         catalog = compare.Catalog.__new__(compare.Catalog)
         catalog.members = {"base": (None, {"externals": [{"path": "archive:/other/CAB"}]}, {8: {}}), "CAB": (None, {}, {7: {}})}
         self.assertEqual(catalog.endpoint("base", (1, 7)), ("CAB", 7))
@@ -145,15 +156,16 @@ class CatalogCompletionTests(unittest.TestCase):
             evidence = dict(complete=True, bodies=2, masters=1, metadataSha256=pin(metadata)["sha256"], bundles={"fixture": "digest"}, failures=[])
             receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence)))
             request = dict(bundles={"fixture": dict(sha256="digest")})
-            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, None))
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, None, None))
             with self.assertRaisesRegex(ValueError, "bundle pins differ"):
                 compare.typed_catalog_identity(receipt, dict(bundles={}), apk)
             definitions = dict(sourceMetadataSha256="original")
-            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence, definitionIdentity=definitions)))
+            displays = dict(complete=True, bodies=[dict(path="body", groups=1)], prefabs=1, failures=[])
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence, definitionIdentity=definitions, displayIdentity=displays)))
             with self.assertRaisesRegex(ValueError, "definition source metadata differs"):
                 compare.typed_catalog_identity(receipt, request, apk)
             request["source_additions"] = dict(metadata=dict(sha256="original"))
-            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, definitions))
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, definitions, displays))
             receipt.write_text(json.dumps(dict(masterBodyIdentity=dict(evidence, metadataSha256="wrong"))))
             with self.assertRaisesRegex(ValueError, "metadata differs"):
                 compare.typed_catalog_identity(receipt, request, apk)

@@ -14,6 +14,9 @@ import catalog_complete as C
 import unity_mesh as M
 
 CHARACTER_MASTER = ("CharacterMaster", "RoR2", "RoR2.dll")
+ITEM_DISPLAY_RULE_SET = ("ItemDisplayRuleSet", "RoR2", "RoR2.dll")
+DISPLAY_STRING_FIELDS = {"childName", "m_AssetGUID", "m_SubObjectName"}
+DISPLAY_POINTER_FIELDS = {"itemDisplayRuleSet", "keyAsset", "followerPrefab"}
 
 
 def pinned(path, digest):
@@ -35,31 +38,40 @@ def schema(tree):
             visit(child, path + (child.name,))
         fields.add((path, node.kind))
         node.has_pointer = node.pointer or any(child.has_pointer for child in node.children)
+        node.display_string = node.kind == "string" and node.name in DISPLAY_STRING_FIELDS
+        node.has_display_string = node.display_string or any(child.has_display_string for child in node.children)
 
     visit(root, ())
     return root, fields
 
 
-def pointers(body, root):
-    """Skip fixed non-reference spans and retain array indices on each PPtr."""
+def pointers(body, root, display_strings=None):
+    """Retain indexed PPtrs and, when requested, display children and addresses."""
     cursor = 0
     found = {}
 
     def read(node, field):
         nonlocal cursor
-        end = None if node.has_pointer else M.fixed_end(node, cursor)
+        end = None if node.has_pointer or (display_strings is not None and node.has_display_string) else M.fixed_end(node, cursor)
         if end is not None:
             cursor = end
         elif node.pointer:
             found[field] = struct.unpack_from("<iq", body, cursor)
             cursor += 12
+        elif display_strings is not None and node.display_string:
+            size = struct.unpack_from("<I", body, cursor)[0]
+            cursor += 4
+            display_strings[field] = body[cursor : cursor + size].decode("utf-8")
+            cursor += size
+            if node.children[0].meta & 0x4000:
+                cursor = (cursor + 3) & ~3
         elif node.flags & 1:
             count = struct.unpack_from("<I", body, cursor)[0]
             cursor += 4
             if len(node.children) != 2 or count > len(body):
                 raise ValueError("invalid serialized array")
             element = node.children[1]
-            end = None if element.has_pointer else M.fixed_end(element, cursor)
+            end = None if element.has_pointer or (display_strings is not None and element.has_display_string) else M.fixed_end(element, cursor)
             if end is not None and count:
                 cursor = end + (count - 1) * (M.fixed_end(element, end) - end)
             else:
@@ -218,7 +230,7 @@ def typed_catalog_identity(receipt, request, candidate_apk):
     definitions = document.get("definitionIdentity")
     if definitions is not None and definitions["sourceMetadataSha256"] != request.get("source_additions", {}).get("metadata", {}).get("sha256"):
         raise ValueError("typed definition source metadata differs from catalog request")
-    return evidence, definitions
+    return evidence, definitions, document.get("displayIdentity")
 
 
 def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None, typed_fixture=None, pc=None):
@@ -232,7 +244,7 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
     if baseline["apk_sha256"] != ref["sha256"]:
         raise ValueError("reference build result belongs to another APK")
     paths = candidate_paths(request, candidate_apk)
-    identity, definitions = typed_catalog_identity(typed_fixture, request, candidate_apk) if typed_fixture else (None, None)
+    identity, definitions, displays = typed_catalog_identity(typed_fixture, request, candidate_apk) if typed_fixture else (None, None, None)
     references = {name: pinned(Path(baseline["payload_directory"]) / name, baseline["payload"][name]) for name in paths.keys() & baseline["payload"].keys()}
     candidate = Catalog(paths, candidate_apk)
     reference = Catalog(references, reference_apk)
@@ -256,15 +268,22 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
             for failure in failures:
                 counts["typed-definition-identity"] += 1
                 table.write(json.dumps(dict(cause="typed-definition-identity", side="candidate", **failure), separators=(",", ":")) + "\n")
+        if displays is not None:
+            failures = list(displays["failures"])
+            if not displays["complete"] or not displays["prefabs"] or len(displays["bodies"]) != identity["bodies"]:
+                failures.append(dict(error="typed body display inspection incomplete"))
+            for failure in failures:
+                counts["typed-item-display-identity"] += 1
+                table.write(json.dumps(dict(cause="typed-item-display-identity", side="candidate", **failure), separators=(",", ":")) + "\n")
 
         def emit(cause, **details):
             counts[cause] += 1
             table.write(json.dumps(dict(cause=cause, bundle=bundle, member=member, path_id=pid, **details), separators=(",", ":")) + "\n")
 
-        def edges(side, catalog, body, typ):
+        def edges(side, catalog, body, typ, display_fields):
             root, _ = schema(typ["tree"])
             result = {}
-            for field, ptr in pointers(body, root).items():
+            for field, ptr in pointers(body, root, display_fields).items():
                 target = catalog.endpoint(member, ptr)
                 if target and len(target) != 2:
                     emit("unresolved-pointer", side=side, field=field, pointer=ptr, target=target)
@@ -307,6 +326,7 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                 records = {s: c.members[member][2] if member in c.bundles.get(bundle, ()) else {} for s, c in sides.items()}
                 for pid in sorted(records["candidate"].keys() | records["reference"].keys()):
                     types, bodies, links, bindings = {}, {}, {}, {}
+                    display_fields = {}
                     for side, catalog in sides.items():
                         if pid not in records[side]:
                             continue
@@ -314,12 +334,14 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                         _, typ, body = catalog.record(member, (0, pid))
                         types[side], bodies[side] = typ, body
                         try:
-                            if typ["class_id"] != 142:
-                                links[side] = edges(side, catalog, body, typ)
                             if typ["class_id"] == 114:
                                 bindings[side] = catalog.binding(member, typ, body)
                                 if bindings[side] is None:
                                     emit("scriptless", side=side)
+                                if bindings[side] == ITEM_DISPLAY_RULE_SET:
+                                    display_fields[side] = {}
+                            if typ["class_id"] != 142:
+                                links[side] = edges(side, catalog, body, typ, display_fields.get(side))
                         except (ValueError, KeyError, struct.error) as exc:
                             emit("object-inspection", side=side, error=str(exc))
                     if any(t["class_id"] == 142 for t in types.values()):
@@ -345,6 +367,11 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                                 emit("serialized-fields", candidate_only=sorted(fields[0] - fields[1]), reference_only=sorted(fields[1] - fields[0]))
                         if cid == 114 and bindings.get("candidate") != bindings.get("reference"):
                             emit("script-binding", identities=bindings)
+                        if len(display_fields) == 2:
+                            a, b = display_fields["candidate"], display_fields["reference"]
+                            for field in sorted(a.keys() | b.keys(), key=repr):
+                                if a.get(field) != b.get(field):
+                                    emit("item-display-rule-field", field=field, candidate=a.get(field), reference=b.get(field))
                         if len(links) == 2:
                             for field in sorted(links["candidate"].keys() | links["reference"].keys(), key=repr):
                                 a = links["candidate"].get(field, "absent")
@@ -353,6 +380,12 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                                     cause = "component-slot" if cid == 1 and field[0] == "m_Component" else "pointer-target"
                                     if field == ("bodyPrefab",) and CHARACTER_MASTER in bindings.values():
                                         cause = "character-master-body-target"
+                                    if (
+                                        field
+                                        and field[-1] in DISPLAY_POINTER_FIELDS
+                                        and (field[-1] == "itemDisplayRuleSet" or ITEM_DISPLAY_RULE_SET in bindings.values())
+                                    ):
+                                        cause = "item-display-pointer-target"
                                     if isinstance(b, tuple) and aliases.get(b, "unknown") == a:
                                         cause = "canonical-pointer-redirection"
                                     emit(cause, field=field, candidate=a, reference=b)
@@ -379,6 +412,8 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
         summary["typed_master_body_identity"] = {key: identity[key] for key in ("complete", "bodies", "masters", "metadataSha256", "bundles")}
     if definitions is not None:
         summary["typed_definition_identity"] = {key: value for key, value in definitions.items() if key != "failures"}
+    if displays is not None:
+        summary["typed_item_display_identity"] = {key: value for key, value in displays.items() if key != "failures"}
     (output / "result.json").write_text(json.dumps(summary, indent=2) + "\n")
 
 
