@@ -228,3 +228,32 @@ class OwnerJourneyTests(unittest.TestCase):
                 self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
                 self.assertFalse(list((journey.inputs / "work/releases/downloads").glob(".download-*")))
                 self.assertEqual(original.read_bytes(), b"authored")
+
+    def test_consent_and_result_refusal_rebuilds_without_false_install(self):
+        for outcome in ("declined", "failed", "missing", "mismatch"):
+            with self.subTest(outcome=outcome), owner_journey() as journey:
+                self.assertEqual(journey.run("install-prepare")["state"], "INPUTS_REQUIRED")
+                original = journey.inputs / "import/files/original.txt"
+                original.parent.mkdir(parents=True)
+                original.write_bytes(b"authored")
+                self.assertEqual(journey.run("release-build")["state"], "READY")
+                first = install(journey)
+                prior_receipt = (journey.inputs / "installed-release.json").read_bytes()
+                journey.candidate["release"] = copy.deepcopy(journey.release)
+                journey.candidate["release"].update(version="synthetic-2", version_code=3)
+                journey.run("release-check", first)
+                self.assertEqual(journey.run("release-build", first)["state"], "READY")
+                refused_code = json.loads((journey.inputs / "owner-apk-ready.json").read_text())["version_code"]
+                unchanged = install(journey, first, outcome=outcome)
+                self.assertEqual(unchanged, first)
+                self.assertEqual(json.loads((journey.inputs / "installed-release.json").read_text()), json.loads(prior_receipt))
+                self.assertFalse((journey.inputs / "pending-install.json").exists())
+                self.assertEqual(journey.run("release-build", first)["state"], "READY")
+                retry = json.loads((journey.inputs / "owner-apk-ready.json").read_text())
+                self.assertGreater(retry["version_code"], refused_code)
+                installed = install(journey, first)
+                self.assertTrue(installed["installed_readback_verified"])
+                self.assertEqual(installed["release"]["version_code"], 3)
+                self.assertEqual(installed["signer_sha256"], first["signer_sha256"])
+                self.assertEqual(original.read_bytes(), b"authored")
+                self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
