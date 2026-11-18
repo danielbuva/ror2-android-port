@@ -1905,9 +1905,10 @@ compilation. Fixed targets continue to select their own policy.
 `GnuToolAdapter.c` supplies only the GNU build-tool low-address mappings and
 explicit emulated child execution required by Mono/LLVM under QEMU. It is foreign
 tool data, never linked into the ARM64 game. `native.py::compiled_jobs` validates
-a completed object's source/command/input/hash receipts for an explicit relink,
-or the contiguous successful prefix of a failed compilation for explicit
-continuation in a new output. Reused lump receipts retain their actual original
+a completed object's source, command, input and hash receipts for an explicit
+relink. Resume validates the compiled prefix after a compilation failure or the
+full object set after a stripping-phase failure, then links in a new output.
+Reused lump receipts retain their actual original
 SDK wrapper root after relocation. An optional independently written pause
 clock lets its process wait count active time while the entire tool UID is
 stopped; malformed/reset clocks fail closed. Selected-job measurement compiles
