@@ -81,3 +81,28 @@ durable persistence, independently of these in-memory transactions.
 the touch document. Its fixture covers profile/default isolation, preview/cancel,
 anchor scaling across aspect/inset changes, round-trip and failed imports. A
 compiler-less host skip is not execution evidence.
+
+## File persistence adapter
+
+`LayoutPreferenceStore` is an optional separate file adapter, not live wiring.
+Construct it with one caller-owned regular-file path in an existing private
+directory. Use distinct files for touch and HUD. LoadTouch/LoadHud return Loaded,
+Missing, Invalid or Unavailable. Only a genuinely missing file returns the supplied
+default model; corrupt/oversized/invalid UTF-8 data returns no model and is left
+untouched. Missing directories and read/access errors are unavailable, not defaults.
+
+SaveTouch/SaveHud serialize a validated immutable model, refuse to overwrite invalid
+or unreadable existing data, write a uniquely named same-directory temporary file,
+flush it to disk, then atomically replace the old file (or move for a first save).
+There is no delete-then-move fallback. Unsupported atomic replacement fails without
+removing the old file. Temporary cleanup is best effort. Caller must handle save
+errors separately from editor Confirm; a confirmed in-memory draft is not a saved
+file. Explicit corrupt-file recovery/backup decisions belong to the caller, not an
+automatic reset. Reads are bounded to 1 MiB plus one detection byte.
+
+Calls on one adapter are serialized. Caller owns path security and must serialize
+writers across instances/processes; shared/untrusted directories are unsupported.
+File content is flushed, but no portable directory-fsync or hardware power-loss
+guarantee is claimed. Host tests use authored temporary files, real replace/read
+operations and injected write/publish/read failures. Physical interruption, Android
+storage behavior and runtime integration remain device-worker responsibilities.

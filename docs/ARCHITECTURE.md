@@ -7882,3 +7882,10 @@ preferences and anchor-aware safe-area scale projection. `HudLayoutEditor` owns
 preview/confirm/cancel/reset/import transactions. Scene callers select group IDs;
 projection does not mutate stored preferences. The model has no runtime renderer,
 input dependency or persistence side effects and uses only the geometry owner.
+
+`LayoutPreferenceStore.cs` is the optional caller-owned-path persistence adapter
+for both layout formats. It distinguishes missing/default from invalid/unavailable
+loads and uses flushed same-directory temporary files plus atomic replace, never
+delete-then-move. Invalid existing data is preserved for explicit caller recovery.
+The adapter is independent of live settings/UI; cross-process ownership, path
+security and physical durability qualification belong to its eventual integrator.
