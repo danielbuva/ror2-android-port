@@ -1689,6 +1689,9 @@ publishes private telemetry. Teardown reaps owned children and retains verified
 checkpoints; PackageInstaller alone establishes installation success.
 [User flow and storage behavior](../tools/phone-build/owner-apk/README.md#phone-only-import-and-installation)
 remain separate from complete game/device qualification.
+The installer persists session identity and INSTALLING admission in one checked
+commit before writing or committing the PackageInstaller session. Failure abandons
+the uncommitted session; recreation cannot recover a committed session as idle.
 
 `owner-apk/atomic_io.py` owns shared private checkpoint writes under each
 caller's existing operation lock: sibling staging, file fsync, rename and parent
