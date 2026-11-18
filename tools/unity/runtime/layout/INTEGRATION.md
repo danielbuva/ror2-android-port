@@ -1,0 +1,44 @@
+# Layout model entry points for gameplay workers
+
+These host-tested authored models are not wired into the game. Live input/HUD
+owners, coordinate conversion and device checks belong to the gameplay workers;
+this note does not authorize or claim that integration.
+
+1. Supply a `LayoutProjection(width, height, left, top, right, bottom)` from actual
+   display/safe-area observations. All coordinates here use top-left, x-right,
+   y-down display pixels and normalized safe-area rectangles. Convert Unity/screen
+   conventions explicitly; refresh when the display or insets change.
+2. Construct authored `TouchLayoutDocument` defaults and `HudLayoutModel` defaults.
+   Choose separate private file paths and use `LayoutPreferenceStore.LoadTouch`
+   / `LoadHud`. Only Missing means use defaults. Invalid/Unavailable requires an
+   honest recovery/error decision, not automatic overwrite or fabricated success.
+3. For the editor, create `TouchLayoutEditor` and `TouchEditorGesture` with intended
+   minimum pixel sizes. Pass editor-only Down/Move/Up events with stable pointer
+   IDs. Caller chooses drag versus resize handle. Call CancelPointer on pointer
+   cancellation; Cancel on focus loss, navigation, teardown and display changes.
+   Do not route these events as gameplay controls or mutate its active draft from
+   another control. Draw Draft for preview, Document for committed preferences.
+4. Use `HudLayoutEditor.Begin/SetScale/SetGroup/Preview` for temporary HUD editing,
+   then Confirm or Cancel. `HudLayoutModel.Project(profile, group, projection)`
+   resolves sparse overrides and anchor scaling without changing preferences.
+   Scene callers request only groups they can display, retaining other preferences.
+5. Confirm/Up changes memory only. Invoke SaveTouch/SaveHud explicitly on the
+   committed model when saving is intended, handle I/O errors and retain unsaved
+   UI state. One adapter serializes its calls; the integrator must serialize other
+   writers and own private-path security. No directory-fsync or power-loss claim.
+6. Touch rectangle and scale/opacity fields need an explicit visual/hitbox policy
+   in the eventual renderer. This helper hit-tests the authored rectangle only;
+   it does not apply scale again or map generic IDs to gameplay actions. HUD scale
+   uses its documented corner/center anchor with safe-area clamping. Neither model
+   provides physical accessibility or visual parity guarantees.
+
+Publishing-host command (must execute actual C# tests, not just skip):
+
+```
+python3 -m unittest -v tests.test_layout_projection tests.test_touch_layout_document tests.test_hud_layout_model tests.test_layout_preference_store tests.test_touch_editor_gesture
+```
+
+Device acceptance remains open: real safe-area/orientation changes, multitouch and
+lost focus, editor exit/cancel/re-entry, separate gameplay dispatch, control sizes
+and opacity, HUD scene transitions, saved-file restart and physical write/power
+interruption. Do not mark these passed from host fixtures or compilation alone.
