@@ -21,7 +21,7 @@ typedef int (*run_fn)(void);
 int main(int argc, char **argv) {
   if (argc < 4)
     return 64;
-  char self[4096], standard[4096], dynamic[4096];
+  char self[4096], standard[4096], dynamic[4096], packages[4096];
   ssize_t n = readlink("/proc/self/exe", self, sizeof(self) - 1);
   if (n <= 0 || n >= (ssize_t)sizeof(self) - 1)
     return 65;
@@ -29,7 +29,9 @@ int main(int argc, char **argv) {
   if (snprintf(standard, sizeof(standard), "%s/lib/python3.14", argv[2]) >=
           (int)sizeof(standard) ||
       snprintf(dynamic, sizeof(dynamic), "%s/lib/python3.14/lib-dynload",
-               argv[2]) >= (int)sizeof(dynamic))
+               argv[2]) >= (int)sizeof(dynamic) ||
+      snprintf(packages, sizeof(packages), "%s/lib/player-packages", argv[2]) >=
+          (int)sizeof(packages))
     return 65;
   void *library = dlopen(argv[1], RTLD_NOW | RTLD_GLOBAL);
   if (!library) {
@@ -63,11 +65,11 @@ int main(int argc, char **argv) {
   for (size_t i = 0; i < sizeof(values) / sizeof(values[0]); i++)
     if (setint(config, options[i], values[i]) < 0)
       goto failure;
-  char *paths[] = {standard, dynamic};
+  char *paths[] = {standard, dynamic, packages};
   if (setstr(config, "program_name", self) < 0 ||
       setstr(config, "home", argv[2]) < 0 ||
       setstr(config, "run_filename", argv[3]) < 0 ||
-      setlist(config, "module_search_paths", 2, paths) < 0 ||
+      setlist(config, "module_search_paths", sizeof(paths) / sizeof(paths[0]), paths) < 0 ||
       setlist(config, "argv", (size_t)(argc - 3), argv + 3) < 0 ||
       initialize(config) < 0)
     goto failure;

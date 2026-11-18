@@ -24,6 +24,9 @@ var typedBodies=new System.Collections.Generic.List<System.Collections.Generic.K
 int bodies=0,controllers=0,slots=0;
 int checkedTransforms = 0;
 var checkedSkins = new System.Collections.Generic.HashSet<RoR2.SkinDef>();
+var projectileConfigPin = request["projectile_config"];
+var checkedProjectileKeys = new System.Collections.Generic.HashSet<string>();
+int checkedSupportPrefabs = 0, checkedEffectPrefabs = 0;
 
 System.Func<string, UnityEngine.AssetBundle> openBundle = owner =>
 {
@@ -162,8 +165,110 @@ try{
    }
   }catch(System.Exception error){failures.Add(new{path,error=error.ToString()});}
  }
+ if (projectileConfigPin != null)
+ {
+     // Preserve first deserialization order for skins before inspecting Start dependencies.
+     var config = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(pin(projectileConfigPin)));
+     var visited = new System.Collections.Generic.HashSet<UnityEngine.GameObject>();
+     System.Func<string, Newtonsoft.Json.Linq.JToken> gameObjectLocation = key =>
+         stringKeys.TryGetValue(key, out var candidates) ? candidates.FirstOrDefault(row =>
+             ((string)row["type"])?.Split(',')[0] == typeof(UnityEngine.GameObject).FullName) : null;
+     System.Action<UnityEngine.GameObject, string, string> checkProjectiles = null;
+     checkProjectiles = (root, path, field) =>
+     {
+         if (!root || !visited.Add(root))
+             return;
+         foreach (var trail in root.GetComponentsInChildren<RoR2.DamageTrail>(true))
+             checkProjectiles(trail.segmentPrefab, path, field);
+         foreach (var projectile in root.GetComponentsInChildren<RoR2.Projectile.ProjectileController>(true))
+         {
+             var reference = projectile.ghostPrefabAddress;
+             if (reference == null || !reference.RuntimeKeyIsValid())
+             {
+                 checkProjectiles(projectile.ghostPrefab, path, field);
+                 continue;
+             }
+             var key = reference.RuntimeKey.ToString();
+             if (!checkedProjectileKeys.Add(key))
+                 continue;
+             Newtonsoft.Json.Linq.JToken location = null;
+             try
+             {
+                 location = gameObjectLocation(key);
+                 if (location == null)
+                     throw new System.Exception("Typed projectile ghost address absent");
+                 var ghost = openBundle((string)location["bundle"])
+                     .LoadAsset<UnityEngine.GameObject>((string)location["path"]);
+                 if (!ghost || !ghost.GetComponent<RoR2.Projectile.ProjectileGhostController>() ||
+                     !ghost.GetComponentsInChildren<UnityEngine.Component>(true).All(component => component))
+                     throw new System.Exception("Typed projectile ghost component contract failed");
+                 checkProjectiles(ghost, path, field);
+             }
+             catch (System.Exception error)
+             {
+                 failures.Add(new { path, field, projectile = projectile.name, key, location, error = error.Message });
+             }
+         }
+     };
+     var owner = openBundle("commando-prefab-lab");
+     foreach (var asset in config["objectiveConfigAssets"])
+     {
+         var path = (string)asset;
+         var source = owner.LoadAsset<RoR2.EntityStateConfiguration>(path);
+         if (!source)
+         {
+             failures.Add(new { path, error = "Typed objective state config missing" });
+             continue;
+         }
+         foreach (var field in source.serializedFieldsCollection.serializedFields)
+         {
+             var projectile = field.fieldValue.objectValue as UnityEngine.GameObject;
+             if (projectile && projectile.GetComponent<RoR2.Projectile.ProjectileController>())
+                 checkProjectiles(projectile, path, field.fieldName);
+         }
+     }
+
+     System.Action<string, string, string> checkPrefab = (bundle, path, field) =>
+     {
+         try
+         {
+             var prefab = openBundle(bundle).LoadAsset<UnityEngine.GameObject>(path);
+             if (!prefab)
+                 throw new System.Exception("Typed startup prefab missing");
+             if (field == "objectiveSupportAssets" &&
+                 !prefab.GetComponentsInChildren<UnityEngine.Component>(true).All(component => component))
+                 failures.Add(new { path, field, bundle, error = "Objective support component contract failed" });
+             if (field == "objectiveEffectAssets" && !prefab.GetComponent<RoR2.EffectComponent>())
+                 failures.Add(new { path, field, bundle, error = "Objective effect component contract failed" });
+             checkProjectiles(prefab, path, field);
+         }
+         catch (System.Exception error)
+         {
+             failures.Add(new { path, field, bundle, error = error.Message });
+         }
+     };
+     var supportPaths = config["objectiveSupportAssets"].Values<string>().Distinct(System.StringComparer.OrdinalIgnoreCase).ToArray();
+     var sharedPaths = new System.Collections.Generic.HashSet<string>(supportPaths, System.StringComparer.OrdinalIgnoreCase);
+     foreach (var path in supportPaths)
+     {
+         checkedSupportPrefabs++;
+         checkPrefab("objective-support-lab", path, "objectiveSupportAssets");
+     }
+     foreach (var path in config["objectiveEffectAssets"].Values<string>().Distinct(System.StringComparer.OrdinalIgnoreCase))
+     {
+         checkedEffectPrefabs++;
+         checkPrefab(sharedPaths.Contains(path) ? "objective-support-lab" : "commando-prefab-lab", path, "objectiveEffectAssets");
+     }
+     // FireTrail is loaded by CharacterBody through the legacy Prefabs/FireTrail alias.
+     const string fireTrailAddress = "RoR2/Base/Common/FireTrail.prefab";
+     var fireTrail = gameObjectLocation(fireTrailAddress);
+     if (fireTrail == null)
+         failures.Add(new { path = "Prefabs/FireTrail", error = "Typed FireTrail catalog location absent" });
+     else
+         checkPrefab((string)fireTrail["bundle"], (string)fireTrail["path"], "Prefabs/FireTrail");
+ }
 }catch(System.Exception error){failures.Add(new{error=error.ToString()});}
 finally{foreach(var bundle in bundles.Values.Reverse())bundle.Unload(true);}
-var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
+var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
 var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;

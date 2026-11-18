@@ -169,9 +169,10 @@ int32_t hostfxr_close(void *handle){(void)handle;puts("NET_CLOSE");return 0;}
         for value in (
             "PY_STR home=/authored home",
             "PY_STR run_filename=script path.py",
-            "PY_LIST module_search_paths=2",
+            "PY_LIST module_search_paths=3",
             "PY_ITEM module_search_paths_0=/authored home/lib/python3.14",
             "PY_ITEM module_search_paths_1=/authored home/lib/python3.14/lib-dynload",
+            "PY_ITEM module_search_paths_2=/authored home/lib/player-packages",
             "PY_LIST argv=2",
             "PY_ITEM argv_0=script path.py",
             "PY_ITEM argv_1=argument space",

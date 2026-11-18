@@ -18,6 +18,7 @@ from types import SimpleNamespace
 PREFIX = "tools/phone-build/accepted-output/"
 PLAYER_RESOURCE_ASSEMBLIES = ("System.Data", "System.Drawing", "mscorlib")
 ANDROID_COMPONENT = "${inputs}/acquired/unity-android-support.pkg"
+LINUX_COMPONENT = "${inputs}/acquired/unity-linux-editor.tar.xz"
 PACKAGE_POLICY = "tools/phone-build/package-assemblies/profile.json"
 PACKAGE_PRODUCER = "tools/phone-build/package-assemblies/produce.py"
 PACKAGE_ARCHIVES = "${inputs}/acquired/unity-packages"
@@ -26,6 +27,37 @@ INSTALLED_BUNDLE_CODEC = dict(
     sha256="${native_sha256:libbundlelz4.so}",
     bytes="${native_bytes:libbundlelz4.so}",
 )
+TEXTURE_NATIVE = {
+    "jpeg_codec": "libtexture-jpeg.so",
+    "etc_codec": "libtexture-etc.so",
+}
+TEXTURE_GUEST = "${installed_runtime}/texture-sdk/"
+TEXTURE_GUEST_LIB = "linux/lib/x86_64-linux-gnu/"
+
+
+def texture_sdk_request(library, guest_files):
+    qemu = "libqemu-x86_64.so"
+    pixels = "libtexture-pixels.so"
+    return {
+        "command": [
+            "${native}/" + qemu,
+            "-L",
+            TEXTURE_GUEST + "linux",
+            "-E",
+            "LD_LIBRARY_PATH=" + TEXTURE_GUEST + TEXTURE_GUEST_LIB.rstrip("/"),
+            "-E",
+            "LC_ALL=C",
+            TEXTURE_GUEST + "texture-sdk-codec",
+            library["path"],
+        ],
+        "environment": {},
+        "pixels": "${native}/" + pixels,
+        "inputs": {
+            **{"${native}/" + name: "${native_sha256:" + name + "}" for name in (qemu, pixels, "libc++_shared.so")},
+            **{TEXTURE_GUEST + name: pin for name, pin in guest_files.items()},
+            library["path"]: library["sha256"],
+        },
+    }
 
 
 def digest(path):
@@ -210,6 +242,7 @@ class Graph:
         phase_arguments = self.player_arguments(providers) if producer == "player_data" else []
         needs = list(providers.values())
         request = None
+        witnesses = []
         arguments = ["--profile", "${repo}/" + path, "--profile-sha256", pin, "--output", "${output}"]
         if producer in {
             "object_produce",
@@ -271,7 +304,21 @@ class Graph:
                 bindings.append("sdk_toolchain")
             for binding in bindings:
                 flag = "--" + binding.replace("_", "-")
-                arguments += [flag, "${input:" + binding + "}", flag + "-sha256", "${input_sha256:" + binding + "}"]
+                if not self.conversion:
+                    path_token, pin_token = "${input:" + binding + "}", "${input_sha256:" + binding + "}"
+                elif binding == "sdk_toolchain":
+                    extractor = self.sdk_texture_extraction()
+                    needs.append(extractor)
+                    guest_files = json.loads((self.repo / "recipe/owner-app-host-tools.json").read_text())["texture_sdk_guest"]
+                    request = texture_sdk_request(self.artifact_pin(extractor, "library"), guest_files)
+                    witnesses.extend(TEXTURE_GUEST + name for name in guest_files)
+                    path_token, pin_token = "${request}", "${request_sha256}"
+                else:
+                    installed = TEXTURE_NATIVE[binding]
+                    path_token, pin_token = "${native}/" + installed, "${native_sha256:" + installed + "}"
+                    if binding == "etc_codec" and "sdk_toolchain" not in bindings:
+                        witnesses.append("${native}/libc++_shared.so")
+                arguments += [flag, path_token, flag + "-sha256", pin_token]
         if producer in {"object_produce", "shader_prefab", "payload_shader_records", "shader_produce"} and "original_bundle" not in profile:
             codec = INSTALLED_BUNDLE_CODEC if self.conversion else dict(path="${input:codec}", sha256="${input_sha256:codec}")
             arguments += ["--codec", codec["path"], "--codec-sha256", codec["sha256"]]
@@ -312,7 +359,7 @@ class Graph:
             if "shared_defaults" in profile:
                 dependency = providers[profile["shared_defaults"]["shader_record"]]
                 arguments += ["--record-pack", "${job_directory:" + dependency + ":shared_receipt}", "${sha256:" + dependency + ":shared_receipt}"]
-        elif needs:
+        elif providers:
             raise ValueError("unsupported supplier contract: " + path)
         extra = self.extra.get(producer, [])
         if not isinstance(extra, list) or not all(isinstance(arg, str) for arg in extra):
@@ -375,6 +422,8 @@ class Graph:
         self.jobs[name] = {"schema": 1, "script": PREFIX + producer + ".py", "arguments": arguments, "needs": needs, "outputs": outputs, "artifacts": artifacts}
         if request is not None:
             self.jobs[name]["request"] = request
+        if witnesses:
+            self.jobs[name]["cache_witnesses"] = witnesses
         self.profile_files[name] = path
         self.job_profiles[name] = profile
         return name
@@ -976,6 +1025,21 @@ class Graph:
         self.job_profiles[name] = {}
         return name
 
+    def sdk_texture_extraction(self):
+        name = "recipe/jobs/owner-sdk-texture-input.json"
+        if name not in self.jobs:
+            self.jobs[name] = {
+                "schema": 1,
+                "script": PREFIX + "sdk_inputs.py",
+                "arguments": ["--component", LINUX_COMPONENT, "--output", "${output}", "--linux-texture"],
+                "needs": [],
+                "outputs": {},
+                "artifacts": {"receipt": "result.json", "library": "etccompress.so"},
+                "cache_witnesses": [LINUX_COMPONENT],
+            }
+            self.job_profiles[name] = {}
+        return name
+
     def sdk_package(self, request_path):
         """Keep SDK resources, Java code and native engine libraries in one job."""
         request = json.loads((self.repo / request_path).read_text())
@@ -1076,7 +1140,7 @@ class Graph:
         if not entries:
             raise ValueError("select at least one complete output profile")
         for name, job in self.jobs.items():
-            if name == self.android_sdk:
+            if job["script"] == PREFIX + "sdk_inputs.py":
                 # The extractor imports only the standard library. A producer
                 # change elsewhere in the release need not unpack the same SDK.
                 job["source_files"] = [name, job["script"]]

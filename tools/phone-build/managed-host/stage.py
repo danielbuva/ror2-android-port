@@ -2,12 +2,14 @@
 
 import argparse
 import hashlib
+import io
 import json
 from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+import zipfile
 
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parents[2]
@@ -31,6 +33,8 @@ UPDATE_NETWORK_MODULES = {
     "libpyext__socket.so": "python/lib/python3.14/lib-dynload/_socket.cpython-314-aarch64-linux-android.so",
     "libpyext__ssl.so": "python/lib/python3.14/lib-dynload/_ssl.cpython-314-aarch64-linux-android.so",
 }
+MMAP_MODULE = "libpyext_mmap.so"
+MMAP_LINK = "python/lib/python3.14/lib-dynload/mmap.cpython-314-aarch64-linux-android.so"
 
 
 def digest(path):
@@ -64,6 +68,48 @@ def validate_update_network(extra):
             raise ValueError("Installer HTTPS provider must be a canonical matching Python 3.14 module: " + target)
         if digest(path) != row["sha256"]:
             raise ValueError("Installer HTTPS native provider drift: " + target)
+
+
+def stage_python_wheels(extra, pins, destination):
+    """Install the exact player-registry packages into the isolated import path."""
+    if not extra or "python_wheels" not in extra:
+        return {}
+    if MMAP_MODULE not in extra["natives"] or extra["links"].get(MMAP_LINK) != MMAP_MODULE:
+        raise ValueError("Player Python wheels require an explicit mmap provider and Python link")
+    source = Path(extra["python_wheels"]).resolve(strict=True)
+    inputs = {}
+    for name, expected in pins.items():
+        path = source / name
+        data = path.read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError("Player Python wheel drift: " + name)
+        inputs[path] = data
+    for data in inputs.values():
+        # Only the exact public pure-Python wheels are admitted, including their notices.
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            archive.extractall(destination)
+    return {str(path): pins[path.name] for path in inputs}
+
+
+def stage_texture_sdk_guest(extra, pins, destination):
+    """Stage the pinned x86-64 QEMU inputs as app assets."""
+    if not extra or "texture_sdk_guest" not in extra:
+        return {}
+    required = {"libqemu-x86_64.so", "libtexture-pixels.so", "libtexture-etc.so", "libc++_shared.so"}
+    if not required <= extra["natives"].keys():
+        raise ValueError("Texture SDK guest requires QEMU, pixels, ETC and libc++ native providers")
+    source = Path(extra["texture_sdk_guest"]).resolve(strict=True)
+    inputs = {}
+    for name, expected in pins.items():
+        data = (source / relative(name)).read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError("Texture SDK guest input drift: " + name)
+        inputs[name] = data
+    for name, data in inputs.items():
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+    return {str(source / name): expected for name, expected in pins.items()}
 
 
 def load_metadata():
@@ -142,11 +188,11 @@ def tool_manifest(source, destination, package=None, game_package=None):
     tree.write(destination, encoding="utf-8", xml_declaration=True)
 
 
-def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, release_trust=None):
+def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, release_trust=None, backend_tools=None):
     profile_source = Path(profile_source).resolve(strict=True)
     sdk = Path(sdk).resolve(strict=True)
     destination = Path(destination).expanduser().absolute()
-    owned = root.resolve() / "work"
+    owned = (root.resolve() / "work").resolve()
     if destination != destination.resolve() or not destination.is_relative_to(owned) or destination.exists():
         raise ValueError("Fixture destination must be new under this checkout's ignored work/")
     if profile_source == destination or destination in profile_source.parents or sdk == destination or sdk in destination.parents:
@@ -216,6 +262,8 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
     if set(trust) != {"repository", "application_id", "keys"} or not isinstance(trust["keys"], dict):
         raise ValueError("Explicit public release trust configuration required")
     bind(trust_source, "release-trust.json")
+    if backend_tools is not None:
+        bind(Path(backend_tools), "backend-tools.json")
     bind(METADATA, "python-native-plan.json")
     for name, path in {
         "android.jar": "platforms/android-33/android.jar",
@@ -250,6 +298,9 @@ if __name__ == "__main__":
     parser.add_argument("--dest", type=Path, required=True)
     parser.add_argument("--owner-backend", action="store_true", help="stage current authored owners for the headless whole-player backend")
     parser.add_argument("--release-trust", type=Path, help="explicit publisher public-key configuration; default remains unprovisioned")
+    parser.add_argument("--backend-tools", type=Path, help="private native provider and alias plan for the installer builder")
     args = parser.parse_args()
-    result = stage(args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend, release_trust=args.release_trust)
+    result = stage(
+        args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend, release_trust=args.release_trust, backend_tools=args.backend_tools
+    )
     print(json.dumps(dict(success=result["success"], files=len(result["files"]))))

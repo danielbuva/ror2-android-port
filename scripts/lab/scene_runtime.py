@@ -3,6 +3,7 @@
 from common import *
 import re
 import shutil
+import historical_receipts
 
 
 def preserve_input_trace(device, runtime, attempt, report, expected_pid):
@@ -35,6 +36,8 @@ def preserve_input_trace(device, runtime, attempt, report, expected_pid):
 def scene_prepare(include_prefab=False):
     from build import preflight
 
+    provenance, provenance_selection = historical_receipts.resolve(historical_receipts.SCENE_ASSEMBLIES, root=ROOT)
+    original = provenance["original_assemblies"]
     preflight()
     prior = ROOT / read(WORK / "experiments/scene-closure/latest.json")["path"]
     closure = read(prior / "loadingbasic.json")
@@ -87,7 +90,6 @@ def scene_prepare(include_prefab=False):
                     edits.append({"path": relative, "from": old, "to": new, "count": count})
                     text = text.replace(old, new)
             dst.write_text(text)
-    original = read(WORK / "experiments/original-closure-runtime/20260913T024051.910924Z/slice-provenance.json")["original_assemblies"]
     for name, h in original.items():
         src = game() / "Risk of Rain 2_Data/Managed" / name
         if sha(src) != h:
@@ -103,6 +105,7 @@ def scene_prepare(include_prefab=False):
         "scene": "Assets/LabLoadingScene/" + str(Path(closure["root"]).relative_to("Assets")),
         "copied_source_hashes": copied,
         "original_assemblies": original,
+        "historical_receipts": {historical_receipts.SCENE_ASSEMBLIES: provenance_selection},
         "ui_remaps": edits,
         "status": "staged; import and identity assertions required before any scene execution",
         "evidence": str(out.relative_to(ROOT)),
@@ -1203,16 +1206,16 @@ def startup_prepare(
 
 def audio_assets_prepare(native_availability=False):
     """J51 measured prefab closure; asset loading only, no audio activation."""
+    identity_data, identity_selection = historical_receipts.resolve(historical_receipts.AUDIO_IDENTITIES, root=ROOT)
+    closure, closure_selection = historical_receipts.resolve(historical_receipts.AUDIO_CLOSURE, root=ROOT)
     startup_prepare(integration=True)
     out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
     r = read(out / "attempt.json")
     stage = Path(r["stage"])
-    audit = WORK / "experiments/audio-boundary/20260914T032612Z"
-    identities = read(audit / "identities.json")["rows"]
+    identities = identity_data["rows"]
     if len(identities) != 8 or not all(x["resolved"] and not x["error"] for x in identities):
         raise RuntimeError("Audio identity gate failed")
     export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0] / "Assets"
-    closure = read(audit / "serialized-closure.json")
     if closure["unresolved"]:
         raise RuntimeError("Unresolved audio closure")
     for row in closure["files"]:
@@ -1241,6 +1244,9 @@ def audio_assets_prepare(native_availability=False):
     write(WORK / "scene-probe-build.json", build)
     r["audio_assets"] = True
     write(out / "attempt.json", r)
+    write(
+        out / "audio-historical-receipts.json", {historical_receipts.AUDIO_IDENTITIES: identity_selection, historical_receipts.AUDIO_CLOSURE: closure_selection}
+    )
     write(out / "audio-closure.json", closure)
     write(out / "audio-config.json", cfg)
 
@@ -1961,6 +1967,8 @@ def body_root_order_prepare(cases=None, start_items=False, spawn_states=False, t
 
 
 def body_start_loadout_prepare(spawn_states=False, cases=None, teleport_material=False, barrier_effect=False, nova_input=False):
+    if teleport_material:
+        query, query_selection = historical_receipts.resolve(historical_receipts.TELEPORT_QUERY, root=ROOT)
     body_root_order_prepare(
         start_items=True,
         nova_input=nova_input,
@@ -1995,7 +2003,6 @@ def body_start_loadout_prepare(spawn_states=False, cases=None, teleport_material
     if teleport_material:
         source = ROOT / read(WORK / "config/reconstruction.json")["projects"][0] / "Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat"
         export_guid = re.search(r"^guid: ([a-f0-9]{32})", Path(str(source) + ".meta").read_text(), re.M)[1]
-        query = read(WORK / "experiments/scene-runtime/20260930T202924.269738Z/teleport-catalog-query.json")
         locations = [
             x
             for x in query["locations"]
@@ -2010,7 +2017,8 @@ def body_start_loadout_prepare(spawn_states=False, cases=None, teleport_material
                 "export_guid": export_guid,
                 "source_sha256": sha(source),
                 "key": cfg["teleportMaterialKey"],
-                "catalog_query": "work/experiments/scene-runtime/20260930T202924.269738Z/teleport-catalog-query.json",
+                "catalog_query": query_selection["path"],
+                "historical_receipt": query_selection,
                 "bundle": "teleport-material-lab",
                 "scope": "Actual material and serialized closure; separate original-provider ownership, exported dummy shader retained; no graphics parity claim",
                 "prior_art": "R2API AddressReferencedAsset synchronous/async handle and release semantics; community-prior-art.md original-provider candidate; accepted ControllerAddressProbe/AudioAssetProbe",

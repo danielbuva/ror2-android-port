@@ -455,6 +455,24 @@ class SdkTextureTests(unittest.TestCase):
                 BUILD.build(provider, None, provider, root / "output")
             self.assertFalse((root / "output").exists())
 
+    def test_pixels_only_build_produces_a_working_helper_without_the_sdk(self):
+        output = self.root.resolve() / "pixels-only"
+        subprocess.run(
+            [sys.executable, BUILD.__file__, "--pixels-only", "--compiler", shutil.which("cc"), "--output", str(output)],
+            check=True,
+            capture_output=True,
+            timeout=30,
+        )
+        helper = output / "texture-pixels"
+        receipt = json.loads((output / "result.json").read_text())
+        self.assertTrue(receipt["success"])
+        self.assertEqual(receipt["outputs"], {helper.name: digest(helper.read_bytes())})
+        self.assertEqual(len(receipt["commands"]), 1)
+        self.assertEqual({path.name for path in output.iterdir()}, {helper.name, "result.json", "BCDEC-LICENSE.txt", "0.stdout", "0.stderr"})
+        colour = (1, 31, 65, 255)
+        result = subprocess.run([helper, "4", "4"], input=mode6(colour), check=True, capture_output=True, timeout=10)
+        self.assertEqual(result.stdout, bytes(colour) * 16)
+
 
 if __name__ == "__main__":
     unittest.main()

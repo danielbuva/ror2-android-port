@@ -435,6 +435,95 @@ class ReleaseGraphTests(unittest.TestCase):
                     else:
                         self.assertNotIn("${input:" + binding + "}", arguments)
 
+    def test_signed_texture_request_binds_installed_tools_and_pins_guest_inputs(self):
+        spec = importlib.util.spec_from_file_location("texture_produce", ROOT / G.PREFIX / "texture_produce.py")
+        texture = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(texture)
+        with tempfile.TemporaryDirectory() as directory:
+            inputs = Path(directory).resolve()
+            native, pc = inputs / "installed-native", inputs / "pc"
+            native.mkdir()
+            pc.mkdir()
+            for installed in ("libtexture-jpeg.so", "libtexture-etc.so", "libqemu-x86_64.so", "libtexture-pixels.so", "libc++_shared.so"):
+                (native / installed).write_text(installed)
+            runtime = inputs / "installed-runtime"
+            guest = runtime / "texture-sdk"
+            pins = json.loads((ROOT / "recipe/owner-app-host-tools.json").read_text())["texture_sdk_guest"]
+            guest_files = {}
+            for name in pins:
+                path = guest / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name)
+                guest_files[name] = G.digest(path)
+
+            graph = G.Graph(ROOT, {})
+            graph.conversion = "recipe/jobs/owner-code.json"
+            names = {key: graph.build(G.digest(ROOT / f"recipe/owner-{key}-textures.json")) for key in ("uncompressed", "alpha", "rgb-mip", "rgba")}
+            jpeg, etc, sdk = (graph.jobs[names[key]] for key in ("uncompressed", "alpha", "rgb-mip"))
+            self.assertIn("${native}/libtexture-jpeg.so", jpeg["arguments"])
+            self.assertNotIn("--etc-codec", jpeg["arguments"])
+            self.assertIn("${native}/libtexture-etc.so", etc["arguments"])
+            self.assertEqual(etc["cache_witnesses"], ["${native}/libc++_shared.so"])
+            self.assertNotIn("request", etc)
+            self.assertNotIn("request", jpeg)
+            extractor = "recipe/jobs/owner-sdk-texture-input.json"
+            self.assertEqual(sdk["needs"], [extractor])
+            self.assertEqual(graph.jobs[names["rgba"]]["needs"], [extractor])
+            self.assertEqual(jpeg["needs"], [])
+            self.assertEqual(etc["needs"], [])
+            self.assertEqual(graph.jobs[extractor]["cache_witnesses"], [G.LINUX_COMPONENT])
+            self.assertIn("--linux-texture", graph.jobs[extractor]["arguments"])
+            acquired = inputs / "acquired/unity-linux-editor.tar.xz"
+            acquired.parent.mkdir()
+            acquired.write_text("owner SDK archive")
+            extracted = inputs / "work/jobs/sdk-output"
+            extracted.mkdir(parents=True)
+            codec = extracted / "etccompress.so"
+            codec.write_text("qualified owner SDK member")
+
+            dispatch = object.__new__(J.Dispatcher)
+            dispatch.repo, dispatch.inputs, dispatch.native = ROOT, inputs, native
+            dispatch.installed_runtime = runtime
+            dispatch.runtime = inputs / "release-runtime-view"
+            dispatch.config = {"bindings": {"pc": "pc"}}
+            dispatch.jobs_root = inputs / "work/jobs"
+            dispatch.descriptors = graph.jobs
+            dispatch.completed = {extractor: extracted}
+            output, request_path = dispatch.jobs_root / "output", inputs / ".request.json"
+            expanded = dispatch.expand(sdk["request"], sdk, output, request_path)
+            self.assertEqual(
+                {str(guest / name): pin for name, pin in pins.items()},
+                {path: pin for path, pin in expanded["inputs"].items() if Path(path).is_relative_to(guest)},
+            )
+            expanded["inputs"].update({str(guest / name): pin for name, pin in guest_files.items()})
+            J.UPDATES.write_json(request_path, expanded)
+            arguments = dispatch.expand(sdk["arguments"], sdk, output, request_path)
+            pin = arguments[arguments.index("--sdk-toolchain-sha256") + 1]
+            self.assertEqual(arguments[arguments.index("--sdk-toolchain") + 1], str(request_path))
+            self.assertEqual(pin, G.digest(request_path))
+            verified = texture.sdk_inputs(request_path, pin, pc)
+            self.assertEqual(verified["command"][0], str(native / "libqemu-x86_64.so"))
+            self.assertEqual(verified["command"][-1], str(codec))
+            self.assertEqual(verified["pixels"], str(native / "libtexture-pixels.so"))
+            self.assertTrue(set(map(str, (guest / name for name in guest_files))) <= verified["inputs"].keys())
+
+            before = dispatch.input_pins(names["rgb-mip"])
+            acquired.write_text("changed SDK archive")
+            after = dispatch.input_pins(names["rgb-mip"])
+            self.assertNotEqual(before[G.LINUX_COMPONENT], after[G.LINUX_COMPONENT])
+            guest_wrapper = guest / "texture-sdk-codec"
+            guest_token = G.TEXTURE_GUEST + guest_wrapper.name
+            guest_wrapper.write_text("changed packaged wrapper")
+            self.assertNotEqual(before[guest_token], dispatch.input_pins(names["rgb-mip"])[guest_token])
+            with self.assertRaisesRegex(ValueError, "tool input drift"):
+                texture.sdk_inputs(request_path, pin, pc)
+            guest_wrapper.write_text(guest_wrapper.name)
+            codec.write_text("changed SDK member")
+            with self.assertRaisesRegex(ValueError, "tool input drift"):
+                texture.sdk_inputs(request_path, pin, pc)
+            (native / "libtexture-pixels.so").write_text("changed installed provider")
+            self.assertNotEqual(after["native_sha256:libtexture-pixels.so"], dispatch.input_pins(names["rgb-mip"])["native_sha256:libtexture-pixels.so"])
+
     def test_player_shader_suppliers_keep_serialized_and_nested_pack_contracts(self):
         graph = G.Graph(ROOT, {})
         player_path = ROOT / "recipe/owner-player-data.json"
@@ -692,7 +781,7 @@ if __name__ == '__main__':
 request = json.loads(pathlib.Path(sys.argv[1]).read_text())
 assert sys.argv[2:] == ['--stop-after-conversion']
 work = pathlib.Path(request['owner_work'])
-assert (work / 'inventory/files.json').is_file()
+assert json.loads((work / 'inventory/files.json').read_text())['hash_mode'] == 'full'
 source = pathlib.Path(request['source_inputs']['original']).read_bytes()
 packages = pathlib.Path(request['source_inputs']['packages'])
 metadata = struct.pack('<II', 0xFAB11BAF, 31) + (pathlib.Path(request['sdk_install']) / 'receipt.json').read_bytes()

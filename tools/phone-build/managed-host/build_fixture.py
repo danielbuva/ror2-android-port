@@ -56,6 +56,10 @@ try:
     spec.loader.exec_module(staging)
     # Refuse before any native/Java/APK build, not at the first phone download.
     staging.validate_update_network(extra)
+    assets = out / "assets"
+    assets.mkdir()
+    receipt["inputs"].update(staging.stage_python_wheels(extra, plan["python_wheels"], assets / "python/lib/player-packages"))
+    receipt["inputs"].update(staging.stage_texture_sdk_guest(extra, plan["texture_sdk_guest"], assets / "texture-sdk"))
     binary = out / "libtoolhost.so"
     run(
         "native-build",
@@ -186,8 +190,6 @@ try:
             run("link-GnuToolAdapter", native / "bin/ld.lld", "-m", "elf_x86_64", "-shared", out / "gnu-adapter.o", "-o", out / "libgnu-tool-adapter.so")
     framework = runtime / "shared/Microsoft.NETCore.App/8.0.32"
     native_files.update({p.name: p for p in framework.glob("*.so")})
-    assets = out / "assets"
-    assets.mkdir()
     if extra:
         resources = Path(extra["clang_resources"])
         for p in resources.rglob("*"):

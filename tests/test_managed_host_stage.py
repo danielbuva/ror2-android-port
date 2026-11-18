@@ -4,10 +4,13 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
 import xml.etree.ElementTree as ET
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("managed_host_stage", ROOT / "tools/phone-build/managed-host/stage.py")
@@ -35,6 +38,30 @@ class ManagedHostStageTests(unittest.TestCase):
         self.patch = mock.patch.object(stage, "load_metadata", return_value=self.metadata)
         self.patch.start()
         self.addCleanup(self.patch.stop)
+
+    def test_texture_sdk_guest_stages_only_pinned_public_files(self):
+        source = self.root / "guest"
+        wrapper = source / "texture-sdk-codec"
+        library = source / "linux/lib/x86_64-linux-gnu/libc.so.6"
+        library.parent.mkdir(parents=True)
+        wrapper.write_bytes(b"synthetic wrapper")
+        library.write_bytes(b"synthetic guest library")
+        (source / "etccompress.so").write_bytes(b"excluded owner-only SDK member")
+        pins = {path.relative_to(source).as_posix(): stage.digest(path) for path in (wrapper, library)}
+        destination = self.root / "assets/texture-sdk"
+        extra = {
+            "texture_sdk_guest": str(source),
+            "natives": dict.fromkeys(("libqemu-x86_64.so", "libtexture-pixels.so", "libtexture-etc.so", "libc++_shared.so")),
+        }
+        self.assertEqual(stage.stage_texture_sdk_guest({}, pins, destination), {})
+        with self.assertRaisesRegex(ValueError, "requires QEMU"):
+            stage.stage_texture_sdk_guest(dict(extra, natives={}), pins, destination)
+        with self.assertRaisesRegex(ValueError, "guest input drift"):
+            stage.stage_texture_sdk_guest(extra, pins | {library.relative_to(source).as_posix(): "0" * 64}, destination)
+        self.assertFalse(destination.exists())
+        receipt = stage.stage_texture_sdk_guest(extra, pins, destination)
+        self.assertEqual(receipt, {str(source / path): pin for path, pin in pins.items()})
+        self.assertEqual({path.relative_to(destination).as_posix(): stage.digest(path) for path in destination.rglob("*") if path.is_file()}, pins)
 
     def test_staging_binds_sources_without_game_input_or_executing_jars(self):
         result = stage.stage(self.profile, self.sdk, self.destination, root=self.root)
@@ -79,6 +106,23 @@ class ManagedHostStageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source drift"):
             stage.stage(self.profile, self.sdk, self.destination, root=self.root)
         self.assertFalse(self.destination.exists())
+
+    def test_shared_worktree_stages_explicit_backend_plan_and_binds_receipt(self):
+        checkout = self.root / "checkout"
+        checkout.mkdir()
+        shared = self.root / "shared-work"
+        shared.mkdir()
+        (checkout / "work").symlink_to(shared, target_is_directory=True)
+        plan = shared / "selected-tools.json"
+        plan.write_text('{"natives": {}, "links": {}}\n')
+        destination = shared / "fixture"
+
+        result = stage.stage(self.profile, self.sdk, destination, root=checkout, backend_tools=plan)
+
+        self.assertEqual((destination / "backend-tools.json").read_bytes(), plan.read_bytes())
+        self.assertEqual(result["files"]["backend-tools.json"], stage.digest(plan))
+        with self.assertRaisesRegex(ValueError, "must be new"):
+            stage.stage(self.profile, self.sdk, self.root / "outside", root=checkout, backend_tools=plan)
 
     def test_owner_backend_retains_repository_marker_for_existing_owners(self):
         (self.root / "AGENTS.md").write_text("# Fixture repository marker\n")
@@ -179,6 +223,35 @@ class ManagedHostStageTests(unittest.TestCase):
 
 
 class ManagedHostMetadataTests(unittest.TestCase):
+    def test_player_python_wheels_verify_before_extraction_and_import_in_isolation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            wheels = root / "wheels"
+            wheels.mkdir()
+            destination = root / "python/lib/player-packages"
+            pins = {}
+            for name, files in (
+                ("dnfile", {"dnfile/__init__.py": "from pefile import witness", "dnfile-1.dist-info/LICENSE": "authored notice"}),
+                ("pefile", {"pefile.py": "from mmap import mmap\nwitness = 42"}),
+            ):
+                path = wheels / (name + "-1-py3-none-any.whl")
+                with zipfile.ZipFile(path, "w") as archive:
+                    for member, data in files.items():
+                        archive.writestr(member, data)
+                pins[path.name] = stage.digest(path)
+            extra = {"python_wheels": str(wheels), "natives": {}, "links": {stage.MMAP_LINK: stage.MMAP_MODULE}}
+            with self.assertRaisesRegex(ValueError, "mmap provider"):
+                stage.stage_python_wheels(extra, pins, destination)
+            extra["natives"][stage.MMAP_MODULE] = {}
+            with self.assertRaisesRegex(ValueError, "wheel drift: pefile"):
+                stage.stage_python_wheels(extra, pins | {"pefile-1-py3-none-any.whl": "0" * 64}, destination)
+            self.assertFalse(destination.exists())
+            receipt = stage.stage_python_wheels(extra, pins, destination)
+            self.assertEqual(receipt, {str(wheels / name): value for name, value in pins.items()})
+            self.assertEqual((destination / "dnfile-1.dist-info/LICENSE").read_text(), "authored notice")
+            code = "import sys; sys.path.append(sys.argv[1]); import dnfile; assert dnfile.witness == 42"
+            subprocess.run([sys.executable, "-I", "-S", "-B", "-c", code, str(destination)], check=True, capture_output=True, text=True)
+
     def test_network_extensions_are_explicit_pinned_inputs_before_any_build(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

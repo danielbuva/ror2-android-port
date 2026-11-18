@@ -105,6 +105,42 @@ class RebuildTests(unittest.TestCase):
         self.assertEqual(before, self.snapshot_inputs())
         self.assertFalse(list(self.dest.glob(".assemblies-*")))
 
+    def test_provenance_drift_detects_equal_oracles_without_changing_gate(self):
+        self.run_step()
+        path = self.rows[0]["path"]
+        (self.dest / path).write_bytes(b"same drift")
+        (self.project / path).write_bytes(b"same drift")
+        before = self.snapshot_inputs()
+        result = self.run_step(compare_only=True)
+        self.assertTrue(result["equal"])  # Diagnostic, not new baseline policy.
+        drift = result["provenance_drift"]
+        self.assertEqual(drift["counts"], dict(missing=0, changed=2, unexpected=0, unreadable=0, identity_unavailable=0))
+        self.assertEqual({row["side"] for row in drift["entries"]}, {"project", "destination"})
+        self.assertTrue(all(row["expected"]["sha256"] == self.provenance[path]["sha256"] for row in drift["entries"]))
+        self.assertEqual(before, self.snapshot_inputs())
+
+    def test_provenance_drift_bounded_missing_extra_and_unreadable(self):
+        self.run_step()
+        path = self.rows[0]["path"]
+        (self.dest / path).unlink()
+        report = rebuild.provenance_drift(self.dest, self.project, {path}, self.provenance, ["Assets/Extra.asset"], limit=1)
+        self.assertEqual(report["counts"], dict(missing=1, changed=0, unexpected=1, unreadable=0, identity_unavailable=0))
+        self.assertEqual(len(report["entries"]), 1)
+        self.assertEqual(report["omitted"], 1)
+        self.assertEqual(report["entries"][0]["path"], path)
+        with patch.object(rebuild, "sha", side_effect=PermissionError("private absolute path must not leak")):
+            report = rebuild.provenance_drift(self.dest, self.project, {path}, self.provenance, [])
+        self.assertEqual(report["counts"]["unreadable"], 1)
+        self.assertNotIn("private absolute", str(report))
+
+    def test_provenance_drift_membership_only_identity_is_unavailable(self):
+        self.run_step()
+        path = self.rows[0]["path"]
+        report = rebuild.compare(self.dest, self.project, {path}, {path: {}}, lambda _: False)
+        self.assertEqual(report["provenance_drift"]["counts"]["identity_unavailable"], 1)
+        self.assertEqual(report["provenance_drift"]["entries"][0], dict(status="identity_unavailable", path=path))
+        self.assertEqual(report["identical"], [path])
+
     def test_explicit_destination(self):
         self.dest = self.root / "work/rebuild/custom/project"
         self.assertTrue(self.run_step(dest=self.dest)["equal"])

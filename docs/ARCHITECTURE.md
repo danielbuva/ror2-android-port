@@ -92,6 +92,13 @@ body, profile, index and witness hashes. Setup opens only declared staged member
 teardown closes them on success or failure. Full-output cache hits still check
 actual final local and external managed bodies, and inputs are rehashed before
 the receipt is written. The final artifact is the canonical repack when selected.
+An optional pinned `extension` supplies qualified candidate records, additional
+asset groups and assets, and measured external field routes.
+`bundle_prepare.extend_selection` walks their local closure from the actual
+producer extents and complete layouts. A newly selected external field requires
+its measured owner, field path, pointer and endpoint. The emitter checks the
+resulting closure, including staged endpoints and current managed scripts,
+before writing any catalog declaration.
 The same checked invocation writes `catalog-profile.json` from the emitted
 bundle identity and required asset groups, and pins that declaration and the
 actual final bundle in its receipt. The alias donor remains a separate catalog
@@ -429,6 +436,12 @@ then resolves the typed SkinDefParams and checks each bake transform with the
 native prefab path function, including base skins. All opened bundles are
 released in `finally`. Its local receipt records failures before the Android
 gameplay gate.
+The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
+After the skin checks, the fixture loads the objective state configs from
+`commando-prefab-lab`. It follows projectile and trail references from those
+configs, the objective support and effect prefabs in their original owners,
+and the FireTrail catalog prefab. It checks each keyed ghost's typed catalog
+location and native components.
 During startup, `BodyCatalogSession` opens the objective-support bundle through
 `TeleporterWorldSession` before deserializing body prefabs. The original
 CharacterBody family loads in provider order before the explicit Commando read
@@ -823,8 +836,10 @@ hash-matched original Wisp schema, SDK Material/resource records and the shader
 owner's standard record pack. Its Cube and diagnostics preloads follow the
 authored LabBuild policy. No generated project, private schema cache or Editor
 fixture output is a production input. Registry metadata inspection lazily uses
-the pinned `dnfile`/`pefile` dependencies; the earlier player slices keep their
-standard-library path. The registry projects only the raw CLR metadata consumed
+the pinned `dnfile`/`pefile` dependencies. The managed app-host builder installs
+those wheels and notices from its explicit backend inputs into the isolated
+CPython dependency directory, with a hash-bound Android `mmap` provider.
+The registry projects only the raw CLR metadata consumed
 by serialization and closes each PE immediately. It releases SDK and original
 witness layouts before managed traversal, rereading witnesses during validation
 instead of caching them. Completion and failure close the current resolver.
@@ -1192,6 +1207,14 @@ adds a pinned public stb/IJG JPEG tool but no Unity SDK, Editor or private
 discovery input. J1079 qualifies all 399 uncompressed records and the public
 JPEG-tool build on Android. Other texture formats and complete bundle assembly
 remain separate gates; no current game build or runtime consumes these packs.
+The signed release graph selects the installed Android codec executables per
+texture operation. The release dispatcher materializes the existing SDK
+toolchain JSON with the installed QEMU and pixel decoder paths and hash-pinned
+guest files, then includes those provider witnesses in incremental cache
+identity. SDK texture jobs share one `sdk_inputs.py --linux-texture` job that
+verifies the owner's Linux Editor archive and streams only the pinned codec
+member into a private artifact. The reader closes on exit and retains a
+receipt. The GNU runtime and guest adapter use the private acquired root.
 The same owner's current experimental `--resume` reuses its original profile,
 input/tool pins and existing output. Data fsync precedes every committed index
 row; recovery checks the ordered persisted prefix before truncating uncommitted
@@ -1271,8 +1294,13 @@ pixel tool and dependency pins. The existing texture owner admits it through
 attributed public bcdec header and owns the same integer transparency dilation
 with bounded native coordinate buffers; `sdk_texture_codec.c` calls the separately supplied
 SDK codec. Host-native SDK execution is an oracle; Android uses the public QEMU
-runner and genuine GNU runtime. No game runtime owner or Editor/project build
-is introduced. Full-cohort phone qualification remains pending.
+runner and genuine GNU runtime. The same builder's `--pixels-only` action
+produces the public native helper, its license and build receipt independently
+of SDK acquisition. The managed app-host builder packages the
+pinned public guest files as verified assets and installs the native helpers
+through its PackageManager library plan. The signed graph binds those installed
+paths and the separately extracted owner SDK member into the worker request.
+Signed app-host execution and complete phone qualification remain open.
 The same native pixel owner has experimental BC4/BC5 byte-channel decoding and
 linear/sRGB mip-chain pipe modes. It preserves byte units through the first
 linear reduction, then continuous float32 levels. These modes have authored
@@ -2631,7 +2659,9 @@ changes the existing refusal probe or reports security qualification.
 
 `tools/phone-build/managed-host/` owns the connected experimental app-host
 support. `stage.py` checks the public source/native metadata contract and stages
-new owner-supplied SDK inputs; its builder owns the separate phone-built APK.
+owner-supplied SDK inputs and an optional private backend plan into canonical
+ignored work, including shared worktree storage. Its builder checks the plan's
+provider bytes and owns the separate phone-built APK.
 `NativePythonHost.c` selects the existing interpreter's isolated configuration;
 `NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
 `NativeJavaHost.c` invokes the separately acquired headless JDK through JNI;
@@ -2776,6 +2806,11 @@ resolve an explicitly registered, hash-pinned optional-guard receipt against the
 preserved original assembly before inventory/probe work. This support owner has
 no runtime or build-selection side effects; its registration and local-state
 contract are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-optional-guard-evidence).
+The same owner resolves named hash-bound scene-runtime assembly provenance,
+audio identity/closure receipts and teleport catalog queries before their
+historical staging pipelines. Their selections are recorded in preparation
+receipts; source-byte and runtime acceptance checks are unchanged. Registration
+contracts are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-scene-runtime-evidence).
 
 `scripts/prune-generated.py` (current) discards rebuildable build outputs under
 `work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
@@ -2792,6 +2827,16 @@ entry referenced by each current-build/iteration-base receipt, the latest instal
 APK per device, explicit keeps and the age guard. Nested content hashes and sync
 inventories do not pin cache entries. `--json` includes `kept_items` with protection
 reasons and cache-specific protection counts. Retired entries retain JSON receipts.
+`--supersede OLD --by NEW` writes an exclusive `.superseded-by` marker for
+physical run/version folders under the existing experiment/coordination/rebuild
+roots. It binds the replacement and latest direct `result.json`/`*.done.json`
+receipt (strict `success: true`) by SHA-256. After a minimum of 24 hours without
+new writes, unchanged markers let existing generated-output candidates ignore
+historical manifest pins. State/baseline/device/coordination-lock pins, explicit
+keeps and `.prune-keep` still win; receipts, logs and authored files stay.
+Planning checks eligibility once per marked run, not per descendant directory.
+Marking never deletes; normal dry-run/apply owns pruning and rechecks eligibility
+before the first deletion of each marked run. No symlinked runs are eligible.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
@@ -3207,6 +3252,21 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Reconciled raw windows also report strictly >50 ms consecutive hitch bursts,
+longest within-window run and worst absolute frame index (earliest on ties).
+Incomplete raw windows remain unavailable; boundary bursts may extend outside
+the window, and covered-tail observations do not certify the full ten minutes.
+No causal attribution is inferred.
+Its clock/cooling summary reports per-channel observed ranges, missing/gap coverage
+and adjacent observed changes from existing CPU/GPU frequency/limit and cooling
+state samples. Missing channels remain unavailable; valid cooling state zero is
+retained. No new sampler, policy, time weighting or causal throttling inference.
+Its battery summary uses existing sustained samples only: signed current × voltage
+at the battery terminals, equally weighted sample means, endpoint charge/level
+changes, per-metric missing/gap coverage and observed external-power transitions.
+Missing endpoints remain unavailable; externally powered discharge is not labelled
+unplugged drain. Sampled unplugged status does not certify uninterrupted operation
+or an energy budget. No integrated energy or causal throttling claim is made.
 Optional `--completed-session` binds the completed camera report by attempt and
 raw-trace identity. Only complete retained recorder windows inside the sustained
 frame endpoints contribute sample-count-weighted timing/allocation/render means
@@ -4212,6 +4272,13 @@ working-project staging must hold the host editor lock and batch asset editing,
 verify the prior plugin/generation hashes, and update the local generation marker.
 
 Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R9):
+Its existing comparison JSON includes a local-only `provenance_drift` diagnostic:
+selected paths' project/destination hash and size differences, missing inputs and
+existing destination-extra membership. Counts cover every finding; at most 100
+ordered entries are retained. No contents or absolute roots are emitted. Approved
+candidate overrides may intentionally differ from the retained map; the existing
+comparison/refusal gates remain authoritative. No baseline acceptance or R1–R8
+replay is inferred. Reports are printed locally and must not be published raw.
 `assembly_payload` owns the shared recipe-only DLL/importer generation. R1's
 `assemblies` wrapper retains provenance membership/hash/size comparison before
 project writes. The separate current `owner_assemblies.py` action uses that
@@ -6266,8 +6333,10 @@ Still open:
    menu roots, settings visibility and others) still live on `PortSession`. 23 boundary files
    have no private state worth an owner, and the three Moon files were deferred because
    neither standard check reaches them.
-5. **Hard-coded run folders.** `scene_runtime.py:59`, `:515` and `:883`, and
-   `input_migration.py:90` read fixed timestamped evidence folders (all in historical actions).
+5. **Historical evidence registration.** `scene_runtime.py` and `input_migration.py`
+   now resolve explicit named, hash-pinned receipts rather than fixed timestamped
+   folders. Historical replay still requires operator-reviewed retained evidence;
+   this removes implicit path dependencies, not the evidence requirement or runtime gates.
 6. **Experiment drivers outside Git.** Broader gameplay runs still use about 89 untracked
    runner scripts in `work/experiments/whole-catalog/gameplay/`; the standard checks are
    tracked as `./dev check-baseline` and `--stage-exit` ([BASELINE.md](BASELINE.md)).
