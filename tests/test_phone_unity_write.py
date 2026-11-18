@@ -110,6 +110,25 @@ class UnityWriteTests(unittest.TestCase):
             W.write_bundle(result, [(name, 4, len(data), lambda: io.BytesIO(data))], compress)
             self.assertEqual(UnityPy.load(result.getvalue()).container[ASSET].read().m_Name, "phone-fixture")
 
+    def test_lz4_short_and_extended_lengths_with_overlapping_and_disjoint_matches(self):
+        cases = (
+            (b"\x80abcdefgh\x08\x00\x80FINSUFFX", b"abcdefghabcdFINSUFFX"),
+            (b"\x15a\x01\x00\x50FINAL", b"a" * 10 + b"FINAL"),
+            (b"\x1fa\x01\x00\xff\x01\x50FINAL", b"a" * 276 + b"FINAL"),
+            (b"\xf0\xff\x00" + b"b" * 270, b"b" * 270),
+        )
+        for packed, expanded in cases:
+            with self.subTest(packed=packed[:12]):
+                self.assertEqual(lz4.block.decompress(packed, uncompressed_size=len(expanded)), expanded)
+                self.assertEqual(W.B.decompress(packed, len(expanded), 3), expanded)
+        for packed, size, error in (
+            (b"\xf0\xff", 270, "truncated LZ4 length"),
+            (b"\xf0\xff", 269, "LZ4 length exceeds output"),
+            (b"\x10a\x02\x00", 5, "invalid LZ4 match extent"),
+        ):
+            with self.subTest(packed=packed, size=size), self.assertRaisesRegex(ValueError, error):
+                W.B.decompress(packed, size, 3)
+
     def test_rejects_duplicate_members_bad_extents_and_destination_overlap(self):
         row = ("CAB-authored", 4, 1, lambda: io.BytesIO(b"x"))
         for members in (

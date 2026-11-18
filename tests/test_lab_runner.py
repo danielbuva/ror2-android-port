@@ -81,6 +81,15 @@ class BatteryRuleTest(unittest.TestCase):
                 self.assertIsNotNone(runner.admit_battery("synthetic"))
                 self.assertEqual(battery.call_count, 3)
 
+    def test_phone_producer_battery_floor(self):
+        with tempfile.TemporaryDirectory() as repo:
+            runner = lab_runner.Runner(repo, {})
+            with mock.patch.object(runner, "battery", return_value=(29, 0, 260)):
+                self.assertIn("< 30 %", runner.admit_battery("synthetic", heavy=True))
+                self.assertIsNone(runner.admit_battery("synthetic"))
+            with mock.patch.object(runner, "battery", return_value=(30, 0, 260)):
+                self.assertIsNone(runner.admit_battery("synthetic", heavy=True))
+
     def test_uncertain_emission_preserves_lease_through_runner_cleanup(self):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {})
