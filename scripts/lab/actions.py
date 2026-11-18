@@ -463,7 +463,7 @@ _ENTRIES = (
         "host_skin_bundles",
         {},
         "current",
-        "Typed-load body skin slots and optional objective state-config projectile ghosts from the pinned converted catalog request (--target).",
+        "Typed-load body skin slots and optional native startup prefabs and projectile ghosts from the pinned converted catalog request (--target).",
         handler=_target,
     ),
     Action(

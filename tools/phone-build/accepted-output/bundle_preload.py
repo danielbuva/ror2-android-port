@@ -1033,6 +1033,7 @@ def _emit_closed_native(
     provider_paths=None,
     index_store=None,
     record_workers=None,
+    retained_records=None,
 ):
     """Emit the declared local/native subset of a qualified producer graph.
 
@@ -1081,10 +1082,12 @@ def _emit_closed_native(
     retained = json.loads((graph_directory / "done.json").read_text())
     if retained.get("success") is not True:
         raise ValueError("Unsuccessful source graph")
-    all_records = index_store.mapping()
-    all_records.load(
-        ((tuple(row["destination"]), row) for row in json_rows(graph_directory / "selected-records.jsonl")), duplicate="Duplicate selected destination"
-    )
+    all_records = retained_records
+    if all_records is None:
+        all_records = index_store.mapping()
+        all_records.load(
+            ((tuple(row["destination"]), row) for row in json_rows(graph_directory / "selected-records.jsonl")), duplicate="Duplicate selected destination"
+        )
     selected = index_store.mapping()
     if required is None:
         for key, row in all_records.items():
@@ -2187,7 +2190,10 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
     inputs = Path(inputs).resolve(strict=True)
     request = json.loads(inputs.read_bytes())
     required_keys = {"schema", "graph", "schemas", "required", "routes", "endpoints", "staged", "managed_inputs", "game_root", "codec", "bundle", "member"}
-    if set(request) - {"canonical", "null_script_sources", "provider_paths"} != required_keys or request["schema"] != "owner-bundle-preload-inputs-v1":
+    if (
+        set(request) - {"canonical", "null_script_sources", "provider_paths", "extension"} != required_keys
+        or request["schema"] != "owner-bundle-preload-inputs-v1"
+    ):
         raise ValueError("unsupported bundle preload input contract")
     E = module("bundle_endpoints")
     owner = SimpleNamespace(**globals())
@@ -2235,6 +2241,20 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
         required[key] = expected
     routes = index_store.mapping()
     routes.load(((tuple(value["owner"]), value["edges"]) for value in json_rows(pins.pin(request["routes"]))), duplicate="Duplicate structural route owner")
+    if "extension" in request:
+        extension = pins.read(request["extension"])
+        member = required["name"], required["member"]
+        candidates = pins.pin(extension["candidates"])
+
+        def additions():
+            for value in json_rows(candidates):
+                key = tuple(value["destination"])
+                if key[:2] == member and key not in selected:
+                    yield key, value
+
+        selected.load(additions(), duplicate="Duplicate extension candidate")
+        producer = ProducerRecords(provider_paths, index_store=index_store)
+        module("bundle_prepare").extend_selection(owner, member, required, selected, types, routes, extension, producer)
     codec = pins.pin(request["codec"])
     canonical = request.get("canonical")
     if canonical is not None:
@@ -2265,6 +2285,7 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
             provider_paths=provider_paths,
             index_store=index_store,
             record_workers=record_workers,
+            retained_records=selected if "extension" in request else None,
         )
         qualification.check_final(emission["bundle"])
         final = emission

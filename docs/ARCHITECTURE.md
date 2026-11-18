@@ -92,6 +92,13 @@ body, profile, index and witness hashes. Setup opens only declared staged member
 teardown closes them on success or failure. Full-output cache hits still check
 actual final local and external managed bodies, and inputs are rehashed before
 the receipt is written. The final artifact is the canonical repack when selected.
+An optional pinned `extension` supplies qualified candidate records, additional
+asset groups and assets, and measured external field routes.
+`bundle_prepare.extend_selection` walks their local closure from the actual
+producer extents and complete layouts. A newly selected external field requires
+its measured owner, field path, pointer and endpoint. The emitter checks the
+resulting closure, including staged endpoints and current managed scripts,
+before writing any catalog declaration.
 The same checked invocation writes `catalog-profile.json` from the emitted
 bundle identity and required asset groups, and pins that declaration and the
 actual final bundle in its receipt. The alias donor remains a separate catalog
@@ -431,8 +438,10 @@ released in `finally`. Its local receipt records failures before the Android
 gameplay gate.
 The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
 After the skin checks, the fixture loads the objective state configs from
-`commando-prefab-lab`, follows their projectile and trail references, and checks
-each keyed ghost's typed catalog location and native components.
+`commando-prefab-lab`. It follows projectile and trail references from those
+configs, the objective support and effect prefabs in their original owners,
+and the FireTrail catalog prefab. It checks each keyed ghost's typed catalog
+location and native components.
 During startup, `BodyCatalogSession` opens the objective-support bundle through
 `TeleporterWorldSession` before deserializing body prefabs. The original
 CharacterBody family loads in provider order before the explicit Commando read
