@@ -21,6 +21,11 @@ leaves an adjacent <name>.retired.json marker. Rebuild from the recorded source
 commit if an old candidate is ever needed again.
 
 Defaults to a dry-run plan; --apply deletes and writes a ledger.
+--supersede OLD --by NEW marks a physical generated run as replaced by the
+latest direct result.json or *.done.json with success=true. After 24 hours,
+unchanged receipt-bound markers let generated outputs ignore historical manifest
+pins, never state/baseline/device/coordination-lock pins or .prune-keep. Evidence
+and authored files remain; this does not delete arbitrary run directories.
 Build-cache protection uses pinned state/baseline APKs, current build/base
 entries, latest installed APKs, newest worker and lane builds, their frozen
 payload references, explicit keeps and the age guard. Stale `.prune-keep` markers, nested content
@@ -48,6 +53,7 @@ BULKY_DIRS = {"payload", "il2cppOutput", "Bee"}
 LARGE_BINARY = 32 * 1024 * 1024
 SCAN_ROOTS = ("experiments", "coordination", "rebuild")
 KEEP_MARKER = ".prune-keep"
+SUPERSEDED_MARKER = ".superseded-by"
 
 
 def tree_size(path):
@@ -83,24 +89,29 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def protected_state(work, extra):
+def protected_state(work, extra, *, authoritative=False):
     hashes, paths = set(extra), set()
-    for name in PROTECTION_DOCS:
+    for name in PROTECTION_DOCS[:2] if authoritative else PROTECTION_DOCS:
         path = ROOT / name
         if path.is_file():
             hashes |= set(HASH.findall(path.read_text(errors="replace")))
-    receipts = [work / name for name in PROTECTION_RECEIPTS]
+    receipts = [work / PROTECTION_RECEIPTS[0]] if authoritative else [work / name for name in PROTECTION_RECEIPTS]
+    if authoritative:
+        receipts += [ROOT / name for name in PROTECTION_DOCS[:2]]
     receipts += sorted((work / "device").glob("*.json")) + sorted((work / "device").glob("*/*.json"))
     for path in receipts:
         if not path.is_file():
             continue
         text = path.read_text(errors="replace")
         hashes |= set(HASH.findall(text))
-        for match in re.finditer(r'"(/[^"]+|work/[^"]+)"', text):
-            candidate = Path(match[1])
+        references = re.findall(r'["`](/[^"`]+|work/[^"`]+)["`]', text)
+        if authoritative:
+            references += re.findall(r'(?<![\w/])work/[^\s"`<>)\],;]+', text)
+        for reference in references:
+            candidate = Path(reference)
             candidate = candidate if candidate.is_absolute() else ROOT / candidate
             # Shallow roots such as work/experiments would protect everything.
-            if (candidate.is_relative_to(work) and len(candidate.relative_to(work).parts) >= 3) or (
+            if (candidate.is_relative_to(work) and len(candidate.relative_to(work).parts) >= (2 if authoritative else 3)) or (
                 candidate.is_relative_to(ROOT / ".local/build-lanes") and len(candidate.relative_to(ROOT / ".local/build-lanes").parts) >= 1
             ):
                 paths.add(candidate.resolve())
@@ -123,6 +134,71 @@ def read_receipt(path):
         return value if isinstance(value, dict) else {}
     except (OSError, ValueError):
         return {}
+
+
+def run_directory(value, work):
+    """Only physical run/version directories in the existing generated roots."""
+    path = Path(value)
+    path = path if path.is_absolute() else ROOT / path
+    if not path.is_relative_to(work) or ".." in path.parts:
+        raise ValueError("supersession requires a run directory under work")
+    relative = path.relative_to(work)
+    if len(relative.parts) < 2 or relative.parts[0] not in SCAN_ROOTS:
+        raise ValueError("supersession requires an experiment, coordination or rebuild run")
+    if not path.is_dir() or any(part.is_symlink() for part in (path, *path.parents) if part.is_relative_to(work)):
+        raise ValueError("supersession requires physical directories, not symlinks")
+    return path
+
+
+def success_receipt(run):
+    candidates = set(run.glob("*.done.json")) | {run / "result.json"}
+    candidates = [path for path in candidates if path.exists() or path.is_symlink()]
+    if not candidates or any(path.is_symlink() or not path.is_file() for path in candidates):
+        raise ValueError("replacement needs a regular success receipt")
+    receipt = max(candidates, key=lambda path: (path.stat().st_mtime_ns, path.name))
+    if read_receipt(receipt).get("success") is not True:
+        raise ValueError("replacement's latest receipt must report success true")
+    return receipt
+
+
+def supersede(old, new, work):
+    old, new = run_directory(old, work), run_directory(new, work)
+    if old == new or old.is_relative_to(new) or new.is_relative_to(old):
+        raise ValueError("superseded and replacement runs must be disjoint")
+    receipt = success_receipt(new)
+    marker = {"replacement": str(new.relative_to(ROOT)), "receipt": str(receipt.relative_to(ROOT)), "receipt_sha256": sha256(receipt)}
+    # Exclusive creation never follows a marker link or silently resets its age.
+    with (old / SUPERSEDED_MARKER).open("x") as stream:
+        stream.write(json.dumps(marker, indent=2) + "\n")
+    return marker
+
+
+def superseded_ready(run, work, hashes, paths, cutoff):
+    """Fail closed on stale receipt identity, new writes or authoritative pins."""
+    try:
+        run = run_directory(run, work)
+        marker_path = run / SUPERSEDED_MARKER
+        if marker_path.is_symlink() or not marker_path.is_file():
+            return False
+        marker = read_receipt(marker_path)
+        replacement = run_directory(marker["replacement"], work)
+        if run == replacement or run.is_relative_to(replacement) or replacement.is_relative_to(run):
+            return False
+        receipt = success_receipt(replacement)
+        if str(receipt.relative_to(ROOT)) != marker["receipt"] or sha256(receipt) != marker["receipt_sha256"]:
+            return False
+        if newest_mtime(run) >= min(cutoff, time.time() - 24 * 3600):
+            return False
+        if kept(run, work) or any(run.rglob(KEEP_MARKER)) or is_protected_path(run, paths):
+            return False
+        for path in run.rglob("*"):
+            if path.is_symlink():
+                return False
+            if path.is_file() and path.name.endswith(BINARY_SUFFIXES) and (sha256(path) in hashes or any(h[:12] in str(path.parent) for h in hashes)):
+                return False
+        return True
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
 
 
 def payload_cache_key(cache_root, value):
@@ -208,11 +284,14 @@ def is_protected_path(path, paths):
 
 
 class Planner:
-    def __init__(self, work, hashes, paths, min_age_hours, cache_protection=None, cache_min_age_hours=None):
+    def __init__(self, work, hashes, paths, min_age_hours, cache_protection=None, cache_min_age_hours=None, superseded_protection=None):
         self.work, self.hashes, self.paths = work, hashes, paths
         self.cutoff = time.time() - min_age_hours * 3600
         self.cache_cutoff = time.time() - (min_age_hours if cache_min_age_hours is None else cache_min_age_hours) * 3600
         self.items, self.kept = [], []
+        self.authoritative_hashes, self.authoritative_paths = (
+            superseded_protection if superseded_protection is not None else protected_state(work, [], authoritative=True)
+        )
         self.cache_hashes, self.cache_keys = cache_protection if cache_protection is not None else cache_protected_state(work, [])
 
     def old(self, path):
@@ -372,12 +451,14 @@ class Planner:
             else:
                 self.keep(entry, "recent")
 
-    def apk_protected(self, path):
-        if is_protected_path(path, self.paths):
+    def apk_protected(self, path, *, superseded=False):
+        hashes = self.authoritative_hashes if superseded else self.hashes
+        paths = self.authoritative_paths if superseded else self.paths
+        if is_protected_path(path, paths):
             return True
-        if any(h[:12] in str(path.parent) for h in self.hashes):
+        if any(h[:12] in str(path.parent) for h in hashes):
             return True
-        return sha256(path) in self.hashes
+        return sha256(path) in hashes
 
     def scan(self, name):
         root = self.work / name
@@ -385,17 +466,37 @@ class Planner:
             return
         for base, dirs, files in os.walk(root):
             here = Path(base)
-            protected_here = any(f.endswith(BINARY_SUFFIXES) and self.apk_protected(here / f) for f in files if not (here / f).is_symlink())
+            superseded_run = next(
+                (
+                    parent
+                    for parent in (here, *here.parents)
+                    if parent.is_relative_to(root) and ((parent / SUPERSEDED_MARKER).exists() or (parent / SUPERSEDED_MARKER).is_symlink())
+                ),
+                None,
+            )
+            if superseded_run is not None and not superseded_ready(superseded_run, self.work, self.authoritative_hashes, self.authoritative_paths, self.cutoff):
+                self.keep(superseded_run, "supersession not eligible or protected")
+                dirs.clear()
+                continue
+            paths = self.authoritative_paths if superseded_run else self.paths
+            extra = (
+                {"superseded_run": str(superseded_run.relative_to(ROOT)), "superseded_marker_sha256": sha256(superseded_run / SUPERSEDED_MARKER)}
+                if superseded_run
+                else {}
+            )
+            protected_here = any(
+                f.endswith(BINARY_SUFFIXES) and self.apk_protected(here / f, superseded=bool(superseded_run)) for f in files if not (here / f).is_symlink()
+            )
             for d in list(dirs):
                 path = here / d
                 unity_library = d == "Library" and (here / "Assets").is_dir()
                 if path.is_symlink() or not (d in BULKY_DIRS or unity_library):
                     continue
                 dirs.remove(d)
-                if protected_here or is_protected_path(path, self.paths):
+                if protected_here or is_protected_path(path, paths):
                     self.keep(path, "beside a protected APK")
                 elif self.old(path):
-                    self.add(path, "generated directory")
+                    self.add(path, "generated directory", receipt_protection=not superseded_run, **extra)
             for f in files:
                 path = here / f
                 if path.is_symlink() or f.endswith(".retired.json"):
@@ -404,19 +505,30 @@ class Planner:
                 library = f.endswith(".so") and path.stat().st_size >= LARGE_BINARY
                 if not (binary or library):
                     continue
-                if protected_here or is_protected_path(path, self.paths):
+                if protected_here or is_protected_path(path, paths):
                     self.keep(path, "protected APK set")
                 elif self.old(path):
-                    self.add(path, "generated binary")
+                    self.add(path, "generated binary", receipt_protection=not superseded_run, **extra)
 
 
 def apply(plan, work, ledger_path):
     retired_receipts = work / "cleanup-analysis/pruned-build-cache"
     reason = "Rebuildable generated output discarded by scripts/prune-generated.py; rebuild from the recorded source commit"
+    supersessions = {}
     for item in plan:
         path = item["path"]
         if not path.exists() and not path.is_symlink():
             continue
+        if "superseded_run" in item:
+            run = ROOT / item["superseded_run"]
+            if run not in supersessions:
+                hashes, paths = protected_state(work, [], authoritative=True)
+                supersessions[run] = (
+                    superseded_ready(run, work, hashes, paths, time.time() - 24 * 3600) and sha256(run / SUPERSEDED_MARKER) == item["superseded_marker_sha256"]
+                )
+            if not supersessions[run]:
+                item["skipped"] = "supersession changed or became protected after planning"
+                continue
         if item["kind"] == "build lane":
             from build_lanes import remove
 
@@ -468,13 +580,31 @@ def main():
     parser.add_argument("--keep-sha256", action="append", default=[], help="Additional APK SHA-256 to protect")
     parser.add_argument("--apply", action="store_true", help="Delete the planned items (default: print the plan only)")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--supersede", metavar="OLD", help="Mark a generated run/version as replaced; no deletion")
+    parser.add_argument("--by", metavar="NEW", help="Replacement run with a passing receipt")
     args = parser.parse_args()
     work = Path(args.work_dir).resolve()
     if not work.is_dir() or not work.is_relative_to(ROOT):
         sys.exit("work directory must exist inside this checkout")
+    if args.supersede or args.by:
+        if not args.supersede or not args.by or args.apply:
+            parser.error("--supersede OLD requires --by NEW and cannot be combined with --apply")
+        try:
+            print(json.dumps(supersede(args.supersede, args.by, work)))
+        except (OSError, ValueError) as error:
+            parser.error(str(error))
+        return
     # No lock check: the --min-age-hours guard already excludes anything a running build writes.
     hashes, paths = protected_state(work, args.keep_sha256)
-    planner = Planner(work, hashes, paths, args.min_age_hours, cache_protected_state(work, args.keep_sha256), args.cache_min_age_hours)
+    planner = Planner(
+        work,
+        hashes,
+        paths,
+        args.min_age_hours,
+        cache_protected_state(work, args.keep_sha256),
+        args.cache_min_age_hours,
+        protected_state(work, args.keep_sha256, authoritative=True),
+    )
     planner.build_cache()
     planner.lab_build()
     planner.lanes()

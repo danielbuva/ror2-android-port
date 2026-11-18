@@ -1,3 +1,5 @@
+from contextlib import redirect_stdout, redirect_stderr
+import io
 import importlib.util
 import json
 import os
@@ -405,6 +407,153 @@ class PruneGeneratedTests(unittest.TestCase):
         self.assertFalse(lane.is_symlink())
         self.assertTrue((cold / "checkout/work/Library/binary").is_file())
         self.assertTrue(receipt.is_file())
+
+    def superseded_pair(self):
+        old = self.work / "coordination/fixture/v1"
+        new = self.work / "coordination/fixture/v2"
+        (old / "payload").mkdir(parents=True)
+        (old / "payload/data").write_bytes(b"generated")
+        (old / "candidate.apk").write_bytes(b"old candidate")
+        (old / "result.json").write_text('{"success": true}')
+        (old / "logcat.txt").write_text("retained evidence")
+        new.mkdir()
+        (new / "terminal.done.json").write_text('{"success": true}')
+        age(old)
+        prune.supersede(old, new, self.work)
+        return old, new
+
+    def test_superseded_marker_waits_24_hours_then_overrides_old_manifest_only(self):
+        old, new = self.superseded_pair()
+        config = self.work / "config/current-build.json"
+        config.parent.mkdir()
+        config.write_text(json.dumps({"apk": str(old / "candidate.apk"), "apk_sha256": prune.sha256(old / "candidate.apk")}))
+        self.assertEqual(self.plan().items, [])
+        age(old)
+        planner = self.plan()
+        self.assertEqual({item["path"] for item in planner.items}, {old / "candidate.apk", old / "payload"})
+        prune.apply(planner.items, self.work, self.work / "cleanup-analysis/ledger.json")
+        self.assertFalse((old / "candidate.apk").exists())
+        self.assertFalse((old / "payload").exists())
+        for name in ("result.json", "logcat.txt", ".superseded-by", "candidate.apk.retired.json", "payload.retired.json"):
+            self.assertTrue((old / name).is_file())
+        self.assertTrue((new / "terminal.done.json").is_file())
+
+    def test_superseded_protections_survive_historical_override(self):
+        for protection in ("state-hash", "baseline-path", "device-hash", "device-path", "keep", "nested-keep", "ancestor-keep", "explicit"):
+            with self.subTest(protection=protection):
+                old, new = self.superseded_pair()
+                digest = prune.sha256(old / "candidate.apk")
+                if protection == "state-hash":
+                    (self.root / "PORTING_STATE.md").write_text(digest)
+                elif protection == "baseline-path":
+                    (self.root / "docs").mkdir(exist_ok=True)
+                    (self.root / "docs/BASELINE.md").write_text("`work/coordination/fixture/v1`")
+                elif protection.startswith("device"):
+                    path = self.work / "device/fixture/installed.json"
+                    path.parent.mkdir(parents=True)
+                    path.write_text(json.dumps({"apk": str(old / "candidate.apk")} if protection.endswith("path") else {"apk_sha256": digest}))
+                elif protection != "explicit":
+                    target = old.parent if protection == "ancestor-keep" else old / "payload" if protection == "nested-keep" else old
+                    (target / ".prune-keep").touch()
+                age(old)
+                hashes, paths = prune.protected_state(self.work, [])
+                planner = prune.Planner(
+                    self.work,
+                    hashes,
+                    paths,
+                    24,
+                    superseded_protection=prune.protected_state(self.work, [digest] if protection == "explicit" else [], authoritative=True),
+                )
+                planner.scan("coordination")
+                self.assertEqual(planner.items, [])
+                shutil.rmtree(self.work)
+                (self.root / "PORTING_STATE.md").write_text("")
+                if (self.root / "docs/BASELINE.md").exists():
+                    (self.root / "docs/BASELINE.md").unlink()
+
+    def test_superseded_invalid_receipt_marker_and_new_activity_fail_closed(self):
+        for condition in (
+            "receipt-change",
+            "receipt-failure",
+            "receipt-missing",
+            "newer-failure",
+            "marker-invalid",
+            "marker-symlink",
+            "receipt-symlink",
+            "recent-output",
+            "nested-link",
+        ):
+            with self.subTest(condition=condition):
+                old, new = self.superseded_pair()
+                age(old)
+                receipt = new / "terminal.done.json"
+                if condition == "receipt-change":
+                    receipt.write_text('{"success":true,"changed":true}')
+                elif condition == "receipt-failure":
+                    receipt.write_text('{"success":false}')
+                elif condition == "receipt-missing":
+                    receipt.unlink()
+                elif condition == "newer-failure":
+                    (new / "result.json").write_text('{"success":false}')
+                elif condition == "marker-invalid":
+                    (old / ".superseded-by").write_text("not json")
+                    age(old)
+                elif condition in ("marker-symlink", "receipt-symlink"):
+                    path = old / ".superseded-by" if condition == "marker-symlink" else receipt
+                    target = self.root / "unrelated"
+                    target.write_bytes(path.read_bytes())
+                    path.unlink()
+                    path.symlink_to(target)
+                elif condition == "recent-output":
+                    (old / "payload/new-data").write_bytes(b"new")
+                else:
+                    (old / "linked").symlink_to(new, target_is_directory=True)
+                self.assertEqual(self.plan().items, [])
+                shutil.rmtree(self.work)
+
+    def test_supersede_requires_disjoint_physical_runs_and_latest_passing_receipt(self):
+        old, new = self.superseded_pair()
+        marker = old / ".superseded-by"
+        with self.assertRaises(FileExistsError):
+            prune.supersede(old, new, self.work)
+        marker.unlink()
+        for target in (old, old.parent, old / "payload", self.root, self.work / "coordination"):
+            with self.assertRaises(ValueError):
+                prune.supersede(old, target, self.work)
+        (new / "terminal.done.json").write_text('{"success":1}')
+        with self.assertRaises(ValueError):
+            prune.supersede(old, new, self.work)
+        self.assertFalse(marker.exists())
+
+    def test_supersede_cli_marks_only_and_rejects_apply_combination(self):
+        old, new = self.superseded_pair()
+        (old / ".superseded-by").unlink()
+        with (
+            patch.object(prune.subprocess, "check_output", return_value=str(self.root / ".git")),
+            patch.object(sys, "argv", [str(SCRIPT), "--supersede", str(old), "--by", str(new)]),
+            redirect_stdout(io.StringIO()),
+        ):
+            prune.main()
+        self.assertTrue((old / ".superseded-by").is_file())
+        self.assertTrue((old / "candidate.apk").is_file())
+        with (
+            patch.object(prune.subprocess, "check_output", return_value=str(self.root / ".git")),
+            patch.object(sys, "argv", [str(SCRIPT), "--supersede", str(old), "--by", str(new), "--apply"]),
+            redirect_stderr(io.StringIO()),
+            self.assertRaises(SystemExit),
+        ):
+            prune.main()
+        self.assertTrue((old / "candidate.apk").is_file())
+
+    def test_superseded_apply_rechecks_protection_added_after_plan(self):
+        old, _ = self.superseded_pair()
+        age(old)
+        planner = self.plan()
+        (old / ".prune-keep").touch()
+        prune.apply(planner.items, self.work, self.work / "cleanup-analysis/ledger.json")
+        self.assertTrue((old / "candidate.apk").exists())
+        self.assertTrue((old / "payload").is_dir())
+        self.assertTrue(all("skipped" in item for item in planner.items))
 
     def test_prune_keep_marker_protects_a_directory_tree(self):
         run = self.work / "coordination/oracle/packet"
