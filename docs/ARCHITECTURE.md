@@ -48,6 +48,13 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
+`StageGeometrySession` accepts an explicit lab-only `diagnosticStage` at
+fresh-run entry. It loads the configured geometry and `RunClockSession`
+checks its original stage identity against the staged SceneDef. The diagnostic
+enters with fresh Run counters and skips the stage-one selection RNG draw. It
+uses the stored loadout and the existing assisted-run profile exclusions.
+Existing stage and run cleanup own teardown.
+
 `WholeCatalogLoader.RegisterLocations` wraps its completed map with an
 `IResourceLocator` request observer. Each lookup logs its original key, key type,
 requested asset type, phase and map result, including unresolved soft references.

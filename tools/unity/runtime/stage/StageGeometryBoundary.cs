@@ -41,6 +41,7 @@ public sealed partial class PortSession
     string firstStageName;
     bool firstStagePolicyConsumed;
     float firstStageSelectionValue;
+    bool DirectStageDiagnosticRequested => !string.IsNullOrEmpty(r.diagnosticStage);
     StageGeometrySession stageGeometrySession;
     StageGeometrySession GetStageGeometrySession()
     {
@@ -212,7 +213,13 @@ public sealed partial class PortSession
             coordinator.firstStageName = "golemplains";
             coordinator.firstStagePolicyConsumed = false;
             stageSourceNames = coordinator.r.originalStageSceneNames ?? cfg.originalStageSceneNames ?? new string[0];
-            if (cfg.integratedWorld && cfg.teleporterLoop && coordinator.r.freePlay)
+            if (coordinator.DirectStageDiagnosticRequested)
+            {
+                coordinator.firstStageName = coordinator.r.diagnosticStage;
+                coordinator.Check(coordinator.firstStageName != SirenEncounterContract.SceneName,
+                                  "Siren's Call requires its native transition entry owner");
+            }
+            else if (cfg.integratedWorld && cfg.teleporterLoop && coordinator.r.freePlay)
             {
                 // Run.Start is unavailable behind the stock platform boundary. Use its shipped
                 // scene group, weighted selector and RNG before the body needs stage geometry.
@@ -231,12 +238,12 @@ public sealed partial class PortSession
                 coordinator.Check(selected && selected.stageOrder == 1, "Original starting scene selection failed");
                 coordinator.firstStageName = selected.cachedName;
                 coordinator.firstStagePolicyConsumed = true;
-                if (coordinator.firstStageName != "golemplains")
-                {
-                    coordinator.firstStageSpec = cfg.integratedStages.SingleOrDefault(stage => stage.name == coordinator.firstStageName);
-                    coordinator.Check(coordinator.firstStageSpec != null && !coordinator.firstStageSpec.moonMission,
-                                      "Original starting scene has no converted Android content: " + coordinator.firstStageName);
-                }
+            }
+            if (coordinator.firstStageName != "golemplains")
+            {
+                coordinator.firstStageSpec = cfg.integratedStages.SingleOrDefault(stage => stage.name == coordinator.firstStageName);
+                coordinator.Check(coordinator.firstStageSpec != null && !coordinator.firstStageSpec.moonMission,
+                                  "Starting scene has no converted Android stage content: " + coordinator.firstStageName);
             }
             var load = coordinator.firstStageSpec == null
                            ? LoadStageGeometry("golemplains-spine-lab", cfg.stagePreviewCallbacks, null, cfg.stageMapZoneCount,

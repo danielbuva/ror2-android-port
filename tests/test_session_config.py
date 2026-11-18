@@ -96,6 +96,10 @@ class SessionConfigTests(unittest.TestCase):
                 self.assertEqual(declaration, self.report[name])
         self.assertEqual(list(self.config), [name for name in self.report if name in self.config])
 
+    def test_direct_stage_is_a_default_off_launch_selector(self):
+        self.assertEqual(self.report["diagnosticStage"], ((), ("string",), ()))
+        self.assertNotIn("diagnosticStage", self.config)
+
     def test_config_contains_exactly_the_fields_read_from_config(self):
         reads = set()
         for source in self.partials.values():

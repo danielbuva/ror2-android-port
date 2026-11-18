@@ -29,6 +29,10 @@ each dispatch and its actual elapsed time are retained in the terminal receipt.
 taps the observed Start button and waits for a ready world before the clock begins.
 Use it with an explicit auto-route selector for stage-transition memory soaks;
 physical and ordinary-play qualification remain separate.
+For a fresh lab run in a specific staged base scene, supply the scene's
+catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
+The selector uses the stored loadout and existing integrated stage loader.
+Siren's Call still enters through its native transition owner.
 `capture_golem_attacks: true` (lab launch mode only) saves up to eight
 three-frame bursts under `golem-attacks/` on live Unity Golem clap or laser
 entry logs. Each burst records the triggering line and capture times. Clap
