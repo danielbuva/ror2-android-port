@@ -3238,8 +3238,8 @@ records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
 route observations in either package. The runner resolves the installed APK's
 attempt before thermal sampling begins. After any bootstrap input, it waits for the
-attempt/PID-bound native menu, requires owned display-zero
-focus, taps the reported Start button and waits for a ready world before the
+attempt/PID-bound native menu, requires owned display-zero focus, captures the
+menu and taps the reported Start button. It waits for a ready world before the
 observation clock begins. Existing periodic captures retain PSS,
 native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage

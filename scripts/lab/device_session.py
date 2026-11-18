@@ -830,6 +830,7 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
         coordinates = menu_start_coordinates(menu)
         if coordinates is None:
             raise RuntimeError("Current native menu Start geometry unavailable")
+        device.collect("screenshot", output)
         x, y = coordinates
         device.sh("input", "-d", "0", "tap", str(x), str(y), timeout=5)
     else:

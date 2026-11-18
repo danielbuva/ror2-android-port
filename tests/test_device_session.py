@@ -255,6 +255,7 @@ class DeviceSessionTests(unittest.TestCase):
             )
         target.sh.assert_any_call("input", "keyboard", "keyevent", "KEYCODE_ENTER")
         target.sh.assert_any_call("input", "-d", "0", "tap", "171", "757", timeout=5)
+        target.collect.assert_called_once_with("screenshot", self.output)
         self.assertTrue((self.output / "world-start.json").is_file())
         with (
             mock.patch.object(runner, "wait_for_settings_report", return_value=menu),
