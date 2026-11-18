@@ -1233,8 +1233,10 @@ stride, regenerates each face from its top level without a vertical flip, and
 writes CompleteImageSize per face. Existing BC decoding, float mip filtering,
 public ETC and SDK RGBA encoders share the same pack/checkpoint contract. The
 native pixel helper owns BC6 byte conversion and HDR export-half/DoubleLDR mip
-handling. Source identity and unresolved native reflections remain explicit
-gates; no target pixel fallback is available.
+handling. Its `bc6-half` pipe mode decodes one unsigned BC6H mip into little-endian
+RGBAHalf with opaque alpha. It crops edge blocks to the requested dimensions and
+streams four rows at a time. The default-scene owner still consumes the native
+capture while source reflection and ambient compatibility are evaluated.
 The opt-in `cube-preserve` operation retains original BC6H/RGBAHalf face/mip
 bytes, format, color space and usage with per-face CompleteImageSize. The audited
 `recipe/owner-source-baked-reflections.json` selects two original baked probes;
@@ -1523,6 +1525,16 @@ registry pins the selected sources and importer metadata. The current audio
 compiler still needs its macOS SDK tools and checkout work root. The package
 owner removes temporary extraction files and retains the selected inputs and
 terminal receipt.
+The optional `--audio-stage-receipt` reads relative member names from a private
+authoring stage. The current conversion job checks those names against its new
+local audio receipt and exposes the receipt, banks, streamed media and licensed
+ARM64 library as signed APK entries. The native job consumes that same conversion,
+so the packaged receipt and compiled runtime pin share one owner. Android audio
+production and playback remain open.
+When a public bundle index exceeds the installer's 4 MiB limit, the publisher
+writes shared dependency closures once. Installer 4 or later expands their
+references for the existing signed dependency checks and retains the compact
+index on disk. Smaller indexes keep their existing encoding.
 The optional `--native-request` adds `owner-code/native.py` as one cached job
 with final `libil2cpp.so` and matching `global-metadata.dat` outputs. With
 `--code-request`, an assembly-stage `produce.py --stop-after-conversion` job
@@ -3834,6 +3846,14 @@ runtime source selection. Generated request and bank pins default to disabled;
 build-time generators must write derived sources to ignored output directories.
 Original audio can be admitted only after all declared preparation succeeds;
 actual engine, bank and event results require device evidence.
+The existing bank stager and runtime stage-pin generator accept `--owner-work`
+for the reviewed full import inventory and the decoder-free bank index. The
+stager writes its private receipt and payload beneath that workspace. The pin
+generator verifies the receipt and staged bytes before emitting C# constants.
+The runtime opt-in request generator also accepts this explicit workspace. It
+binds the same-build managed and native inputs to the selected index, the
+owner inventory and the exact stage receipt.
+Signed APK assembly and native Wwise playback remain qualification gates.
 The payload copier preflights existing bank/media paths, file types and sizes
 without reading their contents for capacity accounting. It hashes each existing
 payload at the actual reuse point; integrity results never survive a yield.

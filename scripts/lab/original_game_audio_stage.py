@@ -195,11 +195,13 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
     }
 
 
-def validate_streamed_media_rows(receipt: dict) -> list[dict]:
+def validate_streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None = None) -> list[dict]:
     """Validate the accepted fixed media closure; reusable by producer/pin tooling."""
     if not isinstance(receipt, dict) or receipt.get("schema") != "original-game-wwise-bank-cohort-r2":
         raise ValueError("bank stage receipt must use streamed-media cohort r2")
     for key, expected in R2_RECEIPT_PINS.items():
+        if key == "current_bank_index_sha256" and bank_index_sha256 is not None:
+            expected = bank_index_sha256
         if receipt.get(key) != expected:
             raise ValueError(f"bank stage receipt source pin differs: {key}")
     outputs = receipt.get("outputs")

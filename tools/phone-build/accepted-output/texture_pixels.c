@@ -191,7 +191,8 @@ int main(int argc, char **argv) {
     int is_bc4 = argc == 4 && !strcmp(argv[3], "bc4");
     int is_bc5 = argc == 4 && !strcmp(argv[3], "bc5");
     int is_bc6 = argc == 4 && !strcmp(argv[3], "bc6");
-    if (argc == 4 && !is_bc1 && !is_bc3 && !is_bc4 && !is_bc5 && !is_bc6) {
+    int is_bc6_half = argc == 4 && !strcmp(argv[3], "bc6-half");
+    if (argc == 4 && !is_bc1 && !is_bc3 && !is_bc4 && !is_bc5 && !is_bc6 && !is_bc6_half) {
         if (!strcmp(argv[3], "dilate")) return dilate((int)width, (int)height);
         if (!strcmp(argv[3], "mips-linear")) return mips((int)width, (int)height, 0, 0);
         if (!strcmp(argv[3], "mips-srgb")) return mips((int)width, (int)height, 1, 0);
@@ -199,13 +200,15 @@ int main(int argc, char **argv) {
         if (!strcmp(argv[3], "hdr-mips-srgb")) return mips((int)width, (int)height, 1, 1);
         return 65;
     }
-    unsigned char *rows = malloc(width * 16);
+    size_t pixel_bytes = is_bc6_half ? 8 : 4;
+    size_t row_bytes = width * pixel_bytes;
+    unsigned char *rows = malloc(4 * row_bytes);
     if (!rows)
         return 66;
     for (int by = 0; by < height; by += 4) {
         for (int bx = 0; bx < width; bx += 4) {
             _Alignas(uint64_t) unsigned char block[16];
-            unsigned char decoded[64];
+            unsigned char decoded[16 * 8];
             size_t block_bytes = is_bc1 || is_bc4 ? 8 : 16;
             if (fread(block, 1, block_bytes, stdin) != block_bytes)
                 return 67;
@@ -214,6 +217,19 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < 16; i++) decoded[i * 4 + 3] = 255;
                 bc45_channel(block, decoded, 0);
                 if (is_bc5) bc45_channel(block + 8, decoded, 1);
+            } else if (is_bc6_half) {
+                unsigned short values[16 * 3];
+                bcdec_bc6h_half(block, values, 12, 0);
+                for (int i = 0; i < 16; i++) {
+                    for (int c = 0; c < 3; c++) {
+                        unsigned short bits = values[i * 3 + c];
+                        decoded[i * 8 + c * 2] = bits & 0xff;
+                        decoded[i * 8 + c * 2 + 1] = bits >> 8;
+                    }
+                    // IEEE binary16 alpha 1.0, in little-endian byte order.
+                    decoded[i * 8 + 6] = 0;
+                    decoded[i * 8 + 7] = 0x3c;
+                }
             } else if (is_bc6) {
                 float values[16 * 3];
                 bcdec_bc6h_float(block, values, 12, 0);
@@ -227,10 +243,10 @@ int main(int argc, char **argv) {
             else bcdec_bc7(block, decoded, 16);
             int columns = width - bx < 4 ? width - bx : 4;
             for (int y = 0; y < 4 && by + y < height; y++)
-                memcpy(rows + (y * width + bx) * 4, decoded + y * 16, columns * 4);
+                memcpy(rows + y * row_bytes + bx * pixel_bytes, decoded + y * 4 * pixel_bytes, columns * pixel_bytes);
         }
         int count = height - by < 4 ? height - by : 4;
-        if (fwrite(rows, 1, width * count * 4, stdout) != (size_t)width * count * 4)
+        if (fwrite(rows, row_bytes, count, stdout) != (size_t)count)
             return 68;
     }
     if (fgetc(stdin) != EOF)

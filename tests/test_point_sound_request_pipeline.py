@@ -60,6 +60,11 @@ class RequestPipelineTests(unittest.TestCase):
         )
 
     def test_composed_game_is_generated_into_request_and_runtime_pin(self) -> None:
+        for explicit in (False, True):
+            with self.subTest(explicit_owner_work=explicit):
+                self.check_composed_game_request_pin(explicit)
+
+    def check_composed_game_request_pin(self, explicit: bool) -> None:
         producer = load(PRODUCER_PATH, "private_audio_producer")
         generator = load(GENERATOR_PATH, "private_request_generator")
         with tempfile.TemporaryDirectory() as temp:
@@ -206,12 +211,15 @@ class RequestPipelineTests(unittest.TestCase):
             stage_doc["wwise_global_prefab_sha256"] = values["wwise_global_prefab_sha256"]
             stage_doc["init_adaptation_receipt_sha256"] = values["init_adaptation_receipt_sha256"]
             stage_path.write_text(json.dumps(stage_doc, sort_keys=True))
-            fake_generator = SimpleNamespace(EXPECTED=expected, CONTRACT_SCHEMA=generator.CONTRACT_SCHEMA)
+            generator.EXPECTED = expected if not explicit else {**expected, "current_bank_index_sha256": "2" * 64}
+            generator.OWNER_BANK_INDEX_SHA256 = expected["current_bank_index_sha256"]
+            fake_generator = SimpleNamespace(expected_sources=generator.expected_sources, CONTRACT_SCHEMA=generator.CONTRACT_SCHEMA)
             (work / "out").mkdir()
             (work / "generated").mkdir()
-            producer.ROOT = root
+            producer.ROOT = root / "separate-checkout" if explicit else root
             producer.TOOLS = PATCH / "tools/unity/support/audio/generators"
             producer.LINEAGE.update({"accepted_game_sha256": raw_game_sha, "raw_api_sha256": raw_api_sha, "accepted_input_id": "accepted"})
+            owner = {"owner_work": work} if explicit else {}
             with mock.patch.object(producer, "load_module", return_value=fake_generator):
                 request_path, contract_path = producer.generate_request_contract(
                     work / "out",
@@ -228,6 +236,7 @@ class RequestPipelineTests(unittest.TestCase):
                     init_receipt,
                     True,
                     True,
+                    **owner,
                 )
             contract = json.loads(contract_path.read_text())
             request = json.loads(request_path.read_text())
@@ -241,15 +250,16 @@ class RequestPipelineTests(unittest.TestCase):
             checkout.mkdir()
             (checkout / "work").symlink_to(work, target_is_directory=True)
             generator.ROOT = checkout
-            generator.WORK = work
-            generator.streamed_media_rows = lambda receipt: receipt["streamed_media"]
-            generator.EXPECTED = expected
+            generator.WORK = checkout if explicit else work
+            media_rows = mock.Mock(return_value=stage_doc["streamed_media"])
+            generator.streamed_media_rows = media_rows
             generator.CONTRACT_ROLES = roles
-            validated = generator.validate(request_path, contract_path, stage_path)
+            validated = generator.validate(request_path, contract_path, stage_path, **owner)
             self.assertEqual(request["request_id"], validated["request"]["request_id"])
             self.assertEqual(120, validated["streamed_media_count"])
+            media_rows.assert_called_once_with(stage_doc, bank_index_sha256=expected["current_bank_index_sha256"])
             generated_pin = work / "generated-pin.cs"
-            emitted = generator.emit(request_path, contract_path, stage_path, generated_pin)
+            emitted = generator.emit(request_path, contract_path, stage_path, generated_pin, **owner)
             self.assertEqual("work/generated-pin.cs", emitted["output"])
             generated_text = generated_pin.read_text()
             self.assertIn(expected["composed_game_sha256"], generated_text)
@@ -258,7 +268,7 @@ class RequestPipelineTests(unittest.TestCase):
             tampered["composed_game_sha256"] = "f" * 64
             request_path.write_text(json.dumps(tampered))
             with self.assertRaisesRegex(ValueError, "accepted source pin mismatch: composed_game_sha256"):
-                generator.validate(request_path, contract_path, stage_path)
+                generator.validate(request_path, contract_path, stage_path, **owner)
 
     def test_runtime_stage_pin_checks_all_streamed_media_bytes_and_paths(self) -> None:
         runtime = load(RUNTIME_GENERATOR_PATH, "private_runtime_stage_pin")
@@ -325,14 +335,25 @@ class RequestPipelineTests(unittest.TestCase):
             }
             receipt_path = work / "stage-receipt.json"
             receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
-            runtime.source_plan = lambda *args: plan
-            runtime.streamed_media_rows = lambda value: value["streamed_media"]
+            runtime.source_plan = lambda *args, **kwargs: plan
+            runtime.streamed_media_rows = lambda value, **kwargs: value["streamed_media"]
             output = work / "generated/StagePin.cs"
             result = runtime.generate(receipt_path, stage_root, output, prefab, bank_index, init_file, init_receipt)
             self.assertEqual("work/generated/StagePin.cs", result["output"])
             self.assertEqual(153, result["bank_count"])
             self.assertEqual(120, result["streamed_media_count"])
             self.assertEqual(153, output.read_text(encoding="utf-8").count('"Bank'))
+
+            owner_output = work / "generated/OwnerStagePin.cs"
+            with self.assertRaisesRegex(ValueError, "source pin mismatch"):
+                runtime.generate(receipt_path, stage_root, owner_output, prefab, bank_index, init_file, init_receipt, owner_work=work)
+            receipt["current_bank_index_sha256"] = runtime.OWNER_BANK_INDEX_SHA256
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            owner = runtime.generate(receipt_path, stage_root, owner_output, prefab, bank_index, init_file, init_receipt, owner_work=work)
+            self.assertEqual((owner["bank_count"], owner["streamed_media_count"]), (153, 120))
+            self.assertNotEqual(owner["receipt_sha256"], result["receipt_sha256"])
+            receipt["current_bank_index_sha256"] = runtime.BANK_INDEX_SHA256
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
 
             output.unlink()
             media_file = output_dir / "Media/120.wem"

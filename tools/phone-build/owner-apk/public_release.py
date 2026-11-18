@@ -28,6 +28,8 @@ def _module(name, path):
 
 RELEASE = _module("owner_release_contract", Path(__file__).with_name("release.py"))
 MAX_JSON_BYTES = 8 * 1024 * 1024
+MAX_BUNDLE_INDEX_BYTES = 4 * 1024 * 1024
+COMPACT_INDEX_INSTALLER_VERSION = 4
 MAX_PUBLIC_FILE_BYTES = 64 * 1024 * 1024
 MAX_BUNDLE_BYTES = 512 * 1024 * 1024
 INDEX = "bundle-index.json"
@@ -159,13 +161,13 @@ def validate_alpha_release(body):
     publication_policy(body["application_id"], body["minimum_installer_version"], body.get("data_schema"))
 
 
-def load_json(data):
+def load_json(data, *, max_bytes=MAX_JSON_BYTES):
     """Reject ambiguous duplicate keys, nonfinite numbers and oversized input."""
     if isinstance(data, bytes):
-        if len(data) > MAX_JSON_BYTES:
+        if len(data) > max_bytes:
             raise ValueError("JSON size limit exceeded")
         data = data.decode("utf-8")
-    if not isinstance(data, str) or len(data.encode("utf-8")) > MAX_JSON_BYTES:
+    if not isinstance(data, str) or len(data.encode("utf-8")) > max_bytes:
         raise ValueError("bounded JSON text required")
 
     def pairs(rows):
@@ -359,6 +361,44 @@ def validate_bundle_index(index, release):
             raise ValueError("bundle dependency fingerprints differ from release")
 
 
+def encode_bundle_index(index):
+    data = RELEASE.signed_bytes(index) + b"\n"
+    if len(data) <= MAX_BUNDLE_INDEX_BYTES:
+        return data
+    closures, references, by_definition = [], {}, {}
+    for name, row in sorted(index["entries"].items()):
+        definition = RELEASE.signed_bytes(row)
+        if definition not in by_definition:
+            by_definition[definition] = len(closures)
+            closures.append(row)
+        references[name] = by_definition[definition]
+    data = RELEASE.signed_bytes(dict(index, entries=references, closures=closures)) + b"\n"
+    if len(data) > MAX_BUNDLE_INDEX_BYTES:
+        raise ValueError("public bundle index exceeds installer size limit")
+    return data
+
+
+def read_bundle_index(data, release):
+    if len(data) > MAX_BUNDLE_INDEX_BYTES:
+        raise ValueError("bounded public bundle index required")
+    index = load_json(data)
+    if isinstance(index, dict) and "closures" in index:
+        if release["minimum_installer_version"] < COMPACT_INDEX_INSTALLER_VERSION:
+            raise ValueError("compact public bundle index requires installer version 4 or later")
+        closures = index.pop("closures")
+        references = index.get("entries")
+        if (
+            not isinstance(closures, list)
+            or not isinstance(references, dict)
+            or any(type(reference) is not int for reference in references.values())
+            or set(references.values()) != set(range(len(closures)))
+        ):
+            raise ValueError("invalid public bundle closure references")
+        index["entries"] = {name: closures[reference] for name, reference in references.items()}
+    validate_bundle_index(index, release)
+    return index
+
+
 def _tracked(root):
     result = {}
     for line in subprocess.check_output(["git", "ls-tree", "-rz", "HEAD"], cwd=root).split(b"\0"):
@@ -439,7 +479,7 @@ def build_bundle(repository, plan, output):
     }
     RELEASE.validate(body, 1, body["application_id"], 0)
     validate_bundle_index(index, body)
-    contents[INDEX] = RELEASE.signed_bytes(index) + b"\n"
+    contents[INDEX] = encode_bundle_index(index)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("xb") as stream, zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_STORED, allowZip64=False) as archive:
         for name, data in sorted(contents.items()):
@@ -459,8 +499,9 @@ def validate_publication(bundle_path, body):
     if RELEASE.digest(bundle_path) != body["bundle_sha256"]:
         raise ValueError("public bundle changed before publication")
     with zipfile.ZipFile(bundle_path) as archive:
-        index = load_json(archive.read(INDEX))
-        validate_bundle_index(index, body)
+        if archive.getinfo(INDEX).file_size > MAX_BUNDLE_INDEX_BYTES:
+            raise ValueError("bounded public bundle index required")
+        index = read_bundle_index(archive.read(INDEX), body)
         missing = PUBLISHING_SOURCE_FILES - index["files"].keys()
         if missing:
             raise ValueError("public bundle lacks installer/assembly/toolchain source: " + ", ".join(sorted(missing)))
@@ -518,7 +559,7 @@ def main():
     parser.add_argument("--signing-key", type=Path, required=True)
     parser.add_argument("--public-key", type=Path, required=True)
     args = parser.parse_args()
-    plan = load_json(_blob(args.repository, _tracked(args.repository), args.plan))
+    plan = load_json(_blob(args.repository, _tracked(args.repository), args.plan), max_bytes=MAX_PUBLIC_FILE_BYTES)
     schema = publication_policy(args.application_id, args.minimum_installer_version, plan.get("data_schema"))
     args.output.mkdir(parents=True)
     bundle = build_bundle(args.repository, plan, args.output / "public-tools.zip")

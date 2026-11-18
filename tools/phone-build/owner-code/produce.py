@@ -257,9 +257,16 @@ def verify_inputs(request, profile, sdk, sdk_state, before, work, state, output,
         raise ValueError("managed inputs changed during owner backend")
 
 
+def verify_audio_members(managed, expected):
+    receipt = json.loads((managed / "staged/stage-receipt.json").read_text())
+    actual = [row["filename"] for row in receipt["outputs"]] + [row["relative_path"] for row in receipt["streamed_media"]]
+    if sorted(actual) != expected:
+        raise ValueError("locally produced audio membership differs from the signed release")
+
+
 def source_run(request, *, stop_after_conversion=False, burst_only=False):
     """Join original-input managed production to this same backend."""
-    if set(request) - {"target", "android_tools", "linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"} != {
+    if set(request) - {"target", "android_tools", "linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs", "audio_members"} != {
         "owner_work",
         "sdk_install",
         "source_inputs",
@@ -304,6 +311,8 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
             )
         else:
             providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production")
+        if "audio_members" in request:
+            verify_audio_members(output / "managed-production", request["audio_members"])
         backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}
         for name in ("target", "android_tools", "linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"):
             if name in request:

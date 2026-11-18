@@ -14,10 +14,11 @@ import stat
 ROOT = Path(__file__).resolve().parents[5]
 WORK = (ROOT / "work").resolve()
 STAGER = Path(__file__).resolve().parent / "stage_original_game_banks.py"
-STAGER_SHA256 = "922eb5012296683c646c7a0272645bfa895f7ae591f45c64ba8a3fca68d15026"
+STAGER_SHA256 = "4aec7b0a43972e02cd7d6280f2bd2010222c25c9a0a7f50fd2c836fdbf88b597"
 INPUT_ID = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 PREFAB_SHA256 = "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af"
 BANK_INDEX_SHA256 = "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326"
+OWNER_BANK_INDEX_SHA256 = "063944216e330019b171e8d654b3f0c53ca33289888a2615100abc9e27fa2b76"
 INIT_SHA256 = "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90"
 INIT_RECEIPT_SHA256 = "3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f"
 GLOBAL_SHA256 = "37756450a0a08a0e3d79ed42926c4de062f67c01dbfef590db1c4af1130485e4"
@@ -34,16 +35,16 @@ def sha_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def checked_work_file(path: Path, label: str) -> Path:
+def checked_work_file(path: Path, label: str, work: Path) -> Path:
     lexical = path.absolute()
     resolved = lexical.resolve(strict=True)
-    if not resolved.is_file() or not resolved.is_relative_to(WORK):
+    if not resolved.is_file() or not resolved.is_relative_to(work):
         raise ValueError(f"{label} must be a regular file under work/")
     try:
-        relative = lexical.relative_to(WORK)
+        relative = lexical.relative_to(work)
     except ValueError as error:
         raise ValueError(f"{label} must be a work-relative path") from error
-    cursor = WORK
+    cursor = work
     for part in relative.parts:
         cursor /= part
         if stat.S_ISLNK(cursor.lstat().st_mode):
@@ -51,7 +52,7 @@ def checked_work_file(path: Path, label: str) -> Path:
     return resolved
 
 
-def streamed_media_rows(receipt: dict) -> list[dict]:
+def streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None = None) -> list[dict]:
     validator_path = ROOT / "scripts/lab/original_game_audio_stage.py"
     spec = importlib.util.spec_from_file_location("original_audio_stage_validator", validator_path)
     if spec is None or spec.loader is None:
@@ -61,19 +62,19 @@ def streamed_media_rows(receipt: dict) -> list[dict]:
     validator = getattr(module, "validate_streamed_media_rows", None)
     if not callable(validator):
         raise ValueError("shared streamed-media receipt validator unavailable")
-    rows = validator(receipt)
+    rows = validator(receipt, bank_index_sha256=bank_index_sha256)
     if not isinstance(rows, list) or len(rows) != STREAMED_MEDIA_COUNT:
         raise ValueError("R2 receipt must validate exactly 120 streamed media rows")
     return rows
 
 
-def checked_staged_file(path: Path, label: str) -> Path:
+def checked_staged_file(path: Path, label: str, work: Path) -> Path:
     lexical = path.absolute()
     try:
-        relative = lexical.relative_to(WORK)
+        relative = lexical.relative_to(work)
     except ValueError as error:
         raise ValueError(f"{label} must remain under work/") from error
-    cursor = WORK
+    cursor = work
     for part in relative.parts:
         cursor /= part
         try:
@@ -85,12 +86,12 @@ def checked_staged_file(path: Path, label: str) -> Path:
     if not stat.S_ISREG(info.st_mode):
         raise ValueError(f"{label} must be a regular file")
     resolved = lexical.resolve(strict=True)
-    if not resolved.is_relative_to(WORK):
+    if not resolved.is_relative_to(work):
         raise ValueError(f"{label} must resolve under work/")
     return resolved
 
 
-def source_plan(prefab: Path, bank_index: Path, adapted_init: Path, init_receipt: Path) -> list[dict]:
+def source_plan(prefab: Path, bank_index: Path, adapted_init: Path, init_receipt: Path, *, owner_work: Path | None = None) -> list[dict]:
     if sha_file(STAGER) != STAGER_SHA256:
         raise ValueError("pinned explicit-input stage producer changed")
     spec = importlib.util.spec_from_file_location("root_bank_stage", STAGER)
@@ -98,22 +99,36 @@ def source_plan(prefab: Path, bank_index: Path, adapted_init: Path, init_receipt
         raise ValueError("explicit-input bank stage producer unavailable")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    if sha_file(prefab) != PREFAB_SHA256 or sha_file(bank_index) != BANK_INDEX_SHA256:
+    index_sha = BANK_INDEX_SHA256 if owner_work is None else OWNER_BANK_INDEX_SHA256
+    if sha_file(prefab) != PREFAB_SHA256 or sha_file(bank_index) != index_sha:
         raise ValueError("current accepted prefab/bank index pins differ")
     if sha_file(adapted_init) != INIT_SHA256 or sha_file(init_receipt) != INIT_RECEIPT_SHA256:
         raise ValueError("explicit adapted Init candidate/receipt pins differ")
-    _, _, plan, _ = module.load_inputs(prefab, bank_index, adapted_init, init_receipt)
+    _, _, plan, _ = module.load_inputs(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work)
     return plan
 
 
-def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, bank_index: Path, adapted_init: Path, init_receipt: Path) -> dict:
-    receipt_path = checked_work_file(receipt_path, "stage receipt")
-    prefab = checked_work_file(prefab, "WwiseGlobal prefab")
-    bank_index = checked_work_file(bank_index, "accepted bank index")
-    adapted_init = checked_work_file(adapted_init, "adapted Init candidate")
-    init_receipt = checked_work_file(init_receipt, "Init adaptation receipt")
+def generate(
+    receipt_path: Path,
+    stage_root: Path,
+    output: Path,
+    prefab: Path,
+    bank_index: Path,
+    adapted_init: Path,
+    init_receipt: Path,
+    *,
+    owner_work: Path | None = None,
+) -> dict:
+    work = WORK if owner_work is None else owner_work
+    if work != work.resolve(strict=True):
+        raise ValueError("owner work root must be canonical")
+    receipt_path = checked_work_file(receipt_path, "stage receipt", work)
+    prefab = checked_work_file(prefab, "WwiseGlobal prefab", work)
+    bank_index = checked_work_file(bank_index, "accepted bank index", work)
+    adapted_init = checked_work_file(adapted_init, "adapted Init candidate", work)
+    init_receipt = checked_work_file(init_receipt, "Init adaptation receipt", work)
     stage_root = stage_root.absolute()
-    if not stage_root.resolve(strict=True).is_relative_to(WORK):
+    if not stage_root.resolve(strict=True).is_relative_to(work):
         raise ValueError("stage root must be under work/")
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     if (
@@ -128,10 +143,10 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
         or receipt.get("output_relative_directory") != "Audio/GeneratedSoundBanks/Android"
     ):
         raise ValueError("stage receipt does not match current default-unaccepted contract")
-    if receipt.get("accepted_inventory_sha256") != sha_file(WORK / "inventory/files.json"):
+    if receipt.get("accepted_inventory_sha256") != sha_file(work / "inventory/files.json"):
         raise ValueError("stage receipt does not bind current full accepted inventory")
     for key, expected in {
-        "current_bank_index_sha256": BANK_INDEX_SHA256,
+        "current_bank_index_sha256": BANK_INDEX_SHA256 if owner_work is None else OWNER_BANK_INDEX_SHA256,
         "wwise_global_prefab_sha256": PREFAB_SHA256,
         "init_adaptation_receipt_sha256": INIT_RECEIPT_SHA256,
         "init_adaptation_candidate_sha256": INIT_SHA256,
@@ -139,8 +154,8 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
     }.items():
         if receipt.get(key) != expected:
             raise ValueError(f"stage receipt source pin mismatch: {key}")
-    media_rows = streamed_media_rows(receipt)
-    plan = source_plan(prefab, bank_index, adapted_init, init_receipt)
+    media_rows = streamed_media_rows(receipt, bank_index_sha256=OWNER_BANK_INDEX_SHA256 if owner_work is not None else None)
+    plan = source_plan(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work)
     expected = {row["output_filename"]: row for row in plan}
     expected["Init.bnk"] = {"source_sha256": INIT_SHA256, "size_bytes": adapted_init.stat().st_size}
     outputs = receipt.get("outputs")
@@ -164,18 +179,18 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
                 raise ValueError(f"stage filename/name mapping differs: {name}")
             names.append(requested)
         output_path = stage_root / receipt["output_relative_directory"] / name
-        output_path = checked_staged_file(output_path, f"staged output {name}")
+        output_path = checked_staged_file(output_path, f"staged output {name}", work)
         if output_path.stat().st_size != row["size_bytes"] or sha_file(output_path) != row["sha256"]:
             raise ValueError(f"staged output bytes do not match receipt: {name}")
     if seen != set(expected) or len(names) != 153 or len(set(names)) != 153:
         raise ValueError("stage receipt does not bind the exact current cohort")
     media_dir = stage_root / receipt["output_relative_directory"]
     for row in media_rows:
-        media_path = checked_staged_file(media_dir / row["relative_path"], f"staged media {row['media_id']}")
+        media_path = checked_staged_file(media_dir / row["relative_path"], f"staged media {row['media_id']}", work)
         if media_path.stat().st_size != row["size_bytes"] or sha_file(media_path) != row["sha256"]:
             raise ValueError(f"staged streamed media bytes do not match receipt: {row['media_id']}")
     absolute = output.absolute()
-    if not absolute.resolve(strict=False).is_relative_to(WORK) or absolute.exists():
+    if not absolute.resolve(strict=False).is_relative_to(work) or absolute.exists():
         raise ValueError("generated source must be a new file under work/")
     values = ",\n        ".join(json.dumps(name, ensure_ascii=True) for name in sorted(names))
     source = (
@@ -191,7 +206,7 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
     return {
         "receipt_sha256": sha_file(receipt_path),
         "source_sha256": sha_file(absolute),
-        "output": str(Path("work") / absolute.relative_to(WORK)),
+        "output": str(Path("work") / absolute.relative_to(work)),
         "bank_count": len(names),
         "streamed_media_count": len(media_rows),
         "soundbanks_info_sha256": SOUNDBANKS_INFO_SHA256,
@@ -211,8 +226,16 @@ def main() -> None:
     parser.add_argument("--bank-index", type=Path, required=True)
     parser.add_argument("--adapted-init", type=Path, required=True)
     parser.add_argument("--init-receipt", type=Path, required=True)
+    parser.add_argument("--owner-work", type=Path, help="explicit admitted owner work root and decoder-free index")
     args = parser.parse_args()
-    print(json.dumps(generate(args.receipt, args.stage_root, args.output, args.prefab, args.bank_index, args.adapted_init, args.init_receipt), sort_keys=True))
+    print(
+        json.dumps(
+            generate(
+                args.receipt, args.stage_root, args.output, args.prefab, args.bank_index, args.adapted_init, args.init_receipt, owner_work=args.owner_work
+            ),
+            sort_keys=True,
+        )
+    )
 
 
 if __name__ == "__main__":
