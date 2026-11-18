@@ -8,6 +8,8 @@ using UnityEngine;
 // Owned Android rendering approximations. Original assets and simulation stay intact.
 public static class AndroidMaterialPresentation
 {
+    const string IntersectionShader = "Hopoo Games/FX/Cloud Intersection Remap";
+
     [Serializable]
     public class Report
     {
@@ -107,14 +109,27 @@ public static class AndroidMaterialPresentation
         }
         return count;
     }
-    public static void Apply(Material source, Material copy)
+    public static Material RecoverTeamAreaMaterial(Material source, List<Material> owned)
+    {
+        if (!source || !source.shader || source.shader.name != IntersectionShader)
+            return source;
+        var copy = new Material(source);
+        if (!Apply(source, copy))
+        {
+            UnityEngine.Object.Destroy(copy);
+            return source;
+        }
+        owned.Add(copy);
+        return copy;
+    }
+    public static bool Apply(Material source, Material copy)
     {
         if (!source || !copy)
-            return;
+            return false;
         string name = source.shader.name;
         bool terrain = name.IndexOf("Triplanar", StringComparison.OrdinalIgnoreCase) >= 0;
         if (ApplyNative(source, copy))
-            return;
+            return true;
         bool nativeParticle = name == "Mobile/Particles/Alpha Blended" || name == "Particles/Standard Unlit" ||
                               name == "Legacy Shaders/Particles/Additive" || name == "Legacy Shaders/Particles/Additive (Soft)";
         if (nativeParticle)
@@ -126,11 +141,11 @@ public static class AndroidMaterialPresentation
                 report.error = "Original Unity particle shader unavailable: " + name;
             bindings.Add(new Binding { material = copy, enhanced = source.shader, fallback = source.shader });
             report.nativeParticles++;
-            return;
+            return true;
         }
         bool cloud = name.IndexOf("Cloud", StringComparison.OrdinalIgnoreCase) >= 0;
         bool opaqueCloud = name == "Hopoo Games/FX/Opaque Cloud Remap", distortion = name == "Hopoo Games/FX/Distortion";
-        bool intersection = name == "Hopoo Games/FX/Cloud Intersection Remap";
+        bool intersection = name == IntersectionShader;
         bool water = name.IndexOf("Water", StringComparison.OrdinalIgnoreCase) >= 0;
         bool snow = name.IndexOf("Snow", StringComparison.OrdinalIgnoreCase) >= 0;
         bool foliage = name.IndexOf("Speedtree", StringComparison.OrdinalIgnoreCase) >= 0;
@@ -146,7 +161,7 @@ public static class AndroidMaterialPresentation
         if (!shader || !shader.isSupported)
         {
             report.error = "Android material family unavailable: " + name;
-            return;
+            return false;
         }
         if (billboard)
         {
@@ -160,7 +175,7 @@ public static class AndroidMaterialPresentation
             copy.shaderKeywords = keys.ToArray();
             report.billboards++;
             bindings.Add(new Binding { material = copy, enhanced = shader, fallback = shader });
-            return;
+            return true;
         }
         var fallback = copy.shader;
         copy.shader = shader;
@@ -184,7 +199,7 @@ public static class AndroidMaterialPresentation
             bindings.Add(new Binding { material = copy, enhanced = shader, fallback = fallback });
             if (!report.enabled)
                 copy.shader = fallback;
-            return;
+            return true;
         }
         copy.SetFloat("_AndroidNormalEnabled", source.HasProperty("_NormalTex") && source.GetTexture("_NormalTex") ? 1 : 0);
         if (source.HasProperty("_NormalTex") && source.GetTexture("_NormalTex"))
@@ -237,6 +252,7 @@ public static class AndroidMaterialPresentation
         bindings.Add(new Binding { material = copy, enhanced = shader, fallback = fallback });
         if (!report.enabled)
             copy.shader = fallback;
+        return true;
     }
     // Remove an adapter-owned material copy before the adapter releases it.
     public static void Release(Material material)
