@@ -293,7 +293,7 @@ class Graph:
             ]
             if self.conversion:
                 needs.append(self.conversion)
-                fresh_arguments, request = self.player_conversion()
+                fresh_arguments, request = self.player_conversion(needs)
                 arguments += fresh_arguments
             else:
                 arguments += [
@@ -770,12 +770,7 @@ class Graph:
             "bytes": "${bytes:" + job + ":" + artifact + "}",
         }
 
-    def code_conversion(self, request_path):
-        """Run original-input managed production and preserve its converter cohort."""
-        request = json.loads((self.repo / request_path).read_text())
-        if request.get("output") != "${output}" or "source_inputs" not in request:
-            raise ValueError("code request must select original source inputs and the dispatcher output")
-        target = request.get("target", {})
+    def fixed_code_sources(self, target):
         profile = target.get("profile", "")
         source = target.get("source", "")
         if not profile.startswith("${repo}/") or not (source == "${repo}" or source.startswith("${repo}/")):
@@ -785,8 +780,61 @@ class Graph:
         if any(path.resolve(strict=True) != path or not path.is_relative_to(self.repo) for path in (profile_path, source_root)):
             raise ValueError("code target profile and source must be canonical public paths")
         selected = json.loads(profile_path.read_text())
-        paths = [
-            profile_path.relative_to(self.repo).as_posix(),
+        paths = [profile_path.relative_to(self.repo).as_posix()]
+        paths.extend((source_root / "recipe" / policy).relative_to(self.repo).as_posix() for policy in ("build-entry-inputs.json", "runtime-sources.json"))
+        for relative, expected in selected["source_files"].items():
+            path = source_root / relative
+            if path.resolve(strict=True) != path or not path.is_relative_to(source_root) or digest(path) != expected:
+                raise ValueError("code target authored source drift: " + relative)
+            paths.append(path.relative_to(self.repo).as_posix())
+        return paths
+
+    def current_code_sources(self):
+        runtime = "recipe/runtime-sources.json"
+        audio_manifest = "recipe/original-audio-owner-sources.json"
+        audio = self.repo / "tools/unity/support/audio"
+        return [
+            "AGENTS.md",
+            "PORTING_STATE.md",
+            "environment/toolchain.json",
+            "recipe/build-entry-inputs.json",
+            runtime,
+            "recipe/project-layout.json",
+            audio_manifest,
+            "recipe/owner-audio-prefab.json",
+            "recipe/wwise-android-abi.json",
+            "tools/phone-build/legacy/transform_init.py.txt",
+            "android/Assets/LabDiagnostics.cs",
+            *["tools/unity/" + path for path in json.loads((self.repo / runtime).read_text())],
+            *[
+                (audio / path).resolve().relative_to(self.repo).as_posix()
+                for path in json.loads((self.repo / audio_manifest).read_text())["owner_source_hashes"]
+            ],
+            *[
+                "tools/unity/support/audio/generators/" + name
+                for name in ("generate_accepted_request_pin.py", "generate_runtime_stage_pin.py", "original_media_plan.py", "stage_original_game_banks.py")
+            ],
+            "tools/unity/support/audio/managed-producer/produce.py",
+            *[
+                "tools/unity/support/audio/managed-producer/" + name + suffix
+                for name in (
+                    "source/owner-api/OriginalOwnerProbeObserver",
+                    "tools/composed/ComposedGameCecilTransform",
+                    "tools/owner-api/OwnerApiCecilTransform",
+                )
+                for suffix in (".cs", ".csproj")
+            ],
+            "tools/wwise-android-abi/generate.py",
+            *["tools/wwise-android-abi/" + name + suffix for name in ("CecilAbiTool", "CecilAbiWriter") for suffix in (".cs", ".csproj")],
+        ]
+
+    def code_conversion(self, request_path):
+        """Run original-input managed production and preserve its converter cohort."""
+        request = json.loads((self.repo / request_path).read_text())
+        if request.get("output") != "${output}" or "source_inputs" not in request:
+            raise ValueError("code request must select original source inputs and the dispatcher output")
+        paths = self.fixed_code_sources(request["target"]) if "target" in request else self.current_code_sources()
+        paths += [
             "recipe/owner-managed-code.json",
             "recipe/owner-player-code.json",
             "recipe/owner-native-arm64.json",
@@ -795,14 +843,8 @@ class Graph:
             "recipe/owner-public-tools.json",
             PACKAGE_POLICY,
         ]
-        paths.extend((source_root / "recipe" / policy).relative_to(self.repo).as_posix() for policy in ("build-entry-inputs.json", "runtime-sources.json"))
         transforms = json.loads((self.repo / "recipe/assembly-transforms.json").read_text())
         paths.extend(transforms["tool_sources"])
-        for relative, expected in selected["source_files"].items():
-            path = source_root / relative
-            if path.resolve(strict=True) != path or not path.is_relative_to(source_root) or digest(path) != expected:
-                raise ValueError("code target authored source drift: " + relative)
-            paths.append(path.relative_to(self.repo).as_posix())
         name = "recipe/jobs/owner-code-conversion.json"
         cache_witnesses = request.pop("cache_witnesses", [])
         if self.package_inputs:
@@ -827,7 +869,7 @@ class Graph:
         self.job_profiles[name] = {}
         return name
 
-    def player_conversion(self):
+    def player_conversion(self, needs):
         """Expose the converter resources and regular managed outputs used by the player."""
         conversion = self.jobs[self.conversion]
         managed = "managed-production/"
@@ -839,18 +881,20 @@ class Graph:
             managed_packages=managed + "packages/postprocessed",
             managed_maps=managed + "maps",
             managed_support=managed + "support",
-            **{"managed_" + assembly: managed + "ordinary/" + assembly + ".dll" for assembly in ("RoR2", "AK.Wwise.Unity.API", "AK.Wwise.Unity.MonoBehaviour")},
             **{"resource_" + assembly: "backend/converter/data/Resources/" + assembly + ".dll-resources.dat" for assembly in PLAYER_RESOURCE_ASSEMBLIES},
         )
         original_request = conversion["request"]
-        # The fixed target also needs its importer-only TestRunner and MCP
-        # sources. Keep its existing registry input even with fresh compiler
-        # packages, which deliberately contain only the compiler groups.
-        registry_packages = json.loads((self.repo / self.profile_files[self.conversion]).read_text())["source_inputs"]["packages"]
-        request = {
-            "source_inputs": {"packages": registry_packages},
-            "target": {"source": original_request["target"]["source"]},
-        }
+        packages = original_request["source_inputs"]["packages"]
+        request = {"source_inputs": {"packages": packages}}
+        if "target" in original_request:
+            # The fixed registry also needs the importer-only TestRunner and MCP
+            # sources, which the compiler package set does not select.
+            request["source_inputs"]["packages"] = json.loads((self.repo / self.profile_files[self.conversion]).read_text())["source_inputs"]["packages"]
+            request["target"] = {"source": original_request["target"]["source"]}
+        else:
+            conversion["artifacts"]["managed_package_inputs"] = managed + "packages/inputs.json"
+            if self.package_inputs:
+                needs.append(self.package_inputs)
         return [
             "--converter",
             "${job_directory:" + self.conversion + ":receipt}",

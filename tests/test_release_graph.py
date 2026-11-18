@@ -728,6 +728,7 @@ for name in ('gameplay/postprocessed/Assembly-CSharp.dll', 'packages/postprocess
     'path': str(managed / 'gameplay/postprocessed/Assembly-CSharp.dll'), 'sha256': pin(source)['sha256'],
 }}))
 (managed / 'gameplay/inputs.json').write_text('{}')
+(managed / 'packages/inputs.json').write_text(json.dumps({'package': pin((packages / 'Selected.cs').read_bytes())}))
 (managed / 'gameplay/ilpp-references').symlink_to(managed / 'support', target_is_directory=True)
 """,
             )
@@ -742,11 +743,16 @@ for name in ('profile-sha256', 'converter-receipt-sha256'):
 args = parser.parse_args()
 request = json.loads(args.code_request.read_text())
 packages = pathlib.Path(request['source_inputs']['packages'])
-assert (packages.parent / 'input-hashes.json').is_file()
-assert (packages / 'Fixture.cs').read_text() == 'class PackageFixture {}'
-assert pathlib.Path(request['target']['source']) == args.profile.parent.parent
 assert args.sdk.name == 'AndroidPlayer'
-assert args.sdk.parent.parent == packages.parent.parent / 'sdk'
+if 'target' in request:
+    assert (packages.parent / 'input-hashes.json').is_file()
+    assert (packages / 'Fixture.cs').read_text() == 'class PackageFixture {}'
+    assert pathlib.Path(request['target']['source']) == args.profile.parent.parent
+    assert args.sdk.parent.parent == packages.parent.parent / 'sdk'
+else:
+    data = (packages / 'Selected.cs').read_bytes()
+    compiler = json.loads((args.managed_production / 'packages/inputs.json').read_text())
+    assert hashlib.sha256(data).hexdigest() == compiler['package']['sha256']
 receipt = (args.converter / 'result.json').read_bytes()
 assert hashlib.sha256(receipt).hexdigest() == args.converter_receipt_sha256
 providers = json.loads((args.managed_production / 'providers.json').read_text())
@@ -849,7 +855,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             }
             progress = []
 
-            def build():
+            def build(*, current=False):
                 graph = G.Graph(repo, {})
                 index = graph.compile([bundle_profile], code_request=code_request, native_request=native_request, package_archives=True)
                 for name, job in graph.jobs.items():
@@ -857,7 +863,15 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     index["files"][name] = G.digest(repo / name)
                 index["files"][input_manifest] = G.digest(repo / input_manifest)
                 index["install_plan"] = selected
-                self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
+                if current:
+                    self.assertIn("tools/wwise-android-abi/generate.py", graph.jobs[code]["source_files"])
+                    self.assertIn("recipe/original-audio-owner-sources.json", graph.jobs[code]["source_files"])
+                    self.assertIn("recipe/project-layout.json", graph.jobs[player]["source_files"])
+                    self.assertIn("managed_package_inputs", graph.jobs[code]["artifacts"])
+                    self.assertIn(package_job, graph.jobs[player]["needs"])
+                else:
+                    self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
+                    self.assertNotIn(package_job, graph.jobs[player]["needs"])
                 self.assertEqual(graph.jobs[code]["needs"], [package_job])
                 self.assertIn("recipe/runtime-sources.json", graph.jobs[player]["source_files"])
                 self.assertEqual(graph.jobs[witness]["needs"], [code, player])
@@ -950,6 +964,14 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 ],
             )
             self.assertEqual(progress[-5:], [(code, False), (player, False), (witness, False), (bundle, False), (native_job, False)])
+
+            for path in G.Graph(ROOT, {}).current_code_sources():
+                write(repo / path, (ROOT / path).read_text())
+            request = json.loads((repo / code_request).read_text())
+            del request["target"]
+            write(repo / code_request, request)
+            build(current=True)
+            self.assertFalse(build(current=True)["rebuilt"])
 
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):

@@ -1479,8 +1479,13 @@ stages only the pinned compiler groups and original script metas, and supplies
 their versioned directories to managed production. The dispatcher rechecks
 cached outputs and includes each archive hash in the dependency identity.
 The fixed-target registry retains its explicit package inventory, including
-the TestRunner and MCP importers. The package owner removes temporary
-extraction files and retains the selected inputs and terminal receipt.
+the TestRunner and MCP importers. Without a fixed target, the graph signs the
+current runtime and audio producer sources and passes the compiler's package
+directory and its `packages/inputs.json` receipt to the player registry. The
+registry pins the selected sources and importer metadata. The current audio
+compiler still needs its macOS SDK tools and checkout work root. The package
+owner removes temporary extraction files and retains the selected inputs and
+terminal receipt.
 The optional `--native-request` adds `owner-code/native.py` as one cached job
 with final `libil2cpp.so` and matching `global-metadata.dat` outputs. With
 `--code-request`, an assembly-stage `produce.py --stop-after-conversion` job
