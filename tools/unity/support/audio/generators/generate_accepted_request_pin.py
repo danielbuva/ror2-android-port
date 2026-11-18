@@ -227,8 +227,8 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner
         if stage.get(key) != expected:
             raise ValueError(f"stage receipt source pin mismatch: {key}")
     outputs = stage.get("outputs")
-    if not isinstance(outputs, list) or len(outputs) != 154:
-        raise ValueError("stage receipt must contain exactly 153 banks and Init")
+    if not isinstance(outputs, list) or len(outputs) < 154:
+        raise ValueError("stage receipt must contain at least 153 startup banks and Init")
     names: set[str] = set()
     filenames: set[str] = set()
     found_init = False
@@ -250,8 +250,8 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner
         if not isinstance(name, str) or not name or filename != name + ".bnk" or name in names:
             raise ValueError("unsafe or duplicate serialized bank name")
         names.add(name)
-    if not found_init or len(names) != 153:
-        raise ValueError("stage receipt must bind the exact 153-name set plus Init")
+    if not found_init or len(names) < 153:
+        raise ValueError("stage receipt must bind the 153 startup bank names plus Init")
     media_rows = streamed_media_rows(stage, bank_index_sha256=pins["current_bank_index_sha256"], init_receipt_sha256=pins["init_adaptation_receipt_sha256"])
     if len(media_rows) != 120:
         raise ValueError("stage receipt must validate exactly 120 streamed media rows")

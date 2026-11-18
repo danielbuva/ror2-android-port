@@ -4099,14 +4099,14 @@ payloads before staging. Requested stages also package the exact bank-cohort
 receipt at `Assets/StreamingAssets/stage-receipt.json`, the URL consumed by
 `GameAudioOriginalPayloadCopy`; the separate `Lab/OriginalGameAudioStageReceipt.json`
 records project ownership. Historical 164/165-output bank-only stages remain
-recognized for exact owned upgrades. Current R2 bank receipts keep 154 bank rows
-and add a separate 120-row streamed-media closure; the artifact/project receipt
-owns canonical `Media/<id>.wem` targets as a distinct role. The shared validator
-binds source metadata, exact paths, IDs, references, hashes and sizes before writes.
-`generators/original_media_plan.py` owns the pure selected-bank media plan,
-checking both bank-index and SoundbanksInfo modes against the full accepted
-inventory. `stage_original_game_banks.py` snapshots original media bytes as well
-as banks into a new ignored stage root; no source game input is modified.
+recognized for exact owned upgrades. The shared bank stager packages the full
+accepted bank index for lab and converted APKs. The generated runtime pin keeps
+the 153 WwiseGlobal startup names. The stage receipt also binds dynamically
+loaded banks, adapted Init and canonical `Media/<id>.wem` targets.
+`generators/original_media_plan.py` checks the bank index and SoundbanksInfo
+against the accepted inventory. A non-streamed OtherBank reference resolves to
+embedded media in a packaged bank. `stage_original_game_banks.py` snapshots
+original banks and loose media into a new ignored stage root.
 `GameAudioOriginalPayloadCopy` validates the request-bound receipt, checks existing
 payloads and available bytes on the actual persistent filesystem, then copies
 through verified temporary siblings before original Wwise initialization.
@@ -6549,6 +6549,9 @@ prints its absolute done-file for dispatcher wakeup; it adds no device actions.
 Optional `storage_wait_seconds` (0–3600, default 0) admits a bounded wait for
 100 GiB headroom before taking the editor mutex. Dry-run reports storage
 readiness; the full build still enforces its storage gate under the mutex.
+Optional `audio_selection` selects a validated audio configuration path
+relative to `work/` for this build and its source scenes. The shared default
+remains available to other build requests.
 
 Teardown restores the original primary branch/commit after success or failure.
 Unexpected edits or moved refs refuse restoration and preserve those files for

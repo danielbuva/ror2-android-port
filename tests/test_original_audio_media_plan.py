@@ -75,6 +75,17 @@ class ExternalMediaPlanTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not embedded"):
             self.plan()
 
+    def test_other_bank_media_requires_a_packaged_embedded_owner_without_loose_file(self) -> None:
+        self.index_rows[0]["declared"] = [{"id": self.id, "streaming": False, "location": "OtherBank"}]
+        self.index_rows[0]["embedded"] = []
+        self.index_rows.append({"path": "Global.bnk", "declared": [], "embedded": [{"id": self.id, "bytes": 128}]})
+        self.xml_rows[0]["media"][0].update(streaming=False, location="OtherBank", path=None)
+        self.xml_rows.append({"short_name": "Global", "media": []})
+        self.inventory_rows = []
+        self.assertEqual(plan_external_media(["Music", "Global"], self.index_rows, self.xml_rows, [], self.root, self.bank_root), [])
+        with self.assertRaisesRegex(ValueError, "not embedded in any packaged bank"):
+            self.plan()
+
     def test_missing_full_external_file_refuses(self) -> None:
         (self.root / self.source_relative).unlink()
         with self.assertRaisesRegex(ValueError, "missing, linked or size-drifted"):
