@@ -493,12 +493,38 @@ def validate_locations(metadata, members, registry):
     )
 
 
+def include_source_locations(metadata, source, location_ids):
+    """Restore selected source locations and their aliases to a staged catalog."""
+    if any(source[key] != metadata[key] for key in ("input_id", "source_catalog_sha256", "providers")):
+        raise ValueError("catalog addition source identity differs")
+    selected = set(location_ids)
+    locations = [row for row in source["locations"] if row["id"] in selected]
+    if len(selected) != len(location_ids) or len(locations) != len(selected) or {row["id"] for row in locations} != selected:
+        raise ValueError("catalog addition location selection differs")
+    if any(row["id"] in selected for row in metadata["locations"]):
+        raise ValueError("catalog addition location already exists")
+    if any(row["root"] for row in locations):
+        raise ValueError("catalog additions require non-root locations")
+
+    def identity(row):
+        return row["key"], row.get("keyType", "System.String")
+
+    keys = {identity(row): row for row in metadata["keys"]}
+    for row in source["keys"]:
+        additions = [location for location in row["locations"] if location in selected]
+        if additions:
+            key = identity(row)
+            existing = keys.get(key)
+            keys[key] = dict(existing or row, locations=(existing["locations"] if existing else []) + additions)
+    return dict(metadata, locations=metadata["locations"] + locations, keys=list(keys.values()))
+
+
 def produce(inputs, output):
     inputs = Path(inputs).resolve(strict=True)
     request_bytes = inputs.read_bytes()
     request = json.loads(request_bytes)
     if (
-        set(request) - {"resources"} != {"schema", "metadata", "profiles", "bundles", "registry", "input_id", "attempt"}
+        set(request) - {"resources", "source_additions"} != {"schema", "metadata", "profiles", "bundles", "registry", "input_id", "attempt"}
         or request["schema"] != "owner-catalog-inputs-v1"
     ):
         raise ValueError("unsupported catalog completion input contract")
@@ -518,6 +544,12 @@ def produce(inputs, output):
     metadata = json.loads(pinned(request["metadata"]).read_bytes())
     if any(metadata[key] != request[key] for key in ("input_id", "attempt")):
         raise ValueError("catalog input/startup identity differs")
+    if "source_additions" in request:
+        additions = request["source_additions"]
+        if set(additions) != {"metadata", "locations"}:
+            raise ValueError("unsupported catalog addition contract")
+        source = json.loads(pinned(additions["metadata"]).read_bytes())
+        metadata = include_source_locations(metadata, source, additions["locations"])
     profiles = [json.loads(pinned(row).read_bytes()) for row in request["profiles"]]
     files = {name: pinned(row) for name, row in request["bundles"].items()}
     registry = pinned(request["registry"])

@@ -12,6 +12,79 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
+def requalify_relocation(owner, inputs, output):
+    """Issue a fresh witness for retained PPtr patches from their prior producer."""
+    inputs, output = Path(inputs).resolve(strict=True), Path(output).resolve()
+    pins = owner.module("bundle_endpoints").InputPins(inputs.parent, owner)
+    request = json.loads(pins.add(inputs).read_bytes())
+    if set(request) != {"schema", "provider", "receipt", "records", "routes", "schemas"} or request["schema"] != "owner-retained-relocation-inputs-v1":
+        raise ValueError("Unsupported retained relocation request")
+    receipt_path = pins.pin(request["receipt"])
+    receipt = json.loads(receipt_path.read_bytes())
+    if receipt.get("success") is not True or "profile_sha256" in receipt or "witnesses_sha256" not in receipt:
+        raise ValueError("Expected a successful retained relocation pack")
+    pack = receipt_path.parent
+    index, objects = (pins.add(pack / filename) for filename in ("index.jsonl", "objects.bin"))
+    if any(pins.files[path]["sha256"] != receipt[key] for path, key in ((index, "index_sha256"), (objects, "objects_sha256"))):
+        raise ValueError("Retained relocation pack differs from its receipt")
+    indexed = {}
+    for row in owner.json_rows(index):
+        key = row["bundle"], row["member"], row["path_id"]
+        if key in indexed:
+            raise ValueError("Ambiguous retained relocation record")
+        indexed[key] = row
+    records = {tuple(value["destination"]): value for value in owner.json_rows(pins.pin(request["records"])) if value["provider"] == request["provider"]}
+    if not records:
+        raise ValueError("No selected records use this retained relocation pack")
+    routes = {tuple(row["owner"]): row["edges"] for row in owner.json_rows(pins.pin(request["routes"])) if tuple(row["owner"]) in records}
+    types = {}
+    for source in request["schemas"]:
+        for key, value in pins.read(source).items():
+            if types.setdefault(key, value) != value:
+                raise ValueError("Conflicting retained relocation schema")
+    producer, parsed = owner.ProducerRecords(), owner.ParsedTrees()
+    selected, witnesses = {}, []
+    for key, value in records.items():
+        record_key = tuple(value["record_source"])
+        row = indexed[record_key]
+        body = owner.O.record_extent(objects, row)
+        before = dict(value, provider=row["provider_before"], sha256=row["body_before_sha256"])
+        _, original = producer.record(before)
+        typ = {name: bytes.fromhex(item) if name in ("tree", "hash", "script_id") else item for name, item in types[value["full_type"]].items()}
+        fields = owner.checked_fields(value, body, typ, parsed)
+        mapped = {}
+        for route in routes[key]:
+            field, target = tuple(route["field"]), tuple(route["target"])
+            if field in mapped or tuple(route["pointer"]) != fields[field]:
+                raise ValueError("Retained relocation route differs")
+            mapped[field] = target
+        if mapped.keys() != {field for field, pointer in fields.items() if pointer[1]}:
+            raise ValueError("Retained relocation routes do not cover every nonnull field")
+        if owner.relocate_pointer_fields(value, original, typ, mapped, row["external_members"], schemas=parsed) != body:
+            raise ValueError("Retained relocation differs from the producer PPtr patch")
+        selected[record_key] = row
+        witnesses.append(dict(destination=list(key), before=before, after=value, fields=routes[key]))
+    resources = pins.add(pack / "resources.bin") if any(row.get("resource") for row in selected.values()) else None
+    pins.check()
+    output.mkdir(parents=True, exist_ok=False)
+    (output / "objects.bin").symlink_to(objects)
+    if resources is not None:
+        (output / "resources.bin").symlink_to(resources)
+    for filename, rows in (("index.jsonl", selected.values()), ("witnesses.jsonl", witnesses)):
+        (output / filename).write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+    result = dict(
+        success=True,
+        records=len(selected),
+        inputs={str(path): pin for path, pin in pins.files.items()},
+        source_provider_pins=producer.pins,
+        objects_sha256=pins.files[objects]["sha256"],
+        index_sha256=owner.O.B.sha(output / "index.jsonl"),
+        witnesses_sha256=owner.O.B.sha(output / "witnesses.jsonl"),
+    )
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
 def extend_selection(owner, member, required, selected, types, routes, extension, producer):
     """Add catalog roots from pinned records and measured external field routes."""
     proofs = {}
