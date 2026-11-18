@@ -431,8 +431,10 @@ released in `finally`. Its local receipt records failures before the Android
 gameplay gate.
 The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
 After the skin checks, the fixture loads the objective state configs from
-`commando-prefab-lab`, follows their projectile and trail references, and checks
-each keyed ghost's typed catalog location and native components.
+`commando-prefab-lab`. It follows projectile and trail references from those
+configs, the objective support and effect prefabs in their original owners,
+and the FireTrail catalog prefab. It checks each keyed ghost's typed catalog
+location and native components.
 During startup, `BodyCatalogSession` opens the objective-support bundle through
 `TeleporterWorldSession` before deserializing body prefabs. The original
 CharacterBody family loads in provider order before the explicit Commando read
