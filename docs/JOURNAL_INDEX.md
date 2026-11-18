@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1492](PORTING_JOURNAL.md#j1492--restore-acrids-native-normal-and-finisher-swing-bindings) | 2026-11-17 | Restore Acrid's native normal and finisher swing bindings | 2026-11-18. |
+| [J1491](PORTING_JOURNAL.md#j1491--recover-native-materials-when-baked-effects-load) | 2026-11-17 | Recover native materials when baked effects load | 2026-11-18. |
 | [J1489](PORTING_JOURNAL.md#j1489--restore-source-texture-alpha-and-bison-smoke-rings) | 2026-11-17 | Restore source texture alpha and Bison smoke rings | 2026-11-18. |
 | [J1488](PORTING_JOURNAL.md#j1488--verify-android-folder-and-zip-acquisition-through-the-installer) | 2026-11-17 | Verify Android folder and ZIP acquisition through the installer | 2026-11-18. |
 | [J1487](PORTING_JOURNAL.md#j1487--prepare-native-mercenary-expose-materials-before-pooling) | 2026-11-17 | Prepare native Mercenary Expose materials before pooling | 2026-11-18. |
