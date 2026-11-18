@@ -151,6 +151,33 @@ class BundlePreloadTests(unittest.TestCase):
             canonical_bundle=canonical,
         ), aliases
 
+    def test_staged_record_rewrite_preserves_container_resources_and_tables(self):
+        import staged_projectiles as staged
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            request, _ = self.canonical_fixture(root)
+            member = request["required"]["member"]
+            bundle = staged.W.B.Bundle(request["source"])
+            catalog = staged.C.ProducedMembers()
+            with bundle.member(member) as before:
+                catalog.add(member, before, "authored")
+                _, layout, objects = catalog.members[member]
+                prior = catalog.record(member, (0, 1))[2]
+                typ = layout["types"][objects[20]["type_id"]]
+                replacement = struct.pack("<iqi", 0, 10, 87)
+                target = root / "updated"
+                staged.rewrite(bundle, member, catalog, {20: replacement}, {objects[20]["type_id"]: typ}, target, lambda block, method: block)
+            actual = staged.W.B.Bundle(target)
+            with actual.member(member) as after:
+                checked = staged.C.ProducedMembers()
+                checked.add(member, after, "authored")
+                self.assertEqual(checked.record(member, (0, 1))[2], prior)
+                self.assertEqual(checked.record(member, (0, 20))[2], replacement)
+                self.assertEqual(checked.members[member][1], layout)
+            with actual.member(member + ".resS") as resource:
+                self.assertEqual(resource.read(), b"authored resources!")
+
     def test_canonical_repack_preserves_reciprocal_owners_and_rebuilds_preloads(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

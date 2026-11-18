@@ -11,6 +11,32 @@ GUID_REF = re.compile(r"^\{fileID: -?\d+, guid: [0-9a-f]{32}, type: 3\}$")
 
 
 class RecipeAuditTests(unittest.TestCase):
+    def test_projectile_boundary_uses_authored_registry_script_in_both_staged_profiles(self):
+        identity = ["Assembly-CSharp.dll", "", "SilentProjectileBoundary"]
+        for pack, bundle, count in (("commando", "commando", 26), ("objective", "objective-support", 6)):
+            with self.subTest(bundle=bundle):
+                supplier = RECIPE / f"owner-{pack}-reused-records.json"
+                records = json.loads(supplier.read_bytes())["records"]
+                (script,) = [row for row in records if row.get("script_identity") == identity]
+                profile = json.loads((RECIPE / f"owner-{bundle}-objects.json").read_bytes())
+                name, member, script_id = script["destination"]
+                self.assertEqual((name, member), (profile["bundle"]["name"], profile["bundle"]["member"]))
+                objects = {row["path_id"]: row for row in profile["objects"]}
+                self.assertEqual(objects[script_id]["script_identity"], identity)
+                self.assertEqual(objects[script_id]["record"], hashlib.sha256(supplier.read_bytes()).hexdigest())
+                owners = []
+                for row in objects.values():
+                    pointers = {ref["offset"]: ref["to"] for ref in row.get("references", [])}
+                    if pointers.get(16) == [0, script_id]:
+                        self.assertTrue(row["fieldless_script_record"])
+                        self.assertNotIn("sdk_event_system", row)
+                        file_id, owner = pointers[0]
+                        self.assertEqual(file_id, 0)
+                        self.assertIn(owner, objects)
+                        owners.append(owner)
+                self.assertEqual(len(owners), count)
+                self.assertEqual(len(set(owners)), count)
+
     def test_published_whole_scene_shader_digests_match_object_pack_references(self):
         references = {}
         for shader in RECIPE.glob("owner-*-whole-*-shaders.json"):

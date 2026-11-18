@@ -133,6 +133,46 @@ class RefusedLeaseTest(unittest.TestCase):
             self.assertEqual(execute.call_args.kwargs, dict(local_checkout=repo, workstream="fixture-worker"))
             self.assertEqual(json.loads(done.read_bytes())["error"], "fixture failure")
 
+    def test_local_packaging_can_back_up_a_cached_thor_signer_without_building(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            commit = "a" * 40
+            config = repo / "work/config/lab-runner.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(json.dumps({"devices": {"thor": "fixture"}}))
+            output = repo / "work/coordination/lab-runner/toolhost" / commit
+            output.mkdir(parents=True)
+            command = output / "command.json"
+            command.write_text(json.dumps(dict(source_commit=commit, retained_tool_key="/data/local/tmp/synthetic/owner-tool-key")))
+            (output / "result.json").write_text(json.dumps(dict(success=True, package=lab_runner.TEST_PACKAGE, source_commit=commit, signer_sha256="b" * 64)))
+            done = repo / "work/terminal.json"
+            request = repo / "request.json"
+            request.write_text(
+                json.dumps(
+                    dict(
+                        repo=str(repo),
+                        checkout=str(repo),
+                        device="thor",
+                        workstream="fixture-worker",
+                        done_file=str(done),
+                        operation="toolhost",
+                        backup_installer_key=True,
+                        toolhost_source_commit=commit,
+                    )
+                )
+            )
+            with (
+                mock.patch.object(lab_runner.subprocess, "check_output", return_value=str(repo / ".git")),
+                mock.patch.object(lab_runner, "retain_installer_signer") as backup,
+                mock.patch.object(lab_runner.Runner, "toolhost") as build,
+            ):
+                self.assertEqual(lab_runner.local_packaging(request, dry_run=True), 0)
+                backup.assert_not_called()
+                self.assertEqual(lab_runner.local_packaging(request), 0)
+                self.assertEqual(backup.call_args.args[1:], (repo, "thor", "fixture-worker", output))
+                build.assert_not_called()
+            self.assertTrue(json.loads(done.read_bytes())["signing_key_backed_up"])
+
     def test_explicit_restage_uses_the_shared_installer_resume_path(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory).resolve()

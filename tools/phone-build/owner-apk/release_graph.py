@@ -915,6 +915,7 @@ class Graph:
             ):
                 raise ValueError("canonical Wwise stage membership required")
             members = sorted([*banks, *media])
+            request["source_inputs"].pop("decoder", None)
             request["audio_members"] = members
             outputs = {
                 "apk/assets/stage-receipt.json": "managed-production/staged/stage-receipt.json",

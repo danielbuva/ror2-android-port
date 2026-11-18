@@ -183,6 +183,7 @@ observations, not a total lifetime bound or plateau. Keep snapshot object census
 separate from process heap telemetry. A long unassisted physical session,
 ordinary results navigation and dependency retention remain owner playtests.
 
+- In the alpha installer, use Android's folder picker to select a supported PC game folder and confirm the installer displays “Source selected.”
 - Observe a long repeated-session series only after each session passes teardown.
   Record post-collection managed usage, PSS, live completed owners, object/bundle
   counts and process lifetime. A completed series with a positive memory slope

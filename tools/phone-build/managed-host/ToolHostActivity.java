@@ -33,7 +33,12 @@ public final class ToolHostActivity extends Activity {
     private Button checkButton, rollbackButton, recoveryButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
     private static final int PICK_TREE = 120, PICK_ZIP = 121;
     private String flowDetail = "";
-    private final Runnable refresh = new Runnable() { public void run() { refreshStatus(); handler.postDelayed(this, 500); } };
+    private final Runnable refresh = new Runnable() { public void run() {
+        refreshStatus();
+        try { AcquisitionFixture.control(ToolHostActivity.this); }
+        catch (Exception error) { updateStatus(ToolHostActivity.this, "ERROR", error.getMessage()); }
+        handler.postDelayed(this, 500);
+    } };
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener installObserver =
         new android.content.SharedPreferences.OnSharedPreferenceChangeListener() {
             public void onSharedPreferenceChanged(android.content.SharedPreferences preferences, String key) {
@@ -73,6 +78,17 @@ public final class ToolHostActivity extends Activity {
         result.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) { action.run(); } });
         return result;
     }
+    Button acquisitionControl(String action) throws IOException {
+        switch (action) {
+            case "check": return checkButton;
+            case "prepare": return prepareButton;
+            case "choose-folder": return treeButton;
+            case "choose-zip": return zipButton;
+            case "import": return importButton;
+            case "cancel": return cancelButton;
+            default: throw new IOException("Unknown lab acquisition control");
+        }
+    }
     @Override protected void onDestroy() {
         if (graphicsPicker != null) graphicsPicker.close();
         super.onDestroy();
@@ -82,8 +98,11 @@ public final class ToolHostActivity extends Activity {
         Intent pick = new Intent(tree ? Intent.ACTION_OPEN_DOCUMENT_TREE : Intent.ACTION_OPEN_DOCUMENT);
         pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         if (!tree) { pick.setType("application/zip"); pick.addCategory(Intent.CATEGORY_OPENABLE); pick.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip", "application/x-zip-compressed", "application/octet-stream"}); }
-        try { startActivityForResult(pick, tree ? PICK_TREE : PICK_ZIP); }
-        catch (RuntimeException error) { updateStatus(this, "ERROR", "File picker unavailable: " + error.getMessage()); }
+        try {
+            Intent fixture = AcquisitionFixture.selection(this);
+            startActivityForResult(fixture == null ? pick : fixture, tree ? PICK_TREE : PICK_ZIP);
+        }
+        catch (Exception error) { updateStatus(this, "ERROR", "File picker unavailable: " + error.getMessage()); }
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
