@@ -1233,8 +1233,10 @@ stride, regenerates each face from its top level without a vertical flip, and
 writes CompleteImageSize per face. Existing BC decoding, float mip filtering,
 public ETC and SDK RGBA encoders share the same pack/checkpoint contract. The
 native pixel helper owns BC6 byte conversion and HDR export-half/DoubleLDR mip
-handling. Source identity and unresolved native reflections remain explicit
-gates; no target pixel fallback is available.
+handling. Its `bc6-half` pipe mode decodes one unsigned BC6H mip into little-endian
+RGBAHalf with opaque alpha. It crops edge blocks to the requested dimensions and
+streams four rows at a time. The default-scene owner still consumes the native
+capture while source reflection and ambient compatibility are evaluated.
 The opt-in `cube-preserve` operation retains original BC6H/RGBAHalf face/mip
 bytes, format, color space and usage with per-face CompleteImageSize. The audited
 `recipe/owner-source-baked-reflections.json` selects two original baked probes;
