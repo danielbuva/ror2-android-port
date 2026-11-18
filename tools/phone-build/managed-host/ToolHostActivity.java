@@ -407,6 +407,7 @@ public final class ToolHostActivity extends Activity {
         }
         if (pipeline != null) {
             detail.append("\n\nReconstruction stages");
+            if (pipeline.has("repair_notice")) detail.append("\n").append(pipeline.optString("repair_notice"));
             File currentThermal = new File(getFilesDir(), "owner-input/thermal-state.json");
             boolean paused = currentThermal.isFile() && "paused".equals(readJson(currentThermal).optString("status"));
             long liveSeconds = OwnerUpdateState.liveSeconds(OwnerBuildService.isRunning(), pipeline.optString("status"), paused,
