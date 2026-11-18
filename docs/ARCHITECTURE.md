@@ -1525,6 +1525,16 @@ registry pins the selected sources and importer metadata. The current audio
 compiler still needs its macOS SDK tools and checkout work root. The package
 owner removes temporary extraction files and retains the selected inputs and
 terminal receipt.
+The optional `--audio-stage-receipt` reads relative member names from a private
+authoring stage. The current conversion job checks those names against its new
+local audio receipt and exposes the receipt, banks, streamed media and licensed
+ARM64 library as signed APK entries. The native job consumes that same conversion,
+so the packaged receipt and compiled runtime pin share one owner. Android audio
+production and playback remain open.
+When a public bundle index exceeds the installer's 4 MiB limit, the publisher
+writes shared dependency closures once. Installer 4 or later expands their
+references for the existing signed dependency checks and retains the compact
+index on disk. Smaller indexes keep their existing encoding.
 The optional `--native-request` adds `owner-code/native.py` as one cached job
 with final `libil2cpp.so` and matching `global-metadata.dat` outputs. With
 `--code-request`, an assembly-stage `produce.py --stop-after-conversion` job

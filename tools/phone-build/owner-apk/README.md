@@ -779,6 +779,17 @@ the managed compiler's `packages/inputs.json`. A fixed-target player registry
 uses the code request's original `source_inputs.packages` and flat inventory,
 which also includes TestRunner and MCP importer sources.
 
+Optional `--audio-stage-receipt /path/to/private/stage-receipt.json` adds
+the staged Wwise banks, streamed media, receipt and licensed ARM64 library to
+the signed APK entries. Pair it with the current `--code-request` and its
+`--native-request`. The graph reads only relative member names from the host
+stage for publication. The code producer derives and verifies the actual audio
+cohort from the owner's inputs, and its own receipt supplies the compiled
+runtime pin and APK entry. The current producer still needs its host toolchain.
+The full audio cohort exceeds the 4 MiB index budget if its dependency closure
+is repeated for every member. The publisher compacts these indexes and requires
+`--minimum-installer-version 4` or later for compact-index releases.
+
 Optional `--burst-request recipe/<request>.json` adds the existing
 `owner-code/produce.py` Burst-only job. The caller's request uses
 `"output": "${output}"` and explicit tool/input bindings, with either `managed`

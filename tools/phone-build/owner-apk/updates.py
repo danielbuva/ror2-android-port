@@ -192,10 +192,10 @@ def extract_bundle(bundle, destination, release):
                 raise ValueError("expanded public bundle exceeds size limit")
             if item.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}:
                 raise ValueError("unsupported public bundle compression")
-        if "bundle-index.json" not in names or archive.getinfo("bundle-index.json").file_size > MAX_METADATA:
+        if "bundle-index.json" not in names or archive.getinfo("bundle-index.json").file_size > public().MAX_BUNDLE_INDEX_BYTES:
             raise ValueError("bounded public bundle index required")
-        index = public().load_json(archive.read("bundle-index.json"))
-        public().validate_bundle_index(index, release)
+        index_data = archive.read("bundle-index.json")
+        index = public().read_bundle_index(index_data, release)
         if names != set(index["files"]) | {"bundle-index.json"}:
             raise ValueError("public bundle membership differs from index")
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -218,7 +218,8 @@ def extract_bundle(bundle, destination, release):
                     os.fsync(output.fileno())
                 if digest.hexdigest() != expected:
                     raise ValueError("public bundle member hash differs: " + name)
-            write_json(stage / "bundle-index.json", index)
+            with ATOMIC.writer(stage / "bundle-index.json") as output:
+                output.write(index_data)
             # Sync nested entries before publishing the complete verified tree.
             for directory, _, _ in os.walk(stage, topdown=False):
                 ATOMIC.sync_directory(directory)
