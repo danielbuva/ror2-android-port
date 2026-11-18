@@ -178,6 +178,44 @@ class BundlePreloadTests(unittest.TestCase):
             with actual.member(member + ".resS") as resource:
                 self.assertEqual(resource.read(), b"authored resources!")
 
+    def test_partial_external_prefab_loads_reciprocal_hierarchy_and_scripts_per_group(self):
+        # Two local addresses reach the same child through a GameObject and a
+        # component. A third address shares only the script with that prefab.
+        ids = {10: 1, 11: 4, 20: 1, 21: 4, 22: 114, 23: 115, 90: 142}
+        records = {pid: dict(type_id=cid) for pid, cid in ids.items()}
+        types = {cid: dict(class_id=cid, tree=bytes([cid])) for cid in ids.values()}
+        schemas = {typ["tree"]: node("Base", children=[pointer("#374")] if cid in (4, 114) else []) for cid, typ in types.items()}
+        native = Node(members={"donor": (None, dict(types=types), records)}, managed_identity=lambda *args: ("Fixture", "", "App"))
+        native.record = lambda _, ptr: ("donor", types[ids[ptr[1]]], ptr[1])
+        ptrs = {
+            10: {("m_Component", "Array", "0", "component"): (0, 11)},
+            11: {("#374",): (0, 10), ("m_Father",): (0, 0), ("#83", "Array", "0"): (0, 21)},
+            20: {("m_Component", "Array", "0", "component"): (0, 21), ("m_Component", "Array", "1", "component"): (0, 22)},
+            21: {("#374",): (0, 20), ("m_Father",): (0, 11)},
+            22: {("#374",): (0, 20), ("#490",): (0, 23)},
+        }
+        donor_extent = [(0, pid) for pid in ids if pid != 90]
+        catalog = Node(containers=lambda _: ([("actor.prefab", (0, 10), donor_extent)], False))
+        with patch.object(P, "module", return_value=catalog), patch.object(P, "pointers", side_effect=lambda body, *_: ptrs[body]):
+            owners, preloads = P.external_prefab_preloads(native, "donor", 1, {20, 22, 23}, schemas)
+            self.assertEqual(owners, {(1, 20): 10, (1, 22): 10})
+            self.assertEqual(preloads[10], {(1, pid) for _, pid in donor_extent})
+            ptrs[11].pop(("#83", "Array", "0"))
+            with self.assertRaisesRegex(ValueError, "ancestry differs"):
+                P.external_prefab_preloads(native, "donor", 1, {20}, schemas)
+        groups = [dict(path=f"{root}.asset", guid=f"{root:032x}", roots=[root]) for root in (1, 2, 3)]
+        selected = dict(name="consumer", member="CAB-local", externals=["CAB-other"], dependencies=["donor"], asset_groups=groups)
+        graph = {1: {(1, 20)}, 2: {(0, 4)}, 3: {(1, 23)}, 4: {(1, 22)}}
+        with tempfile.TemporaryDirectory() as tmp, closing(P.EmissionCache(tmp)) as cache:
+
+            def write(extents):
+                body = P.produce_graph(selected, graph, {}, emission_cache=cache, prefab_owners=owners, prefab_preloads=extents)
+                return {pid: set(refs) for _, (_, pid), refs in P.module("catalog_complete").containers(body)[0]}
+
+            rows = write(preloads)
+            self.assertEqual(rows, {1: {(0, 1)} | preloads[10], 2: {(0, 2), (0, 4)} | preloads[10], 3: {(0, 3), (1, 23)}})
+            self.assertIn((1, 24), write({10: preloads[10] | {(1, 24)}})[2])
+
     def test_canonical_repack_preserves_reciprocal_owners_and_rebuilds_preloads(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
