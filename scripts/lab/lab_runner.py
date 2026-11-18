@@ -16,6 +16,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -413,10 +414,11 @@ def local_packaging(path, *, dry_run=False, detach=False):
         if inputs is not None:
             if retain_signer:
                 raise CommandError("explicit toolhost stages use the retained signer and do not provide a signing backup")
-            from toolhost_build import digest, read_plan
+            from toolhost_build import digest, read_plan, verify_apk
 
             plan = read_plan(inputs, checkout)
-            output = toolhosts / plan[-1]
+            stage, files, _, _, cache_key, commit = plan
+            output = toolhosts / cache_key
         elif cached_signer is not None:
             output = toolhosts / cached_signer
         if dry_run or detach:
@@ -460,13 +462,25 @@ def local_packaging(path, *, dry_run=False, detach=False):
             receipt_path = output / "result.json"
             apk = output / "signed.apk"
             receipt = json.loads(receipt_path.read_bytes()) if receipt_path.is_file() else {}
+            identity = dict(source_commit=commit, package=TEST_PACKAGE, signer_sha256=inputs["signer_sha256"], cache_key=cache_key)
             if receipt.get("success") is True and apk.is_file() and digest(apk) == receipt.get("apk_sha256"):
+                write_receipt = any(receipt.get(key) != value for key, value in identity.items())
+                if write_receipt:
+                    build = json.loads((output / "build-receipt.json").read_bytes())
+                    verify_apk(apk, stage, files, build, inputs, TEST_PACKAGE)
                 code = 0
                 result["cached"] = True
             else:
                 command.update(job="toolhost", local_toolhost=(inputs, plan, output))
                 code, receipt = runner.execute(command, local_checkout=checkout, workstream=workstream)
-                receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
+                write_receipt = True
+            if code == 0:
+                receipt.update(identity)
+            if write_receipt:
+                with tempfile.TemporaryDirectory(dir=output) as directory:
+                    temporary = Path(directory) / receipt_path.name
+                    temporary.write_text(json.dumps(receipt, indent=2) + "\n")
+                    temporary.replace(receipt_path)
             (output / ".prune-keep").touch()
             result["toolhost"] = toolhost_summary(output)
         elif cached_signer is not None:
