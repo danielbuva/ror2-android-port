@@ -2716,6 +2716,12 @@ owner. No rendered image, font/text payload, encoded block or target field
 array is included. The sprite texture file names are minimum dependency
 relationships; texture production remains a separate owner/gate.
 
+2026-11-17: refreshed the current player profile's recipe, TextAsset body and
+serialized-file hashes after the authored enemy material settings changed in
+#516. The existing TextAsset owner serialized the current recipe using the
+original input's native type. This update records only sizes and digests. The
+serialized output and original type bytes remain in ignored work.
+
 `owner-death-effect-objects.json` selects the original rooted prefab and its
 MonoScripts, with checked pointer relationships and comparison hashes. All
 non-reference fields and embedded type metadata come directly from the source;

@@ -207,6 +207,17 @@ class SourceMetadataTests(unittest.TestCase):
 
 
 class ShaderManifestTextTests(unittest.TestCase):
+    def test_current_runtime_config_has_matching_source_and_text_body_pins(self):
+        profile = json.loads((ROOT / "recipe/owner-player-data.json").read_text())
+        (row,) = (item for item in profile["text_assets"]["files"] if item.get("recipe", {}).get("path") == "runtime-config.json")
+        recipe = row["recipe"]
+        source = (ROOT / "recipe" / recipe["path"]).read_bytes()
+        self.assertEqual(pin(source), (recipe["bytes"], recipe["sha256"]))
+        body = io.BytesIO()
+        P.OBJECTS.aligned_string(body, row["name"])
+        P.OBJECTS.aligned_string(body, json.dumps(json.loads(source), indent=2) + "\n")
+        self.assertEqual(pin(body.getvalue()), (row["bytes"], row["sha256"]))
+
     def test_generated_manifest_uses_source_text_type_and_checked_json_body(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder).resolve()
