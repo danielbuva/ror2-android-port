@@ -1989,7 +1989,7 @@ def host_integration():
 
 
 def host_skin_bundles(target):
-    """Inspect converted body skins and optional projectile ghosts in the idle exact editor."""
+    """Inspect actual converted body skin references in the idle exact editor."""
     from build_lock import HOST_BUILD_LOCK, host_build_lock
 
     request = Path(target).resolve(strict=True)
@@ -1999,12 +1999,12 @@ def host_skin_bundles(target):
     out = WORK / "experiments/whole-catalog-skin-host" / now()
     out.mkdir(parents=True)
     write(out / "inputs.json", dict(request=str(request)))
-    with host_build_lock(HOST_BUILD_LOCK, operation="Converted catalog typed loads", timeout=1):
+    with host_build_lock(HOST_BUILD_LOCK, operation="Converted body skin typed loads", timeout=1):
         export_catalog(out, "ValidateConvertedSkins.cs.txt", "skin-host.json")
     result = read(out / "skin-host.json")
     print(json.dumps(dict(path=str(out), **result["summary"]), indent=2))
     if not result["success"]:
-        raise RuntimeError("Converted catalog typed loads failed; inspect skin-host.json")
+        raise RuntimeError("Converted body skin typed loads failed; inspect skin-host.json")
 
 
 def host_providers():
