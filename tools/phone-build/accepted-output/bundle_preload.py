@@ -1431,11 +1431,22 @@ def _emit_closed_native(
             resource_file = Path(scratch) / "resources.resS"
             S.resource(resource_file, resource_extents, 0, W, O.B.LIMIT)
             members.append((resource_member, 0, resource_file.stat().st_size, lambda: resource_file.open("rb")))
+        compression_started = time.monotonic()
+        child_before = resource.getrusage(resource.RUSAGE_CHILDREN)
         bundle = output / (name + ".bundle")
         compression = W.codec(codec, codec_sha256) if codec is not None else nullcontext(lambda block, method: block)
         with compression as compress, bundle.open("wb") as stream:
-            W.write_bundle(stream, members, compress, flags=0x243 if codec is not None else 0x40)
+            written = W.write_bundle(stream, members, compress, flags=0x243 if codec is not None else 0x40, hash_output=True)
+        member_staging_seconds = compression_started - stage_start
         stage("serialize_compress")
+        stages["serialize_compress"].update(member_staging_seconds=member_staging_seconds, bundle_wall_seconds=stage_start - compression_started)
+        if isinstance(compress, W.Codec):
+            child_after = resource.getrusage(resource.RUSAGE_CHILDREN)
+            stages["serialize_compress"].update(
+                codec_exchange_seconds=compress.exchange_seconds,
+                decoded_equality_seconds=compress.verification_seconds,
+                codec_cpu_seconds=(child_after.ru_utime - child_before.ru_utime) + (child_after.ru_stime - child_before.ru_stime),
+            )
         # Read the actual final container, metadata and every persisted body.
         # Reset endpoint bytes between phases: a warm read must never hide drift.
         external_bodies.clear()
@@ -1506,7 +1517,7 @@ def _emit_closed_native(
                     remaining -= len(part)
                 if digest.hexdigest() != row["source_resource"]["sha256"]:
                     raise ValueError("Emitted native resource differs")
-        digest = O.B.sha(bundle)
+        digest = written["sha256"]
         stage("persisted_validation")
     gaps = dict(
         complete=False,
@@ -2060,7 +2071,7 @@ def repack_canonical_aliases(
                 ]
                 compression = W.codec(codec, codec_sha256) if codec is not None else nullcontext(lambda block, method: block)
                 with compression as compress, target.open("xb") as handle:
-                    W.write_bundle(handle, members, compress, engine=layout["engine"], flags=0x243 if codec is not None else 0x40)
+                    written = W.write_bundle(handle, members, compress, engine=layout["engine"], flags=0x243 if codec is not None else 0x40, hash_output=True)
             actual = W.B.Bundle(target)
             with actual.member(member) as persisted:
                 metadata = W.read_serialized(persisted)
@@ -2099,7 +2110,7 @@ def repack_canonical_aliases(
             typed_load_accepted=False,
             device_accepted=False,
             bundle=str(target),
-            sha256=O.B.sha(target),
+            sha256=written["sha256"],
             bytes=target.stat().st_size,
             canonical_roots=len(mapping),
             retained_skin_preloads={str(pid): roots for pid, roots in skin_links.items()},

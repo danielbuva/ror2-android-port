@@ -6,6 +6,7 @@ or compressed target block is an input to the writer.
 """
 
 from contextlib import contextmanager
+import hashlib
 import importlib.util
 import io
 import os
@@ -371,11 +372,14 @@ class Codec:
         self.child = subprocess.Popen([str(path)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True, bufsize=0)
         os.set_blocking(self.child.stdin.fileno(), False)
         os.set_blocking(self.child.stdout.fileno(), False)
+        self.exchange_seconds = self.verification_seconds = 0.0
 
     def transfer(self, stream, data=None, size=0):
         deadline = time.monotonic() + 60
         result = bytearray()
         position = 0
+        if data is not None:
+            data = memoryview(data)
         with selectors.DefaultSelector() as selector:
             selector.register(stream, selectors.EVENT_READ if data is None else selectors.EVENT_WRITE)
             while len(result) < size if data is None else position < len(data):
@@ -390,38 +394,69 @@ class Codec:
                     position += os.write(stream.fileno(), data[position : position + 65536])
         return bytes(result)
 
-    def __call__(self, data, method):
-        if method == 0:
-            return data
+    def send(self, data, method):
         # Worker method 9 selects HC9 shader segments; UnityFS flags stay 2/3.
         if method not in (2, 3, 9) or not 0 < len(data) <= B.LIMIT:
             raise ValueError("unqualified compression request")
+        started = time.monotonic()
         self.transfer(self.child.stdin, struct.pack("<II", len(data), method) + data)
+        self.exchange_seconds += time.monotonic() - started
+
+    def receive(self, data):
+        started = time.monotonic()
         (size,) = struct.unpack("<I", self.transfer(self.child.stdout, size=4))
         if not 0 < size <= len(data) + len(data) // 255 + 16:
             raise ValueError("invalid bundle codec output size")
         encoded = self.transfer(self.child.stdout, size=size)
-        if B.decompress(encoded, len(data), 3 if method == 9 else method) != data:
-            raise ValueError("bundle codec roundtrip differs")
+        self.exchange_seconds += time.monotonic() - started
         return encoded
 
-    def close(self):
+    def verify(self, data, encoded, method):
+        started = time.monotonic()
+        if B.decompress(encoded, len(data), 3 if method == 9 else method) != data:
+            raise ValueError("bundle codec roundtrip differs")
+        self.verification_seconds += time.monotonic() - started
+        return encoded
+
+    def __call__(self, data, method):
+        if method == 0:
+            return data
+        self.send(data, method)
+        return self.verify(data, self.receive(data), method)
+
+    def encode_blocks(self, blocks, method):
+        """Overlap one ordered native request with verification of its predecessor."""
+        blocks = iter(blocks)
+        previous = next(blocks, None)
+        if previous is None:
+            return
+        self.send(previous, method)
+        for current in blocks:
+            encoded = self.receive(previous)
+            self.send(current, method)
+            yield previous, self.verify(previous, encoded, method)
+            previous = current
+        yield previous, self.verify(previous, self.receive(previous), method)
+
+    def close(self, *, abort=False):
         self.child.stdin.close()
         try:
+            if abort and self.child.poll() is None:
+                os.killpg(self.child.pid, signal.SIGKILL)
             try:
                 result = self.child.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 os.killpg(self.child.pid, signal.SIGKILL)
                 self.child.wait()
                 raise TimeoutError("bundle codec exit deadline") from None
-            if result:
+            if result and not abort:
                 raise ValueError("bundle codec failed")
         finally:
             if self.child.poll() is None:
                 os.killpg(self.child.pid, signal.SIGKILL)
                 self.child.wait()
             self.child.stdout.close()
-        if B.sha(self.path) != self.sha256:
+        if not abort and B.sha(self.path) != self.sha256:
             raise ValueError("bundle codec changed during production")
 
 
@@ -430,11 +465,28 @@ def codec(path, sha256):
     child = Codec(path, sha256)
     try:
         yield child
-    finally:
+    except BaseException:
+        child.close(abort=True)
+        raise
+    else:
         child.close()
 
 
-def write_bundle(output, members, compress, *, engine="2021.3.45f2", version=8, block_size=131072, flags=0x243):
+class _DigestWriter:
+    def __init__(self, output):
+        self.output = output
+        self.digest = hashlib.sha256()
+
+    def tell(self):
+        return self.output.tell()
+
+    def write(self, data):
+        if self.output.write(data) != len(data):
+            raise OSError("short bundle write")
+        self.digest.update(data)
+
+
+def write_bundle(output, members, compress, *, engine="2021.3.45f2", version=8, block_size=131072, flags=0x243, hash_output=False):
     """Stream independent members into canonical UnityFS blocks and directory.
 
     members: ordered (name, flags, size, open_readable) tuples. Compression is
@@ -447,20 +499,11 @@ def write_bundle(output, members, compress, *, engine="2021.3.45f2", version=8, 
         raise ValueError("unqualified UnityFS compression")
     method = flags & 63
     blocks, directory = [], []
-    pending = bytearray()
-    offset = 0
-    names = set()
-    with tempfile.TemporaryFile(dir=getattr(output, "name", None) and Path(output.name).parent) as scratch:
 
-        def flush():
-            encoded = compress(bytes(pending), method)
-            selected = method
-            if len(encoded) >= len(pending):
-                encoded, selected = pending, 0
-            scratch.write(encoded)
-            blocks.append((len(pending), len(encoded), selected))
-            pending.clear()
-
+    def source_blocks():
+        pending = bytearray()
+        offset = 0
+        names = set()
         for name, node_flags, size, open_source in members:
             if name in names or size < 0:
                 raise ValueError("duplicate or invalid bundle member")
@@ -475,11 +518,25 @@ def write_bundle(output, members, compress, *, engine="2021.3.45f2", version=8, 
                     pending.extend(B.exact(source, count))
                     remaining -= count
                     if len(pending) == block_size:
-                        flush()
+                        yield bytes(pending)
+                        pending.clear()
                 if source.read(1):
                     raise ValueError("bundle member exceeds declared extent")
         if pending:
-            flush()
+            yield bytes(pending)
+
+    scratch_directory = getattr(output, "name", None) and Path(output.name).parent
+    if hash_output:
+        output = _DigestWriter(output)
+    with tempfile.TemporaryFile(dir=scratch_directory) as scratch:
+        source = source_blocks()
+        encoded_blocks = compress.encode_blocks(source, method) if method and isinstance(compress, Codec) else ((raw, compress(raw, method)) for raw in source)
+        for raw, encoded in encoded_blocks:
+            selected = method
+            if len(encoded) >= len(raw):
+                encoded, selected = raw, 0
+            scratch.write(encoded)
+            blocks.append((len(raw), len(encoded), selected))
         info = bytes(16) + struct.pack(">I", len(blocks))
         info += b"".join(struct.pack(">IIH", *block) for block in blocks)
         info += struct.pack(">I", len(directory))
@@ -503,4 +560,7 @@ def write_bundle(output, members, compress, *, engine="2021.3.45f2", version=8, 
         copy(scratch, output, sum(block[1] for block in blocks))
         if flags & 128:
             output.write(encoded_info)
-    return {"bytes": size, "blocks": len(blocks), "members": len(directory)}
+    report = {"bytes": size, "blocks": len(blocks), "members": len(directory)}
+    if hash_output:
+        report["sha256"] = output.digest.hexdigest()
+    return report

@@ -2179,9 +2179,13 @@ resource descriptors remain in `resources.jsonl`. Optional `--codec` and
 UnityFS repacking without changing member bytes. `build_bundle_lz4.py` builds
 the public `bundle_lz4.c` worker; `unity_write.py::codec` owns its hash-pinned,
 bounded child, per-block deadlines and independent decoded-byte verification.
-Exit rechecks the codec pin, closes pipes/reaps the child and removes the
-writer's temporary compressed spool. Final body/resource checks still read the
-compressed output; the producer receipt records compression and the codec pin.
+The native child encodes the next canonical block while Python verifies the
+previous response. A successful exit rechecks the codec pin, closes pipes and
+reaps the child. The writer removes its temporary compressed spool and hashes
+the final bundle bytes as they are written. Final body/resource checks read
+the compressed output. The producer receipt records the codec pin, member
+staging and bundle wall times, codec CPU and exchange time, and decoded-byte
+verification time. Exchange and verification can overlap native CPU time.
 Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
 The same owner supplies per-field external qualification for strict graph
