@@ -309,6 +309,8 @@ def main(argv=None):
                         import_acceptance(phone, dex, passed)
     except INSTALLER.Failure as error:
         # Existing installer Failure codes are authored constants, not raw logs.
+        if phase == "saf-acquisition":
+            phase = INSTALLER.CURRENT_PHASE
         print("FAIL alpha-packaging phase=" + phase + " reason=" + str(error), flush=True)
         failed = True
     except Exception:

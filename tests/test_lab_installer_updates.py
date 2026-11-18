@@ -2529,6 +2529,18 @@ public class Review {
             * 2,
         )
 
+    def test_seek_cancel_below_the_import_control_before_scrolling_up(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        label = "Cancel (keep verified checkpoints)"
+        tree = ET.fromstring('<hierarchy><node scrollable="true" bounds="[0,0][100,100]" /></hierarchy>')
+        with (
+            patch.object(phone, "tap_visible", side_effect=[False, True]),
+            patch.object(phone, "ui", return_value=tree),
+            patch.object(phone, "shell") as shell,
+        ):
+            self.assertTrue(phone.tap(label, scroll_down_first=True))
+        shell.assert_called_once_with("input", "swipe", "50", "80", "50", "20", "250", label="device-ui-scroll")
+
     def test_active_launcher_root_is_refused_before_any_tap_or_scroll(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         launcher = ET.fromstring('<hierarchy><node package="com.android.launcher3" scrollable="true" /></hierarchy>')

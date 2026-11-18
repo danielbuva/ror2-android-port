@@ -232,7 +232,9 @@ class Acquisition:
         if expected == "CANCELLED":
             result["cancel_observed"] = row["state"]
             result["copied_bytes_at_cancel"] = row.get("completed", 0)
-            phone.tap("Cancel (keep verified checkpoints)")
+            # The import starts above the cancellation control. Scroll toward
+            # it while validation or copying is still active.
+            phone.tap("Cancel (keep verified checkpoints)", scroll_down_first=True)
             row = self.wait_import(phone, expected)
         self.require(all(part in row.get("message", "") for part in message), "acquisition-import-report-mismatch")
         self.visible_status(phone, expected, message)
