@@ -1748,7 +1748,12 @@ before progress is restarted, with a visible repair notice. Producer caches and
 input/signing state stay untouched and undergo existing revalidation. Unsupported
 checkpoint versions or failed preservation refuse instead of discarding evidence.
 Producer receipts remain the authority for
-reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
+reuse. `tests/owner_journey_fixture.py` and `tests/owner_journey_android.py`
+provide a reusable synthetic host journey across input admission, real producer
+stages, issued receipts, simulated Android consent/readback and the next update.
+`tests/test_owner_journey.py` compares stage order and cross-language receipts.
+Crypto, packaging, input selection/copy and Android/provider behavior remain
+explicit test boundaries; this is not phone or gameplay qualification. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
 foreground operation independently of `ToolHostActivity`. `OwnerUpdateState` supplies
 Android-free progress presentation: missing/future timestamps never advance the
