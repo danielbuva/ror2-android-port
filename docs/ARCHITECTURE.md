@@ -5164,6 +5164,12 @@ The production setup/exclusion/disposal host fixture covers both modes,
 including the initial report-mode flag still being unset during configuration.
 The owner captures the configured mode and native readiness during setup;
 it never treats the later report assignment as startup authority.
+The opt-in PCM diagnostic also reads the Commando body's active Wwise event
+IDs while the original pistol state is live. It samples at most 12 times and
+requires a fresh successful original audio service frame for each follow-up.
+The report keeps an exact source event match and its render-frame ordinal.
+That match establishes active playback on the body. MainOutput PCM still
+measures the mix, and physical audibility requires device observation.
 
 Once the original audio owner is ready, existing actor, projectile, pickup,
 effect and model adapters preserve source sound identities and authored Wwise
