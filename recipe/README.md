@@ -6985,6 +6985,22 @@ MonoScriptExtensions full-name comparison informs identity selection. The
 producer retains receipt/file/native-type checks and records historical body
 equality as a diagnostic; generated bodies remain ignored.
 
+## Whole-game source registry bindings (2026-11-18)
+
+`owner-whole-game-source-registry.json` pins 1,200 original MonoScript selectors
+and binds each to the current source-produced player registry by assembly,
+namespace and class. ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions
+inform the identity checks. Preparation verifies the original layout and the
+registry's receipt, native type and body before structural bundle emission.
+Historical body hashes are diagnostic. The recipe contains authored selectors
+and hashes. The original bundle and generated script bodies stay local.
+Provenance, licensing, privacy and sensitive-content review found no code,
+serialized bodies, account data or private paths in the recipe.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-source-registry.json` | `0905584adc493c52234da6fc972a67e73097d50e94810b365f90be8eb6df1f8c` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison

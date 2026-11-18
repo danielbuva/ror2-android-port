@@ -200,7 +200,12 @@ Setup opens declared original and staged members; teardown closes streams on
 success or failure. Preparation retains pins and emits the existing request,
 including original script properties and canonical body-identity witnesses.
 MonoScripts retain their own source selectors, separate from behaviour hash
-schemas. Null-script witnesses pin the original body, and SDK resource members
+schemas. The release graph can bind an original MonoScript selector to a
+receipt-produced player registry record. Preparation verifies the assembly,
+namespace, class and native type of both records. A pinned, pointer-free
+original layout supplies the type tree when the player registry omits it.
+The emitted body and script properties come from the current registry.
+Null-script witnesses pin the original body, and SDK resource members
 remain external references without becoming AssetBundle dependencies.
 `bundle_preload.py --release REQUEST --output NEW_DIRECTORY` materializes the
 signed policy, prepares fresh suppliers and runs the same checked emitter and

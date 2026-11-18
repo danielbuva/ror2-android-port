@@ -146,7 +146,7 @@ def extend_selection(owner, member, required, selected, types, routes, extension
 
 
 def original_identities(owner, path, source_files=None, *, destinations=None):
-    """Reverse body-producing profile selectors, never schema-only type_source."""
+    """Reverse original body selectors and identity-bound MonoScript remaps."""
     result = {}
 
     def add(record, source):
@@ -157,6 +157,16 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
         bundles = owner.A.profile_bundles(path)
     else:
         profile = json.loads(path.read_bytes())
+        if "original_sources" in profile:
+            originals = profile["original_sources"]
+            for row in profile["records"]:
+                source = row.get("original", ())
+                if row["class_id"] != 115 or not row.get("script_identity") or len(source) != 3 or source[0] not in originals:
+                    raise ValueError("registry remap requires a pinned original MonoScript identity")
+                if source_files is not None and source_files.setdefault(source[0], originals[source[0]]) != originals[source[0]]:
+                    raise ValueError("original source file pins disagree")
+                add(tuple(row["destination"]), source)
+            return result
         if "bundles" not in profile:
             bundle = profile["bundle"]
             if source_files is not None:
@@ -379,12 +389,26 @@ def prepare(owner, inputs, output):
                 actual, body = producer.record(value)
                 if actual != row:
                     raise ValueError("supplier record changed")
+                original_body, original_type, _ = original(binding["source"])
+                identity = row.get("source_produced", {}).get("script_identity")
+                if identity is not None:
+                    if not original_type.get("tree") or original_type["dependencies"]:
+                        raise ValueError("registry MonoScript requires an original leaf layout and verified identity")
+                    expected_type = (
+                        original_type if "tree" in typ else {key: value for key, value in original_type.items() if key not in {"tree", "dependencies"}}
+                    )
+                    if typ != expected_type:
+                        raise ValueError("registry MonoScript native type differs from original")
+                    owner.O.current_script_identity(original_body, original_type["class_id"], identity)
+                    owner.O.current_script_identity(body, typ["class_id"], identity)
+                    if owner.pointers(original_body, original_type, {}):
+                        raise ValueError("original registry MonoScript layout contains pointers")
+                    typ = original_type
                 value = descriptor(
                     target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, source=binding["source"]
                 )
                 if "resource" in row:
                     value["resource"] = row["resource"]
-                original(binding["source"])
             else:
                 if target in staged_descriptors:
                     value, body, typ = staged.record(target)
