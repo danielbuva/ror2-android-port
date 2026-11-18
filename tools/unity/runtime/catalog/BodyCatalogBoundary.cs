@@ -647,7 +647,6 @@ public sealed partial class PortSession
         }
         sealed class MercEvisImpactEffectLease
         {
-            const string VisualPath = "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab";
             const string ProjectilePath = "Assets/WholeGame/RoR2/Base/Characters/Merc/Skills/EvisProjectile.prefab";
             readonly GameObject targetProjectile;
             readonly ProjectileImpactExplosion targetComponent;
@@ -927,7 +926,7 @@ public sealed partial class PortSession
             MercEvisImpactEffectLease candidate = null;
             if (includeMercEvisAdapter)
                 candidate = MercEvisImpactEffectLease.Create(
-                    fixtureVisual ? fixtureVisual : WholeCatalogComposed.LoadOwnedContent<GameObject>("Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab"),
+                    fixtureVisual ? fixtureVisual : WholeCatalogComposed.LoadOwnedContent<GameObject>(MercFinisherVisualPath),
                     fixtureProjectile ? fixtureProjectile : WholeCatalogComposed.LoadOwnedContent<GameObject>("Assets/WholeGame/RoR2/Base/Characters/Merc/Skills/EvisProjectile.prefab"),
                     requireOwnedProjectileCatalog);
 #if UNITY_EDITOR

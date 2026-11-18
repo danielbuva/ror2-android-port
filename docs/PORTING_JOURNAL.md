@@ -18,6 +18,30 @@ Evidence: `work/coordination/p1-scenes-w/source-collision-policy-v23/v23-ordinar
 lease release passed. CPU/GPU peaked at 70.1 C, with no time above 80 C.
 Results initialization still needs the original item-relationship families.
 Ordinary stage play, sustained FPS and End Run remain open.
+## J1497 — Restore native Vagrant cannon intersection material
+
+2026-11-18. The native effect owner prepares Cloud Intersection Remap slots
+and particle trails before pooled effects spawn. The Vagrant cannon Nova
+Sphere used the supported Android intersection pass, queue 3000 and One/One
+blend with two live emitters at frame 5040.
+APK SHA-256 `8235f795cab2afd14da0fb37b689742dd792b751f4fcbe058509bebefb782ecf` (source `00640b65`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/merc-finisher-owner-dense-live/`
+includes the PID-matched `sample-87/` screenshot, Unity log and renderer
+report. The assisted Titanic Plains run held native authority for 98.298 s.
+Vagrant body brightness, black-sheet attribution and matched PC pixels remain open.
+
+## J1496 — Prepare Mercenary's native finisher visual before state configuration
+
+2026-11-18. The body visual owner prepares the same owned finisher prefab
+that native GroundLight uses. Assisted Titanic Plains frame 5040 shows 10
+live Sparks on Android variant 0/111, the live SwingTrail on 0/36 and
+live distortion on 7/0. Sparks and trail use queue 3000 and One/One blend.
+APK SHA-256 `8235f795cab2afd14da0fb37b689742dd792b751f4fcbe058509bebefb782ecf` (source `00640b65`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/merc-finisher-owner-dense-live/`
+includes `sample-87/` and `terminal.done.json`. The terminal recorded
+40.64 FPS at 24.61 ms. SoC peaked at 86 C with 14.591 s above 80 C.
+Scratch cleanup, OLED sleep and lease release passed. Normal slash remains open.
+
 ## J1494 — Overlap Android bundle encoding and verification
 
 2026-11-18. The UnityFS writer overlaps native LZ4 encoding with decoded-byte

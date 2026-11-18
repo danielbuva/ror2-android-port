@@ -4992,7 +4992,9 @@ can receive new source slots after its first presentation. The authored
 replacement, toggling and source ownership. Rendering remains a device gate.
 `TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
 effect sources and native projectile ghosts and DamageTrail segment references
-before their pools instantiate them. Baked effect definitions send the acquired
+before their pools instantiate them. Source Cloud Intersection Remap slots on
+these prefabs and their particle trails use the Android intersection presentation
+with the original blend factors. Baked effect definitions send the acquired
 prefab through the native reference-discovery callback. The session detaches
 these callbacks before restoring the source materials. It follows typed prefab
 edges with cycle protection, including CharacterBody's separately loaded FireTrail.
@@ -5001,11 +5003,15 @@ intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
 startup selects a team entry. The original table is restored with the effect
 callbacks before world cleanup destroys the owned copies.
 The original body visual owner submits Mercenary's persistent and consume Expose
-prefabs and Acrid's normal and combo-finisher swings. It reads the configured native
-Slash state and holds the finisher's typed provider lease through the run. Integrated
-world cleanup restores source slots and particle trails before the visual owner
-releases its leases and the session destroys its material copies. Source blend
-values remain intact.
+prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
+Acrid's normal and combo-finisher swings. It reads the configured native Croco
+Slash state for the normal swing and holds the Acrid
+finisher's typed provider lease through the run. Integrated world cleanup restores
+source slots and particle trails before the visual owner releases its leases and
+the session destroys its material copies. Source blend values remain intact.
+The detailed renderer report reads VagrantMesh's effective slot properties from
+the selected material property block and the shared material. It does not mutate
+the renderer or the source materials.
 The session counts objective projectile materials during catalog setup. The
 integrated-world report includes these counts from its first snapshot.
 
@@ -7912,6 +7918,14 @@ texture state; particle renderers also report all meshes. The existing screen
 coverage ordering and 128-view limit remain: this is a sampled attribution tool,
 not proof that every prefab rendered. Session teardown discards the report with
 the other objective observations; it never changes materials or simulation.
+For the Wandering Vagrant body, the observer also records flash, elite index,
+limb mask, fade and emission color by slot at the same Unity frame. It reads the
+slot block when populated, otherwise the renderer block, then falls back to
+material values for missing properties. The original material rows are retained.
+`OriginalBodyVisualSession` prepares the Mercenary finisher source through the
+same owned content path as the Merc Evis impact adapter, before the native state
+configuration populates its static field. Native GroundLight still selects and
+spawns the effect. The existing native effect owner restores its material slots.
 On the same opt-in selector, `NovaDiagnosticDisplay` samples up to 32 renderers
 of the presented player model, including inactive and disabled renderers, on
 the existing five-second report cadence. The latest `NovaReport` sample records

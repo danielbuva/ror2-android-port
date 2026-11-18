@@ -76,15 +76,16 @@ public static class AndroidMaterialPresentation
     }
     // Actor callbacks can add renderers after template preparation. Adapt only
     // recovered source families; already-owned and unknown materials stay intact.
-    public static int ApplyRecovered(Renderer renderer, List<Material> owned)
+    public static int ApplyRecovered(Renderer renderer, List<Material> owned, bool includeIntersection = false)
     {
         int count = 0;
         Material Recover(Material source)
         {
-            if (!AndroidNativeDeferredPresentation.IsSourceFamily(source))
+            bool intersection = includeIntersection && IsIntersectionMaterial(source);
+            if (!intersection && !AndroidNativeDeferredPresentation.IsSourceFamily(source))
                 return source;
             var copy = new Material(source);
-            if (!ApplyNative(source, copy))
+            if (!(intersection ? Apply(source, copy) : ApplyNative(source, copy)))
             {
                 UnityEngine.Object.Destroy(copy);
                 return source;
@@ -109,9 +110,10 @@ public static class AndroidMaterialPresentation
         }
         return count;
     }
-    public static Material RecoverTeamAreaMaterial(Material source, List<Material> owned)
+    static bool IsIntersectionMaterial(Material source) => source && source.shader && source.shader.name == IntersectionShader;
+    public static Material RecoverIntersectionMaterial(Material source, List<Material> owned)
     {
-        if (!source || !source.shader || source.shader.name != IntersectionShader)
+        if (!IsIntersectionMaterial(source))
             return source;
         var copy = new Material(source);
         if (!Apply(source, copy))
