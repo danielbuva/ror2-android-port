@@ -120,18 +120,22 @@ class OwnerCodeManagedTests(unittest.TestCase):
                 MANAGED.bind_paths(values)
 
     def test_signed_stage_binds_index_and_copy_to_the_same_workspace_without_decoder(self):
-        work, game = Path("/owner/work"), Path("/owner/game")
-        output = work / "managed"
         with (
+            tempfile.TemporaryDirectory() as temporary,
             patch.object(MANAGED.wwise_bank_index, "owner_index") as index,
             patch.object(MANAGED.owner_audio_prefab, "reconstruct") as prefab,
-            patch.object(MANAGED.legacy, "run") as init,
+            patch.object(MANAGED.wwise_init_platform, "produce_owner") as init,
+            patch.object(MANAGED.legacy, "run") as legacy,
             patch.object(MANAGED, "invoke") as invoke,
         ):
+            work, game = Path(temporary).resolve(), Path("/owner/game")
+            output = work / "managed"
+            output.mkdir()
             stage, prefab_path, bank_path, init_dir = MANAGED.stage_source_audio(work, game, output)
         index.assert_called_once_with(work, bank_path.parent, False, decoder_executable=None)
         prefab.assert_called_once_with(work, prefab_path.parent)
-        init.assert_called_once_with(work, init_dir)
+        init.assert_called_once_with(work, game, init_dir)
+        legacy.assert_not_called()
         command, destination, label = invoke.call_args.args
         arguments = dict(zip(command[2::2], command[3::2]))
         self.assertEqual(arguments["--owner-work"], work)

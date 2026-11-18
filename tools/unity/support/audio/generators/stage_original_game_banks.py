@@ -30,6 +30,7 @@ MEDIA_PLANNER_SHA = "104fca54159b676ce5539e2686539dbe12400d2e136ce6e3344c88de760
 INIT_SHA = "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90"
 INIT_SOURCE_SHA = "3182093b59cf48034b2715b224f3f217b34eaecf104d10940528ea20c4baffc6"
 INIT_RECEIPT_SHA = "3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f"
+INIT_RECIPE = ROOT / "recipe/wwise-init-android.json"
 GLOBAL_SHA = "37756450a0a08a0e3d79ed42926c4de062f67c01dbfef590db1c4af1130485e4"
 GLOBAL_SIZE = 95239411
 BANK_ROOT = Path("Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows")
@@ -153,12 +154,14 @@ def load_inputs(
 ) -> tuple[Path, dict, list[dict], dict]:
     game_root, inputs = bank_context(prefab_path, bank_index_path, owner_work)
     inventory, bank_index = inputs["inventory"], inputs["bank_index"]
-    adaptation = json.loads(init_receipt_path.read_text())
+    adaptation_bytes = init_receipt_path.read_bytes()
+    adaptation = json.loads(adaptation_bytes)
+    receipt_sha = INIT_RECEIPT_SHA if owner_work is None else json.loads(INIT_RECIPE.read_text())["owner_receipt_sha256"]
     if (
-        sha_file(init_receipt_path) != INIT_RECEIPT_SHA
+        sha_bytes(adaptation_bytes) != receipt_sha
         or adaptation.get("input_sha256") != INIT_SOURCE_SHA
         or adaptation.get("output_sha256") != INIT_SHA
-        or adaptation.get("transform_sha256") != "91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37"
+        or (owner_work is None and adaptation.get("transform_sha256") != "91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37")
     ):
         raise ValueError("explicit Init adaptation receipt mismatch")
     if sha_file(init_path) != INIT_SHA:

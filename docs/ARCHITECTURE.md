@@ -1735,7 +1735,10 @@ the native-code owner. Startup metadata uses the admitted content hashes by
 default, so copying identical inputs again preserves its identity.
 `install_inputs.py` also generates the source-output assembly receipt.
 `install_flow.py` owns durable stage
-checkpoints and failure/retry state; producer receipts remain the authority for
+checkpoints and failure/retry state, including stage-admission write failures
+before a producer starts. If persisting the failure also fails, the existing
+in-memory error snapshot remains available; explicit retry revalidates receipts.
+Producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
 foreground operation independently of `ToolHostActivity`. Pending/active admission
@@ -2098,8 +2101,10 @@ retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
 When a signed conversion declares audio members, the managed producer derives
-the decoder-free bank index in its explicit owner workspace. Staging, the
-runtime request pin and the stage pin use that workspace and index together.
+the decoder-free bank index and runs `scripts/lab/wwise_init_platform.py` in
+its explicit owner workspace. The Init producer verifies and transforms one
+inventory-bound bank snapshot and writes a new bank and receipt exclusively.
+Staging and both runtime pins bind the resulting receipt and bank index.
 The converter compares the local roster with the signed names before
 exposing the stage for APK assembly.
 
@@ -6034,6 +6039,13 @@ setup, reuse and isolation.
 orchestrator device lease, applies the battery rule, posts a sanitized result and
 prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
 the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
+
+`scripts/lab/toolhost_build.py` owns the explicit staged installer build in the
+local packaging request. It verifies staged checkout and provider pins, binds
+host providers to generated device paths and invokes the existing managed fixture
+builder under the phone thermal supervisor. The runner owns the lease, terminal
+receipt and commit/input-keyed APK cache. The build verifies the retained signer
+and packaged source and native bytes before it releases its scratch.
 
 The same owner's current local `--emission-request` entry point executes
 `scripts/lab/toolhost_emission.py` through the existing installer driver. This

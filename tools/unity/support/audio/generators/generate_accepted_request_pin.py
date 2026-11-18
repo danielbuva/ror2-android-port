@@ -13,6 +13,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[5]
 WORK = (ROOT / "work").resolve()
+INIT_RECIPE = ROOT / "recipe/wwise-init-android.json"
 OWNER_BANK_INDEX_SHA256 = "063944216e330019b171e8d654b3f0c53ca33289888a2615100abc9e27fa2b76"
 EXPECTED = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
@@ -61,7 +62,13 @@ def work_root(owner_work: Path | None) -> Path:
 
 
 def expected_sources(owner_work: Path | None) -> dict:
-    return EXPECTED if owner_work is None else {**EXPECTED, "current_bank_index_sha256": OWNER_BANK_INDEX_SHA256}
+    if owner_work is None:
+        return EXPECTED
+    return {
+        **EXPECTED,
+        "current_bank_index_sha256": OWNER_BANK_INDEX_SHA256,
+        "init_adaptation_receipt_sha256": json.loads(INIT_RECIPE.read_text())["owner_receipt_sha256"],
+    }
 
 
 def checked_work_file(path: Path, label: str, work: Path) -> Path:
@@ -120,7 +127,7 @@ def validate_input_contract(path: Path, *, owner_work: Path | None = None) -> st
     return hashlib.sha256(raw).hexdigest()
 
 
-def streamed_media_rows(receipt: dict, *, bank_index_sha256: str) -> list[dict]:
+def streamed_media_rows(receipt: dict, *, bank_index_sha256: str, init_receipt_sha256: str) -> list[dict]:
     validator_path = ROOT / "scripts/lab/original_game_audio_stage.py"
     spec = importlib.util.spec_from_file_location("original_audio_stage_validator", validator_path)
     if spec is None or spec.loader is None:
@@ -130,7 +137,7 @@ def streamed_media_rows(receipt: dict, *, bank_index_sha256: str) -> list[dict]:
     validator = getattr(module, "validate_streamed_media_rows", None)
     if not callable(validator):
         raise ValueError("shared streamed-media receipt validator unavailable")
-    rows = validator(receipt, bank_index_sha256=bank_index_sha256)
+    rows = validator(receipt, bank_index_sha256=bank_index_sha256, init_receipt_sha256=init_receipt_sha256)
     if not isinstance(rows, list) or len(rows) != 120:
         raise ValueError("R2 receipt must validate exactly 120 streamed media rows")
     return rows
@@ -245,7 +252,7 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner
         names.add(name)
     if not found_init or len(names) != 153:
         raise ValueError("stage receipt must bind the exact 153-name set plus Init")
-    media_rows = streamed_media_rows(stage, bank_index_sha256=pins["current_bank_index_sha256"])
+    media_rows = streamed_media_rows(stage, bank_index_sha256=pins["current_bank_index_sha256"], init_receipt_sha256=pins["init_adaptation_receipt_sha256"])
     if len(media_rows) != 120:
         raise ValueError("stage receipt must validate exactly 120 streamed media rows")
     if any(not set(row["referenced_by"]).issubset(names) for row in media_rows):

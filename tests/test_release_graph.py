@@ -984,6 +984,8 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 if current:
                     self.assertIn("tools/wwise-android-abi/generate.py", graph.jobs[code]["source_files"])
                     self.assertIn("recipe/original-audio-owner-sources.json", graph.jobs[code]["source_files"])
+                    self.assertIn("recipe/wwise-init-android.json", graph.jobs[code]["source_files"])
+                    self.assertNotIn("tools/phone-build/legacy/transform_init.py.txt", graph.jobs[code]["source_files"])
                     self.assertIn("recipe/project-layout.json", graph.jobs[player]["source_files"])
                     self.assertIn("managed_package_inputs", graph.jobs[code]["artifacts"])
                     self.assertIn(package_job, graph.jobs[player]["needs"])
@@ -1099,7 +1101,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             )
             self.assertEqual(progress[-5:], [(code, False), (player, False), (witness, False), (bundle, False), (native_job, False)])
 
-            for path in G.Graph(ROOT, {}).current_code_sources():
+            for path in G.Graph(ROOT, {}).current_code_sources(signed_audio=True):
                 write(repo / path, (ROOT / path).read_text())
             request = json.loads((repo / code_request).read_text())
             with self.assertRaisesRegex(ValueError, "audio-bearing code"):

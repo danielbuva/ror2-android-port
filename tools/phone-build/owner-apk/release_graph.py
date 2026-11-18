@@ -838,7 +838,7 @@ class Graph:
             paths.append(path.relative_to(self.repo).as_posix())
         return paths
 
-    def current_code_sources(self):
+    def current_code_sources(self, *, signed_audio=False):
         runtime = "recipe/runtime-sources.json"
         audio_manifest = "recipe/original-audio-owner-sources.json"
         audio = self.repo / "tools/unity/support/audio"
@@ -852,7 +852,7 @@ class Graph:
             audio_manifest,
             "recipe/owner-audio-prefab.json",
             "recipe/wwise-android-abi.json",
-            "tools/phone-build/legacy/transform_init.py.txt",
+            "recipe/wwise-init-android.json" if signed_audio else "tools/phone-build/legacy/transform_init.py.txt",
             "android/Assets/LabDiagnostics.cs",
             *["tools/unity/" + path for path in json.loads((self.repo / runtime).read_text())],
             *[
@@ -882,7 +882,7 @@ class Graph:
         request = json.loads((self.repo / request_path).read_text())
         if request.get("output") != "${output}" or "source_inputs" not in request:
             raise ValueError("code request must select original source inputs and the dispatcher output")
-        paths = self.fixed_code_sources(request["target"]) if "target" in request else self.current_code_sources()
+        paths = self.fixed_code_sources(request["target"]) if "target" in request else self.current_code_sources(signed_audio=audio_stage_receipt is not None)
         paths += [
             "recipe/owner-managed-code.json",
             "recipe/owner-player-code.json",

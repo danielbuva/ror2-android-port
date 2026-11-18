@@ -92,6 +92,21 @@ invokes the normal buttons in the debuggable installer-test package. The run sen
 Back to the system picker and uses the fixture's Android document grants to qualify
 folder and ZIP imports. It then removes its owned files and installer.
 
+To build a specific managed installer stage, add a `toolhost_inputs` object.
+Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
+existing Android tool workspace containing `material/`, `archives/` and the
+retained signing key. Set `signer_sha256` to the expected certificate digest.
+Optional `native_sources` maps planned native filenames to local provider files
+when those providers need transfer. Host files must match the existing
+`backend-tools.json` and Python provider pins. This request uses the
+retained signer. Use a commit-keyed toolhost request to back up the signer.
+
+Run `--dry-run` to check the staged files, checkout and host providers. The
+shared lease covers transfer, supervised Android build and scratch cleanup.
+The terminal receipt identifies a verified APK cached by commit and request
+pins. A missing terminal device status retains the lease and the private
+detached handle for reconciliation.
+
 ## Current local emission request
 
 After obtaining the orchestrator's device grant, use the same runner locally:

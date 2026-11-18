@@ -281,6 +281,12 @@ class Runner:
             job, args = request["job"], request["args"]
             device_args = ["--device", serial] if serial else []
             if job == "toolhost":
+                if "local_toolhost" in request:
+                    from toolhost_build import execute
+
+                    inputs, plan, output = request["local_toolhost"]
+                    result = execute(inputs, plan, output, runner=self, serial=serial, lease=lease, transport_module=_TRANSPORT, package=TEST_PACKAGE)
+                    return 0, result
                 return self.toolhost(checkout, toolhosts)
             argv = {
                 "host-tests": [py, "scripts/host-tests.py", *args],
@@ -403,10 +409,20 @@ def local_packaging(path, *, dry_run=False, detach=False):
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
         toolhosts = repo / "work/coordination/lab-runner/toolhost"
-        if cached_signer is not None:
+        inputs = request.get("toolhost_inputs") if build_toolhost else None
+        if inputs is not None:
+            if retain_signer:
+                raise CommandError("explicit toolhost stages use the retained signer and do not provide a signing backup")
+            from toolhost_build import digest, read_plan
+
+            plan = read_plan(inputs, checkout)
+            output = toolhosts / plan[-1]
+        elif cached_signer is not None:
             output = toolhosts / cached_signer
         if dry_run or detach:
-            if cached_signer is not None:
+            if inputs is not None:
+                code = 0  # The exact stage, checkout and host provider pins were read above.
+            elif cached_signer is not None:
                 installer_signer_source(output)
                 code = 0
             elif build_toolhost:
@@ -421,7 +437,17 @@ def local_packaging(path, *, dry_run=False, detach=False):
                 return 0
             with runner.log.open("a") as log:
                 subprocess.Popen(
-                    [sys.executable, str(Path(__file__).resolve()), "--packaging-request", str(Path(path).resolve())],
+                    [
+                        "bash",
+                        "-c",
+                        'source "$1" && shift && exec "$@"',
+                        "lab-packaging",
+                        str(checkout / "scripts/env.sh"),
+                        sys.executable,
+                        str(Path(__file__).resolve()),
+                        "--packaging-request",
+                        str(Path(path).resolve()),
+                    ],
                     cwd=checkout,
                     stdin=subprocess.DEVNULL,
                     stdout=log,
@@ -430,7 +456,20 @@ def local_packaging(path, *, dry_run=False, detach=False):
                 )
             print("WAITING done-file " + str(done), flush=True)
             return 0
-        if cached_signer is not None:
+        if inputs is not None:
+            receipt_path = output / "result.json"
+            apk = output / "signed.apk"
+            receipt = json.loads(receipt_path.read_bytes()) if receipt_path.is_file() else {}
+            if receipt.get("success") is True and apk.is_file() and digest(apk) == receipt.get("apk_sha256"):
+                code = 0
+                result["cached"] = True
+            else:
+                command.update(job="toolhost", local_toolhost=(inputs, plan, output))
+                code, receipt = runner.execute(command, local_checkout=checkout, workstream=workstream)
+                receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
+            (output / ".prune-keep").touch()
+            result["toolhost"] = toolhost_summary(output)
+        elif cached_signer is not None:
             retain_installer_signer(runner, checkout, device, workstream, output)
             result["signing_key_backed_up"] = True
             code = 0
@@ -451,7 +490,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
         else:
             code, _ = runner.execute(command, local_checkout=checkout, workstream=workstream)
         result.update(success=code == 0, exitcode=code)
-    except (KeyError, OSError, ValueError, subprocess.SubprocessError) as error:
+    except (KeyError, OSError, RuntimeError, ValueError, subprocess.SubprocessError) as error:
         result["error"] = str(error)
         if dry_run or detach:
             print(str(error) + ". Private log: " + str(runner.log), file=sys.stderr)
