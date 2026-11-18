@@ -176,6 +176,19 @@ mode `0700` after asset extraction for QEMU's executable check. Retain the
 providers' license notices. The owner-acquired Unity codec is extracted by a
 separate signed conversion job.
 
+Signed player Shader jobs use two additional native executables. Add them to
+`natives` as `libd3dasm.so` and `libhlsl-decompiler.so` with their SHA-256
+values. Build d3dasm's `d3dasm-cli` package from the pinned d3dasm and cfglib
+revisions using `cargo build --locked --release --target aarch64-linux-android`.
+Use the bundled NDK API 24 Clang linker and the AArch64 LLVM unwind archive
+from NDK r25c with `-L native=ARCHIVE_DIRECTORY` for the Rust runtime. Invoke
+`shader_recovery.build_native_hlsl` with the pinned HLSLDecompiler checkout,
+putting the bundled NDK bin directory first on `PATH`. Set
+`CCC_OVERRIDE_OPTIONS` to `# +--target=aarch64-linux-android24 +-static-libstdc++ +-fsigned-char`
+so the fallback preserves the source's signed `char` semantics. Retain the
+public tools' license notices with the packaged providers.
+[Source pins](../../../docs/shader-recovery.md#pinned-tools-and-local-prerequisites)
+
 The muxer keeps CoreLib in the selected framework's verified data directory via
 the public hostfxr runtime-property API. For .NET 10 it uses the public
 [CoreCLR hosting ABI](https://github.com/dotnet/runtime/blob/v10.0.0/src/coreclr/hosts/inc/coreclrhost.h)

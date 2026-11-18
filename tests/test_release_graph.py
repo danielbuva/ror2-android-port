@@ -520,8 +520,18 @@ class ReleaseGraphTests(unittest.TestCase):
                 prefix = "" if embedded else G.ASSET_RIPPER_TEMPLATES
                 argv = job["arguments"]
                 self.assertEqual(argv[argv.index(flag) + 1], G.ASSET_RIPPER_SOURCE)
+                recovered_tools = set()
+                for tool, filename in (("d3dasm", "libd3dasm.so"), ("hlsl-tool", "libhlsl-decompiler.so")):
+                    if not embedded:
+                        self.assertNotIn("--" + tool, argv)
+                        continue
+                    path = "${native}/" + filename
+                    recovered_tools.add(path)
+                    position = argv.index("--" + tool)
+                    self.assertEqual(argv[position + 1 : position + 4], [path, "--" + tool + "-sha256", "${native_sha256:" + filename + "}"])
                 self.assertEqual(
-                    set(job["cache_witnesses"]), {*G.SDK_GNU_WITNESSES, root + "LICENSE.md", *(root + prefix + name for name in profile["template_inputs"])}
+                    set(job["cache_witnesses"]),
+                    {*G.SDK_GNU_WITNESSES, *recovered_tools, root + "LICENSE.md", *(root + prefix + name for name in profile["template_inputs"])},
                 )
                 extractor = "recipe/jobs/owner-sdk-shader-inputs.json"
                 self.assertIn(extractor, job["needs"])
