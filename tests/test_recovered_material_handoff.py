@@ -31,7 +31,17 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
         source += source_method(native, "public static bool IsSourceFamily(") + "\n}\n"
         stage = (ROOT / "tools/unity/runtime/stage/TeleporterWorldBoundary.cs").read_text()
         source += "\npublic partial class SourceSession {\n"
-        source += source_method(stage, "void PresentNativeEffectSource(") + "\n}\n"
+        source += "\n".join(
+            source_method(stage, declaration)
+            for declaration in (
+                "public void PresentRegisteredNativeEffects(",
+                "void StopPresentingNativeEffectReferences(",
+                "void PresentNativeEffectSource(",
+            )
+        )
+        visuals = (ROOT / "tools/unity/runtime/catalog/OriginalBodyVisualBoundary.cs").read_text()
+        source += "\n" + source_method(visuals, "IEnumerator PrepareCrocoSwingEffects(")
+        source += "\n}\n"
         with tempfile.TemporaryDirectory() as temporary:
             scratch = Path(temporary)
             fixture = scratch / "RecoveredMaterials.cs"

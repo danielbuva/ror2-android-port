@@ -72,11 +72,12 @@ NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
 OWNER_ANCESTOR_MANIFEST_SHA256 = "4091c3c40784855b90b784aeb00b404fbd63b765a8fd8c003851245d9d55d844"
 STAGE_PIN_TOOL_SHA256 = "11c1f947b44aac65197f0238e5ae9d166804bb7e7a4e3389d26bff3a210a1549"
 REQUEST_PIN_TOOL_SHA256 = "88d9608c2c055b1a22ae4c81ea58705275f8b74e76a5151973c2f94b08287661"
-MANAGED_PRODUCER_SHA256 = "b3f1806afa9e7f82159052a7524f0ae389df6ab255e735e3344b714ad5dfb34d"
+MANAGED_PRODUCER_SHA256 = "5fde187c0393de9645370c6a1ca6516e5ec7966db576ef0f14ba915078e23235"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
 ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6"
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
+ABI_NATIVE_EXPORT_SET_SHA256 = "1595a576edc694da66e3ba593a0f4b82212219bf2a4b959b4cbb0390db122d31"
 OWNER_SOURCE_HASHES = {
     "../../runtime/catalog/BodyCatalogBoundary.cs": "d10d6cb2ec78abf39ce1ec63e2a4083d92e1173813118964dd221fa9ca8b4e40",
     "../../runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs": "f1249d463ee86e53c3ad8242b1366b303e3fff975b31acab71b542d4cab1270f",
@@ -866,7 +867,7 @@ def compile_requested(
     }
 
 
-def verify_managed_output_manifest(manifest: dict, work_root: Path) -> dict[str, Path]:
+def verify_managed_output_manifest(manifest: dict, work_root: Path, *, native_abi_reader: bool = False) -> dict[str, Path]:
     if (
         manifest.get("schema") != "game-audio-original-public-producer-r1"
         or manifest.get("accepted_input_id") != LINEAGE["accepted_input_id"]
@@ -877,7 +878,7 @@ def verify_managed_output_manifest(manifest: dict, work_root: Path) -> dict[str,
         "arm64_release_native_plugin": ABI_NATIVE_PLUGIN_SHA256,
         "generated_android_source": ABI_GENERATED_SOURCE_SHA256,
         "handwritten_android_source": ABI_HANDWRITTEN_SOURCE_SHA256,
-        "llvm_nm": ABI_LLVM_NM_SHA256,
+        **({"native_export_set": ABI_NATIVE_EXPORT_SET_SHA256} if native_abi_reader else {"llvm_nm": ABI_LLVM_NM_SHA256}),
     }:
         raise ValueError("managed transform manifest differs from the exact Android ABI inputs")
     expected = {

@@ -3,6 +3,8 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -14,6 +16,37 @@ SPEC.loader.exec_module(MANAGED)
 
 
 class OwnerCodeManagedTests(unittest.TestCase):
+    def test_signed_sdk_compiler_uses_explicit_android_runtime_and_references(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sdk = root / "SDK with spaces"
+            relative = "DotNetSdkRoslyn/csc.dll"
+            compiler_path = sdk / "Unity.app/Contents" / relative
+            compiler_path.parent.mkdir(parents=True)
+            compiler_path.write_bytes(b"authored compiler fixture")
+            inputs = {"compiler/csc.dll": (relative, MANAGED.native.sha(compiler_path))}
+            launcher = root / "installed-dotnet"
+            assembly = root / "Fixture.dll"
+            source = root / "Source File.cs"
+            reference = root / "SDK Reference.dll"
+            with patch.object(sys.modules["phone_sdk_compiler"], "INPUTS", inputs):
+                compiler = MANAGED.SdkCompiler(sdk, launcher, root)
+                with patch.object(subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as run:
+                    compiler.compile(assembly, [source], [reference], ["-target:library"])
+                runtime = json.loads(compiler.runtime_config.read_text())
+                self.assertEqual(runtime["runtimeOptions"]["framework"]["version"], "8.0.32")
+                rsp = assembly.with_suffix(".rsp")
+                self.assertEqual(
+                    run.call_args.args[0],
+                    [str(launcher), "exec", "--runtimeconfig", str(compiler.runtime_config), str(compiler_path), "-noconfig", "-nostdlib+", "@" + str(rsp)],
+                )
+                response = rsp.read_text().splitlines()
+                self.assertIn("-r:" + json.dumps(str(reference)), response)
+                self.assertIn(json.dumps(str(source)), response)
+                compiler_path.write_bytes(b"changed fixture")
+                with self.assertRaisesRegex(ValueError, "Pinned SDK Roslyn"):
+                    compiler.verify()
+
     def test_current_runtime_manifest_reaches_reference_resolution(self):
         # Exercise the real current manifest, which outgrew the old 128-file
         # guard. Stop at SDK resolution; no compiler or game inputs are needed.

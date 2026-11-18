@@ -4232,3 +4232,30 @@ The run held native authority for 91.148 s. Terminal snapshot was 32.75 FPS
 at 30.53 ms. SoC peaked at 94.3 °C, with 54.574 s above 80 °C. Battery peaked
 at 27 °C. Idle cleanup and OLED sleep passed. Black sheets in sample 70
 and visual verification of Acrid's two Twotone emitters remain open.
+
+## J1491 — Recover native materials when baked effects load
+
+2026-11-18. The stage presentation owner prepares a baked effect's native
+prefab at typed reference discovery, before spawning uses its renderers.
+Assisted Verdant Falls sample 105 retains two live Goo and two Ring Mesh
+emitters. Their original materials bind to Android variants 1/6 and 0/36,
+with queues 2450 and 3000 and Ring blends 5/10. Matched baseline used queue 2000 stubs.
+APK SHA-256 `1f381753f61faaf6220cff5ff9e02bc5e19ed96842dbb8f2ebe19312d13046ad` (source `8847e22a`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/verdant-acrid-baked-effects/`
+includes `terminal.done.json` and the sample 105 screenshot, renderer data and Unity log.
+Native authority held 86.401 s. SoC peaked at 87.2 °C with 13.849 s above 80 °C.
+Battery was 26–27 °C. Cleanup and OLED sleep passed. Matched draw attribution remains open.
+
+## J1492 — Restore Acrid's native normal and finisher swing bindings
+
+2026-11-18. The body visual owner prepares the configured normal swing and
+leases the typed finisher prefab through the run. Assisted Verdant Falls captures
+both original materials on Android variant 0/36, queue 3000 and blends 5/10.
+Their shared Distortion uses variant 7/0, queue 5000. Goo and Ring stay recovered.
+APK SHA-256 `f03c4fd8a704ed455c1e7b7b7cdce9aa6fb24ac5fe9636a254560f387474c516` (source `d3c9e962`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/verdant-acrid-native-swings/`
+includes `terminal.done.json`, `sample-75/`, `sample-120/` and `terminal-capture/`.
+Native authority held 96.536 s with all four skill callbacks paired. Terminal
+snapshot was 33.79 FPS / 29.60 ms. SoC peaked at 88.4 °C with 19.907 s above
+80 °C. Battery held 26 °C. Scratch removal, OLED sleep and lease release passed.
+Black quads in the terminal screenshot and matched finisher pixels remain open.

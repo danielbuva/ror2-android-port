@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Host-only, exact-input Wwise Android ABI candidate generator.
+"""Exact-input Wwise Android ABI candidate generator.
 
 The accepted game install is read-only. All plans and candidates must be new
 files under ignored work/. No project, editor, device, or build operation occurs.
@@ -49,9 +49,9 @@ def validate_output_basename(path: Path) -> None:
     )
 
 
-def accepted_managed_input() -> tuple[Path, Path, str]:
-    accepted = json.loads((WORK / "config/accepted-input.json").read_text())
-    inventory = json.loads((WORK / "inventory/files.json").read_text())
+def accepted_managed_input(work: Path) -> tuple[Path, Path, str]:
+    accepted = json.loads((work / "config/accepted-input.json").read_text())
+    inventory = json.loads((work / "inventory/files.json").read_text())
     recipe = json.loads((ROOT / "recipe/original-assemblies.json").read_text())
     input_id = accepted.get("input_id")
     require(isinstance(input_id, str) and re.fullmatch(r"[0-9a-f]{64}", input_id) is not None, "invalid accepted input identity")
@@ -61,7 +61,7 @@ def accepted_managed_input() -> tuple[Path, Path, str]:
     require(len(row) == 1 and row[0].get("sha256") == POLICY["retained_managed_sha256"], "accepted assembly recipe does not match this reviewed API")
     record = [x for x in inventory.get("files", []) if x.get("path") == "Risk of Rain 2_Data/Managed/AK.Wwise.Unity.API.dll"]
     require(len(record) == 1 and record[0].get("sha256") == row[0]["sha256"], "accepted inventory has no unique matching Wwise API record")
-    local = json.loads((WORK / "config/local.json").read_text())
+    local = json.loads((work / "config/local.json").read_text())
     configured = Path(local["game_path"]).expanduser().resolve(strict=True)
     source = configured / "Risk of Rain 2_Data/Managed/AK.Wwise.Unity.API.dll"
     require(source.is_file() and not source.is_symlink(), "configured accepted Wwise API is missing or symlinked")
@@ -69,7 +69,7 @@ def accepted_managed_input() -> tuple[Path, Path, str]:
     return source, configured, input_id
 
 
-def assert_output_path(path: Path, game_root: Path) -> Path:
+def assert_output_path(path: Path, game_root: Path, owner_work: Path | None = None) -> Path:
     raw = Path(os.path.abspath(path.expanduser()))
     require(not raw.exists() and not raw.is_symlink(), "refusing to overwrite or follow output")
     # Reject any symlink component, even if it eventually resolves inside work.
@@ -79,14 +79,17 @@ def assert_output_path(path: Path, game_root: Path) -> Path:
         cur = cur.parent
     resolved_parent = raw.parent.resolve(strict=True)
     dest = resolved_parent / raw.name
-    require(dest.is_relative_to(WORK.resolve()) and dest != WORK.resolve(), "new output must be inside this repository's ignored work/")
+    work = owner_work or WORK.resolve(strict=True)
+    require(dest.is_relative_to(work) and dest != work, "new output must be inside owner work")
     require(not dest.is_relative_to(game_root), "output cannot be inside the accepted game installation")
+    require(not dest.is_relative_to(work / "config") and not dest.is_relative_to(work / "inventory"), "output overlaps owner input metadata")
     require(raw.parent == resolved_parent, "output parent may not traverse symlinks")
     # Isolated checkouts share a canonical work tree outside their Git root.
     # Validate that subtree above, then check its ignored checkout entry.
-    ignored_path = WORK if WORK.is_symlink() else dest
-    check = subprocess.run(["git", "check-ignore", "--quiet", str(ignored_path)], cwd=ROOT)
-    require(check.returncode == 0, "output path is not ignored by Git")
+    if owner_work is None:
+        ignored_path = WORK if WORK.is_symlink() else dest
+        check = subprocess.run(["git", "check-ignore", "--quiet", str(ignored_path)], cwd=ROOT)
+        require(check.returncode == 0, "output path is not ignored by Git")
     return dest
 
 
@@ -564,13 +567,17 @@ def main() -> int:
     p.add_argument("--candidate", type=Path, help="write an optional incomplete ABI candidate; it remains runtime-ineligible")
     p.add_argument("--dotnet", type=Path)
     p.add_argument("--cecil", type=Path)
+    p.add_argument("--owner-work", type=Path, help="canonical provisioned owner workspace")
+    p.add_argument("--android-sdk-install", type=Path, help="compile the authored tools with installed Android .NET and the owner SDK")
     args = p.parse_args()
     validate_output_basename(args.output)
     if args.candidate is not None:
         validate_output_basename(args.candidate)
-    managed, game_root, input_id = accepted_managed_input()
-    output = assert_output_path(args.output, game_root)
-    candidate = assert_output_path(args.candidate, game_root) if args.candidate is not None else None
+    work = args.owner_work or WORK.resolve(strict=True)
+    require(work == work.resolve(strict=True) and work.is_dir(), "owner work must be a canonical directory")
+    managed, game_root, input_id = accepted_managed_input(work)
+    output = assert_output_path(args.output, game_root, args.owner_work)
+    candidate = assert_output_path(args.candidate, game_root, args.owner_work) if args.candidate is not None else None
     assert_distinct_outputs(output, candidate)
     require(sha(args.android_source) == ANDROID_DECL_SHA, "official Android declaration source pin mismatch")
     require(sha(args.android_os_string_source) == POLICY["official_android_os_string_source_sha256"], "official Android OS-string source pin mismatch")
@@ -587,27 +594,42 @@ def main() -> int:
     android = parse_android_source(args.android_source)
     dotnet = discover_dotnet(args.dotnet)
     cecil = discover_cecil(args.cecil)
-    tempdir = tempfile.TemporaryDirectory(prefix="wwise-abi-v6-", dir=WORK)
-    build = Path(tempdir.name) / "inspector"
-    subprocess.run(
-        [
-            str(dotnet),
-            "build",
-            str(HERE / "CecilAbiTool.csproj"),
-            "-p:UseSharedCompilation=false",
-            "-o",
-            str(build),
-            "-p:BaseIntermediateOutputPath=" + str(Path(tempdir.name) / "obj-inspector") + os.sep,
-            "-p:CecilPath=" + str(cecil),
-            "--nologo",
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    inspector = build / "CecilAbiTool.dll"
-    try:
-        inspected = subprocess.run([str(dotnet), str(inspector), "--inspect-pinvoke", str(managed)], check=True, capture_output=True, text=True)
+    with tempfile.TemporaryDirectory(prefix="wwise-abi-v6-", dir=output.parent if args.owner_work else WORK) as scratch:
+        scratch = Path(scratch)
+        compiler = None
+        if args.android_sdk_install:
+            sys.path.insert(0, str(ROOT / "scripts/lab"))
+            from phone_sdk_compiler import SdkCompiler
+
+            compiler = SdkCompiler(args.android_sdk_install.resolve(strict=True), dotnet, scratch)
+
+        def compile_tool(name, folder):
+            build = scratch / folder
+            assembly = build / (name + ".dll")
+            if compiler:
+                compiler.tool(assembly, [HERE / (name + ".cs")], cecil)
+            else:
+                subprocess.run(
+                    [
+                        str(dotnet),
+                        "build",
+                        str(HERE / (name + ".csproj")),
+                        "-p:UseSharedCompilation=false",
+                        "-o",
+                        str(build),
+                        "-p:BaseIntermediateOutputPath=" + str(scratch / ("obj-" + folder)) + os.sep,
+                        "-p:CecilPath=" + str(cecil),
+                        "--nologo",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            return assembly
+
+        inspector = compile_tool("CecilAbiTool", "inspector")
+        tool_env = compiler.tool_environment() if compiler else None
+        inspected = subprocess.run([str(dotnet), str(inspector), "--inspect-pinvoke", str(managed)], env=tool_env, check=True, capture_output=True, text=True)
         original = json.loads(inspected.stdout)
         require(original["sha256"] == POLICY["retained_managed_sha256"], "inspected assembly is not the accepted original")
         plan = derive_plan(original, android, exports)
@@ -618,37 +640,24 @@ def main() -> int:
         plan["native_export_set_sha256"] = export_hash
         content = (json.dumps(plan, sort_keys=True, indent=2) + "\n").encode()
         if candidate is not None:
-            plan_path = Path(tempdir.name) / "plan.json"
+            plan_path = scratch / "plan.json"
             atomic_new(plan_path, content)
-            writer_dir = Path(tempdir.name) / "writer"
+            writer = compile_tool("CecilAbiWriter", "writer")
             subprocess.run(
                 [
                     str(dotnet),
-                    "build",
-                    str(HERE / "CecilAbiWriter.csproj"),
-                    "-p:UseSharedCompilation=false",
-                    "-o",
-                    str(writer_dir),
-                    "-p:BaseIntermediateOutputPath=" + str(Path(tempdir.name) / "obj-writer") + os.sep,
-                    "-p:CecilPath=" + str(cecil),
-                    "--nologo",
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            subprocess.run(
-                [
-                    str(dotnet),
-                    str(writer_dir / "CecilAbiWriter.dll"),
+                    str(writer),
                     "--emit-incomplete-candidate",
                     str(managed),
                     str(plan_path),
                     str(POLICY_PATH),
                     str(candidate),
                 ],
+                env=tool_env,
                 check=True,
             )
+        if compiler:
+            compiler.verify()
         atomic_new(output, content)
         print(
             json.dumps(
@@ -665,9 +674,6 @@ def main() -> int:
             )
         )
         return 0
-    finally:
-        if tempdir:
-            tempdir.cleanup()
 
 
 if __name__ == "__main__":

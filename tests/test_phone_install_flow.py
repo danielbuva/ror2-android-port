@@ -130,6 +130,60 @@ class CheckpointTests(unittest.TestCase):
                     # Keep each injected case independent of the previous success.
                     flow.path.unlink()
 
+    def test_damaged_checkpoint_preserves_bytes_and_revalidates_without_deleting_cache(self):
+        original = self.create().snapshot()
+        bad = copy.deepcopy(original)
+        del bad["stages"][2]["total"]
+        damaged = [b'{"schema":', b"[]", json.dumps(bad).encode()]
+        for status in ([], {}):
+            for stage in (False, True):
+                malformed = copy.deepcopy(original)
+                target = malformed["stages"][2] if stage else malformed
+                target["status"] = status
+                damaged.append(json.dumps(malformed).encode())
+        for raw in damaged:
+            with self.subTest(raw=raw[:20]):
+                checkpoint = self.root / "install-checkpoint.json"
+                checkpoint.write_bytes(raw)
+                artifact = self.root / "retained-producer.txt"
+                artifact.write_text("authored cached output")
+                flow = self.create()
+                self.assertEqual(flow.state["status"], "interrupted")
+                self.assertIn("must pass normal identity/hash checks", flow.state["repair_notice"])
+                self.assertTrue(all(row["status"] == "pending" for row in flow.state["stages"]))
+                self.assertFalse(flow.reusable("apk"))
+                self.assertEqual(artifact.read_text(), "authored cached output")
+                self.assertTrue(any(p.read_bytes() == raw for p in self.root.glob("install-checkpoint-damaged-*.json")))
+                flow.perform("admission", lambda: None)
+                self.assertEqual(self.create().row("admission")["status"], "complete")
+
+    def test_android_install_checkpoint_phases_are_not_damaged(self):
+        for status in ("awaiting_consent", "complete"):
+            with self.subTest(status=status):
+                flow = self.create()
+                # Match ToolHostActivity.updateInstallCheckpoint's persisted fields.
+                flow.state.update(status=status, current_stage="install", first_failure=None)
+                flow.row("install").update(status=status, completed=1 if status == "complete" else 0, total=1)
+                flow.persist()
+                resumed = self.create()
+                self.assertEqual(resumed.state["status"], status)
+                self.assertEqual(resumed.row("install")["status"], status)
+                self.assertNotIn("repair_notice", resumed.state)
+                changed = self.create("next-release")
+                self.assertNotIn("repair_notice", changed.state)
+                self.assertFalse(list(self.root.glob("install-checkpoint-damaged-*.json")))
+
+    def test_checkpoint_repair_refuses_unpreserved_damage_and_unknown_schema(self):
+        checkpoint = self.root / "install-checkpoint.json"
+        checkpoint.write_bytes(b"truncated")
+        with patch.object(F.ATOMIC, "writer", side_effect=OSError("cannot retain damaged receipt")), self.assertRaises(OSError):
+            self.create()
+        self.assertEqual(checkpoint.read_bytes(), b"truncated")
+        checkpoint.write_text('{"schema":2}')
+        with self.assertRaisesRegex(ValueError, "Unsupported progress checkpoint version"):
+            self.create()
+        self.assertEqual(checkpoint.read_text(), '{"schema":2}')
+
     def test_artifact_receipt_rehashes_bytes_missing_and_symlink(self):
         flow = self.create()
         artifact = self.root / "synthetic-result.txt"

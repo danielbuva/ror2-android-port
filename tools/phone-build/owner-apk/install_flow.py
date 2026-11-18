@@ -6,6 +6,7 @@ be skipped. No installer consent or installation success is synthesized here.
 """
 
 import hashlib
+import math
 import json
 from pathlib import Path
 import time
@@ -67,6 +68,54 @@ def validate_plan(plan, index, descriptor):
     return {name: stages[position]["id"] for name, position in selected.items()}
 
 
+def valid_checkpoint(value):
+    """Validate progress shape before trusting resumable observations, not outputs."""
+
+    def number(v):
+        return type(v) in (int, float) and math.isfinite(v) and v >= 0
+
+    if not isinstance(value, dict) or value.get("schema") != 1 or not isinstance(value.get("id"), str):
+        return False
+    if not isinstance(value.get("status"), str) or value.get("status") not in {
+        "running",
+        "paused",
+        "interrupted",
+        "failed",
+        "cancelled",
+        "awaiting_install",
+        "awaiting_consent",
+        "complete",
+    }:
+        return False
+    if value.get("current_stage") not in (None, *STAGES) or not number(value.get("elapsed_seconds")):
+        return False
+    failure = value.get("first_failure")
+    if failure is not None and (not isinstance(failure, dict) or failure.get("stage") not in STAGES or not isinstance(failure.get("reason"), str)):
+        return False
+    rows = value.get("stages")
+    if not isinstance(rows, list) or len(rows) != len(STAGES):
+        return False
+    for name, row in zip(STAGES, rows):
+        if not isinstance(row, dict) or row.get("id") != name or not isinstance(row.get("label"), str):
+            return False
+        if not isinstance(row.get("status"), str) or row.get("status") not in {
+            "pending",
+            "running",
+            "interrupted",
+            "complete",
+            "not_required",
+            "failed",
+            "awaiting_consent",
+        }:
+            return False
+        if not all(number(row.get(key)) for key in ("completed", "total", "elapsed_seconds")):
+            return False
+        artifacts = row.get("artifacts", {})
+        if not isinstance(artifacts, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in artifacts.items()):
+            return False
+    return True
+
+
 class Pipeline:
     def __init__(self, inputs, release, input_sha256, plan, *, emit=lambda value: None, clock=time.monotonic):
         self.inputs = Path(inputs).resolve()
@@ -97,8 +146,24 @@ class Pipeline:
         if self.path.exists():
             if self.path.is_symlink():
                 raise ValueError("checkpoint cannot be a symlink")
-            previous = json.loads(self.path.read_text())
-            if previous.get("schema") == 1 and previous.get("id") == self.identity:
+            raw = self.path.read_bytes()
+            try:
+                previous = json.loads(raw)
+            except (ValueError, UnicodeError):
+                previous = None
+            if isinstance(previous, dict) and previous.get("schema") not in (None, 1):
+                raise ValueError("Unsupported progress checkpoint version; retain it and update the installer before retrying")
+            if not valid_checkpoint(previous):
+                # Preserve exact damaged progress before resetting observations.
+                # Producer caches, input admission and signing state are untouched.
+                retained = self.inputs / ("install-checkpoint-damaged-" + hashlib.sha256(raw).hexdigest() + ".json")
+                with ATOMIC.writer(retained) as stream:
+                    stream.write(raw)
+                self.state["status"] = "interrupted"
+                self.state["repair_notice"] = (
+                    "Damaged progress checkpoint preserved; progress restarted. Retained producer outputs must pass normal identity/hash checks. No installation is certified."
+                )
+            elif previous.get("id") == self.identity:
                 self.state = previous
                 for row in self.state["stages"]:
                     if row["status"] == "running":
