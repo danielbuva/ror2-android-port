@@ -194,6 +194,17 @@ def provenance(emission, candidate, reference):
     return sources, aliases
 
 
+def candidate_paths(request, candidate_apk):
+    paths = {}
+    with ZipFile(candidate_apk) as archive:
+        for name, row in request["bundles"].items():
+            paths[name] = pinned(row["path"], row["sha256"])
+            with archive.open("assets/owner-bootstrap/data/" + name) as stream:
+                if hashlib.file_digest(stream, "sha256").hexdigest() != row["sha256"]:
+                    raise ValueError("candidate APK differs from catalog input: " + name)
+    return paths
+
+
 def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None):
     request = json.loads(inputs.read_bytes())
     ref = json.loads(assembly.read_bytes())["authored_class_reference"]
@@ -202,15 +213,8 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
     baseline = json.loads((reference_apk.parent / "result.json").read_bytes())
     if baseline["apk_sha256"] != ref["sha256"]:
         raise ValueError("reference build result belongs to another APK")
-    paths = {}
-    references = {}
-    with ZipFile(candidate_apk) as archive:
-        for name, row in request["bundles"].items():
-            paths[name] = pinned(row["path"], row["sha256"])
-            references[name] = pinned(Path(baseline["payload_directory"]) / name, baseline["payload"][name])
-            with archive.open("assets/owner-bootstrap/data/" + name) as stream:
-                if hashlib.file_digest(stream, "sha256").hexdigest() != row["sha256"]:
-                    raise ValueError("candidate APK differs from catalog input: " + name)
+    paths = candidate_paths(request, candidate_apk)
+    references = {name: pinned(Path(baseline["payload_directory"]) / name, baseline["payload"][name]) for name in paths}
     candidate = Catalog(paths, candidate_apk)
     reference = Catalog(references, reference_apk)
     sides = {"candidate": candidate, "reference": reference}

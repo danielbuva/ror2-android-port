@@ -38,6 +38,48 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_objective_slot_uses_ordered_indices_and_confirmed_hierarchy(self):
+        mesh = module("objective_slot_mesh", "unity_mesh.py")
+        records = module("objective_slot_records", "record_produce.py")
+        with patch.dict(sys.modules, catalog_complete=C, unity_mesh=mesh):
+            compare = module("objective_slot_catalog", "catalog_compare.py")
+        with patch.dict(sys.modules, catalog_compare=compare, record_produce=records):
+            slots = module("objective_slot_test", "objective_slots.py")
+
+        catalog = compare.Catalog.__new__(compare.Catalog)
+        layout = {"externals": [], "types": [{"class_id": 4}, {"class_id": 114}]}
+        catalog.members = {"prefab": (None, layout, {pid: {"type_id": typ, "path_id": pid} for pid, typ in [(1, 0), (2, 0), (3, 0), (4, 0), (5, 1)]})}
+        catalog.names = {"prefab": "bundle"}
+        prefabs = slots.ObjectivePrefabs.__new__(slots.ObjectivePrefabs)
+        prefabs.catalog = catalog
+        prefabs.assets = {"model.prefab": {("prefab", 1)}}
+        prefabs.bundle_names = {"bundle": "runtime-name"}
+        refs = {
+            1: {("m_Component", "Array", 0, "component"): (0, 2)},
+            2: {("m_Children", "Array", 1): (0, 3)},
+            3: {("#374",): (0, 4)},
+            4: {("m_Component", "Array", 0, "component"): (0, 3), ("m_Component", "Array", 1, "component"): (0, 5)},
+        }
+
+        def field_rows(_, endpoint):
+            pid = endpoint[1]
+            name = b"Root" if pid == 1 else b"Leaf"
+            return 1, struct.pack("<I", 4) + name, None, refs[pid]
+
+        failure = dict(asset="Model.prefab", route="1", hierarchy="Root/Leaf", componentCount=2, slot=1)
+        with (
+            patch.object(slots, "fields", side_effect=field_rows),
+            patch.object(records, "fields", return_value=(None, {("m_Name",): (0, 8)})),
+            patch.object(catalog, "record", return_value=("prefab", {"class_id": 114}, bytes(32))),
+        ):
+            result = prefabs.slot(failure, [])
+            self.assertEqual(result["component"], dict(file_id=0, path_id=5, member="prefab", expected_bundle="runtime-name", bundle_loaded=False))
+            self.assertIsNone(result["script"])
+            with self.assertRaisesRegex(ValueError, "hierarchy or slots differ"):
+                prefabs.slot(dict(failure, componentCount=3), [])
+            with self.assertRaisesRegex(ValueError, "sibling index absent"):
+                prefabs.slot(dict(failure, route="0"), [])
+
     def test_differential_retains_array_indices_and_resolves_file_ids_per_member(self):
         mesh = module("catalog_comparison_mesh", "unity_mesh.py")
         with patch.dict(sys.modules, catalog_complete=C, unity_mesh=mesh):

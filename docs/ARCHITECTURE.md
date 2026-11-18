@@ -4,7 +4,12 @@ The per-run `diagnosticObjectiveStartup` selector asks `TeleporterWorldSession`
 to inspect typed objective assets before preparing any actor templates. The
 session report retains every observed failure, child names and sibling indices,
 component slot and count, and the loaded bundle names for a serialized-file
-join. Ordinary template preparation still enforces its original checks.
+join. On the host, `accepted-output/objective_slots.py` binds the captured
+report to its launch PID, attempt, session and installed APK hash. It follows
+the sibling route from the signed prefab's container entry and checks the
+hierarchy and slot count before reporting component and script PPtrs, their
+resolved members and whether Android listed the owning bundles as loaded.
+Ordinary template preparation still enforces its original checks.
 
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
