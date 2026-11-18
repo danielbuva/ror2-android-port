@@ -114,6 +114,12 @@ producer extents and complete layouts. A newly selected external field requires
 its measured owner, field path, pointer and endpoint. The emitter checks the
 resulting closure, including staged endpoints and current managed scripts,
 before writing any catalog declaration.
+`bundle_prepare` also owns retained relocation requalification for a pack
+with surviving bodies and a missing witness. It checks the receipt's index and
+body hashes, reads the preceding producer, and replays the measured PPtr
+fields under the retained member table. A fresh witness is written only when
+that replay reproduces the complete body. The emitter then uses the resulting
+provider through its usual alias and qualification path.
 The same checked invocation writes `catalog-profile.json` from the emitted
 bundle identity and required asset groups, and pins that declaration and the
 actual final bundle in its receipt. The alias donor remains a separate catalog
@@ -430,6 +436,11 @@ every produced bundle and the current runtime script
 registry, plus input/startup identity. Existing catalog helpers resolve ownership
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
+Optional `source_additions` pins metadata from the same input catalog and provider
+set and selects additional non-root location IDs. Completion restores the original
+location rows and aliases, preserving existing alias order. Explicit staged
+owners retain priority, and unclaimed paths use the whole-game fallback. The same
+container checks apply to each added location.
 Every emitted `ModelSkinController.skins` slot is checked against its actual
 local or external `RoR2.SkinDef` and registered MonoScript. The converter follows
 the serialized body `ModelLocator` to its model controller and records each
@@ -456,7 +467,11 @@ After the skin checks, the fixture loads the objective state configs from
 `commando-prefab-lab`. It follows projectile and trail references from those
 configs, the objective support and effect prefabs in their original owners,
 and the FireTrail catalog prefab. It checks each keyed ghost's typed catalog
-location and native components.
+location and native components. The same fixture loads the configured objective
+actor bodies, masters, animation assets and spawn cards from their runtime
+owners. It checks the built-in director decks and the Golemplains and Blackbeach
+monster pools, following typed spawn-card references to each master and body.
+An unbound component is reported with its actor, hierarchy path and slot index.
 During startup, `BodyCatalogSession` opens the objective-support bundle through
 `TeleporterWorldSession` before deserializing body prefabs. The original
 CharacterBody family loads in provider order before the explicit Commando read
@@ -3090,15 +3105,22 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+The runner records the device-local timestamp, PID, start time and package of
+each lab process before and after install and launch, and before sending the
+observed Start input. Install requires both packages idle. After launch and
+at Start, only the selected launcher PID may be running. An unexpected process
+stops the workload and leaves its checkpoint in the private terminal receipt.
 An Android signature mismatch allows one uninstall/reinstall only for the
 disposable lab package with a live hash-backed ownership receipt and an explicit
 payload source. The uninstall clears its data. The runner revalidates placement
 on the configured volume, recreates the runtime directory, syncs the payload and
 records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
-route observations. It waits for the installed attempt/PID-bound native menu,
-requires owned display-zero focus, taps the reported Start button and waits for a ready world
-before the observation clock begins. Existing periodic captures retain PSS,
+route observations in either package. The runner resolves the installed APK's
+attempt before thermal sampling begins. After any bootstrap input, it waits for the
+attempt/PID-bound native menu, requires owned display-zero
+focus, taps the reported Start button and waits for a ready world before the
+observation clock begins. Existing periodic captures retain PSS,
 native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage
 selector is separate. Existing shared cleanup stops the process and removes the

@@ -25,10 +25,12 @@ before launch) and `capture_interval_seconds` (launch-mode cadence, default 60).
 Scheduled scripts resolve relative to the request and use the same live PID,
 APK hash and 30-second gesture limit. Times start after the startup input script;
 each dispatch and its actual elapsed time are retained in the terminal receipt.
-`start_from_menu: true` (lab launch mode only) waits for the owned native menu,
-taps the observed Start button and waits for a ready world before the clock begins.
-Use it with an explicit auto-route selector for stage-transition memory soaks;
-physical and ordinary-play qualification remain separate.
+`start_from_menu: true` (launch mode) runs after any startup input script.
+It waits for the owned native menu, taps its reported Start button and waits
+for a ready world before the clock begins. The lab and converted packages
+use their respective gameplay reports. For a lab stage-transition memory
+soak, pair it with an explicit auto-route selector. Physical input
+qualification remains separate.
 For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
 The selector uses the stored loadout and existing integrated stage loader.

@@ -635,6 +635,63 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(fields[("first",)], (1, 100))
             self.assertEqual(fields[("second",)], (0, 20))
 
+    def test_missing_relocation_witness_can_be_requalified_from_prior_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            before, body, typ, proofs, _, _ = self.external_contract(root)
+            source, retained = root / "source", root / "retained"
+            source.mkdir()
+            retained.mkdir()
+            member = before["destination"]
+            key = dict(bundle=member[0], member=member[1], path_id=member[2], offset=0, bytes=len(body))
+            profile = "authored-profile"
+
+            def write(path, value):
+                path.write_text(json.dumps(value) + "\n")
+                return dict(path=str(path), bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+
+            (source / "objects.bin").write_bytes(body)
+            original = hashlib.sha256(body).hexdigest()
+            source_index = write(source / "index.jsonl", dict(key, sha256=original))
+            write(source / "result.json", dict(success=True, profile_sha256=profile, outputs={"index.jsonl": source_index}))
+            externals = ["CAB-dependency"]
+            targets = {tuple(proof["field"]): proof["target"] for proof in proofs}
+            patched = P.relocate_pointer_fields(before, body, typ, targets, externals)
+            fields = P.pointers(patched, typ, {})
+            digest = hashlib.sha256(patched).hexdigest()
+            row = dict(key, sha256=digest, provider_before=str(source), body_before_sha256=original, external_members=externals)
+            index = write(retained / "index.jsonl", row)
+            (retained / "objects.bin").write_bytes(patched)
+            receipt = dict(success=True, index_sha256=index["sha256"], objects_sha256=digest, witnesses_sha256="missing")
+            value = dict(before, provider=str(retained), record_source=member, record=profile, sha256=digest, edges=list(fields.values()))
+            routes = [
+                dict(field=field, pointer=pointer, target=targets.get(field, [*member[:2], pointer[1]])) for field, pointer in fields.items() if pointer[1]
+            ]
+
+            def request():
+                return write(
+                    root / "request.json",
+                    dict(
+                        schema="owner-retained-relocation-inputs-v1",
+                        provider=str(retained),
+                        receipt=write(retained / "result.json", receipt),
+                        records=write(root / "records.jsonl", value),
+                        routes=write(root / "routes.jsonl", dict(owner=member, edges=routes)),
+                        schemas=[write(root / "schemas.json", {value["full_type"]: P.O.json_layout(typ)})],
+                    ),
+                )["path"]
+
+            recover = P.module("bundle_prepare").requalify_relocation
+            output = root / "requalified"
+            with self.assertRaises(FileNotFoundError):
+                P.ProducerRecords().record(value)
+            self.assertEqual(recover(P, request(), output)["records"], 1)
+            self.assertEqual(P.ProducerRecords({str(retained): output}).record(value)[1], patched)
+            routes[0]["target"] = [*routes[0]["target"][:2], 999]
+            with self.assertRaisesRegex(ValueError, "differs from the producer PPtr patch"):
+                recover(P, request(), root / "refused")
+            self.assertFalse((root / "refused").exists())
+
     def test_external_fields_require_each_field_proof_and_effective_provider(self):
         import copy
 
