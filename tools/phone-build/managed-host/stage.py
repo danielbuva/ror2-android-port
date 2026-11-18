@@ -90,6 +90,27 @@ def stage_python_wheels(extra, pins, destination):
     return {str(path): pins[path.name] for path in inputs}
 
 
+def stage_texture_sdk_guest(extra, pins, destination):
+    """Stage the pinned x86-64 QEMU inputs as app assets."""
+    if not extra or "texture_sdk_guest" not in extra:
+        return {}
+    required = {"libqemu-x86_64.so", "libtexture-pixels.so", "libtexture-etc.so", "libc++_shared.so"}
+    if not required <= extra["natives"].keys():
+        raise ValueError("Texture SDK guest requires QEMU, pixels, ETC and libc++ native providers")
+    source = Path(extra["texture_sdk_guest"]).resolve(strict=True)
+    inputs = {}
+    for name, expected in pins.items():
+        data = (source / relative(name)).read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError("Texture SDK guest input drift: " + name)
+        inputs[name] = data
+    for name, data in inputs.items():
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+    return {str(source / name): expected for name, expected in pins.items()}
+
+
 def load_metadata():
     data = json.loads(METADATA.read_text())
     if data.get("schema") != 1 or data.get("kind") != "owner-app-host-tools-v1" or data.get("python_version") != "3.14.8":
@@ -151,11 +172,11 @@ def tool_manifest(source, destination, package=None, game_package=None):
     tree.write(destination, encoding="utf-8", xml_declaration=True)
 
 
-def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, release_trust=None):
+def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, release_trust=None, backend_tools=None):
     profile_source = Path(profile_source).resolve(strict=True)
     sdk = Path(sdk).resolve(strict=True)
     destination = Path(destination).expanduser().absolute()
-    owned = root.resolve() / "work"
+    owned = (root.resolve() / "work").resolve()
     if destination != destination.resolve() or not destination.is_relative_to(owned) or destination.exists():
         raise ValueError("Fixture destination must be new under this checkout's ignored work/")
     if profile_source == destination or destination in profile_source.parents or sdk == destination or sdk in destination.parents:
@@ -225,6 +246,8 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
     if set(trust) != {"repository", "application_id", "keys"} or not isinstance(trust["keys"], dict):
         raise ValueError("Explicit public release trust configuration required")
     bind(trust_source, "release-trust.json")
+    if backend_tools is not None:
+        bind(Path(backend_tools), "backend-tools.json")
     bind(METADATA, "python-native-plan.json")
     for name, path in {
         "android.jar": "platforms/android-33/android.jar",
@@ -259,6 +282,9 @@ if __name__ == "__main__":
     parser.add_argument("--dest", type=Path, required=True)
     parser.add_argument("--owner-backend", action="store_true", help="stage current authored owners for the headless whole-player backend")
     parser.add_argument("--release-trust", type=Path, help="explicit publisher public-key configuration; default remains unprovisioned")
+    parser.add_argument("--backend-tools", type=Path, help="private native provider and alias plan for the installer builder")
     args = parser.parse_args()
-    result = stage(args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend, release_trust=args.release_trust)
+    result = stage(
+        args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend, release_trust=args.release_trust, backend_tools=args.backend_tools
+    )
     print(json.dumps(dict(success=result["success"], files=len(result["files"]))))

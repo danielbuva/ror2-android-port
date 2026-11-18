@@ -39,6 +39,30 @@ class ManagedHostStageTests(unittest.TestCase):
         self.patch.start()
         self.addCleanup(self.patch.stop)
 
+    def test_texture_sdk_guest_stages_only_pinned_public_files(self):
+        source = self.root / "guest"
+        wrapper = source / "texture-sdk-codec"
+        library = source / "linux/lib/x86_64-linux-gnu/libc.so.6"
+        library.parent.mkdir(parents=True)
+        wrapper.write_bytes(b"synthetic wrapper")
+        library.write_bytes(b"synthetic guest library")
+        (source / "etccompress.so").write_bytes(b"excluded owner-only SDK member")
+        pins = {path.relative_to(source).as_posix(): stage.digest(path) for path in (wrapper, library)}
+        destination = self.root / "assets/texture-sdk"
+        extra = {
+            "texture_sdk_guest": str(source),
+            "natives": dict.fromkeys(("libqemu-x86_64.so", "libtexture-pixels.so", "libtexture-etc.so", "libc++_shared.so")),
+        }
+        self.assertEqual(stage.stage_texture_sdk_guest({}, pins, destination), {})
+        with self.assertRaisesRegex(ValueError, "requires QEMU"):
+            stage.stage_texture_sdk_guest(dict(extra, natives={}), pins, destination)
+        with self.assertRaisesRegex(ValueError, "guest input drift"):
+            stage.stage_texture_sdk_guest(extra, pins | {library.relative_to(source).as_posix(): "0" * 64}, destination)
+        self.assertFalse(destination.exists())
+        receipt = stage.stage_texture_sdk_guest(extra, pins, destination)
+        self.assertEqual(receipt, {str(source / path): pin for path, pin in pins.items()})
+        self.assertEqual({path.relative_to(destination).as_posix(): stage.digest(path) for path in destination.rglob("*") if path.is_file()}, pins)
+
     def test_staging_binds_sources_without_game_input_or_executing_jars(self):
         result = stage.stage(self.profile, self.sdk, self.destination, root=self.root)
         self.assertTrue(result["success"])
@@ -82,6 +106,23 @@ class ManagedHostStageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source drift"):
             stage.stage(self.profile, self.sdk, self.destination, root=self.root)
         self.assertFalse(self.destination.exists())
+
+    def test_shared_worktree_stages_explicit_backend_plan_and_binds_receipt(self):
+        checkout = self.root / "checkout"
+        checkout.mkdir()
+        shared = self.root / "shared-work"
+        shared.mkdir()
+        (checkout / "work").symlink_to(shared, target_is_directory=True)
+        plan = shared / "selected-tools.json"
+        plan.write_text('{"natives": {}, "links": {}}\n')
+        destination = shared / "fixture"
+
+        result = stage.stage(self.profile, self.sdk, destination, root=checkout, backend_tools=plan)
+
+        self.assertEqual((destination / "backend-tools.json").read_bytes(), plan.read_bytes())
+        self.assertEqual(result["files"]["backend-tools.json"], stage.digest(plan))
+        with self.assertRaisesRegex(ValueError, "must be new"):
+            stage.stage(self.profile, self.sdk, self.root / "outside", root=checkout, backend_tools=plan)
 
     def test_owner_backend_retains_repository_marker_for_existing_owners(self):
         (self.root / "AGENTS.md").write_text("# Fixture repository marker\n")

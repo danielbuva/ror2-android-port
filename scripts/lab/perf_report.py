@@ -46,6 +46,7 @@ def raw_frame_window(first, last, trace):
         last_frame=last["pacing_frames"],
         complete=False,
         percentiles_ms=None,
+        hitch_bursts=None,
     )
     if begin < 0 or end > trace["retained_frames"]:
         result["reason"] = "Raw capture does not cover every frame in this counter window"
@@ -61,8 +62,25 @@ def raw_frame_window(first, last, trace):
         or not math.isclose(sum(durations), last["pacing_total_ms"] - first["pacing_total_ms"], rel_tol=1e-12, abs_tol=1e-5)
     ):
         raise ValueError("Raw durations do not reconcile with frame/duration/hitch counters")
+    bursts = longest = current = 0
+    for ms in durations:
+        if ms > 50:
+            bursts += current == 0
+            current += 1
+            longest = max(longest, current)
+        else:
+            current = 0
+    worst_index = max(range(len(durations)), key=durations.__getitem__)
     result.update(
         complete=True,
+        hitch_bursts=dict(
+            threshold_ms=50,
+            count=bursts,
+            longest_frames=longest,
+            worst_frame=result["first_frame"] + worst_index,
+            worst_frame_ms=durations[worst_index],
+            limitation="Strictly >50 ms consecutive frames within this reconciled window only; boundary bursts may extend outside it. Worst-frame ties use the earliest frame. No causal attribution.",
+        ),
         frames=len(durations),
         total_ms=sum(durations),
         over33ms=window["over33ms"],
@@ -227,6 +245,42 @@ def camera_profile(session, completed):
     )
 
 
+def clock_cooling_summary(samples):
+    """Describe retained sensor readings without inferring thermal causation."""
+    times = [row["host_seconds"] for row in samples]
+
+    def summarize(values, unit, cooling=False):
+        values = [value if type(value) is int and (value >= 0 if cooling else value > 0) else None for value in values]
+        observed = [(time, value) for time, value in zip(times, values) if value is not None]
+        return dict(
+            unit=unit,
+            valid_samples=len(observed),
+            missing_samples=len(values) - len(observed),
+            minimum=min((value for _, value in observed), default=None),
+            maximum=max((value for _, value in observed), default=None),
+            first_host_seconds=observed[0][0] if observed else None,
+            last_host_seconds=observed[-1][0] if observed else None,
+            largest_unobserved_gap_seconds=max(b - a for a, b in zip([times[0], *[t for t, _ in observed]], [*[t for t, _ in observed], times[-1]])),
+            adjacent_observed_changes=sum(a is not None and b is not None and a != b for a, b in zip(values, values[1:])),
+        )
+
+    channels = {}
+    for field, unit in (("cpu_frequency_khz", "kHz"), ("cpu_limit_khz", "kHz"), ("cooling_states", "state index")):
+        mappings = [row.get(field) if isinstance(row.get(field), dict) else {} for row in samples]
+        names = sorted({name for mapping in mappings for name in mapping if isinstance(name, str)})
+        channels[field] = {name: summarize([mapping.get(name) for mapping in mappings], unit, field == "cooling_states") for name in names}
+    for field in ("gpu_frequency_hz", "gpu_limit_hz"):
+        channels[field] = summarize([row.get(field) for row in samples], "Hz")
+    return dict(
+        channels=channels,
+        limitations=[
+            "These are sampled sensor observations, not time-weighted clocks or residency. Missing readings are not zero; changes across missing samples are not counted.",
+            "CPU policies and cooling devices are reported separately. Cooling state indices are device-specific, not temperatures or comparable severity levels.",
+            "Clock/limit drops or cooling changes do not establish thermal causation or throttling onset; workload, power policy and external power can confound them.",
+        ],
+    )
+
+
 def energy_summary(samples):
     """Summarize sampled battery-terminal observations, never device energy use."""
 
@@ -360,6 +414,7 @@ def analyze(session, thermal, raw_trace=None, completed=None):
         gpu_frame_ms=distribution([r.get("gpu_frame_ms") for r in samples]),
         camera_profile=camera_profile(session, completed) if completed is not None else None,
         energy=energy_summary(samples),
+        clock_cooling=clock_cooling_summary(samples),
         thermal=dict(
             samples=len(heat),
             max_gap_seconds=max(gaps) if gaps else None,
@@ -465,6 +520,30 @@ def markdown(report):
             f"{name}: {measured['valid_samples']} valid / {measured['missing_samples']} missing samples; largest unobserved gap {fmt(measured['largest_unobserved_gap_seconds'])} s."
         )
     energy_lines.extend(energy["limitations"])
+    sensors = report["clock_cooling"]
+    sensor_lines = ["## Clock and cooling observations (not throttling attribution)"]
+    for field, channels in sensors["channels"].items():
+        rows = {field: channels} if field.startswith("gpu_") else {f"{field}/{name}": value for name, value in channels.items()}
+        if not rows:
+            sensor_lines.append(f"{field}: unavailable (no retained channels).")
+        for name, measured in rows.items():
+            sensor_lines.append(
+                f"{name}: min/max {fmt(measured['minimum'])}/{fmt(measured['maximum'])} {measured['unit']}; "
+                f"{measured['valid_samples']} valid / {measured['missing_samples']} missing; "
+                f"largest gap {fmt(measured['largest_unobserved_gap_seconds'])} s; adjacent changes {measured['adjacent_observed_changes']}."
+            )
+    sensor_lines.extend(sensors["limitations"])
+    hitch_lines = []
+    for label, raw in (("Whole counter window", report.get("raw_frame_window")), ("Covered tail", tail.get("raw_frame_window"))):
+        bursts = (raw or {}).get("hitch_bursts")
+        if bursts is None:
+            hitch_lines.append(f"{label} hitch bursts: unavailable (no complete reconciled raw window).")
+        else:
+            hitch_lines.append(
+                f"{label} >50 ms hitch bursts: {bursts['count']}; longest {bursts['longest_frames']} frames; "
+                f"worst frame {bursts['worst_frame']} at {fmt(bursts['worst_frame_ms'])} ms."
+            )
+            hitch_lines.append(bursts["limitation"])
     lines = [
         "# Sustained game performance report",
         "",
@@ -481,6 +560,7 @@ def markdown(report):
         quantile_line("Individual-frame p50/p95/p99", report["true_frame_time_percentiles_ms"]),
         quantile_line("Final ten-minute individual-frame p50/p95/p99", tail["true_frame_time_percentiles_ms"]),
         f"Periodic frame-mean p50/p95/p99: {fmt(proxy['p50'])}/{fmt(proxy['p95'])}/{fmt(proxy['p99'])} ms (equal observation weights).",
+        *hitch_lines,
         "Throttling onset: unestablished by this report.",
         "",
         *budget_lines,
@@ -488,6 +568,8 @@ def markdown(report):
         *camera_lines,
         "",
         *energy_lines,
+        "",
+        *sensor_lines,
         "",
         "| Start (min) | Samples | Median FPS | CPU ms | GPU ms | CPU C | GPU C | Battery C | Enemies |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",

@@ -138,9 +138,11 @@ The existing thermal supervisor still wraps the worker. Host authored-pack
 production/resume passes; ordinary-app texture execution remains unqualified.
 
 `stage.py --owner-backend` also stages the tracked authored owners and target
-profiles. An explicit private `backend-tools.json` supplies hash-bound generic
-compiler/linker/strip/Python-extension ELF providers, native data-tree links and
-Clang resources to the existing builder. An optional supplied .NET 10 framework
+profiles. Pass `--backend-tools PATH` to stage the private plan with the
+installer sources and bind it in the staging receipt. Use a canonical
+destination when the checkout links to shared `work/`. The plan supplies
+hash-bound compiler, linker, strip and Python-extension ELF providers, native
+data-tree links and Clang resources to the existing builder. An optional .NET 10 framework
 keeps the pinned ILSpy tool runnable; .NET 8 remains selected by the Unity tool
 and public transform runtime configurations. Native providers enter only the
 PackageManager library directory; input game/SDK/target sources are separate
@@ -155,6 +157,24 @@ to it. The builder validates the public wheel hashes, retains their license
 files and verifies installed data and native libraries through the existing
 receipts. [dnfile release files](https://pypi.org/project/dnfile/0.18.0/#files)
 [pefile release files](https://pypi.org/project/pefile/2024.8.26/#files)
+
+For signed texture jobs, add the outputs of
+`build_texture_jpeg.py`, `build_texture_etc.py` and `build_texture_sdk.py`
+to `natives` as `libtexture-jpeg.so`, `libtexture-etc.so` and
+`libtexture-pixels.so` respectively. Build the native pixel helper with
+`build_texture_sdk.py --pixels-only --compiler TARGET_CLANG --output NEW_DIR`
+before the owner SDK arrives. For macOS cross-builds, use the bundled NDK's
+`aarch64-linux-android24-clang` for JPEG and pixels and its
+`aarch64-linux-android24-clang++` for ETC. Include `libqemu-x86_64.so`,
+`libc++_shared.so` and the pinned QEMU dependency closure with its actual
+SONAME aliases under `native-links/` in `links`.
+Set `texture_sdk_guest` to a directory containing the built x86-64
+`texture-sdk-codec` and the GNU runtime arranged under `linux/` as listed
+in `recipe/owner-app-host-tools.json`. The builder copies only those pinned
+paths into the private fixture, and the host grants the verified guest wrapper
+mode `0700` after asset extraction for QEMU's executable check. Retain the
+providers' license notices. The owner-acquired Unity codec is extracted by a
+separate signed conversion job.
 
 The muxer keeps CoreLib in the selected framework's verified data directory via
 the public hostfxr runtime-property API. For .NET 10 it uses the public

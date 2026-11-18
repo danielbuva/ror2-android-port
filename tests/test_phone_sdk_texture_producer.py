@@ -242,6 +242,19 @@ class SdkTextureTests(unittest.TestCase):
         result = subprocess.run([str(self.decoder), "1", "3", "bc6"], input=bytes(16), capture_output=True, timeout=10)
         self.assertEqual((result.returncode, result.stdout), (0, bytes((0, 0, 0, 255)) * 3))
 
+    def test_bc6_half_preserves_hdr_channels_and_cropped_block_order(self):
+        # One-subset BC6H mode with distinct RGB endpoints and all selectors zero.
+        hdr_block = (3 | (528 << 5) | (496 << 15) | (464 << 25)).to_bytes(16, "little")
+        command = [str(self.decoder), "5", "3", "bc6-half"]
+        data = hdr_block + bytes(16)
+        result = subprocess.run(command, input=data, capture_output=True, timeout=10)
+        hdr = struct.pack("<4H", 0x3FFF, 0x3C1F, 0x383F, 0x3C00)
+        black = struct.pack("<4e", 0, 0, 0, 1)
+        self.assertEqual((result.returncode, result.stdout), (0, (hdr * 4 + black) * 3))
+        for malformed in (data[:-1], data + b"x"):
+            result = subprocess.run(command, input=malformed, capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 67)
+
     def test_native_crunch_rejects_wrong_extents_and_malformed_streams(self):
         compiler = shutil.which("c++")
         if compiler is None:
@@ -454,6 +467,24 @@ class SdkTextureTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "SDK codec provider"):
                 BUILD.build(provider, None, provider, root / "output")
             self.assertFalse((root / "output").exists())
+
+    def test_pixels_only_build_produces_a_working_helper_without_the_sdk(self):
+        output = self.root.resolve() / "pixels-only"
+        subprocess.run(
+            [sys.executable, BUILD.__file__, "--pixels-only", "--compiler", shutil.which("cc"), "--output", str(output)],
+            check=True,
+            capture_output=True,
+            timeout=30,
+        )
+        helper = output / "texture-pixels"
+        receipt = json.loads((output / "result.json").read_text())
+        self.assertTrue(receipt["success"])
+        self.assertEqual(receipt["outputs"], {helper.name: digest(helper.read_bytes())})
+        self.assertEqual(len(receipt["commands"]), 1)
+        self.assertEqual({path.name for path in output.iterdir()}, {helper.name, "result.json", "BCDEC-LICENSE.txt", "0.stdout", "0.stderr"})
+        colour = (1, 31, 65, 255)
+        result = subprocess.run([helper, "4", "4"], input=mode6(colour), check=True, capture_output=True, timeout=10)
+        self.assertEqual(result.stdout, bytes(colour) * 16)
 
 
 if __name__ == "__main__":
