@@ -3242,6 +3242,10 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Its clock/cooling summary reports per-channel observed ranges, missing/gap coverage
+and adjacent observed changes from existing CPU/GPU frequency/limit and cooling
+state samples. Missing channels remain unavailable; valid cooling state zero is
+retained. No new sampler, policy, time weighting or causal throttling inference.
 Its battery summary uses existing sustained samples only: signed current × voltage
 at the battery terminals, equally weighted sample means, endpoint charge/level
 changes, per-metric missing/gap coverage and observed external-power transitions.

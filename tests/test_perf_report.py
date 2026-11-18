@@ -33,6 +33,35 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def test_clock_cooling_sparse_channels_and_valid_zero_state(self):
+        rows = [
+            dict(host_seconds=0, cpu_frequency_khz={"policy0": 1000}, cpu_limit_khz={"policy0": 2000}, cooling_states={"fan": 0}, gpu_limit_hz=500),
+            dict(
+                host_seconds=1, cpu_frequency_khz={"policy0": 500, "policy4": 900}, cpu_limit_khz={"policy0": 1500}, cooling_states={"fan": 1}, gpu_limit_hz=400
+            ),
+            dict(host_seconds=9),
+            dict(host_seconds=20, cpu_frequency_khz={"policy0": 100}, cooling_states={"fan": 2}, gpu_limit_hz=200),
+        ]
+        result = perf.clock_cooling_summary(rows)["channels"]
+        self.assertEqual(result["cpu_frequency_khz"]["policy0"]["adjacent_observed_changes"], 1)
+        self.assertEqual(result["cpu_frequency_khz"]["policy4"]["missing_samples"], 3)
+        self.assertEqual(result["gpu_limit_hz"]["largest_unobserved_gap_seconds"], 19)
+        self.assertEqual(result["gpu_limit_hz"]["unit"], "Hz")
+        self.assertEqual(result["cooling_states"]["fan"]["minimum"], 0)
+        self.assertEqual(result["cooling_states"]["fan"]["adjacent_observed_changes"], 1)
+
+    def test_clock_cooling_legacy_absence_and_invalid_readings(self):
+        session, _ = fixture()
+        session["samples"][0].update(cpu_frequency_khz={"policy0": True}, cooling_states={"fan": -1}, gpu_frequency_hz=0)
+        session["samples"][1].update(cpu_frequency_khz=[], gpu_frequency_hz=float("nan"))
+        report = perf.analyze(session, [])
+        channels = report["clock_cooling"]["channels"]
+        self.assertEqual(channels["gpu_frequency_hz"]["valid_samples"], 0)
+        self.assertIsNone(channels["cpu_frequency_khz"]["policy0"]["minimum"])
+        self.assertEqual(channels["cooling_states"]["fan"]["valid_samples"], 0)
+        self.assertEqual(channels["cpu_limit_khz"], {})
+        self.assertIn("not throttling attribution", perf.markdown(report))
+
     def test_energy_external_power_keeps_signed_discharge_and_endpoint_changes(self):
         session, _ = fixture()
         for index, row in enumerate(session["samples"]):
