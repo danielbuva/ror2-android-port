@@ -371,9 +371,10 @@ class Graph:
             codec = INSTALLED_BUNDLE_CODEC if self.conversion else dict(path="${input:codec}", sha256="${input_sha256:codec}")
             arguments += ["--codec", codec["path"], "--codec-sha256", codec["sha256"]]
         if producer == "shader_context":
-            if len(needs) != 1:
+            if len(providers) != 1:
                 raise ValueError("shader context requires one provider: " + path)
-            arguments += ["--record-pack", "${job_directory:" + needs[0] + ":receipt}", "--receipt-sha256", "${sha256:" + needs[0] + ":receipt}"]
+            records = next(iter(providers.values()))
+            arguments += ["--record-pack", "${job_directory:" + records + ":receipt}", "--receipt-sha256", "${sha256:" + records + ":receipt}"]
         elif producer in {"object_produce", "record_remap"}:
             for dependency in needs:
                 dependency_owner = Path(self.jobs[dependency]["script"]).stem

@@ -515,6 +515,13 @@ class ReleaseGraphTests(unittest.TestCase):
                 self.assertEqual(command[-1], data + "/Tools/UnityShaderCompiler")
                 self.assertIn("LD_LIBRARY_PATH=" + data + "/Tools:" + G.SDK_GNU_LIBRARIES, command)
 
+        context = graph.build(G.digest(ROOT / "recipe/owner-commando-shader-context.json"))
+        job = graph.jobs[context]
+        extractor = "recipe/jobs/owner-sdk-shader-inputs.json"
+        records = next(dependency for dependency in job["needs"] if dependency != extractor)
+        self.assertIn(extractor, job["needs"])
+        self.assertEqual(job["arguments"][job["arguments"].index("--record-pack") + 1], "${job_directory:" + records + ":receipt}")
+
     def test_texture_jobs_bind_required_pinned_tools(self):
         graph = G.Graph(ROOT, {})
         for profile, bindings in (
