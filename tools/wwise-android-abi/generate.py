@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -304,9 +305,42 @@ def parse_android_source(path: Path) -> list[dict]:
     return result
 
 
-def native_exports(nm: Path, so: Path) -> set[str]:
-    run = subprocess.run([str(nm), "-D", "--defined-only", str(so)], check=True, text=True, capture_output=True)
-    return {line.split()[-1].split("@")[0] for line in run.stdout.splitlines() if line.split()}
+def native_exports(data: bytes) -> set[str]:
+    """Read the defined dynamic names from a little-endian ARM64 shared library."""
+    require(
+        len(data) >= 64 and data[:7] == b"\x7fELF\x02\x01\x01" and struct.unpack_from("<HHI", data, 16) == (3, 183, 1),
+        "native plugin is not an ARM64 ELF64 shared library",
+    )
+    section_header = struct.Struct("<IIQQQQIIQQ")
+    table_offset = struct.unpack_from("<Q", data, 40)[0]
+    entry_size, count = struct.unpack_from("<HH", data, 58)
+    require(
+        entry_size == section_header.size and count > 0 and 64 <= table_offset <= len(data) - entry_size * count,
+        "invalid native ELF section table",
+    )
+    sections = list(section_header.iter_unpack(data[table_offset : table_offset + entry_size * count]))
+    dynamic_tables = [section for section in sections if section[1] == 11]  # SHT_DYNSYM
+    require(len(dynamic_tables) == 1, "expected one native ELF dynamic symbol table")
+    _, _, _, _, symbols_offset, symbols_size, string_index, _, _, symbol_size = dynamic_tables[0]
+    require(0 < string_index < count and sections[string_index][1] == 3, "invalid native ELF dynamic string table link")  # SHT_STRTAB
+    strings_offset, strings_size = sections[string_index][4:6]
+    require(strings_size > 0 and strings_offset + strings_size <= len(data), "invalid native ELF dynamic string table extent")
+    strings = data[strings_offset : strings_offset + strings_size]
+    symbol = struct.Struct("<IBBHQQ")
+    require(
+        symbol_size == symbol.size and symbols_size > 0 and symbols_size % symbol_size == 0 and symbols_offset + symbols_size <= len(data),
+        "invalid native ELF dynamic symbol table extent",
+    )
+    exports = set()
+    for name_offset, _, _, section_index, _, _ in symbol.iter_unpack(data[symbols_offset : symbols_offset + symbols_size]):
+        if name_offset == 0 or section_index == 0:  # Unnamed or SHN_UNDEF
+            continue
+        name_end = strings.find(b"\0", name_offset)
+        require(name_end > name_offset, "invalid native ELF dynamic symbol name")
+        # GNU version metadata is separate from the name. Keep the legacy
+        # spelling normalization for names with an explicit @ suffix as well.
+        exports.add(strings[name_offset:name_end].decode().partition("@")[0])
+    return exports
 
 
 def native_shape(info: dict) -> dict:
@@ -525,7 +559,7 @@ def main() -> int:
     p.add_argument("--android-source", required=True, type=Path)
     p.add_argument("--android-os-string-source", required=True, type=Path, help="pinned Android AkOSChar decoder implementation source")
     p.add_argument("--native-so", required=True, type=Path)
-    p.add_argument("--llvm-nm", required=True, type=Path)
+    p.add_argument("--llvm-nm", type=Path, help="optionally cross-check the native exports with the host NDK tool")
     p.add_argument("--output", required=True, type=Path)
     p.add_argument("--candidate", type=Path, help="write an optional incomplete ABI candidate; it remains runtime-ineligible")
     p.add_argument("--dotnet", type=Path)
@@ -540,10 +574,16 @@ def main() -> int:
     assert_distinct_outputs(output, candidate)
     require(sha(args.android_source) == ANDROID_DECL_SHA, "official Android declaration source pin mismatch")
     require(sha(args.android_os_string_source) == POLICY["official_android_os_string_source_sha256"], "official Android OS-string source pin mismatch")
-    require(sha(args.native_so) == POLICY["android_arm64_release_plugin_sha256"], "official native plugin pin mismatch")
-    exports = native_exports(args.llvm_nm, args.native_so)
+    native_data = args.native_so.read_bytes()
+    native_hash = hashlib.sha256(native_data).hexdigest()
+    require(native_hash == POLICY["android_arm64_release_plugin_sha256"], "official native plugin pin mismatch")
+    exports = native_exports(native_data)
     export_hash = hashlib.sha256(("\n".join(sorted(exports)) + "\n").encode()).hexdigest()
     require(len(exports) == POLICY["android_arm64_export_count"] and export_hash == POLICY["android_arm64_export_set_sha256"], "native export set pin mismatch")
+    if args.llvm_nm is not None:
+        comparison = subprocess.run([str(args.llvm_nm), "-D", "--defined-only", str(args.native_so)], check=True, text=True, capture_output=True)
+        external_exports = {line.split()[-1].partition("@")[0] for line in comparison.stdout.splitlines() if line.split()}
+        require(exports == external_exports, "native ELF reader and llvm-nm export sets differ")
     android = parse_android_source(args.android_source)
     dotnet = discover_dotnet(args.dotnet)
     cecil = discover_cecil(args.cecil)
@@ -574,7 +614,7 @@ def main() -> int:
         plan["accepted_input_id"] = input_id
         plan["android_source_sha256"] = sha(args.android_source)
         plan["android_os_string_source_sha256"] = sha(args.android_os_string_source)
-        plan["native_plugin_sha256"] = sha(args.native_so)
+        plan["native_plugin_sha256"] = native_hash
         plan["native_export_set_sha256"] = export_hash
         content = (json.dumps(plan, sort_keys=True, indent=2) + "\n").encode()
         if candidate is not None:
