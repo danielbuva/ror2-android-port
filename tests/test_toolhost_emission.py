@@ -209,6 +209,33 @@ class EmissionTests(unittest.TestCase):
             self.assertEqual(archive.getmember("runtime/repo").linkname, "../repo")
             self.assertTrue(archive.getmember("runtime/clang/21/include/stddef.h").isfile())
 
+    def test_signed_code_upgrades_exact_retained_tool_and_cleans_only_new_scratch(self):
+        self.signed_request()
+        self.request["retained_tool_sha256"] = "c" * 64
+        self.path.write_text(json.dumps(self.request))
+        self.phone.occupied.return_value = True
+        self.phone.package_hash.side_effect = ["c" * 64, self.request["tool_apk"]["sha256"]]
+        with patch("device.validate_apk_identity") as identity:
+            result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["retained_tool_preserved"])
+        identity.assert_called_once()
+        self.phone.transport.install.assert_called_once()
+        self.phone.install.assert_not_called()
+        self.phone.remove_owned_installer.assert_not_called()
+        state = json.loads((self.output / "device-state.json").read_bytes())
+        self.assertTrue(state["retained_tool"])
+        self.phone.shell.assert_any_call("run-as", INSTALLER.PACKAGE, "rm", "-rf", state["remote"], label="emission-retained-scratch-cleanup")
+
+    def test_signed_code_refuses_a_retained_tool_pin_mismatch(self):
+        self.signed_request()
+        self.request["retained_tool_sha256"] = "c" * 64
+        self.path.write_text(json.dumps(self.request))
+        self.phone.occupied.return_value = True
+        self.assertEqual(self.run_request()["error"], "emission-preexisting-package")
+        self.phone.transport.install.assert_not_called()
+        self.phone.remove_owned_installer.assert_not_called()
+
     def test_android_invocation_uses_serial_records_without_multiprocessing_extension(self):
         result = self.run_request()
         self.assertTrue(result["success"])

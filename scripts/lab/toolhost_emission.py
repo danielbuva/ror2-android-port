@@ -59,6 +59,11 @@ def load_request(path, *, refresh_repo=False):
     count = "expected_managed_providers" if signed_code else "expected_records"
     if signed_code:
         required = (required - {"expected_records"}) | {"operation", count}
+        if "retained_tool_sha256" in request:
+            required.add("retained_tool_sha256")
+            previous = request["retained_tool_sha256"]
+            if not isinstance(previous, str) or not re.fullmatch(r"[0-9a-f]{64}", previous):
+                raise ValueError("emission-retained-tool-pin")
     if set(request) != required or request["profile"] not in ("nova", "thor"):
         raise ValueError("emission-request-contract")
     for key in ("tool_apk", "manifest"):
@@ -281,6 +286,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     device = phone = state = None
     job = None
     terminal = False
+    retained_tool = False
     previous_work = None
     lease = Path(os.environ["LAB_RUNNER_LEASE"])
     owner = json.loads((lease / "lab-runner.json").read_bytes())
@@ -335,7 +341,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 or phone.package_hash(installer.PACKAGE) != apk_hash
             ):
                 raise RuntimeError("emission-resume-identity")
-            phone.owned_installer, phone.installer_hash = True, apk_hash
+            retained_tool = state.get("retained_tool", False)
+            phone.owned_installer, phone.installer_hash = not retained_tool, apk_hash
             if restage:
                 # Explicit producer qualification replaces only this receipt's
                 # confirmed-terminal scratch. Unknown jobs never reach here.
@@ -351,10 +358,28 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 phone.shell("run-as", installer.PACKAGE, "mkdir", "-p", state["remote"], label="emission-input-directory")
                 result["restaged_after_terminal"] = True
         else:
+            apk = Path(request["tool_apk"]["path"])
             if phone.occupied(installer.PACKAGE):
-                raise RuntimeError("emission-preexisting-package")
-            phone.install_volume = "internal"
-            phone.install(Path(request["tool_apk"]["path"]))
+                previous = request.get("retained_tool_sha256")
+                if not previous or phone.package_hash(installer.PACKAGE) != previous:
+                    raise RuntimeError("emission-preexisting-package")
+                retained_tool = True
+                if previous != apk_hash:
+                    # PackageManager enforces the existing signer on replacement.
+                    # Preserve the earlier run's data and never claim app cleanup.
+                    from device import validate_apk_identity
+
+                    validate_apk_identity(apk, installer.PACKAGE)
+                    phone.transport.install(
+                        apk,
+                        "internal",
+                        label="emission-update-retained-tool",
+                        timeout=600,
+                        reconcile=lambda: phone.package_hash(installer.PACKAGE) == apk_hash,
+                    )
+            else:
+                phone.install_volume = "internal"
+                phone.install(apk)
             home = phone.shell("run-as", installer.PACKAGE, "pwd", label="emission-home").decode().strip()
             details = phone.shell("dumpsys", "package", installer.PACKAGE, label="emission-native-location").decode()
             match = re.search(r"^\s*(?:nativeLibraryDir|legacyNativeLibraryDir)=(/[^\s]+)", details, re.M)
@@ -369,6 +394,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 manifest_sha256=request["manifest"]["sha256"],
                 remote=home + "/files/owner-input/emission-" + uuid.uuid4().hex,
                 native=native,
+                retained_tool=retained_tool,
             )
             write(state_path, state)  # Ownership survives transfer failure.
             phone.shell("run-as", installer.PACKAGE, "mkdir", "-p", state["remote"], label="emission-input-directory")
@@ -439,7 +465,18 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         if job is not None and not terminal:
             write(lease / "retain.json", dict(reason="emission-remote-outcome-unknown", job=job.as_dict(), state=str(state_path)))
             result["lease_retained"] = True
-        if phone is not None and phone.owned_installer:
+        if retained_tool and state and (terminal or job is None):
+            try:
+                remote = state["remote"]
+                if not re.fullmatch(r"/data/(?:user/[0-9]+|data)/dev\.ror2lab\.installertest/files/owner-input/emission-[0-9a-f]{32}", remote):
+                    raise RuntimeError("emission-retained-scratch-root-required")
+                if phone.package_hash(installer.PACKAGE) != apk_hash:
+                    raise RuntimeError("emission-retained-tool-cleanup-identity")
+                phone.shell("run-as", installer.PACKAGE, "rm", "-rf", remote, label="emission-retained-scratch-cleanup")
+                result["retained_tool_preserved"] = True
+            except BaseException as error:
+                result.update(success=False, cleanup_error=str(error))
+        elif phone is not None and phone.owned_installer:
             if signed_code and (terminal or job is None):
                 try:
                     phone.remove_owned_installer()

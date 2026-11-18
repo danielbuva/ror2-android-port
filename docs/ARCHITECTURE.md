@@ -6114,7 +6114,10 @@ frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner
 stops after converter output validation and native planning. Confirmed jobs
 return converter, resource-use and thermal receipts and remove the owned test
-install. Uncertain jobs retain the exact handle. The signed release graph binds
+install. A signed-code request can pin an earlier retained toolhost by APK
+hash. The runner verifies the installed bytes and uses a same-signer Android
+update when the target differs. It removes only the current job's scratch for
+a retained toolhost. Uncertain jobs retain the exact handle. The signed release graph binds
 installed Android tools and their toolhost data manifest for conversion and native
 compilation. When a Burst request accompanies the signed audio roster, the code
 owner checks its preservation roots before stripping the same managed cohort and
