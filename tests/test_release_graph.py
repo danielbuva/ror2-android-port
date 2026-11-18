@@ -1243,7 +1243,7 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
             repo, inputs = root / "repo", root / "inputs"
             (repo / "recipe").mkdir(parents=True)
             (inputs / "work").mkdir(parents=True)
-            template = "recipe/owner-sdk-job-inputs.json"
+            template = "recipe/owner-sdk-android-job-inputs.json"
             shutil.copyfile(ROOT / template, repo / template)
             producer = repo / G.PREFIX / "sdk_package.py"
             producer.parent.mkdir(parents=True)
@@ -1280,6 +1280,11 @@ android.mkdir(parents=True)
     for name in ('android_jar','aapt','java','javac'):
         assert pathlib.Path(request[name]).is_file()
     assert all(pathlib.Path(value).is_file() for value in request['jars'].values())
+    qemu, loader_flag, loader, env_flag, libs, locale_flag, locale = request['aapt_prefix']
+    assert pathlib.Path(qemu).is_file()
+    assert (loader_flag, env_flag, locale_flag, locale) == ('-L', '-E', '-E', 'LC_ALL=C')
+    assert (pathlib.Path(loader) / 'lib64/ld-linux-x86-64.so.2').is_file()
+    assert libs == f'LD_LIBRARY_PATH={loader}/lib/x86_64-linux-gnu'
     out=pathlib.Path(request['output']);out.mkdir()
     for name in SDK_ENTRIES:
         path=out/'resources/apk'/name;path.parent.mkdir(parents=True,exist_ok=True)
@@ -1290,13 +1295,15 @@ android.mkdir(parents=True)
             helper = G.PREFIX + "SdkAndroidCode.java"
             (repo / helper).write_text("// authored helper fixture\n")
             request = json.loads((repo / template).read_text())
-            request["cache_witnesses"] = ["${inputs}/sdk_aapt"]
-            (repo / template).write_text(json.dumps(request))
-            bindings = {}
-            for token in [request[name] for name in ("android_jar", "aapt", "java", "javac")] + list(request["jars"].values()):
-                key = token.removeprefix("${input:").removesuffix("}")
-                bindings[key] = key
-                (inputs / key).write_text("authored tool input")
+            self.assertEqual(set(request["jars"]), set(sdk.TOOL_JARS))
+            runtime, native = root / "runtime", root / "native"
+            roots = {"${inputs}": inputs, "${installed_runtime}": runtime, "${native}": native}
+            files = [*(request[name] for name in ("android_jar", "aapt", "java", "javac")), *request["jars"].values(), *request["cache_witnesses"]]
+            for token in files:
+                name, relative = token.split("/", 1)
+                path = roots[name] / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("authored tool input")
             package = "recipe/jobs/owner-sdk-package.json"
             extraction = "recipe/jobs/owner-sdk-inputs.json"
             acquired = G.Graph(repo, {})
@@ -1323,9 +1330,6 @@ android.mkdir(parents=True)
                 path.write_text(json.dumps(descriptor))
                 index["files"][name] = G.digest(path)
             release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
-            runtime, native = root / "runtime", root / "native"
-            runtime.mkdir()
-            native.mkdir()
             progress = []
 
             def dispatch():
@@ -1336,7 +1340,7 @@ android.mkdir(parents=True)
                     inputs,
                     runtime,
                     native,
-                    {"bindings": bindings},
+                    {"bindings": {}},
                     "a" * 64,
                     python=[sys.executable],
                     progress=lambda name, reused: progress.append((name, reused)),
@@ -1350,7 +1354,10 @@ android.mkdir(parents=True)
                     dispatcher.produce(name, dependencies, destination)
                     self.assertEqual(destination.read_bytes(), ("authored " + name.removeprefix("apk/")).encode())
             self.assertEqual(progress, [(extraction, False), (package, False), (extraction, True), (package, True)])
-            (inputs / "sdk_aapt").write_text("updated tool input")
+            (inputs / request["aapt"].removeprefix("${inputs}/")).write_text("updated tool input")
+            dispatch().execute(package)
+            self.assertEqual(progress[-2:], [(extraction, True), (package, False)])
+            (native / "libqemu-x86_64.so").write_text("updated QEMU input")
             dispatch().execute(package)
             self.assertEqual(progress[-2:], [(extraction, True), (package, False)])
             component.write_text("changed archive fixture")

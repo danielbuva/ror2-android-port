@@ -1104,6 +1104,8 @@ class Graph:
         spec.loader.exec_module(sdk)
         name = "recipe/jobs/owner-sdk-package.json"
         cache_witnesses = request.pop("cache_witnesses", [])
+        tools = [*(request[key] for key in ("android_jar", "aapt", "java", "javac")), *request["jars"].values()]
+        cache_witnesses = sorted(set(cache_witnesses) | {path for path in tools if path.startswith(("${inputs}/", "${installed_runtime}/", "${native}/"))})
         if self.android_sdk:
             request["sdk"] = self.artifact_pin(self.android_sdk, "android_player")["path"]
         self.jobs[name] = {

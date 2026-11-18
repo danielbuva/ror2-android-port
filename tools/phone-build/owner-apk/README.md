@@ -815,6 +815,11 @@ SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
 the producer closure; all entries share one cached job. SDK packaging does not
 qualify gameplay or complete the remaining source bundle suppliers.
 
+Use `--sdk-request recipe/owner-sdk-android-job-inputs.json --sdk-component`
+for the installed ARM64 toolhost. The phone JVM runs Java tools. QEMU runs
+the acquired Linux AAPT2 under its GNU loader. Platform, guest and Maven inputs
+live under `acquired/android-sdk/` and participate in the SDK job cache key.
+
 Optional `--sdk-component` extracts the verified Unity Android Support archive
 from the private input root at `acquired/unity-android-support.pkg`. Provision
 the [pinned owner component](../accepted-output/README.md#acquire-the-three-sdk-copy-inputs)

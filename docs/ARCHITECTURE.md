@@ -1628,6 +1628,8 @@ cache readback. This archive stays separate from the original-game inventory
 and the compiler/editor SDK tree. The existing extractor owns verification,
 private output creation and terminal receipts. SDK packaging can pin its
 separately supplied platform and tool files with request cache witnesses.
+The phone SDK request binds private acquired tools and the installed JVM and
+QEMU. The SDK job hashes those tools and the guest libraries before cache reuse.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host

@@ -2054,7 +2054,12 @@ library providers from Maven Central. The SDK component is extracted by
 are required local tool inputs rather than generated game content. The private
 request supplies every path explicitly; no run-directory discovery occurs.
 Android additionally supplies the existing app-host JVM/QEMU and GNU loader
-closure. Retain these providers and their acquisition/hash receipts under
+closure. The signed phone request `recipe/owner-sdk-android-job-inputs.json`
+uses the installed JVM and QEMU with private `acquired/android-sdk/` inputs.
+Stage the API-30 platform as `android-30.jar`, recognized Linux AAPT2 as
+`aapt2-linux`, and pinned Maven tools under `jars/`. Stage the Linux interpreter
+under `linux/lib64/` and the runtime libraries named in the request under
+`linux/lib/x86_64-linux-gnu/`. Retain these providers and acquisition receipts under
 ignored local storage; the public repository distributes no provider binaries.
 [Setup and output lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
 explain their use. Host Java 11 and phone Java 21 produce the documented J1109
