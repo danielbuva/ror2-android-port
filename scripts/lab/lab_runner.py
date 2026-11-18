@@ -324,6 +324,37 @@ def toolhost_summary(out):
     return f"success={result.get('success')} apk_sha256={result.get('apk_sha256') or result.get('tool_apk_sha256')} dir=$LAB_TOOLHOST_ROOT/{out.name}"
 
 
+def retain_installer_signer(runner, checkout, device, workstream, output, receipt):
+    """Copy only the existing installer-test signer while the granted Thor is leased."""
+    spec = importlib.util.spec_from_file_location("lab_installer_toolhost", Path(__file__).with_name("installer_toolhost.py"))
+    fixture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixture)
+    source = json.loads((output / "command.json").read_bytes())
+    remote = source["retained_tool_key"]
+    if (
+        receipt.get("package") != TEST_PACKAGE
+        or source.get("source_commit") != receipt.get("source_commit")
+        or not re.fullmatch(r"[0-9a-f]{64}", receipt.get("signer_sha256") or "")
+        or not re.fullmatch(r"/data/local/tmp/[A-Za-z0-9_-]+/owner-tool-key", remote)
+    ):
+        raise CommandError("installer-test signing backup source differs")
+    serial = runner.devices[device]
+    runner.require_grant(serial, workstream)
+    lease = runner.take_lease(device, serial, workstream=workstream)
+    try:
+        runner.stop_unity_adb(checkout)
+
+        def fetch(name, stream):
+            command = [runner.adb, "-s", serial, "exec-out", "cat", remote + "/" + name]
+            if subprocess.run(command, stdout=stream, stderr=subprocess.DEVNULL, timeout=30).returncode:
+                raise CommandError("installer-test signing backup transfer failed")
+
+        fixture.backup_signing_key(runner.repo / "work" / fixture.KEY_DIR, Path(os.environ["JAVA_HOME"]) / "bin/java", receipt["signer_sha256"], fetch)
+    finally:
+        (lease / "lab-runner.json").unlink()
+        lease.rmdir()
+
+
 def local_packaging(path, *, dry_run=False, detach=False):
     request = json.loads(Path(path).read_bytes())
     repo = Path(request["repo"]).resolve()
@@ -347,6 +378,9 @@ def local_packaging(path, *, dry_run=False, detach=False):
         if operation not in ("packaging", "acquisition", "toolhost"):
             raise CommandError("unknown local packaging operation")
         build_toolhost = operation == "toolhost"
+        retain_signer = request.get("backup_installer_key", False)
+        if not isinstance(retain_signer, bool) or (retain_signer and not build_toolhost):
+            raise CommandError("installer-test signing backup requires a Thor toolhost request")
         if not re.fullmatch(r"[a-z0-9-]+", workstream) or device not in runner.devices or (build_toolhost and device != "thor"):
             raise CommandError("invalid local packaging workstream or configured device")
         common_dir = subprocess.check_output(["git", "-C", checkout, "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()
@@ -391,6 +425,9 @@ def local_packaging(path, *, dry_run=False, detach=False):
                     raise CommandError("toolhost builder did not produce a successful APK receipt")
                 (output / ".prune-keep").touch()
                 result["toolhost"] = summary.splitlines()[0]
+                if retain_signer:
+                    retain_installer_signer(runner, checkout, device, workstream, output, receipt)
+                    result["signing_key_backed_up"] = True
         else:
             code, _ = runner.execute(command, local_checkout=checkout, workstream=workstream)
         result.update(success=code == 0, exitcode=code)

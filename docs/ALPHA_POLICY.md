@@ -12,7 +12,7 @@ boundary in [ADR-002](ADR-002-public-alpha-distribution.md) remain fixed.
 | `dev.ror2lab.arm64` | The lab's existing debug key. Linked worktrees using the same lab project resolve its Android user home from the shared work root. Isolated build lanes use the copied lab key. |
 | `dev.ror2lab.converted` | A dedicated private converted-build key, reused for that package's updates. Standalone owner assemblies default to this package, including private replay assemblies. |
 | `dev.ror2lab.alpha` | The owner's durable on-device alpha key. The final installer requires the alpha identity, an issued version and its bound retention policy. |
-| Installer and tool fixtures | A separate durable tool signing key for each fixture identity. The managed host builder reserves all three game package IDs. |
+| Installer and tool fixtures | A separate durable tool signing key for each fixture identity. The disposable installer can use its certificate-verified host key copy for Mac rebuilds. The managed host builder reserves all three game package IDs. |
 
 The APK assembly rewrites both the manifest and resource package to the selected
 owner identity. Existing laboratory data stays with its original package.

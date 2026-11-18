@@ -1608,6 +1608,12 @@ uses the shared lab runner for a granted device and records the installed versio
 and hashes before the fixture is removed. The toolhost request pins the cached
 installer by source commit for subsequent device checks.
 
+`scripts/lab/installer_toolhost.py` owns Mac rebuilds of the disposable installer.
+It recompiles the managed code and manifest, replaces the authored repository
+assets, verifies the retained Android runtime members, and signs with the local
+fixture key. The host build records both source commits and APK hashes. The
+shared runner can back up the retained fixture key after a Thor build.
+
 `Phone.retain_build_artifact` streams one explicitly selected, cache-receipt-pinned
 result from the currently owned installer to ignored host `work/` before cleanup.
 It checks the received hash before publishing the file, keeps binary bytes out of
