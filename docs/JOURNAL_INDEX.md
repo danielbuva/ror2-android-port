@@ -332,3 +332,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1496](PORTING_JOURNAL.md#j1496--prepare-mercenarys-native-finisher-visual-before-state-configuration) | 2026-11-18 | Prepare Mercenary's native finisher visual before state configuration | 2026-11-18. |
 | [J1497](PORTING_JOURNAL.md#j1497--restore-native-vagrant-cannon-intersection-material) | 2026-11-18 | Restore native Vagrant cannon intersection material | 2026-11-18. |
 | [J1498](PORTING_JOURNAL.md#j1498--restore-the-original-collision-policy-in-the-converted-apk) | 2026-11-18 | Restore the original collision policy in the converted APK | 2026-11-18. |
+| [J1499](PORTING_JOURNAL.md#j1499--restore-mercenarys-native-normal-slash-material) | 2026-11-18 | Restore Mercenary's native normal slash material | 2026-11-18. |

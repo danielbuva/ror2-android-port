@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1499 — Restore Mercenary's native normal slash material
+
+2026-11-18. The body visual owner prepares Mercenary's shared normal
+slash prefab before GroundLight state configuration. On assisted Titanic
+Plains, GroundLight2 and GroundLight1 SwingTrail emitters used the supported
+Android Cloud Remap variant 0/36, source queue 3000 and One/One blend.
+APK SHA-256 `3d3d06629839b09a7570459b171c21d90b8601d1b6b8d7b989964cddaf37f992` (source `d2939a0e`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/merc-normal-slash-live/`
+includes `terminal.done.json` and the renderer report, screenshot and Unity
+log for `sample-89/` (frame 4080) and `sample-118/` (frame 5760).
+Native authority held for 101.087 s. Terminal snapshot was 55.76 FPS at
+17.93 ms. SoC peaked at 83.2 °C with 1.825 s above 80 °C. Battery peaked at
+25 °C. Scratch cleanup and OLED sleep passed. Matched PC pixels remain open.
+
 ## J1498 — Restore the original collision policy in the converted APK
 
 2026-11-18. The converter preserves the source PhysicsManager collision matrix
