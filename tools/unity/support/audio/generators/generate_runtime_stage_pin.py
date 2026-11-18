@@ -14,7 +14,7 @@ import stat
 ROOT = Path(__file__).resolve().parents[5]
 WORK = (ROOT / "work").resolve()
 STAGER = Path(__file__).resolve().parent / "stage_original_game_banks.py"
-STAGER_SHA256 = "4aec7b0a43972e02cd7d6280f2bd2010222c25c9a0a7f50fd2c836fdbf88b597"
+STAGER_SHA256 = "b3c7a69e2b3005babc5deb6126c16ba3d4c3afbe237b5f4a57298aec26fc7b5e"
 INPUT_ID = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 PREFAB_SHA256 = "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af"
 BANK_INDEX_SHA256 = "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326"
@@ -52,7 +52,7 @@ def checked_work_file(path: Path, label: str, work: Path) -> Path:
     return resolved
 
 
-def streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None = None) -> list[dict]:
+def streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None = None, init_receipt_sha256: str | None = None) -> list[dict]:
     validator_path = ROOT / "scripts/lab/original_game_audio_stage.py"
     spec = importlib.util.spec_from_file_location("original_audio_stage_validator", validator_path)
     if spec is None or spec.loader is None:
@@ -62,7 +62,7 @@ def streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None = None) 
     validator = getattr(module, "validate_streamed_media_rows", None)
     if not callable(validator):
         raise ValueError("shared streamed-media receipt validator unavailable")
-    rows = validator(receipt, bank_index_sha256=bank_index_sha256)
+    rows = validator(receipt, bank_index_sha256=bank_index_sha256, init_receipt_sha256=init_receipt_sha256)
     if not isinstance(rows, list) or len(rows) != STREAMED_MEDIA_COUNT:
         raise ValueError("R2 receipt must validate exactly 120 streamed media rows")
     return rows
@@ -102,8 +102,6 @@ def source_plan(prefab: Path, bank_index: Path, adapted_init: Path, init_receipt
     index_sha = BANK_INDEX_SHA256 if owner_work is None else OWNER_BANK_INDEX_SHA256
     if sha_file(prefab) != PREFAB_SHA256 or sha_file(bank_index) != index_sha:
         raise ValueError("current accepted prefab/bank index pins differ")
-    if sha_file(adapted_init) != INIT_SHA256 or sha_file(init_receipt) != INIT_RECEIPT_SHA256:
-        raise ValueError("explicit adapted Init candidate/receipt pins differ")
     _, _, plan, _ = module.load_inputs(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work)
     return plan
 
@@ -145,17 +143,22 @@ def generate(
         raise ValueError("stage receipt does not match current default-unaccepted contract")
     if receipt.get("accepted_inventory_sha256") != sha_file(work / "inventory/files.json"):
         raise ValueError("stage receipt does not bind current full accepted inventory")
+    plan = source_plan(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work)
+    init_receipt_sha = INIT_RECEIPT_SHA256 if owner_work is None else sha_file(init_receipt)
+    index_sha = BANK_INDEX_SHA256 if owner_work is None else OWNER_BANK_INDEX_SHA256
     for key, expected in {
-        "current_bank_index_sha256": BANK_INDEX_SHA256 if owner_work is None else OWNER_BANK_INDEX_SHA256,
+        "current_bank_index_sha256": index_sha,
         "wwise_global_prefab_sha256": PREFAB_SHA256,
-        "init_adaptation_receipt_sha256": INIT_RECEIPT_SHA256,
+        "init_adaptation_receipt_sha256": init_receipt_sha,
         "init_adaptation_candidate_sha256": INIT_SHA256,
         "global_accepted_original_sha256": GLOBAL_SHA256,
     }.items():
         if receipt.get(key) != expected:
             raise ValueError(f"stage receipt source pin mismatch: {key}")
-    media_rows = streamed_media_rows(receipt, bank_index_sha256=OWNER_BANK_INDEX_SHA256 if owner_work is not None else None)
-    plan = source_plan(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work)
+    if owner_work is None:
+        media_rows = streamed_media_rows(receipt)
+    else:
+        media_rows = streamed_media_rows(receipt, bank_index_sha256=index_sha, init_receipt_sha256=init_receipt_sha)
     expected = {row["output_filename"]: row for row in plan}
     expected["Init.bnk"] = {"source_sha256": INIT_SHA256, "size_bytes": adapted_init.stat().st_size}
     outputs = receipt.get("outputs")

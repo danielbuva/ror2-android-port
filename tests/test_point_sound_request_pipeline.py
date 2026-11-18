@@ -211,8 +211,10 @@ class RequestPipelineTests(unittest.TestCase):
             stage_doc["wwise_global_prefab_sha256"] = values["wwise_global_prefab_sha256"]
             stage_doc["init_adaptation_receipt_sha256"] = values["init_adaptation_receipt_sha256"]
             stage_path.write_text(json.dumps(stage_doc, sort_keys=True))
-            generator.EXPECTED = expected if not explicit else {**expected, "current_bank_index_sha256": "2" * 64}
+            generator.EXPECTED = expected if not explicit else {**expected, "current_bank_index_sha256": "2" * 64, "init_adaptation_receipt_sha256": "3" * 64}
             generator.OWNER_BANK_INDEX_SHA256 = expected["current_bank_index_sha256"]
+            generator.INIT_RECIPE = work / "init-recipe.json"
+            generator.INIT_RECIPE.write_text(json.dumps({"owner_receipt_sha256": expected["init_adaptation_receipt_sha256"]}))
             fake_generator = SimpleNamespace(expected_sources=generator.expected_sources, CONTRACT_SCHEMA=generator.CONTRACT_SCHEMA)
             (work / "out").mkdir()
             (work / "generated").mkdir()
@@ -257,7 +259,9 @@ class RequestPipelineTests(unittest.TestCase):
             validated = generator.validate(request_path, contract_path, stage_path, **owner)
             self.assertEqual(request["request_id"], validated["request"]["request_id"])
             self.assertEqual(120, validated["streamed_media_count"])
-            media_rows.assert_called_once_with(stage_doc, bank_index_sha256=expected["current_bank_index_sha256"])
+            media_rows.assert_called_once_with(
+                stage_doc, bank_index_sha256=expected["current_bank_index_sha256"], init_receipt_sha256=expected["init_adaptation_receipt_sha256"]
+            )
             generated_pin = work / "generated-pin.cs"
             emitted = generator.emit(request_path, contract_path, stage_path, generated_pin, **owner)
             self.assertEqual("work/generated-pin.cs", emitted["output"])
@@ -348,11 +352,17 @@ class RequestPipelineTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "source pin mismatch"):
                 runtime.generate(receipt_path, stage_root, owner_output, prefab, bank_index, init_file, init_receipt, owner_work=work)
             receipt["current_bank_index_sha256"] = runtime.OWNER_BANK_INDEX_SHA256
+            init_receipt_sha = write(init_receipt, b"owner receipt")
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "init_adaptation_receipt_sha256"):
+                runtime.generate(receipt_path, stage_root, owner_output, prefab, bank_index, init_file, init_receipt, owner_work=work)
+            receipt["init_adaptation_receipt_sha256"] = init_receipt_sha
             receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
             owner = runtime.generate(receipt_path, stage_root, owner_output, prefab, bank_index, init_file, init_receipt, owner_work=work)
             self.assertEqual((owner["bank_count"], owner["streamed_media_count"]), (153, 120))
             self.assertNotEqual(owner["receipt_sha256"], result["receipt_sha256"])
             receipt["current_bank_index_sha256"] = runtime.BANK_INDEX_SHA256
+            receipt["init_adaptation_receipt_sha256"] = runtime.INIT_RECEIPT_SHA256
             receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
 
             output.unlink()

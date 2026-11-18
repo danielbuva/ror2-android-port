@@ -24,6 +24,7 @@ import owner_audio_prefab  # noqa: E402
 import phone_unity_compile  # noqa: E402
 import public_transform_tools  # noqa: E402
 import wwise_bank_index  # noqa: E402
+import wwise_init_platform  # noqa: E402
 
 
 def load(path, name):
@@ -169,7 +170,11 @@ def stage_source_audio(work, game, output, *, decoder=None):
     bank_dir, prefab_dir, init_dir = [output / name for name in ("bank-index", "prefab", "init")]
     wwise_bank_index.owner_index(work, bank_dir, decoder is not None, decoder_executable=decoder)
     owner_audio_prefab.reconstruct(work, prefab_dir)
-    legacy.run(work, init_dir)
+    if decoder is None:
+        init_dir.mkdir()
+        wwise_init_platform.produce_owner(work, game, init_dir)
+    else:
+        legacy.run(work, init_dir)
     prefab, bank = prefab_dir / "WwiseGlobal.prefab", bank_dir / "bank-index.json"
     staged = output / "staged"
     soundbanks_info = game / "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/SoundbanksInfo.xml"
