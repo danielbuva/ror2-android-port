@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Host-only, exact-input Wwise Android ABI candidate generator.
+"""Exact-input Wwise Android ABI candidate generator.
 
 The accepted game install is read-only. All plans and candidates must be new
 files under ignored work/. No project, editor, device, or build operation occurs.
@@ -568,6 +568,7 @@ def main() -> int:
     p.add_argument("--dotnet", type=Path)
     p.add_argument("--cecil", type=Path)
     p.add_argument("--owner-work", type=Path, help="canonical provisioned owner workspace")
+    p.add_argument("--android-sdk-install", type=Path, help="compile the authored tools with installed Android .NET and the owner SDK")
     args = p.parse_args()
     validate_output_basename(args.output)
     if args.candidate is not None:
@@ -593,27 +594,42 @@ def main() -> int:
     android = parse_android_source(args.android_source)
     dotnet = discover_dotnet(args.dotnet)
     cecil = discover_cecil(args.cecil)
-    tempdir = tempfile.TemporaryDirectory(prefix="wwise-abi-v6-", dir=output.parent if args.owner_work else WORK)
-    build = Path(tempdir.name) / "inspector"
-    subprocess.run(
-        [
-            str(dotnet),
-            "build",
-            str(HERE / "CecilAbiTool.csproj"),
-            "-p:UseSharedCompilation=false",
-            "-o",
-            str(build),
-            "-p:BaseIntermediateOutputPath=" + str(Path(tempdir.name) / "obj-inspector") + os.sep,
-            "-p:CecilPath=" + str(cecil),
-            "--nologo",
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    inspector = build / "CecilAbiTool.dll"
-    try:
-        inspected = subprocess.run([str(dotnet), str(inspector), "--inspect-pinvoke", str(managed)], check=True, capture_output=True, text=True)
+    with tempfile.TemporaryDirectory(prefix="wwise-abi-v6-", dir=output.parent if args.owner_work else WORK) as scratch:
+        scratch = Path(scratch)
+        compiler = None
+        if args.android_sdk_install:
+            sys.path.insert(0, str(ROOT / "scripts/lab"))
+            from phone_sdk_compiler import SdkCompiler
+
+            compiler = SdkCompiler(args.android_sdk_install.resolve(strict=True), dotnet, scratch)
+
+        def compile_tool(name, folder):
+            build = scratch / folder
+            assembly = build / (name + ".dll")
+            if compiler:
+                compiler.tool(assembly, [HERE / (name + ".cs")], cecil)
+            else:
+                subprocess.run(
+                    [
+                        str(dotnet),
+                        "build",
+                        str(HERE / (name + ".csproj")),
+                        "-p:UseSharedCompilation=false",
+                        "-o",
+                        str(build),
+                        "-p:BaseIntermediateOutputPath=" + str(scratch / ("obj-" + folder)) + os.sep,
+                        "-p:CecilPath=" + str(cecil),
+                        "--nologo",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            return assembly
+
+        inspector = compile_tool("CecilAbiTool", "inspector")
+        tool_env = compiler.tool_environment() if compiler else None
+        inspected = subprocess.run([str(dotnet), str(inspector), "--inspect-pinvoke", str(managed)], env=tool_env, check=True, capture_output=True, text=True)
         original = json.loads(inspected.stdout)
         require(original["sha256"] == POLICY["retained_managed_sha256"], "inspected assembly is not the accepted original")
         plan = derive_plan(original, android, exports)
@@ -624,37 +640,24 @@ def main() -> int:
         plan["native_export_set_sha256"] = export_hash
         content = (json.dumps(plan, sort_keys=True, indent=2) + "\n").encode()
         if candidate is not None:
-            plan_path = Path(tempdir.name) / "plan.json"
+            plan_path = scratch / "plan.json"
             atomic_new(plan_path, content)
-            writer_dir = Path(tempdir.name) / "writer"
+            writer = compile_tool("CecilAbiWriter", "writer")
             subprocess.run(
                 [
                     str(dotnet),
-                    "build",
-                    str(HERE / "CecilAbiWriter.csproj"),
-                    "-p:UseSharedCompilation=false",
-                    "-o",
-                    str(writer_dir),
-                    "-p:BaseIntermediateOutputPath=" + str(Path(tempdir.name) / "obj-writer") + os.sep,
-                    "-p:CecilPath=" + str(cecil),
-                    "--nologo",
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            subprocess.run(
-                [
-                    str(dotnet),
-                    str(writer_dir / "CecilAbiWriter.dll"),
+                    str(writer),
                     "--emit-incomplete-candidate",
                     str(managed),
                     str(plan_path),
                     str(POLICY_PATH),
                     str(candidate),
                 ],
+                env=tool_env,
                 check=True,
             )
+        if compiler:
+            compiler.verify()
         atomic_new(output, content)
         print(
             json.dumps(
@@ -671,9 +674,6 @@ def main() -> int:
             )
         )
         return 0
-    finally:
-        if tempdir:
-            tempdir.cleanup()
 
 
 if __name__ == "__main__":
