@@ -429,6 +429,10 @@ then resolves the typed SkinDefParams and checks each bake transform with the
 native prefab path function, including base skins. All opened bundles are
 released in `finally`. Its local receipt records failures before the Android
 gameplay gate.
+The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
+After the skin checks, the fixture loads the objective state configs from
+`commando-prefab-lab`, follows their projectile and trail references, and checks
+each keyed ghost's typed catalog location and native components.
 During startup, `BodyCatalogSession` opens the objective-support bundle through
 `TeleporterWorldSession` before deserializing body prefabs. The original
 CharacterBody family loads in provider order before the explicit Commando read
