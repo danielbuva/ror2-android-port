@@ -147,12 +147,25 @@ def load_request(path, serial=None):
         for script in scripts:
             inputs = json.loads(Path(script).read_text())
             touch_gesture.validate_request(dict(inputs, pid="1"))
+    if "prior_receipt" in value:
+        read_ownership_receipt(value["prior_receipt"], value["serial"], value["package"])
     mapping = checked_mapping(value) if "input_mapping" in value else None
-    if value.get("start_from_menu") and "selection" in value:
+    if value.get("start_from_menu"):
+        from device import PACKAGE, validate_apk_identity
+        from device_context import receipt_directory, validate_receipt_directory
         from installed_attempt import attempt_from_installed
 
+        validate_apk_identity(apk, value["package"])
+        work = root / "work"
+        configuration = json.loads((work / "config/local.json").read_text())
+        receipt_root = receipt_directory(work, dict(serial=value["serial"], default_serial=configuration["device_serial"]))
+        if value["package"] != PACKAGE:
+            receipt_root = validate_receipt_directory(work, receipt_root / "packages" / value["package"])
+        receipt = receipt_root / "installed.json"
+        if receipt.exists() or receipt.is_symlink():
+            read_ownership_receipt(receipt, value["serial"], value["package"])
         attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(value)
-        if value["selection"].get("attempt") != attempt:
+        if "selection" in value and value["selection"].get("attempt") != attempt:
             raise ValueError("Menu Start selector attempt must match the APK's embedded attempt: " + attempt)
     return value
 
@@ -340,16 +353,31 @@ def placement(device, reserve, *, adopted_only=False, install_apk=None):
     return storage
 
 
+def read_ownership_receipt(path, serial, package):
+    """Validate the local receipt without taking a lease or contacting a device."""
+    path = Path(path)
+    if path.is_symlink() or not path.is_file():
+        raise RuntimeError("Ownership receipt must be a regular file")
+    receipt = json.loads(path.read_text())
+    if not isinstance(receipt, dict) or receipt.get("serial") != serial or receipt.get("package") != package:
+        raise RuntimeError("Ownership receipt does not match selected package/device")
+    package_path = receipt.get("package_path")
+    apk_hash = receipt.get("apk_sha256")
+    if not isinstance(package_path, str) or not package_path.startswith("package:/") or "\n" in package_path or "\r" in package_path:
+        raise RuntimeError("Ownership receipt has an invalid package path")
+    if not isinstance(apk_hash, str) or not re.fullmatch(r"[0-9a-f]{64}", apk_hash):
+        raise RuntimeError("Ownership receipt has an invalid APK hash")
+    return receipt
+
+
 def adopt_receipt(device, path):
     """Migrate a peer's explicit ownership receipt only after live readback."""
-    receipt = json.loads(Path(path).read_text())
-    if receipt.get("serial") != device.serial or receipt.get("package") != device.package:
-        raise RuntimeError("Prior ownership receipt does not match selected package/device")
+    receipt = read_ownership_receipt(path, device.serial, device.package)
     current = device.sh("pm", "path", device.package)
-    if current != receipt.get("package_path") or not current.startswith("package:") or "\n" in current:
+    if current != receipt["package_path"]:
         raise RuntimeError("Prior receipt package placement changed")
     actual = device.sh("sha256sum", current.removeprefix("package:")).split()
-    if not actual or actual[0] != receipt.get("apk_sha256"):
+    if not actual or actual[0] != receipt["apk_sha256"]:
         raise RuntimeError("Prior receipt live package hash changed")
     device.write_receipt("installed.json", receipt)
 
