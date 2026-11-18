@@ -2105,9 +2105,12 @@ cover fixed owner-work admission, exclusive outputs, immutable provider checks,
 retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
-When a signed conversion declares audio members, the managed producer derives
-the decoder-free bank index and runs `scripts/lab/wwise_init_platform.py` in
-its explicit owner workspace. The Init producer verifies and transforms one
+When a signed conversion declares audio members, its managed, ABI and audio
+stages share the provisioned owner workspace. The ABI stage pins the export
+set from the ARM64 ELF reader. The managed manifest verifies this export set
+alongside the original declarations and native plugin. The bank stage derives
+the decoder-free index and runs `scripts/lab/wwise_init_platform.py` in the same
+workspace. The Init producer verifies and transforms one
 inventory-bound bank snapshot and writes a new bank and receipt exclusively.
 Staging and both runtime pins bind the resulting receipt and bank index.
 The converter compares the local roster with the signed names before
