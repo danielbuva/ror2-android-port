@@ -7127,3 +7127,12 @@ implementation, private paths or credentials.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-game-prefab-component-source-records.json` | `d0fea0b51e8f32ca83e6fd71ca8d501f93814a6d9dd7c0d194877e5906244f80` |
+
+### Signed managed SDK compiler
+
+The direct compiler uses the installed, hash-checked Unity Roslyn and Android
+references to build authored tools and runtime code. It pins the authored
+observer build and verifies the established Wwise and game transform hashes.
+Provenance, privacy, licensing and sensitive-content review found authored
+compiler wiring, reference names and hashes only. SDK files, original game
+and middleware files, compiled outputs and private evidence stay local.

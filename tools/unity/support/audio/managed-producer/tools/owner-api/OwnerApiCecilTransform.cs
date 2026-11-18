@@ -45,7 +45,7 @@ static class Program
     static int Transform(string input, string output, string observerPath)
     {
         Require(Hash(input) == InputSha, "input API hash is not the pinned 2bd original-564-derived fixture input");
-        Require(Hash(observerPath) == ExpectedObserverSha, "observer helper does not match its pinned source build; update candidate pins");
+        Require(IsPinnedObserver(observerPath), "observer helper does not match its pinned source build; update candidate pins");
         Require(Path.GetFullPath(input) != Path.GetFullPath(output), "transform must write a separate candidate copy");
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
         using var a = Read(input);
@@ -61,7 +61,7 @@ static class Program
     static int Verify(string input, string output, string observerPath)
     {
         Require(Hash(input) == InputSha, "input API hash is not pinned");
-        Require(Hash(observerPath) == ExpectedObserverSha, "observer helper hash is not pinned");
+        Require(IsPinnedObserver(observerPath), "observer helper hash is not pinned");
         VerifyCore(input, output, observerPath);
         Console.WriteLine("verification passed " + Hash(output));
         return 0;
@@ -69,6 +69,13 @@ static class Program
 
     // Update only after deliberately freezing a newly compiled observer source.
     const string ExpectedObserverSha = "f4036a6eae0c6c04ab59072f9f8d5fbb79adfa76b130b112068a946502ae5a36";
+    const string SdkObserverSha = "91c95b14ededaa32e34e24ed9e47084500c6e595a9b41e904bb9a55fc53a2da6";
+
+    static bool IsPinnedObserver(string path)
+    {
+        var digest = Hash(path);
+        return digest == ExpectedObserverSha || digest == SdkObserverSha;
+    }
 
     static int ValidateSites(string mutantPath, string observerPath)
     {

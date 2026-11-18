@@ -129,6 +129,17 @@ class ProducerManifestTests(unittest.TestCase):
                 mock.patch.object(producer, "CURRENT_COMPOSED_GAME_SHA256", manifest["source_input_hashes"]["composed_game"]),
             ):
                 joined = producer.verify_managed_output_manifest(manifest, root)
+                with self.assertRaisesRegex(ValueError, "exact Android ABI inputs"):
+                    producer.verify_managed_output_manifest(manifest, root, native_abi_reader=True)
+                abi_inputs = manifest["android_abi_input_hashes"]
+                del abi_inputs["llvm_nm"]
+                abi_inputs["native_export_set"] = producer.ABI_NATIVE_EXPORT_SET_SHA256
+                self.assertEqual(producer.verify_managed_output_manifest(manifest, root, native_abi_reader=True), joined)
+                with self.assertRaisesRegex(ValueError, "exact Android ABI inputs"):
+                    producer.verify_managed_output_manifest(manifest, root)
+                abi_inputs["native_export_set"] = "0" * 64
+                with self.assertRaisesRegex(ValueError, "exact Android ABI inputs"):
+                    producer.verify_managed_output_manifest(manifest, root, native_abi_reader=True)
             self.assertEqual(set(outputs), set(joined))
             self.assertEqual("api-instrumented-composed.dll", next(p.name for p in joined.values() if p.name == "api-instrumented-composed.dll"))
             self.assertIn("game-original-owner-point-sound-composed.dll", {p.name for p in joined.values()})

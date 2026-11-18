@@ -295,6 +295,21 @@ public class Harness {
         check(!render.update("complete",OwnerUpdateState.Phase.UP_TO_DATE,50000));
         check(render.update("new detail after resume",OwnerUpdateState.Phase.UP_TO_DATE,50001));
         check(new OwnerUpdateState.StatusRender().update("recreated",OwnerUpdateState.Phase.IDLE,0));
+        check(OwnerUpdateState.liveSeconds(true,"running",false,100,120)==20);
+        check(OwnerUpdateState.liveSeconds(true,"running",false,0,120)==0);
+        check(OwnerUpdateState.liveSeconds(true,"running",false,130,120)==0);
+        check(OwnerUpdateState.liveSeconds(false,"running",false,100,120)==0);
+        check(OwnerUpdateState.liveSeconds(true,"running",true,100,120)==0);
+        for(String phase:new String[]{"paused","interrupted","failed","awaiting_install"})
+            check(OwnerUpdateState.liveSeconds(true,phase,false,100,120)==0);
+        check(OwnerUpdateState.stageProgress("running",0,0).equals("progress unavailable"));
+        check(OwnerUpdateState.stageProgress("running",-1,10).equals("progress unavailable"));
+        check(OwnerUpdateState.stageProgress("running",11,10).equals("progress unavailable"));
+        check(OwnerUpdateState.stageProgress("running",2,10).equals("2/10"));
+        check(OwnerUpdateState.stageProgress("not_required",0,0).equals("not required"));
+        check(OwnerUpdateState.failureDetail("native","write failed").contains("Retry revalidates retained work"));
+        OwnerUpdateState retryModel=new OwnerUpdateState();retryModel.observe("READY","ready");check(retryModel.canInstall());
+        for(String phase:new String[]{"PAUSED","INTERRUPTED","ERROR"}){retryModel.observe(phase,"retry");check(!retryModel.canInstall()&&!retryModel.canBuild());}
         System.out.println("session install/update/hash/key/version/callback contracts PASS");
     }
 }
@@ -313,6 +328,8 @@ class OwnerInstallerTests(unittest.TestCase):
         self.assertIn("registerOnSharedPreferenceChangeListener(installObserver)", ui)
         self.assertIn("unregisterOnSharedPreferenceChangeListener(installObserver)", ui)
         self.assertIn("handler.removeCallbacks(refresh)", ui)
+        for helper in ("liveSeconds", "stageProgress", "failureDetail"):
+            self.assertIn("OwnerUpdateState." + helper + "(", activity)
         self.assertIn("statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())", ui)
         self.assertEqual(ui.count("statusView.setText("), 1)
         self.assertIn("OwnerInstaller.reconcile(this)", ui)

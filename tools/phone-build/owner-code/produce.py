@@ -281,14 +281,16 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
     specification.loader.exec_module(managed_owner)
     work, sdk = native.canonical(request["owner_work"]), native.canonical(request["sdk_install"])
     target, source_root, target_sha = target_inputs(request["target"]) if "target" in request else (None, None, None)
-    if target is None and work != (ROOT / "work").resolve():
+    signed_audio = "audio_members" in request
+    if target is None and not signed_audio and work != (ROOT / "work").resolve():
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
-    signed_audio = "audio_members" in request
+    android_tools = request.get("android_tools") if signed_audio else None
+    source_inputs = request["source_inputs"]
+    if android_tools:
+        source_inputs = source_inputs | {"dotnet": android_tools["dotnet"]}
     inputs = (
-        {k: native.canonical(v) for k, v in request["source_inputs"].items()}
-        if target
-        else managed_owner.bind_paths(request["source_inputs"], signed_audio=signed_audio)
+        {k: native.canonical(v) for k, v in request["source_inputs"].items()} if target else managed_owner.bind_paths(source_inputs, signed_audio=signed_audio)
     )
     output = Path(request["output"])
     if not output.is_relative_to(work) or output == work:
@@ -315,7 +317,7 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
                 work, sdk, request["source_inputs"], target, source_root, output / "managed-production", android_tools=request.get("android_tools")
             )
         else:
-            providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production", signed_audio=signed_audio)
+            providers = managed_owner.run(work, sdk, source_inputs, output / "managed-production", signed_audio=signed_audio, android_tools=android_tools)
         if signed_audio:
             verify_audio_members(output / "managed-production", request["audio_members"])
         backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}
