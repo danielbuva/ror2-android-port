@@ -390,17 +390,13 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.device.display.assert_called_once_with(False)
         self.assertEqual(self.owner.phase, "gameplay")
 
-    def test_actual_gap_and_unknown_read_are_hard_refusals(self):
+    def test_runtime_adb_timeout_records_sampling_failure(self):
         self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]
-        self.device.cmd.return_value = self.runtime_reply("56000\n")
-        with mock.patch.object(batch.time, "monotonic", side_effect=[0, 0.2, 0.4, 1.3]):
-            self.assertEqual(self.owner.sample(), 56)
-            with self.assertRaisesRegex(RuntimeError, "gap exceeded"):
-                self.owner.sample()
-        self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=1)
-        self.device.cmd.side_effect = TimeoutError("hung ADB")
-        with self.assertRaisesRegex(TimeoutError, "hung ADB"):
+        self.device.cmd.side_effect = subprocess.TimeoutExpired("adb", 5)
+        with self.assertRaisesRegex(RuntimeError, "gap exceeded five seconds"):
             self.owner.sample()
+        self.device.cmd.assert_called_once_with("shell", "cat /thermal_zone0/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=5)
+        self.assertEqual(json.loads(self.owner.trace.read_text())["error"], "Thermal sample gap exceeded five seconds")
 
     def test_slow_admission_discovers_paths_then_runtime_uses_one_cat(self):
         self.device.display.return_value = True
@@ -416,7 +412,7 @@ class GameThermalOwnerTests(unittest.TestCase):
         with mock.patch.object(batch.time, "monotonic", side_effect=[3, 3.2]):
             self.assertEqual(self.owner.sample(), 80.001)
         self.device.cmd.assert_called_with(
-            "shell", "cat /thermal_zone0/temp /thermal_zone1/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=1
+            "shell", "cat /thermal_zone0/temp /thermal_zone1/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=5
         )
         rows = [json.loads(line) for line in self.owner.trace.read_text().splitlines()]
         self.assertTrue(rows[0]["admission"])
@@ -435,7 +431,7 @@ class GameThermalOwnerTests(unittest.TestCase):
 
         def shell(*args, **kwargs):
             self.assertEqual(args[0], "shell")
-            self.assertEqual(kwargs, dict(timeout=1))
+            self.assertEqual(kwargs, dict(timeout=5))
             self.assertTrue(args[1].startswith("cat "))
             self.assertEqual(args[1].count("cat "), 1)
             command = args[1].replace("dumpsys battery", "printf 'temperature: 340\\nlevel: 80\\nstatus: 4\\n'")
@@ -454,16 +450,15 @@ class GameThermalOwnerTests(unittest.TestCase):
                     self.owner.sample()
                 self.assertIn("error", json.loads(self.owner.trace.read_text().splitlines()[-1]))
 
-    def test_combined_sample_uses_full_budget_without_relaxing_measured_gap(self):
+    def test_combined_sample_tolerates_jitter_in_one_adb_transaction(self):
         self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]
         self.device.cmd.return_value = self.runtime_reply("56000")
         with mock.patch.object(batch.time, "monotonic", side_effect=[0, 0.8, 1.05, 1.85]):
             self.assertEqual(self.owner.sample(), 56)
-            with self.assertRaisesRegex(RuntimeError, "gap exceeded"):
-                self.owner.sample()
+            self.assertEqual(self.owner.sample(), 56)
         self.device.sh.assert_not_called()
         self.assertEqual(self.device.cmd.call_count, 2)
-        self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=1)
+        self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=5)
 
     def test_runtime_refuses_without_admission_before_any_adb(self):
         with self.assertRaisesRegex(RuntimeError, "requires admission"):
@@ -626,10 +621,19 @@ class GameThermalOwnerTests(unittest.TestCase):
         readings = [[96, 79], [79, 96]] * 8
         self.assertEqual(self.runtime_sequence(["cpu-0", "cpu-0"], readings, [i * 0.25 for i in range(16)]), [96] * 16)
 
-    def test_runtime_gap_boundary_still_refuses_above_one_second(self):
+    def test_runtime_gap_warns_above_one_second_and_refuses_above_five(self):
         self.assertEqual(self.runtime_sequence(["cpu-0"], [[81], [81]], [0, 1]), [81, 81])
-        with self.assertRaisesRegex(RuntimeError, "gap exceeded"):
-            self.runtime_sequence(["cpu-0"], [[81]], [2.001])
+        self.assertEqual(self.runtime_sequence(["cpu-0"], [[81]], [5.9]), [81])
+        with self.assertRaisesRegex(RuntimeError, "gap exceeded five seconds"):
+            self.runtime_sequence(["cpu-0"], [[81]], [11])
+        _, one_second, warned, aborted = map(json.loads, self.owner.trace.read_text().splitlines())
+        self.assertNotIn("warning", one_second)
+        self.assertAlmostEqual(warned["gap_seconds"], 4.9)
+        self.assertIn("warning", warned)
+        self.assertNotIn("error", warned)
+        self.assertAlmostEqual(aborted["gap_seconds"], 5.1)
+        self.assertIn("error", aborted)
+        self.assertEqual(self.owner.time_above_80_seconds, 1)
 
     def test_admission_waits_for_cpu_gpu_battery_skin_only(self):
         for name in ("cpu-0", "GPU-0", "skin"):
@@ -724,7 +728,7 @@ class GameThermalOwnerTests(unittest.TestCase):
         )
         self.device.cmd.return_value = self.runtime_reply("50000")
         self.assertEqual(self.owner.sample(), 50)
-        self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=1)
+        self.device.cmd.assert_called_with("shell", "cat /thermal_zone0/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=5)
         runtime = json.loads(self.owner.trace.read_text().splitlines()[-1])
         self.assertEqual(runtime["excluded_zones"], row["excluded_zones"])
 
