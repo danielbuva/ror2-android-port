@@ -119,7 +119,7 @@ After obtaining the orchestrator's device grant, use the same runner locally:
 ```
 source scripts/env.sh
 .local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --dry-run
-.local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json>
+.local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --workstream <name>
 ```
 
 The ignored JSON config has exactly these fields:
@@ -147,8 +147,11 @@ checkpoints are the same in both modes.
 
 The operation streams the pinned APK's Python runtime and pinned inputs without
 host archive copies.
-Dry-run validates pins without device access. Live execution uses the standard
-fresh checkout, lease, cooldown, package-identity, storage and display owners.
+Dry-run validates pins without device access. Live execution with `--workstream`
+verifies the named grant, takes the lease and stops Unity's ADB server before
+device admission. Use the same workstream to reattach to a retained lease.
+Execution uses the standard fresh checkout, cooldown, package-identity,
+storage and display owners.
 The current runtime staging supports configured internal-only devices; adopted
 storage is refused without an internal-storage fallback.
 
@@ -202,8 +205,10 @@ the pinned toolhost APK. Its existing Android code adapter runs fresh managed
 compilation, audio roster verification, UnityLinker, IL2CPP conversion and native
 planning. The terminal receipt records the provider count, converter file
 hashes, wall time, peak memory, storage and thermal sampling. This gate ends at
-the native plan. The runner collects terminal evidence and removes its exact
-owned toolhost and scratch. `--resume-emission` reattaches an uncertain handle.
+the native plan. Before removing its owned scratch, the runner streams child
+logs and app-owned crash files to the private run directory. Failed runs also
+capture Android's crash buffer and package exit history. If transfer fails,
+the runner retains its exact handle and scratch for `--resume-emission`.
 After a confirmed result, use a fresh request directory for another attempt.
 
 ## Safety model

@@ -18,7 +18,7 @@ KEY_DIR = Path("keys/installer-test")
 KEY_FILES = ("owner.p12", "password")
 MANAGED = Path("tools/phone-build/managed-host")
 SIGNER = Path("tools/phone-build/owner-apk/build_owner_apk.py")
-REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "AGENTS.md", "dev")
+REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "dev")
 RUNTIME_INPUTS = (
     MANAGED / "build_fixture.py",
     MANAGED / "NativePythonHost.c",

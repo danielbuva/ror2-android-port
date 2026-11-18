@@ -210,15 +210,17 @@ static bool IsWithin(string path, string parent) {
     return string.Equals(canonicalPath.TrimEnd(Path.DirectorySeparatorChar), canonicalParent.TrimEnd(Path.DirectorySeparatorChar), comparison) ||
         canonicalPath.StartsWith(canonicalParent, comparison);
 }
-static void RequireOutputUnderIgnoredWork(string output) {
+static void RequirePrivateOutput(string output, string? ownerWork) {
     var dir = new DirectoryInfo(Path.GetDirectoryName(output)!);
     for (DirectoryInfo? d = dir; d is not null; d = d.Parent) Check((d.Attributes & FileAttributes.ReparsePoint) == 0, "Output path contains a symlink");
     Check(!File.Exists(output) && !Directory.Exists(output) && new FileInfo(output).LinkTarget is null, "Refusing to overwrite or follow output");
-    var root = Directory.GetCurrentDirectory();
-    var workEntry = Path.Combine(root, "work");
-    var work = CanonicalExistingPath(workEntry).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-    Check(Path.GetFullPath(output).StartsWith(work, StringComparison.Ordinal), "Output must be beneath repository work/");
-    var localConfig = Path.Combine(root, "work", "config", "local.json");
+    var root = ownerWork is null ? Directory.GetCurrentDirectory() : null;
+    var workEntry = ownerWork ?? Path.Combine(root!, "work");
+    var work = CanonicalExistingPath(workEntry);
+    if (ownerWork is not null) Check(ownerWork == work, "Owner work must be canonical");
+    Check(output != work && IsWithin(output, work), "Output must be beneath owner work");
+    Check(!IsWithin(output, Path.Combine(work, "config")) && !IsWithin(output, Path.Combine(work, "inventory")), "Output overlaps owner input metadata");
+    var localConfig = Path.Combine(work, "config", "local.json");
     Check(File.Exists(localConfig) && new FileInfo(localConfig).LinkTarget is null, "Required local config is unavailable");
     using var config = JsonDocument.Parse(File.ReadAllBytes(localConfig));
     var configured = Need(config.RootElement, "game_path");
@@ -226,18 +228,19 @@ static void RequireOutputUnderIgnoredWork(string output) {
     else if (configured.StartsWith("~/", StringComparison.Ordinal)) configured = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), configured[2..]);
     var gameRoot = CanonicalExistingPath(configured);
     Check(!IsWithin(Path.GetFullPath(output), gameRoot), "Output path is inside the configured accepted game installation");
-    var gitInfo = new System.Diagnostics.ProcessStartInfo("git") { WorkingDirectory = root, UseShellExecute = false };
+    if (ownerWork is not null) return;
+    var gitInfo = new System.Diagnostics.ProcessStartInfo("git") { WorkingDirectory = root!, UseShellExecute = false };
     gitInfo.ArgumentList.Add("check-ignore"); gitInfo.ArgumentList.Add("--quiet"); gitInfo.ArgumentList.Add(new DirectoryInfo(workEntry).LinkTarget is null ? output : workEntry);
     using var git = System.Diagnostics.Process.Start(gitInfo);
     git!.WaitForExit(); Check(git.ExitCode == 0, "Output is not ignored by Git");
 }
 
-if (args.Length != 5 || (args[0] is not "--emit-incomplete-candidate" and not "--full-enable"
+if ((args.Length != 5 && (args.Length != 7 || args[5] != "--owner-work")) || (args[0] is not "--emit-incomplete-candidate" and not "--full-enable"
 #if WWISE_TEST_ONLY
     and not "--synthetic-test" and not "--synthetic-corrupt-reopened-array-marshal" and not "--synthetic-corrupt-reopened-return-array-marshal"
 #endif
     )) {
-    Console.Error.WriteLine("usage: --emit-incomplete-candidate|--full-enable <assembly> <plan.json> <policy.json> <new-output.dll>"); return 2;
+    Console.Error.WriteLine("usage: --emit-incomplete-candidate|--full-enable <assembly> <plan.json> <policy.json> <new-output.dll> [--owner-work <path>]"); return 2;
 }
 var mode = args[0]; var input = Path.GetFullPath(args[1]); var planPath = Path.GetFullPath(args[2]); var policyPath = Path.GetFullPath(args[3]); var output = Path.GetFullPath(args[4]);
 var planBytes = File.ReadAllBytes(planPath); var policyBytes = File.ReadAllBytes(policyPath);
@@ -266,7 +269,7 @@ if (!syntheticTest && mode == "--full-enable") {
     Console.Error.WriteLine("Refusing full enable: " + unresolved.GetArrayLength() + " imports unavailable; Android initialization/platform path is unresolved");
     return 3;
 }
-RequireOutputUnderIgnoredWork(output);
+RequirePrivateOutput(output, args.Length == 7 ? args[6] : null);
 var tempOutput = output + ".tmp-" + Guid.NewGuid().ToString("N") + ".dll";
 using var removeTemporaryOutput = new DeletePathOnDispose(tempOutput);
 using var assembly = AssemblyDefinition.ReadAssembly(input, new ReaderParameters { InMemory = true, ReadWrite = false });

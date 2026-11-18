@@ -4,6 +4,7 @@ import gzip
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -26,6 +27,75 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_staged_phone_entry_points_run_without_a_checkout(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            app = Path(temporary).resolve()
+            repo = app / "runtime/repo"
+            cwd = app / "unrelated"
+            native = app / "native"
+            inputs = app / "owner-input"
+            for directory in (cwd, native, inputs / "game", inputs / "sdk", inputs / "work/inventory"):
+                directory.mkdir(parents=True)
+
+            graph = G.Graph(ROOT, {})
+            paths = graph.current_code_sources(signed_audio=True)
+            self.assertFalse({"AGENTS.md", "PORTING_STATE.md"} & set(paths))
+            graph.jobs["recipe/jobs/test-code.json"] = {"script": "tools/phone-build/owner-code/produce.py", "needs": []}
+            graph.job_profiles["recipe/jobs/test-code.json"] = {}
+            graph.public_files["recipe/jobs/test-code.json"] = paths
+            entry = graph.entry("recipe/jobs/test-code.json")
+            for name in set(entry["producer_files"] + entry["recipe_files"]) - set(graph.jobs):
+                target = repo / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, target)
+
+            def run(script, *arguments):
+                return subprocess.run(
+                    [sys.executable, "-I", "-B", "-S", str(repo / script), *map(str, arguments)],
+                    cwd=cwd,
+                    env={**os.environ, "PATH": str(cwd)},
+                    text=True,
+                    capture_output=True,
+                    timeout=30,
+                )
+
+            for script in sorted(
+                J.PRODUCERS - {"tools/phone-build/owner-code/run_android.py"}
+                | {
+                    "scripts/lab/original_game_audio_produce.py",
+                    "tools/phone-build/accepted-output/phone_runner.py",
+                    "tools/phone-build/owner-apk/build_owner_apk.py",
+                    "tools/unity/support/audio/managed-producer/produce.py",
+                    "tools/unity/support/audio/generators/stage_original_game_banks.py",
+                    "tools/wwise-android-abi/generate.py",
+                }
+            ):
+                with self.subTest(script=script):
+                    result = run(script, "--help")
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertIn("usage:", result.stdout)
+
+            request = inputs / "code.json"
+            request.write_text(json.dumps(dict(source_inputs={}, audio_members=["Init.bnk"], output="conversion")))
+            (inputs / "input-hashes.json").write_text("{}")
+            (inputs / "work/inventory/files.json").write_text('{"files":[]}')
+            # The real toolhost launch must reach owner-input validation after
+            # importing the managed and audio owners from the staged tree.
+            result = run("tools/phone-build/owner-code/run_android.py", request, repo.parent, native)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn(str(inputs / "work/config/accepted-input.json"), result.stderr)
+            self.assertIn("FileNotFoundError", result.stderr)
+
+            result = run("tools/phone-build/managed-host/run_profile.py", repo.parent)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn(str(app / "user-input/input-hashes.json"), result.stderr)
+
+            request.write_text("{}")
+            result = run("tools/phone-build/owner-apk/updates.py", request, repo.parent, native)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            state = json.loads((inputs / "update-state.json").read_text())
+            self.assertEqual(state, {"state": "ERROR", "message": "explicit trusted installer action/context required"})
+
     def test_private_record_pins_resolve_only_unique_source_and_output_pairs(self):
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary)
@@ -672,6 +742,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
 
             for name in (*G.INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so"):
                 write(native / name, "installed tool fixture " + name)
+            write(runtime / "data-hashes.json", {"clang/21/include/header.h": "fixture v1"})
             original = inputs / "import/files/Data/source.txt"
             write(original, "owned fixture")
             input_manifest = "recipe/inputs.json"
@@ -698,7 +769,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
                 write(repo / f"recipe/{stem}.json", {})
             write(repo / "recipe/assembly-transforms.json", {"tool_sources": {}})
             write(repo / "tools/phone-build/package-assemblies/profile.json", {})
-            code_request, native_request = "recipe/owner-code-request.json", "recipe/owner-native-request.json"
+            code_request, native_request, burst_request = [f"recipe/owner-{name}-request.json" for name in ("code", "native", "burst")]
             player_profile = "recipe/owner-player-fixture.json"
             write(repo / player_profile, {"project_assemblies": [], "outputs": {}, "registry": {"file": "registry.assets", "path": "registry.json"}})
             write(repo / "recipe/registry.json", {})
@@ -837,6 +908,11 @@ if 'audio_members' in request:
     supplied = managed / 'supplied-sdk'
     supplied.mkdir()
     (supplied / 'libAkSoundEngine.so').write_bytes(b'local licensed library fixture')
+    burst = frame.parent.parent / 'burst'
+    burst.mkdir()
+    (burst / 'lib_burst_generated.so').write_bytes(pathlib.Path(request['burst_tools']['runtime']).read_bytes())
+    assert request['linux_tools']['adapter'].endswith('/libgnu-tool-adapter.so')
+    (burst / 'burst.xml').write_text('<linker/>')
 """,
             )
             write(
@@ -942,7 +1018,11 @@ providers, _ = native.converter_inputs(receipt, pin, sources, metadata, profile,
 out = pathlib.Path(request['output'])
 out.mkdir()
 native.expand(providers['Fixture.cpp'], out / 'source.cpp')
-(out / 'libil2cpp.so').write_bytes((out / 'source.cpp').read_bytes() + pathlib.Path(request['android_tools']['linker']).read_bytes())
+tools = request['android_tools']
+if 'resource_dir' in tools:
+    assert pathlib.Path(tools['resource_dir']).parts[-2:] == ('clang', '21')
+    assert pathlib.Path(request['sdk_install']).parts[-2:] == ('acquired', 'sdk')
+(out / 'libil2cpp.so').write_bytes((out / 'source.cpp').read_bytes() + pathlib.Path(tools['linker']).read_bytes())
 (out / 'global-metadata.dat').write_bytes(metadata.read_bytes())
 (out / 'result.json').write_text('{"success":true}')
 """,
@@ -950,16 +1030,6 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             admission, plan = load("install_inputs"), load("install_flow")
             code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
             package_job = "recipe/jobs/owner-package-inputs.json"
-            selected = {
-                "schema": 1,
-                "required_inputs": input_manifest,
-                "workspace_bytes": 0,
-                "configuration": {"bindings": {"original": "Data/source.txt", "pc": "."}},
-                "stages": [
-                    {"id": name, "title": name, "jobs": {"assembly": [package_job, code, player, witness, bundle], "native": [native_job]}.get(name, [])}
-                    for name in plan.STAGES
-                ],
-            }
             progress = []
             audio_layout = root / "private-stage-receipt.json"
             write(
@@ -981,12 +1051,12 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     native_request=native_request,
                     package_archives=True,
                     audio_stage_receipt=audio_layout if current else None,
+                    burst_request=burst_request if current else None,
                 )
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
-                index["files"][input_manifest] = G.digest(repo / input_manifest)
-                index["install_plan"] = selected
+                graph.attach_install_plan(index, required_inputs=input_manifest, workspace_bytes=0, bindings={"original": "Data/source.txt", "pc": "."})
                 if current:
                     self.assertIn("tools/wwise-android-abi/generate.py", graph.jobs[code]["source_files"])
                     self.assertIn("recipe/original-audio-owner-sources.json", graph.jobs[code]["source_files"])
@@ -996,6 +1066,11 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     self.assertIn("managed_package_inputs", graph.jobs[code]["artifacts"])
                     self.assertIn(package_job, graph.jobs[player]["needs"])
                     self.assertIn(code, graph.jobs[native_job]["needs"])
+                    self.assertEqual(graph.jobs[native_job]["request"]["android_tools"], graph.jobs[code]["request"]["android_tools"])
+                    self.assertTrue(G.INSTALLED_CODE_WITNESSES.issubset(graph.jobs[native_job]["cache_witnesses"]))
+                    self.assertIn(burst_request, graph.jobs[code]["source_files"])
+                    self.assertIn("recipe/owner-j850-code.json", graph.jobs[code]["source_files"])
+                    self.assertNotIn("recipe/jobs/owner-burst-code.json", graph.jobs)
                     self.assertNotIn(str(audio_layout), json.dumps(graph.jobs[code]))
                     self.assertNotIn("private authoring witness", json.dumps(graph.jobs[code]))
                 else:
@@ -1018,7 +1093,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     repo, index, release, inputs, runtime, native, config, identity, python=[sys.executable], progress=lambda *args: progress.append(args)
                 )
                 self.assertEqual(
-                    plan.validate_plan(selected, index, dispatcher.descriptor),
+                    plan.validate_plan(index["install_plan"], index, dispatcher.descriptor),
                     {package_job: "assembly", code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"},
                 )
                 dispatcher.execute(bundle)
@@ -1035,15 +1110,16 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 )
                 if current:
                     profile, _ = admission.assembly_profile(result["outputs"], inputs, release)
-                    audio = {
+                    code_outputs = {
                         "apk/assets/stage-receipt.json",
                         "apk/assets/Audio/GeneratedSoundBanks/Android/Init.bnk",
                         "apk/assets/Audio/GeneratedSoundBanks/Android/Fixture.bnk",
                         "apk/assets/Audio/GeneratedSoundBanks/Android/Media/1.wem",
                         "apk/lib/arm64-v8a/libAkSoundEngine.so",
+                        "apk/lib/arm64-v8a/lib_burst_generated.so",
                     }
-                    self.assertEqual(set(graph.jobs[code]["outputs"]), audio)
-                    self.assertEqual({row["path"] for row in json.loads(profile.read_text())["targets"]} & audio, audio)
+                    self.assertEqual(set(graph.jobs[code]["outputs"]), code_outputs)
+                    self.assertEqual({row["path"] for row in json.loads(profile.read_text())["targets"]} & code_outputs, code_outputs)
                     local_receipt = Path(result["outputs"]["apk/assets/stage-receipt.json"])
                     self.assertEqual(json.loads(local_receipt.read_text())["inventory"]["sha256"], G.digest(original))
                 return result
@@ -1115,12 +1191,32 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             del request["target"]
             request["source_inputs"]["decoder"] = "${native}/historical-audio-decoder"
             write(repo / code_request, request)
+            write(repo / native_request, {name: value for name, value in native_template.items() if name not in {"android_tools", "cache_witnesses"}})
+            write(repo / "recipe/owner-j850-code.json", {})
+            burst_runtime = inputs / "acquired/burst/compiler"
+            write(burst_runtime, "Burst fixture v1")
+            write(
+                repo / burst_request,
+                {
+                    "output": "${output}",
+                    "burst_tools": {"command": ["${native}/libgnu-tool-adapter.so"], "runtime": "${inputs}/acquired/burst/compiler"},
+                    "linux_tools": {"adapter": "${native}/libgnu-tool-adapter.so"},
+                    "cache_witnesses": ["${inputs}/acquired/burst/compiler"],
+                },
+            )
             build(current=True)
             self.assertFalse(build(current=True)["rebuilt"])
             write(native / G.INSTALLED_CODE_TOOLS["dotnet"], "installed tool fixture updated")
             progress.clear()
             build(current=True)
             self.assertIn((code, False), progress)
+            write(burst_runtime, "Burst fixture v2")
+            self.assertEqual(build(current=True)["rebuilt"], ["apk/lib/arm64-v8a/lib_burst_generated.so"])
+            write(runtime / "data-hashes.json", {"clang/21/include/header.h": "fixture v2"})
+            progress.clear()
+            self.assertFalse(build(current=True)["rebuilt"])
+            self.assertIn((code, False), progress)
+            self.assertIn((native_job, False), progress)
 
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):
@@ -1206,7 +1302,7 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
             repo, inputs = root / "repo", root / "inputs"
             (repo / "recipe").mkdir(parents=True)
             (inputs / "work").mkdir(parents=True)
-            template = "recipe/owner-sdk-job-inputs.json"
+            template = "recipe/owner-sdk-android-job-inputs.json"
             shutil.copyfile(ROOT / template, repo / template)
             producer = repo / G.PREFIX / "sdk_package.py"
             producer.parent.mkdir(parents=True)
@@ -1243,6 +1339,11 @@ android.mkdir(parents=True)
     for name in ('android_jar','aapt','java','javac'):
         assert pathlib.Path(request[name]).is_file()
     assert all(pathlib.Path(value).is_file() for value in request['jars'].values())
+    qemu, loader_flag, loader, env_flag, libs, locale_flag, locale = request['aapt_prefix']
+    assert pathlib.Path(qemu).is_file()
+    assert (loader_flag, env_flag, locale_flag, locale) == ('-L', '-E', '-E', 'LC_ALL=C')
+    assert (pathlib.Path(loader) / 'lib64/ld-linux-x86-64.so.2').is_file()
+    assert libs == f'LD_LIBRARY_PATH={loader}/lib/x86_64-linux-gnu'
     out=pathlib.Path(request['output']);out.mkdir()
     for name in SDK_ENTRIES:
         path=out/'resources/apk'/name;path.parent.mkdir(parents=True,exist_ok=True)
@@ -1253,13 +1354,15 @@ android.mkdir(parents=True)
             helper = G.PREFIX + "SdkAndroidCode.java"
             (repo / helper).write_text("// authored helper fixture\n")
             request = json.loads((repo / template).read_text())
-            request["cache_witnesses"] = ["${inputs}/sdk_aapt"]
-            (repo / template).write_text(json.dumps(request))
-            bindings = {}
-            for token in [request[name] for name in ("android_jar", "aapt", "java", "javac")] + list(request["jars"].values()):
-                key = token.removeprefix("${input:").removesuffix("}")
-                bindings[key] = key
-                (inputs / key).write_text("authored tool input")
+            self.assertEqual(set(request["jars"]), set(sdk.TOOL_JARS))
+            runtime, native = root / "runtime", root / "native"
+            roots = {"${inputs}": inputs, "${installed_runtime}": runtime, "${native}": native}
+            files = [*(request[name] for name in ("android_jar", "aapt", "java", "javac")), *request["jars"].values(), *request["cache_witnesses"]]
+            for token in files:
+                name, relative = token.split("/", 1)
+                path = roots[name] / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("authored tool input")
             package = "recipe/jobs/owner-sdk-package.json"
             extraction = "recipe/jobs/owner-sdk-inputs.json"
             acquired = G.Graph(repo, {})
@@ -1286,9 +1389,6 @@ android.mkdir(parents=True)
                 path.write_text(json.dumps(descriptor))
                 index["files"][name] = G.digest(path)
             release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
-            runtime, native = root / "runtime", root / "native"
-            runtime.mkdir()
-            native.mkdir()
             progress = []
 
             def dispatch():
@@ -1299,7 +1399,7 @@ android.mkdir(parents=True)
                     inputs,
                     runtime,
                     native,
-                    {"bindings": bindings},
+                    {"bindings": {}},
                     "a" * 64,
                     python=[sys.executable],
                     progress=lambda name, reused: progress.append((name, reused)),
@@ -1313,7 +1413,10 @@ android.mkdir(parents=True)
                     dispatcher.produce(name, dependencies, destination)
                     self.assertEqual(destination.read_bytes(), ("authored " + name.removeprefix("apk/")).encode())
             self.assertEqual(progress, [(extraction, False), (package, False), (extraction, True), (package, True)])
-            (inputs / "sdk_aapt").write_text("updated tool input")
+            (inputs / request["aapt"].removeprefix("${inputs}/")).write_text("updated tool input")
+            dispatch().execute(package)
+            self.assertEqual(progress[-2:], [(extraction, True), (package, False)])
+            (native / "libqemu-x86_64.so").write_text("updated QEMU input")
             dispatch().execute(package)
             self.assertEqual(progress[-2:], [(extraction, True), (package, False)])
             component.write_text("changed archive fixture")

@@ -2709,6 +2709,15 @@ the Unity fingerprint serializes fixed authored build settings in the exact SDK
 field order. No accepted metadata bytes, SDK implementation or game-derived
 content is embedded in the caller. Provenance/privacy/licensing and sensitive
 content audit: 2026-10-25; provider redistribution remains a separate gate.
+`owner-sdk-android-job-inputs.json` adds an authored phone invocation and
+cache witnesses for the same SDK producer. It names installed JVM/QEMU tools
+and separately acquired platform, guest and Maven inputs. The tracked request
+contains paths and arguments only. Provenance, privacy, licensing and
+sensitive-content audit: 2026-11-18.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sdk-android-job-inputs.json` | `74f247b398d4d3f473117bf70aa816d6cb6f27ff73290805dc8ebbc847a128f8` |
 
 The generic UnityFS/serialized writer and LZ4 helper contain authored wire-format
 orchestration only. The separately acquired unchanged public LZ4 v1.9.4 provider

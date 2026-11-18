@@ -176,7 +176,7 @@ class Runner:
             owner = json.loads((lease / "lab-runner.json").read_bytes())
             retained = json.loads((lease / "retain.json").read_bytes())
             state = json.loads(self.resume_state.read_bytes())
-            if owner.get("workstream") != "lab-runner" or retained.get("state") != str(self.resume_state) or retained.get("job") != state.get("job"):
+            if owner.get("workstream") != workstream or retained.get("state") != str(self.resume_state) or retained.get("job") != state.get("job"):
                 raise CommandError("emission retained lease identity mismatch")
             try:
                 os.kill(owner["pid"], 0)
@@ -213,12 +213,17 @@ class Runner:
                 time.sleep(10)
         return refusal  # Three positive-current observations, ten seconds apart.
 
-    def worktree(self, ref):
+    def worktree(self, ref, *, local_ref=False):
         path = self.repo / ".local/worktrees" / f"lab-run-{self.run_id}"
         git = ["git", "-C", str(self.repo)]
-        if self.run(git + ["fetch", "-q", "origin", ref], self.repo, timeout=600) != 0:
-            raise CommandError(f"cannot fetch ref `{ref}`")
-        if self.run(git + ["worktree", "add", "-q", "--detach", str(path), "FETCH_HEAD"], self.repo, timeout=600) != 0:
+        if local_ref:
+            if not re.fullmatch(r"[0-9a-f]{40}", ref):
+                raise CommandError("local device run requires a full commit hash")
+        else:
+            if self.run(git + ["fetch", "-q", "origin", ref], self.repo, timeout=600) != 0:
+                raise CommandError(f"cannot fetch ref `{ref}`")
+            ref = "FETCH_HEAD"
+        if self.run(git + ["worktree", "add", "-q", "--detach", str(path), ref], self.repo, timeout=600) != 0:
             raise CommandError("cannot create the job worktree")
         (path / "work").symlink_to(self.repo / "work")
         (path / ".local").mkdir(exist_ok=True)
@@ -256,7 +261,7 @@ class Runner:
                 rows.append(f"{alias}: unreachable ({type(error).__name__})")
         return "\n".join(rows)
 
-    def execute(self, request, *, local_checkout=None, workstream=None):
+    def execute(self, request, *, local_checkout=None, workstream=None, local_ref=False):
         if request["job"] == "status":
             return 0, self.status()
         serial = None
@@ -264,7 +269,7 @@ class Runner:
             serial = self.devices.get(request["device"])
             if not serial:
                 raise CommandError(f"unknown device alias; configured: {', '.join(sorted(self.devices)) or 'none'}")
-        checkout = local_checkout or self.worktree(request["ref"])
+        checkout = local_checkout or self.worktree(request["ref"], local_ref=local_ref)
         toolhosts = self.repo / "work/coordination/lab-runner/toolhost"
         lease = None
         try:
@@ -519,7 +524,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
     return int(not result["success"])
 
 
-def local_emission(path, *, dry_run=False, resume=False, restage=False):
+def local_emission(path, *, dry_run=False, resume=False, restage=False, workstream=None):
     """Private request entry point; same script/worktree/lease owner as /lab."""
     request = json.loads(Path(path).read_bytes())
     configuration = request["runner"]
@@ -544,6 +549,9 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False):
 
     previous = {number: signal.signal(number, interrupt) for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)}
     try:
+        local_ref = configuration.get("local_ref", False)
+        if local_ref and (local_ref is not True or not workstream):
+            raise CommandError("local emission commit requires a dispatcher workstream")
         command = "/lab script " + shlex.join(
             [
                 "ref=" + configuration["ref"],
@@ -558,7 +566,7 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False):
             command += " --resume-emission"
         if restage:
             command += " --resume-emission --restage-emission" if not resume else " --restage-emission"
-        code, _ = runner.execute(parse_command(command))
+        code, _ = runner.execute(parse_command(command), workstream=workstream, local_ref=local_ref)
         operation = done.with_suffix(".operation.json")
         if operation.exists():
             result.update(json.loads(operation.read_bytes()))
@@ -625,6 +633,7 @@ if __name__ == "__main__":
 
         parser = argparse.ArgumentParser(description="Current shared device runner: pinned bundle emission or signed-code conversion")
         parser.add_argument("--emission-request", required=True)
+        parser.add_argument("--workstream", help="Require this dispatcher grant before taking the device lease")
         mode = parser.add_mutually_exclusive_group()
         mode.add_argument("--dry-run", action="store_true")
         mode.add_argument("--resume-emission", action="store_true")
@@ -636,5 +645,13 @@ if __name__ == "__main__":
 
             print(json.dumps(refresh_manifest(arguments.emission_request, arguments.refresh_emission_manifest)))
             sys.exit(0)
-        sys.exit(local_emission(arguments.emission_request, dry_run=arguments.dry_run, resume=arguments.resume_emission, restage=arguments.restage_emission))
+        sys.exit(
+            local_emission(
+                arguments.emission_request,
+                dry_run=arguments.dry_run,
+                resume=arguments.resume_emission,
+                restage=arguments.restage_emission,
+                workstream=arguments.workstream,
+            )
+        )
     sys.exit(main())

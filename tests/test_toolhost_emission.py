@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tarfile
@@ -85,7 +86,8 @@ class EmissionTests(unittest.TestCase):
             thermal.return_value.admission_battery = dict(level=80, current_now=0, temperature=300)
             stack.enter_context(patch.object(INSTALLER, "Phone", return_value=self.phone))
             stack.enter_context(patch.object(EMISSION, "transfer"))
-            stack.enter_context(patch.object(EMISSION, "collect", return_value=self.collected))
+            if self.collected is not None:
+                stack.enter_context(patch.object(EMISSION, "collect", return_value=self.collected))
             return EMISSION.execute(self.path, INSTALLER, resume=resume, restage=restage)
 
     def test_explicit_restage_replaces_only_confirmed_terminal_owned_inputs(self):
@@ -130,6 +132,25 @@ class EmissionTests(unittest.TestCase):
         self.assertEqual(first_command[first_command.index("--cache") + 1], second_command[second_command.index("--cache") + 1])
         self.phone.install.assert_called_once()
         self.phone.cleanup.assert_not_called()
+
+    def test_invocation_executes_package_manager_path_with_equals(self):
+        native = self.root / "~~encoded==" / "dev.ror2lab.installertest-encoded==" / "lib/arm64"
+        native.mkdir(parents=True)
+        launcher = native / "libpythonhost.so"
+        launcher.write_text('#!/bin/sh\nprintf "%s\\n" "$LD_LIBRARY_PATH" "$1" "$2" "$ROR2LAB_BUILD_HOSTFXR"\n')
+        launcher.chmod(0o700)
+        self.signed_request()
+        command = EMISSION.invocation(str(self.root), str(native), self.request, "attempt")
+        observed = subprocess.run(command, capture_output=True, text=True, check=True)
+        self.assertEqual(
+            observed.stdout.splitlines(),
+            [
+                f"{native}:{self.root}/runtime/native-links",
+                str(native / "libpython3.14.so"),
+                str(self.root / "runtime/python"),
+                str(native / "libhostfxr10.so"),
+            ],
+        )
 
     def signed_request(self):
         self.request.pop("expected_records")
@@ -186,6 +207,80 @@ class EmissionTests(unittest.TestCase):
         self.phone.transport.start_detached.assert_called_once()
         self.phone.remove_owned_installer.assert_called_once()
 
+    def test_signed_code_retains_nested_raw_managed_failure_before_cleanup(self):
+        self.signed_request()
+        self.collected = None
+        self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
+        self.phone.adb, self.phone.serial = "/synthetic/adb", "synthetic-device"
+        managed = Path("work/conversion/managed-production")
+        artifacts = {
+            managed / "logs/raw-managed.stderr.log": b"compiler startup\n" * 1024 + b"compiler failure\n",
+            managed / "logs/raw-managed.process.json": b'{"returncode":139}',
+            managed / "raw/adapter logs/compile.log": b"authored nested log\n",
+            managed / "raw/tombstone_01": b"authored app tombstone\n",
+        }
+        remote_fixture = self.root / "remote"
+        for path, data in artifacts.items():
+            target = remote_fixture / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        real_run = subprocess.run
+
+        def read_remote(*args, **kwargs):
+            label = kwargs["label"]
+            if label == "emission-crash.log":
+                self.assertEqual(args, ("logcat", "-b", "crash", "-d", "-v", "threadtime"))
+                return subprocess.CompletedProcess([], 0, b"authored Android crash report", b"")
+            if label == "emission-exit-info.txt":
+                return subprocess.CompletedProcess([], 0, b"authored exit info", b"")
+            if label == "emission-tombstone-access.txt":
+                return subprocess.CompletedProcess([], 1, b"", b"Permission denied")
+            command = shlex.split(args[1])
+            if label == "emission-evidence-list":
+                self.assertEqual(command[:4], ["run-as", INSTALLER.PACKAGE, "sh", "-c"])
+                return real_run(["sh", "-c", command[4], command[5], remote_fixture, *command[7:]], capture_output=True, check=True)
+            if command[-1].endswith("/work/conversion/managed-production/result.json"):
+                return subprocess.CompletedProcess([], 0, b'{"phase":"raw-managed","success":false}', b"")
+            return subprocess.CompletedProcess([], 1, b"", b"absent")
+
+        def pull(argv, *, stdout, **kwargs):
+            self.assertEqual(argv[:-1], ["/synthetic/adb", "-s", "synthetic-device", "shell", "-T"])
+            command = shlex.split(argv[-1])
+            self.assertEqual(command[:-1], ["run-as", INSTALLER.PACKAGE, "cat"])
+            path = Path(command[-1].split("/work/conversion/", 1)[1])
+            stdout.write((remote_fixture / "work/conversion" / path).read_bytes())
+            return subprocess.CompletedProcess(argv, 0, None, b"")
+
+        def check_evidence():
+            for path, data in artifacts.items():
+                self.assertEqual((self.output / "logs/producer" / path).read_bytes(), data)
+            self.assertEqual((self.output / "logs/crash/crash.log").read_bytes(), b"authored Android crash report")
+            self.assertEqual((self.output / "logs/crash/exit-info.txt").read_bytes(), b"authored exit info")
+            self.assertEqual((self.output / "logs/crash/tombstone-access.txt").read_bytes(), b"Permission denied")
+
+        self.phone.execute.side_effect = read_remote
+        self.phone.remove_owned_installer.side_effect = check_evidence
+        with patch.object(EMISSION.subprocess, "run", side_effect=pull):
+            result = self.run_request()
+        self.assertFalse(result["success"])
+        self.assertEqual(result["managed"]["phase"], "raw-managed")
+        self.assertTrue(result["owned_app_removed"])
+        self.phone.remove_owned_installer.assert_called_once()
+
+    def test_signed_code_keeps_scratch_if_evidence_capture_fails(self):
+        self.signed_request()
+        self.phone.execute.return_value = subprocess.CompletedProcess([], 1, b"", b"connection lost")
+        result = self.run_request()
+        self.assertEqual(result["error"], "emission-evidence-list-failed")
+        self.assertTrue(result["lease_retained"])
+        self.phone.remove_owned_installer.assert_not_called()
+        state = json.loads((self.output / "device-state.json").read_bytes())
+        self.assertNotIn("terminal", state)
+        self.phone.execute.return_value = subprocess.CompletedProcess([], 0, b"", b"")
+        self.assertTrue(self.run_request(resume=True)["reattached_without_launch"])
+        self.phone.transport.start_detached.assert_called_once()
+        self.phone.remove_owned_installer.assert_called_once()
+
     def test_signed_code_runtime_stream_keeps_framework_libraries_in_installed_apk(self):
         apk = self.root / "runtime.apk"
         dotnet8 = "dotnet/shared/Microsoft.NETCore.App/8.0.32/"
@@ -208,6 +303,33 @@ class EmissionTests(unittest.TestCase):
             self.assertEqual(archive.getmember("runtime/native-links/libssl.so.3").linkname, native + "/libssl.so")
             self.assertEqual(archive.getmember("runtime/repo").linkname, "../repo")
             self.assertTrue(archive.getmember("runtime/clang/21/include/stddef.h").isfile())
+
+    def test_signed_code_upgrades_exact_retained_tool_and_cleans_only_new_scratch(self):
+        self.signed_request()
+        self.request["retained_tool_sha256"] = "c" * 64
+        self.path.write_text(json.dumps(self.request))
+        self.phone.occupied.return_value = True
+        self.phone.package_hash.side_effect = ["c" * 64, self.request["tool_apk"]["sha256"]]
+        with patch("device.validate_apk_identity") as identity:
+            result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["retained_tool_preserved"])
+        identity.assert_called_once()
+        self.phone.transport.install.assert_called_once()
+        self.phone.install.assert_not_called()
+        self.phone.remove_owned_installer.assert_not_called()
+        state = json.loads((self.output / "device-state.json").read_bytes())
+        self.assertTrue(state["retained_tool"])
+        self.phone.shell.assert_any_call("run-as", INSTALLER.PACKAGE, "rm", "-rf", state["remote"], label="emission-retained-scratch-cleanup")
+
+    def test_signed_code_refuses_a_retained_tool_pin_mismatch(self):
+        self.signed_request()
+        self.request["retained_tool_sha256"] = "c" * 64
+        self.path.write_text(json.dumps(self.request))
+        self.phone.occupied.return_value = True
+        self.assertEqual(self.run_request()["error"], "emission-preexisting-package")
+        self.phone.transport.install.assert_not_called()
+        self.phone.remove_owned_installer.assert_not_called()
 
     def test_android_invocation_uses_serial_records_without_multiprocessing_extension(self):
         result = self.run_request()

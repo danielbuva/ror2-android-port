@@ -4,6 +4,7 @@ Only a normal PackageInstaller success/readback can advance installed-release.js
 This module never installs, clears saves, obtains ownership, or downloads game data.
 """
 
+import errno
 import fcntl
 import functools
 import hashlib
@@ -26,6 +27,21 @@ MAX_METADATA = 4 * 1024**2
 MAX_BUNDLE = 512 * 1024**2
 MAX_EXPANDED = 2 * 1024**3
 MAX_MEMBERS = 40000
+
+
+class StorageRefused(ValueError):
+    def __init__(self, stage, required, available):
+        self.storage = {"scope": "installer-private", "stage": stage, "required_bytes": required, "available_bytes": available}
+        super().__init__(
+            f"Not enough installer-private storage for {stage}: need {required} bytes including safety reserve; available {available} bytes. "
+            "Free space using Android settings, then retry; retained work is revalidated. Original inputs and profiles are not deleted by this refusal; existing generated-output cleanup policy is unchanged. Android installation capacity is separate."
+        )
+
+
+def require_space(path, required, stage):
+    available = shutil.disk_usage(path).free
+    if available < required:
+        raise StorageRefused(stage, required, available)
 
 
 def module(name, path):
@@ -199,8 +215,7 @@ def extract_bundle(bundle, destination, release):
         if names != set(index["files"]) | {"bundle-index.json"}:
             raise ValueError("public bundle membership differs from index")
         destination.parent.mkdir(parents=True, exist_ok=True)
-        if shutil.disk_usage(destination.parent).free < expanded + 64 * 1024**2:
-            raise ValueError("insufficient space for verified public tools")
+        require_space(destination.parent, expanded + 64 * 1024**2, "verified public tools")
         stage = Path(tempfile.mkdtemp(prefix=".extract-", dir=destination.parent))
         try:
             for name, expected in index["files"].items():
@@ -643,8 +658,7 @@ def _run(request_file, runtime, native, *, transport=None, debuggable=False):
                 keys = within(inputs, admitted["key_directory"])
                 if context["installed_version"] and not all((keys / name).is_file() for name in ("owner.p12", "password")):
                     raise ValueError("owner key lost: restore the same private key; update refused")
-                if shutil.disk_usage(inputs).free < index["install_plan"]["workspace_bytes"] + 2 * 1024**3:
-                    raise ValueError("insufficient private storage for reconstruction and safety reserve")
+                require_space(inputs, index["install_plan"]["workspace_bytes"] + 2 * 1024**3, "reconstruction")
                 write_json(config_path, admitted)
                 return admitted, input_identity(inputs, admitted)
 
@@ -736,7 +750,12 @@ def _run(request_file, runtime, native, *, transport=None, debuggable=False):
         if flow is not None and flow.state["status"] != "failed":
             flow.fail(error)
         try:
-            emit("ERROR", str(error))
+            details = {"storage": error.storage} if isinstance(error, StorageRefused) else {}
+            message = str(error)
+            if isinstance(error, OSError) and error.errno == errno.ENOSPC:
+                details["storage"] = {"scope": "installer-private", "stage": "write", "reason": "ENOSPC"}
+                message += ". Private storage filled during a write. Free space using Android settings, then retry to revalidate retained work. Original inputs and profiles are not deleted by this refusal; existing generated-output cleanup policy is unchanged; Android installation capacity is separate."
+            emit("ERROR", message, **details)
         except OSError:
             pass  # Reporting cannot overwrite the original ENOSPC/failure.
         raise
