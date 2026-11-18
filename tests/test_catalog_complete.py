@@ -37,6 +37,39 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_player_binding_uses_image_identity_and_serialized_script_table(self):
+        def text(value):
+            raw = struct.pack("<I", len(value)) + value.encode()
+            return raw + bytes(-len(raw) % 4)
+
+        identity = ("Behaviour", "Package", "Plugin.dll")
+        strings = b"Plugin.dll\0Behaviour\0Package\0"
+        metadata = bytearray(176)
+        struct.pack_into("<II", metadata, 0, 0xFAB11BAF, 31)
+        struct.pack_into("<II", metadata, 24, len(metadata), len(strings))
+        metadata.extend(strings)
+        struct.pack_into("<II", metadata, 160, len(metadata), 88)
+        metadata.extend(struct.pack("<ii", 11, 21) + bytes(80))
+        struct.pack_into("<II", metadata, 168, len(metadata), 40)
+        metadata.extend(struct.pack("<iiii", 0, 0, 0, 1) + bytes(24))
+        self.assertEqual(C.il2cpp_type_identities(metadata), {identity})
+        with self.assertRaisesRegex(ValueError, "invalid Android IL2CPP metadata table"):
+            C.il2cpp_type_identities(metadata[:-1])
+
+        members = C.ProducedMembers()
+        component = struct.pack("<iqIiq", 0, 1, 1, 1, 3)
+        script = text(identity[0]) + bytes(20) + b"".join(map(text, identity))
+        typ = dict(class_id=114, script_type=0, script_id=C.S.md4("".join(identity).encode()))
+        layout = dict(data_offset=0, types=[typ], externals=[dict(path="CAB-plugin")], scripts=[(1, 3)])
+        members.members["CAB-prefab"] = (io.BytesIO(component), layout, {2: dict(type_id=0, offset=0, bytes=len(component))})
+        members.members["CAB-plugin"] = (io.BytesIO(script), dict(data_offset=0, types=[dict(class_id=115)]), {3: dict(type_id=0, offset=0, bytes=len(script))})
+        self.assertEqual(C.prefab_script_bindings(members, {identity}), dict(behaviours=1, scriptless=[], types=1, failures=[]))
+        absent = C.prefab_script_bindings(members, {("Behaviour", "Package", "Other.dll")})
+        self.assertEqual([(row["identity"], row["error"]) for row in absent["failures"]], [(identity, "type absent from Android player image")])
+        layout["scripts"] = [(1, 4)]
+        mismatched = C.prefab_script_bindings(members, {identity})
+        self.assertEqual([row["error"] for row in mismatched["failures"]], ["serialized script table disagrees with m_Script"])
+
     def test_model_skin_slots_follow_actual_external_scripts_and_reject_nulls(self):
         def text(value):
             raw = struct.pack("<I", len(value)) + value.encode()

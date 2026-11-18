@@ -7614,6 +7614,13 @@ from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
 
+After assembly, `catalog_complete.py --player-apk` checks prefab and scene
+components against the APK's serialized script tables and IL2CPP images. It
+verifies the catalog input bundles, registry and resources against the APK,
+reads native player members directly, and writes a standalone audit receipt.
+The check covers package and plugin images and reports scriptless components
+separately. Native typed loads still qualify runtime behaviour.
+
 The owner APK builder binds the Android resource table's package name to an
 explicit installation ID alongside the manifest rewrite. This preserves resource
 IDs and bodies while allowing Unity's context-package string lookup to resolve
