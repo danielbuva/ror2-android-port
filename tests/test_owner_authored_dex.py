@@ -71,7 +71,7 @@ class AuthoredDexTests(unittest.TestCase):
             dex = OWNER.compile_authored(roots, output, {retained}, run)
             classes = OWNER.dex_classes(dex.read_bytes())
             self.assertNotIn(retained, classes)
-            for name in ("LabDisplayPreference", "LabSettingsWriteObserver", "BuildConfig", "LabPendingWriteStop$1"):
+            for name in ("LabDisplayPreference", "LabSettingsWriteObserver", "LabUnpluggedSession", "BuildConfig", "LabPendingWriteStop$1"):
                 self.assertIn("Ldev/ror2lab/diagnostics/" + name + ";", classes)
             self.assertIn("Ldev/ror2owner/bootstrap/PayloadBootstrapActivity;", classes)
 
