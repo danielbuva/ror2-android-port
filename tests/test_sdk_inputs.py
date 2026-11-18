@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import stat
 import struct
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -55,6 +56,46 @@ def component(entries, *, old=False, truncate=False):
 
 
 class SDKInputTests(unittest.TestCase):
+    def test_linux_texture_extracts_only_pinned_regular_member(self):
+        for variant in ("codec", "link", "changed", "missing", "archive-drift"):
+            with self.subTest(variant=variant), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp).resolve()
+                source, output = root / "editor.tar.xz", root / "out"
+                with tarfile.open(source, "w:xz") as archive:
+                    unrelated = tarfile.TarInfo("../unrelated")
+                    unrelated.size = len(DATA)
+                    archive.addfile(unrelated, io.BytesIO(DATA))
+                    member = tarfile.TarInfo("./" + SDK.LINUX_TEXTURE_MEMBER)
+                    payload = b"x" * len(DATA) if variant == "changed" else DATA
+                    if variant == "link":
+                        member.type = tarfile.SYMTYPE
+                        member.linkname = "../unrelated"
+                        archive.addfile(member)
+                    elif variant != "missing":
+                        member.size = len(payload)
+                        archive.addfile(member, io.BytesIO(payload))
+                archive_pin = hashlib.sha256(source.read_bytes()).hexdigest()
+                codec_pin = hashlib.sha256(DATA).hexdigest()
+                with patch.multiple(
+                    SDK,
+                    LINUX_EDITOR_BYTES=source.stat().st_size,
+                    LINUX_EDITOR_SHA256=archive_pin if variant != "archive-drift" else "0" * 64,
+                    LINUX_TEXTURE_SHA256=codec_pin,
+                ):
+                    if variant != "codec":
+                        with self.assertRaises(ValueError):
+                            SDK.extract_linux_texture(source, output)
+                    else:
+                        result = SDK.extract_linux_texture(source, output)
+                        self.assertEqual((output / "etccompress.so").read_bytes(), DATA)
+                        self.assertEqual(result["files"], {"etccompress.so": {"bytes": len(DATA), "sha256": codec_pin}})
+                        self.assertEqual(sorted(p.name for p in output.iterdir()), ["etccompress.so", "result.json"])
+                if variant == "archive-drift":
+                    self.assertFalse(output.exists())
+                elif variant != "codec":
+                    self.assertFalse(json.loads((output / "result.json").read_text())["success"])
+                self.assertFalse((root / "unrelated").exists())
+
     def run_archive(self, root, archive, output):
         source = root / "owner.pkg"
         source.write_bytes(archive)

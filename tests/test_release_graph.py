@@ -457,7 +457,7 @@ class ReleaseGraphTests(unittest.TestCase):
             graph = G.Graph(ROOT, {})
             graph.conversion = "recipe/jobs/owner-code.json"
             with mock.patch.object(G, "TEXTURE_GUEST_FILES", guest_files):
-                names = {key: graph.build(G.digest(ROOT / f"recipe/owner-{key}-textures.json")) for key in ("uncompressed", "alpha", "rgb-mip")}
+                names = {key: graph.build(G.digest(ROOT / f"recipe/owner-{key}-textures.json")) for key in ("uncompressed", "alpha", "rgb-mip", "rgba")}
             jpeg, etc, sdk = (graph.jobs[names[key]] for key in ("uncompressed", "alpha", "rgb-mip"))
             self.assertIn("${native}/libtexture-jpeg.so", jpeg["arguments"])
             self.assertNotIn("--etc-codec", jpeg["arguments"])
@@ -465,6 +465,19 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertEqual(etc["cache_witnesses"], ["${native}/libc++_shared.so"])
             self.assertNotIn("request", etc)
             self.assertNotIn("request", jpeg)
+            extractor = "recipe/jobs/owner-sdk-texture-input.json"
+            self.assertEqual(sdk["needs"], [extractor])
+            self.assertEqual(graph.jobs[names["rgba"]]["needs"], [extractor])
+            self.assertEqual(jpeg["needs"], [])
+            self.assertEqual(etc["needs"], [])
+            self.assertEqual(graph.jobs[extractor]["cache_witnesses"], [G.LINUX_COMPONENT])
+            self.assertIn("--linux-texture", graph.jobs[extractor]["arguments"])
+            acquired = inputs / "acquired/unity-linux-editor.tar.xz"
+            acquired.write_text("owner SDK archive")
+            extracted = inputs / "work/jobs/sdk-output"
+            extracted.mkdir(parents=True)
+            codec = extracted / "etccompress.so"
+            codec.write_text("qualified owner SDK member")
 
             dispatch = object.__new__(J.Dispatcher)
             dispatch.repo, dispatch.inputs, dispatch.native = ROOT, inputs, native
@@ -472,6 +485,7 @@ class ReleaseGraphTests(unittest.TestCase):
             dispatch.config = {"bindings": {"pc": "pc"}}
             dispatch.jobs_root = inputs / "work/jobs"
             dispatch.descriptors = graph.jobs
+            dispatch.completed = {extractor: extracted}
             output, request_path = dispatch.jobs_root / "output", inputs / ".request.json"
             J.UPDATES.write_json(request_path, dispatch.expand(sdk["request"], sdk, output, request_path))
             arguments = dispatch.expand(sdk["arguments"], sdk, output, request_path)
@@ -480,15 +494,15 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertEqual(pin, G.digest(request_path))
             verified = texture.sdk_inputs(request_path, pin, pc)
             self.assertEqual(verified["command"][0], str(native / "libqemu-x86_64.so"))
-            self.assertEqual(verified["command"][-1], str(guest / "etccompress.so"))
+            self.assertEqual(verified["command"][-1], str(codec))
             self.assertEqual(verified["pixels"], str(native / "libtexture-pixels.so"))
             self.assertTrue(set(map(str, (guest / name for name in guest_files))) <= verified["inputs"].keys())
 
             before = dispatch.input_pins(names["rgb-mip"])
-            (guest / "etccompress.so").write_text("changed SDK")
+            acquired.write_text("changed SDK archive")
             after = dispatch.input_pins(names["rgb-mip"])
-            guest_witness = G.TEXTURE_GUEST + "etccompress.so"
-            self.assertNotEqual(before[guest_witness], after[guest_witness])
+            self.assertNotEqual(before[G.LINUX_COMPONENT], after[G.LINUX_COMPONENT])
+            codec.write_text("changed SDK member")
             with self.assertRaisesRegex(ValueError, "tool input drift"):
                 texture.sdk_inputs(request_path, pin, pc)
             (native / "libtexture-pixels.so").write_text("changed installed provider")

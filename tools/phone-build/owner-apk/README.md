@@ -821,16 +821,20 @@ In a `--code-request` graph, texture jobs select the installed
 `libtexture-jpeg.so` and `libtexture-etc.so` only for operations that use them.
 Stage these providers and their Android runtime libraries through the managed
 app-host backend tool plan. SDK texture operations use the same tool plan for
-`libqemu-x86_64.so` and `libtexture-pixels.so`. Provision the authorized
-Linux Unity `etccompress.so`, the matching public `texture-sdk-codec` helper
-and the GNU guest libraries under the private `acquired/texture-sdk` root.
-Use regular files at the qualified paths in `release_graph.py`, including
+`libqemu-x86_64.so`, `libtexture-pixels.so` and their native dependencies.
+Place the owner-acquired Unity Linux Editor archive at
+`acquired/unity-linux-editor.tar.xz`. One shared `sdk_inputs.py --linux-texture`
+job verifies the archive and extracts its pinned `Editor/etccompress.so` into
+the private job output. Provision the matching public `texture-sdk-codec`
+helper with mode `0700` and the GNU guest libraries under the private
+`acquired/texture-sdk` root. Use regular files at the paths in
+`release_graph.py`, including
 `linux/lib64/ld-linux-x86-64.so.2` and the files in
 `linux/lib/x86_64-linux-gnu`. The
 [SDK texture provider build](../accepted-output/README.md#produce-single-mip-rgba-textures-with-the-owner-supplied-sdk)
 describes acquisition and compilation. The dispatcher writes the producer's
-toolchain JSON using actual run paths and passes its SHA-256. Guest file changes
-and installed codec changes invalidate the texture cache. Acquired-mode graphs
+toolchain JSON using actual run paths and passes its SHA-256. Archive, guest
+file and installed codec changes invalidate the texture cache. Acquired-mode graphs
 use the explicit `jpeg_codec`, `etc_codec` and `sdk_toolchain` input bindings.
 
 Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
