@@ -827,8 +827,10 @@ hash-matched original Wisp schema, SDK Material/resource records and the shader
 owner's standard record pack. Its Cube and diagnostics preloads follow the
 authored LabBuild policy. No generated project, private schema cache or Editor
 fixture output is a production input. Registry metadata inspection lazily uses
-the pinned `dnfile`/`pefile` dependencies; the earlier player slices keep their
-standard-library path. The registry projects only the raw CLR metadata consumed
+the pinned `dnfile`/`pefile` dependencies. The managed app-host builder installs
+those wheels and notices from its explicit backend inputs into the isolated
+CPython dependency directory, with a hash-bound Android `mmap` provider.
+The registry projects only the raw CLR metadata consumed
 by serialization and closes each PE immediately. It releases SDK and original
 witness layouts before managed traversal, rereading witnesses during validation
 instead of caching them. Completion and failure close the current resolver.

@@ -2457,6 +2457,10 @@ are unchanged. Setup and unsupported modes are documented in
 `tools/phone-build/managed-host/README.md`; the experiment result lives only in
 J1001.
 
+This profile also pins the two public MIT-licensed wheel archives used by the
+player script registry. The private fixture retains their license notices and
+the recipe contains only archive names and checksums.
+
 
 The app-host profile source pins were refreshed on 2026-10-24 for the integrated
 public profile: `assembly_transforms.py` and `common.py` changed while the
