@@ -2721,6 +2721,8 @@ serialized-file hashes after the authored enemy material settings changed in
 #516. The existing TextAsset owner serialized the current recipe using the
 original input's native type. This update records only sizes and digests. The
 serialized output and original type bytes remain in ignored work.
+The native manager profile also pins the current tracked tool requirements
+file. The manager and phase profile updates contain only public digests.
 
 `owner-death-effect-objects.json` selects the original rooted prefab and its
 MonoScripts, with checked pointer relationships and comparison hashes. All

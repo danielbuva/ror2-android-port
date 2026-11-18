@@ -50,7 +50,7 @@
   },
   "manager": {
     "profile": "recipe/owner-player-managers.json",
-    "sha256": "3ddfee21f0efc4e51b28273afb50b41c5b983914b1371e1697beab15b43e338e",
+    "sha256": "cb8c736e66c67750e78c566095fc3dd6e190d1edd0345a31202a8d540cd721ad",
     "outputs": [
       "globalgamemanagers"
     ]

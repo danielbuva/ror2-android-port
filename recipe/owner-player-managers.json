@@ -45,7 +45,7 @@
     },
     "requirements": {
       "path": "tools/lab-requirements.txt",
-      "sha256": "ee114fd9a3a0108a8e4b07c670ba6a67dbf04b2b6744e15989ecebeb73e33699"
+      "sha256": "5836a9fe0f7b946e647ba100d0829c99224c3f278798aa5ab1397e5e61b80219"
     },
     "settings_ProjectSettings": {
       "path": "smoke/ProjectSettings/ProjectSettings.asset",

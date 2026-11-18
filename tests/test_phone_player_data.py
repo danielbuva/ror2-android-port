@@ -132,6 +132,12 @@ def script_properties_fixture(root, pc, script_kind=115, sdk_kind=114, custom_na
 
 
 class CurrentOutputReceiptTests(unittest.TestCase):
+    def test_public_manager_inputs_match_profile_pins(self):
+        profile = json.loads((ROOT / "recipe/owner-player-managers.json").read_text())
+        for name, row in profile["public_inputs"].items():
+            with self.subTest(name=name):
+                self.assertEqual(P.sha(ROOT / row["path"]), row["sha256"])
+
     def test_fresh_registry_hash_is_diagnostic_and_receipt_stays_exact(self):
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder).resolve()
