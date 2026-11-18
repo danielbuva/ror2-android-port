@@ -275,9 +275,9 @@ public sealed partial class PortSession
                 coordinator.PrepareOfflineSettings();
             if (string.IsNullOrEmpty(coordinator.r.selectedSurvivor))
                 coordinator.r.selectedSurvivor = pendingOfflineSurvivor;
-            // A developer-only survivor override is never shown as an earned menu choice.
+            // Developer launches begin with the selected survivor and the stored loadout.
             if (!AllowsOfflineSessionMenu(coordinator.r) || !cfg.integratedWorld || !cfg.integratedResults || coordinator.skipOfflineMenu ||
-                coordinator.r.developerSurvivorOverride)
+                coordinator.r.developerSurvivorOverride || coordinator.DirectStageDiagnosticRequested)
                 yield break;
             coordinator.offlineUnlockPreview = null;
             var choices = coordinator.OrdinarySurvivorChoices();

@@ -30,6 +30,7 @@ RELEASE = _module("owner_release_contract", Path(__file__).with_name("release.py
 MAX_JSON_BYTES = 8 * 1024 * 1024
 MAX_BUNDLE_INDEX_BYTES = 4 * 1024 * 1024
 COMPACT_INDEX_INSTALLER_VERSION = 4
+AUTHORED_UNITY_INSTALLER_VERSION = 5
 MAX_PUBLIC_FILE_BYTES = 64 * 1024 * 1024
 MAX_BUNDLE_BYTES = 512 * 1024 * 1024
 INDEX = "bundle-index.json"
@@ -64,6 +65,42 @@ SOURCE_SUFFIXES = {
     ".gradle",
 }
 LAUNCHER_ART_SHA256 = "6f73ee2c7a9d6544b5f2972832b12a7aed3f98cf9ba00fc04b218502f65ea4ff"
+# Repository-authored scene, settings and shader inputs. Publication checks
+# these reviewed pins. Installed validators bind these paths to the signed
+# archive's per-file hashes so later reviewed revisions can update in place.
+AUTHORED_UNITY_SOURCE_SHA256 = {
+    "smoke/Assets/Bootstrap.unity": "a6a4f756cfc225edd41984638c4eea35cdfc3818291f976db5e03e0278ec465a",
+    "smoke/ProjectSettings/AudioManager.asset": "9a554916fe138ebcad8443ee9b079363ecc72795c39d0e80f5f7ca99e2c6f5e7",
+    "smoke/ProjectSettings/DynamicsManager.asset": "63d4baef3e25a3dc11bd1b5aac6278eaa714bcef13b1e73197c078f2c6acee73",
+    "smoke/ProjectSettings/EditorSettings.asset": "fa7130f8e63927b87c4ba36f474e11e547c91b8f893abbb80fc6c4ac0fb2e7cc",
+    "smoke/ProjectSettings/GraphicsSettings.asset": "7e7101091125a933bbbaaed9ba2f9b3c7e69a38222c2554a29af9c9490b8687b",
+    "smoke/ProjectSettings/InputManager.asset": "aa9c09fc8335af6fa9594d6e5244d1f77b1685fb17772011fc852a06b6e8d4e4",
+    "smoke/ProjectSettings/NavMeshAreas.asset": "28db9a32b1eebd40fb57b40367780ae2c7722d9268f1f5249e4e09c617046a19",
+    "smoke/ProjectSettings/Physics2DSettings.asset": "8440eb91da6ad817c8426a0dfd24fc66ff620983f7eb2a75ff434ed42b634a23",
+    "smoke/ProjectSettings/ProjectSettings.asset": "d66146bae51e552b7f83ac8ad4a141a457996753cb7da7ea394dc66ce2954452",
+    "smoke/ProjectSettings/QualitySettings.asset": "88e358e892b5876aebe859a7bcd10d88f7ccc73f5cf9b0ecd97262ca7a3974e6",
+    "smoke/ProjectSettings/TimeManager.asset": "1a83e54adbbda7c9f4851103a0c6ab7f6448a3343d4ea5b7620452fa08416ecd",
+    **{
+        "tools/unity/runtime/shaders/" + name: digest
+        for name, digest in (
+            ("AndroidBillboardPresentation.shader", "fb78c2e3cc299dd9933479b7952b635fa6062453364fa1c42f3aac6b055d2f4d"),
+            ("AndroidColorGrade.shader", "1613f49bc1bcd392b26d11275ebbe1d5f0b48316d00fa59604b2d5dec390e19c"),
+            ("AndroidDistortionPresentation.shader", "21fc0955f7caf0aa99c893affc95ce1a31e017618d00158a4f1af600583a0071"),
+            ("AndroidOpaqueParticlePresentation.shader", "529b6cc912f3827cf88c3e2eac5e00f4ac0d71dd4b927a2ab3afc6fa22aecf99"),
+            ("AndroidParticlePresentation.shader", "aed64c8c961b5834f9d00d4f8331d2fe09d0fc2f12e08b29fd37a80908733596"),
+            ("AndroidRecoveredReflections.cginc", "f4284aa2137512f44ed1142fddae70e49b301e2f12e81964b8d73f68661156c9"),
+            ("AndroidSurfacePresentation.shader", "358afda650a7eb9eb079bb6b55046a5a0c1d8d4ae5d972b1da7811551357e309"),
+            ("AndroidTerrainPresentation.shader", "a4e7defedb85196b86c8c3794a1b6c4c0ff339ccf0859b8dbc562c7d25b4ddf8"),
+            ("AndroidWaterPresentation.shader", "20c238b540554e6cbc45d7be43731ce6bcf8d5c62146009e1edfc80f6e5b6820"),
+            ("CommandoMaterialPreview.shader", "a0d79ca77733182f4ef3ab08415edd561041b39996e26cb02729be0bafc95b99"),
+            ("CommandoPreview.shader", "d6cd24df6845a9dc1940f085c4689018fcaaa56d544debae4daf2c378d49a8df"),
+            ("MoonPillarBeaconPreview.shader", "5b214ded54203129e6283a33c9073b30792b99c38edb6cc76191e82bdf12b0bc"),
+            ("MoonPillarBeamPreview.shader", "43728d3a807973ecaf42d0906ce6271488f84380449858b0ecc6caa72dee1ab8"),
+            ("StageSurfacePreview.shader", "ebff1420ec896525b0fe058c8989f2eaf52fa749fcc02c14265e43a46d714e92"),
+            ("StageTerrainPreview.shader", "97176b709d4f14820c2ce86eb46ec60c9e1868f42c5f36b6f201be24db2c91f8"),
+        )
+    },
+}
 PUBLISHING_SOURCE_FILES = {
     "environment/toolchain.json",
     "tools/android-write-interruption/LabPendingWriteStop.java",
@@ -201,6 +238,8 @@ def public_source_path(name, digest):
     path = PurePosixPath(name)
     if name == "launcher/background.png" and digest == LAUNCHER_ART_SHA256:
         return name
+    if name in AUTHORED_UNITY_SOURCE_SHA256:
+        return name
     if path.suffix.lower() in SOURCE_SUFFIXES or path.name.lower() in {"license", "copying", "notice", "makefile"}:
         return name
     if name.startswith("recipe/") and name.endswith(".jsonl.gz"):
@@ -208,6 +247,11 @@ def public_source_path(name, digest):
     if name.startswith("recipe/templates/") and path.suffix == ".meta":
         return name
     raise ValueError("only reviewed public source/configuration/license files may be bundled: " + name)
+
+
+def _check_authored_unity_pin(name, digest):
+    if name in AUTHORED_UNITY_SOURCE_SHA256 and digest != AUTHORED_UNITY_SOURCE_SHA256[name]:
+        raise ValueError("authored Unity source differs from reviewed SHA-256: " + name)
 
 
 def _sha256(value):
@@ -345,6 +389,8 @@ def validate_bundle_index(index, release):
         public_source_path(path, digest)
         if any(str(parent) in index["files"] for parent in PurePosixPath(path).parents):
             raise ValueError("overlapping public bundle paths")
+    if AUTHORED_UNITY_SOURCE_SHA256.keys() & index["files"].keys() and release["minimum_installer_version"] < AUTHORED_UNITY_INSTALLER_VERSION:
+        raise ValueError("authored Unity sources require installer version 5 or later")
     if not isinstance(index["entries"], dict) or set(index["entries"]) != set(release["entries"]):
         raise ValueError("bundle outputs differ from signed release")
     for name, row in index["entries"].items():
@@ -458,7 +504,9 @@ def build_bundle(repository, plan, output):
     contents = {}
     for name in sorted(selected):
         data = _blob(root, tracked, name)
-        public_source_path(name, hashlib.sha256(data).hexdigest())
+        digest = hashlib.sha256(data).hexdigest()
+        public_source_path(name, digest)
+        _check_authored_unity_pin(name, digest)
         if audit.violations(name, data):
             raise ValueError("public source audit refused: " + name)
         contents[name] = data
@@ -472,11 +520,11 @@ def build_bundle(repository, plan, output):
         "version": "validation",
         "version_code": 1,
         "application_id": "dev.ror2lab.alpha",
-        "minimum_installer_version": 1,
+        "minimum_installer_version": AUTHORED_UNITY_INSTALLER_VERSION,
         "bundle_sha256": "0" * 64,
         "entries": dependencies,
     }
-    RELEASE.validate(body, 1, body["application_id"], 0)
+    RELEASE.validate(body, AUTHORED_UNITY_INSTALLER_VERSION, body["application_id"], 0)
     validate_bundle_index(index, body)
     contents[INDEX] = encode_bundle_index(index)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -501,6 +549,8 @@ def validate_publication(bundle_path, body):
         if archive.getinfo(INDEX).file_size > MAX_BUNDLE_INDEX_BYTES:
             raise ValueError("bounded public bundle index required")
         index = read_bundle_index(archive.read(INDEX), body)
+        for name, digest in index["files"].items():
+            _check_authored_unity_pin(name, digest)
         missing = PUBLISHING_SOURCE_FILES - index["files"].keys()
         if missing:
             raise ValueError("public bundle lacks installer/assembly/toolchain source: " + ", ".join(sorted(missing)))

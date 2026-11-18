@@ -59,6 +59,21 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
+`StageGeometrySession` accepts an explicit lab-only `diagnosticStage` at
+fresh-run entry. It loads the configured geometry and `RunClockSession`
+checks its original stage identity against the staged SceneDef. The diagnostic
+enters with fresh Run counters and skips the stage-one selection RNG draw. It
+uses the stored loadout and the existing assisted-run profile exclusions.
+Existing stage and run cleanup own teardown. On a return to the offline menu,
+`IntegratedWorldSession` starts the next session without the direct-stage launch
+selector or its assistance. The device runner still owns removing the selector.
+
+`ActiveClientSession` checks each native SkillLocator cache against that
+identity's ordered GenericSkill components and cached NetworkIdentity before
+initial serialization. The minimum skill count applies to the controlled body.
+Native objects with no skills, such as Sky Meadow rock projectiles, still run
+through the same cache and serializer checks.
+
 `WholeCatalogLoader.RegisterLocations` wraps its completed map with an
 `IResourceLocator` request observer. Each lookup logs its original key, key type,
 requested asset type, phase and map result, including unresolved soft references.
@@ -1371,11 +1386,13 @@ keeps this owner separate from content, game-code production and final signing.
 `accepted-output/phone_runner.py` now owns shared experimental on-device
 producer duty cycling for shell commands and the managed host
 owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
-zones, checks thermal admission and selects inherited efficiency-core affinity
+and readable SoC zones, checks thermal admission and selects inherited efficiency-core affinity
 with two-worker runtime limits. Its independent supervisor pauses the owned
-process group and nested-session descendants at 70/55 C by default (explicit
-Thor profile 75/60 C), using the current 95 C/3 s CPU/GPU and 46 C battery limits with 250 ms sampling.
-Teardown kills owned processes; receipts retain pause time and failures. The
+process group and nested-session descendants at CPU/GPU 70/55 C. A separate
+ceiling pauses the same family at 85 C on any readable CPU, GPU or SoC zone,
+releases below 70 C, and aborts after 15 min at the ceiling. The 250 ms sampler
+also enforces the CPU/GPU 95 C/3 s and battery 43 C limits. Teardown kills owned
+processes. Receipts retain pause time, SoC peak and phase, and failures. The
 atomic BOOTTIME clock feeds the existing native active-time contract through
 `run_android.py`. Phone sensor access and sustained qualification remain open.
 [Interface and limits](../tools/phone-build/accepted-output/README.md#shared-on-device-producer-thermal-runner).
@@ -1493,6 +1510,10 @@ passes input, dependency and output hash checks before reuse. The release owner
 refuses key loss on updates. `owner-apk/public_release.py` owns canonical public manifests, detached
 signatures and tracked-only bundles; `.github/workflows/public-release.yml`
 publishes these on authorized version tags using an externally provisioned key.
+The publisher checks exact reviewed hashes for the authored smoke scene,
+project settings and shader sources. Installer 5 admits those paths and
+checks each extracted member against the signed bundle index, including
+later reviewed revisions of those inputs.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
 verification and the private update transaction; `release_jobs.py` dispatches
 signed job recipes to existing source-only producers. Optional
@@ -1693,13 +1714,20 @@ default, so copying identical inputs again preserves its identity.
 checkpoints and failure/retry state; producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
-foreground operation independently of `ToolHostActivity`. Explicit resume after
+foreground operation independently of `ToolHostActivity`. Pending/active admission
+coalesces repeated launch actions; foreground/wake-lock/thread startup failure
+releases admission and owned resources for a later explicit retry. The synthetic
+service lifecycle fixture checks cancellation, pending profile recovery and
+process-recreation boundaries without starting a device conversion. Explicit resume after
 restart revalidates completed work. The existing `accepted-output/phone_runner.py`
 combines user pause/cancel with its unchanged thermal/battery safety policy and
 publishes private telemetry. Teardown reaps owned children and retains verified
 checkpoints; PackageInstaller alone establishes installation success.
 [User flow and storage behavior](../tools/phone-build/owner-apk/README.md#phone-only-import-and-installation)
 remain separate from complete game/device qualification.
+The installer persists session identity and INSTALLING admission in one checked
+commit before writing or committing the PackageInstaller session. Failure abandons
+the uncommitted session; recreation cannot recover a committed session as idle.
 
 `owner-apk/atomic_io.py` owns shared private checkpoint writes under each
 caller's existing operation lock: sibling staging, file fsync, rename and parent
@@ -2045,6 +2073,11 @@ cover fixed owner-work admission, exclusive outputs, immutable provider checks,
 retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
+When a signed conversion declares audio members, the managed producer derives
+the decoder-free bank index in its explicit owner workspace. Staging, the
+runtime request pin and the stage pin use that workspace and index together.
+The converter compares the local roster with the signed names before
+exposing the stage for APK assembly.
 
 `tools/phone-build/owner-code/legacy_init.py` owns current experimental
 historical Init-receipt compatibility. It requires the full accepted owner
@@ -4851,7 +4884,7 @@ report, read against the journal entry that defines what it must show.
 | Equipment expansion availability | `runtime/world/EnemyRewardBoundary.cs`, existing `PortSession.OriginalStats` call site | `EnemyRewardSession` owns one `RewardEquipmentExpansionMaskLease`, retaining the exact native Run and rented mask before population | Integrated survivor state setup acquires before spawn; reward preparation reuses the exact lease; pre-rule refresh locks all required expansions and the later existing rule-ready refresh uses native availability. Partial setup and ordinary disposal return once before Run disable; foreign replacements survive and recovery retains ownership. Item-mask and RNG setup retain their existing phase. | `test_reward_equipment_mask_lease.py`, authored host doubles in `tests/fixtures/reward_equipment_mask_lease.cs` |
 | Commerce and pickups | `WorldCommerceBoundary`, `ChestPurchaseBoundary`, `ChestEjectionBoundary`, `ItemPickupBoundary`, `GenericPickupBoundary`, `MoneyCostBoundary`, `PickupDropletFlightBoundary` (10 files) | nested `ChestEjectionSession` (`IDisposable`) **own type** holds chest animation snapshots, source effect pool/cache references, observed effects/returns, owned material copies and droplet/model references; `chestEjectionBegan` stays shared with ChestPurchase on the coordinator; `r.chestEjection` remains the coordinator observation; remaining boundaries use coordinator fields; nested `GenericPickupSession` (`IDisposable`) **own types** hold their files' private state; nested `WorldCommerceSession` (`IDisposable`) **own types** hold their files' private state | `PrepareWorldCommerce` → `CleanupWorldCommerce`; `OwnChestAnimationSources` / `PrepareChestEjection` → `ObserveChestEjection` / `FinishChestEjection` → `CleanupChestEjection` (calls `Dispose`: droplet destruction, source effect pools/cache cleanup, material destruction) → diagnostic `CheckChestEjectionCleanup` after chest/pickup cleanup; owner created on first use and retained after cleanup | — |
 | Stage transport and teleporter | `TeleporterWorldBoundary`, `IntegratedStageBoundary`, `AndroidStageTransport`, `StageGeometryBoundary`, `GoldshoresBoundary`, `MoonMissionBoundary`, `MoonEscapeBoundary` | nested `StageGeometrySession` (`IDisposable`) **own type** holds owned billboard copies, Moon-volume mode, map-zone activation/source names and observation callbacks; geometry bundle, scene, materials, source-object/context roots, first-stage selection and `r.stage` stay shared on the coordinator; remaining boundaries use coordinator fields; nested `IntegratedStageSession` (`IDisposable`) **own types** hold their files' private state; nested `TeleporterWorldSession` (`IDisposable`) **own types** hold their files' private state | `PrepareTeleporterWorld` → `CleanupTeleporterWorld`; `PrepareStageTransport` → `CleanupStageTransport`; `PrepareStageGeometry` / `LoadStageGeometry` forward to the session; source-context deactivation stays separate; `CleanupStageGeometry` remains an awaited coroutine at the same call sites, including after `CleanupSpawnConfig` in `Start` (pause zones, detach observations, unload scene, destroy billboards then materials, unload bundle, mark coordinator report); owner created on first use and retained across stage handoffs; `Dispose` is a no-op | — |
-| Combat-input first-failure witness | `TeleporterWorldSession.ObjectiveCombatInput`, `ObjectiveCombatInputFailureWitness`, existing `WorldReport` | Only explicit skill-coverage diagnostics allocate/reuse the witness; the ordinary path enters the same core directly. Read-group, row and CLR/Unity-null states describe already-read operands. The first NRE snapshot is copied to the report before bare rethrow; diagnostic failures cannot replace it. No operand becomes optional. | Per-call reset; no retained Unity references; the report survives existing cleanup, which remains authoritative | `test_objective_combat_input_failure_witness.py` executes the production wrapper, witness and report DTO against a synthetic core; runtime cause remains open (J811) |
+| Combat-input first-failure witness | `TeleporterWorldSession.ObjectiveCombatInput`, `ObjectiveCombatInputFailureWitness`, existing `WorldReport` | Only explicit skill-coverage diagnostics allocate/reuse the witness. The witness records the first NRE and the CLR/Unity-null state of operands already read before rethrow. The assisted input driver uses its default engagement distances while a native stance transition leaves the primary slot empty. | Per-call reset; no retained Unity references; existing cleanup preserves the report | `test_objective_combat_input_failure_witness.py` exercises the production wrapper, witness, report DTO and primary lookup |
 | First-stage source lifecycle (diagnostic) | `runtime/stage/FirstStageDiagnosticGate.cs`, `FirstStageSourceOwners.cs`, `SourceStageIdentityLifecycle.cs`; existing stage/objective/population boundaries | `IntegratedStageSession` owns the exact source identity transaction and its Director bridge; `TeleporterWorldSession` owns the inactive prepared objective and exact native placement; `WholeStagePopulationObservation` owns pre-start listeners | Explicit per-attempt `SessionReport.nativeFirstStageLifecycleDiagnosticAttempt` defaults off, supports Golemplains/Lakes only and always marks assisted. Prepare native inputs → activate/spawn audited source cohort → genuine Run scene change and server Stage-begin → natural SceneDirector population/Teleporter Start. Retire owned actors/interactables → exact Stage → objective → source cohort → providers. Transport refuses before mutation. | `FirstStageDiagnosticGateFixture.cs` (pure production gates and an inactive native managed-field lease fixture; actual native lifecycle remains a separate device gate) |
 | Siren encounter | `runtime/stage/SirenEncounterBoundary.cs`, `SirenEncounterEggTargets.cs`, `SirenNativeListeningSnapshotPolicy.cs`, `SirenNativeListeningSnapshotReader.cs` | `SirenEncounterSession` (`IDisposable`) owns the exact source encounter, its network-spawn lease, native BossGroup listener, observation clock, and private native egg-list/object/ID baseline; it also retains exact original terminal-death bodies/IDs for naturally destroyed boss/probe masters and detaches its one server-death subscription before cleanup; `SirenEncounterReport` retains bounded scalar last-sample data, never Unity object references | `IntegratedStageSession.BeginOriginalStage` after source population and native `Stage.Start` → bounded stage tick → `CleanupSirenEncounter` before transition/unload or transport disposal; a new exact native `Listening` instance starts a fresh snapshot, listener exit releases private references but preserves timestamped last-observed scalars, and owner cleanup releases references | `SirenEncounterHost.cs` (exact-editor selection/transaction fixture; native lifecycle and snapshot integration remain unverified) |
 | Siren source entry | `runtime/stage/SirenSourceEntrySession.cs` | `IntegratedStageSession` retains the `SirenSourceEntrySession` (`IDisposable`) and its exact source scene, ID-11 toggle target snapshots, source-spawner disable witnesses, egg identities/poses and per-row retirement progress; reports remain in `r.stageProgress.sirenSourceEntries` | On every integrated Ship Graveyard entry, with the exact temporary Stage current, preflight the inactive imported Ship Graveyard identities before the existing Director owner activates ID 2; retain the entry owner first and lease only that exact root/identity activation, requiring it to stay unregistered. Activate ID 11 under the same temporary Stage, then release that Stage. Native toggle `Awake` consumes destination RNG already generated by original Run advancement; perform the existing single Run stage callback then the complete native global callback; observe natural spawners and admit the existing ID-10 owner only after the exact cohort gate. After exact source-cohort completion, observe the original server death event for captured eggs. Cleanup first releases that subscription, accounts once for exact naturally destroyed/unmapped eggs, retries pending live captured eggs, removes witnesses, restores toggle targets and retires/restores ID 11; moved, ambiguous or unknown rows retain recovery context; the first identity refusal reports its expected/actual match, name, active state and registration operands without mutation | `test_siren_source_entry_contract.py`, `test_siren_partial_retirement.py`, `test_siren_source_stage_handoff.py`, `test_siren_source_director_handoff.py` (host contract/retry/order fixtures; editor import and native device lifecycle remain gates) |
@@ -4869,11 +4902,20 @@ replacement, toggling and source ownership. Rendering remains a device gate.
 `TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
 effect sources and native projectile ghosts and DamageTrail segment references
 before their pools instantiate them. It follows typed prefab edges with cycle
-protection, including CharacterBody's separately loaded FireTrail. Original
+protection, including CharacterBody's separately loaded FireTrail. The original
+body visual owner submits Mercenary's persistent and consume Expose prefabs
+after resolving their native fields on CharacterBody and HealthComponent. Original
 source slots and particle trails are restored by integrated-world cleanup before
 the session destroys its material copies; source blend values remain intact.
 The session counts objective projectile materials during catalog setup. The
 integrated-world report includes these counts from its first snapshot.
+
+`CombatSpineSession` owns one projectile service for the entire local run.
+Direct stage diagnostics start it before first-scene activation so native
+scene callbacks can spawn projectiles. Player combat reuses that instance.
+Rock spawner coroutines retire before the service, including when first-stage
+setup fails before input owns combat cleanup.
+
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
 `AndroidProfileSession` reserves each original achievement event before its
@@ -4882,6 +4924,15 @@ A thrown transaction releases only that event reservation for a later genuine
 callback; successful refusal and post-transaction reporting failures retain it.
 Session disposal clears the set. The extracted production-method fixture in
 `tests/test_offline_achievement_event_retry.py` checks this host contract (J1039).
+
+Ordinary Huntress and Acrid runs attach `AndroidNativeSourceSkinLifecycle`
+before the detached source model activates. Their original
+`ModelSkinController` applies the selected SkinDef and supplies the meshes,
+renderer records, controller and avatar. The adapter publishes translated
+materials into the first slot of each source renderer record. The lab camera
+and item-display owners remain active with the CharacterModel callbacks disabled.
+Input setup waits for the selected assets and initialized Animator before
+enabling native aim. The subscription and material copies follow model lifetime.
 
 For the explicitly selected native-skin diagnostic only,
 `NovaDiagnosticDisplay.CaptureNativeSourceSkinReport` asks the existing lifecycle
@@ -7724,3 +7775,9 @@ texture state; particle renderers also report all meshes. The existing screen
 coverage ordering and 128-view limit remain: this is a sampled attribution tool,
 not proof that every prefab rendered. Session teardown discards the report with
 the other objective observations; it never changes materials or simulation.
+On the same opt-in selector, `NovaDiagnosticDisplay` samples up to 32 renderers
+of the presented player model, including inactive and disabled renderers, on
+the existing five-second report cadence. The latest `NovaReport` sample records
+the display camera, renderer state, projected bounds, mesh and first shared
+material. The sample holds no Unity references and works with native skin
+diagnostics disabled.

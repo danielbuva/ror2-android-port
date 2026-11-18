@@ -111,9 +111,33 @@ class OwnerCodeManagedTests(unittest.TestCase):
                     path.write_bytes(b"independently authored input")
                 values[name] = str(path)
             self.assertEqual(len(MANAGED.bind_paths(values)), 10)
+            signed = {k: v for k, v in values.items() if k != "decoder"}
+            self.assertEqual(set(MANAGED.bind_paths(signed, signed_audio=True)), set(signed))
+            with self.assertRaisesRegex(ValueError, "decoder for historical staging"):
+                MANAGED.bind_paths(signed)
             values["dotnet"] = values["packages"]
             with self.assertRaisesRegex(ValueError, "provider kind"):
                 MANAGED.bind_paths(values)
+
+    def test_signed_stage_binds_index_and_copy_to_the_same_workspace_without_decoder(self):
+        work, game = Path("/owner/work"), Path("/owner/game")
+        output = work / "managed"
+        with (
+            patch.object(MANAGED.wwise_bank_index, "owner_index") as index,
+            patch.object(MANAGED.owner_audio_prefab, "reconstruct") as prefab,
+            patch.object(MANAGED.legacy, "run") as init,
+            patch.object(MANAGED, "invoke") as invoke,
+        ):
+            stage, prefab_path, bank_path, init_dir = MANAGED.stage_source_audio(work, game, output)
+        index.assert_called_once_with(work, bank_path.parent, False, decoder_executable=None)
+        prefab.assert_called_once_with(work, prefab_path.parent)
+        init.assert_called_once_with(work, init_dir)
+        command, destination, label = invoke.call_args.args
+        arguments = dict(zip(command[2::2], command[3::2]))
+        self.assertEqual(arguments["--owner-work"], work)
+        self.assertEqual(arguments["--bank-index"], bank_path)
+        self.assertEqual(arguments["--output-dir"], stage)
+        self.assertEqual((destination, label), (output, "stage-audio"))
 
 
 if __name__ == "__main__":

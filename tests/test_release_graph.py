@@ -820,6 +820,7 @@ for name in ('gameplay/postprocessed/Assembly-CSharp.dll', 'packages/postprocess
 (managed / 'packages/inputs.json').write_text(json.dumps({'package': pin((packages / 'Selected.cs').read_bytes())}))
 (managed / 'gameplay/ilpp-references').symlink_to(managed / 'support', target_is_directory=True)
 if 'audio_members' in request:
+    assert 'decoder' not in request['source_inputs']
     stage = managed / 'staged'
     bank_root = 'Audio/GeneratedSoundBanks/Android'
     for relative in request['audio_members']:
@@ -1104,6 +1105,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             with self.assertRaisesRegex(ValueError, "audio-bearing code"):
                 G.Graph(repo, {}).compile([], code_request=code_request, native_request=native_request, audio_stage_receipt=audio_layout)
             del request["target"]
+            request["source_inputs"]["decoder"] = "${native}/historical-audio-decoder"
             write(repo / code_request, request)
             build(current=True)
             self.assertFalse(build(current=True)["rebuilt"])

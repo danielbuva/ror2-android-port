@@ -58,6 +58,7 @@ def build_harness(teleporter: Path, integrated: Path) -> str:
     )
     witness_enum = extract_csharp_member(teleporter_text, "internal enum ObjectiveCombatInputFailureStep")
     witness = extract_csharp_member(teleporter_text, "internal sealed class ObjectiveCombatInputFailureWitness")
+    primary_read = teleporter_text.split("var primarySlot = skillLocator.primary;", 1)[1].split("bool meleePrimary =", 1)[0]
     # These source anchors ensure the selected wrapper and production witness
     # remain connected; behavior below executes the extracted members in C#.
     if "ObjectiveCombatInputCore(player, bridge, elapsed, planar, constrainToHoldout, null)" not in wrapper:
@@ -82,6 +83,8 @@ namespace UnityEngine
 
 class CharacterBody : UnityEngine.Object { }
 class NovaInputBridge { }
+class SkillDefinition : UnityEngine.Object { }
+class SkillSlot : UnityEngine.Object { public SkillDefinition skillDef; }
 
 class PortSession
 {
@@ -127,6 +130,12 @@ class TeleporterWorldSession
 class Test
 {
     static void Need(bool value, string name) { if (!value) throw new Exception(name); }
+    static SkillDefinition ReadPrimary(SkillSlot primarySlot, ObjectiveCombatInputFailureWitness witness)
+    {
+        PRIMARY_READ
+        return primary;
+    }
+
     static int Main()
     {
         var player = new CharacterBody();
@@ -193,13 +202,24 @@ class Test
         Need(witness.PlayerInputBankState == 0 && witness.ActorBodyState == 0 && witness.UtilitySlotState == 0,
              "reset-clears-read-states");
 
+        Need(ReadPrimary(null, witness) == null && witness.PrimarySlotState == 1 && witness.PrimaryDefinitionState == 1,
+             "native-swap-primary-is-unassigned");
+        var definition = new SkillDefinition();
+        Need(ReadPrimary(new SkillSlot { skillDef = definition }, witness) == definition &&
+             witness.PrimarySlotState == 3 && witness.PrimaryDefinitionState == 3,
+             "native-primary-resumes-after-swap");
+
         Console.WriteLine("objective combat input failure witness tests passed");
         return 0;
     }
 }
 """
     return (
-        program.replace("REPORT_DTO", report_dto).replace("OBJECTIVE_STEP_ENUM", witness_enum).replace("OBJECTIVE_WITNESS", witness).replace("WRAPPER", wrapper)
+        program.replace("REPORT_DTO", report_dto)
+        .replace("OBJECTIVE_STEP_ENUM", witness_enum)
+        .replace("OBJECTIVE_WITNESS", witness)
+        .replace("WRAPPER", wrapper)
+        .replace("PRIMARY_READ", primary_read)
     )
 
 

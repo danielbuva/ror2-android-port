@@ -55,6 +55,54 @@ class DutyCycleTests(unittest.TestCase):
         self.assertEqual(receipt["peak_cpu_gpu_celsius"], 96)
         self.assertEqual(receipt["peak_phase"], "paused")
 
+    def test_soc_ceiling_uses_hottest_zone_and_strict_resume(self):
+        policy = runner.ThermalDutyCycle("thor")
+        for tick, (soc, expected) in enumerate(((84.9, None), (85, signal.SIGSTOP), (92, None), (70, None), (69.9, signal.SIGCONT))):
+            self.assertEqual(policy.observe({**zones(cpu=65), "soc0": ("soc", 62), "soc1": ("soc", soc)}, tick * 0.25), expected)
+        receipt = policy.receipt(1)
+        self.assertEqual(receipt["ceiling_pauses"], 1)
+        self.assertEqual(receipt["ceiling_pause_seconds"], 0.75)
+        self.assertEqual(receipt["peak_soc_celsius"], 92)
+        self.assertEqual(receipt["peak_soc_phase"], "paused")
+
+    def test_ceiling_cooldown_preserves_cpu_duty_cycle(self):
+        policy = runner.ThermalDutyCycle()
+        self.assertEqual(policy.observe({**zones(cpu=76), "soc0": ("soc", 85)}, 0), signal.SIGSTOP)
+        self.assertIsNone(policy.observe({**zones(cpu=68), "soc0": ("soc", 69.9)}, 0.25))
+        self.assertEqual(policy.observe(zones(cpu=55), 0.5), signal.SIGCONT)
+        self.assertEqual(policy.receipt(0.5)["ceiling_pause_seconds"], 0.25)
+
+    def test_ceiling_timeout_kills_paused_family_without_resume(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            receipt = Path(temporary) / "receipt.json"
+            child, family = Mock(returncode=None), Mock()
+            child.poll.return_value = None
+            tick = [0.0]
+
+            def wait(seconds):
+                tick[0] += seconds
+
+            with (
+                patch.object(runner, "efficiency_cpus", return_value={0}),
+                patch.object(runner.subprocess, "Popen", return_value=child),
+                patch.object(runner, "Family", return_value=family),
+            ):
+                result = runner.run(
+                    ["producer"],
+                    receipt,
+                    sensor=lambda: {**zones(), "soc0": ("soc", 45 if tick[0] == 0 else 85)},
+                    clock=lambda: tick[0],
+                    wait=wait,
+                )
+            self.assertFalse(result["success"])
+            self.assertEqual(result["error"], "SoC thermal ceiling pause reached 15 min")
+            self.assertEqual(result["ceiling_pause_seconds"], 900)
+            signals = [row.args[0] for row in family.send.call_args_list]
+            self.assertEqual(signals[0], signal.SIGSTOP)
+            self.assertEqual(signals[-1], signal.SIGKILL)
+            self.assertNotIn(signal.SIGCONT, signals)
+            self.assertEqual(json.loads(receipt.read_text()), result)
+
     def test_fake_sensor_supervises_command_and_records_pauses(self):
         with tempfile.TemporaryDirectory() as temporary:
             receipt = Path(temporary) / "receipt.json"
@@ -204,12 +252,12 @@ class DutyCycleTests(unittest.TestCase):
     def test_sysfs_sensor_excludes_pmic_and_sentinels(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            for index, (kind, value) in enumerate((("cpu0", 45000), ("gpu", 46000), ("pmic", 120000), ("cpu1", -300000))):
+            for index, (kind, value) in enumerate((("cpu0", 45000), ("gpu", 46000), ("pmic", 120000), ("cpu1", -300000), ("soc_thermal", 85000), ("socd", 20))):
                 node = root / f"thermal_zone{index}"
                 node.mkdir()
                 (node / "type").write_text(kind)
                 (node / "temp").write_text(str(value))
-            self.assertEqual(runner.read_zones(root), {"thermal_zone0": ("cpu", 45), "thermal_zone1": ("gpu", 46)})
+            self.assertEqual(runner.read_zones(root), {"thermal_zone0": ("cpu", 45), "thermal_zone1": ("gpu", 46), "thermal_zone4": ("soc", 85)})
 
 
 if __name__ == "__main__":

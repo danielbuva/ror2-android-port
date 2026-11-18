@@ -158,10 +158,14 @@ public final class OwnerInstaller {
         boolean committed = false;
         diagnostic(app, "session-open", null, false);
         try (PackageInstaller.Session session = installer.openSession(id)) {
+            String installing = "Installing " + next.packageName + "…";
+            // Session ownership and active admission must survive recreation together.
+            // A separate unchecked status commit could leave a committed session idle.
             if (!app.getSharedPreferences(STATUS, 0).edit().putString("session", Integer.toString(id))
                 .putString("package", next.packageName).putString("version", Long.toString(version(next)))
-                .putString("signer", nextSigner).commit()) throw new IOException("Could not retain installation identity");
-            status(app, "INSTALLING", "Installing " + next.packageName + "…");
+                .putString("signer", nextSigner).putString("state", "INSTALLING").putString("status", installing).commit())
+                throw new IOException("Could not retain installation identity");
+            ToolHostActivity.updateInstallCheckpoint(app, "INSTALLING", installing);
             MessageDigest hash = MessageDigest.getInstance("SHA-256");
             diagnostic(app, "write-start", null, false);
             try (InputStream input = new FileInputStream(apk);
