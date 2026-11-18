@@ -1207,6 +1207,11 @@ adds a pinned public stb/IJG JPEG tool but no Unity SDK, Editor or private
 discovery input. J1079 qualifies all 399 uncompressed records and the public
 JPEG-tool build on Android. Other texture formats and complete bundle assembly
 remain separate gates; no current game build or runtime consumes these packs.
+The signed release graph selects the installed Android codec executables per
+texture operation. The release dispatcher materializes the existing SDK
+toolchain JSON with the installed QEMU and pixel decoder paths and hash-pinned
+guest files, then includes those provider witnesses in incremental cache
+identity. The SDK guest files are provisioned under the private acquired root.
 The same owner's current experimental `--resume` reuses its original profile,
 input/tool pins and existing output. Data fsync precedes every committed index
 row; recovery checks the ordered persisted prefix before truncating uncommitted
@@ -2811,6 +2816,7 @@ receipt (strict `success: true`) by SHA-256. After a minimum of 24 hours without
 new writes, unchanged markers let existing generated-output candidates ignore
 historical manifest pins. State/baseline/device/coordination-lock pins, explicit
 keeps and `.prune-keep` still win; receipts, logs and authored files stay.
+Planning checks eligibility once per marked run, not per descendant directory.
 Marking never deletes; normal dry-run/apply owns pruning and rechecks eligibility
 before the first deletion of each marked run. No symlinked runs are eligible.
 

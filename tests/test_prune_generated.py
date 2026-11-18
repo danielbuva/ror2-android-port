@@ -545,6 +545,24 @@ class PruneGeneratedTests(unittest.TestCase):
             prune.main()
         self.assertTrue((old / "candidate.apk").is_file())
 
+    def test_supersession_planning_checks_each_run_once_and_apply_rechecks(self):
+        old, _ = self.superseded_pair()
+        for number in range(100):
+            (old / f"subdirectory-{number}").mkdir()
+        age(old)
+        with patch.object(prune, "superseded_ready", wraps=prune.superseded_ready) as eligibility, patch.object(prune, "sha256", wraps=prune.sha256) as digest:
+            planner = self.plan()
+            self.assertEqual(eligibility.call_count, 1)
+            self.assertEqual(sum(call.args[0] == old / "candidate.apk" for call in digest.call_args_list), 2)
+            self.assertEqual({item["path"] for item in planner.items}, {old / "candidate.apk", old / "payload"})
+            # Cached planning must not weaken the independent apply-time veto.
+            (old / ".prune-keep").touch()
+            prune.apply(planner.items, self.work, self.work / "cleanup-analysis/ledger.json")
+            self.assertEqual(eligibility.call_count, 2)
+            self.assertTrue(all("skipped" in item for item in planner.items))
+        self.assertTrue((old / "candidate.apk").is_file())
+        self.assertTrue((old / "payload").is_dir())
+
     def test_superseded_apply_rechecks_protection_added_after_plan(self):
         old, _ = self.superseded_pair()
         age(old)
