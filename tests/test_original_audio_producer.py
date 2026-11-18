@@ -58,6 +58,17 @@ class ProducerManifestTests(unittest.TestCase):
     def temporary_directory(self):
         return tempfile.TemporaryDirectory()
 
+    def test_staged_producer_import_uses_source_layout(self):
+        with self.temporary_directory() as temporary:
+            checkout = Path(temporary).resolve()
+            script = checkout / SCRIPT.relative_to(ROOT)
+            script.parent.mkdir(parents=True)
+            script.write_bytes(SCRIPT.read_bytes())
+            spec = importlib.util.spec_from_file_location("staged_audio_producer", script)
+            staged = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(staged)
+            self.assertEqual(staged.SOURCE, checkout / "tools/unity/support/audio")
+
     def test_new_native_output_pin_replaces_old_pin_for_producer_artifacts(self):
         self.assertEqual(
             "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3",
