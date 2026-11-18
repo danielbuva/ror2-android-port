@@ -464,6 +464,7 @@ class Planner:
         root = self.work / name
         if not root.is_dir():
             return
+        supersessions = {}
         for base, dirs, files in os.walk(root):
             here = Path(base)
             superseded_run = next(
@@ -474,16 +475,23 @@ class Planner:
                 ),
                 None,
             )
-            if superseded_run is not None and not superseded_ready(superseded_run, self.work, self.authoritative_hashes, self.authoritative_paths, self.cutoff):
-                self.keep(superseded_run, "supersession not eligible or protected")
-                dirs.clear()
-                continue
+            extra = {}
+            if superseded_run is not None:
+                # Full-tree age/protection checks and APK hashes are per run,
+                # not per visited directory. apply() independently rechecks.
+                if superseded_run not in supersessions:
+                    ready = superseded_ready(superseded_run, self.work, self.authoritative_hashes, self.authoritative_paths, self.cutoff)
+                    supersessions[superseded_run] = (
+                        {"superseded_run": str(superseded_run.relative_to(ROOT)), "superseded_marker_sha256": sha256(superseded_run / SUPERSEDED_MARKER)}
+                        if ready
+                        else None
+                    )
+                extra = supersessions[superseded_run]
+                if extra is None:
+                    self.keep(superseded_run, "supersession not eligible or protected")
+                    dirs.clear()
+                    continue
             paths = self.authoritative_paths if superseded_run else self.paths
-            extra = (
-                {"superseded_run": str(superseded_run.relative_to(ROOT)), "superseded_marker_sha256": sha256(superseded_run / SUPERSEDED_MARKER)}
-                if superseded_run
-                else {}
-            )
             protected_here = any(
                 f.endswith(BINARY_SUFFIXES) and self.apk_protected(here / f, superseded=bool(superseded_run)) for f in files if not (here / f).is_symlink()
             )
