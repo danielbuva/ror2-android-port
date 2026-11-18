@@ -37,6 +37,34 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(first, dict(encoded, tree=b"\x12\x34", hash=b"\xab" * 16))
             self.assertEqual(encoded["tree"], "1234")
 
+    def test_qualification_passes_the_resolved_script_descriptor_to_baseline(self):
+        endpoints = P.module("bundle_endpoints")
+        member = ("authored", "CAB-authored")
+        target = (*member, 12)
+        identity = ["Example.dll", "Example", "Definition"]
+        owner = Node(pointers=lambda *_: {("m_Script",): (0, target[2])}, O=Node(script_fields=lambda _: (8, tuple(reversed(identity)))))
+        body, typ = b"behaviour", {"class_id": 114}
+        descriptor = {"destination": [*member, 11]}
+        script_descriptor = {}
+
+        def baseline(value, raw, native_type, read):
+            self.assertEqual((raw, native_type), (body, typ))
+            self.assertEqual(value["current_registry_identity"], identity)
+            value, raw, native_type = read(target)
+            self.assertEqual(value["current_registry_identity"], identity)
+            self.assertEqual((raw, native_type["class_id"]), (b"script", 115))
+            return tuple(identity)
+
+        with closing(endpoints.Qualification(Node(**(vars(P) | vars(owner))), None, dict(bundle=member[0], member=member[1]), {}, {}, {})) as check:
+            check.universe = Node(registry=lambda seen: self.assertEqual(seen, identity))
+            check.baseline = baseline
+            with patch.object(check, "tables", return_value=[]) as tables:
+                result = check.check(descriptor, body, typ, lambda _: (script_descriptor, b"script", {"class_id": 115}))
+                tables.assert_not_called()
+            self.assertEqual(result, tuple(identity))
+        self.assertEqual(descriptor, {"destination": [*member, 11]})
+        self.assertEqual(script_descriptor, {})
+
     def test_bulk_descriptors_preserve_order_and_duplicate_contracts(self):
         with tempfile.TemporaryDirectory() as tmp, closing(P.DiskIndexes(tmp)) as store:
             rows = store.mapping()

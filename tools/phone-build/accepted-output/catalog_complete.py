@@ -181,9 +181,9 @@ def il2cpp_type_identities(metadata):
 
 
 def prefab_script_bindings(members, player_types):
-    """Check every GameObject-owned MonoBehaviour in the supplied members."""
-    failures, scriptless = [], []
-    checked = 0
+    """Check managed records with a serialized script in the supplied members."""
+    failures, scriptless, ownerless_scriptless = [], [], []
+    behaviours = ownerless = 0
     identities = set()
     resolved = {}
     for member, (_, layout, objects) in sorted(members.members.items()):
@@ -196,13 +196,15 @@ def prefab_script_bindings(members, player_types):
                 failures.append(dict(member=member, path_id=path_id, error="truncated serialized MonoBehaviour"))
                 continue
             game_object = struct.unpack_from("<iq", body)
-            if game_object == (0, 0):
-                continue
             pointer = struct.unpack_from("<iq", body, 16)
             if pointer == (0, 0):
-                scriptless.append(dict(member=member, path_id=path_id, game_object=game_object))
+                missing = ownerless_scriptless if game_object == (0, 0) else scriptless
+                missing.append(dict(member=member, path_id=path_id, game_object=game_object))
                 continue
-            checked += 1
+            if game_object == (0, 0):
+                ownerless += 1
+            else:
+                behaviours += 1
             identity = None
             try:
                 key = (member, pointer, typ["script_id"])
@@ -217,7 +219,9 @@ def prefab_script_bindings(members, player_types):
                     raise ValueError("type absent from Android player image")
             except ValueError as exc:
                 failures.append(dict(member=member, path_id=path_id, game_object=game_object, script=pointer, identity=identity, error=str(exc)))
-    return dict(behaviours=checked, scriptless=scriptless, types=len(identities), failures=failures)
+    return dict(
+        behaviours=behaviours, ownerless=ownerless, scriptless=scriptless, ownerless_scriptless=ownerless_scriptless, types=len(identities), failures=failures
+    )
 
 
 class ProducedMembers:
@@ -581,8 +585,7 @@ def include_source_locations(metadata, source, location_ids):
         raise ValueError("catalog addition location selection differs")
     if any(row["id"] in selected for row in metadata["locations"]):
         raise ValueError("catalog addition location already exists")
-    if any(row["root"] for row in locations):
-        raise ValueError("catalog additions require non-root locations")
+    roots = {row["id"] for row in locations if row["root"]}
 
     def identity(row):
         return row["key"], row.get("keyType", "System.String")
@@ -593,8 +596,24 @@ def include_source_locations(metadata, source, location_ids):
         if additions:
             key = identity(row)
             existing = keys.get(key)
-            keys[key] = dict(existing or row, locations=(existing["locations"] if existing else []) + additions)
-    return dict(metadata, locations=metadata["locations"] + locations, keys=list(keys.values()))
+            present = existing["locations"] if existing else []
+            if roots.intersection(additions):
+                present_ids = set(present) | selected
+                source_order = [location for location in row["locations"] if location in present_ids]
+                source_ids = set(source_order)
+                locations_for_key = source_order + [location for location in present if location not in source_ids]
+            else:
+                locations_for_key = present + additions
+            keys[key] = dict(existing or row, locations=locations_for_key)
+    result = dict(metadata, locations=metadata["locations"] + locations, keys=list(keys.values()))
+    if roots:
+        for field in ("roots", "provider_roots", "runtime_roots"):
+            present = metadata[field]
+            present_ids = set(present) | roots
+            source_order = [location for location in source[field] if location in present_ids]
+            source_ids = set(source_order)
+            result[field] = source_order + [location for location in present if location not in source_ids]
+    return result
 
 
 def audit_player_bindings(player_apk, members, files, registry, resources, pins):
@@ -717,7 +736,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inputs", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--player-apk", type=Path, help="Audit prefab script bindings against an assembled Android player")
+    parser.add_argument("--player-apk", type=Path, help="Audit serialized script bindings against an assembled Android player")
     args = parser.parse_args()
     result = produce(args.inputs, args.output, args.player_apk)
     print(json.dumps(result))

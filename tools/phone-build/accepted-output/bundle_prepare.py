@@ -437,6 +437,16 @@ def prepare(owner, inputs, output):
             routes[target] = edges
         if used != overrides.keys():
             raise ValueError("unused exceptional field route")
+        # The emitted endpoint index contains only the reachable SDK witnesses.
+        for row in normalized_staged:
+            if row["bundle"] != "sdk":
+                continue
+            for key in ("leaves", "full"):
+                if key in row:
+                    witnesses = pins.read(row[key])
+                    reachable = [witness for witness in witnesses if tuple(witness["destination"]) in selected]
+                    if len(reachable) != len(witnesses):
+                        row[key] = write(f"sdk-{Path(row['member']).name}-{key}.json", reachable)
         externals = sorted({target[1] for target in selected if target[:2] != member})
         canonical = policy.get("canonical")
         if canonical is not None:

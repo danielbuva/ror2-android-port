@@ -145,12 +145,18 @@ class CatalogCompletionTests(unittest.TestCase):
             evidence = dict(complete=True, bodies=2, masters=1, metadataSha256=pin(metadata)["sha256"], bundles={"fixture": "digest"}, failures=[])
             receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence)))
             request = dict(bundles={"fixture": dict(sha256="digest")})
-            self.assertEqual(compare.typed_master_identity(receipt, request, apk), evidence)
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, None))
             with self.assertRaisesRegex(ValueError, "bundle pins differ"):
-                compare.typed_master_identity(receipt, dict(bundles={}), apk)
+                compare.typed_catalog_identity(receipt, dict(bundles={}), apk)
+            definitions = dict(sourceMetadataSha256="original")
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence, definitionIdentity=definitions)))
+            with self.assertRaisesRegex(ValueError, "definition source metadata differs"):
+                compare.typed_catalog_identity(receipt, request, apk)
+            request["source_additions"] = dict(metadata=dict(sha256="original"))
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, definitions))
             receipt.write_text(json.dumps(dict(masterBodyIdentity=dict(evidence, metadataSha256="wrong"))))
             with self.assertRaisesRegex(ValueError, "metadata differs"):
-                compare.typed_master_identity(receipt, request, apk)
+                compare.typed_catalog_identity(receipt, request, apk)
 
     def test_player_binding_uses_image_identity_and_serialized_script_table(self):
         def text(value):
@@ -173,17 +179,30 @@ class CatalogCompletionTests(unittest.TestCase):
 
         members = C.ProducedMembers()
         component = struct.pack("<iqIiq", 0, 1, 1, 1, 3)
+        definition = struct.pack("<iqIiq", 0, 0, 1, 1, 3)
         script = text(identity[0]) + bytes(20) + b"".join(map(text, identity))
         typ = dict(class_id=114, script_type=0, script_id=C.S.md4("".join(identity).encode()))
         layout = dict(data_offset=0, types=[typ], externals=[dict(path="CAB-plugin")], scripts=[(1, 3)])
-        members.members["CAB-prefab"] = (io.BytesIO(component), layout, {2: dict(type_id=0, offset=0, bytes=len(component))})
+        members.members["CAB-prefab"] = (
+            io.BytesIO(component + definition),
+            layout,
+            {2: dict(type_id=0, offset=0, bytes=len(component)), 4: dict(type_id=0, offset=len(component), bytes=len(definition))},
+        )
         members.members["CAB-plugin"] = (io.BytesIO(script), dict(data_offset=0, types=[dict(class_id=115)]), {3: dict(type_id=0, offset=0, bytes=len(script))})
-        self.assertEqual(C.prefab_script_bindings(members, {identity}), dict(behaviours=1, scriptless=[], types=1, failures=[]))
+        self.assertEqual(
+            C.prefab_script_bindings(members, {identity}), dict(behaviours=1, ownerless=1, scriptless=[], ownerless_scriptless=[], types=1, failures=[])
+        )
         absent = C.prefab_script_bindings(members, {("Behaviour", "Package", "Other.dll")})
-        self.assertEqual([(row["identity"], row["error"]) for row in absent["failures"]], [(identity, "type absent from Android player image")])
+        self.assertEqual(
+            [(row["path_id"], row["identity"], row["error"]) for row in absent["failures"]],
+            [
+                (2, identity, "type absent from Android player image"),
+                (4, identity, "type absent from Android player image"),
+            ],
+        )
         layout["scripts"] = [(1, 4)]
         mismatched = C.prefab_script_bindings(members, {identity})
-        self.assertEqual([row["error"] for row in mismatched["failures"]], ["serialized script table disagrees with m_Script"])
+        self.assertEqual([row["error"] for row in mismatched["failures"]], ["serialized script table disagrees with m_Script"] * 2)
 
     def test_model_skin_slots_follow_actual_external_scripts_and_reject_nulls(self):
         def text(value):
@@ -466,6 +485,30 @@ class CatalogCompletionTests(unittest.TestCase):
             path.write_text(json.dumps(request))
             with self.assertRaisesRegex(ValueError, "location selection differs"):
                 C.produce(path, root / "missing")
+
+    def test_source_root_additions_restore_catalog_membership_and_alias_order(self):
+        identity = dict(input_id="fixture", source_catalog_sha256="source-catalog", providers=["provider"])
+        staged = dict(
+            identity,
+            locations=[dict(id=1, root=True), dict(id=3, root=True), dict(id=9, root=False)],
+            keys=[dict(key="family", locations=[3, 9, 1]), dict(key="other", locations=[3, 1])],
+            roots=[1, 3],
+            provider_roots=[1, 3],
+            runtime_roots=[],
+        )
+        source = dict(
+            identity,
+            locations=[dict(id=1, root=True), dict(id=2, root=True), dict(id=3, root=True), dict(id=4, root=True), dict(id=5, root=False)],
+            keys=[dict(key="family", locations=[2, 1, 3]), dict(key="other", locations=[5, 1, 3]), dict(key="runtime", locations=[4])],
+            roots=[1, 2, 3, 4],
+            provider_roots=[1, 2, 3],
+            runtime_roots=[4],
+        )
+        result = C.include_source_locations(staged, source, [2, 4, 5])
+        self.assertEqual(result["roots"], [1, 2, 3, 4])
+        self.assertEqual(result["provider_roots"], [1, 2, 3])
+        self.assertEqual(result["runtime_roots"], [4])
+        self.assertEqual([(row["key"], row["locations"]) for row in result["keys"]], [("family", [2, 1, 3, 9]), ("other", [3, 1, 5]), ("runtime", [4])])
 
     def test_final_type_mismatch_refuses_output(self):
         with tempfile.TemporaryDirectory() as folder:

@@ -207,14 +207,18 @@ def candidate_paths(request, candidate_apk):
     return paths
 
 
-def typed_master_identity(receipt, request, candidate_apk):
-    evidence = json.loads(receipt.read_bytes())["masterBodyIdentity"]
+def typed_catalog_identity(receipt, request, candidate_apk):
+    document = json.loads(receipt.read_bytes())
+    evidence = document["masterBodyIdentity"]
     with ZipFile(candidate_apk) as archive, archive.open("assets/owner-bootstrap/data/whole-catalog.json") as stream:
         if hashlib.file_digest(stream, "sha256").hexdigest() != evidence["metadataSha256"]:
             raise ValueError("typed master identity metadata differs from candidate APK")
     if not evidence["bundles"] or any(request["bundles"].get(name, {}).get("sha256") != digest for name, digest in evidence["bundles"].items()):
         raise ValueError("typed master identity bundle pins differ from candidate APK")
-    return evidence
+    definitions = document.get("definitionIdentity")
+    if definitions is not None and definitions["sourceMetadataSha256"] != request.get("source_additions", {}).get("metadata", {}).get("sha256"):
+        raise ValueError("typed definition source metadata differs from catalog request")
+    return evidence, definitions
 
 
 def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None, typed_fixture=None, pc=None):
@@ -228,8 +232,8 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
     if baseline["apk_sha256"] != ref["sha256"]:
         raise ValueError("reference build result belongs to another APK")
     paths = candidate_paths(request, candidate_apk)
-    identity = typed_master_identity(typed_fixture, request, candidate_apk) if typed_fixture else None
-    references = {name: pinned(Path(baseline["payload_directory"]) / name, baseline["payload"][name]) for name in paths}
+    identity, definitions = typed_catalog_identity(typed_fixture, request, candidate_apk) if typed_fixture else (None, None)
+    references = {name: pinned(Path(baseline["payload_directory"]) / name, baseline["payload"][name]) for name in paths.keys() & baseline["payload"].keys()}
     candidate = Catalog(paths, candidate_apk)
     reference = Catalog(references, reference_apk)
     sides = {"candidate": candidate, "reference": reference}
@@ -245,6 +249,13 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
             for failure in failures:
                 counts["typed-master-body-identity"] += 1
                 table.write(json.dumps(dict(cause="typed-master-body-identity", side="candidate", **failure), separators=(",", ":")) + "\n")
+        if definitions is not None:
+            failures = list(definitions["failures"])
+            if not definitions["complete"] or not definitions["families"] or not definitions["publication"]:
+                failures.append(dict(error="typed definition inspection incomplete"))
+            for failure in failures:
+                counts["typed-definition-identity"] += 1
+                table.write(json.dumps(dict(cause="typed-definition-identity", side="candidate", **failure), separators=(",", ":")) + "\n")
 
         def emit(cause, **details):
             counts[cause] += 1
@@ -291,9 +302,9 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
 
         bundles = [only] if only else sorted(paths)
         for bundle in bundles:
-            members = set(candidate.bundles[bundle]) | set(reference.bundles[bundle])
+            members = set(candidate.bundles.get(bundle, ())) | set(reference.bundles.get(bundle, ()))
             for member in sorted(members):
-                records = {s: c.members[member][2] if member in c.bundles[bundle] else {} for s, c in sides.items()}
+                records = {s: c.members[member][2] if member in c.bundles.get(bundle, ()) else {} for s, c in sides.items()}
                 for pid in sorted(records["candidate"].keys() | records["reference"].keys()):
                     types, bodies, links, bindings = {}, {}, {}, {}
                     for side, catalog in sides.items():
@@ -366,6 +377,8 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
     )
     if identity is not None:
         summary["typed_master_body_identity"] = {key: identity[key] for key in ("complete", "bodies", "masters", "metadataSha256", "bundles")}
+    if definitions is not None:
+        summary["typed_definition_identity"] = {key: value for key, value in definitions.items() if key != "failures"}
     (output / "result.json").write_text(json.dumps(summary, indent=2) + "\n")
 
 
@@ -378,7 +391,7 @@ if __name__ == "__main__":
     cli.add_argument("--candidate-sha256", required=True)
     cli.add_argument("--output", required=True, type=Path)
     cli.add_argument("--bundle", help="inspect only one bundle for a smoke run")
-    cli.add_argument("--typed-fixture", type=Path, help="join the candidate's exact-editor body/master identity report")
+    cli.add_argument("--typed-fixture", type=Path, help="join the candidate's exact-editor catalog identity report")
     cli.add_argument("--pc", type=Path, help="compare the pinned original game's physics settings and layer table")
     args = cli.parse_args()
     compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle, args.typed_fixture, args.pc)
