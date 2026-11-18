@@ -4,10 +4,13 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
 import xml.etree.ElementTree as ET
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("managed_host_stage", ROOT / "tools/phone-build/managed-host/stage.py")
@@ -162,6 +165,35 @@ class ManagedHostStageTests(unittest.TestCase):
 
 
 class ManagedHostMetadataTests(unittest.TestCase):
+    def test_player_python_wheels_verify_before_extraction_and_import_in_isolation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            wheels = root / "wheels"
+            wheels.mkdir()
+            destination = root / "python/lib/player-packages"
+            pins = {}
+            for name, files in (
+                ("dnfile", {"dnfile/__init__.py": "from pefile import witness", "dnfile-1.dist-info/LICENSE": "authored notice"}),
+                ("pefile", {"pefile.py": "from mmap import mmap\nwitness = 42"}),
+            ):
+                path = wheels / (name + "-1-py3-none-any.whl")
+                with zipfile.ZipFile(path, "w") as archive:
+                    for member, data in files.items():
+                        archive.writestr(member, data)
+                pins[path.name] = stage.digest(path)
+            extra = {"python_wheels": str(wheels), "natives": {}, "links": {stage.MMAP_LINK: stage.MMAP_MODULE}}
+            with self.assertRaisesRegex(ValueError, "mmap provider"):
+                stage.stage_python_wheels(extra, pins, destination)
+            extra["natives"][stage.MMAP_MODULE] = {}
+            with self.assertRaisesRegex(ValueError, "wheel drift: pefile"):
+                stage.stage_python_wheels(extra, pins | {"pefile-1-py3-none-any.whl": "0" * 64}, destination)
+            self.assertFalse(destination.exists())
+            receipt = stage.stage_python_wheels(extra, pins, destination)
+            self.assertEqual(receipt, {str(wheels / name): value for name, value in pins.items()})
+            self.assertEqual((destination / "dnfile-1.dist-info/LICENSE").read_text(), "authored notice")
+            code = "import sys; sys.path.append(sys.argv[1]); import dnfile; assert dnfile.witness == 42"
+            subprocess.run([sys.executable, "-I", "-S", "-B", "-c", code, str(destination)], check=True, capture_output=True, text=True)
+
     def test_network_extensions_are_explicit_pinned_inputs_before_any_build(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

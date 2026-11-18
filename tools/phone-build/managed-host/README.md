@@ -13,7 +13,8 @@ app-host runs and copied-input refusal. Full game construction remains open.
 [opaque initialization API](https://docs.python.org/3.14/c-api/init_config.html).
 It selects isolated configuration, explicit home/module paths and arguments,
 disables environment/site imports and bytecode writes, and preserves the script
-exit. `NativeDotnetMuxer.c` implements only the protocol needed by the public
+exit. It explicitly searches the packaged player dependency directory.
+`NativeDotnetMuxer.c` implements only the protocol needed by the public
 producer: actual framework enumeration, `exec APP` and direct framework-dependent
 application execution through the public
 [hostfxr ABI](https://github.com/dotnet/runtime/blob/v8.0.32/src/native/corehost/hostfxr.h).
@@ -144,6 +145,16 @@ keeps the pinned ILSpy tool runnable; .NET 8 remains selected by the Unity tool
 and public transform runtime configurations. Native providers enter only the
 PackageManager library directory; input game/SDK/target sources are separate
 caller-owned app data. SDK/tool acquisition rights remain separate from hosting.
+
+For signed builds with the player registry, set `python_wheels` in that same
+backend configuration to the directory containing the pinned
+`dnfile-0.18.0-py3-none-any.whl` and `pefile-2024.8.26-py3-none-any.whl`. Supply
+the Android `mmap.cpython-314-aarch64-linux-android.so` provider as
+`libpyext_mmap.so` and map `python/lib/python3.14/lib-dynload/mmap.cpython-314-aarch64-linux-android.so`
+to it. The builder validates the public wheel hashes, retains their license
+files and verifies installed data and native libraries through the existing
+receipts. [dnfile release files](https://pypi.org/project/dnfile/0.18.0/#files)
+[pefile release files](https://pypi.org/project/pefile/2024.8.26/#files)
 
 The muxer keeps CoreLib in the selected framework's verified data directory via
 the public hostfxr runtime-property API. For .NET 10 it uses the public
