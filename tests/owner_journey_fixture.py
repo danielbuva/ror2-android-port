@@ -4,9 +4,11 @@ The real pipeline, producer dispatcher, issued ledger and receipt checks run unc
 No game data, real keys, APKs or installation are created.
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import copy
 import hashlib
+import io
+import zipfile
 import json
 from pathlib import Path
 import sys
@@ -17,7 +19,7 @@ from tests.test_phone_install_flow import F, U, J
 
 
 @contextmanager
-def owner_journey():
+def owner_journey(*, acquisition=False):
     installed_version = 0
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary).resolve()
@@ -142,13 +144,23 @@ def owner_journey():
 
             return flow.perform("signing", sign)
 
-        def run(action, installed=None):
+        def bundle():
+            stream = io.BytesIO()
+            with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                for name in index["files"]:
+                    archive.writestr(name, (repo / name).read_bytes())
+                archive.writestr("bundle-index.json", json.dumps(index))
+            result = stream.getvalue()
+            candidate["release"]["bundle_sha256"] = hashlib.sha256(result).hexdigest()
+            return result
+
+        def run(action, installed=None, *, transport=None):
             context = json.loads(request.read_text())
             context["action"] = action
             if installed:
                 context.update(installed_version=installed["version_code"], installed_release_version=installed["release"]["version_code"])
             original_write(request, context)
-            U.run(request, runtime, native, transport=Mock())
+            U.run(request, runtime, native, transport=transport or Mock())
             return json.loads((inputs / "update-state.json").read_text())
 
         is_file = Path.is_file
@@ -157,8 +169,8 @@ def owner_journey():
             return True if path in {inputs / "signing/owner/owner.p12", inputs / "signing/owner/password"} else is_file(path)
 
         with (
-            patch.object(U, "latest", return_value=candidate),
-            patch.object(U, "acquire", return_value=(repo, index)),
+            patch.object(U, "latest", return_value=candidate) if not acquisition else nullcontext(),
+            patch.object(U, "acquire", return_value=(repo, index)) if not acquisition else nullcontext(),
             patch.object(U.public(), "verify_envelope", side_effect=lambda *args: candidate["release"]),
             patch.object(U, "module", side_effect=modules),
             patch.object(U, "assemble_sign", side_effect=assemble),
@@ -168,5 +180,15 @@ def owner_journey():
             patch.object(Path, "is_file", keys),
         ):
             yield SimpleNamespace(
-                root=root, inputs=inputs, runtime=runtime, native=native, repo=repo, release=release, candidate=candidate, index=index, events=events, run=run
+                root=root,
+                inputs=inputs,
+                runtime=runtime,
+                native=native,
+                repo=repo,
+                release=release,
+                candidate=candidate,
+                index=index,
+                events=events,
+                run=run,
+                bundle=bundle,
             )
