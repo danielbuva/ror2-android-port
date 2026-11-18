@@ -44,6 +44,8 @@ class BundlePreloadTests(unittest.TestCase):
         identity = ["Example.dll", "Example", "Definition"]
         owner = Node(pointers=lambda *_: {("m_Script",): (0, target[2])}, O=Node(script_fields=lambda _: (8, tuple(reversed(identity)))))
         body, typ = b"behaviour", {"class_id": 114}
+        descriptor = {"destination": [*member, 11]}
+        script_descriptor = {}
 
         def baseline(value, raw, native_type, read):
             self.assertEqual((raw, native_type), (body, typ))
@@ -57,9 +59,11 @@ class BundlePreloadTests(unittest.TestCase):
             check.universe = Node(registry=lambda seen: self.assertEqual(seen, identity))
             check.baseline = baseline
             with patch.object(check, "tables", return_value=[]) as tables:
-                result = check.check(dict(destination=[*member, 11]), body, typ, lambda _: ({}, b"script", {"class_id": 115}))
+                result = check.check(descriptor, body, typ, lambda _: (script_descriptor, b"script", {"class_id": 115}))
                 tables.assert_not_called()
             self.assertEqual(result, tuple(identity))
+        self.assertEqual(descriptor, {"destination": [*member, 11]})
+        self.assertEqual(script_descriptor, {})
 
     def test_bulk_descriptors_preserve_order_and_duplicate_contracts(self):
         with tempfile.TemporaryDirectory() as tmp, closing(P.DiskIndexes(tmp)) as store:

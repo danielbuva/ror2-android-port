@@ -486,9 +486,16 @@ try{
      var itemDefs = new System.Collections.Generic.HashSet<RoR2.ItemDef>(typedDefinitions.Values.OfType<RoR2.ItemDef>());
      var relationshipTypes = new System.Collections.Generic.HashSet<RoR2.ItemRelationshipType>(typedDefinitions.Values.OfType<RoR2.ItemRelationshipType>());
      foreach (var provider in typedDefinitions.Values.OfType<RoR2.ItemRelationshipProvider>().Distinct())
-         if (!provider.relationshipType || !relationshipTypes.Contains(provider.relationshipType) || provider.relationships == null ||
-             provider.relationships.Any(pair => !pair.itemDef1 || !pair.itemDef2 || !itemDefs.Contains(pair.itemDef1) || !itemDefs.Contains(pair.itemDef2)))
-             failDefinition(new { name = provider.name, error = "Item relationship points outside the typed definition families" });
+     {
+         var relationships = provider.relationships;
+         var badPairs = relationships?.Select((pair, index) => new { index, pair.itemDef1, pair.itemDef2 })
+             .Where(pair => !itemDefs.Contains(pair.itemDef1) || !itemDefs.Contains(pair.itemDef2))
+             .Select(pair => new { pair.index, first = pair.itemDef1 ? pair.itemDef1.name : null,
+                 second = pair.itemDef2 ? pair.itemDef2.name : null }).ToArray();
+         if (!provider.relationshipType || !relationshipTypes.Contains(provider.relationshipType) || badPairs == null || badPairs.Length != 0)
+             failDefinition(new { name = provider.name, relationshipType = provider.relationshipType ? provider.relationshipType.name : null,
+                 pairs = relationships?.Length, badPairs, error = "Item relationship points outside the typed definition families" });
+     }
      definitionsComplete = true;
  }
 }catch(System.Exception error){failures.Add(new{error=error.ToString()});}

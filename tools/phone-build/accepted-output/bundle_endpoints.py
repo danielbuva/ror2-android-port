@@ -867,12 +867,13 @@ class Qualification:
                     raise ValueError("actual script file ID outside member table")
                 member = tables[fid - 1]
             target = (*member, pid)
-            scripts[target] = endpoint(target)
-            script_value, script_raw, _ = scripts[target]
+            script_value, script_raw, script_type = endpoint(target)
             _, (name, namespace, assembly) = self.owner.O.script_fields(script_raw)
             identity = [assembly, namespace, name]
-            value.setdefault("current_registry_identity", identity)
-            script_value.setdefault("current_registry_identity", identity)
+            # Persisted endpoint descriptors also serve as cache keys and evidence.
+            value = {"current_registry_identity": identity, **value}
+            script_value = {"current_registry_identity": identity, **script_value}
+            scripts[target] = script_value, script_raw, script_type
             self.universe.registry(identity)
         return self.baseline(value, raw, typ, scripts.__getitem__)
 
