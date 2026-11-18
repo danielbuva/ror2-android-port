@@ -817,6 +817,22 @@ is introduced. `input_sha256:NAME` hashes a declared regular input file, and
 Private input identity must cover acquired tools as well as original files, as
 required by the existing updater.
 
+In a `--code-request` graph, texture jobs select the installed
+`libtexture-jpeg.so` and `libtexture-etc.so` only for operations that use them.
+Stage these providers and their Android runtime libraries through the managed
+app-host backend tool plan. SDK texture operations use the same tool plan for
+`libqemu-x86_64.so` and `libtexture-pixels.so`. Provision the authorized
+Linux Unity `etccompress.so`, the matching public `texture-sdk-codec` helper
+and the GNU guest libraries under the private `acquired/texture-sdk` root.
+Use regular files at the qualified paths in `release_graph.py`, including
+`linux/lib64/ld-linux-x86-64.so.2` and the files in
+`linux/lib/x86_64-linux-gnu`. The
+[SDK texture provider build](../accepted-output/README.md#produce-single-mip-rgba-textures-with-the-owner-supplied-sdk)
+describes acquisition and compilation. The dispatcher writes the producer's
+toolchain JSON using actual run paths and passes its SHA-256. Guest file changes
+and installed codec changes invalidate the texture cache. Acquired-mode graphs
+use the explicit `jpeg_codec`, `etc_codec` and `sdk_toolchain` input bindings.
+
 Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
 `converter_receipt` (that directory's result.json), `code_request` and `managed`
 to freshly source-produced inputs. Shader jobs use `sdk_contents` and require

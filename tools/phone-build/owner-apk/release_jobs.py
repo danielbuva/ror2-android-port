@@ -174,7 +174,10 @@ class Dispatcher:
 
     def expand(self, value, job, output, request_path):
         if isinstance(value, dict):
-            return {key: self.expand(item, job, output, request_path) for key, item in value.items()}
+            expanded = {self.expand(key, job, output, request_path): self.expand(item, job, output, request_path) for key, item in value.items()}
+            if len(expanded) != len(value) or not all(isinstance(key, str) for key in expanded):
+                raise ValueError("request requires unique string keys after substitution")
+            return expanded
         if isinstance(value, list):
             return [self.expand(item, job, output, request_path) for item in value]
         if not isinstance(value, str):
@@ -195,6 +198,8 @@ class Dispatcher:
             key = match.group(1)
             if key in roots:
                 return str(roots[key])
+            if key == "request_sha256":
+                return UPDATES.RELEASE.digest(request_path)
             if key.startswith(("input:", "input_relative:", "input_sha256:")):
                 binding = self.config.get("bindings", {}).get(key.split(":", 1)[1])
                 selected = UPDATES.within(self.inputs, binding, exists=True)
