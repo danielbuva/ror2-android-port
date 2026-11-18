@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 import copy
+import errno
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -272,3 +273,36 @@ class OwnerJourneyTests(unittest.TestCase):
                 self.assertEqual(installed["signer_sha256"], first["signer_sha256"])
                 self.assertEqual(original.read_bytes(), b"authored")
                 self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
+
+    def test_storage_admission_write_failure_and_explicit_recovery(self):
+        with owner_journey() as journey:
+            journey.run("install-prepare")
+            original = journey.inputs / "import/files/original.txt"
+            original.parent.mkdir(parents=True)
+            original.write_bytes(b"authored")
+            with patch.object(U.shutil, "disk_usage", return_value=SimpleNamespace(free=1)), self.assertRaises(U.StorageRefused):
+                journey.run("release-build")
+            refused = json.loads((journey.inputs / "update-state.json").read_text())
+            self.assertEqual(refused["state"], "ERROR")
+            self.assertEqual(refused["storage"], {"scope": "installer-private", "stage": "reconstruction", "required_bytes": 2 * 1024**3, "available_bytes": 1})
+            self.assertIn("Original inputs and profiles are not deleted by this refusal", refused["message"])
+            self.assertFalse((journey.inputs / "attempt-count.txt").exists())
+            write = U.write_json
+
+            def full_at_ready(path, value):
+                if path.name == "owner-apk-ready.json":
+                    raise OSError(errno.ENOSPC, "synthetic full disk")
+                write(path, value)
+
+            with patch.object(U, "write_json", side_effect=full_at_ready), self.assertRaises(OSError):
+                journey.run("release-build")
+            full = json.loads((journey.inputs / "update-state.json").read_text())
+            self.assertEqual(full["storage"]["reason"], "ENOSPC")
+            self.assertIn("installation capacity is separate", full["message"])
+            self.assertFalse((journey.inputs / "owner-apk-ready.json").exists())
+            self.assertFalse((journey.inputs / "installed-release.json").exists())
+            self.assertEqual(journey.run("release-build")["state"], "READY")
+            installed = install(journey)
+            self.assertTrue(installed["installed_readback_verified"])
+            self.assertEqual(original.read_bytes(), b"authored")
+            self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
