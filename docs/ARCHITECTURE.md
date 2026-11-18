@@ -7999,3 +7999,9 @@ for future editor models. Its top-left normalized contract, explicit clamp and
 rotation are documented beside the source and exercised by host C# fixtures.
 It has no UnityEngine dependency or live touch/HUD/input integration. Caller-owned
 insets and aspect changes are data, not detected device facts.
+
+`TouchLayoutDocument.cs` beside that projection owns immutable authored touch
+profiles and bounded versioned interchange; `TouchLayoutEditor` owns selected
+control drafts, confirm/cancel/reset and bounded session undo/redo. Caller-owned
+persistence is separate from in-memory commits. Neither owner dispatches input,
+changes live controls or claims rendered geometry; see the layout README contract.
