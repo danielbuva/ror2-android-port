@@ -134,7 +134,14 @@ class CheckpointTests(unittest.TestCase):
         original = self.create().snapshot()
         bad = copy.deepcopy(original)
         del bad["stages"][2]["total"]
-        for raw in (b'{"schema":', b"[]", json.dumps(bad).encode()):
+        damaged = [b'{"schema":', b"[]", json.dumps(bad).encode()]
+        for status in ([], {}):
+            for stage in (False, True):
+                malformed = copy.deepcopy(original)
+                target = malformed["stages"][2] if stage else malformed
+                target["status"] = status
+                damaged.append(json.dumps(malformed).encode())
+        for raw in damaged:
             with self.subTest(raw=raw[:20]):
                 checkpoint = self.root / "install-checkpoint.json"
                 checkpoint.write_bytes(raw)
