@@ -40,6 +40,41 @@ public final class OwnerUpdateState {
         if ("release-check".equals(action) || "release-build".equals(action) || "install-prepare".equals(action) || "release-rollback".equals(action)) return "repo/tools/phone-build/owner-apk/updates.py";
         throw new IllegalArgumentException("Unsupported installer action");
     }
+    /** A fresh screen snapshot uses observed owners, never remembered button state. */
+    public static final class Screen {
+        public final boolean check, build, install, prepare, selectInputs, importInputs, pause, resume, cancel, retry, recover, rollback;
+        public final String text;
+        private Screen(OwnerUpdateState model, boolean running, boolean installing, boolean pendingRecovery,
+                       boolean inputsAvailable, String importState, boolean rollbackAvailable, boolean resumable) {
+            boolean idle = !running && !installing && !pendingRecovery;
+            check = idle && model.canCheck();
+            build = idle && (model.canBuild() || "IMPORTED".equals(importState));
+            install = idle && model.canInstall();
+            prepare = idle; selectInputs = idle; importInputs = idle && inputsAvailable;
+            pause = running && !installing && !pendingRecovery;
+            cancel = pause;
+            resume = !installing && !pendingRecovery && (running || (resumable &&
+                (model.phase == Phase.PAUSED || model.phase == Phase.INTERRUPTED || model.phase == Phase.CANCELLED)));
+            retry = idle && model.phase == Phase.ERROR && resumable;
+            recover = !running && !installing && pendingRecovery;
+            rollback = idle && rollbackAvailable;
+            String next = recover ? "Recover and verify retained profile/settings before another operation."
+                : installing ? "Finish Android confirmation or verification; no second installation will start."
+                : install ? "Tap Install for the verified build and Android consent."
+                : retry ? "Retry revalidates retained work; it does not certify installation."
+                : resume && !running ? "Resume revalidates retained work; a ready build may continue to Android installation."
+                : build ? "Build locally from admitted inputs; Android installation may follow reconstruction." : "";
+            text = (model.phase == Phase.ERROR ? "FAILED" : model.phase.toString().replace('_', ' ')) + "\n" + model.message + (next.isEmpty() ? "" : "\n" + next);
+        }
+    }
+    public Screen screen(boolean running, boolean installing, boolean pendingRecovery, boolean inputsAvailable,
+                         String importState, boolean rollbackAvailable, boolean resumable) {
+        return new Screen(this, running, installing, pendingRecovery, inputsAvailable, importState, rollbackAvailable, resumable);
+    }
+    public static boolean resumableAction(String action) {
+        return "import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)
+            || "install-prepare".equals(action) || "release-check".equals(action);
+    }
     public Phase phase() { return phase; }
     public String message() { return message; }
     public boolean busy() {

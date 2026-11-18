@@ -147,7 +147,7 @@ public final class ToolHostActivity extends Activity {
         if ("import".equals(previous)) startImport();
         else if ("release-build".equals(previous) || "release-rollback".equals(previous)) startUpdate(previous);
         else if ("install-prepare".equals(previous) || "release-check".equals(previous)) startUpdate(previous);
-        // Installation always requires the separate explicit Install button, including after reboot.
+        // This does not restart an install-only action; resumed builds retain the service's normal Android installation handoff.
     }
     @Override public void onResume() {
         super.onResume();
@@ -365,7 +365,7 @@ public final class ToolHostActivity extends Activity {
             }
             if (OwnerAlphaInstall.pending(this) && !OwnerInstaller.busy(this) && !OwnerBuildService.isRunning()) model.observe("RECOVERY_REQUIRED", OwnerInstaller.status(this));
             // A killed worker is not still running. Rechecking safely rediscovers the release/cache.
-            if (!OwnerBuildService.isRunning() && model.busy() && !OwnerInstaller.busy(this)) model.observe("ERROR", "Work is not running. Tap Resume to revalidate retained checkpoints.");
+            if (!OwnerBuildService.isRunning() && model.busy() && !OwnerInstaller.busy(this)) model.observe("ERROR", "Work is not running. Tap Retry to revalidate retained checkpoints.");
         } catch (Exception error) { model.observe("ERROR", error.getMessage()); }
         render();
     }
@@ -450,20 +450,23 @@ public final class ToolHostActivity extends Activity {
         return detail.toString();
     }
     private void render() {
-        String phase = model.phase() == OwnerUpdateState.Phase.ERROR ? "FAILED" : model.phase().toString().replace('_', ' ');
         try { flowDetail = phoneProgress(); } catch (Exception error) { flowDetail = "\nPrivate progress unavailable: " + error.getMessage(); }
-        String statusText = phase + "\n" + model.message() + flowDetail;
+        String importState = "";
+        try {
+            File receipt = new File(getFilesDir(), "owner-input/import-state.json");
+            if (receipt.isFile()) importState = readJson(receipt).optString("state");
+        } catch (Exception ignored) { /* Invalid import status is not an admitted build. */ }
+        String previous = OwnerBuildService.action(this);
+        if ("ERROR".equals(OwnerInstaller.state(this))) previous = getSharedPreferences(OwnerBuildService.PREFERENCES, 0).getString("last_build_action", "release-build");
+        OwnerUpdateState.Screen screen = model.screen(OwnerBuildService.isRunning(), OwnerInstaller.busy(this), OwnerAlphaInstall.pending(this),
+            new File(getFilesDir(), "owner-input/install-inputs.json").isFile(), importState, OwnerAlphaInstall.canRollback(this), OwnerUpdateState.resumableAction(previous));
+        String statusText = screen.text + flowDetail;
         if (statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())) statusView.setText(statusText);
-        boolean idle = !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && !OwnerAlphaInstall.pending(this);
-        rollbackButton.setEnabled(idle && OwnerAlphaInstall.canRollback(this));
-        recoveryButton.setEnabled(!OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && OwnerAlphaInstall.pending(this));
-        prepareButton.setEnabled(idle); treeButton.setEnabled(idle); zipButton.setEnabled(idle);
-        importButton.setEnabled(idle && new File(getFilesDir(), "owner-input/install-inputs.json").isFile());
-        pauseButton.setEnabled(OwnerBuildService.isRunning() && !OwnerInstaller.busy(this)); cancelButton.setEnabled(OwnerBuildService.isRunning() && !OwnerInstaller.busy(this));
-        resumeButton.setEnabled(!OwnerInstaller.busy(this)); retryButton.setEnabled(idle && model.phase() == OwnerUpdateState.Phase.ERROR);
-        checkButton.setEnabled(idle && model.canCheck());
-        buildButton.setEnabled(idle && (model.canBuild() || new File(getFilesDir(), "owner-input/import-state.json").isFile()));
-        installButton.setEnabled(idle && model.canInstall());
+        rollbackButton.setEnabled(screen.rollback); recoveryButton.setEnabled(screen.recover);
+        prepareButton.setEnabled(screen.prepare); treeButton.setEnabled(screen.selectInputs); zipButton.setEnabled(screen.selectInputs);
+        importButton.setEnabled(screen.importInputs); pauseButton.setEnabled(screen.pause); cancelButton.setEnabled(screen.cancel);
+        resumeButton.setEnabled(screen.resume); retryButton.setEnabled(screen.retry);
+        checkButton.setEnabled(screen.check); buildButton.setEnabled(screen.build); installButton.setEnabled(screen.install);
     }
     private static File readyApk(Context app) throws Exception {
         File report=new File(app.getFilesDir(),"tool-host-report.json");
