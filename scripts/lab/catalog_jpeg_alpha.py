@@ -12,6 +12,7 @@ from common import game, sha
 
 JPEG = {".jpg", ".jpeg"}
 DXT5_NORMAL = 3
+PLATFORM_ENTRY = re.compile(r"^  - serializedVersion: \d+\n    buildTarget: (\S+)\n(?:    [^\n]*\n)+", re.M)
 
 
 def lossless_pixels(image, usage):
@@ -43,7 +44,21 @@ def texture_importer(text, packed_normal):
     text, dilation = re.subn(r"^  alphaIsTransparency: [01]$", "  alphaIsTransparency: 0", text, flags=re.M)
     if alpha != 1 or dilation != 1:
         raise ValueError("Missing or ambiguous texture alpha importer settings")
-    return text
+    platforms = {entry[1]: entry for entry in PLATFORM_ENTRY.finditer(text)}
+    settings = platforms.get("Android") or platforms["DefaultTexturePlatform"]
+    # The Android automatic ETC2 format quantizes the recovered ramp's alpha.
+    # Preserve all RGBA channels for ordinary textures in this affected cohort.
+    fields = {
+        "buildTarget": "Android",
+        "textureFormat": "4",  # TextureImporterFormat.RGBA32
+        "textureCompression": "0",
+        "crunchedCompression": "0",
+        "allowsAlphaSplitting": "0",
+        "overridden": "1",
+    }
+    android = re.sub(r"^    (\w+): [^\n]*$", lambda line: f"    {line[1]}: {fields[line[1]]}" if line[1] in fields else line[0], settings[0], flags=re.M)
+    start = settings.start() if "Android" in platforms else settings.end()
+    return text[:start] + android + text[settings.end() :]
 
 
 def stage(io, manifest, catalog):
