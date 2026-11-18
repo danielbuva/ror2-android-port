@@ -484,6 +484,44 @@ class ReleaseGraphTests(unittest.TestCase):
         arguments = graph.jobs[name]["arguments"]
         self.assertEqual(arguments[arguments.index("--asset-ripper") + 1], "${input:asset_ripper}")
 
+    def test_fresh_shader_jobs_bind_acquired_templates_and_cache_witnesses(self):
+        graph = G.Graph(ROOT, {})
+        graph.conversion = "recipe/jobs/code.json"
+        graph.jobs[graph.conversion] = {"request": {"sdk_install": "${inputs}/acquired/sdk"}}
+        for filename, flag, embedded in (
+            ("owner-commando-fallback-shaders.json", "--asset-ripper", False),
+            ("owner-player-shaders.json", "--asset-ripper-source", True),
+        ):
+            with self.subTest(filename=filename):
+                job_name = graph.build(G.digest(ROOT / "recipe" / filename))
+                job = graph.jobs[job_name]
+                profile = graph.job_profiles[job_name]
+                if embedded:
+                    profile = profile["tmp_dummy"]
+                root = G.ASSET_RIPPER_SOURCE + "/" + profile["exporter_revision"] + "/"
+                prefix = "" if embedded else G.ASSET_RIPPER_TEMPLATES
+                argv = job["arguments"]
+                self.assertEqual(argv[argv.index(flag) + 1], G.ASSET_RIPPER_SOURCE)
+                self.assertEqual(
+                    set(job["cache_witnesses"]), {*G.SDK_GNU_WITNESSES, root + "LICENSE.md", *(root + prefix + name for name in profile["template_inputs"])}
+                )
+                extractor = "recipe/jobs/owner-sdk-shader-inputs.json"
+                self.assertIn(extractor, job["needs"])
+                self.assertEqual(graph.jobs[extractor]["cache_witnesses"], [G.LINUX_COMPONENT])
+                data = G.Graph.artifact_pin(extractor, "data")["path"]
+                self.assertEqual(argv[argv.index("--compiler-data") + 1], data)
+                command = json.loads(argv[argv.index("--compiler-command") + 1])
+                self.assertEqual(command[0], "${native}/libqemu-x86_64.so")
+                self.assertEqual(command[-1], data + "/Tools/UnityShaderCompiler")
+                self.assertIn("LD_LIBRARY_PATH=" + data + "/Tools:" + G.SDK_GNU_LIBRARIES, command)
+
+        context = graph.build(G.digest(ROOT / "recipe/owner-commando-shader-context.json"))
+        job = graph.jobs[context]
+        extractor = "recipe/jobs/owner-sdk-shader-inputs.json"
+        records = next(dependency for dependency in job["needs"] if dependency != extractor)
+        self.assertIn(extractor, job["needs"])
+        self.assertEqual(job["arguments"][job["arguments"].index("--record-pack") + 1], "${job_directory:" + records + ":receipt}")
+
     def test_texture_jobs_bind_required_pinned_tools(self):
         graph = G.Graph(ROOT, {})
         for profile, bindings in (

@@ -1584,6 +1584,16 @@ input-file hash tokens bind acquired tools without embedding host paths.
 Fresh conversion bundle and shader jobs use the installer-packaged LZ4 worker.
 The dispatcher pins its installed file and includes that hash in consumer cache
 identity. The installer verifies its packaged native tool inventory on launch.
+The shared Shader template reader accepts a revision-scoped staged AssetRipper
+tree. Fresh conversion jobs select that tree under `acquired/asset-ripper`, pin
+template files and retained license notices for cache reuse, and verify the
+recipe's template hashes again before using the text.
+Fresh shader producers share a `sdk_inputs.py --linux-shader` dependency. It
+verifies the acquired Linux SDK archive and extracts the compiler and three
+plugins into their `Data/Tools` layout. The same shader session owner runs this
+compiler through installed QEMU and the acquired GNU runtime, with the pinned
+Mac SDK supplying metadata and includes. The session stops its compiler child
+and retains diagnostics when the job exits.
 Player/shader jobs declare complete serialized outputs; remapping consumes their
 top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the

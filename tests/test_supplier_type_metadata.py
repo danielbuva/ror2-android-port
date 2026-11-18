@@ -33,6 +33,10 @@ class SupplierTypeMetadataTests(unittest.TestCase):
         self.pc, self.sdk, self.legacy, self.public = (self.root / name for name in ("pc", "sdk", "legacy", "public"))
         for directory in (self.pc, self.sdk, self.legacy, self.public):
             directory.mkdir()
+        self.exporter_revision = "a" * 40
+        public_sources = self.public / self.exporter_revision
+        public_sources.mkdir()
+        (public_sources / "LICENSE.md").write_bytes(b"authored license")
         for sdk in (self.sdk, self.legacy):
             for name in ("MacOS/Unity", "Tools/UnityShaderCompiler", "Resources/unity_builtin_extra"):
                 path = sdk / name
@@ -145,7 +149,7 @@ class SupplierTypeMetadataTests(unittest.TestCase):
             sdk=self.sdk_pins(),
             includes_sha256="authored includes",
             template_inputs={},
-            exporter_revision="authored",
+            exporter_revision=self.exporter_revision,
             settings={},
             shaders=[
                 dict(
@@ -160,10 +164,7 @@ class SupplierTypeMetadataTests(unittest.TestCase):
         )
         path = self.profile(profile)
         output = self.root / "post"
-        with (
-            patch.object(A, "postprocessing_tree", side_effect=lambda *a: deepcopy(self.shader)),
-            patch.object(A.subprocess, "check_output", return_value=b"authored license"),
-        ):
+        with patch.object(A, "postprocessing_tree", side_effect=lambda *a: deepcopy(self.shader)):
             result = A.produce_postprocessing(path, profile, P.sha(path), self.pc, self.sdk, self.public, output, self.codec, P.sha(self.codec))
         rows, types = self.assert_pack(output, result, [77, 88, 99])
         self.assertEqual([row["type_id"] for row in rows], [0, 0, 1])
@@ -215,7 +216,7 @@ class SupplierTypeMetadataTests(unittest.TestCase):
             compiler_includes_sha256="authored includes",
             legacy_includes_sha256="authored includes",
             template_inputs={},
-            exporter_revision="authored",
+            exporter_revision=self.exporter_revision,
             settings={"tier0": {}, "caching_preprocessor": False},
             source_filename="fixture.shader",
             outputs=[self.target(1), self.target(2)],
@@ -230,7 +231,6 @@ class SupplierTypeMetadataTests(unittest.TestCase):
         with (
             patch.object(P, "sdk_read", side_effect=lambda image, address, size: addresses.get(address, bytes(size))),
             patch.object(P, "construct", side_effect=lambda *a: deepcopy(self.shader)),
-            patch.object(A.subprocess, "check_output", return_value=b"authored license"),
         ):
             result = A.produce(path, P.sha(path), self.pc, self.sdk, self.legacy, self.public, output, self.codec, P.sha(self.codec))
         rows, types = self.assert_pack(output, result, [77, 77])
