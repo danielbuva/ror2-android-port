@@ -1746,7 +1746,11 @@ in-memory error snapshot remains available; explicit retry revalidates receipts.
 Producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
-foreground operation independently of `ToolHostActivity`. Pending/active admission
+foreground operation independently of `ToolHostActivity`. `OwnerUpdateState` supplies
+Android-free progress presentation: missing/future timestamps never advance the
+live clock, paused/stopped intervals remain frozen, unknown counts stay unavailable,
+and first-failure text explains receipt-revalidating retry without claiming install
+success. Pending/active admission
 coalesces repeated launch actions; foreground/wake-lock/thread startup failure
 releases admission and owned resources for a later explicit retry. The synthetic
 service lifecycle fixture checks cancellation, pending profile recovery and
