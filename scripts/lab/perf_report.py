@@ -46,6 +46,7 @@ def raw_frame_window(first, last, trace):
         last_frame=last["pacing_frames"],
         complete=False,
         percentiles_ms=None,
+        hitch_bursts=None,
     )
     if begin < 0 or end > trace["retained_frames"]:
         result["reason"] = "Raw capture does not cover every frame in this counter window"
@@ -61,8 +62,25 @@ def raw_frame_window(first, last, trace):
         or not math.isclose(sum(durations), last["pacing_total_ms"] - first["pacing_total_ms"], rel_tol=1e-12, abs_tol=1e-5)
     ):
         raise ValueError("Raw durations do not reconcile with frame/duration/hitch counters")
+    bursts = longest = current = 0
+    for ms in durations:
+        if ms > 50:
+            bursts += current == 0
+            current += 1
+            longest = max(longest, current)
+        else:
+            current = 0
+    worst_index = max(range(len(durations)), key=durations.__getitem__)
     result.update(
         complete=True,
+        hitch_bursts=dict(
+            threshold_ms=50,
+            count=bursts,
+            longest_frames=longest,
+            worst_frame=result["first_frame"] + worst_index,
+            worst_frame_ms=durations[worst_index],
+            limitation="Strictly >50 ms consecutive frames within this reconciled window only; boundary bursts may extend outside it. Worst-frame ties use the earliest frame. No causal attribution.",
+        ),
         frames=len(durations),
         total_ms=sum(durations),
         over33ms=window["over33ms"],
@@ -515,6 +533,17 @@ def markdown(report):
                 f"largest gap {fmt(measured['largest_unobserved_gap_seconds'])} s; adjacent changes {measured['adjacent_observed_changes']}."
             )
     sensor_lines.extend(sensors["limitations"])
+    hitch_lines = []
+    for label, raw in (("Whole counter window", report.get("raw_frame_window")), ("Covered tail", tail.get("raw_frame_window"))):
+        bursts = (raw or {}).get("hitch_bursts")
+        if bursts is None:
+            hitch_lines.append(f"{label} hitch bursts: unavailable (no complete reconciled raw window).")
+        else:
+            hitch_lines.append(
+                f"{label} >50 ms hitch bursts: {bursts['count']}; longest {bursts['longest_frames']} frames; "
+                f"worst frame {bursts['worst_frame']} at {fmt(bursts['worst_frame_ms'])} ms."
+            )
+            hitch_lines.append(bursts["limitation"])
     lines = [
         "# Sustained game performance report",
         "",
@@ -531,6 +560,7 @@ def markdown(report):
         quantile_line("Individual-frame p50/p95/p99", report["true_frame_time_percentiles_ms"]),
         quantile_line("Final ten-minute individual-frame p50/p95/p99", tail["true_frame_time_percentiles_ms"]),
         f"Periodic frame-mean p50/p95/p99: {fmt(proxy['p50'])}/{fmt(proxy['p95'])}/{fmt(proxy['p99'])} ms (equal observation weights).",
+        *hitch_lines,
         "Throttling onset: unestablished by this report.",
         "",
         *budget_lines,

@@ -3244,6 +3244,11 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Reconciled raw windows also report strictly >50 ms consecutive hitch bursts,
+longest within-window run and worst absolute frame index (earliest on ties).
+Incomplete raw windows remain unavailable; boundary bursts may extend outside
+the window, and covered-tail observations do not certify the full ten minutes.
+No causal attribution is inferred.
 Its clock/cooling summary reports per-channel observed ranges, missing/gap coverage
 and adjacent observed changes from existing CPU/GPU frequency/limit and cooling
 state samples. Missing channels remain unavailable; valid cooling state zero is
