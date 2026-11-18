@@ -4230,6 +4230,13 @@ working-project staging must hold the host editor lock and batch asset editing,
 verify the prior plugin/generation hashes, and update the local generation marker.
 
 Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R9):
+Its existing comparison JSON includes a local-only `provenance_drift` diagnostic:
+selected paths' project/destination hash and size differences, missing inputs and
+existing destination-extra membership. Counts cover every finding; at most 100
+ordered entries are retained. No contents or absolute roots are emitted. Approved
+candidate overrides may intentionally differ from the retained map; the existing
+comparison/refusal gates remain authoritative. No baseline acceptance or R1–R8
+replay is inferred. Reports are printed locally and must not be published raw.
 `assembly_payload` owns the shared recipe-only DLL/importer generation. R1's
 `assemblies` wrapper retains provenance membership/hash/size comparison before
 project writes. The separate current `owner_assemblies.py` action uses that
