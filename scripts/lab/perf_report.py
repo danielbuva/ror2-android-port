@@ -227,6 +227,72 @@ def camera_profile(session, completed):
     )
 
 
+def energy_summary(samples):
+    """Summarize sampled battery-terminal observations, never device energy use."""
+
+    def numeric(value):
+        return type(value) in (int, float) and math.isfinite(value)
+
+    times = [row["host_seconds"] for row in samples]
+    sources = [row.get("battery_external_power") if type(row.get("battery_external_power")) is bool else None for row in samples]
+    metrics = {key: [] for key in ("power_mw", "charge_uah", "level_percent")}
+    for row in samples:
+        current, voltage = row.get("battery_current_ua"), row.get("battery_voltage_uv")
+        power = current * voltage / 1_000_000_000 if numeric(current) and numeric(voltage) and voltage > 0 else None
+        metrics["power_mw"].append(power if numeric(power) else None)
+        charge, level = row.get("battery_charge_uah"), row.get("battery_level_percent")
+        metrics["charge_uah"].append(charge if numeric(charge) and charge >= 0 else None)
+        metrics["level_percent"].append(level if numeric(level) and 0 <= level <= 100 else None)
+
+    def coverage(values):
+        observed = [time for time, value in zip(times, values) if value is not None]
+        return dict(
+            valid_samples=len(observed),
+            missing_samples=len(values) - len(observed),
+            first_host_seconds=observed[0] if observed else None,
+            last_host_seconds=observed[-1] if observed else None,
+            largest_unobserved_gap_seconds=max(b - a for a, b in zip([times[0], *observed], [*observed, times[-1]])),
+        )
+
+    def delta(values):
+        return values[-1] - values[0] if values[0] is not None and values[-1] is not None else None
+
+    plugged = sum(value is True for value in sources)
+    unplugged = sum(value is False for value in sources)
+    source = (
+        "mixed"
+        if plugged and unplugged
+        else "externally-powered"
+        if plugged == len(sources)
+        else "observed-unplugged"
+        if unplugged == len(sources)
+        else "incomplete"
+    )
+    power = [value for value in metrics["power_mw"] if value is not None]
+    return dict(
+        power_source=source,
+        externally_powered_samples=plugged,
+        unplugged_samples=unplugged,
+        unknown_power_source_samples=len(sources) - plugged - unplugged,
+        observed_power_source_transitions=sum(a is not None and b is not None and a != b for a, b in zip(sources, sources[1:])),
+        power_source_coverage=coverage(sources),
+        coverage={key: coverage(values) for key, values in metrics.items()},
+        signed_battery_terminal_power_mw=dict(
+            sample_mean=statistics.fmean(power) if power else None, minimum=min(power) if power else None, maximum=max(power) if power else None
+        ),
+        charge_change_uah=delta(metrics["charge_uah"]),
+        level_change_percentage_points=delta(metrics["level_percent"]),
+        unplugged_energy_qualified=False,
+        limitations=[
+            "Power is sampled current times voltage at the battery terminals, retaining the source sign convention; it is not total device or wall power.",
+            "Power mean uses equal observation weights, not time weights or integrated energy. Gaps and power-source transitions are not interpolated.",
+            "Charge/level changes are last minus first retained session endpoints only; missing endpoints remain unavailable. Gauge resets or recalibration are not distinguished from charge changes.",
+            "Observed-unplugged means every retained power-source sample was false, not proof of uninterrupted unplugged operation between samples. External power may coexist with battery discharge.",
+            "These observations do not qualify an unplugged energy budget or establish causal thermal throttling.",
+        ],
+    )
+
+
 def analyze(session, thermal, raw_trace=None, completed=None):
     samples = session["samples"]
     if len(samples) < 2:
@@ -293,6 +359,7 @@ def analyze(session, thermal, raw_trace=None, completed=None):
         cpu_frame_ms=distribution([r.get("cpu_frame_ms") for r in samples]),
         gpu_frame_ms=distribution([r.get("gpu_frame_ms") for r in samples]),
         camera_profile=camera_profile(session, completed) if completed is not None else None,
+        energy=energy_summary(samples),
         thermal=dict(
             samples=len(heat),
             max_gap_seconds=max(gaps) if gaps else None,
@@ -314,7 +381,7 @@ def analyze(session, thermal, raw_trace=None, completed=None):
             "Five-minute thermal bins align snapshot UTC with thermal UTC; runtime counter window uses first/last host observations.",
             "Final ten-minute counters use the first retained observation inside the last 600 host seconds; uncovered boundary time is reported, never interpolated.",
             "Thermal exposure uses left-sample hold only across gaps <=1 s; uncovered boundaries and longer gaps are unmeasured.",
-            "This report does not attribute clock changes to thermal limits or calculate battery-terminal power. Unplugged drain requires an unplugged run.",
+            "This report does not attribute clock changes to thermal limits. Battery-terminal observations do not qualify an unplugged energy budget.",
         ],
     )
     report["proposed_pacing_budget"] = dict(
@@ -384,6 +451,20 @@ def markdown(report):
         for name, metric in camera["metrics"].items():
             camera_lines.append(f"| {name} | {fmt(metric['weighted_mean'])} | {metric['samples']} | {metric['positive_windows']} / {metric['windows']} |")
         camera_lines += ["", *camera["limitations"]]
+    energy = report["energy"]
+    energy_lines = [
+        "## Battery observations (not energy qualification)",
+        f"Power source: {energy['power_source']}; external power observed in {energy['externally_powered_samples']} samples, "
+        f"unplugged in {energy['unplugged_samples']}, unknown in {energy['unknown_power_source_samples']}; "
+        f"adjacent observed transitions: {energy['observed_power_source_transitions']}.",
+        f"Signed battery-terminal power sample mean: {fmt(energy['signed_battery_terminal_power_mw']['sample_mean'])} mW (equal observation weights).",
+        f"Endpoint charge change: {fmt(energy['charge_change_uah'])} uAh; level change: {fmt(energy['level_change_percentage_points'])} percentage points (last minus first).",
+    ]
+    for name, measured in {"power_source": energy["power_source_coverage"], **energy["coverage"]}.items():
+        energy_lines.append(
+            f"{name}: {measured['valid_samples']} valid / {measured['missing_samples']} missing samples; largest unobserved gap {fmt(measured['largest_unobserved_gap_seconds'])} s."
+        )
+    energy_lines.extend(energy["limitations"])
     lines = [
         "# Sustained game performance report",
         "",
@@ -405,6 +486,8 @@ def markdown(report):
         *budget_lines,
         "",
         *camera_lines,
+        "",
+        *energy_lines,
         "",
         "| Start (min) | Samples | Median FPS | CPU ms | GPU ms | CPU C | GPU C | Battery C | Enemies |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
