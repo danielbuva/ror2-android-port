@@ -294,6 +294,45 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(Path(first["outputs"]["payload/authored"]).read_text(), "authored output")
         self.assertEqual((dispatcher.runtime / "repo").resolve(), repo)
 
+    def test_incremental_cache_invalidates_identity_dependencies_and_interrupted_receipt(self):
+        release = copy.deepcopy(self.release)
+        dependencies = next(iter(release["entries"].values()))
+        release["entries"] = {"payload/one": dict(dependencies), "payload/two": dict(dependencies)}
+        cache = self.inputs / "cache"
+        context = {key: self.request[key] for key in ("application_id", "installed_version", "installer_version")}
+        calls = []
+        content = {"payload/one": "one", "payload/two": "two"}
+
+        def produce(name, dependencies, output):
+            calls.append(name)
+            output.write_text(content[name])
+
+        options = dict(**context, input_sha256="c" * 64, root=cache, produce=produce)
+        U.RELEASE.rebuild(release, **options)
+        self.assertEqual(U.changed_entries(release, cache, "c" * 64), [])
+        # Changed source dependency must invalidate even when old output hashes match.
+        key = next(iter(release["entries"]["payload/one"]))
+        release["entries"]["payload/one"][key] = "d" * 64
+        content["payload/one"] = "one revised"
+        self.assertEqual(U.changed_entries(release, cache, "c" * 64), ["payload/one"])
+        before = (cache / "release-cache.json").read_bytes()
+        with patch.object(U.RELEASE.ATOMIC, "write_json", side_effect=OSError("synthetic receipt interruption")):
+            with self.assertRaisesRegex(OSError, "receipt interruption"):
+                U.RELEASE.rebuild(release, **options)
+        self.assertEqual((cache / "release-cache.json").read_bytes(), before)
+        self.assertEqual((cache / "payload/one").read_text(), "one revised")
+        calls.clear()
+        resumed = U.RELEASE.rebuild(release, **options)
+        self.assertEqual(calls, ["payload/one"])
+        self.assertEqual(resumed["reused"], ["payload/two"])
+        # Missing output and same-length byte corruption are independently refused.
+        (cache / "payload/one").unlink()
+        (cache / "payload/two").write_text("TWO")
+        self.assertEqual(U.changed_entries(release, cache, "c" * 64), ["payload/one", "payload/two"])
+        self.assertEqual(U.RELEASE.rebuild(release, **options)["rebuilt"], ["payload/one", "payload/two"])
+        self.assertEqual(U.changed_entries(release, cache, "e" * 64), ["payload/one", "payload/two"])
+        self.assertEqual(U.RELEASE.rebuild(release, **dict(options, input_sha256="e" * 64))["reused"], [])
+
     def test_producer_refusal_keeps_existing_output_and_installed_receipt(self):
         archive = self.root / "tools.zip"
         release, index, bundle = fixture(b"raise RuntimeError('authored failure')\n")
