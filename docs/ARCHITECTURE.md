@@ -2123,6 +2123,14 @@ inventory-bound bank snapshot and writes a new bank and receipt exclusively.
 Staging and both runtime pins bind the resulting receipt and bank index.
 The converter compares the local roster with the signed names before
 exposing the stage for APK assembly.
+`scripts/lab/phone_sdk_compiler.py` owns direct SDK Roslyn invocation for
+signed Android compilation. It validates the installed compiler and AOT core
+library, writes response files and logs in the managed scratch tree, and uses
+the installed .NET 8 launcher for Roslyn. The raw producer compiles authored
+Cecil transforms for the installed .NET 10 runtime and verifies the existing
+transformed assemblies against their pins. The managed owner reuses the
+transformed providers and compiles audio and gameplay against Android SDK
+references, with the package producer retaining IL postprocessing ownership.
 
 `tools/phone-build/owner-code/legacy_init.py` owns current experimental
 historical Init-receipt compatibility. It requires the full accepted owner
