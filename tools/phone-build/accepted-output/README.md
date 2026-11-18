@@ -1597,24 +1597,26 @@ ADB, installation, storage admission or display operations: those remain with
 the caller and its device lease. The ordinary app's ability to read the required
 kernel sensors and sustained thermal behaviour remain device gates.
 
-The default profile pauses the owned process group and independently sessioned
+The supervisor pauses the owned process group and independently sessioned
 codec/compiler descendants at CPU/GPU >= 70 C, resuming only when all readable
-CPU/GPU zones are <= 55 C. Explicit `--profile thor` selects 75/60 C. PID/start
+CPU/GPU zones are <= 55 C. Any readable CPU, GPU or SoC zone at >= 85 C also
+pauses the whole family until the hottest zone falls below 70 C. If this
+ceiling holds for 15 min, the supervisor kills the paused family. PID/start
 identities protect descendant signals. Before startup, taskset restricts the
 producer to up to two allowed minimum-capacity CPUs (one allowed CPU if capacity
 information is unavailable); supported numerical/.NET runtime worker settings
 are limited to two. The selected CPUs are passed as a hexadecimal mask for Android Toybox versions
 without the `-c` CPU-list option. Affinity failure refuses production.
 
-Admission requires readable CPU telemetry and observed CPU/GPU/battery/skin
-<= 50 C. Callers must additionally require battery <= 35 C, level <= 85%,
-and refuse charging status 2 at level >= 80% before each job. The 250 ms sampler continues during pauses and aborts on a gap > 1 s,
+Admission requires readable CPU telemetry, CPU/GPU/skin <= 50 C, battery
+<= 35 C, and SoC below the ceiling. Callers also check battery charge level and
+current before launch. The 250 ms sampler continues during pauses and aborts on a gap > 1 s,
 CPU/GPU > 95 C for >= 3 s per zone, or battery >= 43 C. Skin is a metric.
 Unavailable sentinel zones and unrelated PMIC zones are excluded. Runtime limits
 are unchanged by duty cycling. Deadline/cancellation/error cleanup kills the
-owned family without resuming a paused workload. Receipts retain pause count,
-seconds, sampled time above 80 C, CPU/GPU peak and its phase (admission,
-production or paused), affinity, exit and cleanup failures. An adjacent atomic
+owned family without resuming a paused workload. Receipts retain total and
+ceiling pause counts and durations, sampled time above 80 C, CPU/GPU and SoC
+peaks and their phases, affinity, exit and cleanup failures. An adjacent atomic
 BOOTTIME pause clock, passed through `ROR2LAB_BUILD_PAUSE_CLOCK`, preserves the
 existing native compiler active-time deadline contract. This host-tested owner
 does not qualify source equivalence, final installation or phone thermal safety.

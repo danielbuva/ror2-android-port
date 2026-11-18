@@ -161,6 +161,77 @@ class PublicBundleTests(unittest.TestCase):
     def build(self, name="public.zip"):
         return PUBLIC.build_bundle(self.root, self.plan, Path(self.temporary.name) / name)
 
+    def test_reviewed_unity_source_is_published_and_verified(self):
+        def recipe(name):
+            return json.loads((ROOT / "recipe" / name).read_text())
+
+        scene = recipe("owner-default-scene.json")["public_inputs"]["bootstrap"]
+        editor = "smoke/ProjectSettings/EditorSettings.asset"
+        files = {
+            scene["path"]: scene["sha256"],
+            editor: recipe("owner-player-shaders.json")["authored_inputs"][editor]["sha256"],
+        }
+        files.update(
+            (row["path"], row["sha256"]) for name, row in recipe("owner-player-managers.json")["public_inputs"].items() if name.startswith("settings_")
+        )
+        files.update((row["source"], row["source_sha256"]) for row in recipe("authored-additions.json")["assets"])
+        self.assertEqual(files, PUBLIC.AUTHORED_UNITY_SOURCE_SHA256)
+        job = "recipe/owner-default-scene.json"
+        plan = {
+            "schema": 1,
+            "files": [],
+            "entries": {"apk/player": {"recipe_files": [job], "producer_files": sorted(files), "job": job}},
+        }
+        archive = Path(self.temporary.name) / "unity.zip"
+        result = PUBLIC.build_bundle(ROOT, plan, archive)
+        updates = PUBLIC._module("test_authored_unity_updates", ROOT / "tools/phone-build/owner-apk/updates.py")
+        body = dict(release_body(), bundle_sha256=result["bundle_sha256"], entries=result["entries"], minimum_installer_version=4)
+        verified = archive.with_name("verified")
+        with self.assertRaisesRegex(ValueError, "require installer version 5"):
+            updates.extract_bundle(archive, verified, body)
+        self.assertFalse(verified.exists())
+        body["minimum_installer_version"] = 5
+        index = updates.extract_bundle(archive, verified, body)
+        for name, digest in files.items():
+            with self.subTest(name=name):
+                self.assertEqual(index["files"][name], digest)
+                self.assertEqual(PUBLIC.RELEASE.digest(verified / name), digest)
+
+    def test_same_installer_verifies_a_later_reviewed_unity_revision(self):
+        name = "smoke/Assets/Bootstrap.unity"
+        file = self.root / name
+        file.parent.mkdir(parents=True)
+        file.write_bytes(b"synthetic reviewed revision\n")
+        digest = PUBLIC.RELEASE.digest(file)
+        self.commit()
+        self.plan["entries"]["apk/a.txt"]["producer_files"].append(name)
+        with patch.dict(PUBLIC.AUTHORED_UNITY_SOURCE_SHA256, {name: digest}):
+            result = self.build()
+        self.assertNotEqual(PUBLIC.AUTHORED_UNITY_SOURCE_SHA256[name], digest)
+
+        body = dict(release_body(), bundle_sha256=result["bundle_sha256"], entries=result["entries"], minimum_installer_version=5)
+        archive = Path(self.temporary.name) / "public.zip"
+        verified = archive.with_name("verified")
+        updates = PUBLIC._module("test_later_authored_unity_updates", ROOT / "tools/phone-build/owner-apk/updates.py")
+        self.assertEqual(updates.extract_bundle(archive, verified, body)["files"][name], digest)
+        self.assertEqual(PUBLIC.RELEASE.digest(verified / name), digest)
+
+    def test_unreviewed_unity_sources_are_refused_at_publication(self):
+        for name in (
+            "smoke/Assets/Bootstrap.unity",
+            "smoke/Assets/Other.unity",
+            "smoke/ProjectSettings/Other.asset",
+            "tools/unity/runtime/shaders/Other.shader",
+            "tools/unity/runtime/shaders/Other.cginc",
+        ):
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("unreviewed content")
+            self.commit()
+            self.plan["files"] = [name]
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "reviewed"):
+                self.build()
+
     def test_large_output_cohort_shares_closures_in_the_extracted_index(self):
         existing = self.plan["entries"]["apk/a.txt"]
         self.plan["entries"].update({f"apk/assets/audio/{i}.bnk": existing for i in range(40)})
