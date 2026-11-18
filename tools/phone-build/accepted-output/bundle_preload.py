@@ -727,7 +727,128 @@ def check_preload_seeds(required, endpoint_record):
             raise ValueError("Required asset group root or preload root absent")
 
 
-def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_record=None):
+def external_prefab_preloads(native, donor, file_id, referenced, schemas):
+    """Qualify the prefab hierarchy for references into an advertised donor prefab."""
+    catalog = module("catalog_complete")
+    _, layout, objects = native.members[donor]
+
+    def class_id(pid):
+        return layout["types"][objects[pid]["type_id"]]["class_id"]
+
+    def fields(pid):
+        _, typ, body = native.record(donor, (0, pid))
+        return pointers(body, typ, schemas)
+
+    def local(pointer):
+        if pointer is None or pointer[0] or pointer[1] not in objects:
+            raise ValueError("External prefab hierarchy requires a produced local object")
+        return pointer[1]
+
+    def owner(parts):
+        return local(parts.get(("m_GameObject",), parts.get(("#374",))))
+
+    containers = [pid for pid in objects if class_id(pid) == 142]
+    owners, preloads = {}, {}
+    if not containers or not referenced:
+        return owners, preloads
+    (container,) = containers
+    rows, _ = catalog.containers(native.record(donor, (0, container))[2])
+    advertised = {ptr[1]: set(extent) for path, ptr, extent in rows if path.endswith(".prefab") and not ptr[0] and class_id(ptr[1]) == 1}
+    if not advertised:
+        return owners, preloads
+
+    from functools import lru_cache
+
+    @lru_cache(maxsize=None)
+    def components(go):
+        if class_id(go) != 1:
+            raise ValueError("External prefab component owner is not a GameObject")
+        return [local(ptr) for field, ptr in fields(go).items() if field[:2] == ("m_Component", "Array") and field[-1] == "component"]
+
+    @lru_cache(maxsize=None)
+    def hierarchy(go):
+        transforms = [pid for pid in components(go) if class_id(pid) in (4, 224)]
+        if len(transforms) != 1:
+            raise ValueError("External prefab GameObject must own one Transform")
+        transform = transforms[0]
+        parts = fields(transform)
+        if owner(parts) != go:
+            raise ValueError("External prefab Transform ownership differs")
+        father = parts[("m_Father",)]
+        parent = local(father) if father != (0, 0) else None
+        children = [local(ptr) for field, ptr in parts.items() if field[0] in ("m_Children", "#83")]
+        return transform, parent, children
+
+    for pid in referenced:
+        if class_id(pid) == 1:
+            go = pid
+        else:
+            typ = layout["types"][objects[pid]["type_id"]]
+            if typ["tree"] not in schemas:
+                schemas[typ["tree"]] = A.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+            if not any(field.name in ("m_GameObject", "#374") for field in schemas[typ["tree"]].children):
+                continue
+            parts = fields(pid)
+            pointer = parts.get(("m_GameObject",), parts.get(("#374",)))
+            if pointer == (0, 0):
+                continue
+            go = local(pointer)
+            if pid not in components(go):
+                raise ValueError("External prefab component membership differs")
+        visited = set()
+        while True:
+            transform, parent, _ = hierarchy(go)
+            if parent is None:
+                break
+            if go in visited:
+                raise ValueError("External prefab has cyclic Transform ancestry")
+            visited.add(go)
+            go = owner(fields(parent))
+            parent_transform, _, children = hierarchy(go)
+            if parent != parent_transform or transform not in children:
+                raise ValueError("External prefab Transform ancestry differs")
+        if go in advertised and pid != go:
+            owners[file_id, pid] = go
+
+    for root in set(owners.values()):
+        members, behaviours = set(), []
+        queue = [root]
+        while queue:
+            go = queue.pop()
+            if go in members:
+                raise ValueError("External prefab hierarchy repeats a GameObject")
+            members.add(go)
+            transform, _, children = hierarchy(go)
+            for child in children:
+                child_go = owner(fields(child))
+                child_transform, parent, _ = hierarchy(child_go)
+                if (child_transform, parent) != (child, transform):
+                    raise ValueError("External prefab child Transform differs")
+                queue.append(child_go)
+            for component in components(go):
+                members.add(component)
+                if component != transform:
+                    behaviours.append((go, component))
+        dependencies = {(file_id, pid) for pid in members}
+        for go, component in behaviours:
+            parts = fields(component)
+            if owner(parts) != go:
+                raise ValueError("External prefab component ownership differs")
+            if class_id(component) == 114:
+                script = parts.get(("m_Script",), parts.get(("#490",)))
+                if script == (0, 0):
+                    continue
+                script_pid = local(script)
+                _, typ, body = native.record(donor, (0, component))
+                native.managed_identity(donor, typ, body)
+                dependencies.add((file_id, script_pid))
+        if not {(0, pid) for _, pid in dependencies}.issubset(advertised[root]):
+            raise ValueError("External prefab hierarchy or script missing from donor preload extent")
+        preloads[root] = dependencies
+    return owners, preloads
+
+
+def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_record=None, prefab_owners=None, prefab_preloads=None):
     """Frame grouped preloads from the emitter's fully parsed body graph."""
     validate_graph(graph, len(selected["externals"]))
     owners = external_owners(selected, sources, {})
@@ -741,7 +862,14 @@ def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_rec
     stream.write(bytes(4))
     preload_count, containers = 0, []
     if emission_cache is not None:
-        scope = EmissionCache.key(dict(code=O.B.sha(Path(__file__)), ranks=sorted(ranks.items())))
+        scope = EmissionCache.key(
+            dict(
+                code=O.B.sha(Path(__file__)),
+                ranks=sorted(ranks.items()),
+                prefab_owners=sorted((prefab_owners or {}).items()),
+                prefab_preloads=[(root, sorted(entries)) for root, entries in sorted((prefab_preloads or {}).items())],
+            )
+        )
         node_keys = {
             identity: EmissionCache.key([sorted(edges), [(pointer, owners.get(pointer)) for pointer in sorted(edges) if pointer[0] and pointer[1]]])
             for identity, edges in graph.items()
@@ -765,6 +893,9 @@ def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_rec
             packed = emission_cache.get("groups", key)
         if packed is None:
             dependencies = closure(graph, seeds, owners) | external
+            if prefab_owners:
+                for root in {prefab_owners[ptr] for ptr in dependencies if ptr in prefab_owners}:
+                    dependencies.update(prefab_preloads[root])
             if any(file_id not in ranks for file_id, _ in dependencies):
                 raise ValueError("Prefab preload references an absent serialized file")
             ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
@@ -1983,7 +2114,7 @@ def repack_canonical_aliases(
             # An advertised managed root remains a duplicate, while its consumers
             # now use the canonical instance. Loading that address must also load
             # the canonical instance and its script, just like a direct PPtr.
-            # Do not walk unrelated external prefab graphs or change containers.
+            # Preserve the advertised root and its local ownership fields.
             preload_required = copy.deepcopy(required)
             skin_links = retained_skin_preloads(native, member, canonical["member"], required["asset_groups"], selected_records, schemas)
             skins_by_root = {}
@@ -2032,7 +2163,20 @@ def repack_canonical_aliases(
                     typ,
                 )
 
-            replacements[container] = produce_graph(preload_required, graph, {}, emission_cache=emission_cache, endpoint_record=preload_endpoint)
+            donor = canonical["member"]
+            donor_id = externals.index(donor) + 1
+            referenced = {pid for edges in graph.values() for fid, pid in edges if fid == donor_id and pid}
+            referenced.update(seed[2] for group in preload_required["asset_groups"] for seed in group.get("preload_roots", []) if seed[1] == donor)
+            prefab_owners, prefab_preloads = external_prefab_preloads(native, donor, donor_id, referenced, schemas)
+            replacements[container] = produce_graph(
+                preload_required,
+                graph,
+                {},
+                emission_cache=emission_cache,
+                endpoint_record=preload_endpoint,
+                prefab_owners=prefab_owners,
+                prefab_preloads=prefab_preloads,
+            )
             revised = copy.deepcopy(layout)
             offset = 0
             for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
@@ -2102,6 +2246,7 @@ def repack_canonical_aliases(
             sha256=O.B.sha(target),
             bytes=target.stat().st_size,
             canonical_roots=len(mapping),
+            external_prefab_preloads={str(root): len(entries) for root, entries in prefab_preloads.items()},
             retained_skin_preloads={str(pid): roots for pid, roots in skin_links.items()},
             preserved_reciprocal_owner_fields=len(ownership),
             changed_fields=len(changes),

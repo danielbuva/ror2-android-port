@@ -249,7 +249,12 @@ preloads without adding catalog entries or a runtime owner.
 Canonical repack also seeds each aliased managed asset group's canonical root
 and its actual MonoScript from the pinned producer bundle. The advertised
 duplicate remains unchanged; loading its address preloads the instance now used
-by consumers. Unrelated external prefab graphs are not traversed.
+by consumers. When a group reaches a child GameObject or component in the
+canonical bundle, the repack follows reciprocal Transform links to its
+advertised prefab root. It includes that prefab hierarchy, its components and
+their bound MonoScripts in the consumer preload interval after checking those
+records against the donor interval. The group cache includes this ownership
+map and the qualified dependencies.
 For ModelSkinController PPtrs from that producer into the emitted bundle,
 canonical repack also admits retained SkinDefs into their source-matched asset
 groups. It qualifies the native type and actual MonoScript, keeps the advertised
