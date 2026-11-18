@@ -26,6 +26,47 @@ INSTALLED_BUNDLE_CODEC = dict(
     sha256="${native_sha256:libbundlelz4.so}",
     bytes="${native_bytes:libbundlelz4.so}",
 )
+TEXTURE_NATIVE = {
+    "jpeg_codec": "libtexture-jpeg.so",
+    "etc_codec": "libtexture-etc.so",
+}
+TEXTURE_GUEST = "${inputs}/acquired/texture-sdk/"
+TEXTURE_GUEST_LIB = "linux/lib/x86_64-linux-gnu/"
+TEXTURE_GUEST_FILES = {
+    "etccompress.so": "4dc31e0bc2591141648b238fa158fe700dd37c13f62fe3f165618ba85c1a2293",
+    "texture-sdk-codec": "ab2e7439ff7ddf2319cdb06c8a04ad188503915a3b5831504b80e9b6a45beb6a",
+    "linux/lib64/ld-linux-x86-64.so.2": "1c654e88d721c9ac659b48400d20b5310ead8c6d15eeaf695d507d00d59ef490",
+    TEXTURE_GUEST_LIB + "ld-linux-x86-64.so.2": "1c654e88d721c9ac659b48400d20b5310ead8c6d15eeaf695d507d00d59ef490",
+    TEXTURE_GUEST_LIB + "libc.so.6": "091d7280857c4efff84c850d17ef263a0cae66a572304543fe3d550dfc398231",
+    TEXTURE_GUEST_LIB + "libdl.so.2": "df5973c718b4ee540cdd4400e19e90182ab5f3bac2148c0c9f3bb92eb6af3121",
+    TEXTURE_GUEST_LIB + "libgcc_s.so.1": "2d771c2e232fce107c7ec7f9a64b9a804e6d6737063088a2d8096b149a0af8cd",
+    TEXTURE_GUEST_LIB + "libm.so.6": "5461e535328078fb72f25f7ca2bf36bc71c415bbf573ccdfa289a7b796ddfdd3",
+    TEXTURE_GUEST_LIB + "libpthread.so.0": "9807a603f7e37097a442126303e0705a85f38ad4926db8eaf5db4befad118e11",
+}
+
+
+def texture_sdk_request():
+    qemu = "libqemu-x86_64.so"
+    pixels = "libtexture-pixels.so"
+    return {
+        "command": [
+            "${native}/" + qemu,
+            "-L",
+            TEXTURE_GUEST + "linux",
+            "-E",
+            "LD_LIBRARY_PATH=" + TEXTURE_GUEST + TEXTURE_GUEST_LIB.rstrip("/"),
+            "-E",
+            "LC_ALL=C",
+            TEXTURE_GUEST + "texture-sdk-codec",
+            TEXTURE_GUEST + "etccompress.so",
+        ],
+        "environment": {},
+        "pixels": "${native}/" + pixels,
+        "inputs": {
+            **{"${native}/" + name: "${native_sha256:" + name + "}" for name in (qemu, pixels, "libc++_shared.so")},
+            **{TEXTURE_GUEST + name: pin for name, pin in TEXTURE_GUEST_FILES.items()},
+        },
+    }
 
 
 def digest(path):
@@ -210,6 +251,7 @@ class Graph:
         phase_arguments = self.player_arguments(providers) if producer == "player_data" else []
         needs = list(providers.values())
         request = None
+        witnesses = []
         arguments = ["--profile", "${repo}/" + path, "--profile-sha256", pin, "--output", "${output}"]
         if producer in {
             "object_produce",
@@ -271,7 +313,18 @@ class Graph:
                 bindings.append("sdk_toolchain")
             for binding in bindings:
                 flag = "--" + binding.replace("_", "-")
-                arguments += [flag, "${input:" + binding + "}", flag + "-sha256", "${input_sha256:" + binding + "}"]
+                if not self.conversion:
+                    path_token, pin_token = "${input:" + binding + "}", "${input_sha256:" + binding + "}"
+                elif binding == "sdk_toolchain":
+                    request = texture_sdk_request()
+                    witnesses.extend(TEXTURE_GUEST + name for name in TEXTURE_GUEST_FILES)
+                    path_token, pin_token = "${request}", "${request_sha256}"
+                else:
+                    installed = TEXTURE_NATIVE[binding]
+                    path_token, pin_token = "${native}/" + installed, "${native_sha256:" + installed + "}"
+                    if binding == "etc_codec" and "sdk_toolchain" not in bindings:
+                        witnesses.append("${native}/libc++_shared.so")
+                arguments += [flag, path_token, flag + "-sha256", pin_token]
         if producer in {"object_produce", "shader_prefab", "payload_shader_records", "shader_produce"} and "original_bundle" not in profile:
             codec = INSTALLED_BUNDLE_CODEC if self.conversion else dict(path="${input:codec}", sha256="${input_sha256:codec}")
             arguments += ["--codec", codec["path"], "--codec-sha256", codec["sha256"]]
@@ -375,6 +428,8 @@ class Graph:
         self.jobs[name] = {"schema": 1, "script": PREFIX + producer + ".py", "arguments": arguments, "needs": needs, "outputs": outputs, "artifacts": artifacts}
         if request is not None:
             self.jobs[name]["request"] = request
+        if witnesses:
+            self.jobs[name]["cache_witnesses"] = witnesses
         self.profile_files[name] = path
         self.job_profiles[name] = profile
         return name
