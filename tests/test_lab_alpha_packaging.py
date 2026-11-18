@@ -4,6 +4,7 @@ import copy
 import importlib.util
 import io
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -44,6 +45,18 @@ def bound(version=1, publisher=1, purpose="update", prior=None):
 
 
 class AlphaPackagingTests(unittest.TestCase):
+    def test_acquisition_creates_nested_directories_before_adb_sync(self):
+        phone = Mock()
+        source = Path("owned game files")
+        target = "/sdcard/owned-fixture/Supported"
+        paths = ["Root.exe", "Game Data/Nested/first", "Game Data/Nested/second", "Game Data/Other"]
+        ACQUISITION.stage_folder(phone, source, paths, target)
+
+        mkdir, push = phone.command.call_args_list
+        self.assertEqual(mkdir.args[0], "shell")
+        self.assertEqual(shlex.split(mkdir.args[1]), ["mkdir", "-p", target, f"{target}/Game Data", f"{target}/Game Data/Nested"])
+        self.assertEqual(push.args, ("push", source / "Game Data", source / "Root.exe", target + "/"))
+
     def test_acquisition_hash_listing_preserves_manifest_relative_names(self):
         digest = "a" * 64
         valid = f"{digest}  ./Dir with spaces/Game Data\n".encode()

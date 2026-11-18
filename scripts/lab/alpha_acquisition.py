@@ -49,6 +49,15 @@ def hash_listing(raw):
     return result
 
 
+def stage_folder(phone, source, paths, target):
+    # ADB's file sync cannot create nested directories under app-specific external storage.
+    parents = sorted({str(Path(path).parent) for path in paths} - {"."})
+    directories = [target, *(f"{target}/{parent}" for parent in parents)]
+    phone.command("shell", shlex.join(["mkdir", "-p", *directories]), label="acquisition-cohort-directory")
+    children = sorted({path.split("/")[0] for path in paths})
+    phone.command("push", *(source / child for child in children), target + "/", label="acquisition-stage-folder", timeout=900)
+
+
 def selected_document(preferences, kind, relative_path):
     values = {entry.get("name"): entry.text for entry in ET.fromstring(preferences).findall("string")}
     uri = urlsplit(values.get("source_uri") or "")
@@ -129,10 +138,7 @@ class Acquisition:
         phone.shell("mkdir", self.stage_root, label="acquisition-owned-external-directory")
         self.owned_stage = True
         for folder, entry in (("Supported", self.current), ("Older", self.older)):
-            target = self.stage_root + "/" + folder
-            phone.shell("mkdir", target, label="acquisition-cohort-directory")
-            children = sorted({path.split("/")[0] for path in entry[2]})
-            phone.command("push", *(entry[0] / child for child in children), target + "/", label="acquisition-stage-folder", timeout=900)
+            stage_folder(phone, entry[0], entry[2], self.stage_root + "/" + folder)
         phone.command("push", self.archive, self.stage_root + "/Supported.zip", label="acquisition-stage-zip", timeout=900)
         self.staged_unchanged(phone)
         phone.storage_reserve = 20 * GIB + self.apk.stat().st_size + 2 * self.current[3]
