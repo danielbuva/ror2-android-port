@@ -11,6 +11,14 @@ hierarchy and slot count before reporting component and script PPtrs, their
 resolved members and whether Android listed the owning bundles as loaded.
 Ordinary template preparation still enforces its original checks.
 
+For retained staged prefabs, `accepted-output/staged_projectiles.py` updates the
+projectile components from the current object recipe, original prototype, SDK
+base schema and produced player registry. It checks reciprocal ownership by
+the projectile GameObject and its controller, retains the container preloads,
+and reads back every object, member flag, resource and serialized table before
+publishing the output bundle. Fresh prefab production uses the same fieldless
+component recipe through `object_produce.py`.
+
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
 `OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns
