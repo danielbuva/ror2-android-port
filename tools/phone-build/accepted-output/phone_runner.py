@@ -19,6 +19,11 @@ class AdmissionPending(RuntimeError):
     """Valid sensors require more idle cooling before producer startup."""
 
 
+SOC_PAUSE_CELSIUS = 85
+SOC_RESUME_BELOW_CELSIUS = 70
+SOC_PAUSE_TIMEOUT_SECONDS = 900
+
+
 class ThermalDutyCycle:
     def __init__(self, profile="nova"):
         self.high, self.low = {"nova": (70, 55), "thor": (70, 55)}[profile]
@@ -32,22 +37,32 @@ class ThermalDutyCycle:
         self.time_above_80_seconds = 0.0
         self.previous_above_80 = False
         self.peak_phase = None
+        self.duty_paused = False
+        self.ceiling_since = None
+        self.ceiling_seconds = 0.0
+        self.ceiling_pauses = 0
+        self.peak_soc = None
+        self.peak_soc_phase = None
 
     def observe(self, zones, now, admission=False):
         if self.last is not None and now - self.last > 1:
             raise RuntimeError("thermal sample gap above 1 s")
         gap = now - self.last if self.last is not None else 0
         self.last = now
-        processors = [v for kind, v in zones.values() if kind in ("cpu", "gpu")]
-        if not processors or not any(kind == "cpu" for kind, _ in zones.values()):
+        if not any(kind == "cpu" for kind, _ in zones.values()):
             raise RuntimeError("CPU telemetry unavailable")
+        processor = max(v for kind, v in zones.values() if kind in ("cpu", "gpu"))
+        soc = max((v for kind, v in zones.values() if kind == "soc"), default=None)
+        hottest = max(processor, soc) if soc is not None else processor
         phase = "admission" if admission else "paused" if self.paused else "production"
-        if max(processors) > self.peak:
-            self.peak, self.peak_phase = max(processors), phase
+        if processor > self.peak:
+            self.peak, self.peak_phase = processor, phase
+        if soc is not None and (self.peak_soc is None or soc > self.peak_soc):
+            self.peak_soc, self.peak_soc_phase = soc, phase
         if not admission:
             if self.previous_above_80:
                 self.time_above_80_seconds += gap
-            self.previous_above_80 = max(processors) > 80
+            self.previous_above_80 = hottest > 80
         for name, (kind, value) in zones.items():
             if not math.isfinite(value) or not 0 < value < 150:
                 raise RuntimeError("invalid thermal value: " + name)
@@ -61,14 +76,33 @@ class ThermalDutyCycle:
                 else:
                     self.hot_since.pop(name, None)
         if admission:
-            if any(value > (35 if kind == "battery" else 50) for kind, value in zones.values()):
+            if any(value > (35 if kind == "battery" else 50) for kind, value in zones.values() if kind != "soc"):
                 raise AdmissionPending("thermal admission requires CPU/GPU/skin <= 50 C and battery <= 35 C")
+            if hottest >= SOC_PAUSE_CELSIUS:
+                raise AdmissionPending("thermal admission requires SoC below 85 C")
             return None
-        if not self.paused and max(processors) >= self.high:
+
+        if self.ceiling_since is None and hottest >= SOC_PAUSE_CELSIUS:
+            self.ceiling_since = now
+            self.ceiling_pauses += 1
+        if self.ceiling_since is not None:
+            ceiling_seconds = now - self.ceiling_since
+            if ceiling_seconds >= SOC_PAUSE_TIMEOUT_SECONDS:
+                raise RuntimeError("SoC thermal ceiling pause reached 15 min")
+            if hottest < SOC_RESUME_BELOW_CELSIUS:
+                self.ceiling_seconds += ceiling_seconds
+                self.ceiling_since = None
+
+        if processor >= self.high:
+            self.duty_paused = True
+        elif processor <= self.low:
+            self.duty_paused = False
+        should_pause = self.duty_paused or self.ceiling_since is not None
+        if should_pause and not self.paused:
             self.paused, self.since = True, now
             self.pauses += 1
             return signal.SIGSTOP
-        if self.paused and max(processors) <= self.low:
+        if self.paused and not should_pause:
             self.pause_seconds += now - self.since
             self.paused, self.since = False, None
             return signal.SIGCONT
@@ -83,6 +117,10 @@ class ThermalDutyCycle:
             peak_cpu_gpu_celsius=self.peak,
             peak_phase=self.peak_phase,
             time_above_80_seconds=self.time_above_80_seconds,
+            peak_soc_celsius=self.peak_soc,
+            peak_soc_phase=self.peak_soc_phase,
+            ceiling_pauses=self.ceiling_pauses,
+            ceiling_pause_seconds=self.ceiling_seconds + (now - self.ceiling_since if self.ceiling_since is not None else 0),
         )
 
 
@@ -91,12 +129,14 @@ def read_zones(root=Path("/sys/class/thermal")):
     for path in root.glob("thermal_zone*"):
         name = (path / "type").read_text().strip().lower()
         kind = next((k for k in ("cpu", "gpu", "battery", "skin") if name.startswith(k)), None)
+        if name == "soc" or name.startswith(("soc-", "soc_")):
+            kind = "soc"
         if kind is None:
             continue  # PMIC and other unrelated zones are not CPU sensors.
         try:
             value = int((path / "temp").read_text()) / 1000
         except OSError as error:
-            if error.errno == errno.EINVAL:
+            if error.errno == errno.EINVAL or (kind == "soc" and error.errno in (errno.EACCES, errno.EPERM)):
                 continue
             raise
         if value <= -30:
@@ -226,7 +266,7 @@ def run(
                 control_id=control_id,
                 zones={name: {"kind": kind, "celsius": value} for name, (kind, value) in zones.items()},
             )
-            for kind in ("cpu", "gpu", "battery", "skin"):
+            for kind in ("cpu", "gpu", "soc", "battery", "skin"):
                 values = [value for observed, value in zones.values() if observed == kind]
                 value[kind + "_celsius"] = max(values) if values else None
             value.update(policy.receipt(clock()))
