@@ -47,3 +47,37 @@ serialized. Named profile construction/import is the data API, not a live editor
 
 `tests/test_touch_layout_document.py` exercises actual C# isolation, history,
 round-trip/import refusals and bounds when the same host compiler is available.
+
+## HUD preferences and preview
+
+`HudLayoutModel` owns immutable authored default groups and named profiles with a
+uniform UI scale (.5..2) and sparse group overrides. `HudLayoutEditor` stages a
+single profile: SetScale/SetGroup/Preview do not mutate committed preferences;
+Confirm applies and Cancel discards. Import and Reset require an idle editor.
+Reset removes that profile's overrides and restores scale 1; untouched groups
+always resolve to the supplied authored defaults. Arrays are defensively copied.
+
+Group rectangles use the projection contract. Anchor values 0..4 mean top-left,
+top-right, bottom-left, bottom-right and center. Scaling preserves that point of
+the original normalized rectangle, then clamps to the safe area (saturating size
+at its span). Insets/aspect are caller-supplied; projecting an available scene's
+subset of group IDs never removes preferences for absent groups. There is no scene
+listener, display detection or live HUD renderer. Overlap and visual suitability
+remain the future UI integrator's responsibility.
+
+Preferences export as `hud-layout<TAB>1<LF>`, then
+`P<TAB>name<TAB>scale<LF>` and zero or more
+`G<TAB>id<TAB>anchor-number<TAB>x<TAB>y<TAB>width<TAB>height<LF>` records.
+Same identifier and LF/finite invariant-number conventions as touch documents;
+limits are 16 profiles, 128 default groups/overrides per profile and 1 MiB text.
+Defaults themselves are not exported: import requires the caller's authored
+defaults, rejects unknown group IDs, malformed data and versions, and validates
+all preferences before replacing state. This prevents imported preferences from
+rewriting defaults. A changed authored group catalog needs explicit caller
+migration; missing/unknown IDs are not silently dropped. Caller owns file I/O and
+durable persistence, independently of these in-memory transactions.
+
+`tests/test_hud_layout_model.py` compiles only the projection and HUD source, not
+the touch document. Its fixture covers profile/default isolation, preview/cancel,
+anchor scaling across aspect/inset changes, round-trip and failed imports. A
+compiler-less host skip is not execution evidence.

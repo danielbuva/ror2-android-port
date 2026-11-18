@@ -8005,3 +8005,9 @@ profiles and bounded versioned interchange; `TouchLayoutEditor` owns selected
 control drafts, confirm/cancel/reset and bounded session undo/redo. Caller-owned
 persistence is separate from in-memory commits. Neither owner dispatches input,
 changes live controls or claims rendered geometry; see the layout README contract.
+
+`HudLayoutModel.cs` owns separate immutable HUD defaults, sparse per-profile group
+preferences and anchor-aware safe-area scale projection. `HudLayoutEditor` owns
+preview/confirm/cancel/reset/import transactions. Scene callers select group IDs;
+projection does not mutate stored preferences. The model has no runtime renderer,
+input dependency or persistence side effects and uses only the geometry owner.
