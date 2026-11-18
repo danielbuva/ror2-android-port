@@ -337,6 +337,12 @@ public class Harness {
         check(OwnerUpdateState.backgroundDetail(true,true,"complete",false,false,"").contains("steps may remain"));
         check(OwnerUpdateState.backgroundDetail(false,true,"failed",false,false,"CPU telemetry unavailable").contains("Recorded failure: CPU telemetry unavailable"));
         check(OwnerUpdateState.backgroundDetail(true,false,"failed",false,false,"ceiling pause reached 15 min").contains("Recorded failure: ceiling pause reached 15 min"));
+        for(boolean running:new boolean[]{true,false})for(boolean fresh:new boolean[]{true,false}) {
+            String cancelled=OwnerUpdateState.backgroundDetail(running,fresh,"cancelled",false,false,"producer cancelled");
+            check(cancelled.contains("cancelled")&&cancelled.contains("Retained work"));
+            check(!cancelled.contains("failure")&&!cancelled.contains("resolving"));
+            if(!running||!fresh)check(cancelled.contains("not live"));
+        }
         System.out.println("session install/update/hash/key/version/callback contracts PASS");
     }
 }
