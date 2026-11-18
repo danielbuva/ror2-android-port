@@ -50,7 +50,7 @@ namespace UnityEngine
         public Material(string name) { this.name = name; }
         public Material(Material source) { name = source.name + ".copy"; shader = source.shader; }
     }
-    public class Shader : Object { }
+    public class Shader : Object { public bool isSupported = true; }
     public struct Vector3
     {
         public float x, y, z;
@@ -71,7 +71,7 @@ namespace UnityEngine
         public Material[] sharedMaterials = Array.Empty<Material>();
         public int getSharedMaterialsCalls, sharedMaterialGetterCalls;
         public Material sharedMaterial { get { sharedMaterialGetterCalls++; if (throwSharedMaterialGetter) throw new InvalidOperationException("synthetic sharedMaterial read failure"); return sharedMaterials.Length > 0 ? sharedMaterials[0] : null; } }
-        public bool isVisible;
+        public bool isVisible, forceRenderingOff;
         public bool throwSharedMaterialGetter;
         public Bounds bounds;
         public void GetSharedMaterials(List<Material> destination)

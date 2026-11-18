@@ -80,6 +80,7 @@ public sealed partial class PortSession
         public bool novaOnly, originalInputConsumer, stopped, aimConsumed, rendersOriginalModel, diagnosticInput;
         public bool commandoPrimaryDiagnostic;
         public AndroidNativeSourceSkinLifecycle.Report nativeSourceSkinLifecycle;
+        public NovaDiagnosticDisplay.PlayerVisualSnapshot playerVisual;
         public string inputSource;
         public bool physicalInputAvailable, mappingAvailable;
         public AndroidTouchInput.Report touch;
@@ -862,6 +863,8 @@ public sealed partial class PortSession
                             coordinator.r.performance.displayRefreshRate = Screen.currentResolution.refreshRate;
                             if (nativeSourceSkinRequested && display != null)
                                 display.CaptureNativeSourceSkinReport();
+                            if (coordinator.r.detailedVisualDiagnostics && display != null)
+                                coordinator.r.nova.playerVisual = display.CapturePlayerVisual();
                         }
                         coordinator.Save();
                         if (cfg.integratedWorld)

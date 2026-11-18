@@ -69,6 +69,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public int index, instanceId, layer, defaultShadowCastingMode, materialSlotCount, sampledMaterialCount, sampledNullMaterialSlots;
         public string rendererType, rendererName, meshIdentity, rendererRecordMaterialIdentity;
         public bool exists, active, enabled, visible, ignoreOverlays, materialsTruncated, sampledNamesTruncated, materialSlotCountKnown;
+        public bool forceRenderingOff, firstShaderSupported;
         public Vector3 boundsCenter, boundsExtents;
         public string[] materialIdentities;
         public bool screenBoundsKnown, crossesNearClip, hasBehindCameraCorner;
@@ -164,7 +165,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public Vector3 viewCameraPosition, rigCameraPosition;
         public VisualRendererSnapshot[] renderers;
     }
-    const int MaxVisualRendererRecords = 32;
+    internal const int MaxVisualRendererRecords = 32;
     const int MaxVisualMaterialSlots = 8;
     const int MaxRenderCameras = 12;
     int visualCaptureSequence;
@@ -521,54 +522,11 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             }
             for (int i = 0; i < count; i++)
             {
-                var renderer = records[i].renderer;
-                var item = new VisualRendererSnapshot { index = i, exists = renderer };
+                var item = CaptureRenderer(records[i].renderer, i, ownedCamera, captureRenderEvidenceNow);
                 snapshot.renderers[i] = item;
                 item.rendererRecordMaterialIdentity = Identity(records[i].defaultMaterial);
                 item.defaultShadowCastingMode = (int)records[i].defaultShadowCastingMode;
                 item.ignoreOverlays = records[i].ignoreOverlays;
-                if (!renderer)
-                    continue;
-                item.instanceId = renderer.GetInstanceID();
-                item.rendererType = ShortText(renderer.GetType().FullName, 96);
-                item.rendererName = ShortText(renderer.name, 96);
-                item.layer = renderer.gameObject.layer;
-                item.active = renderer.gameObject.activeInHierarchy;
-                item.enabled = renderer.enabled;
-                item.visible = renderer.isVisible;
-                var bounds = renderer.bounds;
-                item.boundsCenter = bounds.center;
-                item.boundsExtents = bounds.extents;
-                Mesh mesh = null;
-                var skinned = renderer as SkinnedMeshRenderer;
-                if (skinned)
-                    mesh = skinned.sharedMesh;
-                else
-                {
-                    var filter = renderer.GetComponent<MeshFilter>();
-                    if (filter)
-                        mesh = filter.sharedMesh;
-                }
-                item.meshIdentity = Identity(mesh);
-                // Unity 2021.3 exposes all shared materials as a list, so avoid
-                // enumerating an unbounded slot array at this 5-second cadence.
-                // Sample only the non-instantiating first sharedMaterial getter.
-                item.materialSlotCount = -1;
-                item.materialSlotCountKnown = false;
-                item.materialsTruncated = true;
-                if (captureRenderEvidenceNow)
-                    CaptureFirstRendererMaterial(item, renderer);
-                else
-                {
-                    var material = renderer.sharedMaterial;
-                    item.sampledMaterialCount = material ? 1 : 0;
-                    item.sampledNullMaterialSlots = 0;
-                    item.materialIdentities = material
-                        ? new[] { ShortText(Identity(material) + "|" + (material.shader ? material.shader.name : "<null-shader>"), 192) }
-                        : Array.Empty<string>();
-                }
-                if (captureRenderEvidenceNow && ownedCamera)
-                    CaptureRendererProjection(item, ownedCamera, bounds);
             }
             if (captureRenderEvidenceNow)
             {
@@ -967,7 +925,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         return copy;
     }
 
-    static VisualCameraSnapshot CaptureCamera(Camera camera, bool ownedSourceCamera)
+    internal static VisualCameraSnapshot CaptureCamera(Camera camera, bool ownedSourceCamera)
     {
         if (!camera)
             return new VisualCameraSnapshot();
@@ -1009,25 +967,53 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         };
     }
 
-    void CaptureFirstRendererMaterial(VisualRendererSnapshot item, Renderer renderer)
+    internal static VisualRendererSnapshot CaptureRenderer(Renderer renderer, int index, Camera camera, bool detailed)
     {
-        // Preserve the lifecycle report's existing first-shared-material
-        // observation. Do not enumerate a renderer's full material array here:
+        var item = new VisualRendererSnapshot { index = index, exists = renderer };
+        if (!renderer)
+            return item;
+        item.instanceId = renderer.GetInstanceID();
+        item.rendererType = ShortText(renderer.GetType().FullName, 96);
+        item.rendererName = ShortText(renderer.name, 96);
+        item.layer = renderer.gameObject.layer;
+        item.active = renderer.gameObject.activeInHierarchy;
+        item.enabled = renderer.enabled;
+        item.visible = renderer.isVisible;
+        item.forceRenderingOff = renderer.forceRenderingOff;
+        var bounds = renderer.bounds;
+        item.boundsCenter = bounds.center;
+        item.boundsExtents = bounds.extents;
+        var skinned = renderer as SkinnedMeshRenderer;
+        var filter = skinned ? null : renderer.GetComponent<MeshFilter>();
+        item.meshIdentity = Identity(skinned ? skinned.sharedMesh : filter ? filter.sharedMesh : null);
+        CaptureFirstRendererMaterial(item, renderer, detailed);
+        if (detailed && camera)
+            CaptureRendererProjection(item, camera, bounds);
+        return item;
+    }
+
+    static void CaptureFirstRendererMaterial(VisualRendererSnapshot item, Renderer renderer, bool detailed)
+    {
+        // Do not enumerate a renderer's full material array here:
         // Unity exposes no slot count that is safe to query without materializing
         // the complete list, so the total and all later names remain unknown.
         var material = renderer.sharedMaterial;
+        var shader = material ? material.shader : null;
         item.materialSlotCount = -1;
         item.materialSlotCountKnown = false;
         item.materialsTruncated = true;
         item.sampledMaterialCount = material ? 1 : 0;
         item.sampledNullMaterialSlots = 0;
+        item.materialIdentities = material
+            ? new[] { ShortText(Identity(material) + "|" + (shader ? shader.name : "<null-shader>"), 192) }
+            : Array.Empty<string>();
+        if (!detailed)
+            return;
+        item.firstShaderSupported = shader && shader.isSupported;
         item.sampledNamedMaterialCount = material ? 1 : 0;
         item.sampledNamesTruncated = true;
-        item.materialIdentities = material
-            ? new[] { ShortText(Identity(material) + "|" + (material.shader ? material.shader.name : "<null-shader>"), 192) }
-            : Array.Empty<string>();
         item.sampledMaterialNames = material ? new[] { ShortText(material.name, 96) } : Array.Empty<string>();
-        item.sampledShaderNames = material && material.shader ? new[] { ShortText(material.shader.name, 96) } : Array.Empty<string>();
+        item.sampledShaderNames = shader ? new[] { ShortText(shader.name, 96) } : Array.Empty<string>();
     }
 
     static void CaptureRendererProjection(VisualRendererSnapshot item, Camera camera, Bounds bounds)

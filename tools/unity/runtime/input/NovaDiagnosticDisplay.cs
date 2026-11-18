@@ -9,6 +9,16 @@ using UnityEngine;
 // Native animation/state code chooses the pose; this adapter never rotates bones.
 public sealed class NovaDiagnosticDisplay : IDisposable
 {
+    [Serializable]
+    public sealed class PlayerVisualSnapshot
+    {
+        public int frame, omittedRendererCount;
+        public float realtime;
+        public string model, captureError;
+        public AndroidNativeSourceSkinLifecycle.VisualCameraSnapshot camera;
+        public AndroidNativeSourceSkinLifecycle.VisualRendererSnapshot[] renderers;
+    }
+
     public GameObject root;
     public Camera camera;
     Material material, floorMaterial;
@@ -34,6 +44,29 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     public bool NativeSourceSkinAnimatorReady => sourceSkinLifecycleDiagnostic && nativeSourceSkinLifecycle &&
                                                  nativeSourceSkinLifecycle.NativeAnimatorInitialized;
     public bool UsesOriginalLocalCamera => nativeCameraRigOwner;
+
+    public PlayerVisualSnapshot CapturePlayerVisual()
+    {
+        if (!actualModel || !source)
+            return null;
+        var snapshot = new PlayerVisualSnapshot { frame = Time.frameCount, realtime = Time.realtimeSinceStartup, model = source.name };
+        try
+        {
+            snapshot.camera = AndroidNativeSourceSkinLifecycle.CaptureCamera(camera, UsesOriginalLocalCamera);
+            var renderers = source.GetComponentsInChildren<Renderer>(true);
+            int count = Math.Min(renderers.Length, AndroidNativeSourceSkinLifecycle.MaxVisualRendererRecords);
+            snapshot.omittedRendererCount = renderers.Length - count;
+            snapshot.renderers = new AndroidNativeSourceSkinLifecycle.VisualRendererSnapshot[count];
+            for (int i = 0; i < count; i++)
+                snapshot.renderers[i] = AndroidNativeSourceSkinLifecycle.CaptureRenderer(renderers[i], i, camera, detailed: true);
+        }
+        catch (Exception error)
+        {
+            snapshot.captureError = error.GetType().Name + ": " + error.Message;
+        }
+        return snapshot;
+    }
+
     static void IsolateModelCallbacks(Transform model, bool sourceSelected, bool nativeSkinLifecycle,
                                      AndroidNativeSourceSkinLifecycle skinOwner)
     {

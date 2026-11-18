@@ -480,7 +480,7 @@ public sealed partial class PortSession
             // is a prefab reference, not a child, and must be ready before the first tick.
             PresentNativeEffectSource(LegacyResourcesAPI.Load<GameObject>("Prefabs/FireTrail"));
         }
-        void PresentNativeEffectSource(GameObject source)
+        public void PresentNativeEffectSource(GameObject source)
         {
             var visited = new HashSet<GameObject>();
             void Present(GameObject root)

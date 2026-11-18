@@ -4696,7 +4696,9 @@ replacement, toggling and source ownership. Rendering remains a device gate.
 `TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
 effect sources and native projectile ghosts and DamageTrail segment references
 before their pools instantiate them. It follows typed prefab edges with cycle
-protection, including CharacterBody's separately loaded FireTrail. Original
+protection, including CharacterBody's separately loaded FireTrail. The original
+body visual owner submits the Mercenary Expose prefab after resolving its
+native field, before the temporary visual effect first instantiates it. Original
 source slots and particle trails are restored by integrated-world cleanup before
 the session destroys its material copies; source blend values remain intact.
 The session counts objective projectile materials during catalog setup. The
@@ -7535,3 +7537,9 @@ texture state; particle renderers also report all meshes. The existing screen
 coverage ordering and 128-view limit remain: this is a sampled attribution tool,
 not proof that every prefab rendered. Session teardown discards the report with
 the other objective observations; it never changes materials or simulation.
+On the same opt-in selector, `NovaDiagnosticDisplay` samples up to 32 renderers
+of the presented player model, including inactive and disabled renderers, on
+the existing five-second report cadence. The latest `NovaReport` sample records
+the display camera, renderer state, projected bounds, mesh and first shared
+material. The sample holds no Unity references and works with native skin
+diagnostics disabled.

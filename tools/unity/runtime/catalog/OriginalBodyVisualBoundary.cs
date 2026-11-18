@@ -102,10 +102,12 @@ public sealed partial class PortSession
             var exposed = typeof(CharacterBody)
                               .GetNestedType("AssetReferences", BindingFlags.NonPublic)
                               .GetField("mercExposeEffectPrefab", BindingFlags.Public | BindingFlags.Static);
-            coordinator.Check(exposed != null && (GameObject)exposed.GetValue(null),
+            var exposeSource = exposed?.GetValue(null) as GameObject;
+            coordinator.Check(exposeSource,
                               "Original Merc expose visual missing after source reference load");
             coordinator.Check(healthUnavailable.Count == 0,
                               "Original HealthComponent visual-reference closure failed: " + string.Join(",", healthUnavailable.ToArray()));
+            coordinator.GetTeleporterWorldSession().PresentNativeEffectSource(exposeSource);
             coordinator.r.world.bodyVisualSlots =
                 priorOriginalVisualSlots.Keys.Count(field => field.DeclaringType.DeclaringType == typeof(CharacterBody));
             coordinator.r.world.healthVisualSlots =
