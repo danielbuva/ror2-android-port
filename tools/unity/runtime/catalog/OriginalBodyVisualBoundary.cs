@@ -103,7 +103,7 @@ public sealed partial class PortSession
                               "Original HealthComponent visual-reference closure failed: " + string.Join(",", healthUnavailable.ToArray()));
             PresentNativeVisualSource(typeof(CharacterBody), "mercExposeEffectPrefab");
             PresentNativeVisualSource(typeof(HealthComponent), "mercExposeConsumeEffectPrefab");
-            var swings = PrepareCrocoSwingEffects(bodyUnavailable);
+            var swings = PrepareNativeSwingEffects(bodyUnavailable);
             while (swings.MoveNext())
                 yield return swings.Current;
             coordinator.r.world.bodyVisualSlots =
@@ -114,9 +114,15 @@ public sealed partial class PortSession
             coordinator.r.world.healthVisualUnavailable = healthUnavailable.ToArray();
             coordinator.Save();
         }
-        IEnumerator PrepareCrocoSwingEffects(List<string> unavailable)
+        IEnumerator PrepareNativeSwingEffects(List<string> unavailable)
         {
             var presentation = coordinator.GetTeleporterWorldSession();
+            var mercFinisher = EntityStates.Merc.GroundLight.finisherSwingEffectPrefab;
+            if (mercFinisher)
+                presentation.PresentNativeEffectSource(mercFinisher);
+            else
+                unavailable.Add("Merc finisher swing: native prefab missing");
+
             var normal = new EntityStates.Croco.Slash().swingEffectPrefab;
             if (normal)
                 presentation.PresentNativeEffectSource(normal);

@@ -144,6 +144,19 @@ public sealed partial class PortSession
         public SurfacePropertyObservation[] properties;
     }
     [Serializable]
+    public class EffectiveSurfaceSlotObservation
+    {
+        public int slot;
+        public string propertyBlock;
+        public EffectiveSurfacePropertyObservation[] properties;
+    }
+    [Serializable]
+    public class EffectiveSurfacePropertyObservation
+    {
+        public string name, source;
+        public Vector4 value;
+    }
+    [Serializable]
     public class ObjectiveRendererObservation
     {
         public string path, kind;
@@ -159,6 +172,7 @@ public sealed partial class PortSession
         public string[] particleMeshes;
         public SurfaceMaterialObservation trailMaterial, billboardMaterial;
         public SurfaceMaterialObservation[] materialState;
+        public EffectiveSurfaceSlotObservation[] effectiveProperties;
     }
     [Serializable]
     public class ObjectiveReport
@@ -384,6 +398,8 @@ public sealed partial class PortSession
         int objectiveExitPostFinishTicks;
         float objectiveExitTraceNextSampleAt;
         float objectiveRewardApproachAt = -1;
+        MaterialPropertyBlock surfaceRendererBlock, surfaceSlotBlock;
+        static readonly string[] VagrantPropertyNames = { "_FlashColor", "_EliteIndex", "_LimbPrimeMask", "_Fade", "_EmColor" };
         GameObject[] objectiveEffectSources;
         string[] deferredObjectiveEffectPaths;
         bool ownsObjectiveBundlePreload;
@@ -534,7 +550,7 @@ public sealed partial class PortSession
             for (int i = 0; i < prepared.Length; i++)
             {
                 var source = originals[i].sharedMaterial;
-                var material = AndroidMaterialPresentation.RecoverTeamAreaMaterial(source, coordinator.worldMaterials);
+                var material = AndroidMaterialPresentation.RecoverIntersectionMaterial(source, coordinator.worldMaterials);
                 if (material == source)
                     continue;
                 prepared[i].sharedMaterial = material;
@@ -562,7 +578,7 @@ public sealed partial class PortSession
                     var originals = renderer.sharedMaterials;
                     var particle = renderer as ParticleSystemRenderer;
                     var trail = particle ? particle.trailMaterial : null;
-                    int changed = AndroidMaterialPresentation.ApplyRecovered(renderer, coordinator.worldMaterials);
+                    int changed = AndroidMaterialPresentation.ApplyRecovered(renderer, coordinator.worldMaterials, includeIntersection: true);
                     if (changed == 0)
                         continue;
                     coordinator.worldLootSourceMaterials.Add(renderer, originals);
@@ -1998,6 +2014,18 @@ public sealed partial class PortSession
             if (particleRenderer)
                 particleRenderer.GetMeshes(meshes);
             var billboardRenderer = renderer as BillboardRenderer;
+            var materialState = materials.Select(ObserveSurfaceMaterial).ToArray();
+            var path = PortSession.StageObjectPath(renderer.transform);
+            EffectiveSurfaceSlotObservation[] effectiveProperties = null;
+            if (renderer.name == "VagrantMesh" && path.StartsWith("VagrantBody(Clone)/", StringComparison.Ordinal))
+            {
+                if (surfaceRendererBlock == null)
+                {
+                    surfaceRendererBlock = new MaterialPropertyBlock();
+                    surfaceSlotBlock = new MaterialPropertyBlock();
+                }
+                effectiveProperties = ObserveVagrantProperties(renderer, materialState, surfaceRendererBlock, surfaceSlotBlock);
+            }
             return new ObjectiveRendererObservation { unityFrame = Time.frameCount,
                                                       particleRenderMode = particleRenderer ? particleRenderer.renderMode.ToString() : null,
                                                       particleAlignment = particleRenderer ? particleRenderer.alignment.ToString() : null,
@@ -2006,8 +2034,9 @@ public sealed partial class PortSession
                                                       trailMaterial = particleRenderer ? ObserveSurfaceMaterial(particleRenderer.trailMaterial) : null,
                                                       billboardMaterial = billboardRenderer && billboardRenderer.billboard
                                                           ? ObserveSurfaceMaterial(billboardRenderer.billboard.material) : null,
-                                                      materialState = materials.Select(ObserveSurfaceMaterial).ToArray(),
-                                                      path = PortSession.StageObjectPath(renderer.transform),
+                                                      materialState = materialState,
+                                                      effectiveProperties = effectiveProperties,
+                                                      path = path,
                                                       kind = renderer.GetType().Name,
                                                       materials = materials.Select(m => m ? m.name : "missing").ToArray(),
                                                       shaders = materials.Select(m => m && m.shader ? m.shader.name : "missing").ToArray(),
@@ -2021,6 +2050,44 @@ public sealed partial class PortSession
                                                       size = bounds.size,
                                                       particles = particle ? particle.particleCount : 0,
                                                       projectedBoundsFraction = area };
+        }
+        static EffectiveSurfaceSlotObservation[] ObserveVagrantProperties(Renderer renderer, SurfaceMaterialObservation[] materials,
+                                                                           MaterialPropertyBlock rendererBlock, MaterialPropertyBlock slotBlock)
+        {
+            renderer.GetPropertyBlock(rendererBlock);
+            var slots = new EffectiveSurfaceSlotObservation[materials.Length];
+            for (int slot = 0; slot < slots.Length; slot++)
+            {
+                renderer.GetPropertyBlock(slotBlock, slot);
+                // Unity chooses one whole block for the slot. A missing value in the
+                // chosen block comes from the material, even if the other block has it.
+                bool hasSlotBlock = !slotBlock.isEmpty;
+                var block = hasSlotBlock ? slotBlock : rendererBlock;
+                string blockSource = hasSlotBlock ? "slot-block" : rendererBlock.isEmpty ? "none" : "renderer-block";
+                var properties = new EffectiveSurfacePropertyObservation[VagrantPropertyNames.Length];
+                for (int i = 0; i < properties.Length; i++)
+                {
+                    string name = VagrantPropertyNames[i];
+                    bool color = name == "_FlashColor" || name == "_EmColor";
+                    var property = new EffectiveSurfacePropertyObservation { name = name };
+                    if (color ? block.HasColor(name) : block.HasFloat(name))
+                    {
+                        property.source = blockSource;
+                        property.value = color ? (Vector4)block.GetColor(name) : new Vector4(block.GetFloat(name), 0, 0, 0);
+                    }
+                    else
+                    {
+                        var material = materials[slot];
+                        var saved = material == null ? null : Array.Find(material.properties, x => x.name == name);
+                        property.source = saved == null ? "absent" : "material";
+                        if (saved != null)
+                            property.value = saved.value;
+                    }
+                    properties[i] = property;
+                }
+                slots[slot] = new EffectiveSurfaceSlotObservation { slot = slot, propertyBlock = blockSource, properties = properties };
+            }
+            return slots;
         }
         public SurfaceMaterialObservation ObserveSurfaceMaterial(Material material)
         {
