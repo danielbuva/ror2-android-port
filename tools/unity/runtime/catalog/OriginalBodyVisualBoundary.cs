@@ -103,6 +103,9 @@ public sealed partial class PortSession
                               "Original HealthComponent visual-reference closure failed: " + string.Join(",", healthUnavailable.ToArray()));
             PresentNativeVisualSource(typeof(CharacterBody), "mercExposeEffectPrefab");
             PresentNativeVisualSource(typeof(HealthComponent), "mercExposeConsumeEffectPrefab");
+            var swings = PrepareCrocoSwingEffects(bodyUnavailable);
+            while (swings.MoveNext())
+                yield return swings.Current;
             coordinator.r.world.bodyVisualSlots =
                 priorOriginalVisualSlots.Keys.Count(field => field.DeclaringType.DeclaringType == typeof(CharacterBody));
             coordinator.r.world.healthVisualSlots =
@@ -110,6 +113,36 @@ public sealed partial class PortSession
             coordinator.r.world.bodyVisualUnavailable = bodyUnavailable.ToArray();
             coordinator.r.world.healthVisualUnavailable = healthUnavailable.ToArray();
             coordinator.Save();
+        }
+        IEnumerator PrepareCrocoSwingEffects(List<string> unavailable)
+        {
+            var presentation = coordinator.GetTeleporterWorldSession();
+            var normal = new EntityStates.Croco.Slash().swingEffectPrefab;
+            if (normal)
+                presentation.PresentNativeEffectSource(normal);
+            else
+                unavailable.Add("Croco normal swing: native prefab missing");
+
+            // The normal swing is a configured PPtr. The finisher uses a native
+            // address whose prefab must remain resident across stage transitions.
+            var finisher = EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab;
+            var address = finisher?.addressableReference;
+            if (address != null && address.RuntimeKeyIsValid())
+            {
+                var handle = Addressables.LoadAssetAsync<GameObject>(address.RuntimeKey);
+                ownedOriginalVisualHandles.Add(handle);
+                var deadline = Time.realtimeSinceStartup + 45f;
+                while (!handle.IsDone && Time.realtimeSinceStartup < deadline)
+                    yield return null;
+                if (handle.IsDone && handle.Status == AsyncOperationStatus.Succeeded && handle.Result)
+                    presentation.PresentNativeEffectSource(handle.Result);
+                else
+                    unavailable.Add("Croco combo finisher swing: native asset load failed or timed out");
+            }
+            else if (finisher?.directReference)
+                presentation.PresentNativeEffectSource(finisher.directReference);
+            else
+                unavailable.Add("Croco combo finisher swing: native prefab reference missing");
         }
         void PresentNativeVisualSource(Type ownerType, string fieldName)
         {
