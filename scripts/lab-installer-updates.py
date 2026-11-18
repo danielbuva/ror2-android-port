@@ -538,13 +538,38 @@ def run(argv, *, label, stdin=None, timeout=300):
     return result.stdout
 
 
-def read_context():
+def read_context(source_commit=None):
     root = os.environ.get("LAB_TOOLHOST_ROOT")
     if not root:
         raise Failure("LAB_TOOLHOST_ROOT-required-run-lab-toolhost-first")
     commit = run(["git", "-C", ROOT, "rev-parse", "HEAD"], label="resolve-source-commit").decode().strip()
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise Failure("source-commit-unavailable")
+    if source_commit is not None:
+        if not re.fullmatch(r"[0-9a-f]{40}", source_commit):
+            raise Failure("toolhost-cache-source-commit-invalid")
+        run(
+            [
+                "git",
+                "-C",
+                ROOT,
+                "diff",
+                "--quiet",
+                source_commit,
+                "--",
+                "tools/phone-build/managed-host",
+                "tools/phone-build/native-host",
+                "tools/phone-build/owner-apk",
+                "tools/phone-build/accepted-output/package.py",
+                "tools/phone-build/accepted-output/assemble.py",
+                "tools/phone-build/accepted-output/phone_runner.py",
+                "recipe/owner-app-host-tools.json",
+                "environment/toolchain.json",
+                "scripts/env.sh",
+            ],
+            label="toolhost-cache-inputs-changed",
+        )
+        commit = source_commit
     cached = Path(root).resolve(strict=True) / commit
     apk, receipt_path = cached / "signed.apk", cached / "result.json"
     if not apk.is_file() or not receipt_path.is_file():
@@ -557,6 +582,19 @@ def read_context():
         or receipt.get("apk_sha256") != sha(apk.read_bytes())
     ):
         raise Failure("toolhost-cache-receipt-mismatch")
+    if source_commit is not None:
+        staged = json.loads((cached / "stage-receipt.json").read_bytes())
+        built = json.loads((cached / "build-receipt.json").read_bytes())
+        if (
+            staged.get("success") is not True
+            or built.get("success") is not True
+            or staged.get("game_inputs") is not False
+            or built.get("game_inputs") is not False
+            or staged.get("source_commit") != commit
+            or built.get("apk_sha256") != receipt["apk_sha256"]
+            or built.get("apk_bytes") != apk.stat().st_size
+        ):
+            raise Failure("toolhost-cache-build-provenance-mismatch")
     # The builder's publisher key is deliberately not opened or copied. A new
     # independent key exercises the explicit debug-only additive trust seam.
     # Only the public repository's deterministic environment selector runs;
@@ -727,14 +765,14 @@ def synthetic_inputs(tools, temporary):
     return result
 
 
-def release_fixture(public, inputs, version, directory, private_key, public_key):
+def release_fixture(public, inputs, version, directory, private_key, public_key, *, required_catalog=None):
     contents = {name: (ROOT / name).read_bytes() for name in public.PUBLISHING_SOURCE_FILES}
     required = {
         "schema": 1,
         "game_version": "synthetic-installer-only",
         "files": [{"path": name, "bytes": len(data), "sha256": sha(data)} for name, data in sorted(inputs.items())],
     }
-    contents[INPUTS] = encoded(required)
+    contents[INPUTS] = encoded(required if required_catalog is None else required_catalog)
     # The fixture producer replaces only the signed TEST bundle's producer source,
     # never repository or production assets. It uses admitted synthetic inputs.
     contents[PRODUCER] = (
@@ -1133,7 +1171,7 @@ class Phone:
             if attempt == 2:
                 return self.ui_windows(allowed_packages)
             time.sleep(1)
-        return self.read_ui_dump("hierarchy")
+        return allowed_ui_hierarchy(self.read_ui_dump("hierarchy"), allowed_packages)
 
     def read_ui_dump(self, root):
         try:
@@ -1917,8 +1955,12 @@ def focused_window_hierarchy(document):
 
 
 def focused_ui_hierarchy(document, allowed_packages):
-    hierarchy = focused_window_hierarchy(document)
-    package = hierarchy.find("node").get("package")
+    return allowed_ui_hierarchy(focused_window_hierarchy(document), allowed_packages)
+
+
+def allowed_ui_hierarchy(hierarchy, allowed_packages):
+    roots = hierarchy.findall("node")
+    package = roots[0].get("package") if len(roots) == 1 else None
     if package not in allowed_packages or any(node.get("package") not in (None, "", package) for node in hierarchy.iter("node")):
         raise Failure("ui-window-package-not-allowed")
     return hierarchy

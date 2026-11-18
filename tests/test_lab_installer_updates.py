@@ -2254,7 +2254,7 @@ public class Review {
 
     def test_null_root_dump_retries_before_reading_and_cleans_successful_dump(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
-        xml = b'<?xml version="1.0"?><hierarchy><node text="synthetic"/></hierarchy>'
+        xml = f'<?xml version="1.0"?><hierarchy><node package="{LAB.PACKAGE}" text="synthetic"/></hierarchy>'.encode()
         success = subprocess.CompletedProcess([], 0, b"UI hierchary dumped to: /synthetic/private/ui.xml", b"")
         for stdout, stderr in ((b"", b"ERROR: null root node returned by UiTestAutomationBridge."), (b"ERROR: null root node", b"")):
             with self.subTest(stdout=stdout, stderr=stderr):
@@ -2528,6 +2528,19 @@ public class Review {
             ]
             * 2,
         )
+
+    def test_active_launcher_root_is_refused_before_any_tap_or_scroll(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        launcher = ET.fromstring('<hierarchy><node package="com.android.launcher3" scrollable="true" /></hierarchy>')
+        dump = subprocess.CompletedProcess([], 0, b"UI hierarchy dumped to: synthetic-private", b"")
+        with (
+            patch.object(phone, "shell") as shell,
+            patch.object(phone, "detached", return_value=dump),
+            patch.object(phone, "read_ui_dump", return_value=launcher),
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^ui-window-package-not-allowed$"):
+                phone.tap("Prepare signed installation plan")
+        shell.assert_called_once_with("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
 
     def test_wake_failure_does_not_read_or_tap_ui(self):
         phone = LAB.Phone("synthetic-private-selector", 1)

@@ -40,6 +40,7 @@ public final class OwnerUpdateState {
     public boolean canBuild() { return phase == Phase.UPDATE_AVAILABLE; }
     public boolean canInstall() { return phase == Phase.READY; }
     public void observe(String state, String detail) {
+        if ("INPUTS_REQUIRED".equals(state)) state = Phase.INPUT_REQUIRED.name();
         try { phase = Phase.valueOf(state); }
         catch (RuntimeException unknown) { phase = Phase.ERROR; detail = "Unsupported update state: " + state; }
         message = detail == null ? phase.toString() : detail;

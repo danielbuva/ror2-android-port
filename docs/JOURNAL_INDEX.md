@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1488](PORTING_JOURNAL.md#j1488--verify-android-folder-and-zip-acquisition-through-the-installer) | 2026-11-17 | Verify Android folder and ZIP acquisition through the installer | 2026-11-18. |
 | [J1487](PORTING_JOURNAL.md#j1487--prepare-native-mercenary-expose-materials-before-pooling) | 2026-11-17 | Prepare native Mercenary Expose materials before pooling | 2026-11-18. |
 | [J1486](PORTING_JOURNAL.md#j1486--start-sky-meadows-native-projectiles-and-return-to-lab-after-end-run) | 2026-11-17 | Start Sky Meadow's native projectiles and return to Lab after End Run | 2026-11-18. |
 | [J1485](PORTING_JOURNAL.md#j1485--apply-selected-skins-on-the-ordinary-huntress-and-acrid-player-path) | 2026-11-17 | Apply selected skins on the ordinary Huntress and Acrid player path | 2026-11-18. |

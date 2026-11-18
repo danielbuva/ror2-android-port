@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synthetic alpha packaging acceptance; run only on the root-leased /lab phone.
+"""Alpha packaging and acquisition acceptance on a root-leased /lab phone.
 
 Reuses the existing installer acceptance/cleanup owner, never a second installer
 or signer. Additional ART checks execute the actual importer under the fresh test
@@ -19,6 +19,7 @@ import re
 import sys
 import tempfile
 import time
+import traceback
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("alpha_packaging_installer", ROOT / "scripts/lab-installer-updates.py")
@@ -36,6 +37,15 @@ IMPORT_CASES = (
     "zip-traversal-refused",
     "source-unchanged",
     "honest-progress",
+)
+SAF_CASES = (
+    "saf-picker-cancelled",
+    "saf-unknown-refused",
+    "saf-unsupported-refused",
+    "saf-import-cancelled",
+    "saf-folder-validated",
+    "saf-zip-validated",
+    "saf-sources-unchanged",
 )
 PACKAGE_CASES = ("alpha-identity-issued-binding", "same-key-forward-update-and-rollback", "issued-ledger-cold-restart")
 HASH = re.compile(r"[0-9a-f]{64}")
@@ -223,20 +233,25 @@ def main(argv=None):
     parser.add_argument("--allow-test-installs", action="store_true")
     parser.add_argument("--allow-test-notifications", action="store_true")
     parser.add_argument("--package-only", action="store_true", help="Qualify signed packages without running the direct importer harness")
+    parser.add_argument("--acquisition-request", type=Path, help="Qualify actual SAF acquisition with local input inventories")
     parser.add_argument("--dry-run", action="store_true", help="Verify pinned toolhost and compile the acceptance inputs on the host")
     parser.add_argument("--timeout", type=int, default=1200)
     args = parser.parse_args(argv)
     if args.qualify_install_prompts and args.allow_test_installs:
         print("FAIL install-prompt-mode-conflict", flush=True)
         return 1
+    if args.acquisition_request and (args.package_only or args.qualify_install_prompts or args.allow_test_installs or args.allow_test_notifications):
+        parser.error("acquisition uses a fresh installer with ordinary picker permissions")
     phone = None
+    acquisition = None
     completed = set()
     failed = False
     phase = "setup"
 
     def passed(case):
         require(
-            case in INSTALLER.CASES + (INSTALLER.PROMPT_CASES if args.qualify_install_prompts else ()) + PACKAGE_CASES + IMPORT_CASES and case not in completed,
+            case in INSTALLER.CASES + (INSTALLER.PROMPT_CASES if args.qualify_install_prompts else ()) + PACKAGE_CASES + IMPORT_CASES + SAF_CASES
+            and case not in completed,
             "unexpected-acceptance-case",
         )
         completed.add(case)
@@ -251,41 +266,67 @@ def main(argv=None):
             require("allow_test_notifications" in inspect.signature(INSTALLER.Phone).parameters, "merge-installer-notification-authorization-first")
             kwargs["allow_test_notifications"] = True
         INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(ROOT / "work/coordination/alpha-packaging-acceptance")
-        config = INSTALLER.read_context()
+        request = json.loads(args.acquisition_request.read_bytes()) if args.acquisition_request else {}
+        config = INSTALLER.read_context(request.get("toolhost_source_commit")) if request else INSTALLER.read_context()
         with tempfile.TemporaryDirectory(prefix="ror2-synthetic-alpha-", dir="/tmp") as name:
             temporary = Path(name).resolve()
             require(not temporary.is_relative_to(ROOT.resolve()), "throwaway-root-must-be-outside-repository")
-            if not args.package_only:
-                phase = "compile-importer-harness"
-                INSTALLER.set_phase(phase)
-                dex = compile_import_harness(config, temporary)
-            if args.dry_run:
-                INSTALLER.prepare_artifacts(config, temporary)
-                print("PASS alpha-packaging host fixture", flush=True)
-                return 0
-            phone = Phone(serial, args.timeout, **kwargs)
-            phase = "thermal-admission"
-            INSTALLER.set_phase(phase)
-            with phone.observe_thermal():
-                phase = "installer-acceptance"
-                INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts)
-                phase = "alpha-receipt-acceptance"
-                INSTALLER.set_phase(phase)
-                check_packaging_history(phone, passed)
+            if args.acquisition_request:
+                phase = "acquisition-host-fixture"
+                from lab.alpha_acquisition import Acquisition
+
+                acquisition = Acquisition(INSTALLER, require, request, config, temporary)
+                if args.dry_run:
+                    print("PASS alpha-acquisition signed catalogs and source inventory precheck", flush=True)
+                    return 0
+                acquisition.prepare_archive()
+                phone = Phone(serial, args.timeout)
+                phase = "saf-acquisition"
+                with phone.observe_thermal():
+                    acquisition.run(phone, passed)
+                require(completed == set(SAF_CASES), "acquisition-case-series-incomplete")
+            else:
                 if not args.package_only:
-                    phase = "android-importer-acceptance"
+                    phase = "compile-importer-harness"
                     INSTALLER.set_phase(phase)
-                    import_acceptance(phone, dex, passed)
+                    dex = compile_import_harness(config, temporary)
+                if args.dry_run:
+                    INSTALLER.prepare_artifacts(config, temporary)
+                    print("PASS alpha-packaging host fixture", flush=True)
+                    return 0
+                phone = Phone(serial, args.timeout, **kwargs)
+                phase = "thermal-admission"
+                INSTALLER.set_phase(phase)
+                with phone.observe_thermal():
+                    phase = "installer-acceptance"
+                    INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts)
+                    phase = "alpha-receipt-acceptance"
+                    INSTALLER.set_phase(phase)
+                    check_packaging_history(phone, passed)
+                    if not args.package_only:
+                        phase = "android-importer-acceptance"
+                        INSTALLER.set_phase(phase)
+                        import_acceptance(phone, dex, passed)
     except INSTALLER.Failure as error:
         # Existing installer Failure codes are authored constants, not raw logs.
+        if phase == "saf-acquisition":
+            phase = INSTALLER.CURRENT_PHASE
         print("FAIL alpha-packaging phase=" + phase + " reason=" + str(error), flush=True)
         failed = True
     except Exception:
+        if INSTALLER.DIAGNOSTICS is not None:
+            INSTALLER.DIAGNOSTICS.write("alpha-packaging-error.log", traceback.format_exc().encode())
         print("FAIL alpha-packaging phase=" + phase + " reason=unexpected-local-error-see-private-evidence", flush=True)
         failed = True
     finally:
         if phone is not None:
             INSTALLER.set_phase("cleanup")
+            if acquisition is not None:
+                try:
+                    acquisition.cleanup(phone)
+                except Exception:
+                    print("FAIL cleanup reason=owned-download-cleanup-not-verified", flush=True)
+                    failed = True
             try:
                 result = phone.cleanup()
                 if result == "verified-absent":
@@ -296,7 +337,7 @@ def main(argv=None):
                 print("FAIL cleanup reason=owned-package-cleanup-not-verified", flush=True)
                 failed = True
         INSTALLER.DIAGNOSTICS = None
-    if not failed:
+    if not failed and not args.acquisition_request:
         print("SCOPE synthetic-only; SAF/provider UI, legitimate cohorts, power-loss and game-profile acceptance NOT RUN", flush=True)
     return int(failed)
 

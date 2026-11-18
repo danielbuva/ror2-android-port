@@ -1660,12 +1660,28 @@ Its runner-provided toolhost and generated binaries/keys never leave the lab.
 installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending
 consent checks, refusing pregrant; setup and cleanup remain with the installer
-owner. `AlphaPackagingHarness.java` uses generated input only. These checks do
-not qualify SAF/provider UI, legitimate cohorts, power-loss or game profiles.
+owner. `AlphaPackagingHarness.java` uses generated input only.
+`scripts/lab/alpha_acquisition.py` signs test plans for two local inventories
+and observes the import service through the visible UI and durable receipts.
+It checks Android picker cancellation with Back. For deterministic selection,
+`AcquisitionFixture.java` returns read-only tree and ZIP grants through the
+installer's normal activity-result handler. Only the disposable test APK
+registers the fixture, and a one-use private request selects its document.
+The debuggable fixture consumes separate one-use control requests while the
+installer is resumed and invokes the same enabled buttons used by the owner.
+The runner owns its temporary archive and an external-files subtree on the
+phone. It hashes staged sources and successful private imports, then removes
+staging and disposes of the fresh installer through the existing cleanup owner.
 The [local packaging request](LAB_RUNNER.md#current-local-packaging-request)
 uses the shared lab runner for a granted device and records the installed version
 and hashes before the fixture is removed. The toolhost request pins the cached
 installer by source commit for subsequent device checks.
+
+`scripts/lab/installer_toolhost.py` owns Mac rebuilds of the disposable installer.
+It recompiles the managed code and manifest, replaces the authored repository
+assets, verifies the retained Android runtime members, and signs with the local
+fixture key. The host build records both source commits and APK hashes. The
+shared runner can back up the retained fixture key after a Thor build.
 
 `Phone.retain_build_artifact` streams one explicitly selected, cache-receipt-pinned
 result from the currently owned installer to ignored host `work/` before cleanup.
