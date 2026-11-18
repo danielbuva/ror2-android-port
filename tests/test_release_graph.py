@@ -310,6 +310,24 @@ class ReleaseGraphTests(unittest.TestCase):
             manifest = graph.jobs["recipe/jobs/owner-bundle-manifest.json"]["request"]
             self.assertNotIn("whole-catalog.json", [row["name"] for row in manifest["bundles"]])
             self.assertEqual(set(job["request"]["bundles"]), {"authored"})
+            template = json.loads(request.read_text())
+            policy = repo / "recipe/catalog-projection.json"
+            policy.write_text("{}")
+            projected = {key: value for key, value in template.items() if key != "metadata"} | {"projection": "recipe/catalog-projection.json"}
+            request.write_text(json.dumps(projected))
+            with self.assertRaisesRegex(ValueError, "requires original-input code conversion"):
+                graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+            code = "recipe/jobs/owner-code-conversion.json"
+            graph.conversion = code
+            graph.jobs[code] = dict(script="tools/phone-build/owner-code/produce.py", outputs={}, artifacts={}, needs=[])
+            graph.job_profiles[code] = {}
+            graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+            job = graph.jobs[name]
+            self.assertEqual(job["needs"], ["final", "player", code])
+            self.assertEqual(job["request"]["projection"]["source"], graph.artifact_pin(code, "original_catalog"))
+            self.assertEqual(graph.jobs[code]["artifacts"]["original_catalog"], "managed-production/original-catalog.json")
+            self.assertIn("recipe/catalog-projection.json", graph.entry(name)["recipe_files"])
+            request.write_text(json.dumps(template))
             changed = json.loads(request.read_text())
             changed["attempt"] = "other"
             request.write_text(json.dumps(changed))

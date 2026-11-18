@@ -428,6 +428,49 @@ class CatalogCompletionTests(unittest.TestCase):
             self.assertEqual(emitted["locations"][0]["bundle"], "generated-android-data")
             self.assertEqual(emitted["bundles"]["generated-android-data"]["sha256"], result["bundles"]["generated-android-data"]["sha256"])
 
+    def test_managed_catalog_projects_keys_and_checks_actual_container(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, request = self.fixture(root)
+            staged = json.loads(Path(request.pop("metadata")["path"]).read_text())["locations"][0]
+            source = root / "original-catalog.json"
+            row = dict(id=1, internalId="Assets/Authored.asset", type=staged["type"], primaryKey="authored")
+            source.write_text(
+                json.dumps(
+                    dict(
+                        input_id=request["input_id"],
+                        source_catalog_sha256="catalog-hash",
+                        locations=[row, dict(row, id=2, internalId="assetbundlemanifest", type="Unsupported"), dict(row, id=3, internalId="unowned")],
+                        keys=[dict(key="alias", keyType="System.String", locations=[2, 1, 3]), dict(key="excluded", keyType="System.String", locations=[2])],
+                        providers=[],
+                    )
+                )
+            )
+            policy = root / "policy.json"
+            projection = dict(
+                schema="owner-catalog-projection-v1",
+                source_catalog_sha256="catalog-hash",
+                remaps={"1": "assetbundlemanifest"},
+                exclusions=[2],
+                provider_roots=[1],
+                runtime_roots=[],
+                extra_roots=[],
+                mesh_subobjects=[],
+            )
+            policy.write_text(json.dumps(projection))
+            request["projection"] = dict(source=pin(source), policy=pin(policy))
+            path.write_text(json.dumps(request))
+            result = C.produce(path, root / "output")
+            self.assertEqual(result["checks"]["locations"], 1)
+            emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
+            self.assertEqual(emitted["locations"], [dict(staged, primaryKey="authored", root=True, bundle="generated-android-data")])
+            self.assertEqual(emitted["keys"], [dict(key="alias", keyType="System.String", locations=[1])])
+            policy.write_text(json.dumps(dict(projection, source_catalog_sha256="other")))
+            request["projection"]["policy"] = pin(policy)
+            path.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "catalog projection source identity differs"):
+                C.produce(path, root / "other")
+
     def test_player_resource_is_pinned_and_loaded_for_pointer_resolution(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
