@@ -100,6 +100,11 @@ class SessionConfigTests(unittest.TestCase):
         self.assertEqual(self.report["diagnosticStage"], ((), ("string",), ()))
         self.assertNotIn("diagnosticStage", self.config)
 
+    def test_direct_stage_selector_is_ignored_when_returning_to_the_menu(self):
+        world = next(source for path, source in self.partials.items() if path.name == "IntegratedWorldBoundary.cs")
+        self.assertIn("next.ignoreDirectStageLaunchSelection = coordinator.returnToOfflineMenu && coordinator.DirectStageDiagnosticRequested;", world)
+        self.assertIn("if (!ignoreDirectStageLaunchSelection && File.Exists(path))", self.source)
+
     def test_config_contains_exactly_the_fields_read_from_config(self):
         reads = set()
         for source in self.partials.values():

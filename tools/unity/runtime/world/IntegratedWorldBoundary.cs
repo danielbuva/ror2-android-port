@@ -3432,6 +3432,7 @@ public sealed partial class PortSession
             var next = new GameObject("Persistent offline gameplay session").AddComponent<PortSession>();
             next.sessionIndex = coordinator.sessionIndex + 1;
             next.skipOfflineMenu = !coordinator.returnToOfflineMenu;
+            next.ignoreDirectStageLaunchSelection = coordinator.returnToOfflineMenu && coordinator.DirectStageDiagnosticRequested;
             PortSession.Destroy(coordinator.gameObject);
         }
         void CancelPendingOriginalAudioCameraContextCreationForCleanup()

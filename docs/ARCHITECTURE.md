@@ -53,7 +53,9 @@ fresh-run entry. It loads the configured geometry and `RunClockSession`
 checks its original stage identity against the staged SceneDef. The diagnostic
 enters with fresh Run counters and skips the stage-one selection RNG draw. It
 uses the stored loadout and the existing assisted-run profile exclusions.
-Existing stage and run cleanup own teardown.
+Existing stage and run cleanup own teardown. On a return to the offline menu,
+`IntegratedWorldSession` starts the next session without the direct-stage launch
+selector or its assistance. The device runner still owns removing the selector.
 
 `ActiveClientSession` checks each native SkillLocator cache against that
 identity's ordered GenericSkill components and cached NetworkIdentity before

@@ -683,6 +683,8 @@ public sealed partial class PortSession : MonoBehaviour
         if (Resources.Load<TextAsset>("MovementBatchProbe"))
             new GameObject("Isolated movement batch").AddComponent<PortSession>();
     }
+    bool ignoreDirectStageLaunchSelection;
+
     IEnumerator Start()
     {
         if (File.Exists(System.IO.Path.Combine(Application.persistentDataPath, "whole-catalog-selection.json")))
@@ -691,7 +693,7 @@ public sealed partial class PortSession : MonoBehaviour
         // MovementBatchProbe is the unchanged resource/file name.
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");
         var config = JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
-        if (File.Exists(path))
+        if (!ignoreDirectStageLaunchSelection && File.Exists(path))
         {
             string selectionJson = File.ReadAllText(path);
             r = JsonUtility.FromJson<SessionReport>(selectionJson);
