@@ -61,6 +61,8 @@ Set `backup_installer_key` to `true` on that request to also retain the
 test signer locally. The backup reads its two files under the granted Thor
 lease, checks the fixture certificate, and stores them under ignored `work/`
 with mode 0600. An existing matching backup is reused.
+Set `toolhost_source_commit` to a successful retained Thor build's full source
+commit on the same request to back up its signer without starting a new build.
 
 With the backup and a retained fixture build, the Mac can rebuild the disposable
 installer on a clean checkout without a device grant. Supply an Android Build
