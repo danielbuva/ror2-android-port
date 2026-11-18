@@ -325,14 +325,25 @@ class RequestPipelineTests(unittest.TestCase):
             }
             receipt_path = work / "stage-receipt.json"
             receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
-            runtime.source_plan = lambda *args: plan
-            runtime.streamed_media_rows = lambda value: value["streamed_media"]
+            runtime.source_plan = lambda *args, **kwargs: plan
+            runtime.streamed_media_rows = lambda value, **kwargs: value["streamed_media"]
             output = work / "generated/StagePin.cs"
             result = runtime.generate(receipt_path, stage_root, output, prefab, bank_index, init_file, init_receipt)
             self.assertEqual("work/generated/StagePin.cs", result["output"])
             self.assertEqual(153, result["bank_count"])
             self.assertEqual(120, result["streamed_media_count"])
             self.assertEqual(153, output.read_text(encoding="utf-8").count('"Bank'))
+
+            owner_output = work / "generated/OwnerStagePin.cs"
+            with self.assertRaisesRegex(ValueError, "source pin mismatch"):
+                runtime.generate(receipt_path, stage_root, owner_output, prefab, bank_index, init_file, init_receipt, owner_work=work)
+            receipt["current_bank_index_sha256"] = runtime.OWNER_BANK_INDEX_SHA256
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            owner = runtime.generate(receipt_path, stage_root, owner_output, prefab, bank_index, init_file, init_receipt, owner_work=work)
+            self.assertEqual((owner["bank_count"], owner["streamed_media_count"]), (153, 120))
+            self.assertNotEqual(owner["receipt_sha256"], result["receipt_sha256"])
+            receipt["current_bank_index_sha256"] = runtime.BANK_INDEX_SHA256
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
 
             output.unlink()
             media_file = output_dir / "Media/120.wem"

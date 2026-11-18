@@ -19,11 +19,12 @@ import stat
 import xml.etree.ElementTree as ET
 
 
-ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "PORTING_STATE.md").is_file())
+ROOT = Path(__file__).resolve().parents[5]
 WORK = ROOT / "work"
 ACCEPTED_ID = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 PREFAB_SHA = "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af"
 BANK_INDEX_SHA = "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326"
+OWNER_BANK_INDEX_SHA = "063944216e330019b171e8d654b3f0c53ca33289888a2615100abc9e27fa2b76"
 SOUNDBANKS_INFO_SHA = "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407"
 MEDIA_PLANNER_SHA = "104fca54159b676ce5539e2686539dbe12400d2e136ce6e3344c88de760396d1"
 INIT_SHA = "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90"
@@ -123,18 +124,35 @@ def external_media_planner():
     return module.plan_external_media
 
 
-def load_inputs(prefab_path: Path, bank_index_path: Path, init_path: Path, init_receipt_path: Path) -> tuple[Path, dict, list[dict], dict]:
-    accepted = json.loads((WORK / "config/accepted-input.json").read_text())
-    inventory = json.loads((WORK / "inventory/files.json").read_text())
-    local = json.loads((WORK / "config/local.json").read_text())
+def bank_context(prefab_path: Path, bank_index_path: Path, owner_work: Path | None):
+    work = WORK.resolve(strict=True) if owner_work is None else owner_work
+    if work != work.resolve(strict=True):
+        raise ValueError("owner work root must be canonical")
+    accepted = json.loads((work / "config/accepted-input.json").read_text())
+    inventory = json.loads((work / "inventory/files.json").read_text())
+    local = json.loads((work / "config/local.json").read_text())
     game_root = Path(local["game_path"]).expanduser().resolve(strict=True)
     if accepted.get("input_id") != ACCEPTED_ID or inventory.get("input_id") != ACCEPTED_ID or inventory.get("hash_mode") != "full":
         raise ValueError("accepted identity/full inventory mismatch")
     if sha_file(prefab_path) != PREFAB_SHA:
         raise ValueError("WwiseGlobal prefab pin mismatch")
-    bank_index = json.loads(bank_index_path.read_text())
-    if sha_file(bank_index_path) != BANK_INDEX_SHA or bank_index.get("input_id") != ACCEPTED_ID:
+    bank_index_raw = bank_index_path.read_bytes()
+    bank_index = json.loads(bank_index_raw)
+    expected_index = BANK_INDEX_SHA if owner_work is None else OWNER_BANK_INDEX_SHA
+    if sha_bytes(bank_index_raw) != expected_index or bank_index.get("input_id") != ACCEPTED_ID:
         raise ValueError("current accepted bank-index receipt mismatch")
+    if owner_work is not None:
+        files = [(row["path"], row["sha256"]) for row in inventory["files"]]
+        if sha_bytes(json.dumps(files, sort_keys=True, separators=(",", ":")).encode()) != ACCEPTED_ID:
+            raise ValueError("owner inventory content does not match accepted identity")
+    return game_root, {"accepted": accepted, "inventory": inventory, "bank_index": bank_index}
+
+
+def load_inputs(
+    prefab_path: Path, bank_index_path: Path, init_path: Path, init_receipt_path: Path, *, owner_work: Path | None = None
+) -> tuple[Path, dict, list[dict], dict]:
+    game_root, inputs = bank_context(prefab_path, bank_index_path, owner_work)
+    inventory, bank_index = inputs["inventory"], inputs["bank_index"]
     adaptation = json.loads(init_receipt_path.read_text())
     if (
         sha_file(init_receipt_path) != INIT_RECEIPT_SHA
@@ -191,29 +209,23 @@ def load_inputs(prefab_path: Path, bank_index_path: Path, init_path: Path, init_
         game_root,
         adaptation,
         plans,
-        {"accepted": accepted, "inventory": inventory, "bank_index": bank_index},
+        inputs,
     )
 
 
-def load_streamed_media_inputs(prefab_path: Path, bank_index_path: Path, soundbanks_info_path: Path) -> tuple[Path, list[dict]]:
-    accepted = json.loads((WORK / "config/accepted-input.json").read_text())
-    inventory = json.loads((WORK / "inventory/files.json").read_text())
-    local = json.loads((WORK / "config/local.json").read_text())
-    game_root = Path(local["game_path"]).expanduser().resolve(strict=True)
-    if accepted.get("input_id") != ACCEPTED_ID or inventory.get("input_id") != ACCEPTED_ID or inventory.get("hash_mode") != "full":
-        raise ValueError("accepted identity/full inventory mismatch")
-    if sha_file(prefab_path) != PREFAB_SHA:
-        raise ValueError("WwiseGlobal prefab pin mismatch")
-    bank_index = json.loads(bank_index_path.read_text())
-    if sha_file(bank_index_path) != BANK_INDEX_SHA or bank_index.get("input_id") != ACCEPTED_ID:
-        raise ValueError("current accepted bank-index receipt mismatch")
+def load_streamed_media_inputs(
+    prefab_path: Path, bank_index_path: Path, soundbanks_info_path: Path, *, owner_work: Path | None = None
+) -> tuple[Path, list[dict]]:
+    game_root, inputs = bank_context(prefab_path, bank_index_path, owner_work)
+    if owner_work is not None and soundbanks_info_path.resolve(strict=True) != game_root / BANK_ROOT / "SoundbanksInfo.xml":
+        raise ValueError("owner SoundbanksInfo must come from the admitted originals")
     names = extract_names(prefab_path.read_text(encoding="utf-8"))
     xml_rows = soundbanks_rows(soundbanks_info_path)
     media_plans = external_media_planner()(
         names,
-        bank_index.get("banks", []),
+        inputs["bank_index"].get("banks", []),
         xml_rows,
-        inventory.get("files", []),
+        inputs["inventory"].get("files", []),
         game_root,
         BANK_ROOT.as_posix(),
     )
@@ -228,15 +240,17 @@ def create_stage(
     plans: list[dict],
     media_plans: list[dict],
     inputs: dict,
+    *,
+    owner_work: Path | None = None,
 ) -> dict:
     absolute = Path(os.path.abspath(output))
     reject_symlink_components(absolute)
-    canonical_work = WORK.resolve(strict=True)
+    canonical_work = WORK.resolve(strict=True) if owner_work is None else owner_work
     if not inside(absolute, canonical_work) or absolute == canonical_work or absolute.exists():
         raise ValueError("stage output must be a new directory under ignored work/")
     if inside(absolute, game_root.resolve(strict=True)):
         raise ValueError("stage output cannot be in accepted game installation")
-    if subprocess_check_ignore(absolute) is False:
+    if owner_work is None and not subprocess_check_ignore(absolute):
         raise ValueError("stage output must be ignored by Git")
     absolute.mkdir(parents=True, exist_ok=False)
     target = absolute / OUTPUT_RELATIVE
@@ -276,8 +290,8 @@ def create_stage(
         receipt = {
             "schema": "original-game-wwise-bank-cohort-r2",
             "accepted_input_id": ACCEPTED_ID,
-            "accepted_inventory_sha256": sha_file(WORK / "inventory/files.json"),
-            "current_bank_index_sha256": BANK_INDEX_SHA,
+            "accepted_inventory_sha256": sha_file(canonical_work / "inventory/files.json"),
+            "current_bank_index_sha256": BANK_INDEX_SHA if owner_work is None else OWNER_BANK_INDEX_SHA,
             "soundbanks_info_sha256": SOUNDBANKS_INFO_SHA,
             "wwise_global_prefab_sha256": PREFAB_SHA,
             "init_adaptation_receipt_sha256": sha_file(init_receipt_path),
@@ -359,11 +373,12 @@ def main() -> int:
     parser.add_argument("--init-receipt", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--plan-json", type=Path)
+    parser.add_argument("--owner-work", type=Path, help="explicit admitted owner work root and decoder-free index")
     args = parser.parse_args()
     if (args.output_dir is None) == (args.plan_json is None):
         parser.error("choose exactly one of --output-dir or --plan-json")
-    game_root, _, plans, inputs = load_inputs(args.prefab, args.bank_index, args.adapted_init, args.init_receipt)
-    media_root, media_plans = load_streamed_media_inputs(args.prefab, args.bank_index, args.soundbanks_info)
+    game_root, _, plans, inputs = load_inputs(args.prefab, args.bank_index, args.adapted_init, args.init_receipt, owner_work=args.owner_work)
+    media_root, media_plans = load_streamed_media_inputs(args.prefab, args.bank_index, args.soundbanks_info, owner_work=args.owner_work)
     if media_root != game_root:
         raise ValueError("bank and media sources resolve to different accepted roots")
     summary = {
@@ -385,7 +400,10 @@ def main() -> int:
     if args.plan_json:
         destination = Path(os.path.abspath(args.plan_json))
         reject_symlink_components(destination)
-        if not inside(destination, WORK.resolve(strict=True)) or destination.exists() or not subprocess_check_ignore(destination):
+        work = WORK.resolve(strict=True) if args.owner_work is None else args.owner_work
+        if not inside(destination, work) or inside(destination, game_root) or destination.exists():
+            raise ValueError("plan output must be a new file under work/")
+        if args.owner_work is None and not subprocess_check_ignore(destination):
             raise ValueError("plan output must be a new ignored file under work/")
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("x", encoding="utf-8") as stream:
@@ -400,6 +418,7 @@ def main() -> int:
             plans,
             media_plans,
             inputs,
+            owner_work=args.owner_work,
         )
         summary["stage_receipt"] = receipt
     print(json.dumps({k: v for k, v in summary.items() if k != "banks"}, sort_keys=True))

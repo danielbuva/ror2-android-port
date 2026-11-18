@@ -69,8 +69,8 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "bfdcf89b1b8a39118b12a4cd4840f0c229089f720ac20f10f4dc82a42921be3f"
-STAGE_PIN_TOOL_SHA256 = "1aae94e738c3c1471244c37f621128c155a3336f9f9ba751ea112e629f3cc92e"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "6d8df2d0cc74466d6bb8908783930fdfe1cba9799f462001548ec9142e904765"
+STAGE_PIN_TOOL_SHA256 = "03844d131eed33e72ef7472027b1ded4d48a9cbe1974dce70c8b7e8b003c6267"
 REQUEST_PIN_TOOL_SHA256 = "945533162905e763869a00480be064e6b3c31ff5b62f6de81ef1393219c1459b"
 MANAGED_PRODUCER_SHA256 = "b3f1806afa9e7f82159052a7524f0ae389df6ab255e735e3344b714ad5dfb34d"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
@@ -85,10 +85,10 @@ OWNER_SOURCE_HASHES = {
     "../../runtime/session/MusicPcmJoinObserver.cs": "3c8ceaf8a8ce9ce07c76282adb70f63f8f9487f0682d33056ea6aeaa2139cef9",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ef0ca25f48aa39cdbdf33fceb960472bfd6a3e85b86a80db71cf9ec89781154a",
-    "../../runtime/session/PortSession.cs": "13ec233998a9c9d573e6d89821df150d61ac914062c47c64ef536f98dabca12b",
+    "../../runtime/session/PortSession.cs": "3d97da363827183b3619e694a6a72b7a161f381c7ee90fce2f6f91e5125e485a",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "0c08a4e06977e68ec5bc1acc20014f6cdabb7d3f71dd2874caaa6455f3f9b059",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
-    "../../runtime/world/IntegratedWorldBoundary.cs": "3d72f90b54a48cb7cec1bca18f7c7cc20199c176a082d8546153a39555a5a384",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "a9867aadcb63dab37f6a9dc67bcebb3d295c0d973e18422da71302c206d668d1",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "d1d197dc12526614f37b9c3c3699be3bf16a96315abd3ac698c15b4270bfe8b6",
     "../../runtime/world/SurvivorSkillObserver.cs": "b8e2627c42355831d52fb382d4cfa9d9f932a98a3900abb0dfa76d8b4ca2006b",
     "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "31cceff4ae1ea0df0b94fc6a63fc07c1e687f38bde9e12fd9c1330118997aa7d",
