@@ -753,8 +753,10 @@ required. Environment capture remains an explicit source-produced input.
 Optional `--code-request recipe/<request>.json` with a player profile or
 `--native-request` runs
 the original-input code owner through conversion and native planning. Its
-request selects `"${output}"` and an explicit target profile and source root
-inside the signed `"${repo}"`. Schedule `owner-code-conversion.json` in assembly
+request selects `"${output}"`. A fixed `target` selects a profile and authored
+source root inside the signed `"${repo}"`. Omitting it signs the current runtime
+and audio producer sources. The current audio compile still requires macOS SDK
+tools and the checkout's work root. Schedule `owner-code-conversion.json` in assembly
 before its player consumer and `owner-native-code.json` in native when selected.
 The player uses the conversion receipt, the managed payload and the resource
 files from this job. Its registry request carries the original package and source
@@ -772,9 +774,10 @@ in the assembly stage. Place the four private
 [compiler package archives](../package-assemblies/README.md) in
 `acquired/unity-packages/`. The package job supplies its verified versioned
 source directories to the compiler and tracks each archive in the incremental
-cache. Keep the code request's existing `source_inputs.packages` and flat
-inventory for the fixed-target player registry. That inventory also contains
-TestRunner and MCP importer sources.
+cache. The current player registry uses the same staged package directory and
+the managed compiler's `packages/inputs.json`. A fixed-target player registry
+uses the code request's original `source_inputs.packages` and flat inventory,
+which also includes TestRunner and MCP importer sources.
 
 Optional `--burst-request recipe/<request>.json` adds the existing
 `owner-code/produce.py` Burst-only job. The caller's request uses
