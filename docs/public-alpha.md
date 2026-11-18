@@ -78,6 +78,11 @@ host contracts from installed-alpha acceptance.
 - [ ] Phone-qualify folder/ZIP validation, cancellation and honest supported/unknown
       version refusal with legitimate input cohorts and actual SAF providers
       ([acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)).
+      [The acquisition fixture](PORTING_JOURNAL.md#j1488--verify-android-folder-and-zip-acquisition-through-the-installer)
+      covers system picker Back, both version refusals, cancellation during
+      validation and hash-verified folder/ZIP imports on Nova B. The owner route
+      still needs selection from an external provider and persisted URI reopen
+      across app UIDs.
       Keep source installations read-only; account downloads and Steam Cloud deferred.
 
 Laboratory capacity, placement and runtime-backing receipts in
