@@ -517,7 +517,7 @@ _ENTRIES = (
         "check_alpha_stability_batch",
         {},
         "current",
-        "Detached diagnostic driver: one canonical device lease across SDK settings interruption, three-session native heap attribution and 30-minute assisted sustained play. Requires explicit --device, --expected-apk-sha256 and a new absolute --done-file. Stop on first failure; publish terminal cleanup and lease release in that receipt. No automatic installation, physical-input, ordinary-play or memory-bound claim. Independent per-zone sampling targets 250 ms; gaps above 1 s abort. Admission and runtime limits follow the [current playtest thermal policy](PLAYTESTING.md#stability-persistence-and-updates), qualified on the host in J1156; retain failed cases without automatic retry. Completed stages checkpoint; one three-hour deadline. Thermal device qualification remains open.",
+        "Detached diagnostic driver: one canonical device lease across SDK settings interruption, three-session native heap attribution and 30-minute assisted sustained play. Requires explicit --device, --expected-apk-sha256 and a new absolute --done-file. Stop on first failure; publish terminal cleanup and lease release in that receipt. No automatic installation, physical-input, ordinary-play or memory-bound claim. Independent per-zone sampling targets 250 ms. Gaps over 1 s warn and gaps over 5 s abort. Admission and runtime limits follow the [current playtest thermal policy](PLAYTESTING.md#stability-persistence-and-updates), qualified on the host in J1156; retain failed cases without automatic retry. Completed stages checkpoint; one three-hour deadline. Thermal device qualification remains open.",
         handler=_alpha_stability_batch,
     ),
     Action(
