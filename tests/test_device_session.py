@@ -53,6 +53,15 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
 
+    def test_menu_start_rejects_selector_for_a_different_apk_attempt(self):
+        request = dict(self.request, start_from_menu=True, selection={"attempt": "run-folder"})
+        runner.save(self.request_file, request)
+        with mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"):
+            with self.assertRaisesRegex(ValueError, "selector attempt must match.*embedded"):
+                runner.load_request(self.request_file)
+            runner.save(self.request_file, dict(request, selection={"attempt": "embedded"}))
+            self.assertEqual(runner.load_request(self.request_file)["selection"]["attempt"], "embedded")
+
     def test_device_option_selects_only_the_workstreams_granted_serial(self):
         self.request.pop("serial")
         self.request.pop("adopted_install")

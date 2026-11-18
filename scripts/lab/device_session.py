@@ -147,8 +147,13 @@ def load_request(path, serial=None):
         for script in scripts:
             inputs = json.loads(Path(script).read_text())
             touch_gesture.validate_request(dict(inputs, pid="1"))
-    if "input_mapping" in value:
-        checked_mapping(value)
+    mapping = checked_mapping(value) if "input_mapping" in value else None
+    if value.get("start_from_menu") and "selection" in value:
+        from installed_attempt import attempt_from_installed
+
+        attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(value)
+        if value["selection"].get("attempt") != attempt:
+            raise ValueError("Menu Start selector attempt must match the APK's embedded attempt: " + attempt)
     return value
 
 
