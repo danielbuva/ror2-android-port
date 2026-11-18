@@ -1748,7 +1748,12 @@ before progress is restarted, with a visible repair notice. Producer caches and
 input/signing state stay untouched and undergo existing revalidation. Unsupported
 checkpoint versions or failed preservation refuse instead of discarding evidence.
 Producer receipts remain the authority for
-reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
+reuse. `tests/owner_journey_fixture.py` and `tests/owner_journey_android.py`
+provide a reusable synthetic host journey across input admission, real producer
+stages, issued receipts, simulated Android consent/readback and the next update.
+`tests/test_owner_journey.py` compares stage order and cross-language receipts.
+Crypto, packaging, input selection/copy and Android/provider behavior remain
+explicit test boundaries; this is not phone or gameplay qualification. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
 foreground operation independently of `ToolHostActivity`. `OwnerUpdateState` supplies
 Android-free progress presentation: missing/future timestamps never advance the
@@ -2208,9 +2213,13 @@ resource descriptors remain in `resources.jsonl`. Optional `--codec` and
 UnityFS repacking without changing member bytes. `build_bundle_lz4.py` builds
 the public `bundle_lz4.c` worker; `unity_write.py::codec` owns its hash-pinned,
 bounded child, per-block deadlines and independent decoded-byte verification.
-Exit rechecks the codec pin, closes pipes/reaps the child and removes the
-writer's temporary compressed spool. Final body/resource checks still read the
-compressed output; the producer receipt records compression and the codec pin.
+The native child encodes the next canonical block while Python verifies the
+previous response. A successful exit rechecks the codec pin, closes pipes and
+reaps the child. The writer removes its temporary compressed spool and hashes
+the final bundle bytes as they are written. Final body/resource checks read
+the compressed output. The producer receipt records the codec pin, member
+staging and bundle wall times, codec CPU and exchange time, and decoded-byte
+verification time. Exchange and verification can overlap native CPU time.
 Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
 The same owner supplies per-field external qualification for strict graph

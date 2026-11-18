@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1494 — Overlap Android bundle encoding and verification
+
+2026-11-18. The UnityFS writer overlaps native LZ4 encoding with decoded-byte
+checks and hashes the final write. A one-worker Thor replay passed structural
+and required-set checks for all 290,498 records, matching J1478's 571,046,138-byte
+bundle SHA-256 `1117c73fb1ca756d3769af25c066cecaabac620eb9ad8bf9bf13dda517fabc8b`.
+Producer time fell from 10,245.374 to 9,732.853 s (5.0%), with serialization
+and compression down from 1,963.407 to 1,379.129 s (29.8%). Peak stage RSS
+was 2.381 GB against 3 GB. Recorded CPU/GPU peak was 62.1 C at admission,
+with zero thermal pauses. The runner removed 1.828 GB of replay scratch.
+Evidence: `work/coordination/alpha-converter-serial-20261118/terminal.done.json`.
+Unity typed load, converted gameplay and full phone install/update remain open.
+
 ## J1493 — Restore the Stone Titan's pre-fist ground warning
 
 2026-11-18. The native effect owner prepares Android intersection materials in
