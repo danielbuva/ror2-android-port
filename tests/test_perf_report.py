@@ -33,6 +33,76 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def test_energy_external_power_keeps_signed_discharge_and_endpoint_changes(self):
+        session, _ = fixture()
+        for index, row in enumerate(session["samples"]):
+            row.update(
+                battery_current_ua=-250000,
+                battery_voltage_uv=4000000,
+                battery_charge_uah=1000000 - index * 100,
+                battery_level_percent=80 - index,
+                battery_external_power=True,
+            )
+        report = perf.analyze(session, [])
+        energy = report["energy"]
+        self.assertEqual(energy["power_source"], "externally-powered")
+        self.assertEqual(energy["signed_battery_terminal_power_mw"]["sample_mean"], -1000)
+        self.assertEqual(energy["charge_change_uah"], -300)
+        self.assertEqual(energy["level_change_percentage_points"], -3)
+        self.assertFalse(energy["unplugged_energy_qualified"])
+        text = perf.markdown(report)
+        self.assertIn("external power observed in 4 samples", text)
+        self.assertIn("not energy qualification", text)
+
+    def test_energy_sparse_mixed_timeline_reports_gaps_without_interpolation(self):
+        rows = [
+            dict(host_seconds=t, battery_current_ua=current, battery_voltage_uv=4000000, battery_external_power=source)
+            for t, current, source in ((0, -1000000, False), (1, 0, True), (100, None, None), (200, 1000000, False))
+        ]
+        energy = perf.energy_summary(rows)
+        self.assertEqual(energy["power_source"], "mixed")
+        self.assertEqual(energy["observed_power_source_transitions"], 1)
+        self.assertEqual(energy["unknown_power_source_samples"], 1)
+        self.assertEqual(energy["signed_battery_terminal_power_mw"], dict(sample_mean=0, minimum=-4000, maximum=4000))
+        self.assertEqual(energy["coverage"]["power_mw"]["largest_unobserved_gap_seconds"], 199)
+        self.assertIsNone(energy["charge_change_uah"])
+        self.assertEqual(energy["coverage"]["charge_uah"]["missing_samples"], 4)
+
+    def test_energy_missing_invalid_and_zero_values_are_distinct(self):
+        rows = [
+            dict(
+                host_seconds=0, battery_current_ua=True, battery_voltage_uv=4000000, battery_charge_uah=None, battery_level_percent=-1, battery_external_power=0
+            ),
+            dict(host_seconds=5, battery_current_ua=0, battery_voltage_uv=4000000, battery_charge_uah=0, battery_level_percent=0, battery_external_power=False),
+            dict(
+                host_seconds=10,
+                battery_current_ua=float("nan"),
+                battery_voltage_uv=float("inf"),
+                battery_charge_uah=100,
+                battery_level_percent=101,
+                battery_external_power=False,
+            ),
+        ]
+        energy = perf.energy_summary(rows)
+        self.assertEqual(energy["power_source"], "incomplete")
+        self.assertEqual(energy["coverage"]["power_mw"]["valid_samples"], 1)
+        self.assertEqual(energy["signed_battery_terminal_power_mw"]["sample_mean"], 0)
+        self.assertIsNone(energy["charge_change_uah"])
+        self.assertIsNone(energy["level_change_percentage_points"])
+        self.assertEqual(energy["coverage"]["level_percent"]["valid_samples"], 1)
+
+    def test_legacy_energy_absence_and_observed_unplugged_never_qualify_budget(self):
+        session, _ = fixture()
+        energy = perf.analyze(session, [])["energy"]
+        self.assertEqual(energy["unknown_power_source_samples"], 4)
+        self.assertEqual(energy["coverage"]["power_mw"]["largest_unobserved_gap_seconds"], 3)
+        self.assertIsNone(energy["signed_battery_terminal_power_mw"]["sample_mean"])
+        for row in session["samples"]:
+            row["battery_external_power"] = False
+        energy = perf.analyze(session, [])["energy"]
+        self.assertEqual(energy["power_source"], "observed-unplugged")
+        self.assertFalse(energy["unplugged_energy_qualified"])
+
     def test_camera_disabled_trace_accepts_unity_empty_name_and_retains_identity_checks(self):
         session, _ = fixture()
         session.update(attempt="authored", raw_frame_trace=None)
