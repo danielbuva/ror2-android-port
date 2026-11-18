@@ -10,6 +10,10 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1487](PORTING_JOURNAL.md#j1487--prepare-native-mercenary-expose-materials-before-pooling) | 2026-11-17 | Prepare native Mercenary Expose materials before pooling | 2026-11-18. |
+| [J1486](PORTING_JOURNAL.md#j1486--start-sky-meadows-native-projectiles-and-return-to-lab-after-end-run) | 2026-11-17 | Start Sky Meadow's native projectiles and return to Lab after End Run | 2026-11-18. |
+| [J1485](PORTING_JOURNAL.md#j1485--apply-selected-skins-on-the-ordinary-huntress-and-acrid-player-path) | 2026-11-17 | Apply selected skins on the ordinary Huntress and Acrid player path | 2026-11-18. |
+| [J1484](PORTING_JOURNAL.md#j1484--keep-assisted-mul-t-input-live-through-stance-swaps) | 2026-11-17 | Keep assisted MUL-T input live through stance swaps | 2026-11-18. |
 | [J1483](PORTING_JOURNAL.md#j1483--observe-120-hz-battery-discharge-and-clock-limits-on-nova) | 2026-11-17 | Observe 120 Hz battery discharge and clock limits on Nova | 2026-11-17. |
 | [J1482](PORTING_JOURNAL.md#j1482--verify-issued-alpha-versions-and-forward-rollback-on-android) | 2026-11-17 | Verify issued alpha versions and forward rollback on Android | 2026-11-17. |
 | [J1480](PORTING_JOURNAL.md#j1480--recover-an-interrupted-native-profile-commit) | 2026-11-17 | Recover an interrupted native profile commit | 2026-11-17. |
