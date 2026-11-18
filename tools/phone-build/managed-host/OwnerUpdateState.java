@@ -77,10 +77,11 @@ public final class OwnerUpdateState {
     }
     /** Shared Activity/notification explanation, never a thermal control policy. */
     public static String backgroundDetail(boolean running, boolean fresh, String status, boolean manual, boolean thermal, String error) {
+        if ("cancelled".equals(status)) return (!running || !fresh ? "Last recorded thermal state; not live. " : "")
+            + "Conversion cancelled. Retained work is revalidated on explicit retry.";
         if (!running || !fresh) return "Last recorded thermal state; not live. "
             + (error != null && !error.isEmpty() ? "Recorded failure: " + error : "Reopen progress for current worker status.");
         if (error != null && !error.isEmpty()) return "Conversion stopped or unavailable: " + error + ". Retry only after resolving the reported cause.";
-        if ("cancelled".equals(status)) return "Conversion cancelled. Retained work is revalidated on explicit retry.";
         if ("failed".equals(status)) return "Conversion failed. Review the first failure before retrying.";
         if ("complete".equals(status)) return "Producer finished; later reconstruction or installation steps may remain.";
         if (thermal || "cooling".equals(status)) return (manual ? "Paused by you and cooling. " : "Cooling automatically. ")
