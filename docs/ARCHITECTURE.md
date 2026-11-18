@@ -7861,3 +7861,12 @@ the existing five-second report cadence. The latest `NovaReport` sample records
 the display camera, renderer state, projected bounds, mesh and first shared
 material. The sample holds no Unity references and works with native skin
 diagnostics disabled.
+
+
+## Host-only owner layout models
+
+`tools/unity/runtime/layout/LayoutProjection.cs` owns pure C# safe-area geometry
+for future editor models. Its top-left normalized contract, explicit clamp and
+rotation are documented beside the source and exercised by host C# fixtures.
+It has no UnityEngine dependency or live touch/HUD/input integration. Caller-owned
+insets and aspect changes are data, not detected device facts.
