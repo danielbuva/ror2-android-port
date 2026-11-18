@@ -34,8 +34,8 @@ EXPECTED = {
 }
 
 
-def work_relative(path: Path) -> str:
-    return path.resolve().relative_to(WORK.resolve()).as_posix()
+def work_relative(path: Path, owner_work: Path | None = None) -> str:
+    return path.resolve().relative_to(owner_work or WORK.resolve()).as_posix()
 
 
 def sha(path: Path) -> str:
@@ -67,27 +67,30 @@ def run(command: list[str], *, cwd: Path, env: dict[str, str], log: Path, timeou
         raise RuntimeError(f"command failed ({result.returncode}); see {log}\n{result.stdout}")
 
 
-def output_directory(raw: Path) -> Path:
+def output_directory(raw: Path, owner_work: Path | None = None) -> Path:
     absolute = Path(os.path.abspath(raw.expanduser()))
+    work = owner_work or WORK.resolve()
     require(
-        not absolute.exists() and not absolute.is_symlink(),
+        absolute != work and not absolute.exists() and not absolute.is_symlink(),
         "output directory must be new",
     )
     require(
-        absolute.is_relative_to(WORK.resolve()),
+        absolute.is_relative_to(work),
         "output directory must be under repository work/",
     )
+    require(not absolute.is_relative_to(work / "config") and not absolute.is_relative_to(work / "inventory"), "output overlaps owner input metadata")
     parent = absolute.parent.resolve(strict=True)
     require(parent == absolute.parent, "output parent may not traverse symlinks")
     for component in (absolute, *absolute.parents):
         require(not component.is_symlink(), "output path contains a symlink")
-        if component == WORK.resolve():
+        if component == work:
             break
     # Git cannot descend through the shared work/ symlink in isolated checkouts.
     # Its ignored root covers the canonical subtree validated above.
-    ignored_path = WORK if WORK.is_symlink() else absolute
-    ignored = subprocess.run(["git", "check-ignore", "--quiet", str(ignored_path)], cwd=ROOT)
-    require(ignored.returncode == 0, "output path is not ignored by Git")
+    if owner_work is None:
+        ignored_path = WORK if WORK.is_symlink() else absolute
+        ignored = subprocess.run(["git", "check-ignore", "--quiet", str(ignored_path)], cwd=ROOT)
+        require(ignored.returncode == 0, "output path is not ignored by Git")
     absolute.mkdir()
     return absolute
 
@@ -238,7 +241,8 @@ def main() -> None:
     parser.add_argument("--android-source", required=True, type=Path)
     parser.add_argument("--android-os-string-source", required=True, type=Path)
     parser.add_argument("--native-so", required=True, type=Path)
-    parser.add_argument("--llvm-nm", required=True, type=Path)
+    parser.add_argument("--llvm-nm", type=Path, help="optional external export cross-check for provisioned work")
+    parser.add_argument("--owner-work", type=Path, help="canonical provisioned owner workspace")
     parser.add_argument(
         "--unity-editor",
         type=Path,
@@ -249,7 +253,10 @@ def main() -> None:
     parser.add_argument("--output-dir", required=True, type=Path)
     args = parser.parse_args()
 
-    accepted = json.loads((WORK / "config/accepted-input.json").read_text(encoding="utf-8"))
+    work = args.owner_work or WORK.resolve(strict=True)
+    require(work == work.resolve(strict=True) and work.is_dir(), "owner work must be a canonical directory")
+    require(args.owner_work is not None or args.llvm_nm is not None, "the historical producer requires --llvm-nm")
+    accepted = json.loads((work / "config/accepted-input.json").read_text(encoding="utf-8"))
     require(accepted.get("input_id") == EXPECTED["input_id"], "accepted input identity changed")
     composed_transform_source = HERE / "tools/composed/ComposedGameCecilTransform.cs"
     lightning_owner_source = ROOT / "tools/unity/runtime/world/LightningStakeSourceCallObserver.cs"
@@ -259,8 +266,9 @@ def main() -> None:
         sha(composed_transform_source) == EXPECTED["composed_transform_source"],
         "composed Cecil transform source pin changed",
     )
-    local = json.loads((WORK / "config/local.json").read_text(encoding="utf-8"))
-    managed = Path(local["game_path"]).expanduser().resolve(strict=True) / "Risk of Rain 2_Data/Managed"
+    local = json.loads((work / "config/local.json").read_text(encoding="utf-8"))
+    game_root = Path(local["game_path"]).expanduser().resolve(strict=True)
+    managed = game_root / "Risk of Rain 2_Data/Managed"
     raw_game = managed / "RoR2.dll"
     raw_api = managed / "AK.Wwise.Unity.API.dll"
     require(
@@ -270,7 +278,10 @@ def main() -> None:
     require(sha(raw_game) == EXPECTED["raw_game"], "accepted raw game assembly hash changed")
     require(sha(raw_api) == EXPECTED["raw_api"], "accepted raw Wwise API hash changed")
     require(
-        args.android_source.is_file() and args.android_os_string_source.is_file() and args.native_so.is_file() and args.llvm_nm.is_file(),
+        args.android_source.is_file()
+        and args.android_os_string_source.is_file()
+        and args.native_so.is_file()
+        and (args.llvm_nm is None or args.llvm_nm.is_file()),
         "one or more explicit local Wwise Android ABI inputs are absent",
     )
     require(args.unity_editor is not None, "pass --unity-editor or set UNITY_EDITOR")
@@ -284,7 +295,8 @@ def main() -> None:
     require(mono.is_file() and csc.is_file(), "pinned Unity Mono/Roslyn compiler is missing")
     cecil = cecil_from_editor(editor)
     unity_refs, compiler_options = unity_compile_references(editor, managed)
-    out = output_directory(args.output_dir)
+    require(not args.output_dir.resolve().is_relative_to(game_root), "output cannot be inside the accepted game installation")
+    out = output_directory(args.output_dir, args.owner_work)
 
     env = dict(os.environ)
     env.update(
@@ -337,8 +349,8 @@ def main() -> None:
             str(args.android_os_string_source.resolve(strict=True)),
             "--native-so",
             str(args.native_so.resolve(strict=True)),
-            "--llvm-nm",
-            str(args.llvm_nm.resolve(strict=True)),
+            *(["--llvm-nm", str(args.llvm_nm.resolve(strict=True))] if args.llvm_nm else []),
+            *(["--owner-work", str(work)] if args.owner_work else []),
             "--cecil",
             str(cecil),
             "--dotnet",
@@ -540,7 +552,11 @@ def main() -> None:
             "generated_android_source": sha(args.android_source.resolve(strict=True)),
             "handwritten_android_source": sha(args.android_os_string_source.resolve(strict=True)),
             "arm64_release_native_plugin": sha(args.native_so.resolve(strict=True)),
-            "llvm_nm": sha(args.llvm_nm.resolve(strict=True)),
+            **(
+                {"llvm_nm": sha(args.llvm_nm.resolve(strict=True))}
+                if args.llvm_nm
+                else {"native_export_set": json.loads(abi_plan.read_text())["native_export_set_sha256"]}
+            ),
         },
         "transformation_source_hashes": {
             (str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else "tools/unity/runtime/world/LightningStakeSourceCallObserver.cs"): sha(path)
@@ -581,14 +597,14 @@ def main() -> None:
             "stage_to_apk_binding": False,
             "dispatch_ready": False,
         },
-        "outputs_relative_to_work": {work_relative(p): sha(p) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "manifest.json"},
+        "outputs_relative_to_work": {work_relative(p, work): sha(p) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "manifest.json"},
     }
     manifest_path = out / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     print(
         json.dumps(
             {
-                "output_dir_relative_to_work": work_relative(out),
+                "output_dir_relative_to_work": work_relative(out, work),
                 "manifest_sha256": sha(manifest_path),
                 "hashes": manifest["source_input_hashes"],
                 "full_enable_ready": False,

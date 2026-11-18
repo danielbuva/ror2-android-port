@@ -87,6 +87,20 @@ class ManagedProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "under repository work"):
                     PRODUCER.output_directory(root / "outside")
 
+    def test_provisioned_work_needs_no_checkout_and_contains_receipt_paths(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            work = root / "inputs/work"
+            (work / "config").mkdir(parents=True)
+            with mock.patch.object(PRODUCER.subprocess, "run") as invoke:
+                production = PRODUCER.output_directory(work / "fresh", work)
+                self.assertEqual(PRODUCER.work_relative(production / "assembly.dll", work), "fresh/assembly.dll")
+                with self.assertRaisesRegex(RuntimeError, "overlaps owner input metadata"):
+                    PRODUCER.output_directory(work / "config/invalid", work)
+                with self.assertRaisesRegex(RuntimeError, "under repository work"):
+                    PRODUCER.output_directory(root / "outside", work)
+                invoke.assert_not_called()
+
     def test_compiler_receives_isolated_authored_project_without_writing_source(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -114,7 +128,7 @@ class ManagedProducerTests(unittest.TestCase):
         reference = Path.home() / ".nuget/packages/netstandard.library.ref/2.1.0"
         if not dotnet or not reference.is_dir():
             self.skipTest("optional .NET SDK and offline netstandard reference package unavailable")
-        scratch = ROOT / "work/tests/original-audio-managed-repro"
+        scratch = (ROOT / "work/tests/original-audio-managed-repro").resolve()
         scratch.mkdir(parents=True, exist_ok=True)
         project = ROOT / "tools/unity/support/audio/managed-producer/source/owner-api/OriginalOwnerProbeObserver.csproj"
         with tempfile.TemporaryDirectory(dir=scratch) as folder:

@@ -498,7 +498,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
 def run(work, sdk, values, output, *, signed_audio=False):
     work, sdk = native.canonical(work), native.canonical(sdk)
     output = Path(output)
-    if work != (ROOT / "work").resolve():
+    if not signed_audio and work != (ROOT / "work").resolve():
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
     if native.sha(PROFILE) != PROFILE_SHA:
@@ -552,8 +552,11 @@ def run(work, sdk, values, output, *, signed_audio=False):
                 inputs["wwise_os_string_source"],
                 "--native-so",
                 inputs["wwise_abi_native"],
-                "--llvm-nm",
-                sdk / "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-nm",
+                *(
+                    ["--owner-work", work]
+                    if signed_audio
+                    else ["--llvm-nm", sdk / "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-nm"]
+                ),
                 "--unity-editor",
                 sdk / "Unity.app/Contents/MacOS/Unity",
                 "--dotnet",
@@ -567,7 +570,7 @@ def run(work, sdk, values, output, *, signed_audio=False):
             "raw-managed",
         )
         manifest = json.loads((raw / "manifest.json").read_text())
-        managed_paths = audio.verify_managed_output_manifest(manifest, work)
+        managed_paths = audio.verify_managed_output_manifest(manifest, work, native_abi_reader=signed_audio)
         result["phase"] = "packages-and-transforms"
         package_output = output / "packages"
         packages_owner.run({"sdk_install": str(sdk), "packages": str(inputs["packages"]), "output": str(package_output)})
@@ -609,7 +612,9 @@ def run(work, sdk, values, output, *, signed_audio=False):
         )
         unchanged(bound)
         result["phase"] = "original-sources-and-maps"
-        maps, support = maps_and_support(output, inputs, state[1] / "Risk of Rain 2_Data/Managed", ordinary_dir / "tool/AssemblyProbe.dll", profile, state[0])
+        maps, support = maps_and_support(
+            output, inputs, state[1] / "Risk of Rain 2_Data/Managed", ordinary_dir / "tool/AssemblyProbe.dll", profile, state[0], work=work
+        )
         result["phase"] = "gameplay-assembly"
         game = gameplay(output, sdk, inputs, state[1] / "Risk of Rain 2_Data/Managed", ordinary, raw, package_output, audio_outputs, maps, support)
         produced = {
