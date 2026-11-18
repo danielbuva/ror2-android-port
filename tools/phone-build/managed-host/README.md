@@ -159,7 +159,11 @@ receipts. [dnfile release files](https://pypi.org/project/dnfile/0.18.0/#files)
 For signed texture jobs, add the outputs of
 `build_texture_jpeg.py`, `build_texture_etc.py` and `build_texture_sdk.py`
 to `natives` as `libtexture-jpeg.so`, `libtexture-etc.so` and
-`libtexture-pixels.so` respectively. Include `libqemu-x86_64.so`,
+`libtexture-pixels.so` respectively. Build the native pixel helper with
+`build_texture_sdk.py --pixels-only --compiler TARGET_CLANG --output NEW_DIR`
+before the owner SDK arrives. For macOS cross-builds, use the bundled NDK's
+`aarch64-linux-android24-clang` for JPEG and pixels and its
+`aarch64-linux-android24-clang++` for ETC. Include `libqemu-x86_64.so`,
 `libc++_shared.so` and the pinned QEMU dependency closure with its actual
 SONAME aliases under `native-links/` in `links`.
 Set `texture_sdk_guest` to a directory containing the built x86-64

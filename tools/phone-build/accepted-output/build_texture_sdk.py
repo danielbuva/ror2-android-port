@@ -26,17 +26,23 @@ def files(root):
 
 def build(compiler, linker, library, output, qemu_root=None, sysroot=None, android_tool_root=None):
     compiler = compiler.absolute()
-    library = library.resolve(strict=True)
     linux = qemu_root is not None
     if linux != (sysroot is not None) or linux != (linker is not None):
         raise ValueError("Linux SDK requires explicit QEMU root, GNU development sysroot and linker")
-    if sha(library) != (SDK_LINUX if linux else SDK_MAC):
-        raise ValueError("unqualified standalone SDK codec provider")
+    if library is None:
+        if linux:
+            raise ValueError("pixels-only build does not use the Linux SDK runtime")
+    else:
+        library = library.resolve(strict=True)
+        if sha(library) != (SDK_LINUX if linux else SDK_MAC):
+            raise ValueError("unqualified standalone SDK codec provider")
     source = Path(__file__).resolve().parent
     header = source / "third_party/bcdec/bcdec.h"
     if sha(header) != BCDEC:
         raise ValueError("public BC7 source provider drift")
-    inputs = [compiler.resolve(), library, Path(__file__).resolve(), source / "sdk_texture_codec.c", source / "texture_pixels.c", *files(header.parent)]
+    inputs = [compiler.resolve(), Path(__file__).resolve(), source / "texture_pixels.c", *files(header.parent)]
+    if library is not None:
+        inputs += [library, source / "sdk_texture_codec.c"]
     runtime = []
     if linux:
         qemu_root = qemu_root.resolve(strict=True)
@@ -48,7 +54,7 @@ def build(compiler, linker, library, output, qemu_root=None, sysroot=None, andro
         inputs += [linker.resolve(), *runtime, *files(sysroot)]
     if android_tool_root is not None:
         native = android_tool_root.resolve(strict=True) / "usr"
-        if not linux or compiler.resolve() != (native / "bin/clang-21").resolve(strict=True):
+        if (library is not None and not linux) or compiler.resolve() != (native / "bin/clang-21").resolve(strict=True):
             raise ValueError("Android SDK helper build requires the selected native Clang 21")
     inputs = sorted(set(inputs))
     if output.exists() or output.is_symlink() or output.parent != output.parent.resolve(strict=True):
@@ -95,9 +101,10 @@ def build(compiler, linker, library, output, qemu_root=None, sysroot=None, andro
                 "-o",
                 str(codec),
             ]
-        else:
+            result["commands"].append(command)
+        elif library is not None:
             command = [*common, str(source / "sdk_texture_codec.c"), "-o", str(codec)]
-        result["commands"].append(command)
+            result["commands"].append(command)
         for index, command in enumerate(result["commands"]):
             with (output / f"{index}.stdout").open("xb") as stdout, (output / f"{index}.stderr").open("xb") as stderr:
                 child = subprocess.Popen(command, stdout=stdout, stderr=stderr, start_new_session=True)
@@ -115,6 +122,11 @@ def build(compiler, linker, library, output, qemu_root=None, sysroot=None, andro
                 raise ValueError("SDK wrapper is not Linux x86-64 ELF")
         if any(sha(Path(p)) != pin for p, pin in result["inputs"].items()):
             raise ValueError("SDK texture build input changed")
+        (output / "BCDEC-LICENSE.txt").write_bytes((header.parent / "LICENSE").read_bytes())
+        if library is None:
+            result["outputs"] = {decoder.name: sha(decoder)}
+            result["success"] = True
+            return result
         command = [str(codec), str(library)]
         environment = {}
         if linux:
@@ -136,7 +148,6 @@ def build(compiler, linker, library, output, qemu_root=None, sysroot=None, andro
             "inputs": {str(p): sha(p) for p in sorted(set([codec, decoder, library, *runtime]))},
         }
         (output / "sdk-tools.json").write_text(json.dumps(toolchain, indent=2) + "\n")
-        (output / "BCDEC-LICENSE.txt").write_bytes((header.parent / "LICENSE").read_bytes())
         (output / "NOTICE.txt").write_text(
             "BC6/BC7 decoding uses unchanged public bcdec 0.985 under its MIT alternative; retain its license.\n"
             "The SDK is supplied separately by the owner under its provider terms; no SDK is distributed.\n"
@@ -156,8 +167,11 @@ def build(compiler, linker, library, output, qemu_root=None, sysroot=None, andro
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("compiler", "library", "output"):
+    for name in ("compiler", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--library", type=Path, help="Owner-supplied SDK encoder for the pipe adapter")
+    mode.add_argument("--pixels-only", action="store_true", help="Build only the public native pixel helper without SDK inputs")
     for name in ("linker", "qemu-root", "sysroot", "android-tool-root"):
         parser.add_argument("--" + name, type=Path)
     args = parser.parse_args()
