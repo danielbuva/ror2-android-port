@@ -85,7 +85,7 @@ class BatteryRuleTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {})
             runner.devices = {"synthetic": "synthetic-device"}
-            runner.worktree = lambda ref: Path(repo)
+            runner.worktree = lambda ref, *, local_ref=False: Path(repo)
 
             def run(*args, **kwargs):
                 if kwargs.get("extra_env"):
@@ -282,9 +282,11 @@ class RefusedLeaseTest(unittest.TestCase):
             repo = Path(directory).resolve()
             request = repo / "request.json"
             done = repo / "work/terminal.json"
-            request.write_text(json.dumps(dict(runner=dict(repo=str(repo), ref="main", device="synthetic"), done_file=str(done))))
-            with mock.patch.object(lab_runner.Runner, "execute", side_effect=RuntimeError("synthetic failure")):
-                self.assertEqual(lab_runner.local_emission(request), 1)
+            request.write_text(json.dumps(dict(runner=dict(repo=str(repo), ref="c" * 40, local_ref=True, device="synthetic"), done_file=str(done))))
+            with mock.patch.object(lab_runner.Runner, "execute", side_effect=RuntimeError("synthetic failure")) as execute:
+                self.assertEqual(lab_runner.local_emission(request, workstream="fixture-worker"), 1)
+            self.assertEqual(execute.call_args.kwargs["workstream"], "fixture-worker")
+            self.assertTrue(execute.call_args.kwargs["local_ref"])
             self.assertEqual(json.loads(done.read_text())["error"], "synthetic failure")
 
     def test_resume_claims_only_its_retained_lease_after_previous_runner_exits(self):
@@ -296,11 +298,13 @@ class RefusedLeaseTest(unittest.TestCase):
             job = {"directory": "synthetic-job"}
             runner.resume_state.write_text(json.dumps({"job": job}))
             (lease / "retain.json").write_text(json.dumps({"job": job, "state": str(runner.resume_state)}))
-            (lease / "lab-runner.json").write_text(json.dumps({"workstream": "lab-runner", "pid": 12}))
-            with mock.patch.object(lab_runner.os, "kill", return_value=None), self.assertRaisesRegex(lab_runner.CommandError, "still alive"):
+            (lease / "lab-runner.json").write_text(json.dumps({"workstream": "fixture-worker", "pid": 12}))
+            with self.assertRaisesRegex(lab_runner.CommandError, "identity mismatch"):
                 runner.take_lease("synthetic", "synthetic")
+            with mock.patch.object(lab_runner.os, "kill", return_value=None), self.assertRaisesRegex(lab_runner.CommandError, "still alive"):
+                runner.take_lease("synthetic", "synthetic", workstream="fixture-worker")
             with mock.patch.object(lab_runner.os, "kill", side_effect=ProcessLookupError):
-                self.assertEqual(runner.take_lease("synthetic", "synthetic"), lease)
+                self.assertEqual(runner.take_lease("synthetic", "synthetic", workstream="fixture-worker"), lease)
             self.assertTrue(runner.reattached)
             self.assertEqual(json.loads((lease / "lab-runner.json").read_text())["pid"], os.getpid())
 
@@ -308,7 +312,7 @@ class RefusedLeaseTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {"LAB_RUN_ID": "t"})
             runner.devices = {"nova-b": "SERIAL"}
-            runner.worktree = lambda ref: Path(repo)
+            runner.worktree = lambda ref, *, local_ref=False: Path(repo)
             runner.run = lambda *a, **k: 0
             (Path(repo) / ".local/orchestrator/leases/SERIAL").mkdir(parents=True)
             with mock.patch.object(lab_runner.subprocess, "run") as run:
@@ -338,7 +342,7 @@ class TransportIntegrationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {"LAB_RUN_ID": "synthetic"})
             runner.devices = {"synthetic-alias": "synthetic-target"}
-            runner.worktree = lambda ref: Path(repo)
+            runner.worktree = lambda ref, *, local_ref=False: Path(repo)
             with mock.patch.object(runner, "battery", return_value=(70, 0, 260)), mock.patch.object(runner, "run", return_value=0) as job:
                 with mock.patch.object(lab_runner.subprocess, "run", return_value=subprocess.CompletedProcess([], -9, b"", b"")) as adb:
                     with mock.patch.object(lab_runner._TRANSPORT.time, "sleep"):

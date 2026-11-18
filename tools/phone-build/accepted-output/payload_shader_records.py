@@ -18,11 +18,12 @@ import subprocess
 import sys
 import time
 
-import shader_produce as P
-import object_produce as O
-import shader_sdk as SDK
-import unity_write as W
-from mesh_produce import INPUT_ID
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import shader_produce as P  # noqa: E402
+import object_produce as O  # noqa: E402
+import shader_sdk as SDK  # noqa: E402
+import unity_write as W  # noqa: E402
+from mesh_produce import INPUT_ID  # noqa: E402
 
 
 def vertexlit_selections(source):

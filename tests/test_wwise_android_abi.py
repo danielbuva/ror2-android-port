@@ -1,11 +1,15 @@
+import os
 import runpy
 import struct
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
-native_exports = runpy.run_path(str(ROOT / "tools/wwise-android-abi/generate.py"))["native_exports"]
+ABI = runpy.run_path(str(ROOT / "tools/wwise-android-abi/generate.py"))
+native_exports = ABI["native_exports"]
 
 
 def elf_fixture():
@@ -45,3 +49,11 @@ class WwiseAndroidAbiTests(unittest.TestCase):
     def test_rejects_truncated_linked_string_table(self):
         with self.assertRaisesRegex(ValueError, "dynamic string table extent"):
             native_exports(elf_fixture()[:-1])
+
+    def test_plan_output_without_android_hard_links(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(os, "link", None):
+            path = Path(directory) / "plan.json"
+            ABI["atomic_new"](path, b'{"schema": 1}\n')
+            with self.assertRaisesRegex(ValueError, "refusing to overwrite output"):
+                ABI["atomic_new"](path, b"replacement")
+            self.assertEqual(path.read_bytes(), b'{"schema": 1}\n')

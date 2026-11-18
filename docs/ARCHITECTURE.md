@@ -1571,6 +1571,9 @@ graph by their compressed hash and header; the existing record owner streams
 their source groups at execution. Explicit extra argv selects acquired public tools; unresolved
 profiles fail before staging. Generated JSON is overlaid into the release source
 checkout and audited/committed before the existing tracked-only publisher runs.
+`--install-plan` binds the reviewed original-input manifest and workspace budget
+to that graph. It assigns each job to the earliest eligible production stage,
+after its suppliers, and validates the resulting plan with the installer owners.
 The graph's optional `--bundle-manifest` fans every selected payload bundle into
 `bundle_manifest.py` through declared path, digest and integer byte-size artifacts.
 The existing native owner reads actual bundle dependencies and rejects missing
@@ -1648,6 +1651,8 @@ cache readback. This archive stays separate from the original-game inventory
 and the compiler/editor SDK tree. The existing extractor owns verification,
 private output creation and terminal receipts. SDK packaging can pin its
 separately supplied platform and tool files with request cache witnesses.
+The phone SDK request binds private acquired tools and the installed JVM and
+QEMU. The SDK job hashes those tools and the guest libraries before cache reuse.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host
@@ -2139,7 +2144,10 @@ retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
 When a signed conversion declares audio members, its managed, ABI and audio
-stages share the provisioned owner workspace. The ABI stage pins the export
+stages share the provisioned owner workspace. The signed source index includes
+the shared rebuild recipe tables used at startup. Python imports resolve from
+the staged source tree, and the ABI writer receives the canonical app workspace
+for output admission. The ABI stage pins the export
 set from the ARM64 ELF reader. The managed manifest verifies this export set
 alongside the original declarations and native plugin. The bank stage derives
 the decoder-free index and runs `scripts/lab/wwise_init_platform.py` in the same
@@ -6157,11 +6165,19 @@ For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner
 stops after converter output validation and native planning. Confirmed jobs
-return converter, resource-use and thermal receipts and remove the owned test
-install. Uncertain jobs retain the exact handle. Signed release conversion
-descriptors bind the installed Android tools and witness them before cache
-reuse. Nested managed producers use the embedded Python host's argument format
-through `scripts/lab/phone_sdk_compiler.py`.
+return converter, resource-use and thermal receipts. The runner retrieves
+producer logs and available crash evidence before removing owned scratch.
+A signed-code request can pin an earlier retained toolhost by APK
+hash. The runner verifies the installed bytes and uses a same-signer Android
+update when the target differs. It removes only the current job's scratch for
+a retained toolhost. Uncertain jobs retain the exact handle. The signed release graph binds
+installed Android tools and their toolhost data manifest for conversion and native
+compilation. When a Burst request accompanies the signed audio roster, the code
+owner checks its preservation roots before stripping the same managed cohort and
+emits the library as a release entry. Native tool invocations take their timeout
+clock from the phone supervisor, accounting for thermal pauses. Nested managed
+producers use the embedded Python host's argument format through
+`scripts/lab/phone_sdk_compiler.py`.
 
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only

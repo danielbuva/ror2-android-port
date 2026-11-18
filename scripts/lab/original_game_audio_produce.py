@@ -22,14 +22,7 @@ import sys
 import tempfile
 
 
-def find_root() -> Path:
-    for parent in Path(__file__).resolve().parents:
-        if (parent / "AGENTS.md").is_file():
-            return parent
-    raise RuntimeError("repository root not found")
-
-
-ROOT = find_root()
+ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "tools/unity/support/audio"
 TOOLS = SOURCE / "generators"
 DEFAULT_API_SHA256 = "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c"
