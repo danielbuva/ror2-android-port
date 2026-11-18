@@ -207,9 +207,15 @@ For ModelSkinController PPtrs from that producer into the emitted bundle,
 canonical repack also admits retained SkinDefs into their source-matched asset
 groups. It qualifies the native type and actual MonoScript, keeps the advertised
 root, and reads back the retained IDs in those groups' persisted preloads.
+Skin bake PPtrs follow the canonical model. Repack pairs uniquely named child
+routes and native component classes below verified body aliases and model roots
+from source-matched SkinDefs. It checks reciprocal parent and component
+ownership on both sides before moving a SkinDef root or a SkinDefParams renderer,
+activation, mesh or light target. Prefab hierarchies and asset addresses stay
+intact.
 The current `bundle_preload.py --repack` action reuses an existing qualified
 emission through a hash-pinned request; it retains source/type/ownership checks
-and avoids repeating record production for a preload-only repair. The request
+and avoids repeating record production for these reference repairs. The request
 includes selected records for canonical aliases and retained SkinDef source
 matches.
 
@@ -412,14 +418,17 @@ input in its startup snapshot. The native catalog initializes only after
 validation passes.
 `whole_catalog.py::host_skin_bundles` exposes
 `./dev prototype --action whole-catalog-skin-host --target REQUEST` through
-`tools/catalog/ValidateConvertedSkins.cs.txt`. It consumes that pinned catalog
-request in the idle exact editor under the shared mutex.
+`tools/catalog/ValidateConvertedSkins.cs.txt`. Its request pins the completed
+catalog as metadata and the same bundle inputs. The fixture runs in the idle
+exact editor under the shared mutex.
 The fixture-only `skin_fixture` specifies `commando_path` and `ward_path`.
 Optional `early_ward` and `early_commando` replay earlier load orders. The fixture
 opens the three startup owners, leaves deferred owners unopened, loads the typed
-bodies in provider order, and checks the same model controller as startup. All
-opened bundles are released in `finally`. Its local receipt records failures
-before the Android gameplay gate.
+bodies in provider order, and checks the same model controller as startup. It
+then resolves the typed SkinDefParams and checks each bake transform with the
+native prefab path function, including base skins. All opened bundles are
+released in `finally`. Its local receipt records failures before the Android
+gameplay gate.
 During startup, `BodyCatalogSession` opens the objective-support bundle through
 `TeleporterWorldSession` before deserializing body prefabs. The original
 CharacterBody family loads in provider order before the explicit Commando read
