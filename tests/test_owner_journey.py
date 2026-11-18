@@ -1,5 +1,6 @@
 """Coherent synthetic import/build/consent/install/update journey, not device evidence."""
 
+from contextlib import contextmanager
 import copy
 import json
 from pathlib import Path
@@ -8,6 +9,7 @@ import unittest
 from unittest.mock import patch
 from tests.owner_journey_fixture import owner_journey, F, J, U
 from tests.owner_journey_android import install
+from tests.test_phone_updates import FakeGitHub, encoded
 
 
 class OwnerJourneyTests(unittest.TestCase):
@@ -167,3 +169,62 @@ class OwnerJourneyTests(unittest.TestCase):
             self.assertEqual(Path(first["apk"]).read_bytes(), first_bytes)
             self.assertEqual(original.read_bytes(), b"authored")
             self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
+
+    def test_loopback_acquisition_interruption_retry_and_update(self):
+        with owner_journey(acquisition=True) as journey:
+            bundle = journey.bundle()
+            with FakeGitHub(journey.release, bundle) as server:
+                self.assertEqual(journey.run("release-check", transport=server.transport)["state"], "UPDATE_AVAILABLE")
+                self.assertNotIn("/public-tools.zip", server.requests)
+                open_asset = server.transport.open
+                interrupted = []
+
+                def fail_download(url):
+                    if url.endswith("public-tools.zip") and not interrupted:
+                        interrupted.append(url)
+
+                        @contextmanager
+                        def partial_stream():
+                            with open_asset(url) as source:
+                                reads = []
+
+                                def read(size):
+                                    if reads:
+                                        raise OSError("synthetic bundle connection interrupted")
+                                    reads.append(True)
+                                    data = source.read(min(size, 64))
+                                    self.assertTrue(data)
+                                    return data
+
+                                yield SimpleNamespace(headers=source.headers, read=read)
+
+                        return partial_stream()
+                    return open_asset(url)
+
+                with patch.object(server.transport, "open", side_effect=fail_download), self.assertRaises(OSError):
+                    journey.run("install-prepare", transport=server.transport)
+                self.assertEqual(json.loads((journey.inputs / "update-state.json").read_text())["state"], "ERROR")
+                self.assertEqual(list((journey.inputs / "work/releases/downloads").iterdir()), [])
+                self.assertFalse((journey.inputs / "attempt-count.txt").exists())
+                self.assertEqual(journey.run("install-prepare", transport=server.transport)["state"], "INPUTS_REQUIRED")
+                original = journey.inputs / "import/files/original.txt"
+                original.parent.mkdir(parents=True)
+                original.write_bytes(b"authored")
+                installed = None
+                for version in (2, 3):
+                    if installed:
+                        journey.candidate["release"] = copy.deepcopy(journey.release)
+                        journey.candidate["release"].update(version="synthetic-2", version_code=version)
+                        server.paths["/release.json"] = encoded(journey.candidate["release"])
+                        server.metadata["tag_name"] = "owner-v3"
+                        server.paths["/latest"] = encoded(server.metadata)
+                        self.assertEqual(journey.run("release-check", installed, transport=server.transport)["state"], "UPDATE_AVAILABLE")
+                    journey.events.clear()
+                    self.assertEqual(journey.run("release-build", installed, transport=server.transport)["state"], "READY")
+                    states = [event["state"] for event in journey.events]
+                    self.assertLess(states.index("DOWNLOADING"), states.index("VERIFYING"))
+                    self.assertLess(states.index("VERIFYING"), states.index("BUILDING"))
+                    installed = install(journey, installed)
+                self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
+                self.assertFalse(list((journey.inputs / "work/releases/downloads").glob(".download-*")))
+                self.assertEqual(original.read_bytes(), b"authored")
