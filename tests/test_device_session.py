@@ -100,15 +100,16 @@ class DeviceSessionTests(unittest.TestCase):
         target, thermal = mock.Mock(), mock.Mock(error=None)
         target.sh.return_value = "12"
         hud = dict(menuStartX=170.67, menuStartY=757.33, screenWidth=1920, screenHeight=1080)
-        menu = dict(phase="offline-start-menu", hud=hud)
+        menu = dict(phase="offline-start-menu", hud=hud, attempt="owned-attempt")
         gameplay_report = dict(phase="integrated-world-playing", world=dict(ready=True))
         reports = [menu, gameplay_report, menu, gameplay_report]
         gameplay_route = "body-state-spawn-state-auto-player"
 
-        def observed(device, monitor, pid, predicate, timeout, *, report_id):
+        def observed(device, monitor, pid, predicate, timeout, *, report_id, attempt=None):
             self.assertEqual(report_id, gameplay_route)
             report = reports.pop(0)
             self.assertTrue(predicate(report))
+            self.assertEqual(attempt, None if report is menu else menu["attempt"])
             return report
 
         with (
@@ -129,14 +130,41 @@ class DeviceSessionTests(unittest.TestCase):
                 runner.start_from_menu(target, thermal, "12", self.output)
         self.assertFalse(any(call.args[:1] == ("input",) for call in target.sh.call_args_list))
 
-    def test_menu_start_request_is_explicit_native_launch_only(self):
+    def test_menu_start_request_is_explicit_launch_only(self):
         self.request["start_from_menu"] = True
-        runner.save(self.request_file, self.request)
-        self.assertTrue(runner.load_request(self.request_file)["start_from_menu"])
-        for field, value in (("start_from_menu", "yes"), ("mode", "sustained"), ("package", "dev.ror2lab.converted")):
+        for package in ("dev.ror2lab.arm64", "dev.ror2lab.converted"):
+            runner.save(self.request_file, dict(self.request, package=package))
+            self.assertTrue(runner.load_request(self.request_file)["start_from_menu"])
+        for field, value in (("start_from_menu", "yes"), ("mode", "sustained")):
             runner.save(self.request_file, dict(self.request, **{field: value}))
             with self.assertRaises(ValueError):
                 runner.load_request(self.request_file)
+
+    def test_converted_launch_starts_from_the_owned_menu_after_bootstrap_input(self):
+        from session_cleanup_check import SPINE_ID
+
+        gesture = self.root / "bootstrap.json"
+        runner.save(gesture, dict(width=1280, height=960, steps=[dict(action="wait", ms=100)]))
+        request = dict(self.request, package="dev.ror2lab.converted", input_script=str(gesture), start_from_menu=True, duration_seconds=0)
+        device, thermal = mock.Mock(package=request["package"]), mock.Mock()
+        device.sh.return_value = "7"
+        thermal.cancelled.is_set.return_value = False
+        result = {}
+        calls = mock.Mock()
+        calls.input.return_value = {"success": True}
+        with (
+            mock.patch("touch_gesture.run", calls.input),
+            mock.patch.object(runner, "start_from_menu", calls.menu),
+            mock.patch.object(runner, "capture", calls.capture),
+        ):
+            runner.observe_launch(device, thermal, request, self.output, result, "7")
+        self.assertEqual(
+            calls.mock_calls[:2],
+            [
+                mock.call.input(self.output / "input.json", self.digest, device=device),
+                mock.call.menu(device, thermal, "7", self.output, report_id=SPINE_ID.removesuffix("-bringup"), tap_start=True),
+            ],
+        )
 
     def test_golem_capture_is_opt_in_for_native_lab_launch(self):
         self.assertNotIn("capture_golem_attacks", runner.load_request(self.request_file))

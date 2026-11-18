@@ -98,9 +98,10 @@ def load_request(path, serial=None):
     for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
-    for name in ("start_from_menu", "capture_golem_attacks"):
-        if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
-            raise ValueError(name + " requires the native lab launch workload")
+    if value.get("start_from_menu") and value["mode"] != "launch":
+        raise ValueError("start_from_menu requires the launch workload")
+    if value.get("capture_golem_attacks") and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
+        raise ValueError("capture_golem_attacks requires the native lab launch workload")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
@@ -498,12 +499,13 @@ def retain_diagnostic_scratch(device, runtime, initial, output, cleanup):
         raise ExceptionGroup("Diagnostic scratch cleanup failed", errors)
 
 
-def wait_for_settings_report(device, thermal, pid, predicate, timeout=100, *, report_id=None):
+def wait_for_settings_report(device, thermal, pid, predicate, timeout=100, *, report_id=None, attempt=None):
     import session_cleanup_check as cleanup
     from installed_attempt import attempt_from_installed
 
     report_id = report_id or cleanup.SPINE_ID
-    attempt = attempt_from_installed(device.owned())
+    if attempt is None:
+        attempt = attempt_from_installed(device.owned())
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     deadline = time.monotonic() + timeout
     last_phase = None
@@ -715,6 +717,7 @@ def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=F
         lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True,
         timeout=240,
         report_id=report_id,
+        attempt=menu["attempt"],
     )
     save(output / "world-start.json", world)
     return world
@@ -782,14 +785,17 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
 
 
 def observe_launch(device, thermal, request, output, result, pid):
-    if request.get("start_from_menu"):
-        start_from_menu(device, thermal, pid, output, tap_start=True)
     if "input_script" in request:
         import touch_gesture
 
         inputs = dict(json.loads(Path(request["input_script"]).read_text()), pid=pid)
         save(output / "input.json", inputs)
         result["input"] = touch_gesture.run(output / "input.json", request["apk_sha256"], device=device)
+    if request.get("start_from_menu"):
+        from session_cleanup_check import SPINE_ID
+
+        report_id = SPINE_ID.removesuffix("-bringup") if device.package == "dev.ror2lab.converted" else SPINE_ID
+        start_from_menu(device, thermal, pid, output, report_id=report_id, tap_start=True)
     began = time.monotonic()
     next_capture = 0
     scheduled = iter(enumerate(request.get("input_schedule", [])))
