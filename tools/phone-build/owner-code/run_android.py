@@ -177,10 +177,11 @@ def run(request_file, runtime, installed):
         check_inputs()
         print(json.dumps(result), flush=True)
         return
+    signed_code = set(request) == {"source_inputs", "audio_members", "output"}
     burst_only = request.pop("burst_only", False)
     if not isinstance(burst_only, bool):
         raise ValueError("Burst-only qualification selector must be boolean")
-    if set(request) - {"linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"} not in (
+    if not signed_code and set(request) - {"linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"} not in (
         {"managed", "output"},
         {"source_inputs", "target", "output"},
         {"managed", "target", "output"},
@@ -198,6 +199,7 @@ def run(request_file, runtime, installed):
     # Copy timestamps may differ. Preserve the reviewed path/content identity;
     # record this private copy's stats only after checking every original hash.
     (work / "inventory/files.json").write_text(json.dumps(inventory) + "\n")
+    (work / "config").mkdir(exist_ok=True)
     (work / "config/local.json").write_text(json.dumps({"game_path": str(game)}) + "\n")
     tools = {
         name: str(installed / filename)
@@ -254,10 +256,13 @@ def run(request_file, runtime, installed):
             name: str((inputs / backend.native.relative(value)).resolve(strict=True)) for name, value in request["source_inputs"].items()
         }
         production["source_inputs"]["dotnet"] = tools["dotnet"]
-        production["target"] = {
-            "profile": str(runtime / "repo" / backend.native.relative(request["target"]["profile"])),
-            "source": str((inputs / backend.native.relative(request["target"]["source"])).resolve(strict=True)),
-        }
+        if signed_code:
+            production["audio_members"] = request["audio_members"]
+        else:
+            production["target"] = {
+                "profile": str(runtime / "repo" / backend.native.relative(request["target"]["profile"])),
+                "source": str((inputs / backend.native.relative(request["target"]["source"])).resolve(strict=True)),
+            }
     if "linux_tools" in request:
         supplied = request["linux_tools"]
         if set(supplied) != {"clang", "linker", "objcopy", "loader_root", "library_dirs"}:
@@ -304,6 +309,8 @@ def run(request_file, runtime, installed):
     try:
         if native_profile is not None:
             result = backend.native.run(production, profile=native_profile)
+        elif signed_code:
+            result = backend.run(production, stop_after_conversion=True)
         elif burst_only:
             result = backend.run(production, burst_only=True)
         else:

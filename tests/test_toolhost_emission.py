@@ -7,9 +7,11 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/lab"))
@@ -128,6 +130,84 @@ class EmissionTests(unittest.TestCase):
         self.assertEqual(first_command[first_command.index("--cache") + 1], second_command[second_command.index("--cache") + 1])
         self.phone.install.assert_called_once()
         self.phone.cleanup.assert_not_called()
+
+    def signed_request(self):
+        self.request.pop("expected_records")
+        self.request.update(operation="signed-code", expected_managed_providers=332)
+        manifest = Path(self.request["manifest"]["path"])
+        files = {}
+        for name, value in (
+            ("request.json", {"source_inputs": {}, "audio_members": ["Init.bnk"], "output": "conversion"}),
+            ("input-hashes.json", {}),
+            ("work/inventory/files.json", {}),
+        ):
+            source = self.root / (Path(name).stem + "-signed.json")
+            source.write_text(json.dumps(value))
+            files[name] = dict(source=str(source), bytes=source.stat().st_size, sha256=EMISSION.digest(source))
+        manifest.write_text(json.dumps(dict(files=files)))
+        self.request["manifest"]["sha256"] = EMISSION.digest(manifest)
+        self.path.write_text(json.dumps(self.request))
+        self.collected = dict(
+            code=dict(
+                success=True,
+                phase="converted-native-planned",
+                upstream_managed_generation_qualified=True,
+                managed_providers=332,
+                backend=dict(stripped_assemblies=93, native=dict(success=True)),
+            ),
+            converter=dict(inputs_unchanged=True, input_assemblies=93, files={"data/Metadata/global-metadata.dat": {}}),
+            measurements={},
+            thermal={},
+        )
+
+    def test_signed_code_uses_installed_clr_and_removes_only_owned_toolhost(self):
+        self.signed_request()
+        result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["owned_app_removed"])
+        self.assertFalse(result["device_accepted"])
+        self.phone.remove_owned_installer.assert_called_once()
+        self.phone.cleanup.assert_not_called()
+        command = self.phone.transport.start_detached.call_args.args[0]
+        self.assertTrue(any(part.endswith("/owner-code/run_android.py") for part in command))
+        self.assertTrue(any(part.startswith("ROR2LAB_BUILD_HOSTFXR=") and part.endswith("/libhostfxr10.so") for part in command))
+        self.assertTrue(any(part.startswith("ROR2LAB_BUILD_DOTNET_ROOT=") and part.endswith("/runtime/dotnet") for part in command))
+        self.assertEqual(self.run_request(resume=True)["error"], "signed-code-resume-requires-active-handle")
+
+    def test_signed_code_keeps_unknown_handle_for_exact_reattachment(self):
+        self.signed_request()
+        self.phone.transport.wait_detached.side_effect = INSTALLER.TRANSPORT.DetachedUncertain(self.job)
+        self.assertTrue(self.run_request()["lease_retained"])
+        self.phone.remove_owned_installer.assert_not_called()
+        self.phone.transport.wait_detached.side_effect = None
+        final = self.run_request(resume=True)
+        self.assertTrue(final["success"])
+        self.assertTrue(final["reattached_without_launch"])
+        self.phone.transport.start_detached.assert_called_once()
+        self.phone.remove_owned_installer.assert_called_once()
+
+    def test_signed_code_runtime_stream_keeps_framework_libraries_in_installed_apk(self):
+        apk = self.root / "runtime.apk"
+        dotnet8 = "dotnet/shared/Microsoft.NETCore.App/8.0.32/"
+        dotnet10 = "dotnet/shared/Microsoft.NETCore.App/10.0.13/"
+        native = "/data/app/synthetic/lib/arm64"
+        with zipfile.ZipFile(apk, "w") as archive:
+            archive.writestr("assets/native-hashes.json", json.dumps(dict.fromkeys((*EMISSION.NET8_LIBRARIES, "libcoreclr10.so", "libcrypto.so", "libssl.so"))))
+            archive.writestr("assets/python-links.json", json.dumps({dotnet10 + "libcoreclr.so": "libcoreclr10.so"}))
+            for name in ("python/lib/python3.14/abc.py", dotnet8 + "CoreLib.dll", dotnet10 + "CoreLib.dll", "clang/21/include/stddef.h"):
+                archive.writestr("assets/" + name, "authored fixture")
+        streamed = self.root / "stream.tar"
+        with streamed.open("wb") as pipe, patch.object(EMISSION.subprocess, "Popen") as launch:
+            process = launch.return_value
+            process.stdin = pipe
+            process.wait.return_value = process.poll.return_value = 0
+            EMISSION.transfer(self.phone, apk, {}, "/remote", native, signed_code=True)
+        with tarfile.open(streamed) as archive:
+            self.assertEqual(archive.getmember("runtime/" + dotnet8 + "libcoreclr.so").linkname, native + "/libcoreclr.so")
+            self.assertEqual(archive.getmember("runtime/" + dotnet10 + "libcoreclr.so").linkname, native + "/libcoreclr10.so")
+            self.assertEqual(archive.getmember("runtime/native-links/libssl.so.3").linkname, native + "/libssl.so")
+            self.assertEqual(archive.getmember("runtime/repo").linkname, "../repo")
+            self.assertTrue(archive.getmember("runtime/clang/21/include/stddef.h").isfile())
 
     def test_android_invocation_uses_serial_records_without_multiprocessing_extension(self):
         result = self.run_request()

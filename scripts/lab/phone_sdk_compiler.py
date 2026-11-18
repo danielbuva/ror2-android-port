@@ -5,9 +5,18 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 from phone_managed_compile import INPUTS, RUNTIMES, sha
 from public_transform_tools import GLOBALS
+
+
+def python_command(script, *, isolated=False):
+    """Start a child through the same CPython host as this process."""
+    executable = Path(sys.executable)
+    if sys.platform == "android" and executable.name == "libpythonhost.so":
+        return [str(executable), str(executable.with_name("libpython3.14.so")), sys.prefix, str(script)]
+    return [sys.executable, *(["-I"] if isolated else []), str(script)]
 
 
 class SdkCompiler:

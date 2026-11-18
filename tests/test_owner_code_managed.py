@@ -16,6 +16,16 @@ SPEC.loader.exec_module(MANAGED)
 
 
 class OwnerCodeManagedTests(unittest.TestCase):
+    def test_nested_python_uses_the_embedded_android_host_abi(self):
+        native = "/installed/lib/arm64/"
+        runtime = "/private/runtime/python"
+        with patch.multiple(sys, platform="android", executable=native + "libpythonhost.so", prefix=runtime):
+            self.assertEqual(
+                MANAGED.python_command("producer.py", isolated=True),
+                [native + "libpythonhost.so", native + "libpython3.14.so", runtime, "producer.py"],
+            )
+        self.assertEqual(MANAGED.python_command("producer.py", isolated=True), [sys.executable, "-I", "producer.py"])
+
     def test_signed_sdk_compiler_uses_explicit_android_runtime_and_references(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
