@@ -819,6 +819,17 @@ for name in ('gameplay/postprocessed/Assembly-CSharp.dll', 'packages/postprocess
 (managed / 'gameplay/inputs.json').write_text('{}')
 (managed / 'packages/inputs.json').write_text(json.dumps({'package': pin((packages / 'Selected.cs').read_bytes())}))
 (managed / 'gameplay/ilpp-references').symlink_to(managed / 'support', target_is_directory=True)
+if 'audio_members' in request:
+    stage = managed / 'staged'
+    bank_root = 'Audio/GeneratedSoundBanks/Android'
+    for relative in request['audio_members']:
+        path = stage / bank_root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(source)
+    (stage / 'stage-receipt.json').write_text(json.dumps({'inventory': pin(source)}))
+    supplied = managed / 'supplied-sdk'
+    supplied.mkdir()
+    (supplied / 'libAkSoundEngine.so').write_bytes(b'local licensed library fixture')
 """,
             )
             write(
@@ -943,10 +954,27 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 ],
             }
             progress = []
+            audio_layout = root / "private-stage-receipt.json"
+            write(
+                audio_layout,
+                {
+                    "schema": "original-game-wwise-bank-cohort-r2",
+                    "output_relative_directory": "Audio/GeneratedSoundBanks/Android",
+                    "outputs": [{"filename": "Init.bnk"}, {"filename": "Fixture.bnk"}],
+                    "streamed_media": [{"relative_path": "Media/1.wem"}],
+                    "private_inventory_receipt": "private authoring witness",
+                },
+            )
 
             def build(*, current=False):
                 graph = G.Graph(repo, {})
-                index = graph.compile([bundle_profile], code_request=code_request, native_request=native_request, package_archives=True)
+                index = graph.compile(
+                    [bundle_profile],
+                    code_request=code_request,
+                    native_request=native_request,
+                    package_archives=True,
+                    audio_stage_receipt=audio_layout if current else None,
+                )
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
@@ -958,6 +986,9 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     self.assertIn("recipe/project-layout.json", graph.jobs[player]["source_files"])
                     self.assertIn("managed_package_inputs", graph.jobs[code]["artifacts"])
                     self.assertIn(package_job, graph.jobs[player]["needs"])
+                    self.assertIn(code, graph.jobs[native_job]["needs"])
+                    self.assertNotIn(str(audio_layout), json.dumps(graph.jobs[code]))
+                    self.assertNotIn("private authoring witness", json.dumps(graph.jobs[code]))
                 else:
                     self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
                     self.assertNotIn(package_job, graph.jobs[player]["needs"])
@@ -993,6 +1024,19 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     produce=dispatcher.produce,
                     producer_sha256=dispatcher.output_sha256,
                 )
+                if current:
+                    profile, _ = admission.assembly_profile(result["outputs"], inputs, release)
+                    audio = {
+                        "apk/assets/stage-receipt.json",
+                        "apk/assets/Audio/GeneratedSoundBanks/Android/Init.bnk",
+                        "apk/assets/Audio/GeneratedSoundBanks/Android/Fixture.bnk",
+                        "apk/assets/Audio/GeneratedSoundBanks/Android/Media/1.wem",
+                        "apk/lib/arm64-v8a/libAkSoundEngine.so",
+                    }
+                    self.assertEqual(set(graph.jobs[code]["outputs"]), audio)
+                    self.assertEqual({row["path"] for row in json.loads(profile.read_text())["targets"]} & audio, audio)
+                    local_receipt = Path(result["outputs"]["apk/assets/stage-receipt.json"])
+                    self.assertEqual(json.loads(local_receipt.read_text())["inventory"]["sha256"], G.digest(original))
                 return result
 
             first = build()
@@ -1057,6 +1101,8 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             for path in G.Graph(ROOT, {}).current_code_sources():
                 write(repo / path, (ROOT / path).read_text())
             request = json.loads((repo / code_request).read_text())
+            with self.assertRaisesRegex(ValueError, "audio-bearing code"):
+                G.Graph(repo, {}).compile([], code_request=code_request, native_request=native_request, audio_stage_receipt=audio_layout)
             del request["target"]
             write(repo / code_request, request)
             build(current=True)
@@ -1288,24 +1334,34 @@ android.mkdir(parents=True)
             native.mkdir()
             config = {"bindings": {"inventory": "inventory.json"}}
             progress = []
-            for pass_number in range(2):
-                dispatcher = J.Dispatcher(
-                    repo,
-                    index,
-                    release,
-                    inputs,
-                    runtime,
-                    native,
-                    config,
-                    "a" * 64,
-                    python=[sys.executable],
-                    progress=lambda name, reused: progress.append(reused),
-                )
-                for name, dependency in release["entries"].items():
-                    destination = root / (str(pass_number) + "-" + Path(name).name)
-                    dispatcher.produce(name, dependency, destination)
-                    self.assertTrue(destination.is_file())
-            self.assertEqual(progress, [False, True])
+            wait = subprocess.Popen.wait
+            heartbeats = iter(range(3))
+
+            def wait_with_heartbeats(process, timeout=None):
+                if timeout is not None and next(heartbeats, None) is not None:
+                    raise subprocess.TimeoutExpired(process.args, timeout)
+                return wait(process)
+
+            # Exercise the elapsed-time callbacks without depending on host load.
+            with mock.patch.object(subprocess.Popen, "wait", wait_with_heartbeats):
+                for pass_number in range(2):
+                    dispatcher = J.Dispatcher(
+                        repo,
+                        index,
+                        release,
+                        inputs,
+                        runtime,
+                        native,
+                        config,
+                        "a" * 64,
+                        python=[sys.executable],
+                        progress=lambda name, reused: progress.append((name, reused)),
+                    )
+                    for name, dependency in release["entries"].items():
+                        destination = root / (str(pass_number) + "-" + Path(name).name)
+                        dispatcher.produce(name, dependency, destination)
+                        self.assertTrue(destination.is_file())
+            self.assertEqual(progress, [(startup, None)] * 3 + [(startup, False), (startup, True)])
             self.assertEqual((root / "0-boot.config").read_bytes(), (root / "1-boot.config").read_bytes())
             self.assertEqual((root / "0-unity_app_guid").read_bytes(), (root / "1-unity_app_guid").read_bytes())
 

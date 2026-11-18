@@ -161,6 +161,30 @@ class PublicBundleTests(unittest.TestCase):
     def build(self, name="public.zip"):
         return PUBLIC.build_bundle(self.root, self.plan, Path(self.temporary.name) / name)
 
+    def test_large_output_cohort_shares_closures_in_the_extracted_index(self):
+        existing = self.plan["entries"]["apk/a.txt"]
+        self.plan["entries"].update({f"apk/assets/audio/{i}.bnk": existing for i in range(40)})
+        archive = Path(self.temporary.name) / "public.zip"
+        verified = archive.with_name("verified")
+        updates = PUBLIC._module("test_compact_index_updates", ROOT / "tools/phone-build/owner-apk/updates.py")
+        with patch.object(PUBLIC, "MAX_BUNDLE_INDEX_BYTES", 2048):
+            result = self.build()
+        with zipfile.ZipFile(archive) as bundle:
+            data = bundle.read(PUBLIC.INDEX)
+        index = PUBLIC.load_json(data)
+        self.assertEqual(len(index["closures"]), 2)
+        self.assertLess(len(data), 2048)
+        body = dict(release_body(), bundle_sha256=result["bundle_sha256"], entries=result["entries"])
+        with self.assertRaisesRegex(ValueError, "requires installer version 4"):
+            updates.extract_bundle(archive, verified, body)
+        self.assertFalse(verified.exists())
+        body["minimum_installer_version"] = 4
+        self.assertEqual(updates.extract_bundle(archive, verified, body), result["index"])
+        self.assertEqual((verified / PUBLIC.INDEX).read_bytes(), data)
+        index["entries"]["apk/a.txt"] = 2
+        with self.assertRaisesRegex(ValueError, "invalid public bundle closure"):
+            PUBLIC.read_bundle_index(PUBLIC.RELEASE.signed_bytes(index), body)
+
     def test_install_plan_and_required_manifest_are_inside_signed_bundle(self):
         manifest = {"schema": 1, "game_version": "synthetic-v1", "files": [{"path": "Data/test", "bytes": 1, "sha256": "a" * 64}]}
         (self.root / "recipe/inputs.json").write_text(json.dumps(manifest))
