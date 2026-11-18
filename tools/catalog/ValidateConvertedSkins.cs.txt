@@ -510,6 +510,7 @@ try{
      if (missingBodyIds.Length != 0)
          failDisplay(new { missingBodyIds, error = "Body display inspection omits source CharacterBody locations" });
      var equipmentDefs = new System.Collections.Generic.HashSet<RoR2.EquipmentDef>(typedDefinitions.Values.OfType<RoR2.EquipmentDef>());
+     var keyItemDefs = new System.Collections.Generic.HashSet<RoR2.KeyItemDef>(typedDefinitions.Values.OfType<RoR2.KeyItemDef>());
      System.Func<object, System.Type, UnityEngine.Object> loadDisplayAddress = (address, type) =>
      {
          if (!(address is string key) || !stringKeys.TryGetValue(key, out var candidates))
@@ -556,9 +557,11 @@ try{
              if (!key && (group.keyAssetAddress?.RuntimeKeyIsValid() ?? false))
                  key = loadDisplayAddress(group.keyAssetAddress.RuntimeKey, typeof(UnityEngine.ScriptableObject));
              if (!(key is RoR2.ItemDef item && itemDefs.Contains(item)) &&
-                 !(key is RoR2.EquipmentDef equipment && equipmentDefs.Contains(equipment)))
+                 !(key is RoR2.EquipmentDef equipment && equipmentDefs.Contains(equipment)) &&
+                 !(key is RoR2.KeyItemDef keyItem && keyItemDefs.Contains(keyItem)))
                  failDisplay(new { path, ruleSet = ruleSet.name, group = i, key = key ? key.name : null,
-                     address = group.keyAssetAddress?.RuntimeKey, error = "Display key is outside the typed item and equipment families" });
+                     keyType = key ? key.GetType().FullName : null, address = group.keyAssetAddress?.RuntimeKey,
+                     error = "Display key is outside the typed item, equipment and key item families" });
              var groupRules = group.displayRuleGroup.rules;
              if (groupRules == null)
              {

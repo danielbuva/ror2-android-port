@@ -8,6 +8,7 @@ import io
 import json
 from pathlib import Path
 import struct
+import sys
 from zipfile import ZipFile
 
 import catalog_complete as C
@@ -233,6 +234,96 @@ def typed_catalog_identity(receipt, request, candidate_apk):
     return evidence, definitions, document.get("displayIdentity")
 
 
+def source_game_objects(game, bundle, pin, expected_paths):
+    """Read typed local container roots from one accepted original bundle."""
+    path = pinned(game / pin["path"], pin["sha256"])
+    roots = {}
+    source = C.W.B.Bundle(path)
+    for member in source.members:
+        if member.endswith((".resS", ".resource")):
+            continue
+        with source.member(member) as stream:
+            layout = C.W.read_serialized(stream)
+            objects = {row["path_id"]: row for row in layout["objects"]}
+            for row in objects.values():
+                if layout["types"][row["type_id"]]["class_id"] != 142:
+                    continue
+                stream.seek(layout["data_offset"] + row["offset"])
+                _, entries, _, _ = container_table(C.W.B.exact(stream, row["bytes"]))
+                for name, file_id, path_id in entries:
+                    key = name.casefold()
+                    if key not in expected_paths:
+                        continue
+                    target = objects.get(path_id)
+                    if file_id or target is None or layout["types"][target["type_id"]]["class_id"] != 1:
+                        raise ValueError(f"original display root is not a local GameObject: {bundle}:{name}")
+                    roots.setdefault(key, set()).add((pin["path"], member, path_id))
+    return roots
+
+
+def source_display_roots(inputs, fixture, candidate_apk, inventory, game):
+    """Select missing follower locations and their source GameObject records."""
+    sys.path.insert(0, str(C.ROOT / "scripts/lab"))
+    from catalog_reader import read_shipped
+
+    request = json.loads(inputs.read_bytes())
+    _, definitions, displays = typed_catalog_identity(fixture, request, candidate_apk)
+    if not definitions or not definitions["complete"] or not displays or not displays["complete"]:
+        raise ValueError("display discovery requires a complete typed body fixture")
+    source_pin = request["source_additions"]["metadata"]
+    metadata_path = inputs.parent / source_pin["path"]
+    metadata = json.loads(pinned(metadata_path, source_pin["sha256"]).read_bytes())
+    accepted = json.loads(inventory.read_bytes())
+    if accepted["input_id"] != metadata["input_id"]:
+        raise ValueError("display discovery inventory differs from source input")
+    catalogs = [row for row in accepted["files"] if row["path"].endswith("/StreamingAssets/aa/catalog.json")]
+    if len(catalogs) != 1 or catalogs[0]["sha256"] != metadata["source_catalog_sha256"]:
+        raise ValueError("display discovery catalog differs from accepted input")
+    source_catalog = pinned(game / catalogs[0]["path"], metadata["source_catalog_sha256"])
+    source = read_shipped(source_catalog, "", {"labels": {}, "providers": {}})
+    files = {}
+    for row in accepted["files"]:
+        if Path(row["path"]).suffix == ".bundle":
+            files.setdefault(Path(row["path"]).name, []).append(row)
+
+    addresses = {row["address"] for row in displays["failures"] if row.get("rule") is not None and not row["follower"]}
+    locations = {row["id"]: row for row in metadata["locations"] if row["type"].split(",", 1)[0] == "UnityEngine.GameObject"}
+    original = {row["id"]: row for row in source["locations"]}
+    source_keys = {row["key"]: row["locations"] for row in metadata["keys"] if row.get("keyType", "System.String") == "System.String"}
+    original_keys = {row["key"]: row["locations"] for row in source["keys"] if row["keyType"] == "System.String"}
+    published = {row["id"] for row in json.loads(pinned(inputs.parent / request["metadata"]["path"], request["metadata"]["sha256"]).read_bytes())["locations"]}
+    published.update(request["source_additions"]["locations"])
+    groups = {}
+    for address in sorted(addresses):
+        targets = [identity for identity in source_keys.get(address, ()) if identity in locations]
+        if len(targets) != 1 or targets[0] in published:
+            raise ValueError(f"expected one unpublished source display location: {address}")
+        (identity,) = targets
+        row = original[identity]
+        active = locations[identity]
+        if identity not in original_keys.get(address, ()) or (row["type"], row["primaryKey"]) != (active["type"], active["primaryKey"]):
+            raise ValueError(f"source display location identity differs: {identity}")
+        path = row["internalId"].casefold()
+        dependencies = source["dependencySets"][row["dependencySet"]]
+        if not dependencies or not original[dependencies[0]]["bundle"]:
+            raise ValueError(f"source display location has no owning bundle: {identity}")
+        basename = original[dependencies[0]]["internalId"].replace("\\", "/").rsplit("/", 1)[-1]
+        groups.setdefault(basename, []).append((path, identity, address))
+
+    rows = []
+    for bundle, group in sorted(groups.items()):
+        pins = files.get(bundle, ())
+        if len(pins) != 1:
+            raise ValueError(f"expected one accepted display bundle: {bundle}")
+        roots = source_game_objects(game, bundle, pins[0], {path for path, _, _ in group})
+        for path, identity, address in group:
+            targets = roots.get(path, ())
+            if len(targets) != 1:
+                raise ValueError(f"expected one original display GameObject: {bundle}:{path}")
+            rows.append(dict(location=identity, guid=address, path=locations[identity]["path"], source=list(next(iter(targets)))))
+    return sorted(rows, key=lambda row: row["location"])
+
+
 def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None, typed_fixture=None, pc=None):
     import catalog_physics as physics
 
@@ -420,13 +511,26 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--inputs", required=True, type=Path)
-    cli.add_argument("--emission", required=True, type=Path)
-    cli.add_argument("--assembly", required=True, type=Path)
+    cli.add_argument("--emission", type=Path)
+    cli.add_argument("--assembly", type=Path)
     cli.add_argument("--candidate-apk", required=True, type=Path)
     cli.add_argument("--candidate-sha256", required=True)
     cli.add_argument("--output", required=True, type=Path)
     cli.add_argument("--bundle", help="inspect only one bundle for a smoke run")
     cli.add_argument("--typed-fixture", type=Path, help="join the candidate's exact-editor catalog identity report")
-    cli.add_argument("--pc", type=Path, help="compare the pinned original game's physics settings and layer table")
+    cli.add_argument("--pc", type=Path, help="original game installation")
+    cli.add_argument("--discover-display-roots", action="store_true", help="discover missing display roots from the original catalog")
+    cli.add_argument("--inventory", type=Path, help="accepted input inventory for display root discovery")
     args = cli.parse_args()
-    compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle, args.typed_fixture, args.pc)
+    if args.discover_display_roots:
+        if not all((args.inventory, args.pc, args.typed_fixture)):
+            cli.error("display root discovery requires --inventory, --pc and --typed-fixture")
+        candidate = pinned(args.candidate_apk, args.candidate_sha256)
+        rows = source_display_roots(args.inputs, args.typed_fixture, candidate, args.inventory, args.pc)
+        with args.output.open("x") as handle:
+            json.dump(rows, handle, indent=2)
+            handle.write("\n")
+    else:
+        if not all((args.emission, args.assembly)):
+            cli.error("bundle comparison requires --emission and --assembly")
+        compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle, args.typed_fixture, args.pc)

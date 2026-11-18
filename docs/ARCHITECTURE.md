@@ -507,6 +507,11 @@ For each typed body, the fixture follows its `CharacterModel` display rule set,
 checks item and equipment keys against the typed definitions, and resolves
 follower prefabs and model attachments. The differential reports these checks
 and compares serialized display pointers, address keys and attachment names.
+Its host-only `--discover-display-roots` action binds the fixture to the
+candidate APK and matches missing follower keys against the accepted original
+Addressables catalog. It reads the owning bundle's typed container to report
+the source GameObject triple for each location. Bundle preparation still
+checks supplier records and their transitive references before emission.
 The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
 After the skin checks, the fixture loads the objective state configs from
 `commando-prefab-lab`. It follows projectile and trail references from those
