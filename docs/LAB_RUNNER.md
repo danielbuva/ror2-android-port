@@ -57,6 +57,40 @@ The terminal receipt links the private log after cleanup and pruning.
 To prepare the APK, use a separate request with `"operation": "toolhost"`,
 `"device": "thor"` and a Thor grant. This calls the configured toolhost builder,
 which owns the build lease, and pins the output recorded by the terminal receipt.
+Set `backup_installer_key` to `true` on that request to also retain the
+test signer locally. The backup reads its two files under the granted Thor
+lease, checks the fixture certificate, and stores them under ignored `work/`
+with mode 0600. An existing matching backup is reused.
+Set `toolhost_source_commit` to a successful retained Thor build's full source
+commit on the same request to back up its signer without starting a new build.
+
+With the backup and a retained fixture build, the Mac can rebuild the disposable
+installer on a clean checkout without a device grant. Supply an Android Build
+Tools `zipalign` with `-P 16` support alongside the SDK selected by `scripts/env.sh`.
+
+```sh
+source scripts/env.sh
+.local/lab-venv/bin/python scripts/lab/installer_toolhost.py --base <retained-cache-entry> --zipalign <zipalign>
+```
+
+This compiles the current Java and manifest, packages the tracked installer
+sources, and verifies every retained runtime asset and Android library.
+The build refuses changed native/runtime inputs and records the base commit
+and hash next to the new APK. The cache is still keyed by the checkout commit.
+
+For Android input qualification, set `operation` to `acquisition` and add
+`current_inventory`, `current_source`, `older_inventory` and `older_source`.
+The inventories are local lab inventory JSON files. Each source path points to
+its complete legitimate game folder. The first test catalog supports the
+current inventory. The second also recognizes the older inventory for refusal.
+An optional `toolhost_source_commit` selects a previously built cache entry.
+The acquisition runner checks its stage/build receipts and requires matching
+installer runtime sources and the disposable APK's document fixture. The dry-run
+checks the catalogs and source shape. The detached run stages a temporary ZIP and
+two folders under the fresh installer's external files. A private one-use command
+invokes the normal buttons in the debuggable installer-test package. The run sends
+Back to the system picker and uses the fixture's Android document grants to qualify
+folder and ZIP imports. It then removes its owned files and installer.
 
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
@@ -64,7 +98,8 @@ existing Android tool workspace containing `material/`, `archives/` and the
 retained signing key. Set `signer_sha256` to the expected certificate digest.
 Optional `native_sources` maps planned native filenames to local provider files
 when those providers need transfer. Host files must match the existing
-`backend-tools.json` and Python provider pins.
+`backend-tools.json` and Python provider pins. This request uses the
+retained signer. Use a commit-keyed toolhost request to back up the signer.
 
 Run `--dry-run` to check the staged files, checkout and host providers. The
 shared lease covers transfer, supervised Android build and scratch cleanup.

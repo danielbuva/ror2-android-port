@@ -265,6 +265,9 @@ public class Harness {
         for(String phase:new String[]{"VERIFYING","BUILDING","SIGNING"}){state.observe(phase,phase);check(state.busy() && !state.canInstall());}
         state.observe("READY","Ready");check(state.canInstall());state.beginInstall();check(state.busy());
         state.observe("AWAITING_CONFIRMATION","Confirm");check(state.busy());state.observe("INSTALLED","Done");check(state.canCheck());
+        state.observe("INPUTS_REQUIRED","Choose a game folder or ZIP");
+        check(state.phase()==OwnerUpdateState.Phase.INPUT_REQUIRED);
+        check(state.message().equals("Choose a game folder or ZIP") && state.canCheck() && !state.canBuild());
         state.observe("ERROR","Denied");check(state.canCheck());state.observe("unknown",null);check(state.phase()==OwnerUpdateState.Phase.ERROR);
         check(OwnerUpdateState.backendScript(null).endsWith("owner-code/run_android.py"));
         check(OwnerUpdateState.backendScript("release-check").endsWith("owner-apk/updates.py"));

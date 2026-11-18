@@ -35,7 +35,7 @@
       "source_profile_sha256": "1c5388eb5856d73a7e00ef1c4543ae2cb5ae82671fd31be1e025a641a27a1d01",
       "source": [
         "apk/assets/bin/Data/globalgamemanagers.assets",
-        1342
+        1303
       ],
       "class_id": 115,
       "bytes": 104,
@@ -46,9 +46,9 @@
         3231134817632079172
       ],
       "script_identity": [
-        "UnityEngine.UI.dll",
-        "UnityEngine.EventSystems",
-        "EventSystem"
+        "Assembly-CSharp.dll",
+        "",
+        "SilentProjectileBoundary"
       ]
     },
     {

@@ -4190,3 +4190,18 @@ Samples 105 and 120 show the same supported blend paths for persistent Expose.
 The assisted Titanic Plains run held 95.991 s with native authority.
 The screenshots match scene and PID. Per-effect pixel attribution, the pale
 Vagrant and matched PC rendering remain open.
+
+## J1488 — Verify Android folder and ZIP acquisition through the installer
+
+2026-11-18. Nova B verified Android picker Back and fixture-provider imports.
+The installer named the recognized older input and refused it, reported the same
+input as unknown without its fingerprint, and listed the supported version.
+Cancel reached CANCELLED during validation at 0 copied bytes. Neither refusal
+nor cancellation admitted an APK. Both supported imports hash-verified 2,749 files
+and 4,121,244,593 bytes in 47.179 s (folder) and 48.054 s (ZIP). Source hashes stayed
+unchanged. CPU/GPU peaked at 83.2 C (0.332 s above 80 C); battery peaked at 30 C.
+APK SHA-256 `7acdc7e5dfe0dcb6df34dda1ab7d585872f691fcec2e3b8f76bd67baeda2249c` (source `45b9b549`).
+Retained runtime `629cf5aa`, SHA-256 `b8d59ed5f6f86ed0876b135e4dc395c12aa8575642961543b2052232ae4b3934`.
+Evidence: `work/coordination/alpha-packaging-1117/acquisition-private-controls.done.json`.
+Owned scratch and installer were removed. External provider selection, cross-UID
+grant reopen and cancellation after copying begins remain open.

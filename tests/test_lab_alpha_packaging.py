@@ -4,6 +4,7 @@ import copy
 import importlib.util
 import io
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -14,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("tested_alpha_packaging", ROOT / "scripts/lab-alpha-packaging.py")
 A = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(A)
+ACQUISITION = A.INSTALLER.module("tested_alpha_acquisition", ROOT / "scripts/lab/alpha_acquisition.py")
 
 
 def bound(version=1, publisher=1, purpose="update", prior=None):
@@ -43,6 +45,55 @@ def bound(version=1, publisher=1, purpose="update", prior=None):
 
 
 class AlphaPackagingTests(unittest.TestCase):
+    def test_acquisition_publishes_one_use_control_and_waits_for_matching_ack(self):
+        command = {"action": "cancel", "id": "current"}
+        phone = Mock(timeout=10)
+        phone.read.side_effect = [{"action": "cancel", "id": "old"}, command]
+        with patch.object(ACQUISITION.secrets, "token_hex", return_value="current"), patch.object(ACQUISITION.time, "sleep"):
+            ACQUISITION.dispatch_control(phone, A.INSTALLER, "cancel")
+
+        phone.put.assert_called_once_with("acquisition-control.json.pending", A.INSTALLER.encoded(command))
+        phone.shell.assert_called_once_with(
+            "run-as",
+            A.INSTALLER.PACKAGE,
+            "mv",
+            "files/owner-input/acquisition-control.json.pending",
+            "files/owner-input/acquisition-control.json",
+            label="acquisition-publish-control",
+        )
+        self.assertEqual(phone.read.call_count, 2)
+        phone.tap.assert_not_called()
+
+    def test_acquisition_creates_nested_directories_before_adb_sync(self):
+        phone = Mock()
+        source = Path("owned game files")
+        target = "/sdcard/owned-fixture/Supported"
+        paths = ["Root.exe", "Game Data/Nested/first", "Game Data/Nested/second", "Game Data/Other"]
+        ACQUISITION.stage_folder(phone, source, paths, target)
+
+        mkdir, push = phone.command.call_args_list
+        self.assertEqual(mkdir.args[0], "shell")
+        self.assertEqual(shlex.split(mkdir.args[1]), ["mkdir", "-p", target, f"{target}/Game Data", f"{target}/Game Data/Nested"])
+        self.assertEqual(push.args, ("push", source / "Game Data", source / "Root.exe", target + "/"))
+
+    def test_acquisition_hash_listing_preserves_manifest_relative_names(self):
+        digest = "a" * 64
+        valid = f"{digest}  ./Dir with spaces/Game Data\n".encode()
+        self.assertEqual(ACQUISITION.hash_listing(valid), {"Dir with spaces/Game Data": digest})
+        for corrupt in (valid * 2, valid.replace(b"./", b"/"), b"warning"):
+            with self.assertRaisesRegex(ValueError, "acquisition-hash-listing-invalid"):
+                ACQUISITION.hash_listing(corrupt)
+
+    def test_acquisition_requires_the_persisted_document_and_source_kind(self):
+        provider = "content://dev.ror2lab.installertest.acquisition"
+        tree = f'<map><string name="source_kind">tree</string><string name="source_uri">{provider}/tree/Lab%2FSupported</string></map>'
+        archive = tree.replace(">tree<", ">zip<").replace("/tree/", "/document/").replace("Supported<", "Supported.zip<")
+        self.assertTrue(ACQUISITION.selected_document(tree, "tree", "Lab/Supported"))
+        self.assertTrue(ACQUISITION.selected_document(archive, "zip", "Lab/Supported.zip"))
+        self.assertFalse(ACQUISITION.selected_document(tree, "zip", "Lab/Supported.zip"))
+        self.assertFalse(ACQUISITION.selected_document(archive, "zip", "Lab/Older.zip"))
+        self.assertFalse(ACQUISITION.selected_document(tree.replace("installertest.acquisition", "other"), "tree", "Lab/Supported"))
+
     def test_thermal_cancellation_refuses_more_acceptance_commands(self):
         phone = A.Phone("synthetic-test-device", 20)
         phone.thermal = Mock()

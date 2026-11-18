@@ -236,8 +236,7 @@ def verify_owned(device, expected=None):
     return installed
 
 
-def check_lab_processes(device, checkpoints, phase, expected_pid=None):
-    """Bind the lifecycle to the selected main process and record peers."""
+def lab_process_snapshot(device, checkpoints, phase):
     rows = device.sh("sh", "-c", "date '+%F %T' && ps -A -o PID,STIME:19,NAME", timeout=5).splitlines()
     if len(rows) < 2 or not PROCESS_TIME.fullmatch(rows[0]) or rows[1].split() != ["PID", "STIME", "NAME"]:
         raise RuntimeError("Android process snapshot unavailable at " + phase)
@@ -258,9 +257,31 @@ def check_lab_processes(device, checkpoints, phase, expected_pid=None):
             raise RuntimeError("Invalid owned process identity at " + phase)
         processes.append(dict(pid=pid, start_time=start_time, package=package, name=name))
     checkpoints.append(dict(phase=phase, device_time=rows[0], processes=processes))
+    return processes
+
+
+def check_lab_processes(device, checkpoints, phase, expected_pid=None):
+    """Bind the lifecycle to the selected main process and record peers."""
+    processes = lab_process_snapshot(device, checkpoints, phase)
     expected = [] if expected_pid is None else [(str(expected_pid), device.package)]
     if [(row["pid"], row["name"]) for row in processes] != expected:
         raise RuntimeError("Unexpected owned lab process at " + phase)
+
+
+def reset_resumed_peer(device, request, lease, result):
+    """Handle the owned lab returning on wake, before a converted launch."""
+    if device.package != "dev.ror2lab.converted":
+        return
+    processes = lab_process_snapshot(device, result["process_checkpoints"], "after-keyguard")
+    if not processes:
+        return
+    if any(row["package"] != "dev.ror2lab.arm64" for row in processes):
+        raise RuntimeError("Unexpected owned lab process after keyguard dismissal")
+    lease.require()
+    events = device.cmd("logcat", "-b", "events", "-d", "-t", "500", "-v", "threadtime", "am_proc_start:I", "*:S", check=False)
+    record = result["resumed_lab_reset"] = {}
+    record["process_start_events"] = [line for line in events.splitlines() if any("," + row["pid"] + "," in line and row["name"] in line for row in processes)]
+    reset_other_lab(request, lease, record, result["device_cleanup"])
 
 
 def reset_idle(device, lease, record, cleanup=None):
@@ -1032,6 +1053,7 @@ def execute(request):
         thermal.phase = request["mode"]
         prepare_launch(device, result.setdefault("prelaunch", {}))
         thermal.start()
+        reset_resumed_peer(device, request, lease, result)
         run_workload(
             device,
             thermal,

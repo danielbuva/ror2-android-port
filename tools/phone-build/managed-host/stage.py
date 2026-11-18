@@ -16,6 +16,7 @@ ROOT = SOURCE.parents[2]
 METADATA = ROOT / "recipe/owner-app-host-tools.json"
 JAVA_SOURCES = (
     "ToolHostActivity.java",
+    "AcquisitionFixture.java",
     "OwnerInstaller.java",
     "OwnerAlphaInstall.java",
     "OwnerUpdateState.java",
@@ -167,6 +168,21 @@ def tool_manifest(source, destination, package=None, game_package=None):
             node.set(android + "targetPackage", package)
         if node.tag == "provider":
             node.set(android + "authorities", package + ".apk")
+    if package == "dev.ror2lab.installertest":
+        application = manifest.find("application")
+        fixture = "dev.ror2lab.phonebuildhostfixture.AcquisitionFixture"
+        ET.SubElement(application, "activity", {android + "name": fixture + "$Result", android + "exported": "false"})
+        ET.SubElement(
+            application,
+            "provider",
+            {
+                android + "name": fixture + "$Provider",
+                android + "authorities": package + ".acquisition",
+                android + "exported": "true",
+                android + "grantUriPermissions": "true",
+                android + "permission": "android.permission.MANAGE_DOCUMENTS",
+            },
+        )
     manifest.set("package", package)
     ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
     tree.write(destination, encoding="utf-8", xml_declaration=True)

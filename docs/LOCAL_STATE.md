@@ -2183,7 +2183,15 @@ reads these comparison/ranking files or an implicit run directory.
 `scripts/lab/lab_runner.py`; serials are private, so the file stays local. The `toolhost` job calls the owner's
 local builder (default `work/coordination/lab-runner-toolhost/build.py`, written from the retained phone
 toolhost workspace and its test publisher key) and caches outputs under `work/coordination/lab-runner/toolhost/`.
-Without the builder the job refuses; nothing else reads these files. See [LAB_RUNNER](LAB_RUNNER.md).
+The phone-build job requires the local builder. See [LAB_RUNNER](LAB_RUNNER.md).
+
+`work/keys/installer-test/` retains the disposable installer APK signing key
+and its password as two mode-0600 files. The Thor toolhost request can provision
+the host copy from the existing fixture key after matching its certificate to
+the build receipt. The Mac fixture builder requires that copy and a retained
+toolhost runtime APK with its build receipt. Keep the selected runtime APK
+pinned while host fixture builds reuse it. This key serves only
+`dev.ror2lab.installertest` and stays outside APK staging and source control.
 
 The complete Commando profile requires independently generated hierarchy, generic,
 mesh, texture, avatar, animation, Sprite and Shader record packs plus the explicit
