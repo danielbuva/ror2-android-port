@@ -324,3 +324,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1478](PORTING_JOURNAL.md#j1478--emit-the-strict-whole-game-content-request-on-android) | 2026-11-17 | Emit the strict whole-game content request on Android | 2026-11-13. |
 | [J1479](PORTING_JOURNAL.md#j1479--qualify-nova-b-for-shared-assisted-gameplay) | 2026-11-17 | Qualify Nova-B for shared assisted gameplay | 2026-11-17. |
 | [J1481](PORTING_JOURNAL.md#j1481--retire-sky-meadow-rock-spawners-before-teardown) | 2026-11-17 | Retire Sky Meadow rock spawners before teardown | 2026-11-17. |
+| [J1490](PORTING_JOURNAL.md#j1490--build-a-pinned-managed-installer-stage-on-android) | 2026-11-17 | Build a pinned managed installer stage on Android | 2026-11-18. |
