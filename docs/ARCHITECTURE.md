@@ -471,10 +471,10 @@ registry, plus input/startup identity. Existing catalog helpers resolve ownershi
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
 Optional `source_additions` pins metadata from the same input catalog and provider
-set and selects additional non-root location IDs. Completion restores the original
-location rows and aliases, preserving existing alias order. Explicit staged
-owners retain priority, and unclaimed paths use the whole-game fallback. The same
-container checks apply to each added location.
+set and selects additional location IDs. Restored roots rejoin the source root
+lists and restore source order on their aliases. Other additions append in source
+order. Explicit staged owners retain priority, and unclaimed paths use the
+whole-game fallback. The same container checks apply to each added location.
 Every emitted `ModelSkinController.skins` slot is checked against its actual
 local or external `RoR2.SkinDef` and registered MonoScript. The converter follows
 the serialized body `ModelLocator` to its model controller and records each
@@ -497,6 +497,12 @@ native prefab path function, including base skins. It checks that each catalog
 CharacterMaster's assigned body resolves to the same Unity object as a typed
 CharacterBody family member. All opened bundles are released in `finally`.
 Its local receipt records failures before the Android gameplay gate.
+The fixture's optional `definition_source` pins the original integration metadata
+and provider contract. It discovers ScriptableObject roots by managed inheritance,
+loads each declared type, checks provider and runtime root membership, and compares
+original native provider groups. Item relationship pointers must resolve to the
+typed catalog objects. The catalog differential ties the fixture to the candidate
+catalog and bundles, and the signed script audit covers ownerless records.
 The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
 After the skin checks, the fixture loads the objective state configs from
 `commando-prefab-lab`. It follows projectile and trail references from those
