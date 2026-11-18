@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1493 — Restore the Stone Titan's pre-fist ground warning
+
+2026-11-18. The native effect owner prepares Android intersection materials in
+the team table before native startup picks the enemy entry, then restores it at teardown.
+Assisted Verdant Falls captured the red ground warning with native player authority.
+The PID-matched frame 8850 report records a supported intersection shader, queue 3000,
+blend 5/10, alpha 1 and the source cloud and enemy ramp textures.
+APK SHA-256: `639efb032eedbbc1afbd1ea5aaf22f70cd4e0a92758335b6d7501313724bec27` (source `d056c0ee`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/verdant-acrid-titan-indicator-event/`,
+`titan-indicator/`, `terminal-capture/` and `terminal.done.json`.
+CPU/GPU peaked at 88.4 C with 38.235 s above 80 C. Battery peaked at 27 C.
+Scratch cleanup, stopped process, OLED sleep and lease release passed.
+Matched PC pixels and the attack's remaining smoke materials still need attribution.
+
 ## J1490 — Build a pinned managed installer stage on Android
 
 2026-11-18. The shared runner verified 1,249 staged inputs and built the

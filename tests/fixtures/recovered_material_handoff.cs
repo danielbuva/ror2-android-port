@@ -85,6 +85,11 @@ namespace EntityStates.Croco
 namespace RoR2
 {
     public class DamageTrail : UnityEngine.Object { public GameObject segmentPrefab; }
+    public class TeamAreaIndicator : UnityEngine.Object
+    {
+        public struct TeamMaterialPair { public int teamIndex; public Material sharedMaterial; }
+        public TeamMaterialPair[] teamMaterialPairs;
+    }
     public class EffectComponent : UnityEngine.Object { }
     public class EffectDef
     {
@@ -135,6 +140,8 @@ public static class PortSession
 public partial class SourceSession
 {
     readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences = new HashSet<AssetOrDirectReference<GameObject>>();
+    readonly Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]> nativeTeamAreaMaterials =
+        new Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]>();
     public readonly List<AsyncOperationHandle<GameObject>> ownedOriginalVisualHandles = new List<AsyncOperationHandle<GameObject>>();
     public SourceSession coordinator => this;
     public SourceSession GetTeleporterWorldSession() => this;
@@ -175,6 +182,13 @@ public static partial class AndroidMaterialPresentation
     public static Report report = new Report();
     static readonly Shader fallback = new Shader("Fallback");
     static Shader LoadShader(string name) => fallback;
+    public static bool Apply(Material source, Material copy)
+    {
+        if (source.properties == "missing shader")
+            return false;
+        copy.shader = new Shader("Recovered/Intersection");
+        return true;
+    }
 }
 static class Fixture
 {
@@ -230,6 +244,35 @@ static class Fixture
               fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 2,
               "native address and source ownership must be preserved");
     }
+    static void CheckTeamAreaAdmission(Material unrelated)
+    {
+        const string shader = "Hopoo Games/FX/Cloud Intersection Remap";
+        var enemy = new Material(shader, "enemy ramp and fade keyword") { srcBlend = 5, dstBlend = 10, renderQueue = 3000 };
+        var unrenderable = new Material(shader, "missing shader");
+        var pairs = new[] {
+            new TeamAreaIndicator.TeamMaterialPair { teamIndex = 3, sharedMaterial = enemy },
+            new TeamAreaIndicator.TeamMaterialPair { teamIndex = 1, sharedMaterial = unrelated },
+            new TeamAreaIndicator.TeamMaterialPair { teamIndex = 2, sharedMaterial = unrenderable },
+        };
+        var indicator = new TeamAreaIndicator { teamMaterialPairs = pairs };
+        var root = new GameObject { components = new[] { indicator } };
+        var session = new SourceSession();
+        session.Prepare(root);
+        var prepared = indicator.teamMaterialPairs;
+        var selected = prepared[0].sharedMaterial;
+        Check(prepared != pairs && prepared[0].teamIndex == pairs[0].teamIndex && pairs[0].sharedMaterial == enemy &&
+              prepared[1].sharedMaterial == unrelated && prepared[2].sharedMaterial == unrenderable,
+              "native team selection or source table changed");
+        Check(session.worldMaterials.Count == 1 && selected == session.worldMaterials[0] &&
+              selected.shader.name == "Recovered/Intersection" && selected.properties == enemy.properties &&
+              selected.srcBlend == enemy.srcBlend && selected.dstBlend == enemy.dstBlend && selected.renderQueue == enemy.renderQueue,
+              "native team selection did not receive a run-owned presentation copy with original properties");
+        session.Prepare(root);
+        Check(indicator.teamMaterialPairs == prepared && session.worldMaterials.Count == 1, "team table prepared twice");
+        session.Stop();
+        foreach (var copy in session.worldMaterials) UnityEngine.Object.Destroy(copy);
+        Check(indicator.teamMaterialPairs == pairs && enemy && unrelated && unrenderable, "team material source ownership did not unwind");
+    }
     static void Main()
     {
         var body = new Material("Hopoo Games/Deferred/Standard", "source tint/textures/queue/keywords");
@@ -269,6 +312,7 @@ static class Fixture
             srcBlend = 5, dstBlend = 10, zWrite = 0, renderQueue = 3050 };
         CheckBakedEffectAdmission(alpha);
         CheckCrocoSwingAdmission(alpha);
+        CheckTeamAreaAdmission(unknown);
         var segmentRenderer = new ParticleSystemRenderer { sharedMaterials = new[] { fire }, trailMaterial = alpha };
         var segment = new GameObject { components = new UnityEngine.Object[] { segmentRenderer } };
         var ghostRenderer = new Renderer { sharedMaterials = new[] { alpha } };
