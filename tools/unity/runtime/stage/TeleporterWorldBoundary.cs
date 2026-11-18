@@ -386,6 +386,8 @@ public sealed partial class PortSession
         GameObject[] objectiveEffectSources;
         string[] deferredObjectiveEffectPaths;
         bool ownsObjectiveBundlePreload;
+        readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences =
+            new HashSet<AssetOrDirectReference<GameObject>>();
         readonly List<CharacterMaster> pendingObjectiveActors = new List<CharacterMaster>();
         readonly Dictionary<CharacterMaster, int> objectiveAmbientExpected = new Dictionary<CharacterMaster, int>();
         readonly HashSet<CharacterMaster> objectiveDirectorActors = new HashSet<CharacterMaster>();
@@ -487,11 +489,31 @@ public sealed partial class PortSession
         public void PresentRegisteredNativeEffects()
         {
             var entries = (EffectDef[])PortSession.RewardField(typeof(EffectCatalog), "entries").GetValue(null);
-            foreach (var entry in entries.Where(x => x != null && x.prefabEffectComponent && x.prefab))
-                PresentNativeEffectSource(entry.prefab);
+            var referenceField = typeof(EffectDef).GetField("_prefabAssetOrDirectReference", BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (var entry in entries)
+            {
+                if (entry == null)
+                    continue;
+                if (entry.prefabEffectComponent)
+                {
+                    PresentNativeEffectSource(entry.prefab);
+                    continue;
+                }
+                // Baked definitions do not populate prefabEffectComponent. Present
+                // the acquired source before native spawning consumes the result.
+                var reference = (AssetOrDirectReference<GameObject>)referenceField.GetValue(entry);
+                if (nativeEffectReferences.Add(reference))
+                    reference.onValidReferenceDiscovered += PresentNativeEffectSource;
+            }
             // CharacterBody loads this native trail outside EffectCatalog. Its segment
             // is a prefab reference, not a child, and must be ready before the first tick.
             PresentNativeEffectSource(LegacyResourcesAPI.Load<GameObject>("Prefabs/FireTrail"));
+        }
+        void StopPresentingNativeEffectReferences()
+        {
+            foreach (var reference in nativeEffectReferences)
+                reference.onValidReferenceDiscovered -= PresentNativeEffectSource;
+            nativeEffectReferences.Clear();
         }
         public void PresentNativeEffectSource(GameObject source)
         {
@@ -736,6 +758,7 @@ public sealed partial class PortSession
         }
         public void CleanupObjectiveSupport()
         {
+            StopPresentingNativeEffectReferences();
             coordinator.CleanupWorldLootSupport();
             coordinator.CleanupMoonSupport();
             if (objectiveOrbHost)

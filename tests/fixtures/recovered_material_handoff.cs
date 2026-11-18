@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using RoR2;
+using RoR2.ContentManagement;
 
 namespace UnityEngine
 {
@@ -35,10 +37,59 @@ namespace UnityEngine
             => Array.ConvertAll(Array.FindAll(components, value => value is T), value => (T)value);
     }
 }
-namespace RoR2 { public class DamageTrail : UnityEngine.Object { public GameObject segmentPrefab; } }
+namespace RoR2
+{
+    public class DamageTrail : UnityEngine.Object { public GameObject segmentPrefab; }
+    public class EffectComponent : UnityEngine.Object { }
+    public class EffectDef
+    {
+        readonly AssetOrDirectReference<GameObject> _prefabAssetOrDirectReference;
+        public EffectComponent prefabEffectComponent;
+        public GameObject prefab => _prefabAssetOrDirectReference.Acquire();
+        public EffectDef(AssetOrDirectReference<GameObject> reference) => _prefabAssetOrDirectReference = reference;
+    }
+    public static class EffectCatalog
+    {
+        static EffectDef[] entries;
+        public static void SetEntries(params EffectDef[] value) => entries = value;
+    }
+    public static class LegacyResourcesAPI
+    {
+        public static T Load<T>(string path) where T : UnityEngine.Object => null;
+    }
+}
+namespace RoR2.ContentManagement
+{
+    public class AssetOrDirectReference<T> where T : UnityEngine.Object
+    {
+        public T source, result;
+        public int acquisitions, subscribers;
+        Action<T> discovered;
+        public event Action<T> onValidReferenceDiscovered
+        {
+            add { discovered += value; subscribers++; if (result) value(result); }
+            remove { discovered -= value; subscribers--; }
+        }
+        public T Acquire()
+        {
+            acquisitions++;
+            if (!result)
+            {
+                result = source;
+                discovered?.Invoke(result);
+            }
+            return result;
+        }
+    }
+}
 namespace RoR2.Projectile { public class ProjectileController : UnityEngine.Object { public GameObject ghostPrefab; } }
+public static class PortSession
+{
+    public static FieldInfo RewardField(Type type, string name) => type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
+}
 public partial class SourceSession
 {
+    readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences = new HashSet<AssetOrDirectReference<GameObject>>();
     public SourceSession coordinator => this;
     public readonly List<Material> worldMaterials = new List<Material>();
     public readonly Dictionary<Renderer, Material[]> worldLootSourceMaterials = new Dictionary<Renderer, Material[]>();
@@ -49,6 +100,7 @@ public partial class SourceSession
     public Report r = new Report();
     public GameObject OriginalProjectileGhost(RoR2.Projectile.ProjectileController controller) => controller.ghostPrefab;
     public void Prepare(GameObject root) => PresentNativeEffectSource(root);
+    public void Stop() => StopPresentingNativeEffectReferences();
 }
 public static partial class AndroidNativeDeferredPresentation
 {
@@ -79,6 +131,33 @@ public static partial class AndroidMaterialPresentation
 static class Fixture
 {
     static void Check(bool value, string message) { if (!value) throw new Exception(message); }
+    static void CheckBakedEffectAdmission(Material original)
+    {
+        var firstRenderer = new Renderer { sharedMaterials = new[] { original } };
+        var loadedRenderer = new Renderer { sharedMaterials = new[] { original } };
+        var pendingRenderer = new Renderer { sharedMaterials = new[] { original } };
+        var lazy = new AssetOrDirectReference<GameObject> { source = new GameObject { components = new[] { firstRenderer } } };
+        var loaded = new AssetOrDirectReference<GameObject> { result = new GameObject { components = new[] { loadedRenderer } } };
+        var pending = new AssetOrDirectReference<GameObject> { source = new GameObject { components = new[] { pendingRenderer } } };
+        var definition = new EffectDef(lazy);
+        EffectCatalog.SetEntries(definition, new EffectDef(loaded), new EffectDef(pending));
+        var session = new SourceSession();
+        session.PresentRegisteredNativeEffects();
+        session.PresentRegisteredNativeEffects();
+        Check(lazy.acquisitions == 0 && pending.acquisitions == 0 && loaded.acquisitions == 0, "registration loaded a baked source");
+        Check(lazy.subscribers == 1 && loaded.subscribers == 1 && pending.subscribers == 1, "registration subscribed more than once");
+        Check(loadedRenderer.sharedMaterials[0].shader.name.StartsWith("Recovered/"), "already loaded source skipped");
+        Check(firstRenderer.sharedMaterials[0] == original, "unloaded source was touched early");
+        var firstSource = definition.prefab;
+        var firstPooledMaterial = firstSource.GetComponentsInChildren<Renderer>(true)[0].sharedMaterials[0];
+        Check(firstPooledMaterial.shader.name.StartsWith("Recovered/") && firstPooledMaterial.srcBlend == original.srcBlend &&
+            firstPooledMaterial.dstBlend == original.dstBlend, "first native spawn missed original state or recovered shader");
+        session.Stop();
+        session.Stop();
+        pending.Acquire();
+        Check(lazy.subscribers == 0 && loaded.subscribers == 0 && pending.subscribers == 0 && pendingRenderer.sharedMaterials[0] == original,
+            "late acquisition changed material after teardown");
+    }
     static void Main()
     {
         var body = new Material("Hopoo Games/Deferred/Standard", "source tint/textures/queue/keywords");
@@ -116,6 +195,7 @@ static class Fixture
             srcBlend = 1, dstBlend = 1, zWrite = 0, renderQueue = 3000 };
         var alpha = new Material("Hopoo Games/FX/Cloud Remap", "alpha mask") {
             srcBlend = 5, dstBlend = 10, zWrite = 0, renderQueue = 3050 };
+        CheckBakedEffectAdmission(alpha);
         var segmentRenderer = new ParticleSystemRenderer { sharedMaterials = new[] { fire }, trailMaterial = alpha };
         var segment = new GameObject { components = new UnityEngine.Object[] { segmentRenderer } };
         var ghostRenderer = new Renderer { sharedMaterials = new[] { alpha } };

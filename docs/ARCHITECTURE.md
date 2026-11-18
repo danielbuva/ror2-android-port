@@ -4925,9 +4925,11 @@ can receive new source slots after its first presentation. The authored
 replacement, toggling and source ownership. Rendering remains a device gate.
 `TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
 effect sources and native projectile ghosts and DamageTrail segment references
-before their pools instantiate them. It follows typed prefab edges with cycle
-protection, including CharacterBody's separately loaded FireTrail. The original
-body visual owner submits Mercenary's persistent and consume Expose prefabs
+before their pools instantiate them. Baked effect definitions send the acquired
+prefab through the native reference-discovery callback. The session detaches
+these callbacks before restoring the source materials. It follows typed prefab
+edges with cycle protection, including CharacterBody's separately loaded FireTrail.
+The original body visual owner submits Mercenary's persistent and consume Expose prefabs
 after resolving their native fields on CharacterBody and HealthComponent. Original
 source slots and particle trails are restored by integrated-world cleanup before
 the session destroys its material copies; source blend values remain intact.
