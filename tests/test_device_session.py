@@ -13,6 +13,11 @@ import device as device_module
 import device_session as runner
 
 
+def process_snapshot(*processes):
+    date, clock = "2026-11-18", "03:20:00"
+    return "\n".join([f"{date} {clock}", "PID STIME NAME", *(f"{pid} {date} {started} {name}" for pid, started, name in processes)])
+
+
 class DeviceSessionTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -97,8 +102,9 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue((self.output / "terminal.done.json").is_file())
 
     def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
-        target, thermal = mock.Mock(), mock.Mock(error=None)
-        target.sh.return_value = "12"
+        target, thermal = mock.Mock(package=self.request["package"]), mock.Mock(error=None)
+        target.sh.return_value = process_snapshot(("12", "03:19:58", target.package))
+        process_checks = []
         hud = dict(menuStartX=170.67, menuStartY=757.33, screenWidth=1920, screenHeight=1080)
         menu = dict(phase="offline-start-menu", hud=hud, attempt="owned-attempt")
         gameplay_report = dict(phase="integrated-world-playing", world=dict(ready=True))
@@ -117,9 +123,13 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner, "wait_for_settings_report", side_effect=observed),
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
         ):
-            self.assertEqual(runner.start_from_menu(target, thermal, "12", self.output, report_id=gameplay_route), gameplay_report)
             self.assertEqual(
-                runner.start_from_menu(target, thermal, "12", self.output, report_id=gameplay_route, tap_start=True, attempt=menu["attempt"]),
+                runner.start_from_menu(target, thermal, "12", self.output, process_checks=process_checks, report_id=gameplay_route), gameplay_report
+            )
+            self.assertEqual(
+                runner.start_from_menu(
+                    target, thermal, "12", self.output, process_checks=process_checks, report_id=gameplay_route, tap_start=True, attempt=menu["attempt"]
+                ),
                 gameplay_report,
             )
         target.sh.assert_any_call("input", "keyboard", "keyevent", "KEYCODE_ENTER")
@@ -131,8 +141,28 @@ class DeviceSessionTests(unittest.TestCase):
         ):
             target.sh.reset_mock()
             with self.assertRaisesRegex(RuntimeError, "focus absent"):
-                runner.start_from_menu(target, thermal, "12", self.output)
+                runner.start_from_menu(target, thermal, "12", self.output, process_checks=process_checks)
         self.assertFalse(any(call.args[:1] == ("input",) for call in target.sh.call_args_list))
+
+    def test_menu_start_records_second_lab_process_and_blocks_input(self):
+        target, thermal = mock.Mock(package="dev.ror2lab.converted"), mock.Mock(error=None)
+        target.sh.return_value = process_snapshot(
+            ("42", "03:19:58", target.package), ("12", "03:19:55", "dev.ror2lab.arm64"), ("20", "03:19:10", "dev.ror2lab.unrelated")
+        )
+        checks = []
+        with mock.patch.object(runner, "wait_for_settings_report", return_value=dict(phase="offline-start-menu")):
+            with self.assertRaisesRegex(RuntimeError, "Unexpected owned lab process at start"):
+                runner.start_from_menu(target, thermal, "42", self.output, process_checks=checks)
+        self.assertEqual(checks[0]["device_time"], "2026-11-18 03:20:00")
+        self.assertEqual(
+            checks[0]["processes"],
+            [
+                dict(pid="42", start_time="2026-11-18 03:19:58", package=target.package, name=target.package),
+                dict(pid="12", start_time="2026-11-18 03:19:55", package="dev.ror2lab.arm64", name="dev.ror2lab.arm64"),
+            ],
+        )
+        self.assertEqual(target.sh.call_count, 1)
+        self.assertEqual(target.sh.call_args.kwargs["timeout"], 5)
 
     def test_menu_start_request_is_explicit_launch_only(self):
         self.request["start_from_menu"] = True
@@ -166,7 +196,16 @@ class DeviceSessionTests(unittest.TestCase):
             calls.mock_calls[:2],
             [
                 mock.call.input(self.output / "input.json", self.digest, device=device),
-                mock.call.menu(device, thermal, "7", self.output, report_id=SPINE_ID.removesuffix("-bringup"), tap_start=True, attempt="converted-attempt"),
+                mock.call.menu(
+                    device,
+                    thermal,
+                    "7",
+                    self.output,
+                    process_checks=[],
+                    report_id=SPINE_ID.removesuffix("-bringup"),
+                    tap_start=True,
+                    attempt="converted-attempt",
+                ),
             ],
         )
 
@@ -234,7 +273,7 @@ class DeviceSessionTests(unittest.TestCase):
         ):
             runner.run_workload(target, thermal, checked, self.output, result)
             check.call_args.args[3](target)
-        launch.assert_called_once_with(target, thermal)
+        launch.assert_called_once_with(target, thermal, process_checks=[])
         self.assertIs(check.call_args.args[4], thermal.cancelled)
         self.assertEqual(result["settings_save_failure"], {"success": True})
         self.request["selection"] = {}
@@ -250,7 +289,7 @@ class DeviceSessionTests(unittest.TestCase):
         result = {}
         with mock.patch.object(runner, "check_software_notices", return_value={"success": True}) as check:
             runner.run_workload(target, thermal, checked, self.output, result)
-        check.assert_called_once_with(target, thermal, checked, self.output)
+        check.assert_called_once_with(target, thermal, checked, self.output, [])
         self.assertEqual(result["software_notices"], {"success": True})
         self.request["selection"] = {}
         runner.save(self.request_file, self.request)
@@ -285,7 +324,7 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner, "capture") as capture,
             mock.patch("touch_gesture.run") as gesture,
         ):
-            result = runner.check_software_notices(target, thermal, self.request, self.output)
+            result = runner.check_software_notices(target, thermal, self.request, self.output, [])
         self.assertTrue(result["protected_files_unchanged"])
         self.assertEqual(len(reports), 0)
         self.assertEqual(gesture.call_count, 4)
@@ -297,7 +336,7 @@ class DeviceSessionTests(unittest.TestCase):
         self.request["mode"] = "player-screens"
         runner.save(self.request_file, self.request)
         checked = runner.load_request(self.request_file)
-        target, thermal = mock.Mock(), mock.Mock(error=None)
+        target, thermal = mock.Mock(package=self.request["package"]), mock.Mock(error=None)
         target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
         # Exactly the last post-confirm PID read exits; every input checks its owner.
         target.sh.side_effect = lambda *args, **kwargs: "" if args[0] == "pidof" and len(keys) == 10 else "1"
@@ -322,6 +361,8 @@ class DeviceSessionTests(unittest.TestCase):
                 return ""
             if args[0] == "pidof":
                 return "" if len(keys) == 10 else "1"
+            if args[:2] == ("sh", "-c"):
+                return process_snapshot(("1", "03:19:58", target.package))
             return "unchanged"
 
         target.sh.side_effect = command
@@ -338,7 +379,7 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch("settings_write_interrupt_check.protected_hashes", return_value={"profile": "same"}),
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
         ):
-            result = runner.check_player_screens(target, thermal, checked, self.output)
+            result = runner.check_player_screens(target, thermal, checked, self.output, [])
         self.assertTrue(result["quit_exited"])
         self.assertFalse(result["physical_certification"])
         self.assertEqual(
@@ -768,6 +809,9 @@ class DeviceSessionTests(unittest.TestCase):
         target.display.side_effect = lambda awake: events.append("awake" if awake else "asleep") or True
 
         def shell(*args, **kwargs):
+            if args[:2] == ("sh", "-c") and "ps -A" in args[2]:
+                events.append("process-checkpoint")
+                return process_snapshot()
             if args[0] == "sha256sum":
                 return target.owned()["apk_sha256"] + "  /fixture/base.apk"
             if args[:2] == ("pm", "uninstall"):
@@ -859,6 +903,7 @@ class DeviceSessionTests(unittest.TestCase):
             result = runner.execute(self.request)
         self.assertEqual(placement.call_args_list[0].args[1], self.apk.stat().st_size + payload_size + 20 * 1024**3)
         self.assertIn("prelaunch", result, result.get("error"))
+        self.assertEqual([checkpoint["phase"] for checkpoint in result["process_checkpoints"]], ["before-install", "install"])
         prepare.assert_called_once_with(target, result["prelaunch"])
         if payload:
             target.sync.assert_called_once_with(self.root / "payload", replace_previous=True, cleanup=result["device_cleanup"])
@@ -1014,11 +1059,20 @@ class DeviceSessionTests(unittest.TestCase):
 
     def test_converted_launch_resolves_bootstrap_instead_of_unity_activity(self):
         target = mock.Mock(package="dev.ror2lab.converted")
-        target.sh.side_effect = ["dev.ror2lab.converted/.PayloadBootstrapActivity", "started", "73"]
+        target.sh.side_effect = [
+            process_snapshot(),
+            "dev.ror2lab.converted/.PayloadBootstrapActivity",
+            "started",
+            "73",
+            process_snapshot(("73", "03:19:58", target.package)),
+        ]
         thermal = mock.Mock(error=None)
-        result = runner.launch(target, thermal)
+        checks = []
+        result = runner.launch(target, thermal, process_checks=checks)
         self.assertEqual(result["pid"], "73")
         self.assertIn("PayloadBootstrapActivity", result["activity"])
+        self.assertEqual([checkpoint["phase"] for checkpoint in checks], ["before-launch", "launch"])
+        self.assertEqual(checks[-1]["processes"][0]["pid"], "73")
         thermal.launch.assert_not_called()
 
     def test_mapping_binds_embedded_attempt_and_measured_checkpoint(self):

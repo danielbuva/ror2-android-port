@@ -10,6 +10,7 @@ lease atomically; it never waits for a peer, publishes, or grants itself a slot.
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext
+from functools import partial
 import hashlib
 import json
 import os
@@ -24,6 +25,7 @@ import time
 import traceback
 
 PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
+PROCESS_TIME = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 TRANSIENTS = ("movement-batch-selection.json", "offline-settings-v1/preferences.json.pending")
 GOLEM_ATTACK = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+EntityStates\.GolemMonster\.(ClapState|FireLaser):OnEnter\(\)\s*$")
 DEVICE_RESERVE_BYTES = 20 * 1024**3
@@ -234,6 +236,33 @@ def verify_owned(device, expected=None):
     return installed
 
 
+def check_lab_processes(device, checkpoints, phase, expected_pid=None):
+    """Bind the lifecycle to the selected main process and record peers."""
+    rows = device.sh("sh", "-c", "date '+%F %T' && ps -A -o PID,STIME:19,NAME", timeout=5).splitlines()
+    if len(rows) < 2 or not PROCESS_TIME.fullmatch(rows[0]) or rows[1].split() != ["PID", "STIME", "NAME"]:
+        raise RuntimeError("Android process snapshot unavailable at " + phase)
+    processes = []
+    for line in rows[2:]:
+        columns = line.split()
+        if not columns:
+            continue
+        name = columns[-1]
+        package = name.partition(":")[0]
+        if package not in PACKAGES:
+            continue
+        if len(columns) != 4:
+            raise RuntimeError("Invalid owned process identity at " + phase)
+        pid, start_date, start_clock, _ = columns
+        start_time = start_date + " " + start_clock
+        if not pid.isdecimal() or not PROCESS_TIME.fullmatch(start_time):
+            raise RuntimeError("Invalid owned process identity at " + phase)
+        processes.append(dict(pid=pid, start_time=start_time, package=package, name=name))
+    checkpoints.append(dict(phase=phase, device_time=rows[0], processes=processes))
+    expected = [] if expected_pid is None else [(str(expected_pid), device.package)]
+    if [(row["pid"], row["name"]) for row in processes] != expected:
+        raise RuntimeError("Unexpected owned lab process at " + phase)
+
+
 def reset_idle(device, lease, record, cleanup=None):
     """Remove exactly two known transient files from a verified owned package."""
     from session_cleanup_check import _remote_path_state
@@ -339,9 +368,17 @@ def prepare_launch(device, record):
         raise RuntimeError(reason + "; device run aborted before launch")
 
 
-def launch(device, thermal):
+def launch(device, thermal, *, process_checks):
+    check_lab_processes(device, process_checks, "before-launch")
     if device.package == "dev.ror2lab.arm64":
-        return thermal.launch(device)
+        result = thermal.launch(device)
+    else:
+        result = _launch_converted(device, thermal)
+    check_lab_processes(device, process_checks, "launch", result["pid"])
+    return result
+
+
+def _launch_converted(device, thermal):
     if thermal.error:
         raise RuntimeError(thermal.error)
     component = device.sh(
@@ -537,7 +574,7 @@ def qualify_high_refresh(device, thermal, output, pid):
         raise RuntimeError("Persisted 120 Hz app request unavailable")
 
 
-def check_software_notices(device, thermal, request, output):
+def check_software_notices(device, thermal, request, output, process_checks):
     """One owned menu/settings/notices/back flow; shared runner owns lifecycle."""
     from installed_attempt import attempt_from_installed
     from session_cleanup_check import selection
@@ -550,7 +587,7 @@ def check_software_notices(device, thermal, request, output):
     selected = output / "notices-selection.json"
     save(selected, selection(attempt_from_installed(device.owned())))
     device.cmd("push", str(selected), runtime + "/movement-batch-selection.json")
-    launched = launch(device, thermal)
+    launched = launch(device, thermal, process_checks=process_checks)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
 
@@ -594,12 +631,12 @@ def check_software_notices(device, thermal, request, output):
     return dict(success=True, process_continuity=True, protected_files_unchanged=True)
 
 
-def check_player_screens(device, thermal, request, output):
+def check_player_screens(device, thermal, request, output, process_checks):
     """Injected keyboard aliases share controller routes; physical playtest stays open."""
     from settings_write_interrupt_check import protected_hashes
     from touch_gesture import owned_display_zero_focus
 
-    notices = check_software_notices(device, thermal, request, output / "software-notices")
+    notices = check_software_notices(device, thermal, request, output / "software-notices", process_checks)
     pid = device.sh("pidof", device.package, check=False).strip()
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
 
@@ -624,6 +661,7 @@ def check_player_screens(device, thermal, request, output):
         )
 
     wait("first-menu", lambda r: r.get("phase") == "offline-start-menu")
+    check_lab_processes(device, process_checks, "start", pid)
     key("KEYCODE_ENTER")
     wait("playing", lambda r: r.get("phase") == "integrated-world-playing", timeout=request["duration_seconds"])
     capture(device, output / "playing-screen", pid)
@@ -689,7 +727,7 @@ def check_player_screens(device, thermal, request, output):
     raise RuntimeError("Confirmed Quit did not exit")
 
 
-def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=False, attempt=None):
+def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=None, tap_start=False, attempt=None):
     """Start the observed owned menu and return the current world report."""
     from session_cleanup_check import menu_start_coordinates
     from touch_gesture import owned_display_zero_focus
@@ -698,8 +736,7 @@ def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=F
     save(output / "start-menu.json", menu)
     if thermal.error:
         raise RuntimeError(thermal.error)
-    if device.sh("pidof", device.package, check=False).strip() != pid:
-        raise RuntimeError("Owned process changed before menu Start")
+    check_lab_processes(device, process_checks, "start", pid)
     if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays"), device.package):
         raise RuntimeError("Owned display-zero focus absent before menu Start")
     if tap_start:
@@ -724,31 +761,33 @@ def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=F
 
 
 def run_workload(device, thermal, request, output, result, *, _reset_idle=None, start_attempt=None):
+    process_checks = result.setdefault("process_checkpoints", [])
+    checked_launch = partial(launch, process_checks=process_checks)
     if request["mode"] == "profile-write-interrupt":
         from settings_write_interrupt_check import check_profile_write_interrupt
 
         result["profile_write_interrupt"] = check_profile_write_interrupt(
-            device, thermal, request, output, launch, start_from_menu, result.get("device_cleanup")
+            device, thermal, request, output, checked_launch, partial(start_from_menu, process_checks=process_checks), result.get("device_cleanup")
         )
         return
     if request["mode"] == "player-screens":
-        result["player_screens"] = check_player_screens(device, thermal, request, output)
+        result["player_screens"] = check_player_screens(device, thermal, request, output, process_checks)
         return
     if request["mode"] == "software-notices":
-        result["software_notices"] = check_software_notices(device, thermal, request, output)
+        result["software_notices"] = check_software_notices(device, thermal, request, output, process_checks)
         return
     if request["mode"] == "settings-save-failure":
         import settings_write_interrupt_check as settings
 
         result["settings_save_failure"] = settings.check_settings_save_failure(
-            device, output, request["apk_sha256"], lambda current: launch(current, thermal), thermal.cancelled
+            device, output, request["apk_sha256"], lambda current: checked_launch(current, thermal), thermal.cancelled
         )
         return
     if request["mode"] == "sustained":
         import session_sustained_check as sustained
 
-        def checked_launch(current):
-            launched = launch(current, thermal)
+        def sustained_launch(current):
+            launched = checked_launch(current, thermal)
             save(output / "launch.json", launched)
             if request.get("require_high_refresh"):
                 qualify_high_refresh(current, thermal, output, str(launched["pid"]))
@@ -760,7 +799,7 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
         try:
             result["session"] = sustained.check_session_sustained(
                 expected_apk_sha256=request["apk_sha256"],
-                _launch=checked_launch,
+                _launch=sustained_launch,
                 raw_frame_times=True,
                 duration_seconds=request["duration_seconds"],
                 observation_interval_seconds=request.get("capture_interval_seconds", 5),
@@ -776,7 +815,7 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
         if len(fresh) != 1:
             raise RuntimeError("Ambiguous sustained evidence")
         return
-    launched = launch(device, thermal)
+    launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
     capture_events = capture_golem_attacks(device, thermal, pid, output / "golem-attacks") if request.get("capture_golem_attacks") else nullcontext()
@@ -795,7 +834,16 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
         from session_cleanup_check import SPINE_ID
 
         report_id = SPINE_ID.removesuffix("-bringup") if device.package == "dev.ror2lab.converted" else SPINE_ID
-        start_from_menu(device, thermal, pid, output, report_id=report_id, tap_start=True, attempt=start_attempt)
+        start_from_menu(
+            device,
+            thermal,
+            pid,
+            output,
+            process_checks=result.setdefault("process_checkpoints", []),
+            report_id=report_id,
+            tap_start=True,
+            attempt=start_attempt,
+        )
     began = time.monotonic()
     next_capture = 0
     scheduled = iter(enumerate(request.get("input_schedule", [])))
@@ -883,6 +931,7 @@ def execute(request):
         package=request["package"],
         mode=request["mode"],
         device_cleanup=cleanup,
+        process_checkpoints=[],
     )
     lease, device, thermal = Lease(request), None, None
     restore = {}
@@ -918,6 +967,7 @@ def execute(request):
             reset_idle(device, lease, result["initial_reset"], cleanup)
             save(output / "initial-reset.json", result["initial_reset"])
             result["initial_idle"] = _idle_readback(device, active_hash)
+        check_lab_processes(device, result["process_checkpoints"], "before-install")
         try:
             try:
                 result["install"] = device.install(apk)
@@ -942,6 +992,7 @@ def execute(request):
             if device.receipt("installed.json").exists():
                 active_hash = verify_owned(device)["apk_sha256"]
         active_hash = request["apk_sha256"]
+        check_lab_processes(device, result["process_checkpoints"], "install")
         result["storage_after"] = placement(device, payload_size + DEVICE_RESERVE_BYTES)
         runtime = ensure_runtime(device)
         if "payload_directory" in request:

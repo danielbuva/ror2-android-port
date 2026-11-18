@@ -3076,6 +3076,11 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+The runner records the device-local timestamp, PID, start time and package of
+each lab process before and after install and launch, and before sending the
+observed Start input. Install requires both packages idle. After launch and
+at Start, only the selected launcher PID may be running. An unexpected process
+stops the workload and leaves its checkpoint in the private terminal receipt.
 An Android signature mismatch allows one uninstall/reinstall only for the
 disposable lab package with a live hash-backed ownership receipt and an explicit
 payload source. The uninstall clears its data. The runner revalidates placement
