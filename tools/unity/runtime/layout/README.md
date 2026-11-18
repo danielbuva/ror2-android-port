@@ -114,7 +114,9 @@ rectangles using top-left display pixels, last control first (topmost), half-ope
 right/bottom edges. Touch scale/opacity remain metadata, not hit-test transforms.
 The caller chooses drag versus bottom-right resize, such as from an editor handle;
 this class does not render handles or interpret gameplay actions. Positive pixel
-minimums constrain draft sizes. Move uses the initial rectangle and absolute
+minimums constrain draft sizes. Bottom-right resize keeps its original top-left
+corner fixed and caps extents at the remaining safe-area span; that span wins if
+a requested pixel minimum cannot fit. Drag retains ordinary clamping. Move uses the initial rectangle and absolute
 pointer displacement, preventing repeated-event accumulation. Up applies its final
 sample then confirms once; wrong/repeated pointer IDs are ignored.
 
