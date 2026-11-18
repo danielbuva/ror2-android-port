@@ -47,14 +47,15 @@ build-pipeline changes. This checklist makes no alpha-readiness claim.
 - [ ] Qualify the complete owner-generated output on the selected alpha device,
       with committed source/input/toolchain receipts, ordinary installation/update
       and matched performance ([acceptance gates](phone-owner-build.md#proof-gates)).
-      Preserve the original installation, Main's editor/build mutex/device and
-      desktop fallback. IL2CPP alone does not prove equivalent performance.
+      Preserve the original installation, shared Unity build mutex, dispatcher
+      device leases and desktop fallback. IL2CPP alone does not prove equivalent
+      performance.
       [J1401](PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables)
       verifies bounded ordinary Start on a lab APK, not the converter's output.
-- [ ] Complete the [ADR-002 findings review](ADR-002-public-alpha-distribution.md)
-      before adopting a replacement pipeline or final installation architecture.
-      Keep other gameplay backends excluded; audit public artifacts and keep
-      owner-generated game content private.
+- [x] Complete the [ADR-002 findings review](ADR-002-public-alpha-distribution.md#findings-review).
+      Architecture C, native IL2CPP and the desktop fallback remain the accepted
+      direction. Final phone installation and external publication approval
+      remain open.
 
 ## Packaging and acquisition
 
@@ -85,7 +86,8 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
 
 ## Controls, UI and sessions
 
-Owner playtest gate (10 minutes, physical controller and touchscreen):
+[Owner playtest gate](PLAYTESTING.md#ten-minute-owner-playtest) (10 minutes,
+physical controller and touchscreen):
 
 - [ ] Use the controller to choose a survivor/difficulty, open loadout, select a
       skill/skin, close it and Start. Repeat with touch; confirm no hidden Start
@@ -213,6 +215,12 @@ High refresh ON remains uncapped up to the panel; OFF requests 60 FPS. The
 [retained result](PORTING_JOURNAL.md#j1474--qualify-injected-player-screen-routes-and-software-notices)
 leaves ordinary play, visual parity and energy qualification open. No further
 performance recapture is required for this accepted assisted gate.
+
+The [2026-11-17 Main Nova run](performance-game.md#120-hz-battery-and-clock-observation)
+observed 3 percentage points of battery discharge in 30 minutes with the 120 Hz
+preference enabled and external power connected throughout. Mean signed power at
+the battery was −1,017 mW. The sampled clock limits and cooling states leave
+throttling onset unestablished. The unplugged energy budget remains open.
 
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)

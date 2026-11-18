@@ -2,12 +2,14 @@
 
 import argparse
 import hashlib
+import io
 import json
 from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+import zipfile
 
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parents[2]
@@ -30,6 +32,8 @@ UPDATE_NETWORK_MODULES = {
     "libpyext__socket.so": "python/lib/python3.14/lib-dynload/_socket.cpython-314-aarch64-linux-android.so",
     "libpyext__ssl.so": "python/lib/python3.14/lib-dynload/_ssl.cpython-314-aarch64-linux-android.so",
 }
+MMAP_MODULE = "libpyext_mmap.so"
+MMAP_LINK = "python/lib/python3.14/lib-dynload/mmap.cpython-314-aarch64-linux-android.so"
 
 
 def digest(path):
@@ -63,6 +67,48 @@ def validate_update_network(extra):
             raise ValueError("Installer HTTPS provider must be a canonical matching Python 3.14 module: " + target)
         if digest(path) != row["sha256"]:
             raise ValueError("Installer HTTPS native provider drift: " + target)
+
+
+def stage_python_wheels(extra, pins, destination):
+    """Install the exact player-registry packages into the isolated import path."""
+    if not extra or "python_wheels" not in extra:
+        return {}
+    if MMAP_MODULE not in extra["natives"] or extra["links"].get(MMAP_LINK) != MMAP_MODULE:
+        raise ValueError("Player Python wheels require an explicit mmap provider and Python link")
+    source = Path(extra["python_wheels"]).resolve(strict=True)
+    inputs = {}
+    for name, expected in pins.items():
+        path = source / name
+        data = path.read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError("Player Python wheel drift: " + name)
+        inputs[path] = data
+    for data in inputs.values():
+        # Only the exact public pure-Python wheels are admitted, including their notices.
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            archive.extractall(destination)
+    return {str(path): pins[path.name] for path in inputs}
+
+
+def stage_texture_sdk_guest(extra, pins, destination):
+    """Stage the pinned x86-64 QEMU inputs as app assets."""
+    if not extra or "texture_sdk_guest" not in extra:
+        return {}
+    required = {"libqemu-x86_64.so", "libtexture-pixels.so", "libtexture-etc.so", "libc++_shared.so"}
+    if not required <= extra["natives"].keys():
+        raise ValueError("Texture SDK guest requires QEMU, pixels, ETC and libc++ native providers")
+    source = Path(extra["texture_sdk_guest"]).resolve(strict=True)
+    inputs = {}
+    for name, expected in pins.items():
+        data = (source / relative(name)).read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError("Texture SDK guest input drift: " + name)
+        inputs[name] = data
+    for name, data in inputs.items():
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+    return {str(source / name): expected for name, expected in pins.items()}
 
 
 def load_metadata():

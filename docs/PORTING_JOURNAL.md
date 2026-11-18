@@ -4127,3 +4127,17 @@ Evidence: `work/coordination/alpha-packaging-acceptance/run-lddx2pov/issued-pack
 Battery 29 C at admission; CPU/GPU peak 73.6 C; zero time above 80 C.
 Both owned packages were removed, the display was put to sleep and the lease released.
 Production Unity alpha, native save retention across alpha updates, key recovery and real interruption remain open.
+
+## J1483 — Observe 120 Hz battery discharge and clock limits on Nova
+
+2026-11-17. The shared sustained runner records battery power, clock limits and cooling states.
+The assisted 120 Hz run completes 1,800.001 s and retains 61 observations at 30 s cadence.
+With external power connected throughout, battery level falls 80% → 77% (6 points/h),
+and mean signed battery-terminal power is −1,017 mW over the full covered window.
+CPU caps and cooling states are unchanged. GPU cap and thermal throttle onset remain unknown.
+CPU/GPU/battery peak at 97.1/86.5/39 C with a 0.705 s maximum runtime sample gap.
+Adopted placement, native teardown, stopped/asleep readback and lease release pass.
+APK SHA-256 `3fe278af144ff6b428bd7ed48edd6cdf5a07e60bd531f1f2ba6178b083d146b1` (source `f93b1676`).
+Evidence lives in `work/coordination/alpha-120hz-energy-20261117/nova/terminal.done.json`.
+The [retained analysis](performance-game.md#120-hz-battery-and-clock-observation) reports
+frame pacing and thermal exposure. Unplugged energy budget and ordinary play remain open.

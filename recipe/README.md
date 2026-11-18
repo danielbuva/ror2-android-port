@@ -2457,6 +2457,15 @@ are unchanged. Setup and unsupported modes are documented in
 `tools/phone-build/managed-host/README.md`; the experiment result lives only in
 J1001.
 
+This profile also pins the two public MIT-licensed wheel archives used by the
+player script registry. The private fixture retains their license notices and
+the recipe contains only archive names and checksums.
+The `texture_sdk_guest` map pins the authored Linux texture pipe executable
+and the public GNU loader/runtime from the qualified QEMU setup. It contains
+relative paths and checksums. The private fixture stages the pinned files with
+the provider licensing requirements in the managed app-host setup. The Unity
+codec comes from the owner-acquired SDK archive at conversion time.
+
 
 The app-host profile source pins were refreshed on 2026-10-24 for the integrated
 public profile: `assembly_transforms.py` and `common.py` changed while the
@@ -2715,6 +2724,14 @@ recipe is independently authored public configuration, formatted by its current
 owner. No rendered image, font/text payload, encoded block or target field
 array is included. The sprite texture file names are minimum dependency
 relationships; texture production remains a separate owner/gate.
+
+2026-11-17: refreshed the current player profile's recipe, TextAsset body and
+serialized-file hashes after the authored enemy material settings changed in
+#516. The existing TextAsset owner serialized the current recipe using the
+original input's native type. This update records only sizes and digests. The
+serialized output and original type bytes remain in ignored work.
+The native manager profile also pins the current tracked tool requirements
+file. The manager and phase profile updates contain only public digests.
 
 `owner-death-effect-objects.json` selects the original rooted prefab and its
 MonoScripts, with checked pointer relationships and comparison hashes. All

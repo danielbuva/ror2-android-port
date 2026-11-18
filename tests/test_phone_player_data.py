@@ -132,6 +132,12 @@ def script_properties_fixture(root, pc, script_kind=115, sdk_kind=114, custom_na
 
 
 class CurrentOutputReceiptTests(unittest.TestCase):
+    def test_public_manager_inputs_match_profile_pins(self):
+        profile = json.loads((ROOT / "recipe/owner-player-managers.json").read_text())
+        for name, row in profile["public_inputs"].items():
+            with self.subTest(name=name):
+                self.assertEqual(P.sha(ROOT / row["path"]), row["sha256"])
+
     def test_fresh_registry_hash_is_diagnostic_and_receipt_stays_exact(self):
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder).resolve()
@@ -207,6 +213,17 @@ class SourceMetadataTests(unittest.TestCase):
 
 
 class ShaderManifestTextTests(unittest.TestCase):
+    def test_current_runtime_config_has_matching_source_and_text_body_pins(self):
+        profile = json.loads((ROOT / "recipe/owner-player-data.json").read_text())
+        (row,) = (item for item in profile["text_assets"]["files"] if item.get("recipe", {}).get("path") == "runtime-config.json")
+        recipe = row["recipe"]
+        source = (ROOT / "recipe" / recipe["path"]).read_bytes()
+        self.assertEqual(pin(source), (recipe["bytes"], recipe["sha256"]))
+        body = io.BytesIO()
+        P.OBJECTS.aligned_string(body, row["name"])
+        P.OBJECTS.aligned_string(body, json.dumps(json.loads(source), indent=2) + "\n")
+        self.assertEqual(pin(body.getvalue()), (row["bytes"], row["sha256"]))
+
     def test_generated_manifest_uses_source_text_type_and_checked_json_body(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder).resolve()

@@ -425,6 +425,48 @@ class BundlePreparationTests(unittest.TestCase):
                 with self.assertRaises((ValueError, EOFError)):
                     P.prepare_request(inputs, root / "prepared")
 
+    def test_extend_prepared_selection_with_measured_external_routes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _, _, pin = self.fixture(root)
+            prepared = P.prepare_request(inputs, root / "prepared")
+            request_path = Path(prepared["request"]["path"])
+            request = json.loads(request_path.read_bytes())
+            expected = P.produce_request(request_path, root / "expected")
+            required_path = Path(request["required"]["path"])
+            required = json.loads(required_path.read_bytes())
+            groups, assets = required["asset_groups"], required["assets"]
+            required.update(path_ids=[300, 400], asset_groups=[], assets=[])
+            required_path.write_text(json.dumps(required))
+            request["required"] = pin(required_path)
+
+            records_path = root / "prepared/selected-records.jsonl"
+            records = list(P.json_rows(records_path))
+            candidates_path = root / "candidates.jsonl"
+            candidates_path.write_text("".join(json.dumps(row) + "\n" for row in records[:2]))
+            records_path.write_text("".join(json.dumps(row) + "\n" for row in records[2:]))
+            request["graph"]["selected-records.jsonl"] = pin(records_path)
+
+            routes_path = Path(request["routes"]["path"])
+            routes = list(P.json_rows(routes_path))
+            proofs = [dict(edge, owner=row["owner"]) for row in routes[:2] for edge in row["edges"] if edge["pointer"][0]]
+            routes_path.write_text("".join(json.dumps(row) + "\n" for row in routes[2:]))
+            request["routes"] = pin(routes_path)
+            extension_path = root / "extension.json"
+            extension = dict(candidates=pin(candidates_path), asset_groups=groups, assets=assets, field_routes=[])
+            extension_path.write_text(json.dumps(extension))
+            request["extension"] = pin(extension_path)
+            request_path.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "Unproven extension field"):
+                P.produce_request(request_path, root / "incomplete")
+
+            extension["field_routes"] = proofs
+            extension_path.write_text(json.dumps(extension))
+            request["extension"] = pin(extension_path)
+            request_path.write_text(json.dumps(request))
+            actual = P.produce_request(request_path, root / "actual")
+            self.assertEqual(actual["sha256"], expected["sha256"])
+
     def test_fresh_native_output_completes_actual_catalog(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

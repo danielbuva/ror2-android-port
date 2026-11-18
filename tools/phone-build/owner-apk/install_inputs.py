@@ -142,7 +142,7 @@ def prepare(index, repo, inputs):
     bindings.setdefault("inventory", "input-hashes.json")
     input_id = hashlib.sha256(UPDATES.RELEASE.signed_bytes([(row["path"], row["sha256"]) for row in inventory])).hexdigest()
     UPDATES.write_json(UPDATES.within(inputs, "work/config/local.json"), {"game_path": str(imported_root)})
-    UPDATES.write_json(UPDATES.within(inputs, "work/inventory/files.json"), {"schema": 1, "input_id": input_id, "files": inventory})
+    UPDATES.write_json(UPDATES.within(inputs, "work/inventory/files.json"), {"schema": 1, "input_id": input_id, "hash_mode": "full", "files": inventory})
     UPDATES.write_json(UPDATES.within(inputs, "work/config/accepted-input.json"), {"input_id": input_id, "game_version": manifest["game_version"]})
     UPDATES.write_json(
         UPDATES.within(inputs, "input-selection.json"),

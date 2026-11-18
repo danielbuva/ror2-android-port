@@ -25,6 +25,7 @@ PRODUCERS = {
     "tools/phone-build/owner-code/run_android.py",
     "tools/phone-build/owner-code/produce.py",
     "tools/phone-build/owner-code/native.py",
+    "tools/phone-build/package-assemblies/produce.py",
     *{
         "tools/phone-build/accepted-output/" + name + ".py"
         for name in (
@@ -35,6 +36,7 @@ PRODUCERS = {
             "shader_produce",
             "texture_produce",
             "player_data",
+            "sdk_inputs",
             "sdk_package",
             "payload_shader_records",
             "shader_context",
@@ -51,6 +53,7 @@ PRODUCERS = {
     },
 }
 TOKEN = re.compile(r"\$\{([^}]+)\}")
+WITNESS = re.compile(r"\$\{(inputs|installed_runtime|native)\}/(.+)")
 
 
 def validate_jobs(index, release, read_job):
@@ -67,7 +70,10 @@ def validate_jobs(index, release, read_job):
                 return
             seen.add(name)
             job = read_job(name)
-            if set(job) - {"request", "needs", "artifacts", "source_files"} != {"schema", "script", "arguments", "outputs"} or job["schema"] != 1:
+            if (
+                set(job) - {"request", "needs", "artifacts", "source_files", "cache_witnesses"} != {"schema", "script", "arguments", "outputs"}
+                or job["schema"] != 1
+            ):
                 raise ValueError("explicit source producer job schema required")
             if job["script"] not in PRODUCERS or name not in row["recipe_files"] or job["script"] not in row["producer_files"]:
                 raise ValueError("existing source producer and complete signed job closure required")
@@ -91,6 +97,14 @@ def validate_jobs(index, release, read_job):
                 UPDATES.relative(path)
             for path in job.get("artifacts", {}).values():
                 UPDATES.relative(path)
+            witnesses = job.get("cache_witnesses", [])
+            if not isinstance(witnesses, list):
+                raise ValueError("explicit acquisition file witnesses required")
+            for witness in witnesses:
+                match = WITNESS.fullmatch(witness) if isinstance(witness, str) else None
+                if not match:
+                    raise ValueError("acquisition witness must select a canonical private file")
+                UPDATES.relative(match[2])
             needs = job.get("needs", [])
             if not isinstance(needs, list) or len(set(needs)) != len(needs):
                 raise ValueError("unique producer dependencies required")
@@ -103,11 +117,11 @@ def validate_jobs(index, release, read_job):
 class Dispatcher:
     def __init__(self, repo, index, release, inputs, runtime, native, config, input_sha256, *, python=None, progress=None):
         self.repo, self.inputs, self.runtime = [Path(p).resolve(strict=True) for p in (repo, inputs, runtime)]
-        installed_runtime = self.runtime
+        self.installed_runtime = self.runtime
         self.native = Path(native).resolve(strict=True)
         self.index, self.release, self.config, self.input_sha256 = index, release, config, input_sha256
         self.python = python or [str(self.native / "libpythonhost.so"), str(self.native / "libpython3.14.so"), str(self.runtime / "python")]
-        self.completed, self.running, self.descriptors = {}, set(), {}
+        self.completed, self.running, self.descriptors, self.output_hashes = {}, set(), {}, {}
         self.progress = progress or (lambda name, reused: None)
         self.jobs_root = UPDATES.within(self.inputs, "work/releases/jobs")
         self.jobs_root.mkdir(parents=True, exist_ok=True)
@@ -115,7 +129,7 @@ class Dispatcher:
         # run_android resolves producers through runtime/repo; point it at the
         # newly verified source, not the installer APK's older bundled checkout.
         self.runtime = Path(tempfile.mkdtemp(prefix="runtime-", dir=self.jobs_root))
-        for child in installed_runtime.iterdir():
+        for child in self.installed_runtime.iterdir():
             if child.name not in {"repo", "tmp", "home"}:
                 (self.runtime / child.name).symlink_to(child, target_is_directory=child.is_dir())
         (self.runtime / "repo").symlink_to(self.repo, target_is_directory=True)
@@ -160,7 +174,10 @@ class Dispatcher:
 
     def expand(self, value, job, output, request_path):
         if isinstance(value, dict):
-            return {key: self.expand(item, job, output, request_path) for key, item in value.items()}
+            expanded = {self.expand(key, job, output, request_path): self.expand(item, job, output, request_path) for key, item in value.items()}
+            if len(expanded) != len(value) or not all(isinstance(key, str) for key in expanded):
+                raise ValueError("request requires unique string keys after substitution")
+            return expanded
         if isinstance(value, list):
             return [self.expand(item, job, output, request_path) for item in value]
         if not isinstance(value, str):
@@ -169,6 +186,7 @@ class Dispatcher:
             "inputs": self.inputs,
             "repo": self.repo,
             "runtime": self.runtime,
+            "installed_runtime": self.installed_runtime,
             "native": self.native,
             "output": output,
             "output_relative": output.relative_to(self.inputs),
@@ -180,6 +198,8 @@ class Dispatcher:
             key = match.group(1)
             if key in roots:
                 return str(roots[key])
+            if key == "request_sha256":
+                return UPDATES.RELEASE.digest(request_path)
             if key.startswith(("input:", "input_relative:", "input_sha256:")):
                 binding = self.config.get("bindings", {}).get(key.split(":", 1)[1])
                 selected = UPDATES.within(self.inputs, binding, exists=True)
@@ -188,6 +208,12 @@ class Dispatcher:
                         raise ValueError("input hash requires a regular file")
                     return UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if key.startswith("input_relative:") else selected)
+            if key.startswith(("native_sha256:", "native_bytes:")):
+                kind, name = key.split(":", 1)
+                selected = UPDATES.within(self.native, name, exists=True)
+                if not selected.is_file():
+                    raise ValueError("native pin requires a regular installed file")
+                return str(selected.stat().st_size) if kind == "native_bytes" else UPDATES.RELEASE.digest(selected)
             if key.startswith(("job:", "job_relative:", "job_directory:", "sha256:", "bytes:")):
                 parts = key.split(":")
                 if len(parts) != 3 or parts[1] not in job.get("needs", []):
@@ -209,7 +235,7 @@ class Dispatcher:
         result = TOKEN.sub(replace, value)
         if "${" in result:
             raise ValueError("malformed release job substitution")
-        return int(result) if value.startswith("${bytes:") and TOKEN.fullmatch(value) else result
+        return int(result) if value.startswith(("${bytes:", "${native_bytes:")) and TOKEN.fullmatch(value) else result
 
     @staticmethod
     def files_in(output, job):
@@ -242,17 +268,27 @@ class Dispatcher:
     def input_pins(self, name):
         """Pin dynamic file witnesses, including suppliers, before cache reuse."""
         pins, seen = {}, set()
+        roots = {"inputs": self.inputs, "installed_runtime": self.installed_runtime, "native": self.native}
 
         def visit(job_name):
             if job_name in seen:
                 return
             seen.add(job_name)
             descriptor = self.descriptor(job_name)
-            for binding in re.findall(r"\$\{input_sha256:([^}]+)\}", json.dumps(descriptor)):
+            tokens = TOKEN.findall(json.dumps(descriptor))
+            for binding in {token.removeprefix("input_sha256:") for token in tokens if token.startswith("input_sha256:")}:
                 selected = UPDATES.within(self.inputs, self.config.get("bindings", {}).get(binding), exists=True)
                 if not selected.is_file():
                     raise ValueError("input hash requires a regular file")
                 pins[binding] = UPDATES.RELEASE.digest(selected)
+            for token in {token for token in tokens if token.startswith("native_sha256:")}:
+                pins[token] = self.expand("${" + token + "}", descriptor, self.jobs_root, None)
+            for witness in descriptor.get("cache_witnesses", []):
+                root, path = WITNESS.fullmatch(witness).groups()
+                selected = UPDATES.within(roots[root], path, exists=True)
+                if not selected.is_file():
+                    raise ValueError("acquisition witness requires a regular file")
+                pins[witness] = UPDATES.RELEASE.digest(selected)
             for dependency in descriptor.get("needs", []):
                 visit(dependency)
 
@@ -267,15 +303,15 @@ class Dispatcher:
         self.running.add(name)
         try:
             job = self.descriptor(name)
-            for needed in job.get("needs", []):
+            needs = job.get("needs", [])
+            for needed in needs:
                 self.execute(needed)
             files = self.closure(name)
             self.verify_sources(files)
-            identity = hashlib.sha256(
-                UPDATES.RELEASE.signed_bytes(
-                    {"job": name, "files": self.cache_sources(name), "input_sha256": self.input_sha256, "input_pins": self.input_pins(name)}
-                )
-            ).hexdigest()
+            cache_inputs = {"job": name, "files": self.cache_sources(name), "input_sha256": self.input_sha256, "input_pins": self.input_pins(name)}
+            if needs:
+                cache_inputs["dependency_artifacts"] = {needed: self.output_hashes[needed] for needed in needs}
+            identity = hashlib.sha256(UPDATES.RELEASE.signed_bytes(cache_inputs)).hexdigest()
             receipt_path = self.jobs_root / (identity + ".json")
             if receipt_path.exists():
                 receipt = UPDATES.public().load_json(receipt_path.read_bytes())
@@ -286,6 +322,7 @@ class Dispatcher:
                     reusable = False
                 if reusable:
                     self.completed[name] = cached
+                    self.output_hashes[name] = receipt["files"]
                     self.progress(name, True)
                     return cached
             attempt = Path(tempfile.mkdtemp(prefix=identity[:16] + "-", dir=self.jobs_root))
@@ -326,6 +363,7 @@ class Dispatcher:
             outputs = self.files_in(output, job)
             UPDATES.write_json(receipt_path, {"directory": output.relative_to(self.jobs_root).as_posix(), "files": outputs})
             self.completed[name] = output
+            self.output_hashes[name] = outputs
             self.progress(name, False)
             return output
         finally:
@@ -341,3 +379,7 @@ class Dispatcher:
         if not source.is_file():
             raise ValueError("source producer output is incomplete")
         shutil.copyfile(source, destination)
+
+    def output_sha256(self, name):
+        job = self.index["entries"][name]["job"]
+        return self.output_hashes[job][self.descriptor(job)["outputs"][name]]

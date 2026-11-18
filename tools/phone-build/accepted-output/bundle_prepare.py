@@ -12,6 +12,66 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
+def extend_selection(owner, member, required, selected, types, routes, extension, producer):
+    """Add catalog roots from pinned records and measured external field routes."""
+    proofs = {}
+    for row in extension["field_routes"]:
+        key = tuple(row["owner"]), tuple(row["field"])
+        if key in proofs:
+            raise ValueError("Duplicate extension field route")
+        proofs[key] = row
+
+    path_ids = set(required["path_ids"])
+    base_guids = {owner.guid_key(group["guid"]) for group in required["asset_groups"]}
+    groups = extension["asset_groups"]
+    guids = {owner.guid_key(group["guid"]) for group in groups}
+    if len(guids) != len(groups) or base_guids & guids:
+        raise ValueError("Extension asset groups overlap existing groups")
+    pending = [(*member, pid) for group in groups for pid in group["roots"]]
+    pending.extend(tuple(target) for group in groups for target in group.get("preload_roots", []))
+    externals, dependencies = set(), set()
+    parsed = owner.ParsedTrees()
+    while pending:
+        target = pending.pop()
+        if target not in selected:
+            raise ValueError(f"Extension endpoint missing: {target}")
+        if target[:2] != member:
+            externals.add(target[1])
+            if target[0] != "sdk":
+                dependencies.add(target[0])
+            continue
+        if target[2] in path_ids:
+            continue
+        value = selected[target]
+        _, body = producer.record(value)
+        typ = {key: bytes.fromhex(item) if key in ("tree", "hash", "script_id") else item for key, item in types[value["full_type"]].items()}
+        fields = owner.checked_fields(value, body, typ, parsed)
+        edges = []
+        for field, pointer in sorted(fields.items()):
+            fid, pid = pointer
+            if not pid:
+                continue
+            endpoint = (*member, pid)
+            if fid:
+                proof = proofs.pop((target, field), None)
+                if proof is None:
+                    raise ValueError(f"Unproven extension field: {target} {field} {pointer}")
+                endpoint = tuple(proof["target"])
+                if tuple(proof["pointer"]) != pointer or len(endpoint) != 3 or endpoint[2] != pid:
+                    raise ValueError(f"Extension field proof differs: {target} {field} {pointer}")
+            edges.append(dict(field=list(field), pointer=list(pointer), target=list(endpoint)))
+            pending.append(endpoint)
+        routes[target] = edges
+        path_ids.add(target[2])
+    if proofs:
+        raise ValueError("Unused extension field route")
+    required["path_ids"] = sorted(path_ids)
+    required["asset_groups"] += groups
+    required["assets"] += extension["assets"]
+    required["externals"] += sorted(externals.difference(required["externals"]))
+    required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
+
+
 def original_identities(owner, path, source_files=None):
     """Reverse body-producing profile selectors, never schema-only type_source."""
     result = {}

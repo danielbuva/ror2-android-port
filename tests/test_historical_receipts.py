@@ -11,6 +11,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import historical_receipts as receipts
 import input_migration
+import scene_runtime
 from common import write
 
 
@@ -110,6 +111,101 @@ class HistoricalReceiptTests(unittest.TestCase):
         write(self.root / "work/config/historical-receipts" / (receipts.NAME + ".json"), selection)
         with self.assertRaisesRegex(RuntimeError, "schema/name"):
             self.resolve()
+
+
+class SceneHistoricalReceiptTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.contracts = {
+            receipts.SCENE_ASSEMBLIES: {"original_assemblies": {"Fixture.dll": "a" * 64}},
+            receipts.AUDIO_IDENTITIES: {"rows": [{"resolved": True, "error": None} for _ in range(8)]},
+            receipts.AUDIO_CLOSURE: {"unresolved": [], "files": [{"path": "Fixture/prefab.prefab", "sha256": "b" * 64}]},
+            receipts.TELEPORT_QUERY: {
+                "locations": [
+                    {"internalId": "Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat", "type": "UnityEngine.Material", "key": "fixture-material"}
+                ]
+            },
+        }
+
+    def pin(self, name, data=None):
+        source = "work/retained/relocated/" + name + ".json"
+        write(self.root / source, self.contracts[name] if data is None else data)
+        digest = hashlib.sha256((self.root / source).read_bytes()).hexdigest()
+        return receipts.pin(name, source, digest, root=self.root)
+
+    def test_each_relocated_contract_is_explicit_hash_bound_and_read_only(self):
+        for name, data in self.contracts.items():
+            with self.subTest(name=name):
+                selection = self.pin(name)
+                self.assertEqual(receipts.resolve(name, root=self.root), (data, selection))
+                path = self.root / selection["path"]
+                before = path.read_bytes()
+                receipts.resolve(name, root=self.root)
+                self.assertEqual(path.read_bytes(), before)
+                path.write_bytes(before + b" ")
+                with self.assertRaisesRegex(RuntimeError, "SHA-256 mismatch"):
+                    receipts.resolve(name, root=self.root)
+                path.unlink()
+                with self.assertRaisesRegex(RuntimeError, "restore the specific retained evidence"):
+                    receipts.resolve(name, root=self.root)
+
+    def test_missing_selections_fail_before_consumer_staging(self):
+        with patch.object(scene_runtime, "ROOT", self.root), patch("build.preflight") as preflight:
+            with self.assertRaisesRegex(RuntimeError, "Missing named historical receipt"):
+                scene_runtime.scene_prepare()
+            preflight.assert_not_called()
+        with patch.object(scene_runtime, "ROOT", self.root), patch.object(scene_runtime, "startup_prepare") as startup:
+            with self.assertRaisesRegex(RuntimeError, "Missing named historical receipt"):
+                scene_runtime.audio_assets_prepare()
+            startup.assert_not_called()
+            self.pin(receipts.AUDIO_IDENTITIES)
+            with self.assertRaisesRegex(RuntimeError, "Missing named historical receipt"):
+                scene_runtime.audio_assets_prepare()
+            startup.assert_not_called()
+        with patch.object(scene_runtime, "ROOT", self.root), patch.object(scene_runtime, "body_root_order_prepare") as body:
+            with self.assertRaisesRegex(RuntimeError, "Missing named historical receipt"):
+                scene_runtime.body_start_loadout_prepare(teleport_material=True)
+            body.assert_not_called()
+
+    def test_valid_named_receipts_reach_existing_pipeline_without_relocating_evidence(self):
+        for name in self.contracts:
+            self.pin(name)
+        for consumer, dependency, kwargs in (
+            (scene_runtime.scene_prepare, "build.preflight", {}),
+            (scene_runtime.audio_assets_prepare, "scene_runtime.startup_prepare", {}),
+            (scene_runtime.body_start_loadout_prepare, "scene_runtime.body_root_order_prepare", {"teleport_material": True}),
+        ):
+            with (
+                self.subTest(consumer=consumer.__name__),
+                patch.object(scene_runtime, "ROOT", self.root),
+                patch(dependency, side_effect=RuntimeError("pipeline boundary")) as pipeline,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "pipeline boundary"):
+                    consumer(**kwargs)
+                pipeline.assert_called_once()
+        self.assertFalse((self.root / "work/experiments").exists())
+
+    def test_scene_contract_refusals(self):
+        cases = (
+            (receipts.SCENE_ASSEMBLIES, {"original_assemblies": {"../Fixture.dll": "a" * 64}}),
+            (receipts.SCENE_ASSEMBLIES, {"original_assemblies": {"Fixture.dll": "bad"}}),
+            (receipts.AUDIO_IDENTITIES, {"rows": [{"resolved": False, "error": None}] * 8}),
+            (receipts.AUDIO_CLOSURE, {"unresolved": ["fixture"], "files": []}),
+            (receipts.AUDIO_CLOSURE, {"unresolved": [], "files": [{"path": "../escape", "sha256": "b" * 64}]}),
+            (receipts.TELEPORT_QUERY, {"locations": []}),
+            (receipts.TELEPORT_QUERY, {"locations": self.contracts[receipts.TELEPORT_QUERY]["locations"] * 2}),
+        )
+        for name, data in cases:
+            with self.subTest(name=name, data=data), self.assertRaises(RuntimeError):
+                self.pin(name, data)
+
+    def test_named_scene_selection_cannot_be_swapped_to_another_kind(self):
+        selection = self.pin(receipts.SCENE_ASSEMBLIES)
+        write(self.root / "work/config/historical-receipts" / (receipts.AUDIO_IDENTITIES + ".json"), selection)
+        with self.assertRaisesRegex(RuntimeError, "schema/name"):
+            receipts.resolve(receipts.AUDIO_IDENTITIES, root=self.root)
 
 
 if __name__ == "__main__":

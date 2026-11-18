@@ -30,6 +30,7 @@ producer or acquisition reason must be recorded with the request.
 | --- | --- |
 | `pc`, `inventory` | Legitimate installation and reviewed inventory; existing inventory/acceptance tooling produces the inventory, never the original files. |
 | `sdk`, `sdk_contents`, `sdk_install`, `sdk_binary`, `legacy_sdk`, `ugui_source` | Separately acquired exact SDK/package sources; SDK metadata and binaries cannot be generated or distributed by this repository. |
+| `acquired/unity-android-support.pkg` | Private owner-supplied Unity Android Support archive for `--sdk-component`. The existing `sdk_inputs.py` job verifies it and generates the private AndroidPlayer files for player defaults and APK packaging. |
 | `asset_ripper`, `codec`, `jpeg_codec`, `etc_codec`, `sdk_toolchain` | Explicit pinned public sources/tools or generated helper manifests; existing Shader/texture/codec owners document acquisition and helper construction. No retained content output substitutes for a tool. |
 | `converter`, `converter_receipt`, `managed`, `converter_sources`, `converter_metadata` | Existing `owner-code/produce.py`, `managed.py` and converter owners generate the managed cohort, C++/metadata and receipts. Paths must select the matching source-produced cohort. |
 | `code_request` | Explicit caller-authored owner-code request selecting originals/toolchain and output; required local orchestration state unless supplied as a generated prerequisite request. |
@@ -966,6 +967,13 @@ Besides the unchanged compiler sources, retain original adjacent source metas
 and the importer-only TestRunner 1.1.33 and pinned MCP runtime source/asmdef/meta
 sets. SDK archives or the documented public acquisitions supply these inputs;
 no generated project or timestamped discovery root is selected automatically.
+`--package-archives` for signed releases requires privately provisioned Unity
+Burst, Collections and Mathematics tarballs and an archive of compiler uGUI
+from the exact SDK under `acquired/unity-packages/`. The package assembly
+owner verifies and stages the compile-selected files and their original
+metas. Keep the archives separate from the imported originals. The
+[package producer setup](../tools/phone-build/package-assemblies/README.md)
+specifies the archive names and uGUI layout.
 `owner-player-registry.json` supplies the audited source witnesses and authored
 identity configuration. The default-scene shared file also requires the shader
 owner's successful standard object pack. These are explicit local inputs with
@@ -1730,6 +1738,30 @@ do not fabricate it. No selection is shipped in Git. Once preserved baseline met
 a missing selection fails with registration guidance rather than silently
 picking historical input. A fully fresh clone must first supply that baseline.
 
+## Named historical scene-runtime evidence
+
+Historical scene preparation also uses `scripts/lab/historical_receipts.py`;
+there is no implicit timestamped folder fallback. Explicitly register reviewed
+retained receipts with the same `NAME work/RETAINED/file.json --sha256 HASH`
+command above. Each selection is an ignored
+`work/config/historical-receipts/NAME.json`, not a new acceptance decision.
+
+| Name | Retained source contract |
+| --- | --- |
+| `scene-runtime-original-assemblies` | `slice-provenance.json` with original assembly filenames and hashes |
+| `scene-runtime-audio-identities` | Audio-boundary `identities.json` with eight resolved, error-free rows |
+| `scene-runtime-audio-closure` | Audio-boundary `serialized-closure.json` with no unresolved entries and hash-bound relative files |
+| `scene-runtime-teleport-query` | `teleport-catalog-query.json` with one matching material location/key |
+
+Resolve selections before the corresponding staging pipeline. Existing assembly
+and audio source-byte checks, material identity checks and runtime acceptance
+remain unchanged. Preparation receipts retain each selected path and SHA-256;
+relocating evidence requires an explicit reviewed registration, never choosing
+"latest". Missing/drifted receipts refuse with no historical fallback. Preserve
+all existing evidence; restore only the needed historical tree under the
+retention policy. The VM tests use authored synthetic receipts and do not claim
+historical game-input or device qualification.
+
 ## Standalone requested-audio support evidence (J1056)
 
 Ignored `work/coordination/owner-audio-stage-v1/` retains explicit planning/staging
@@ -2079,6 +2111,13 @@ the owner's exact installed Mac SDK as an oracle; Android uses native Clang 21
 for the adapters plus the explicit GNU runtime/QEMU for the unchanged Linux SDK.
 See the current [setup](../tools/phone-build/accepted-output/README.md#produce-single-mip-rgba-textures-with-the-owner-supplied-sdk).
 
+Signed phone conversion reads the owner's exact Linux Editor archive at
+`acquired/unity-linux-editor.tar.xz`. The `sdk_inputs.py` release job streams
+the pinned codec member into its private output. The managed app-host tool
+plan supplies the native QEMU and pixel adapter. Its `texture_sdk_guest`
+directory supplies the built guest C adapter and GNU runtime for the pinned
+`texture-sdk/` app assets. The dispatcher writes the SDK descriptor with the
+current installation paths.
 
 J1118's 153-file player tree is generated by the same owner. Its additional
 required local inputs are explicit source-produced texture-pack directories,

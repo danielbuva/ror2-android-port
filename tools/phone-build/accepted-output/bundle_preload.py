@@ -1033,6 +1033,7 @@ def _emit_closed_native(
     provider_paths=None,
     index_store=None,
     record_workers=None,
+    retained_records=None,
 ):
     """Emit the declared local/native subset of a qualified producer graph.
 
@@ -1081,10 +1082,12 @@ def _emit_closed_native(
     retained = json.loads((graph_directory / "done.json").read_text())
     if retained.get("success") is not True:
         raise ValueError("Unsuccessful source graph")
-    all_records = index_store.mapping()
-    all_records.load(
-        ((tuple(row["destination"]), row) for row in json_rows(graph_directory / "selected-records.jsonl")), duplicate="Duplicate selected destination"
-    )
+    all_records = retained_records
+    if all_records is None:
+        all_records = index_store.mapping()
+        all_records.load(
+            ((tuple(row["destination"]), row) for row in json_rows(graph_directory / "selected-records.jsonl")), duplicate="Duplicate selected destination"
+        )
     selected = index_store.mapping()
     if required is None:
         for key, row in all_records.items():
@@ -1635,6 +1638,138 @@ def retained_skin_preloads(native, member, donor, groups, selected_records, sche
     return links
 
 
+def skin_model_pairs(native, member, canonical_member, profile, selected, skin_id, schemas):
+    """Find model roots named by SkinDefs reconstructed from the same source."""
+    original_roots = {}
+    _, layout, objects = native.members[canonical_member]
+    for row in profile["objects"]:
+        pid = row["path_id"]
+        selector = row.get("properties_hash", {}).get("behaviour", row.get("source"))
+        if selector is None or pid not in objects or layout["types"][objects[pid]["type_id"]].get("script_id") != skin_id:
+            continue
+        source = profile["sources"][selector[0]]
+        _, typ, body = native.record(canonical_member, (0, pid))
+        file_id, root = pointers(body, typ, schemas)[("rootObject",)]
+        if not file_id and root:
+            original_roots.setdefault((source["path"], source["member"], selector[1]), set()).add(root)
+
+    _, layout, objects = native.members[member]
+    for row in selected:
+        _, owner, pid = row["destination"]
+        roots = original_roots.get(tuple(row.get("source") or ()), ())
+        if len(roots) != 1 or owner != member or pid not in objects or layout["types"][objects[pid]["type_id"]].get("script_id") != skin_id:
+            continue
+        _, typ, body = native.record(member, (0, pid))
+        file_id, root = pointers(body, typ, schemas)[("rootObject",)]
+        if not file_id and root:
+            yield root, next(iter(roots))
+
+
+def skin_hierarchy_aliases(native, root_pairs, member, canonical_member, schemas):
+    """Pair unique prefab descendants under source-verified roots.
+
+    Native skin baking builds paths from real object ancestry. Renaming an
+    address or redirecting the body root alone leaves SkinDefParams targets on
+    the duplicate instance. Pair by complete child route and native component
+    class. Ambiguous branches and components have no relocation candidate.
+    """
+    from collections import defaultdict
+    from functools import lru_cache
+
+    C = module("catalog_complete")
+
+    def class_id(owner, pid):
+        _, layout, objects = native.members[owner]
+        return layout["types"][objects[pid]["type_id"]]["class_id"]
+
+    @lru_cache(maxsize=None)
+    def object_name(owner, pid):
+        _, typ, body = native.record(owner, (0, pid))
+        if typ["tree"] not in schemas:
+            schemas[typ["tree"]] = A.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+        span = A.fields(body, schemas[typ["tree"]])[1].get(("m_Name",))
+        if span is None:
+            return None
+        start, end = span
+        return C.text(io.BytesIO(body[start:end]))
+
+    def game_object(fields):
+        return fields.get(("m_GameObject",), fields.get(("#374",)))
+
+    def object_parts(owner, pid):
+        _, typ, body = native.record(owner, (0, pid))
+        fields = pointers(body, typ, schemas)
+        components = defaultdict(list)
+        for field, (file_id, path_id) in fields.items():
+            if field[:2] == ("m_Component", "Array") and field[-1] == "component" and file_id == 0:
+                components[class_id(owner, path_id)].append(path_id)
+        children = defaultdict(list)
+        transforms = components[4] + components[224]
+        if len(transforms) != 1:
+            raise ValueError("Skin hierarchy GameObject does not own one Transform")
+        _, typ, body = native.record(owner, (0, transforms[0]))
+        fields = pointers(body, typ, schemas)
+        if game_object(fields) != (0, pid):
+            raise ValueError("Skin hierarchy Transform ownership differs")
+        for field, (file_id, child) in fields.items():
+            if field[0] not in ("m_Children", "#83") or not child or file_id:
+                continue
+            _, typ, body = native.record(owner, (0, child))
+            child_fields = pointers(body, typ, schemas)
+            if child_fields.get(("m_Father",)) != (0, transforms[0]):
+                raise ValueError("Skin hierarchy Transform parent differs")
+            file_id, child_object = game_object(child_fields)
+            if file_id or not child_object:
+                continue
+            name = object_name(owner, child_object)
+            if name is not None:
+                children[name].append(child_object)
+        return components, children
+
+    result = {}
+    visited = set()
+    pending = list(root_pairs)
+    component_classes = {23, 96, 108, 120, 137, 199, 212, 227}
+
+    def bind(old, new):
+        if result.setdefault(old, new) != new:
+            raise ValueError("Skin hierarchy has conflicting canonical endpoints")
+
+    while pending:
+        old, new = pending.pop()
+        if (old, new) in visited:
+            continue
+        visited.add((old, new))
+        name = object_name(member, old)
+        if name is None or name != object_name(canonical_member, new):
+            continue
+        old_components, old_children = object_parts(member, old)
+        new_components, new_children = object_parts(canonical_member, new)
+        bind(old, new)
+        for ident in component_classes & old_components.keys() & new_components.keys():
+            left, right = old_components[ident], new_components[ident]
+            if len(left) != 1 or len(right) != 1:
+                continue
+            for owner, component, expected_owner in ((member, left[0], old), (canonical_member, right[0], new)):
+                _, typ, body = native.record(owner, (0, component))
+                if game_object(pointers(body, typ, schemas)) != (0, expected_owner):
+                    raise ValueError("Skin hierarchy component ownership differs")
+            bind(left[0], right[0])
+        for child in old_children.keys() & new_children.keys():
+            left, right = old_children[child], new_children[child]
+            if len(left) == len(right) == 1:
+                pending.append((left[0], right[0]))
+    return result
+
+
+def skin_hierarchy_fields(skin_type, fields):
+    """Select only the PPtrs that define the native skin bake's hierarchy."""
+    if skin_type == "SkinDef":
+        return {("rootObject",)} & fields.keys()
+    members = {"rendererInfos": "renderer", "gameObjectActivations": "gameObject", "meshReplacements": "renderer", "lightReplacements": "light"}
+    return {field for field in fields if len(field) == 4 and field[1] == "Array" and members.get(field[0]) == field[3]}
+
+
 def repack_canonical_aliases(
     source,
     output,
@@ -1667,6 +1802,8 @@ def repack_canonical_aliases(
     import time
 
     W, C = module("unity_write"), module("catalog_complete")
+    skin_id = C.S.md4(b"SkinDefRoR2RoR2.dll")
+    skin_types = {skin_id: "SkinDef", C.S.md4(b"SkinDefParamsRoR2RoR2.dll"): "SkinDefParams"}
     source, output, canonical_bundle = Path(source), Path(output), Path(canonical_bundle)
     aliases, selected_records = list(aliases), list(selected_records)
     name, member = required["name"], required["member"]
@@ -1787,6 +1924,8 @@ def repack_canonical_aliases(
                         canonical_script_identity=identity,
                     )
                 )
+            skin_aliases = None
+            skin_changes = 0
             replacements, graph, hashes, changes = {}, {}, {}, []
             container = None
             for pid, obj in objects.items():
@@ -1803,6 +1942,18 @@ def repack_canonical_aliases(
                     for field, pointer in fields.items()
                     if pointer[0] == 0 and (name, member, pointer[1]) in mapping and (pid, field) not in ownership
                 }
+                skin_type = skin_types.get(typ.get("script_id"))
+                if skin_type is not None:
+                    hierarchy_fields = skin_hierarchy_fields(skin_type, fields)
+                    if hierarchy_fields and skin_aliases is None:
+                        roots = [(row["duplicate"][2], row["canonical"][2]) for row in aliases if row["duplicate_class_id"] == 1]
+                        roots.extend(skin_model_pairs(native, member, canonical["member"], canonical_profile, selected_records, skin_id, schemas))
+                        skin_aliases = skin_hierarchy_aliases(native, roots, member, canonical["member"], schemas)
+                    for field in hierarchy_fields:
+                        file_id, path_id = fields[field]
+                        if not file_id and path_id in skin_aliases and field not in targets:
+                            targets[field] = (canonical["name"], canonical["member"], skin_aliases[path_id])
+                            skin_changes += 1
                 if targets:
                     revised_body = relocate_pointer_fields({"destination": [name, member, pid]}, body, typ, targets, externals)
                     expected = bytearray(body)
@@ -1954,6 +2105,7 @@ def repack_canonical_aliases(
             retained_skin_preloads={str(pid): roots for pid, roots in skin_links.items()},
             preserved_reciprocal_owner_fields=len(ownership),
             changed_fields=len(changes),
+            skin_hierarchy_fields=skin_changes,
             changed_objects=len(replacements) - 1,
             source_identity_proof=proof,
             ownership=[dict(component=pid, field=field, owner=owner) for (pid, field), owner in ownership.items()],
@@ -2038,7 +2190,10 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
     inputs = Path(inputs).resolve(strict=True)
     request = json.loads(inputs.read_bytes())
     required_keys = {"schema", "graph", "schemas", "required", "routes", "endpoints", "staged", "managed_inputs", "game_root", "codec", "bundle", "member"}
-    if set(request) - {"canonical", "null_script_sources", "provider_paths"} != required_keys or request["schema"] != "owner-bundle-preload-inputs-v1":
+    if (
+        set(request) - {"canonical", "null_script_sources", "provider_paths", "extension"} != required_keys
+        or request["schema"] != "owner-bundle-preload-inputs-v1"
+    ):
         raise ValueError("unsupported bundle preload input contract")
     E = module("bundle_endpoints")
     owner = SimpleNamespace(**globals())
@@ -2086,6 +2241,20 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
         required[key] = expected
     routes = index_store.mapping()
     routes.load(((tuple(value["owner"]), value["edges"]) for value in json_rows(pins.pin(request["routes"]))), duplicate="Duplicate structural route owner")
+    if "extension" in request:
+        extension = pins.read(request["extension"])
+        member = required["name"], required["member"]
+        candidates = pins.pin(extension["candidates"])
+
+        def additions():
+            for value in json_rows(candidates):
+                key = tuple(value["destination"])
+                if key[:2] == member and key not in selected:
+                    yield key, value
+
+        selected.load(additions(), duplicate="Duplicate extension candidate")
+        producer = ProducerRecords(provider_paths, index_store=index_store)
+        module("bundle_prepare").extend_selection(owner, member, required, selected, types, routes, extension, producer)
     codec = pins.pin(request["codec"])
     canonical = request.get("canonical")
     if canonical is not None:
@@ -2116,6 +2285,7 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
             provider_paths=provider_paths,
             index_store=index_store,
             record_workers=record_workers,
+            retained_records=selected if "extension" in request else None,
         )
         qualification.check_final(emission["bundle"])
         final = emission

@@ -615,6 +615,10 @@ public final class ToolHostActivity extends Activity {
             JSONObject dataHashes=new JSONObject(text(new File(root,"data-hashes.json")));
             Iterator<String> dataNames=dataHashes.keys();int dataCount=0;
             while(dataNames.hasNext()) {String name=dataNames.next();File file=new File(root,name).getCanonicalFile();if(!file.getPath().startsWith(root.getCanonicalPath()+"/")||!file.isFile()||!hash(file).equals(dataHashes.getString(name)))throw new IOException("asset data drift "+name);dataCount++;}
+            // QEMU checks execute permission on its guest main ELF before loading it as data.
+            if (dataHashes.has("texture-sdk/texture-sdk-codec")) {
+                Os.chmod(new File(root, "texture-sdk/texture-sdk-codec").getPath(), 0700);
+            }
             report.put("dataFilesVerified",dataCount);
             File nativeDir=new File(getApplicationInfo().nativeLibraryDir).getCanonicalFile();
             File runtime=new File(root,"dotnet");File framework=new File(runtime,"shared/Microsoft.NETCore.App/8.0.32");File links=new File(root,"native-links");links.mkdir();

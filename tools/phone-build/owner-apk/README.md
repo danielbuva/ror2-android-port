@@ -750,6 +750,35 @@ The manager consumes this job's receipt/hash, and its two final startup files
 enter the release automatically. No separately supplied startup receipt is
 required. Environment capture remains an explicit source-produced input.
 
+Optional `--code-request recipe/<request>.json` with a player profile or
+`--native-request` runs
+the original-input code owner through conversion and native planning. Its
+request selects `"${output}"`. A fixed `target` selects a profile and authored
+source root inside the signed `"${repo}"`. Omitting it signs the current runtime
+and audio producer sources. The current audio compile still requires macOS SDK
+tools and the checkout's work root. Schedule `owner-code-conversion.json` in assembly
+before its player consumer and `owner-native-code.json` in native when selected.
+The player uses the conversion receipt, the managed payload and the resource
+files from this job. Its registry request carries the original package and source
+selections. The three native inputs are the conversion receipt, metadata and
+compressed source directory. SDK and package acquisition must supply the request's
+canonical local inputs first, including the fixed target's `input-hashes.json`
+next to the packages directory. Include that package inventory as a cache witness
+when composing the player. The request templates may include `cache_witnesses`, a list
+of files beneath `"${inputs}"`, `"${installed_runtime}"` or `"${native}"` that
+the job cache hashes. Use acquisition receipts from the tool owner or the
+acquired tool file itself. The graph strips the list from the producer request.
+
+With `--package-archives`, add `owner-package-inputs.json` before conversion
+in the assembly stage. Place the four private
+[compiler package archives](../package-assemblies/README.md) in
+`acquired/unity-packages/`. The package job supplies its verified versioned
+source directories to the compiler and tracks each archive in the incremental
+cache. The current player registry uses the same staged package directory and
+the managed compiler's `packages/inputs.json`. A fixed-target player registry
+uses the code request's original `source_inputs.packages` and flat inventory,
+which also includes TestRunner and MCP importer sources.
+
 Optional `--burst-request recipe/<request>.json` adds the existing
 `owner-code/produce.py` Burst-only job. The caller's request uses
 `"output": "${output}"` and explicit tool/input bindings, with either `managed`
@@ -765,6 +794,18 @@ SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
 the producer closure; all entries share one cached job. SDK packaging does not
 qualify gameplay or complete the remaining source bundle suppliers.
 
+Optional `--sdk-component` extracts the verified Unity Android Support archive
+from the private input root at `acquired/unity-android-support.pkg`. Provision
+the [pinned owner component](../accepted-output/README.md#acquire-the-three-sdk-copy-inputs)
+at that location before production. Put the generated SDK extraction job in
+the signed assembly stage when composing an install plan. The AndroidPlayer
+directory supplies the player's default resources and, if selected, the SDK
+package job's Java/resources and engine libraries. The archive hash and
+extracted file readback participate in cache verification. The archive stays
+outside the original-game import. Platform, Java, AAPT2 and jar paths still
+come from the SDK package request, which can list `cache_witnesses` for those
+tool files or their acquisition receipts.
+
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
 Only producers requiring SDK data receive the default SDK argument. Object
 profiles declaring SDK metadata bind `sdk_contents/..` as their Unity application
@@ -776,15 +817,33 @@ is introduced. `input_sha256:NAME` hashes a declared regular input file, and
 Private input identity must cover acquired tools as well as original files, as
 required by the existing updater.
 
+In a `--code-request` graph, texture jobs select the installed
+`libtexture-jpeg.so` and `libtexture-etc.so` only for operations that use them.
+Stage these providers and their Android runtime libraries through the managed
+app-host backend tool plan. SDK texture operations use the same tool plan for
+`libqemu-x86_64.so`, `libtexture-pixels.so` and their native dependencies.
+Place the owner-acquired Unity Linux Editor archive at
+`acquired/unity-linux-editor.tar.xz`. One shared `sdk_inputs.py --linux-texture`
+job verifies the archive and extracts its pinned `Editor/etccompress.so` into
+the private job output. Set `texture_sdk_guest` in the managed app-host plan
+to package the pinned public `texture-sdk-codec` and GNU guest libraries.
+The app host restores them under its verified `texture-sdk/` asset root
+and grants the wrapper mode `0700`. The
+[SDK texture provider build](../accepted-output/README.md#produce-single-mip-rgba-textures-with-the-owner-supplied-sdk)
+describes acquisition and compilation. The dispatcher writes the producer's
+toolchain JSON using actual run paths and passes its SHA-256. Archive, guest
+file and installed codec changes invalidate the texture cache. Acquired-mode graphs
+use the explicit `jpeg_codec`, `etc_codec` and `sdk_toolchain` input bindings.
+
 Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
 `converter_receipt` (that directory's result.json), `code_request` and `managed`
 to freshly source-produced inputs. Shader jobs use `sdk_contents` and require
 their existing public recovery/compiler tool arguments through
 `--extra-arguments`. `--player-phases` wires the existing optional player
 phase arguments and outputs. Missing inputs fail through the producer contracts;
-this compiler does not generate managed/native runtime inputs. Authored shader
-files, player registry/manifests/bootstrap/config and imported lab Python owners
-are included in the signed dependency closure.
+player still takes the code and managed inputs through its explicit bindings.
+Authored shader files, player registry/manifests/bootstrap/config and imported
+lab Python owners are included in the signed dependency closure.
 
 Overlay generated recipe files into a release source checkout, inspect/audit and
 commit them, then use the existing public publisher. The generated index is an
@@ -800,10 +859,11 @@ sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
 not APK or gameplay acceptance. The generated two-job synthetic fixture also
 checks receipt identity and reuse on the second run.
 
-The phase declaration additionally binds `ugui_source`, `sdk_binary`,
-`startup_receipt`, `scene_environment_result`, `scene_environment_request`,
-`scene_environment_bundle` and `scene_environment_images`. These are explicit
-source-produced/acquired inputs; startup/environment generation is not yet a
-job in this graph. Manager shaders use the existing shader job directly.
-This declares 210 player files with the current source recipes; it does not
-qualify a complete APK or runtime loading.
+The phase declaration additionally binds `scene_environment_result`,
+`scene_environment_request`, `scene_environment_bundle` and
+`scene_environment_images`. The environment producer runs separately. With a
+fresh code request, the separately acquired SDK supplies built-in uGUI
+`Runtime/UI/Core` and the macOS Unity binary read by the manager. Acquired mode
+binds `ugui_source` and `sdk_binary` explicitly. Manager shaders and startup
+identity use their existing graph jobs. The phase declaration covers 210 player
+files. Complete APK assembly and device loading remain separate acceptance gates.
