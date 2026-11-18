@@ -1743,6 +1743,10 @@ default, so copying identical inputs again preserves its identity.
 checkpoints and failure/retry state, including stage-admission write failures
 before a producer starts. If persisting the failure also fails, the existing
 in-memory error snapshot remains available; explicit retry revalidates receipts.
+Malformed/incomplete progress checkpoints are hash-named and preserved privately
+before progress is restarted, with a visible repair notice. Producer caches and
+input/signing state stay untouched and undergo existing revalidation. Unsupported
+checkpoint versions or failed preservation refuse instead of discarding evidence.
 Producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
