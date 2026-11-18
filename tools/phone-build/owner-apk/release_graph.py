@@ -320,6 +320,16 @@ class Graph:
             ]
         if producer == "shader_produce":
             arguments += ["--sdk", self.sdk_contents()]
+            if self.conversion:
+                recovered = ("native_ui", "native_materials", "native_internal", "native_intersection")
+                for flag, installed, required in (
+                    ("d3dasm", "libd3dasm.so", any(key in profile for key in recovered)),
+                    ("hlsl-tool", "libhlsl-decompiler.so", "native_internal" in profile),
+                ):
+                    if required:
+                        native = "${native}/" + installed
+                        arguments += ["--" + flag, native, "--" + flag + "-sha256", "${native_sha256:" + installed + "}"]
+                        witnesses.append(native)
             if self.conversion and "tmp_dummy" in profile:
                 provider = profile["tmp_dummy"]
                 arguments += ["--asset-ripper-source", ASSET_RIPPER_SOURCE]

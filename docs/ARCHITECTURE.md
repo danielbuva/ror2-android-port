@@ -7821,6 +7821,13 @@ native runtime qualification, Android execution and device loadability remain op
 Release-graph Shader jobs with pinned template inputs receive the explicit public
 AssetRipper Git provider. Existing Shader owners validate its revision and resource
 hashes before compiling; the dispatcher retains the resulting pack and receipt.
+For native player Shader recovery, the signed graph supplies the installed
+`libd3dasm.so` and `libhlsl-decompiler.so` executables and their verified hashes.
+The dispatcher binds both files to the job cache identity. `shader_produce.py`
+checks the actual executables before and after production and keeps their hashes
+in its receipt. The host can still build the fallback core from its pinned Git
+source. The [managed host build](../tools/phone-build/managed-host/README.md)
+packages the Android executables. Phone execution remains open.
 
 The existing `record_produce.py` native owner also preserves source release
 LightingSettings and OcclusionCullingData. It parses the complete pointer-free

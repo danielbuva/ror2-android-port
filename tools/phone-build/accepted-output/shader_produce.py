@@ -1374,15 +1374,17 @@ def produce(
     hlsl_source=None,
     asset_ripper_source=None,
     *,
+    hlsl_tool=None,
+    hlsl_tool_sha256=None,
     compiler_command=None,
     compiler_data=None,
     authored_files=None,
 ):
     """Reproduce all selected standalone shaders from original PC/public inputs.
 
-    The SDK compiler executes without the Editor/project. Public source providers
-    are explicit pinned Git object trees; expected file hashes compare only fully
-    persisted independent output. No retained generated source/body is read.
+    The SDK compiler executes without the Editor/project. Public recovery tools
+    are built from pinned source or supplied as pinned executables. Expected file
+    hashes compare fully persisted independent output.
     """
     root = Path(__file__).resolve().parents[3]
     sys.path.insert(0, str(root / "scripts/lab"))
@@ -1417,7 +1419,7 @@ def produce(
     pins = [(profile_path, profile_pin), (codec_path, codec_pin), (source_path, source)]
     pins.extend((relative(sdk, name), pin) for name, pin in profile["sdk"].items())
     pins.extend((relative(root, name), pin) for name, pin in profile["authored_inputs"].items())
-    if "native_ui" in profile or "native_materials" in profile:
+    if any(key in profile for key in ("native_ui", "native_materials", "native_internal", "native_intersection")):
         if d3dasm_path is None or d3dasm_sha256 is None:
             raise ValueError("native recovery requires the explicit pinned public d3dasm tool")
         d3dasm_path = Path(d3dasm_path).absolute()
@@ -1425,8 +1427,13 @@ def produce(
     if "native_ui" in profile:
         pins.extend((relative(pc, row["path"]), row) for row in [profile["native_ui"]["source"], *profile["native_ui"]["materials"]])
     if "native_internal" in profile:
-        if hlsl_source is None:
-            raise ValueError("custom lighting requires the explicit pinned public HLSLDecompiler source repository")
+        if hlsl_tool is not None:
+            if hlsl_source is not None or hlsl_tool_sha256 is None:
+                raise ValueError("supply one pinned HLSLDecompiler executable or source repository")
+            hlsl_tool = Path(hlsl_tool).absolute()
+            pins.append((hlsl_tool, {"bytes": hlsl_tool.stat().st_size, "sha256": hlsl_tool_sha256}))
+        elif hlsl_source is None:
+            raise ValueError("custom lighting requires a pinned public HLSLDecompiler executable or source repository")
         pins.append((relative(pc, profile["native_internal"]["path"]), profile["native_internal"]))
     if "tmp_dummy" in profile:
         if asset_ripper_source is None:
@@ -1494,6 +1501,8 @@ def produce(
     }
     if d3dasm_path is not None:
         result["inputs"]["d3dasm_sha256"] = d3dasm_sha256
+    if hlsl_tool is not None:
+        result["inputs"]["hlsl_tool_sha256"] = hlsl_tool_sha256
     started = time.monotonic()
     try:
         if "native_ui" in profile:
@@ -1535,7 +1544,9 @@ def produce(
             (output / "AssetRipper-LICENSE.md").write_bytes(asset_ripper_file(asset_ripper_source, selected["exporter_revision"], "LICENSE.md"))
             selected = selected["source"]
             tmp_objects = {obj.path_id: obj for obj in UnityPy.load(str(relative(pc, selected["path"]))).objects if obj.assets_file.name == selected["member"]}
-        core = recovery.build_native_hlsl(hlsl_source, output / "native-hlsl-tool") if "native_internal" in profile else None
+        core = hlsl_tool
+        if "native_internal" in profile and core is None:
+            core = recovery.build_native_hlsl(hlsl_source, output / "native-hlsl-tool")
         with (
             compiler_session(
                 compiler,
@@ -1660,6 +1671,8 @@ def main():
     parser.add_argument("--d3dasm", type=Path, help="explicit tool built from the pinned public source; required for native source recovery")
     parser.add_argument("--d3dasm-sha256", help="expected SHA-256 of the caller-supplied public tool")
     parser.add_argument("--hlsl-source", type=Path, help="caller-supplied pinned public HLSLDecompiler Git repository; native core builds into new output")
+    parser.add_argument("--hlsl-tool", type=Path, help="executable built from the pinned public HLSLDecompiler source")
+    parser.add_argument("--hlsl-tool-sha256", help="expected SHA-256 of the HLSLDecompiler executable")
     parser.add_argument("--asset-ripper-source", type=Path, help="pinned public AssetRipper Git repository or staged revision tree")
     add_compiler_arguments(parser)
     parser.add_argument(
@@ -1680,6 +1693,8 @@ def main():
         args.d3dasm_sha256,
         args.hlsl_source,
         args.asset_ripper_source,
+        hlsl_tool=args.hlsl_tool,
+        hlsl_tool_sha256=args.hlsl_tool_sha256,
         compiler_command=args.compiler_command,
         compiler_data=args.compiler_data,
         authored_files=args.authored_file,
