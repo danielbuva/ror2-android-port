@@ -1171,7 +1171,7 @@ class Phone:
             if attempt == 2:
                 return self.ui_windows(allowed_packages)
             time.sleep(1)
-        return self.read_ui_dump("hierarchy")
+        return allowed_ui_hierarchy(self.read_ui_dump("hierarchy"), allowed_packages)
 
     def read_ui_dump(self, root):
         try:
@@ -1955,8 +1955,12 @@ def focused_window_hierarchy(document):
 
 
 def focused_ui_hierarchy(document, allowed_packages):
-    hierarchy = focused_window_hierarchy(document)
-    package = hierarchy.find("node").get("package")
+    return allowed_ui_hierarchy(focused_window_hierarchy(document), allowed_packages)
+
+
+def allowed_ui_hierarchy(hierarchy, allowed_packages):
+    roots = hierarchy.findall("node")
+    package = roots[0].get("package") if len(roots) == 1 else None
     if package not in allowed_packages or any(node.get("package") not in (None, "", package) for node in hierarchy.iter("node")):
         raise Failure("ui-window-package-not-allowed")
     return hierarchy

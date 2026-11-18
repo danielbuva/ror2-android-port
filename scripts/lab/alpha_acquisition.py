@@ -83,7 +83,8 @@ class Acquisition:
         components = installer.run(
             [tools.build / "aapt", "dump", "xmltree", self.apk, "AndroidManifest.xml"], label="inspect-acquisition-document-fixture"
         ).decode()
-        require("AcquisitionFixture$Result" in components and "AcquisitionFixture$Provider" in components, "acquisition-fixture-apk-required")
+        fixture = "dev.ror2lab.phonebuildhostfixture.AcquisitionFixture"
+        require(all(f'="{fixture}${component}"' in components for component in ("Result", "Provider")), "acquisition-fixture-apk-required")
         with zipfile.ZipFile(self.apk) as archive:
             trust = json.loads(archive.read("assets/release-trust.json"))
         require(installer.KEY_ID not in trust["keys"], "acquisition-test-publisher-collides")

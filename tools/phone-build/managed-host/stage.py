@@ -124,12 +124,13 @@ def tool_manifest(source, destination, package=None, game_package=None):
             node.set(android + "authorities", package + ".apk")
     if package == "dev.ror2lab.installertest":
         application = manifest.find("application")
-        ET.SubElement(application, "activity", {android + "name": original + ".AcquisitionFixture$Result", android + "exported": "false"})
+        fixture = "dev.ror2lab.phonebuildhostfixture.AcquisitionFixture"
+        ET.SubElement(application, "activity", {android + "name": fixture + "$Result", android + "exported": "false"})
         ET.SubElement(
             application,
             "provider",
             {
-                android + "name": original + ".AcquisitionFixture$Provider",
+                android + "name": fixture + "$Provider",
                 android + "authorities": package + ".acquisition",
                 android + "exported": "true",
                 android + "grantUriPermissions": "true",

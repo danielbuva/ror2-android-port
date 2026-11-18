@@ -142,15 +142,18 @@ class ManagedHostStageTests(unittest.TestCase):
         self.assertFalse((self.root / "refused.xml").exists())
 
     def test_disposable_installer_has_a_protected_document_fixture(self):
+        preselected = self.root / "preselected.xml"
         output = self.root / "AndroidManifest.xml"
-        stage.tool_manifest(stage.SOURCE / "AndroidManifest.xml", output, "dev.ror2lab.installertest")
+        stage.tool_manifest(stage.SOURCE / "AndroidManifest.xml", preselected, "dev.ror2lab.preselected")
+        stage.tool_manifest(preselected, output, "dev.ror2lab.installertest")
         application = ET.parse(output).getroot().find("application")
         android = "{http://schemas.android.com/apk/res/android}"
         fixture = next(node for node in application.findall("provider") if node.get(android + "authorities").endswith(".acquisition"))
-        self.assertTrue(fixture.get(android + "name").endswith(".AcquisitionFixture$Provider"))
+        self.assertEqual(fixture.get(android + "name"), "dev.ror2lab.phonebuildhostfixture.AcquisitionFixture$Provider")
         self.assertEqual(fixture.get(android + "permission"), "android.permission.MANAGE_DOCUMENTS")
         self.assertEqual(fixture.get(android + "grantUriPermissions"), "true")
         result = next(node for node in application.findall("activity") if node.get(android + "name").endswith(".AcquisitionFixture$Result"))
+        self.assertEqual(result.get(android + "name"), "dev.ror2lab.phonebuildhostfixture.AcquisitionFixture$Result")
         self.assertEqual(result.get(android + "exported"), "false")
 
     def test_manifest_queries_only_configured_game_without_broad_visibility(self):
