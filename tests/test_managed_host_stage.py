@@ -107,6 +107,23 @@ class ManagedHostStageTests(unittest.TestCase):
             stage.stage(self.profile, self.sdk, self.destination, root=self.root)
         self.assertFalse(self.destination.exists())
 
+    def test_shared_worktree_stages_explicit_backend_plan_and_binds_receipt(self):
+        checkout = self.root / "checkout"
+        checkout.mkdir()
+        shared = self.root / "shared-work"
+        shared.mkdir()
+        (checkout / "work").symlink_to(shared, target_is_directory=True)
+        plan = shared / "selected-tools.json"
+        plan.write_text('{"natives": {}, "links": {}}\n')
+        destination = shared / "fixture"
+
+        result = stage.stage(self.profile, self.sdk, destination, root=checkout, backend_tools=plan)
+
+        self.assertEqual((destination / "backend-tools.json").read_bytes(), plan.read_bytes())
+        self.assertEqual(result["files"]["backend-tools.json"], stage.digest(plan))
+        with self.assertRaisesRegex(ValueError, "must be new"):
+            stage.stage(self.profile, self.sdk, self.root / "outside", root=checkout, backend_tools=plan)
+
     def test_owner_backend_retains_repository_marker_for_existing_owners(self):
         (self.root / "AGENTS.md").write_text("# Fixture repository marker\n")
         (self.root / "dev").write_text("# Fixture entry point\n")

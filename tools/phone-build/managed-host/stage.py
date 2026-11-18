@@ -172,11 +172,11 @@ def tool_manifest(source, destination, package=None, game_package=None):
     tree.write(destination, encoding="utf-8", xml_declaration=True)
 
 
-def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, release_trust=None):
+def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, release_trust=None, backend_tools=None):
     profile_source = Path(profile_source).resolve(strict=True)
     sdk = Path(sdk).resolve(strict=True)
     destination = Path(destination).expanduser().absolute()
-    owned = root.resolve() / "work"
+    owned = (root.resolve() / "work").resolve()
     if destination != destination.resolve() or not destination.is_relative_to(owned) or destination.exists():
         raise ValueError("Fixture destination must be new under this checkout's ignored work/")
     if profile_source == destination or destination in profile_source.parents or sdk == destination or sdk in destination.parents:
@@ -246,6 +246,8 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
     if set(trust) != {"repository", "application_id", "keys"} or not isinstance(trust["keys"], dict):
         raise ValueError("Explicit public release trust configuration required")
     bind(trust_source, "release-trust.json")
+    if backend_tools is not None:
+        bind(Path(backend_tools), "backend-tools.json")
     bind(METADATA, "python-native-plan.json")
     for name, path in {
         "android.jar": "platforms/android-33/android.jar",
@@ -280,6 +282,9 @@ if __name__ == "__main__":
     parser.add_argument("--dest", type=Path, required=True)
     parser.add_argument("--owner-backend", action="store_true", help="stage current authored owners for the headless whole-player backend")
     parser.add_argument("--release-trust", type=Path, help="explicit publisher public-key configuration; default remains unprovisioned")
+    parser.add_argument("--backend-tools", type=Path, help="private native provider and alias plan for the installer builder")
     args = parser.parse_args()
-    result = stage(args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend, release_trust=args.release_trust)
+    result = stage(
+        args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend, release_trust=args.release_trust, backend_tools=args.backend_tools
+    )
     print(json.dumps(dict(success=result["success"], files=len(result["files"]))))

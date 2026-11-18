@@ -138,9 +138,11 @@ The existing thermal supervisor still wraps the worker. Host authored-pack
 production/resume passes; ordinary-app texture execution remains unqualified.
 
 `stage.py --owner-backend` also stages the tracked authored owners and target
-profiles. An explicit private `backend-tools.json` supplies hash-bound generic
-compiler/linker/strip/Python-extension ELF providers, native data-tree links and
-Clang resources to the existing builder. An optional supplied .NET 10 framework
+profiles. Pass `--backend-tools PATH` to stage the private plan with the
+installer sources and bind it in the staging receipt. Use a canonical
+destination when the checkout links to shared `work/`. The plan supplies
+hash-bound compiler, linker, strip and Python-extension ELF providers, native
+data-tree links and Clang resources to the existing builder. An optional .NET 10 framework
 keeps the pinned ILSpy tool runnable; .NET 8 remains selected by the Unity tool
 and public transform runtime configurations. Native providers enter only the
 PackageManager library directory; input game/SDK/target sources are separate
