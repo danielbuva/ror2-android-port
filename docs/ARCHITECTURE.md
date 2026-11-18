@@ -1670,6 +1670,9 @@ keeps generated descriptors and caller-owned producer results. The managed-host
 check/prepare/import/build/install/resume actions to durable worker/install state.
 `onResume` registers the install-state observer and 500 ms refresh; `onPause`
 removes both. `OwnerUpdateState.java` owns Android-free presentation policy;
+its fresh `Screen` snapshot binds progress guidance and all Activity actions to
+current worker, consent, recovery and import-receipt facts. A failed import file
+is not build admission, and retained recovery disables Resume and other work.
 its `StatusRender` coalesces changing same-phase text to two seconds while
 rendering phase changes immediately. Sampling and durable work remain separate.
 `OwnerInstaller.java` owns PackageInstaller sessions, streamed hashing,
