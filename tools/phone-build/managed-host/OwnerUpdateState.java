@@ -22,6 +22,19 @@ public final class OwnerUpdateState {
             return true;
         }
     }
+    /** Presentation only; absent timestamps/counts never imply progress. */
+    public static long liveSeconds(boolean running, String status, boolean paused, long updatedAt, long now) {
+        if (!running || !"running".equals(status) || paused || updatedAt <= 0 || now < updatedAt) return 0;
+        return now - updatedAt;
+    }
+    public static String stageProgress(String status, long completed, long total) {
+        if ("not_required".equals(status)) return "not required";
+        if (total <= 0 || completed < 0 || completed > total) return "progress unavailable";
+        return completed + "/" + total;
+    }
+    public static String failureDetail(String stage, String reason) {
+        return "First failure: " + stage + " — " + reason + ". Retry revalidates retained work; this is not installation success.";
+    }
     public static String backendScript(String action) {
         if (action == null) return "repo/tools/phone-build/owner-code/run_android.py";
         if ("release-check".equals(action) || "release-build".equals(action) || "install-prepare".equals(action) || "release-rollback".equals(action)) return "repo/tools/phone-build/owner-apk/updates.py";

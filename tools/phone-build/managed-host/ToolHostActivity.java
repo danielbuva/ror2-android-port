@@ -407,21 +407,22 @@ public final class ToolHostActivity extends Activity {
         }
         if (pipeline != null) {
             detail.append("\n\nReconstruction stages");
-            long liveSeconds = OwnerBuildService.isRunning() && "running".equals(pipeline.optString("status"))
-                ? Math.max(0, System.currentTimeMillis() / 1000 - pipeline.optLong("updated_at")) : 0;
             File currentThermal = new File(getFilesDir(), "owner-input/thermal-state.json");
-            if (currentThermal.isFile() && "paused".equals(readJson(currentThermal).optString("status"))) liveSeconds = 0;
+            boolean paused = currentThermal.isFile() && "paused".equals(readJson(currentThermal).optString("status"));
+            long liveSeconds = OwnerUpdateState.liveSeconds(OwnerBuildService.isRunning(), pipeline.optString("status"), paused,
+                pipeline.optLong("updated_at", -1), System.currentTimeMillis() / 1000);
             JSONArray stages = pipeline.optJSONArray("stages");
             if (stages != null) for (int i = 0; i < stages.length(); i++) {
                 JSONObject stage = stages.getJSONObject(i);
                 detail.append("\n").append(stage.optString("label", stage.optString("title", stage.optString("id"))))
                     .append(": ").append(stage.optString("status", "pending"));
-                if (stage.has("total")) detail.append(" · ").append(stage.optLong("completed")).append('/').append(stage.optLong("total"));
+                detail.append(" · ").append(OwnerUpdateState.stageProgress(stage.optString("status"),
+                    stage.optLong("completed", -1), stage.optLong("total", -1)));
                 if (stage.has("elapsed_seconds")) detail.append(" · ").append(stage.optLong("elapsed_seconds") + ("running".equals(stage.optString("status")) ? liveSeconds : 0)).append(" s");
             }
             if (pipeline.has("elapsed_seconds")) detail.append("\nTotal elapsed: ").append(pipeline.optLong("elapsed_seconds") + liveSeconds).append(" s");
             JSONObject failure = pipeline.optJSONObject("first_failure");
-            if (failure != null) detail.append("\nFirst failure: ").append(failure.optString("stage")).append(" — ").append(failure.optString("reason"));
+            if (failure != null) detail.append("\n").append(OwnerUpdateState.failureDetail(failure.optString("stage"), failure.optString("reason")));
         }
         File thermal = new File(getFilesDir(), "owner-input/thermal-state.json");
         if (thermal.isFile()) {
