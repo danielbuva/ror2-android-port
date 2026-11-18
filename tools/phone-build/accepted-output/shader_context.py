@@ -11,7 +11,6 @@ import io
 import json
 from pathlib import Path
 import struct
-import subprocess
 import sys
 import time
 
@@ -112,13 +111,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider
     if any(row["kind"] == "dummy" for row in profile["records"]):
         if asset_ripper is None:
             raise ValueError("Dummy context requires explicit public template source")
-        for name, pin in profile["template_inputs"].items():
-            raw = subprocess.check_output(
-                ["git", "-C", str(asset_ripper), "show", profile["exporter_revision"] + ":Source/AssetRipper.Export.UnityProjects/Shaders/Templates/" + name]
-            )
-            if len(raw) != pin["bytes"] or hashlib.sha256(raw).hexdigest() != pin["sha256"]:
-                raise ValueError("Shader context public template drift")
-            templates[name] = raw.decode().replace("\r", "")
+        templates = P.asset_ripper_templates(asset_ripper, profile)
     repo = HERE.parents[2]
     compiler = P.module("_context_compiler", repo / "tools/phone-build/owner-code/shader.py")
     sys.path.insert(0, str(repo / "scripts/lab"))

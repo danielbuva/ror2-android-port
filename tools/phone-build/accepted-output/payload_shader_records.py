@@ -14,7 +14,6 @@ import itertools
 import json
 from pathlib import Path
 import struct
-import subprocess
 import sys
 import time
 
@@ -143,21 +142,7 @@ def produce_postprocessing(
     include_pin, common = P.includes(sdk / "CGIncludes")
     if include_pin != profile["includes_sha256"]:
         raise ValueError("post-processing SDK include inputs differ")
-    prefix = "Source/AssetRipper.Export.UnityProjects/Shaders/Templates/"
-    templates = {}
-    for name, pin in profile["template_inputs"].items():
-        data = subprocess.check_output(
-            [
-                "git",
-                "-C",
-                str(asset_ripper),
-                "show",
-                profile["exporter_revision"] + ":" + prefix + name,
-            ]
-        )
-        if len(data) != pin["bytes"] or hashlib.sha256(data).hexdigest() != pin["sha256"]:
-            raise ValueError("post-processing shader template input differs")
-        templates[name] = data.decode().replace("\r", "")
+    templates = P.asset_ripper_templates(asset_ripper, profile)
     import UnityPy
     from UnityPy.helpers.TypeTreeHelper import write_typetree
     from UnityPy.streams import EndianBinaryWriter
@@ -180,15 +165,7 @@ def produce_postprocessing(
         "outputs": {},
     }
     try:
-        license_data = subprocess.check_output(
-            [
-                "git",
-                "-C",
-                str(asset_ripper),
-                "show",
-                profile["exporter_revision"] + ":LICENSE.md",
-            ]
-        )
+        license_data = P.asset_ripper_file(asset_ripper, profile["exporter_revision"], "LICENSE.md")
         (output / "AssetRipper-LICENSE.md").write_bytes(license_data)
         rows = []
         types, type_ids = [], {}
@@ -885,21 +862,7 @@ def produce(
     sources = P.module("_payload_shader_source", repo / "scripts/lab/shader_source.py")
     filename = profile["source_filename"]
     P.relative(repo, filename)
-    prefix = "Source/AssetRipper.Export.UnityProjects/Shaders/Templates/"
-    templates = {}
-    for name, pin in profile["template_inputs"].items():
-        data = subprocess.check_output(
-            [
-                "git",
-                "-C",
-                str(asset_ripper),
-                "show",
-                profile["exporter_revision"] + ":" + prefix + name,
-            ]
-        )
-        if len(data) != pin["bytes"] or hashlib.sha256(data).hexdigest() != pin["sha256"]:
-            raise ValueError("shader template input differs")
-        templates[name] = data.decode().replace("\r", "")
+    templates = P.asset_ripper_templates(asset_ripper, profile)
     text, selected_template = sources.dummy_shader_source(original["m_ParsedForm"], templates)
     if selected_template != "SingleTexture":
         raise ValueError("Barrier source shader no longer selects its pinned template")
@@ -934,15 +897,7 @@ def produce(
     started = time.monotonic()
     try:
         (output / "HGCloudRemap.shader").write_text(text)
-        license_data = subprocess.check_output(
-            [
-                "git",
-                "-C",
-                str(asset_ripper),
-                "show",
-                profile["exporter_revision"] + ":LICENSE.md",
-            ]
-        )
+        license_data = P.asset_ripper_file(asset_ripper, profile["exporter_revision"], "LICENSE.md")
         (output / "AssetRipper-LICENSE.md").write_bytes(license_data)
         vertex_output = output / "vertexlit"
         vertex_output.mkdir()
@@ -1081,7 +1036,7 @@ def main():
         type=Path,
         help="Read-only Unity 2021.3.33f1 Contents for source/hash metadata; never executed",
     )
-    parser.add_argument("--asset-ripper", type=Path, help="Read-only pinned public template Git source")
+    parser.add_argument("--asset-ripper", type=Path, help="Pinned public AssetRipper Git repository or staged revision tree")
     parser.add_argument(
         "--output",
         type=Path,

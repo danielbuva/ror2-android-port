@@ -10,7 +10,6 @@ from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
-import subprocess
 import sys
 import time
 
@@ -183,13 +182,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
     if any(row["kind"] == "dummy" for row in profile["records"]):
         if asset_ripper is None:
             raise ValueError("Prefab dummy requires explicit public template provider")
-        for name, pin in profile["template_inputs"].items():
-            raw = subprocess.check_output(
-                ["git", "-C", str(asset_ripper), "show", profile["exporter_revision"] + ":Source/AssetRipper.Export.UnityProjects/Shaders/Templates/" + name]
-            )
-            if len(raw) != pin["bytes"] or hashlib.sha256(raw).hexdigest() != pin["sha256"]:
-                raise ValueError("Prefab Shader public template differs")
-            templates[name] = raw.decode().replace("\r", "")
+        templates = P.asset_ripper_templates(asset_ripper, profile)
     originals, sdk_objects = {}, {}
 
     def original(selected, class_name="Shader"):
@@ -265,9 +258,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
     types, type_ids = [], {}
     try:
         if templates:
-            (output / "AssetRipper-LICENSE.md").write_bytes(
-                subprocess.check_output(["git", "-C", str(asset_ripper), "show", profile["exporter_revision"] + ":LICENSE.md"])
-            )
+            (output / "AssetRipper-LICENSE.md").write_bytes(P.asset_ripper_file(asset_ripper, profile["exporter_revision"], "LICENSE.md"))
         with (
             compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler", includes=[sdk / "CGIncludes"]) as connection,
             W.codec(codec, codec_pin) as compress,

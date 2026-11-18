@@ -22,6 +22,8 @@ LINUX_COMPONENT = "${inputs}/acquired/unity-linux-editor.tar.xz"
 PACKAGE_POLICY = "tools/phone-build/package-assemblies/profile.json"
 PACKAGE_PRODUCER = "tools/phone-build/package-assemblies/produce.py"
 PACKAGE_ARCHIVES = "${inputs}/acquired/unity-packages"
+ASSET_RIPPER_SOURCE = "${inputs}/acquired/asset-ripper"
+ASSET_RIPPER_TEMPLATES = "Source/AssetRipper.Export.UnityProjects/Shaders/Templates/"
 INSTALLED_BUNDLE_CODEC = dict(
     path="${native}/libbundlelz4.so",
     sha256="${native_sha256:libbundlelz4.so}",
@@ -285,7 +287,12 @@ class Graph:
             # tools bind its Contents directory. Preserve the profile root.
             arguments += ["--sdk", self.sdk_contents() + "/.."]
         if producer in {"shader_prefab", "shader_context", "payload_shader_records"} and profile.get("template_inputs"):
-            arguments += ["--asset-ripper", "${input:asset_ripper}"]
+            arguments += ["--asset-ripper", ASSET_RIPPER_SOURCE if self.conversion else "${input:asset_ripper}"]
+            if self.conversion:
+                path_prefix = ASSET_RIPPER_SOURCE + "/" + profile["exporter_revision"] + "/"
+                witnesses.extend(path_prefix + ASSET_RIPPER_TEMPLATES + name for name in profile["template_inputs"])
+                if producer != "shader_context":
+                    witnesses.append(path_prefix + "LICENSE.md")
         if producer == "sprite_produce":
             binding = "sprite_native_" + pin
             arguments = [
@@ -299,6 +306,12 @@ class Graph:
             ]
         if producer == "shader_produce":
             arguments += ["--sdk", self.sdk_contents()]
+            if self.conversion and "tmp_dummy" in profile:
+                provider = profile["tmp_dummy"]
+                arguments += ["--asset-ripper-source", ASSET_RIPPER_SOURCE]
+                path_prefix = ASSET_RIPPER_SOURCE + "/" + provider["exporter_revision"] + "/"
+                witnesses.extend(path_prefix + name for name in provider["template_inputs"])
+                witnesses.append(path_prefix + "LICENSE.md")
         if producer == "texture_produce":
             textures = [texture for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]]
             operations = {texture["operation"] for texture in textures}
