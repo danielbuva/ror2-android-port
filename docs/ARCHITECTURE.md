@@ -6109,6 +6109,16 @@ must dispose of them after use. Runner finalization sleeps the display and prune
 before publishing the terminal file. Current staging refuses adopted storage;
 host fixtures establish lifecycle contracts, not phone or gameplay acceptance.
 
+For `signed-code` requests the same runner stages the installed toolhost's .NET
+frameworks and Clang resources, then calls `owner-code/run_android.py` with the
+current signed audio roster and fresh private source inputs. The code owner
+stops after converter output validation and native planning. Confirmed jobs
+return converter, resource-use and thermal receipts and remove the owned test
+install. Uncertain jobs retain the exact handle. Signed release conversion
+descriptors bind the installed Android tools and witness them before cache
+reuse. Nested managed producers use the embedded Python host's argument format
+through `scripts/lab/phone_sdk_compiler.py`.
+
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
 caller-declared idempotent operations after a negative local signal status, with

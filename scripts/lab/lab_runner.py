@@ -623,7 +623,7 @@ if __name__ == "__main__":
     if sys.argv[1:2] == ["--emission-request"]:
         import argparse
 
-        parser = argparse.ArgumentParser(description="Current shared device runner: pinned toolhost emission request")
+        parser = argparse.ArgumentParser(description="Current shared device runner: pinned bundle emission or signed-code conversion")
         parser.add_argument("--emission-request", required=True)
         mode = parser.add_mutually_exclusive_group()
         mode.add_argument("--dry-run", action="store_true")

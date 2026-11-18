@@ -188,6 +188,24 @@ cleanup and pruning, including on failure. Retention is temporary: after downstr
 consumers finish, dispose of the owned toolhost with its exact identity receipt.
 Host tests cover this contract; on-device qualification remains separate.
 
+### Signed source code qualification
+
+For current signed code conversion, add `"operation": "signed-code"` and use
+`expected_managed_providers` in place of `expected_records`. The pinned private
+request selects `source_inputs`, the signed `audio_members` roster and an
+`output` relative to its private `work/` directory. Stage the accepted input
+inventory, `input-hashes.json`, original game and compiler inputs beside that
+request. Include the matching public producer closure under `repo/`.
+
+The same runner stages Python, both .NET frameworks and Clang resources from
+the pinned toolhost APK. Its existing Android code adapter runs fresh managed
+compilation, audio roster verification, UnityLinker, IL2CPP conversion and native
+planning. The terminal receipt records the provider count, converter file
+hashes, wall time, peak memory, storage and thermal sampling. This gate ends at
+the native plan. The runner collects terminal evidence and removes its exact
+owned toolhost and scratch. `--resume-emission` reattaches an uncertain handle.
+After a confirmed result, use a fresh request directory for another attempt.
+
 ## Safety model
 
 - The workflow (`.github/workflows/lab-runner.yml`) triggers only on `issue_comment`, so GitHub always

@@ -22,7 +22,7 @@ import common_assets_map  # noqa: E402
 import original_game_audio_produce as audio  # noqa: E402
 import owner_audio_prefab  # noqa: E402
 import phone_unity_compile  # noqa: E402
-from phone_sdk_compiler import SdkCompiler  # noqa: E402
+from phone_sdk_compiler import SdkCompiler, python_command  # noqa: E402
 import public_transform_tools  # noqa: E402
 import wwise_bank_index  # noqa: E402
 import wwise_init_platform  # noqa: E402
@@ -184,8 +184,7 @@ def stage_source_audio(work, game, output, *, decoder=None):
     soundbanks_info = game / "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/SoundbanksInfo.xml"
     invoke(
         [
-            sys.executable,
-            audio.TOOLS / "stage_original_game_banks.py",
+            *python_command(audio.TOOLS / "stage_original_game_banks.py"),
             "--prefab",
             prefab,
             "--bank-index",
@@ -570,9 +569,7 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None):
         raw = output / "raw"
         invoke(
             [
-                sys.executable,
-                "-I",
-                ROOT / "tools/unity/support/audio/managed-producer/produce.py",
+                *python_command(ROOT / "tools/unity/support/audio/managed-producer/produce.py", isolated=True),
                 "--android-source",
                 inputs["wwise_android_source"],
                 "--android-os-string-source",
