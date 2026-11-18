@@ -4359,7 +4359,10 @@ belong to its transform, without changing the pinned package implementations.
 support tool with policy in `recipe/wwise-android-abi.json`. It reads the
 exact policy-bound accepted managed API, authorized local Wwise Android
 declarations, the pinned Android OS-string helper source and ARM64 Release
-plugin, and uses Unity-bundled Cecil. The writer applies the reviewed P/Invoke
+plugin, and uses Unity-bundled Cecil. Its read-only ARM64 ELF reader checks the
+pinned defined-export set directly from the plugin's dynamic symbol and string
+tables. Existing callers that supply `--llvm-nm` get a second check with the
+host NDK tool. The writer applies the reviewed P/Invoke
 metadata and one exact-signature OS-string call-operand rewrite, refusing
 body/signature/operand drift and verifying every other method and assembly
 contract after reopen. It publishes only new plans and candidates under ignored
