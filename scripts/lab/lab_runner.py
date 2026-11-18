@@ -176,7 +176,7 @@ class Runner:
             owner = json.loads((lease / "lab-runner.json").read_bytes())
             retained = json.loads((lease / "retain.json").read_bytes())
             state = json.loads(self.resume_state.read_bytes())
-            if owner.get("workstream") != "lab-runner" or retained.get("state") != str(self.resume_state) or retained.get("job") != state.get("job"):
+            if owner.get("workstream") != workstream or retained.get("state") != str(self.resume_state) or retained.get("job") != state.get("job"):
                 raise CommandError("emission retained lease identity mismatch")
             try:
                 os.kill(owner["pid"], 0)
@@ -519,7 +519,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
     return int(not result["success"])
 
 
-def local_emission(path, *, dry_run=False, resume=False, restage=False):
+def local_emission(path, *, dry_run=False, resume=False, restage=False, workstream=None):
     """Private request entry point; same script/worktree/lease owner as /lab."""
     request = json.loads(Path(path).read_bytes())
     configuration = request["runner"]
@@ -558,7 +558,7 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False):
             command += " --resume-emission"
         if restage:
             command += " --resume-emission --restage-emission" if not resume else " --restage-emission"
-        code, _ = runner.execute(parse_command(command))
+        code, _ = runner.execute(parse_command(command), workstream=workstream)
         operation = done.with_suffix(".operation.json")
         if operation.exists():
             result.update(json.loads(operation.read_bytes()))
@@ -625,6 +625,7 @@ if __name__ == "__main__":
 
         parser = argparse.ArgumentParser(description="Current shared device runner: pinned bundle emission or signed-code conversion")
         parser.add_argument("--emission-request", required=True)
+        parser.add_argument("--workstream", help="Require this dispatcher grant before taking the device lease")
         mode = parser.add_mutually_exclusive_group()
         mode.add_argument("--dry-run", action="store_true")
         mode.add_argument("--resume-emission", action="store_true")
@@ -636,5 +637,13 @@ if __name__ == "__main__":
 
             print(json.dumps(refresh_manifest(arguments.emission_request, arguments.refresh_emission_manifest)))
             sys.exit(0)
-        sys.exit(local_emission(arguments.emission_request, dry_run=arguments.dry_run, resume=arguments.resume_emission, restage=arguments.restage_emission))
+        sys.exit(
+            local_emission(
+                arguments.emission_request,
+                dry_run=arguments.dry_run,
+                resume=arguments.resume_emission,
+                restage=arguments.restage_emission,
+                workstream=arguments.workstream,
+            )
+        )
     sys.exit(main())
