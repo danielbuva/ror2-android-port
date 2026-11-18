@@ -28,6 +28,7 @@ var projectileConfigPin = request["projectile_config"];
 var checkedProjectileKeys = new System.Collections.Generic.HashSet<string>();
 int checkedSupportPrefabs = 0, checkedEffectPrefabs = 0;
 int checkedObjectiveActors = 0, checkedDirectorPools = 0, checkedDirectorCards = 0;
+int checkedMasters = 0;
 
 System.Func<string, UnityEngine.AssetBundle> openBundle = owner =>
 {
@@ -378,10 +379,28 @@ try{
              foreach (var entry in entries)
                  checkDeck(entry.dccs, key);
          }
+ }
+ }
+ var catalogBodies = new System.Collections.Generic.HashSet<UnityEngine.GameObject>(typedBodies.Select(entry => entry.Value));
+ foreach (int id in WholeCatalogComposed.FamilyLocationGroups(manifest, "CharacterMaster").SelectMany(group => group).Distinct())
+ {
+     var row = locations[id];
+     string path = (string)row["path"], owner = (string)row["bundle"];
+     var prefab = openBundle(owner).LoadAsset<UnityEngine.GameObject>(path);
+     var master = prefab ? prefab.GetComponent<RoR2.CharacterMaster>() : null;
+     if (!master)
+     {
+         failures.Add(new { path, owner, error = "Typed CharacterMaster missing" });
+         continue;
      }
+     checkedMasters++;
+     var body = master.bodyPrefab;
+     if (body && (!body.GetComponent<RoR2.CharacterBody>() || !catalogBodies.Contains(body)))
+         failures.Add(new { path, owner, master = prefab.name, body = body.name,
+             bodyInstanceId = body.GetInstanceID(), error = "CharacterMaster bodyPrefab is outside the typed CharacterBody family" });
  }
 }catch(System.Exception error){failures.Add(new{error=error.ToString()});}
 finally{foreach(var bundle in bundles.Values.Reverse())bundle.Unload(true);}
-var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,checkedObjectiveActors,checkedDirectorPools,checkedDirectorCards,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
+var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,checkedObjectiveActors,checkedDirectorPools,checkedDirectorCards,checkedMasters,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
 var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;

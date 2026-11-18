@@ -269,7 +269,10 @@ The current `bundle_preload.py --repack` action reuses an existing qualified
 emission through a hash-pinned request; it retains source/type/ownership checks
 and avoids repeating record production for these reference repairs. The request
 includes selected records for canonical aliases and retained SkinDef source
-matches.
+matches. For a canonical row backed by a record producer, an optional
+`canonical_record_profiles` pin list supplies the exact recipes named by the
+row's record digest. The producer must map the canonical output and duplicate
+to the same unique original body.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
@@ -483,9 +486,10 @@ Optional `early_ward` and `early_commando` replay earlier load orders. The fixtu
 opens the three startup owners, leaves deferred owners unopened, loads the typed
 bodies in provider order, and checks the same model controller as startup. It
 then resolves the typed SkinDefParams and checks each bake transform with the
-native prefab path function, including base skins. All opened bundles are
-released in `finally`. Its local receipt records failures before the Android
-gameplay gate.
+native prefab path function, including base skins. It checks that each catalog
+CharacterMaster's assigned body resolves to the same Unity object as a typed
+CharacterBody family member. All opened bundles are released in `finally`.
+Its local receipt records failures before the Android gameplay gate.
 The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
 After the skin checks, the fixture loads the objective state configs from
 `commando-prefab-lab`. It follows projectile and trail references from those
