@@ -44,6 +44,7 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
             )
         )
         visuals = (ROOT / "tools/unity/runtime/catalog/OriginalBodyVisualBoundary.cs").read_text()
+        source += "\n" + next(line for line in visuals.splitlines() if "const string MercFinisherVisualPath" in line) + "\n"
         source += "\n" + source_method(visuals, "IEnumerator PrepareNativeSwingEffects(")
         source += "\n}\n"
         with tempfile.TemporaryDirectory() as temporary:

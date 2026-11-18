@@ -15,6 +15,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 // their exact shipped initializer field/path pairs. Handles stay session-owned.
 public sealed partial class PortSession
 {
+    const string MercFinisherVisualPath = "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab";
     OriginalBodyVisualSession originalBodyVisualSession;
     OriginalBodyVisualSession GetOriginalBodyVisualSession()
     {
@@ -117,11 +118,10 @@ public sealed partial class PortSession
         IEnumerator PrepareNativeSwingEffects(List<string> unavailable)
         {
             var presentation = coordinator.GetTeleporterWorldSession();
-            var mercFinisher = EntityStates.Merc.GroundLight.finisherSwingEffectPrefab;
-            if (mercFinisher)
-                presentation.PresentNativeEffectSource(mercFinisher);
-            else
-                unavailable.Add("Merc finisher swing: native prefab missing");
+            // The native GroundLight static configuration is populated after this setup.
+            // Prepare the same owned prefab already used by the Merc Evis adapter.
+            var mercFinisher = WholeCatalogComposed.LoadOwnedContent<GameObject>(MercFinisherVisualPath);
+            presentation.PresentNativeEffectSource(mercFinisher);
 
             var normal = new EntityStates.Croco.Slash().swingEffectPrefab;
             if (normal)

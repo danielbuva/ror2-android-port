@@ -7882,6 +7882,10 @@ For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
 material values for missing properties. The original material rows are retained.
+`OriginalBodyVisualSession` prepares the Mercenary finisher source through the
+same owned content path as the Merc Evis impact adapter, before the native state
+configuration populates its static field. Native GroundLight still selects and
+spawns the effect. The existing native effect owner restores its material slots.
 On the same opt-in selector, `NovaDiagnosticDisplay` samples up to 32 renderers
 of the presented player model, including inactive and disabled renderers, on
 the existing five-second report cadence. The latest `NovaReport` sample records

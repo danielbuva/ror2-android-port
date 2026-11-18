@@ -86,6 +86,16 @@ namespace EntityStates.Merc
 {
     public static class GroundLight { public static GameObject finisherSwingEffectPrefab; }
 }
+public static class WholeCatalogComposed
+{
+    public static GameObject mercFinisher;
+    public static T LoadOwnedContent<T>(string path) where T : UnityEngine.Object
+    {
+        if (path != "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab")
+            throw new InvalidOperationException("Unexpected owned swing path: " + path);
+        return mercFinisher as T;
+    }
+}
 namespace RoR2
 {
     public class DamageTrail : UnityEngine.Object { public GameObject segmentPrefab; }
@@ -230,7 +240,7 @@ static class Fixture
         var normal = new Renderer { sharedMaterials = new[] { original } };
         var finisher = new Renderer { sharedMaterials = new[] { original } };
         var fallback = new Renderer { sharedMaterials = new[] { original } };
-        EntityStates.Merc.GroundLight.finisherSwingEffectPrefab = new GameObject { components = new[] { merc } };
+        WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { merc } };
         EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
         EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab = new EntityStates.Croco.Slash.SwingReference {
             addressableReference = new AssetReference { RuntimeKey = "native-finisher" },
@@ -243,8 +253,9 @@ static class Fixture
         var prepare = session.PrepareSwings(unavailable);
         Check(prepare.MoveNext() && normal.sharedMaterials[0] != original && finisher.sharedMaterials[0] == original,
               "normal source should be prepared while native finisher loads");
-        Check(merc.sharedMaterials[0].shader.name.StartsWith("Recovered/") && session.worldLootSourceMaterials[merc][0] == original,
-              "configured Merc finisher did not receive owned presentation");
+        Check(!EntityStates.Merc.GroundLight.finisherSwingEffectPrefab &&
+              merc.sharedMaterials[0].shader.name.StartsWith("Recovered/") && session.worldLootSourceMaterials[merc][0] == original,
+              "owned Merc finisher did not receive presentation before native state configuration");
         operation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 && finisher.sharedMaterials[0] != original,
               "native finisher source should be prepared after loading");
