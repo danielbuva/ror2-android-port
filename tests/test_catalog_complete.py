@@ -10,6 +10,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,6 +39,32 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_physics_route_follows_asset_and_ordered_siblings_across_new_ids(self):
+        dependencies = {name: module("physics_" + name, name + ".py") for name in ("manager_graph", "manager_settings", "player_ui")}
+        with patch.dict(sys.modules, dependencies):
+            physics = module("physics_routes", "catalog_physics.py")
+        index = physics.PhysicsObjects.__new__(physics.PhysicsObjects)
+
+        def pointer(pid=0):
+            return dict(m_FileID=0, m_PathID=pid)
+
+        def routes(member, base):
+            root, first, second = [(member, base + i) for i in range(3)]
+            index.catalog = SimpleNamespace(endpoint=lambda member, ptr: (member, ptr[1]) if ptr[1] else None)
+            objects = {root: {"m_Name": "Prefab"}, first: {"m_Name": "Collider"}, second: {"m_Name": "Collider"}}
+            transforms = {
+                (member, base + 10): dict(m_GameObject=pointer(base), m_Father=pointer(), m_Children=[pointer(base + 12), pointer(base + 11)]),
+                (member, base + 11): dict(m_GameObject=pointer(first[1]), m_Father=pointer(base + 10)),
+                (member, base + 12): dict(m_GameObject=pointer(second[1]), m_Father=pointer(base + 10)),
+            }
+            indexed = index.game_object_routes(objects, transforms, {root: ["asset.prefab"]})
+            return indexed[root], indexed[first], indexed[second]
+
+        root, first, second = routes("original", 1)
+        self.assertEqual((root, first, second), routes("rebuilt", 100))
+        self.assertEqual(first, root + (("Collider", 2),))
+        self.assertEqual(second, root + (("Collider", 1),))
+
     def test_objective_slot_uses_ordered_indices_and_confirmed_hierarchy(self):
         mesh = module("objective_slot_mesh", "unity_mesh.py")
         records = module("objective_slot_records", "record_produce.py")
@@ -102,6 +129,28 @@ class CatalogCompletionTests(unittest.TestCase):
         self.assertEqual(catalog.endpoint("base", (1, 7)), ("CAB", 7))
         self.assertEqual(catalog.endpoint("base", (1, 8)), ("missing-target", "CAB", 8))
         self.assertIsNone(catalog.endpoint("base", (0, 0)))
+
+    def test_differential_joins_identity_only_for_matching_candidate_catalog(self):
+        mesh = module("catalog_identity_mesh", "unity_mesh.py")
+        with patch.dict(sys.modules, catalog_complete=C, unity_mesh=mesh):
+            compare = module("catalog_identity_comparison", "catalog_compare.py")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            metadata = root / "catalog.json"
+            metadata.write_text("{}")
+            apk, receipt = root / "candidate.apk", root / "typed.json"
+            with ZipFile(apk, "w") as archive:
+                archive.write(metadata, "assets/owner-bootstrap/data/whole-catalog.json")
+            evidence = dict(complete=True, bodies=2, masters=1, metadataSha256=pin(metadata)["sha256"], bundles={"fixture": "digest"}, failures=[])
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence)))
+            request = dict(bundles={"fixture": dict(sha256="digest")})
+            self.assertEqual(compare.typed_master_identity(receipt, request, apk), evidence)
+            with self.assertRaisesRegex(ValueError, "bundle pins differ"):
+                compare.typed_master_identity(receipt, dict(bundles={}), apk)
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=dict(evidence, metadataSha256="wrong"))))
+            with self.assertRaisesRegex(ValueError, "metadata differs"):
+                compare.typed_master_identity(receipt, request, apk)
 
     def test_player_binding_uses_image_identity_and_serialized_script_table(self):
         def text(value):

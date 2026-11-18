@@ -44,6 +44,7 @@ class DeviceSessionTests(unittest.TestCase):
         )
         self.request_file = self.root / "request.json"
         runner.save(self.request_file, self.request)
+        runner.save(self.root / "work/config/local.json", {"device_serial": self.request["serial"]})
 
     def test_request_smoke_checks_exact_bytes_without_adb(self):
         with mock.patch.object(runner.subprocess, "run") as process:
@@ -52,6 +53,126 @@ class DeviceSessionTests(unittest.TestCase):
         self.apk.write_bytes(b"changed")
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
+
+    def test_menu_start_rejects_selector_for_a_different_apk_attempt(self):
+        request = dict(self.request, start_from_menu=True, selection={"attempt": "run-folder"})
+        runner.save(self.request_file, request)
+        with (
+            mock.patch.object(device_module, "validate_apk_identity") as identity,
+            mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"),
+        ):
+            with self.assertRaisesRegex(ValueError, "selector attempt must match.*embedded"):
+                runner.load_request(self.request_file)
+            identity.assert_called_once_with(self.apk.resolve(), self.request["package"])
+            runner.save(self.request_file, dict(request, selection={"attempt": "embedded"}))
+            self.assertEqual(runner.load_request(self.request_file)["selection"]["attempt"], "embedded")
+
+    def test_pre_dispatch_rejects_another_packages_local_receipt(self):
+        request = dict(self.request, start_from_menu=True)
+        runner.save(self.request_file, request)
+        receipt_path = self.root / "work/device/installed.json"
+        receipt = dict(serial=request["serial"], package="dev.ror2lab.converted", package_path="package:/fixture/base.apk", apk_sha256="0" * 64)
+        runner.save(receipt_path, receipt)
+        with (
+            mock.patch.object(device_module, "validate_apk_identity"),
+            mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"),
+            mock.patch.object(runner.Lease, "acquire") as lease,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "receipt does not match selected package/device"):
+                runner.main(["--request", str(self.request_file), "--detach"])
+            lease.assert_not_called()
+            runner.save(receipt_path, dict(receipt, package=request["package"]))
+            self.assertEqual(runner.load_request(self.request_file)["apk_sha256"], self.digest)
+
+    def test_owner_unplugged_requires_ordinary_adopted_30_minute_run(self):
+        request = dict(self.request, mode="owner-unplugged", duration_seconds=1800)
+        runner.save(self.request_file, request)
+        self.assertEqual(runner.load_request(self.request_file)["mode"], "owner-unplugged")
+        for changes, error in (
+            (dict(duration_seconds=30), "requires 30 minutes"),
+            (dict(adopted_install=False), "adopted_install"),
+            (dict(selection={}), "physical play"),
+            (dict(start_from_menu=True), "physical play"),
+        ):
+            with self.subTest(changes=changes):
+                runner.save(self.request_file, dict(request, **changes))
+                with self.assertRaisesRegex(ValueError, error):
+                    runner.load_request(self.request_file)
+
+    def test_unplugged_trace_checks_coverage_ownership_and_signed_energy(self):
+        config = dict(nonce="a" * 32, zones=[["cpu", "cpu-path"], ["gpu", "gpu-path"]])
+        base = dict(nonce=config["nonce"], pid=42)
+        samples = [
+            dict(
+                base,
+                kind="sample",
+                elapsed_ms=ms,
+                gap_ms=1000,
+                plugged=0,
+                frames=ms * 60 // 1000,
+                current_ua=-250000,
+                voltage_mv=4000,
+                level=80 - ms // 900000,
+                scale=100,
+                battery_decic=300,
+                zones_millic=[81000, 64000],
+            )
+            for ms in range(0, 1800001, 1000)
+        ]
+        trace = self.root / "observed.jsonl"
+        ready = dict(base, kind="ready", zones=config["zones"])
+        complete = dict(base, kind="complete")
+
+        def write(rows):
+            trace.write_text("".join(json.dumps(row) + "\n" for row in rows))
+
+        write([ready, *samples, complete])
+        summary = runner.unplugged_summary(trace, config, "42")
+        self.assertEqual(summary["signed_terminal_energy_mwh"], -500)
+        self.assertEqual(summary["foreground_frames_per_elapsed_second"], 60)
+        self.assertEqual(summary["time_above80_seconds"], 1800)
+        self.assertEqual((summary["battery_start_percent"], summary["battery_end_percent"]), (80, 78))
+        for rows, error in (
+            ([ready, *samples[:-1], complete], "does not cover"),
+            ([ready, *samples, dict(complete, pid=43)], "different nonce or process"),
+            ([ready, *samples, dict(base, kind="aborted", reason="early reconnect")], "early reconnect"),
+            ([ready, dict(samples[0], plugged=2), *samples[1:], complete], "powered"),
+            ([ready, dict(samples[0], gap_ms=5001), *samples[1:], complete], "thermal coverage"),
+            ([ready, dict(samples[0], battery_decic=430), *samples[1:], complete], "Battery thermal limit"),
+        ):
+            with self.subTest(error=error):
+                write(rows)
+                with self.assertRaisesRegex(RuntimeError, error):
+                    runner.unplugged_summary(trace, config, "42")
+
+    def test_owner_unplugged_waits_without_adb_then_collects_after_usb_reconnect(self):
+        config = dict(nonce="a" * 32, zones=[["cpu", "cpu-path"], ["gpu", "gpu-path"]])
+        runner.save(self.output / runner.UNPLUGGED_REQUEST, config)
+        target = mock.Mock()
+        target.read_receipt.return_value = dict(persistentDataPath="/owned")
+        target.sh.side_effect = [json.dumps(dict(kind="ready", pid=42, **config)), '{"kind":"complete"}']
+        target.cmd.side_effect = ["offline", "device"]
+        result = dict(device_cleanup={})
+
+        def wait(seconds):
+            if seconds == 1800:
+                target.cmd.assert_not_called()
+                self.assertEqual(target.sh.call_count, 1)
+                self.assertTrue((self.output / "unplug-now.json").is_file())
+
+        with (
+            mock.patch.object(runner.time, "sleep", side_effect=wait) as sleeper,
+            mock.patch.object(runner, "verify_owned") as verify,
+            mock.patch.object(device_module, "retain_device_file", return_value="trace-hash") as retain,
+            mock.patch.object(runner, "unplugged_summary", return_value=dict(samples=7201)) as summary,
+        ):
+            runner.observe_unplugged(target, self.request, self.output, result, "42")
+        self.assertEqual(sleeper.call_args_list, [mock.call(1800), mock.call(5)])
+        trace = f"owner-unplugged-{config['nonce']}.jsonl"
+        self.assertEqual(result["owner_unplugged"], dict(trace=trace, sha256="trace-hash", samples=7201))
+        verify.assert_called_once_with(target, self.digest)
+        retain.assert_called_once_with(target, "/owned/" + trace, self.output / trace, {})
+        summary.assert_called_once_with(self.output / trace, config, "42")
 
     def test_device_option_selects_only_the_workstreams_granted_serial(self):
         self.request.pop("serial")
@@ -166,9 +287,10 @@ class DeviceSessionTests(unittest.TestCase):
 
     def test_menu_start_request_is_explicit_launch_only(self):
         self.request["start_from_menu"] = True
-        for package in ("dev.ror2lab.arm64", "dev.ror2lab.converted"):
-            runner.save(self.request_file, dict(self.request, package=package))
-            self.assertTrue(runner.load_request(self.request_file)["start_from_menu"])
+        with mock.patch.object(device_module, "validate_apk_identity"), mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"):
+            for package in ("dev.ror2lab.arm64", "dev.ror2lab.converted"):
+                runner.save(self.request_file, dict(self.request, package=package))
+                self.assertTrue(runner.load_request(self.request_file)["start_from_menu"])
         for field, value in (("start_from_menu", "yes"), ("mode", "sustained")):
             runner.save(self.request_file, dict(self.request, **{field: value}))
             with self.assertRaises(ValueError):

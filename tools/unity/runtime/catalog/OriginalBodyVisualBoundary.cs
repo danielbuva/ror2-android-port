@@ -15,6 +15,8 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 // their exact shipped initializer field/path pairs. Handles stay session-owned.
 public sealed partial class PortSession
 {
+    const string MercNormalSwingVisualPath = "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordSlash.prefab";
+    const string MercFinisherVisualPath = "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab";
     OriginalBodyVisualSession originalBodyVisualSession;
     OriginalBodyVisualSession GetOriginalBodyVisualSession()
     {
@@ -103,7 +105,7 @@ public sealed partial class PortSession
                               "Original HealthComponent visual-reference closure failed: " + string.Join(",", healthUnavailable.ToArray()));
             PresentNativeVisualSource(typeof(CharacterBody), "mercExposeEffectPrefab");
             PresentNativeVisualSource(typeof(HealthComponent), "mercExposeConsumeEffectPrefab");
-            var swings = PrepareCrocoSwingEffects(bodyUnavailable);
+            var swings = PrepareNativeSwingEffects(bodyUnavailable);
             while (swings.MoveNext())
                 yield return swings.Current;
             coordinator.r.world.bodyVisualSlots =
@@ -114,9 +116,15 @@ public sealed partial class PortSession
             coordinator.r.world.healthVisualUnavailable = healthUnavailable.ToArray();
             coordinator.Save();
         }
-        IEnumerator PrepareCrocoSwingEffects(List<string> unavailable)
+        IEnumerator PrepareNativeSwingEffects(List<string> unavailable)
         {
             var presentation = coordinator.GetTeleporterWorldSession();
+            // The native GroundLight static configuration is populated after this setup.
+            var mercNormal = WholeCatalogComposed.LoadOwnedContent<GameObject>(MercNormalSwingVisualPath);
+            presentation.PresentNativeEffectSource(mercNormal);
+            var mercFinisher = WholeCatalogComposed.LoadOwnedContent<GameObject>(MercFinisherVisualPath);
+            presentation.PresentNativeEffectSource(mercFinisher);
+
             var normal = new EntityStates.Croco.Slash().swingEffectPrefab;
             if (normal)
                 presentation.PresentNativeEffectSource(normal);

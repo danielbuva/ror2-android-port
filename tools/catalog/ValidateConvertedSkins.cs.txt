@@ -20,6 +20,9 @@ var pins=(Newtonsoft.Json.Linq.JObject)request["bundles"];
 var startupOwners=fixture==null?pins.Properties().Select(row=>row.Name).ToArray():new[]{"whole-game-content","commando-prefab-lab","objective-support-lab"};
 var bundles=new System.Collections.Generic.Dictionary<string,UnityEngine.AssetBundle>();
 var rows=new System.Collections.Generic.List<object>();var failures=new System.Collections.Generic.List<object>();
+var identityFailures = new System.Collections.Generic.List<object>();
+System.Action<object> failIdentity = row => { identityFailures.Add(row); failures.Add(row); };
+bool identityComplete = false;
 var typedBodies=new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string,UnityEngine.GameObject>>();
 int bodies=0,controllers=0,slots=0;
 int checkedTransforms = 0;
@@ -28,6 +31,7 @@ var projectileConfigPin = request["projectile_config"];
 var checkedProjectileKeys = new System.Collections.Generic.HashSet<string>();
 int checkedSupportPrefabs = 0, checkedEffectPrefabs = 0;
 int checkedObjectiveActors = 0, checkedDirectorPools = 0, checkedDirectorCards = 0;
+int checkedMasters = 0;
 
 System.Func<string, UnityEngine.AssetBundle> openBundle = owner =>
 {
@@ -139,8 +143,11 @@ try{
  foreach(int id in groups.SelectMany(group=>group).Distinct()){
   var row=locations[id];string path=(string)row["path"],owner=(string)row["bundle"];
   try{
-   typedBodies.Add(new System.Collections.Generic.KeyValuePair<string,UnityEngine.GameObject>(path,loadBody(owner,path)));
-  }catch(System.Exception error){failures.Add(new{path,owner,error=error.ToString()});}
+   var body = loadBody(owner, path);
+   if (!body.GetComponent<RoR2.CharacterBody>())
+       throw new System.Exception("Typed CharacterBody missing");
+   typedBodies.Add(new System.Collections.Generic.KeyValuePair<string,UnityEngine.GameObject>(path,body));
+  }catch(System.Exception error){failIdentity(new{path,owner,error=error.ToString()});}
  }
  if(commandoPath!=null&&!earlyCommando)loadBody("commando-prefab-lab",commandoPath);
  if(wardPath!=null&&!earlyWard)loadBody("objective-support-lab",wardPath);
@@ -378,10 +385,32 @@ try{
              foreach (var entry in entries)
                  checkDeck(entry.dccs, key);
          }
-     }
  }
+ }
+ var catalogBodies = new System.Collections.Generic.HashSet<UnityEngine.GameObject>(typedBodies.Select(entry => entry.Value));
+ foreach (int id in WholeCatalogComposed.FamilyLocationGroups(manifest, "CharacterMaster").SelectMany(group => group).Distinct())
+ {
+     var row = locations[id];
+     string path = (string)row["path"], owner = (string)row["bundle"];
+     var prefab = openBundle(owner).LoadAsset<UnityEngine.GameObject>(path);
+     var master = prefab ? prefab.GetComponent<RoR2.CharacterMaster>() : null;
+     if (!master)
+     {
+         failIdentity(new { path, owner, error = "Typed CharacterMaster missing" });
+         continue;
+     }
+     checkedMasters++;
+     var body = master.bodyPrefab;
+     if (body && (!body.GetComponent<RoR2.CharacterBody>() || !catalogBodies.Contains(body)))
+         failIdentity(new { path, owner, master = prefab.name, body = body.name,
+             bodyInstanceId = body.GetInstanceID(), error = "CharacterMaster bodyPrefab is outside the typed CharacterBody family" });
+ }
+ identityComplete = true;
 }catch(System.Exception error){failures.Add(new{error=error.ToString()});}
 finally{foreach(var bundle in bundles.Values.Reverse())bundle.Unload(true);}
-var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,checkedObjectiveActors,checkedDirectorPools,checkedDirectorCards,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
-var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures};
+var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,checkedObjectiveActors,checkedDirectorPools,checkedDirectorCards,checkedMasters,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
+var masterBodyIdentity = new { complete = identityComplete, bodies = typedBodies.Count, masters = checkedMasters,
+    metadataSha256 = (string)request["metadata"]["sha256"],
+    bundles = bundles.Keys.ToDictionary(owner => owner, owner => (string)pins[owner]["sha256"]), failures = identityFailures };
+var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures,masterBodyIdentity};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;

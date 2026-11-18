@@ -285,6 +285,27 @@ class BundlePreloadTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "body provenance|full type identity"):
                     P.repack_canonical_aliases(output=root / "repacked", **inputs)
 
+    def test_canonical_repack_resolves_record_backed_body_by_producer_and_endpoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            profile = root / "record-profile.json"
+            target = dict(bundle="canonical", member="CAB-canonical", path_id=100)
+            member = dict(name="CAB-original", objects=[dict(path_id=1, outputs=[target])])
+            profile.write_text(json.dumps(dict(bundles=[dict(path="original.bundle", members=[member])])))
+            canonical = inputs["canonical_profile"]["objects"][0]
+            canonical.update(record=P.O.B.sha(profile), type_source=canonical.pop("source"))
+            inputs["canonical_record_profiles"] = [profile]
+            result = P.repack_canonical_aliases(output=root / "repacked", **inputs)
+            self.assertEqual(result["changed_fields"], 1)
+            target["path_id"] = 101
+            profile.write_text(json.dumps(dict(bundles=[dict(path="original.bundle", members=[member])])))
+            with self.assertRaisesRegex(ValueError, "does not supply any requested alias"):
+                P.repack_canonical_aliases(output=root / "unmatched-digest", **inputs)
+            canonical["record"] = P.O.B.sha(profile)
+            with self.assertRaisesRegex(ValueError, "needs original body provenance"):
+                P.repack_canonical_aliases(output=root / "unmatched-endpoint", **inputs)
+
     def test_canonical_repack_cache_binds_alias_plan_and_checks_retained_bundle(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

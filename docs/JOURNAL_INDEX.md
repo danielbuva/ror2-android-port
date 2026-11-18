@@ -328,3 +328,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1481](PORTING_JOURNAL.md#j1481--retire-sky-meadow-rock-spawners-before-teardown) | 2026-11-17 | Retire Sky Meadow rock spawners before teardown | 2026-11-17. |
 | [J1490](PORTING_JOURNAL.md#j1490--build-a-pinned-managed-installer-stage-on-android) | 2026-11-17 | Build a pinned managed installer stage on Android | 2026-11-18. |
 | [J1493](PORTING_JOURNAL.md#j1493--restore-the-stone-titans-pre-fist-ground-warning) | 2026-11-17 | Restore the Stone Titan's pre-fist ground warning | 2026-11-18. |
+| [J1494](PORTING_JOURNAL.md#j1494--overlap-android-bundle-encoding-and-verification) | 2026-11-18 | Overlap Android bundle encoding and verification | 2026-11-18. |
+| [J1496](PORTING_JOURNAL.md#j1496--prepare-mercenarys-native-finisher-visual-before-state-configuration) | 2026-11-18 | Prepare Mercenary's native finisher visual before state configuration | 2026-11-18. |
+| [J1497](PORTING_JOURNAL.md#j1497--restore-native-vagrant-cannon-intersection-material) | 2026-11-18 | Restore native Vagrant cannon intersection material | 2026-11-18. |
+| [J1498](PORTING_JOURNAL.md#j1498--restore-the-original-collision-policy-in-the-converted-apk) | 2026-11-18 | Restore the original collision policy in the converted APK | 2026-11-18. |
+| [J1499](PORTING_JOURNAL.md#j1499--restore-mercenarys-native-normal-slash-material) | 2026-11-18 | Restore Mercenary's native normal slash material | 2026-11-18. |

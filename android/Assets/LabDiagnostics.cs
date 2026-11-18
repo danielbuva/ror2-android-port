@@ -21,6 +21,20 @@ public sealed class LabDiagnostics : MonoBehaviour
  }
  string root; float elapsed; int frames; float fps; bool ready; Config config=new Config();
  Renderer referenceGeometry;bool referenceRendering=true;Renderer referenceCube;bool cubeVisibility;
+#if UNITY_ANDROID && !UNITY_EDITOR
+ AndroidJavaObject unpluggedSession;
+ float nextUnpluggedFrameReport;
+ int unpluggedForegroundFrames;
+
+ void StartUnpluggedSession() {
+  string request = Path.Combine(root, "owner-unplugged-request.json");
+  if (!File.Exists(request)) return;
+  using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+  using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+  using (var recorder = new AndroidJavaClass("dev.ror2lab.diagnostics.LabUnpluggedSession"))
+   unpluggedSession = recorder.CallStatic<AndroidJavaObject>("start", activity);
+ }
+#endif
  public bool ReferenceRendering {get{return referenceRendering;}}
  public bool Ready {get{return ready;}}
  public void SetReferenceRendering(bool visible){
@@ -31,6 +45,9 @@ public sealed class LabDiagnostics : MonoBehaviour
  IEnumerator Start() {
   Application.targetFrameRate = 300;
   root=Application.persistentDataPath; Directory.CreateDirectory(root); Application.logMessageReceived+=OnLog;
+#if UNITY_ANDROID && !UNITY_EDITOR
+  StartUnpluggedSession();
+#endif
   string proof=SimpleJSON.JSON.Parse("{\"assembly\":\"preserved\"}")["assembly"].Value;
   Debug.Log("LAB_MANAGED_ASSEMBLY_OK "+proof);
   yield return null;
@@ -58,11 +75,28 @@ public sealed class LabDiagnostics : MonoBehaviour
   ready=true;Dump("LAB_READY");Debug.Log("LAB_READY");
  }
  void Update() {
+#if UNITY_ANDROID && !UNITY_EDITOR
+  if (unpluggedSession != null && Application.isFocused) {
+   unpluggedForegroundFrames++;
+   if (Time.unscaledTime >= nextUnpluggedFrameReport) {
+    nextUnpluggedFrameReport = Time.unscaledTime + 0.25f;
+    unpluggedSession.Call("observeFrame", unpluggedForegroundFrames);
+   }
+  }
+#endif
   frames++;elapsed+=Time.unscaledDeltaTime;FrameTimingManager.CaptureFrameTimings();
   if(elapsed<2 || !ready)return;fps=frames/elapsed;frames=0;elapsed=0;
   var path=Path.Combine(root,"diagnostics.json");try{if(File.Exists(path))config=JsonUtility.FromJson<Config>(File.ReadAllText(path));}catch(Exception e){Debug.LogWarning(e.Message);}
   if(config.enabled)Dump("periodic");
  }
+#if UNITY_ANDROID && !UNITY_EDITOR
+ void OnDestroy() {
+  if (unpluggedSession != null) {
+   unpluggedSession.Call("close");
+   unpluggedSession.Dispose();
+  }
+ }
+#endif
  void OnLog(string message,string stack,LogType type) {
   if(type==LogType.Exception||type==LogType.Error)try{File.AppendAllText(Path.Combine(root,"exceptions.jsonl"),JsonUtility.ToJson(new ErrorRow{message=message,stack=stack,type=type.ToString(),utc=DateTime.UtcNow.ToString("o")})+"\n");}catch{}
  }
