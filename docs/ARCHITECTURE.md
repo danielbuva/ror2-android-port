@@ -3231,6 +3231,12 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Its battery summary uses existing sustained samples only: signed current × voltage
+at the battery terminals, equally weighted sample means, endpoint charge/level
+changes, per-metric missing/gap coverage and observed external-power transitions.
+Missing endpoints remain unavailable; externally powered discharge is not labelled
+unplugged drain. Sampled unplugged status does not certify uninterrupted operation
+or an energy budget. No integrated energy or causal throttling claim is made.
 Optional `--completed-session` binds the completed camera report by attempt and
 raw-trace identity. Only complete retained recorder windows inside the sustained
 frame endpoints contribute sample-count-weighted timing/allocation/render means
