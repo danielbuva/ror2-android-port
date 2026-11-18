@@ -242,6 +242,19 @@ class SdkTextureTests(unittest.TestCase):
         result = subprocess.run([str(self.decoder), "1", "3", "bc6"], input=bytes(16), capture_output=True, timeout=10)
         self.assertEqual((result.returncode, result.stdout), (0, bytes((0, 0, 0, 255)) * 3))
 
+    def test_bc6_half_preserves_hdr_channels_and_cropped_block_order(self):
+        # One-subset BC6H mode with distinct RGB endpoints and all selectors zero.
+        hdr_block = (3 | (528 << 5) | (496 << 15) | (464 << 25)).to_bytes(16, "little")
+        command = [str(self.decoder), "5", "3", "bc6-half"]
+        data = hdr_block + bytes(16)
+        result = subprocess.run(command, input=data, capture_output=True, timeout=10)
+        hdr = struct.pack("<4H", 0x3FFF, 0x3C1F, 0x383F, 0x3C00)
+        black = struct.pack("<4e", 0, 0, 0, 1)
+        self.assertEqual((result.returncode, result.stdout), (0, (hdr * 4 + black) * 3))
+        for malformed in (data[:-1], data + b"x"):
+            result = subprocess.run(command, input=malformed, capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 67)
+
     def test_native_crunch_rejects_wrong_extents_and_malformed_streams(self):
         compiler = shutil.which("c++")
         if compiler is None:
