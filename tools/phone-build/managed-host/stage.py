@@ -90,6 +90,27 @@ def stage_python_wheels(extra, pins, destination):
     return {str(path): pins[path.name] for path in inputs}
 
 
+def stage_texture_sdk_guest(extra, pins, destination):
+    """Stage the pinned x86-64 QEMU inputs as app assets."""
+    if not extra or "texture_sdk_guest" not in extra:
+        return {}
+    required = {"libqemu-x86_64.so", "libtexture-pixels.so", "libtexture-etc.so", "libc++_shared.so"}
+    if not required <= extra["natives"].keys():
+        raise ValueError("Texture SDK guest requires QEMU, pixels, ETC and libc++ native providers")
+    source = Path(extra["texture_sdk_guest"]).resolve(strict=True)
+    inputs = {}
+    for name, expected in pins.items():
+        data = (source / relative(name)).read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError("Texture SDK guest input drift: " + name)
+        inputs[name] = data
+    for name, data in inputs.items():
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+    return {str(source / name): expected for name, expected in pins.items()}
+
+
 def load_metadata():
     data = json.loads(METADATA.read_text())
     if data.get("schema") != 1 or data.get("kind") != "owner-app-host-tools-v1" or data.get("python_version") != "3.14.8":

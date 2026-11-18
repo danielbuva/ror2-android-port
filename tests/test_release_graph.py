@@ -446,9 +446,11 @@ class ReleaseGraphTests(unittest.TestCase):
             pc.mkdir()
             for installed in ("libtexture-jpeg.so", "libtexture-etc.so", "libqemu-x86_64.so", "libtexture-pixels.so", "libc++_shared.so"):
                 (native / installed).write_text(installed)
-            guest = inputs / "acquired/texture-sdk"
+            runtime = inputs / "installed-runtime"
+            guest = runtime / "texture-sdk"
+            pins = json.loads((ROOT / "recipe/owner-app-host-tools.json").read_text())["texture_sdk_guest"]
             guest_files = {}
-            for name in G.TEXTURE_GUEST_FILES:
+            for name in pins:
                 path = guest / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(name)
@@ -456,8 +458,7 @@ class ReleaseGraphTests(unittest.TestCase):
 
             graph = G.Graph(ROOT, {})
             graph.conversion = "recipe/jobs/owner-code.json"
-            with mock.patch.object(G, "TEXTURE_GUEST_FILES", guest_files):
-                names = {key: graph.build(G.digest(ROOT / f"recipe/owner-{key}-textures.json")) for key in ("uncompressed", "alpha", "rgb-mip", "rgba")}
+            names = {key: graph.build(G.digest(ROOT / f"recipe/owner-{key}-textures.json")) for key in ("uncompressed", "alpha", "rgb-mip", "rgba")}
             jpeg, etc, sdk = (graph.jobs[names[key]] for key in ("uncompressed", "alpha", "rgb-mip"))
             self.assertIn("${native}/libtexture-jpeg.so", jpeg["arguments"])
             self.assertNotIn("--etc-codec", jpeg["arguments"])
@@ -473,6 +474,7 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertEqual(graph.jobs[extractor]["cache_witnesses"], [G.LINUX_COMPONENT])
             self.assertIn("--linux-texture", graph.jobs[extractor]["arguments"])
             acquired = inputs / "acquired/unity-linux-editor.tar.xz"
+            acquired.parent.mkdir()
             acquired.write_text("owner SDK archive")
             extracted = inputs / "work/jobs/sdk-output"
             extracted.mkdir(parents=True)
@@ -481,13 +483,20 @@ class ReleaseGraphTests(unittest.TestCase):
 
             dispatch = object.__new__(J.Dispatcher)
             dispatch.repo, dispatch.inputs, dispatch.native = ROOT, inputs, native
-            dispatch.runtime = dispatch.installed_runtime = inputs
+            dispatch.installed_runtime = runtime
+            dispatch.runtime = inputs / "release-runtime-view"
             dispatch.config = {"bindings": {"pc": "pc"}}
             dispatch.jobs_root = inputs / "work/jobs"
             dispatch.descriptors = graph.jobs
             dispatch.completed = {extractor: extracted}
             output, request_path = dispatch.jobs_root / "output", inputs / ".request.json"
-            J.UPDATES.write_json(request_path, dispatch.expand(sdk["request"], sdk, output, request_path))
+            expanded = dispatch.expand(sdk["request"], sdk, output, request_path)
+            self.assertEqual(
+                {str(guest / name): pin for name, pin in pins.items()},
+                {path: pin for path, pin in expanded["inputs"].items() if Path(path).is_relative_to(guest)},
+            )
+            expanded["inputs"].update({str(guest / name): pin for name, pin in guest_files.items()})
+            J.UPDATES.write_json(request_path, expanded)
             arguments = dispatch.expand(sdk["arguments"], sdk, output, request_path)
             pin = arguments[arguments.index("--sdk-toolchain-sha256") + 1]
             self.assertEqual(arguments[arguments.index("--sdk-toolchain") + 1], str(request_path))
@@ -502,6 +511,13 @@ class ReleaseGraphTests(unittest.TestCase):
             acquired.write_text("changed SDK archive")
             after = dispatch.input_pins(names["rgb-mip"])
             self.assertNotEqual(before[G.LINUX_COMPONENT], after[G.LINUX_COMPONENT])
+            guest_wrapper = guest / "texture-sdk-codec"
+            guest_token = G.TEXTURE_GUEST + guest_wrapper.name
+            guest_wrapper.write_text("changed packaged wrapper")
+            self.assertNotEqual(before[guest_token], dispatch.input_pins(names["rgb-mip"])[guest_token])
+            with self.assertRaisesRegex(ValueError, "tool input drift"):
+                texture.sdk_inputs(request_path, pin, pc)
+            guest_wrapper.write_text(guest_wrapper.name)
             codec.write_text("changed SDK member")
             with self.assertRaisesRegex(ValueError, "tool input drift"):
                 texture.sdk_inputs(request_path, pin, pc)

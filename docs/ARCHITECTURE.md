@@ -1294,8 +1294,11 @@ pixel tool and dependency pins. The existing texture owner admits it through
 attributed public bcdec header and owns the same integer transparency dilation
 with bounded native coordinate buffers; `sdk_texture_codec.c` calls the separately supplied
 SDK codec. Host-native SDK execution is an oracle; Android uses the public QEMU
-runner and genuine GNU runtime. No game runtime owner or Editor/project build
-is introduced. Full-cohort phone qualification remains pending.
+runner and genuine GNU runtime. The managed app-host builder packages the
+pinned public guest files as verified assets and installs the native helpers
+through its PackageManager library plan. The signed graph binds those installed
+paths and the separately extracted owner SDK member into the worker request.
+Signed app-host execution and complete phone qualification remain open.
 The same native pixel owner has experimental BC4/BC5 byte-channel decoding and
 linear/sRGB mip-chain pipe modes. It preserves byte units through the first
 linear reduction, then continuous float32 levels. These modes have authored

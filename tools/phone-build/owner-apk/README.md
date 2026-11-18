@@ -825,12 +825,10 @@ app-host backend tool plan. SDK texture operations use the same tool plan for
 Place the owner-acquired Unity Linux Editor archive at
 `acquired/unity-linux-editor.tar.xz`. One shared `sdk_inputs.py --linux-texture`
 job verifies the archive and extracts its pinned `Editor/etccompress.so` into
-the private job output. Provision the matching public `texture-sdk-codec`
-helper with mode `0700` and the GNU guest libraries under the private
-`acquired/texture-sdk` root. Use regular files at the paths in
-`release_graph.py`, including
-`linux/lib64/ld-linux-x86-64.so.2` and the files in
-`linux/lib/x86_64-linux-gnu`. The
+the private job output. Set `texture_sdk_guest` in the managed app-host plan
+to package the pinned public `texture-sdk-codec` and GNU guest libraries.
+The app host restores them under its verified `texture-sdk/` asset root
+and grants the wrapper mode `0700`. The
 [SDK texture provider build](../accepted-output/README.md#produce-single-mip-rgba-textures-with-the-owner-supplied-sdk)
 describes acquisition and compilation. The dispatcher writes the producer's
 toolchain JSON using actual run paths and passes its SHA-256. Archive, guest
