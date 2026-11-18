@@ -193,8 +193,10 @@ extents, indexes and final type tables supply original source, pack output and
 destination identities. Public policy declares candidate bindings, address groups,
 exceptional field routes and canonical pairs. The owner derives reached records,
 staged endpoints, complete types, routes and independent preloads. It writes
-retained PPtr-only relocation packs before invoking the unchanged structural
-emission boundary. Retained suppliers bind their own receipt-pinned type tables;
+retained PPtr-only relocation packs before invoking the structural emission
+boundary. Destinations that share a supplier record keep separate relocation
+packs so each can bind its own checked field routes to the same source lineage.
+Retained suppliers bind their own receipt-pinned type tables;
 an explicit `pointer_namespace` declares their already-relocated member table.
 Setup opens declared original and staged members; teardown closes streams on
 success or failure. Preparation retains pins and emits the existing request,

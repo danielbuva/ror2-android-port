@@ -509,6 +509,39 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(profile["bundle"]["asset_groups"][0]["roots"], [100, 200])
             self.assertEqual(second["catalog_bundle"]["sha256"], second["sha256"])
 
+    def test_fresh_preparation_keeps_distinct_routes_for_shared_supplier_record(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root)
+            alias = ["content", "CAB-content", 999]
+            policy["bindings"].append(dict(policy["bindings"][0], destination=alias))
+            policy["field_routes"].append(dict(owner=["content", "CAB-content", 200], field=["next"], pointer=[1, 10], target=alias))
+            policy_path = root / "policy.json"
+            policy_path.write_text(json.dumps(policy))
+            request["policy"] = pin(policy_path)
+            inputs.write_text(json.dumps(request))
+
+            prepared = P.prepare_request(inputs, root / "prepared")
+            rows = {row["destination"][2]: row for row in P.json_rows(root / "prepared/selected-records.jsonl")}
+            self.assertEqual(rows[100]["record_source"], rows[999]["record_source"])
+            self.assertNotEqual(rows[100]["provider"], rows[999]["provider"])
+            self.assertNotEqual(rows[100]["sha256"], rows[999]["sha256"])
+
+            emitted = P.produce_request(prepared["request"]["path"], root / "emitted")
+            W = P.module("unity_write")
+            with W.B.Bundle(Path(emitted["bundle"])).member("CAB-content") as stream:
+                layout = W.read_serialized(stream)
+                fields = {}
+                for row in layout["objects"]:
+                    if row["path_id"] in (100, 200, 999):
+                        stream.seek(layout["data_offset"] + row["offset"])
+                        fields[row["path_id"]] = P.pointers(W.B.exact(stream, row["bytes"]), layout["types"][row["type_id"]], {})
+            external_members = [row["path"].rsplit("/", 1)[-1] for row in layout["externals"]]
+            external_id = external_members.index("CAB-external") + 1
+            self.assertEqual(fields[100]["external",], (external_id, 10))
+            self.assertEqual(fields[200]["next",], (0, 999))
+            self.assertEqual(fields[999]["external",], (0, 200))
+
     def test_fresh_preparation_refuses_observed_contract_failures(self):
         for failure in ("body", "types", "ambiguous", "override"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
