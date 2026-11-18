@@ -75,6 +75,19 @@ public final class OwnerUpdateState {
         return "import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)
             || "install-prepare".equals(action) || "release-check".equals(action);
     }
+    /** Shared Activity/notification explanation, never a thermal control policy. */
+    public static String backgroundDetail(boolean running, boolean fresh, String status, boolean manual, boolean thermal, String error) {
+        if (!running || !fresh) return "Last recorded thermal state; not live. "
+            + (error != null && !error.isEmpty() ? "Recorded failure: " + error : "Reopen progress for current worker status.");
+        if (error != null && !error.isEmpty()) return "Conversion stopped or unavailable: " + error + ". Retry only after resolving the reported cause.";
+        if ("cancelled".equals(status)) return "Conversion cancelled. Retained work is revalidated on explicit retry.";
+        if ("failed".equals(status)) return "Conversion failed. Review the first failure before retrying.";
+        if ("complete".equals(status)) return "Producer finished; later reconstruction or installation steps may remain.";
+        if (thermal || "cooling".equals(status)) return (manual ? "Paused by you and cooling. " : "Cooling automatically. ")
+            + "Resume clears only a manual pause; it cannot bypass cooling. The 85 C ceiling releases below 70 C; the normal duty gate must also clear. A 15-minute ceiling pause stops work.";
+        if (manual || "paused".equals(status)) return "Paused by you; monitoring remains active. Resume continues when thermal admission permits.";
+        return "Conversion active in the foreground service. You may leave this screen; reopen it to inspect progress or cancel.";
+    }
     public Phase phase() { return phase; }
     public String message() { return message; }
     public boolean busy() {

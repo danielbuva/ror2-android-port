@@ -369,6 +369,16 @@ public final class ToolHostActivity extends Activity {
         } catch (Exception error) { model.observe("ERROR", error.getMessage()); }
         render();
     }
+    static String backgroundProgress(Context app) {
+        try {
+            File file = new File(app.getFilesDir(), "owner-input/thermal-state.json");
+            if (!file.isFile()) return "Thermal telemetry not available yet; no cooling or progress claim.";
+            JSONObject reading = readJson(file);
+            double age = System.currentTimeMillis() / 1000.0 - reading.optDouble("updated_at", 0);
+            return OwnerUpdateState.backgroundDetail(OwnerBuildService.isRunning(), age >= 0 && age <= 5,
+                reading.optString("status"), reading.optBoolean("manual_paused"), reading.optBoolean("thermal_paused"), reading.optString("error"));
+        } catch (Exception error) { return "Thermal telemetry unavailable: " + error.getMessage(); }
+    }
     private String phoneProgress() throws Exception {
         StringBuilder detail = new StringBuilder();
         File debugSource = new File(getFilesDir(), "owner-input/debug-release-source.json");
@@ -432,9 +442,7 @@ public final class ToolHostActivity extends Activity {
             if (!OwnerBuildService.isRunning() || System.currentTimeMillis() / 1000 - reading.optLong("updated_at") > 5) detail.append(" (last recorded reading; not live)");
             for (String zone : new String[]{"cpu", "gpu", "battery", "skin"})
                 detail.append("\n").append(zone).append(": ").append(reading.has(zone + "_celsius") && !reading.isNull(zone + "_celsius") ? reading.optString(zone + "_celsius") + " °C" : "unavailable");
-            if (reading.optBoolean("manual_paused")) detail.append("\nPaused by you; thermal monitoring remains active");
-            if (reading.optBoolean("thermal_paused")) detail.append("\nCooling under the unchanged thermal policy");
-            if (reading.has("error")) detail.append("\n").append(reading.optString("error"));
+            detail.append("\n").append(backgroundProgress(this));
         }
         else detail.append("\n\nThermal / battery: awaiting existing duty runner telemetry");
         Intent battery = registerReceiver(null, new android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED));

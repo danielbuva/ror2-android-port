@@ -326,6 +326,17 @@ public class Harness {
         check(!retryModel.screen(false,false,true,true,"IMPORTED",true,true).resume);
         retryModel.observe("INTERRUPTED","stopped");check(retryModel.screen(false,false,false,true,"",false,true).text.contains("may continue to Android installation"));
         check(!OwnerUpdateState.resumableAction("install"));check(OwnerUpdateState.resumableAction("release-build"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"running",false,false,"").contains("foreground service"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"paused",true,false,"").contains("Paused by you"));
+        String cooling=OwnerUpdateState.backgroundDetail(true,true,"paused",false,true,"");
+        check(cooling.contains("85 C")&&cooling.contains("below 70 C")&&cooling.contains("normal duty gate")&&cooling.contains("cannot bypass"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"cooling",true,true,"").contains("Paused by you and cooling"));
+        check(OwnerUpdateState.backgroundDetail(false,true,"running",false,false,"").contains("not live"));
+        check(OwnerUpdateState.backgroundDetail(true,false,"running",false,false,"").contains("not live"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"failed",false,false,"CPU telemetry unavailable").contains("CPU telemetry unavailable"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"complete",false,false,"").contains("steps may remain"));
+        check(OwnerUpdateState.backgroundDetail(false,true,"failed",false,false,"CPU telemetry unavailable").contains("Recorded failure: CPU telemetry unavailable"));
+        check(OwnerUpdateState.backgroundDetail(true,false,"failed",false,false,"ceiling pause reached 15 min").contains("Recorded failure: ceiling pause reached 15 min"));
         System.out.println("session install/update/hash/key/version/callback contracts PASS");
     }
 }
@@ -352,6 +363,9 @@ class OwnerInstallerTests(unittest.TestCase):
         self.assertIn("OwnerUpdateState.backendScript(updateAction)", activity)
         self.assertIn("OwnerUpdateState.Screen screen = model.screen(", activity)
         self.assertIn("resumeButton.setEnabled(screen.resume)", activity)
+        self.assertIn("OwnerUpdateState.backgroundDetail(", activity)
+        self.assertIn("backgroundProgress(this)", activity)
+        self.assertIn("ToolHostActivity.backgroundProgress(this)", SOURCE.with_name("OwnerBuildService.java").read_text())
         self.assertIn("buildButton.setEnabled(screen.build)", activity)
         self.assertIn("factory.init((java.security.KeyStore) null)", activity)
         self.assertIn("getAcceptedIssuers()", activity)
