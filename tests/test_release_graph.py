@@ -692,7 +692,7 @@ if __name__ == '__main__':
 request = json.loads(pathlib.Path(sys.argv[1]).read_text())
 assert sys.argv[2:] == ['--stop-after-conversion']
 work = pathlib.Path(request['owner_work'])
-assert (work / 'inventory/files.json').is_file()
+assert json.loads((work / 'inventory/files.json').read_text())['hash_mode'] == 'full'
 source = pathlib.Path(request['source_inputs']['original']).read_bytes()
 packages = pathlib.Path(request['source_inputs']['packages'])
 metadata = struct.pack('<II', 0xFAB11BAF, 31) + (pathlib.Path(request['sdk_install']) / 'receipt.json').read_bytes()
