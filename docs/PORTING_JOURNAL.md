@@ -6,7 +6,7 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
-## J1498 — Restore Mercenary's native normal slash material
+## J1499 — Restore Mercenary's native normal slash material
 
 2026-11-18. The body visual owner prepares Mercenary's shared normal
 slash prefab before GroundLight state configuration. On assisted Titanic
