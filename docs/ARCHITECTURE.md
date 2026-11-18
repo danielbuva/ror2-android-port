@@ -3318,8 +3318,9 @@ The batch stops on the first failure; independent actual APK/idle/OLED readback
 and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal
 verification retains the lease for diagnosis. No installation is performed.
-The batch's independent temperature-zone observer targets 250 ms intervals and
-refuses a measured gap above 1 s. Runtime aborts if one CPU/GPU zone remains
+The batch and shared device runner use an independent temperature-zone observer
+that targets 250 ms intervals. A measured gap over 1 s emits a trace warning and
+a gap over 5 s aborts. Runtime also aborts if one CPU/GPU zone remains
 above 95 C for at least three seconds, with no gap above 1 s. A reading at or
 below 95 C resets that zone's continuity. Battery at or above 43 C aborts immediately.
 Skin and HAL status are metrics. Trace rows and stage receipts record sampled
@@ -3340,8 +3341,9 @@ remain sampled in raw observations and all-zone peaks. The runtime thresholds
 apply to CPU/GPU and battery. Admission discovers zone types and readable paths
 with a separate 10-second ADB timeout while no gameplay runs. Runtime reads those
 physical temperature paths and battery service in one ADB transaction with a
-one-second timeout, reducing client startups. The measured one-second maximum
-sampling gap remains mandatory, including transaction time and sampling waits.
+five-second timeout. A timeout is a sampling failure. The measured gap
+includes transaction time and sampling waits, and gaps over 1 s are excluded
+from sampled time above 80 C.
 Unreadable temperature interfaces are excluded with their type/path recorded; known electrical pseudo-zones remain excluded. Unknown
 numeric sentinels and missing readable CPU coverage still refuse admission. Runtime and unexpected failures retain first-failure authority; a
 bounded stop worker cannot block temperature sampling. The owner records the

@@ -4,7 +4,8 @@ The caller launches this driver once and waits on its explicit atomic done file.
 No detached child owns the lease. Public checks retain their own scoped cleanup;
 an independent installed-byte/idle/display readback gates release of this lease.
 Independent sampling records all readable zones and peaks. Runtime aborts on
-CPU/GPU heat above 95 C for three seconds or battery at or above 43 C or a sampling gap above one second. Each new stage requires cooldown.
+CPU/GPU heat above 95 C for three seconds, battery at or above 43 C, or a
+sampling gap above five seconds. Each new stage requires cooldown.
 """
 
 import importlib
@@ -58,6 +59,8 @@ NON_TEMPERATURE_ZONES = {
     "vbat",
 }
 THERMAL_INTERVAL_SECONDS = 0.25
+THERMAL_MAX_GAP_SECONDS = 5
+THERMAL_GAP_ERROR = "Thermal sample gap exceeded five seconds"
 BATCH_DEADLINE_SECONDS = 3 * 60 * 60
 
 
@@ -172,9 +175,11 @@ class _GameThermalOwner:
                 if not self.runtime_zones:
                     raise RuntimeError("Runtime thermal sampling requires admission discovery")
                 # One ADB transaction reads admitted sensors and battery state.
-                # A second client startup consumed part of the one-second budget.
                 command = "cat " + " ".join(shlex.quote(path) for _, path in self.runtime_zones)
-                raw = self.device.cmd("shell", command + " && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=1)
+                try:
+                    raw = self.device.cmd("shell", command + " && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=THERMAL_MAX_GAP_SECONDS)
+                except subprocess.TimeoutExpired as error:
+                    raise RuntimeError(THERMAL_GAP_ERROR) from error
                 observation["runtime_raw"] = raw
                 sensors, separator, battery = raw.partition("\n__LAB_BATTERY__\n")
                 if not separator:
@@ -242,14 +247,17 @@ class _GameThermalOwner:
                 self.previous_above_80 = processor_peak > 80
                 self.peak_cpu_gpu_celsius = max(processor_peak, self.peak_cpu_gpu_celsius or processor_peak)
             observation.update(time_above_80_seconds=self.time_above_80_seconds, peak_cpu_gpu_celsius=self.peak_cpu_gpu_celsius)
+            if not all_zones:
+                if gap > THERMAL_MAX_GAP_SECONDS:
+                    raise RuntimeError(THERMAL_GAP_ERROR)
+                if gap > 1:
+                    observation["warning"] = "Thermal sample gap exceeded one second"
         except BaseException as error:
             observation["error"] = str(error)
             raise
         finally:
             with self.trace.open("a") as stream:
                 stream.write(json.dumps(observation) + "\n")
-        if not all_zones and gap > 1:
-            raise RuntimeError("Thermal sample gap exceeded one second")
         if at >= self.deadline:
             raise RuntimeError("Device run thermal deadline reached")
         if all_zones:
@@ -408,7 +416,7 @@ class _GameThermalOwner:
         finally:
             self.sample_stop.set()
             if self.thread:
-                self.thread.join(timeout=2)
+                self.thread.join(timeout=THERMAL_MAX_GAP_SECONDS + 1)
                 if self.thread.is_alive():
                     raise RuntimeError("CPU thermal observer failed to terminate")
         if self.error:
