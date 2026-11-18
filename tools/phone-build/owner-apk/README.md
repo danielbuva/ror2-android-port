@@ -457,6 +457,9 @@ Job schema 1 names an existing producer `script`, argument array, complete
 `outputs` map and optional `request`, prerequisite `needs` and named `artifacts`;
 `release_jobs.py` defines substitutions and checks dependency membership.
 Provision legitimate inputs through the existing owner-input flow, not releases.
+Each supported version's signed inventory must cover every original-file or
+directory binding in the install plan. Release authoring and installer
+preparation reject an incomplete binding before offering the import.
 
 **Install owner-built update** reuses PR #119's `OwnerInstaller` session owner.
 It checks the actual package, increasing version and retained signing certificate,
