@@ -2062,6 +2062,11 @@ cover fixed owner-work admission, exclusive outputs, immutable provider checks,
 retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
+When a signed conversion declares audio members, the managed producer derives
+the decoder-free bank index in its explicit owner workspace. Staging, the
+runtime request pin and the stage pin use that workspace and index together.
+The converter compares the local roster with the signed names before
+exposing the stage for APK assembly.
 
 `tools/phone-build/owner-code/legacy_init.py` owns current experimental
 historical Init-receipt compatibility. It requires the full accepted owner

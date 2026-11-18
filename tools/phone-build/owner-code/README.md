@@ -218,7 +218,7 @@ be reviewed. `source_inputs` has exactly these canonical absolute paths:
 | `newtonsoft` | Official Newtonsoft package 3.2.1 AOT Newtonsoft.Json.dll, pinned by hash. |
 | `dotnet` | The existing qualified .NET SDK host executable (current host control uses .NET 10). |
 | `ilspy_dll` | ILSpy 11.0.0.9375 CLI assembly, executed only as a decompiler under that host. |
-| `decoder` | The pinned vgmstream executable for required metadata qualification on a temporary bank copy. No audio playback occurs. |
+| `decoder` | The pinned vgmstream executable for standalone historical metadata qualification. A signed release with an audio roster stages from the hash-bound decoder-free index. |
 | `wwise_android_source` | Owner's authorized Android PINVOKE declarations. |
 | `wwise_os_string_source` | Matching authorized Android handwritten declarations. |
 | `wwise_abi_native` | Matching generic Release ARM64 SDK library for static ABI inspection. |
@@ -237,6 +237,12 @@ uses unchanged lower-level audio contract/pin generators and compilers; derives
 maps from the actual original catalog/IL and freshly decompiles the selected 14
 support sources; then compiles/post-processes all 145 gameplay sources. The three
 runtime request/stage/project admissions remain intact. No fake project is used.
+
+The signed audio roster selects explicit-workspace bank staging, then binds
+the same work root and decoder-free index into both generated runtime pins.
+The local stage roster must match the signed roster before conversion can
+expose the audio APK entries. This path still uses the host managed compiler
+and the historical Init producer's checkout work layout.
 
 `recipe/owner-managed-code.json` contains only minimum provider paths/hashes and
 support selection identities. At stage boundaries the owner rechecks original
