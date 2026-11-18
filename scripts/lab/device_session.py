@@ -23,6 +23,7 @@ import sys
 import threading
 import time
 import traceback
+from uuid import uuid4
 
 PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
 PROCESS_TIME = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
@@ -31,6 +32,8 @@ GOLEM_ATTACK = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+EntityS
 TITAN_INDICATOR = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+lab-titan-prefist-visible frame=\d+\s*$")
 DEVICE_RESERVE_BYTES = 20 * 1024**3
 INTERNAL_INSTALL_FLOOR_BYTES = 15 * 1024**3
+UNPLUGGED_SECONDS = 30 * 60
+UNPLUGGED_REQUEST = "owner-unplugged-request.json"
 
 
 def save(path, value):
@@ -91,7 +94,15 @@ def load_request(path, serial=None):
         value.setdefault(name, default)
         if type(value[name]) is not int or value[name] <= 0:
             raise ValueError(name + " must be a positive integer")
-    if value["mode"] not in {"launch", "sustained", "settings-save-failure", "profile-write-interrupt", "software-notices", "player-screens"}:
+    if value["mode"] not in {
+        "launch",
+        "sustained",
+        "settings-save-failure",
+        "profile-write-interrupt",
+        "software-notices",
+        "player-screens",
+        "owner-unplugged",
+    }:
         raise ValueError("Unknown device workload mode")
     if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
@@ -99,6 +110,22 @@ def load_request(path, serial=None):
         raise ValueError("Persistence workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
+    if value["mode"] == "owner-unplugged":
+        if value["duration_seconds"] != UNPLUGGED_SECONDS or "adopted_install" not in value:
+            raise ValueError("Owner unplugged workload requires 30 minutes and adopted-only installation")
+        if (value.keys() - required) & {
+            "input_script",
+            "input_mapping",
+            "input_schedule",
+            "selection",
+            "diagnostics",
+            "pacing_diagnostics",
+            "start_from_menu",
+            "capture_golem_attacks",
+            "capture_titan_indicator",
+            "require_high_refresh",
+        }:
+            raise ValueError("Owner unplugged workload uses physical play and its dedicated recorder")
     for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks", "capture_titan_indicator"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
@@ -528,6 +555,9 @@ def diagnostic_scratch(device, runtime):
         "-o",
         "-name",
         "movement-completed-session-*.json",
+        "-o",
+        "-name",
+        "owner-unplugged-*.jsonl",
         ")",
         "-exec",
         "stat",
@@ -784,9 +814,125 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
     return world
 
 
+def thermal_sensor_kind(name):
+    return next((kind for kind in ("cpu", "gpu", "battery", "skin") if name.lower().startswith(kind)), None)
+
+
+def unplugged_summary(path, config, pid):
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    if not rows or any(row.get("nonce") != config["nonce"] or str(row.get("pid")) != pid for row in rows):
+        raise RuntimeError("Unplugged trace has a different nonce or process")
+    if rows[-1]["kind"] == "aborted":
+        raise RuntimeError("Unplugged recorder aborted: " + rows[-1]["reason"])
+    if rows[0]["kind"] != "ready" or rows[0]["zones"] != config["zones"] or rows[-1]["kind"] != "complete":
+        raise RuntimeError("Unplugged trace lacks matching readiness and completion")
+    samples = rows[1:-1]
+    if not samples or samples[0]["elapsed_ms"] != 0 or samples[-1]["elapsed_ms"] < UNPLUGGED_SECONDS * 1000:
+        raise RuntimeError("Unplugged trace does not cover 30 minutes")
+    indices = [index for index, (kind, _) in enumerate(config["zones"]) if kind in {"cpu", "gpu"}]
+    hot_since = {}
+    for row in samples:
+        if row["kind"] != "sample" or row["plugged"] != 0:
+            raise RuntimeError("Unplugged trace contains a powered or non-sample row")
+        if not 0 <= row["gap_ms"] <= 5000 or len(row["zones_millic"]) != len(config["zones"]):
+            raise RuntimeError("Unplugged thermal coverage is incomplete")
+        if row["battery_decic"] >= 430 or any(
+            kind == "battery" and temperature >= 43000 for (kind, _), temperature in zip(config["zones"], row["zones_millic"])
+        ):
+            raise RuntimeError("Battery thermal limit exceeded")
+        for index in indices:
+            if row["zones_millic"][index] <= 95000:
+                hot_since.pop(index, None)
+            elif row["elapsed_ms"] - hot_since.setdefault(index, row["elapsed_ms"]) >= 3000:
+                raise RuntimeError("CPU/GPU sustained thermal limit exceeded")
+    peaks = [max(row["zones_millic"][index] for index in indices) / 1000 for row in samples]
+    powers = [row["current_ua"] * row["voltage_mv"] for row in samples]
+    energy = 0
+    time_above80 = 0.0
+    for index, (previous, current) in enumerate(zip(samples, samples[1:])):
+        gap = current["elapsed_ms"] - previous["elapsed_ms"]
+        if not 0 < gap == current["gap_ms"] or current["frames"] < previous["frames"]:
+            raise RuntimeError("Unplugged samples have inconsistent time or frame counters")
+        time_above80 += gap / 1000 if peaks[index] > 80 and gap <= 1000 else 0
+        energy += (powers[index] + powers[index + 1]) * gap
+    first, last = samples[0], samples[-1]
+    duration = last["elapsed_ms"] / 1000
+    energy_mwh = energy / (2 * 3_600_000 * 1_000_000)
+    frames = last["frames"] - first["frames"]
+    if frames <= 0:
+        raise RuntimeError("Unplugged trace has no foreground Unity frames")
+    return dict(
+        duration_seconds=duration,
+        samples=len(samples),
+        foreground_unity_frames=frames,
+        foreground_frames_per_elapsed_second=frames / duration,
+        battery_start_percent=100 * first["level"] / first["scale"],
+        battery_end_percent=100 * last["level"] / last["scale"],
+        signed_terminal_energy_mwh=energy_mwh,
+        mean_signed_terminal_power_mw=energy_mwh * 3600 / duration,
+        peak_battery_celsius=max(row["battery_decic"] for row in samples) / 10,
+        peak_cpu_gpu_celsius=max(peaks),
+        time_above80_seconds=time_above80,
+        thermal_gap_warnings=sum(row["gap_ms"] > 1000 for row in samples),
+        max_thermal_gap_seconds=max(row["gap_ms"] for row in samples) / 1000,
+    )
+
+
+def observe_unplugged(device, request, output, result, pid):
+    from device import retain_device_file
+
+    config = json.loads((output / UNPLUGGED_REQUEST).read_text())
+    name = "owner-unplugged-" + config["nonce"] + ".jsonl"
+    remote = device.read_receipt("runtime.json")["persistentDataPath"] + "/" + name
+    ready_deadline = time.monotonic() + 60
+    while time.monotonic() < ready_deadline:
+        row = device.sh("head", "-n", "1", "--", remote, check=False, timeout=5)
+        if row:
+            ready = json.loads(row)
+            if ready.get("nonce") != config["nonce"] or str(ready.get("pid")) != pid:
+                raise RuntimeError("Unplugged recorder readiness has a different nonce or process")
+            if ready.get("kind") == "aborted":
+                raise RuntimeError("Unplugged recorder could not arm: " + ready["reason"])
+            if ready.get("kind") != "ready" or ready.get("zones") != config["zones"]:
+                raise RuntimeError("Unplugged recorder readiness lacks the requested thermal coverage")
+            break
+        time.sleep(1)
+    else:
+        raise RuntimeError("APK did not acknowledge the unplugged recorder")
+
+    prompt = "Unplug the Nova for 30 minutes now. Play normally, then reconnect USB when the recording finishes."
+    save(output / "unplug-now.json", dict(message=prompt, ready=ready))
+    print(prompt, flush=True)
+    # Only the app observes the battery and device during this window.
+    time.sleep(UNPLUGGED_SECONDS)
+    reconnect_deadline = time.monotonic() + 600
+    while time.monotonic() < reconnect_deadline:
+        try:
+            if device.cmd("get-state", check=False, timeout=5) == "device":
+                row = device.sh("tail", "-n", "1", "--", remote, check=False, timeout=5)
+                if row and json.loads(row).get("kind") in {"complete", "aborted"}:
+                    break
+        except (subprocess.TimeoutExpired, json.JSONDecodeError):
+            pass
+        time.sleep(5)
+    else:
+        raise RuntimeError("USB reconnect and recorder terminal row were not available in ten minutes")
+
+    verify_owned(device, request["apk_sha256"])
+    capture_path = output / name
+    digest = retain_device_file(device, remote, capture_path, result["device_cleanup"])
+    result["owner_unplugged"] = dict(trace=name, sha256=digest)
+    result["owner_unplugged"].update(unplugged_summary(capture_path, config, pid))
+
+
 def run_workload(device, thermal, request, output, result, *, _reset_idle=None, start_attempt=None):
     process_checks = result.setdefault("process_checkpoints", [])
     checked_launch = partial(launch, process_checks=process_checks)
+    if request["mode"] == "owner-unplugged":
+        launched = checked_launch(device, thermal)
+        save(output / "launch.json", launched)
+        observe_unplugged(device, request, output, result, str(launched["pid"]))
+        return
     if request["mode"] == "profile-write-interrupt":
         from settings_write_interrupt_check import check_profile_write_interrupt
 
@@ -999,7 +1145,7 @@ def execute(request):
             try:
                 result["install"] = device.install(apk)
             except InstallSignatureMismatch:
-                if device.package != PACKAGE or not active_hash or not payload:
+                if request["mode"] == "owner-unplugged" or device.package != PACKAGE or not active_hash or not payload:
                     raise
                 limit = device.settings.get("apk_install_limit")
                 if limit is not None and common.read(device.install_counter())["dispatched"] >= limit:
@@ -1058,7 +1204,22 @@ def execute(request):
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600
         thermal.phase = request["mode"]
         prepare_launch(device, result.setdefault("prelaunch", {}))
-        thermal.start()
+        if request["mode"] == "owner-unplugged":
+            zones = [(kind, path) for name, path in thermal.runtime_zones if (kind := thermal_sensor_kind(name))]
+            if not {"cpu", "gpu"} <= {kind for kind, _ in zones}:
+                raise RuntimeError("Owner unplugged workload requires CPU and GPU thermal sensors")
+            config = dict(nonce=uuid4().hex, zones=zones)
+            remote = runtime + "/" + UNPLUGGED_REQUEST
+            if device.sh("sh", "-c", 'test ! -e "$1" && test ! -L "$1" && echo absent', "sh", remote, check=False) != "absent":
+                raise RuntimeError("Previous owner session request is still present")
+            restore[remote] = None
+            local = output / UNPLUGGED_REQUEST
+            local.write_text(json.dumps(config) + "\n")
+            device.cmd("push", str(local), remote)
+            if json.loads(device.sh("cat", remote)) != json.loads(local.read_text()):
+                raise RuntimeError("Uploaded owner session request differs")
+        else:
+            thermal.start()
         reset_resumed_peer(device, request, lease, result)
         run_workload(
             device,
