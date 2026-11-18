@@ -76,7 +76,16 @@ def valid_checkpoint(value):
 
     if not isinstance(value, dict) or value.get("schema") != 1 or not isinstance(value.get("id"), str):
         return False
-    if value.get("status") not in {"running", "paused", "interrupted", "failed", "cancelled", "awaiting_install", "awaiting_consent", "complete"}:
+    if not isinstance(value.get("status"), str) or value.get("status") not in {
+        "running",
+        "paused",
+        "interrupted",
+        "failed",
+        "cancelled",
+        "awaiting_install",
+        "awaiting_consent",
+        "complete",
+    }:
         return False
     if value.get("current_stage") not in (None, *STAGES) or not number(value.get("elapsed_seconds")):
         return False
@@ -89,7 +98,15 @@ def valid_checkpoint(value):
     for name, row in zip(STAGES, rows):
         if not isinstance(row, dict) or row.get("id") != name or not isinstance(row.get("label"), str):
             return False
-        if row.get("status") not in {"pending", "running", "interrupted", "complete", "not_required", "failed", "awaiting_consent"}:
+        if not isinstance(row.get("status"), str) or row.get("status") not in {
+            "pending",
+            "running",
+            "interrupted",
+            "complete",
+            "not_required",
+            "failed",
+            "awaiting_consent",
+        }:
             return False
         if not all(number(row.get(key)) for key in ("completed", "total", "elapsed_seconds")):
             return False
