@@ -4704,12 +4704,19 @@ replacement, toggling and source ownership. Rendering remains a device gate.
 effect sources and native projectile ghosts and DamageTrail segment references
 before their pools instantiate them. It follows typed prefab edges with cycle
 protection, including CharacterBody's separately loaded FireTrail. The original
-body visual owner submits the Mercenary Expose prefab after resolving its
-native field, before the temporary visual effect first instantiates it. Original
+body visual owner submits Mercenary's persistent and consume Expose prefabs
+after resolving their native fields on CharacterBody and HealthComponent. Original
 source slots and particle trails are restored by integrated-world cleanup before
 the session destroys its material copies; source blend values remain intact.
 The session counts objective projectile materials during catalog setup. The
 integrated-world report includes these counts from its first snapshot.
+
+`CombatSpineSession` owns one projectile service for the entire local run.
+Direct stage diagnostics start it before first-scene activation so native
+scene callbacks can spawn projectiles. Player combat reuses that instance.
+Rock spawner coroutines retire before the service, including when first-stage
+setup fails before input owns combat cleanup.
+
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
 `AndroidProfileSession` reserves each original achievement event before its

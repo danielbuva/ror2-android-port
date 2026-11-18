@@ -245,6 +245,9 @@ public sealed partial class PortSession
                 coordinator.Check(coordinator.firstStageSpec != null && !coordinator.firstStageSpec.moonMission,
                                   "Starting scene has no converted Android stage content: " + coordinator.firstStageName);
             }
+            // Native scene Start can fire projectiles before the player enters combat.
+            if (coordinator.DirectStageDiagnosticRequested && cfg.combatSpine)
+                coordinator.GetCombatSpineSession().PrepareProjectileService();
             var load = coordinator.firstStageSpec == null
                            ? LoadStageGeometry("golemplains-spine-lab", cfg.stagePreviewCallbacks, null, cfg.stageMapZoneCount,
                                                cfg.stageMapZoneActiveNames, cfg.stagePreviewNames)

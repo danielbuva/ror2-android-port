@@ -1217,6 +1217,8 @@ public sealed partial class PortSession : MonoBehaviour
                     r.error += " Cleanup: " + e;
                     r.success = false;
                 }
+                // First-stage geometry can start the service before input cleanup is entered.
+                combatSpineSession?.ReleaseProjectileService();
                 if (obstacle)
                     Destroy(obstacle);
                 if (host)
