@@ -7,6 +7,8 @@ using System.Reflection;
 public class GameObject
 {
     public bool alive=true,activeSelf=true;
+    public string name="FixtureEffect";
+    public int GetInstanceID(){return 42;}
     public static implicit operator bool(GameObject value) { return value!=null&&value.alive; }
 }
 public class EffectManagerHelper
@@ -18,15 +20,17 @@ public class EffectPool
 {
     public readonly List<EffectManagerHelper> InUse=new List<EffectManagerHelper>();
     public readonly List<EffectManagerHelper> inactive=new List<EffectManagerHelper>(),deferred=new List<EffectManagerHelper>();
+    readonly List<EffectManagerHelper> _OrphanedEffects=new List<EffectManagerHelper>();
     public string mode="immediate";public int calls;public Action onReturn;
     public int InUseCount(){return InUse.Count;}
+    public int PoolCount(){return inactive.Count;}
     public bool IsObjectInPool(EffectManagerHelper value){return inactive.Contains(value);}
     public void ReturnObject(EffectManagerHelper value)
     {
         calls++;if(onReturn!=null)onReturn();
         if(mode=="throw")throw new InvalidOperationException("authored native return refusal");
         if(mode=="deferred"){deferred.Add(value);return;}
-        if(mode=="stuck")return;
+        if(mode=="stuck"){_OrphanedEffects.Add(value);return;}
         InUse.Remove(value);inactive.Add(value);value.gameObject.activeSelf=false;
     }
     public void FinishNativeDestruction()
@@ -98,6 +102,7 @@ public static class HostContract
         pool.FinishNativeDestruction();Time.frameCount++;Check(!iterator.MoveNext(),"Native OnDestroy removal permits continuation");
         Check(pool.calls==7&&AssetAsyncLiaison.releases==1&&owner.dependentReleases==1&&owner.r.stageProgress.effectLoansReturned==7&&owner.r.runClock.endRunEffectLoansReturned==7,"Deferred retirement preserves counts/order");
         owner=Fresh("stuck",1,out pool);iterator=owner.CleanupSeam();Check(iterator.MoveNext(),"Stuck return reaches one fence");Time.frameCount++;Refuses(iterator,"Owned stage effect loans survived original return callbacks");
+        Check(owner.firstFailure.Contains("issuedFrame=100, currentFrame=101")&&owner.firstFailure.Contains("FixtureEffect inUse=1 pooled=0 [FixtureEffect#42 active=True issued=True orphan=True]"),"Native refusal names the retained prefab and orphaned helper");
         Check(pool.calls==1&&AssetAsyncLiaison.releases==0&&owner.dependentReleases==0&&owner.Stage.Retained&&owner.Clock.Retained&&owner.r.stageProgress.effectLoansReturned==0,"Stuck native owner retained, no false credit or release");
         Refuses(owner.CleanupSeam(),"Owned stage effect loans survived original return callbacks");Check(pool.calls==1,"Refusal never reissues native return");
         owner=Fresh("deferred",1,out pool);iterator=owner.CleanupSeam();Check(iterator.MoveNext(),"Foreign-map test suspends");EffectManager._EffectPrefabMap=new Dictionary<GameObject,EffectPool>(EffectManager._EffectPrefabMap);Time.frameCount++;Refuses(iterator,"pool map changed");Check(pool.calls==1&&AssetAsyncLiaison.releases==0&&owner.Stage.Retained,"Foreign dictionary refuses without releasing");
