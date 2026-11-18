@@ -425,6 +425,10 @@ It audits public source, runs synthetic tests, builds a deterministic ZIP from
 committed regular Git blobs only, signs the canonical manifest, verifies the
 result and publishes exactly the three assets above. Dirty working-tree bytes and untracked files are never included; symlinks
 and binary outputs are refused. No release is published by opening a PR.
+Releases that include the reviewed smoke scene, project settings or authored
+shaders require `PUBLIC_MINIMUM_INSTALLER_VERSION=5` or later. When revising
+those inputs, update their reviewed publication hashes and producer recipe
+pins together. Installer 5 verifies the revision using the signed bundle.
 The reviewed plan at `PUBLIC_RELEASE_PLAN_PATH` has `schema: 1`, extra public
 `files`, and `entries` mapping each final output to `recipe_files`,
 `producer_files`, and a `job` JSON path. Each closure must include its transitive

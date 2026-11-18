@@ -1497,6 +1497,10 @@ passes input, dependency and output hash checks before reuse. The release owner
 refuses key loss on updates. `owner-apk/public_release.py` owns canonical public manifests, detached
 signatures and tracked-only bundles; `.github/workflows/public-release.yml`
 publishes these on authorized version tags using an externally provisioned key.
+The publisher checks exact reviewed hashes for the authored smoke scene,
+project settings and shader sources. Installer 5 admits those paths and
+checks each extracted member against the signed bundle index, including
+later reviewed revisions of those inputs.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
 verification and the private update transaction; `release_jobs.py` dispatches
 signed job recipes to existing source-only producers. Optional
