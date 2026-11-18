@@ -672,6 +672,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
 
             for name in (*G.INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so"):
                 write(native / name, "installed tool fixture " + name)
+            write(runtime / "data-hashes.json", {"clang/21/include/header.h": "fixture v1"})
             original = inputs / "import/files/Data/source.txt"
             write(original, "owned fixture")
             input_manifest = "recipe/inputs.json"
@@ -698,7 +699,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
                 write(repo / f"recipe/{stem}.json", {})
             write(repo / "recipe/assembly-transforms.json", {"tool_sources": {}})
             write(repo / "tools/phone-build/package-assemblies/profile.json", {})
-            code_request, native_request = "recipe/owner-code-request.json", "recipe/owner-native-request.json"
+            code_request, native_request, burst_request = [f"recipe/owner-{name}-request.json" for name in ("code", "native", "burst")]
             player_profile = "recipe/owner-player-fixture.json"
             write(repo / player_profile, {"project_assemblies": [], "outputs": {}, "registry": {"file": "registry.assets", "path": "registry.json"}})
             write(repo / "recipe/registry.json", {})
@@ -837,6 +838,11 @@ if 'audio_members' in request:
     supplied = managed / 'supplied-sdk'
     supplied.mkdir()
     (supplied / 'libAkSoundEngine.so').write_bytes(b'local licensed library fixture')
+    burst = frame.parent.parent / 'burst'
+    burst.mkdir()
+    (burst / 'lib_burst_generated.so').write_bytes(pathlib.Path(request['burst_tools']['runtime']).read_bytes())
+    assert request['linux_tools']['adapter'].endswith('/libgnu-tool-adapter.so')
+    (burst / 'burst.xml').write_text('<linker/>')
 """,
             )
             write(
@@ -942,7 +948,11 @@ providers, _ = native.converter_inputs(receipt, pin, sources, metadata, profile,
 out = pathlib.Path(request['output'])
 out.mkdir()
 native.expand(providers['Fixture.cpp'], out / 'source.cpp')
-(out / 'libil2cpp.so').write_bytes((out / 'source.cpp').read_bytes() + pathlib.Path(request['android_tools']['linker']).read_bytes())
+tools = request['android_tools']
+if 'resource_dir' in tools:
+    assert pathlib.Path(tools['resource_dir']).parts[-2:] == ('clang', '21')
+    assert pathlib.Path(request['sdk_install']).parts[-2:] == ('acquired', 'sdk')
+(out / 'libil2cpp.so').write_bytes((out / 'source.cpp').read_bytes() + pathlib.Path(tools['linker']).read_bytes())
 (out / 'global-metadata.dat').write_bytes(metadata.read_bytes())
 (out / 'result.json').write_text('{"success":true}')
 """,
@@ -981,6 +991,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     native_request=native_request,
                     package_archives=True,
                     audio_stage_receipt=audio_layout if current else None,
+                    burst_request=burst_request if current else None,
                 )
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
@@ -996,6 +1007,11 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     self.assertIn("managed_package_inputs", graph.jobs[code]["artifacts"])
                     self.assertIn(package_job, graph.jobs[player]["needs"])
                     self.assertIn(code, graph.jobs[native_job]["needs"])
+                    self.assertEqual(graph.jobs[native_job]["request"]["android_tools"], graph.jobs[code]["request"]["android_tools"])
+                    self.assertTrue(G.INSTALLED_CODE_WITNESSES.issubset(graph.jobs[native_job]["cache_witnesses"]))
+                    self.assertIn(burst_request, graph.jobs[code]["source_files"])
+                    self.assertIn("recipe/owner-j850-code.json", graph.jobs[code]["source_files"])
+                    self.assertNotIn("recipe/jobs/owner-burst-code.json", graph.jobs)
                     self.assertNotIn(str(audio_layout), json.dumps(graph.jobs[code]))
                     self.assertNotIn("private authoring witness", json.dumps(graph.jobs[code]))
                 else:
@@ -1035,15 +1051,16 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 )
                 if current:
                     profile, _ = admission.assembly_profile(result["outputs"], inputs, release)
-                    audio = {
+                    code_outputs = {
                         "apk/assets/stage-receipt.json",
                         "apk/assets/Audio/GeneratedSoundBanks/Android/Init.bnk",
                         "apk/assets/Audio/GeneratedSoundBanks/Android/Fixture.bnk",
                         "apk/assets/Audio/GeneratedSoundBanks/Android/Media/1.wem",
                         "apk/lib/arm64-v8a/libAkSoundEngine.so",
+                        "apk/lib/arm64-v8a/lib_burst_generated.so",
                     }
-                    self.assertEqual(set(graph.jobs[code]["outputs"]), audio)
-                    self.assertEqual({row["path"] for row in json.loads(profile.read_text())["targets"]} & audio, audio)
+                    self.assertEqual(set(graph.jobs[code]["outputs"]), code_outputs)
+                    self.assertEqual({row["path"] for row in json.loads(profile.read_text())["targets"]} & code_outputs, code_outputs)
                     local_receipt = Path(result["outputs"]["apk/assets/stage-receipt.json"])
                     self.assertEqual(json.loads(local_receipt.read_text())["inventory"]["sha256"], G.digest(original))
                 return result
@@ -1115,12 +1132,32 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             del request["target"]
             request["source_inputs"]["decoder"] = "${native}/historical-audio-decoder"
             write(repo / code_request, request)
+            write(repo / native_request, {name: value for name, value in native_template.items() if name not in {"android_tools", "cache_witnesses"}})
+            write(repo / "recipe/owner-j850-code.json", {})
+            burst_runtime = inputs / "acquired/burst/compiler"
+            write(burst_runtime, "Burst fixture v1")
+            write(
+                repo / burst_request,
+                {
+                    "output": "${output}",
+                    "burst_tools": {"command": ["${native}/libgnu-tool-adapter.so"], "runtime": "${inputs}/acquired/burst/compiler"},
+                    "linux_tools": {"adapter": "${native}/libgnu-tool-adapter.so"},
+                    "cache_witnesses": ["${inputs}/acquired/burst/compiler"],
+                },
+            )
             build(current=True)
             self.assertFalse(build(current=True)["rebuilt"])
             write(native / G.INSTALLED_CODE_TOOLS["dotnet"], "installed tool fixture updated")
             progress.clear()
             build(current=True)
             self.assertIn((code, False), progress)
+            write(burst_runtime, "Burst fixture v2")
+            self.assertEqual(build(current=True)["rebuilt"], ["apk/lib/arm64-v8a/lib_burst_generated.so"])
+            write(runtime / "data-hashes.json", {"clang/21/include/header.h": "fixture v2"})
+            progress.clear()
+            self.assertFalse(build(current=True)["rebuilt"])
+            self.assertIn((code, False), progress)
+            self.assertIn((native_job, False), progress)
 
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):

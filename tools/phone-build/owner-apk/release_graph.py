@@ -33,6 +33,7 @@ INSTALLED_CODE_TOOLS = {
     "linker": "lib-ld.lld-.so",
     "objcopy": "libobjcopy.so",
 }
+INSTALLED_CODE_WITNESSES = {"${native}/" + path for path in INSTALLED_CODE_TOOLS.values()} | {"${installed_runtime}/data-hashes.json"}
 TEXTURE_NATIVE = {
     "jpeg_codec": "libtexture-jpeg.so",
     "etc_codec": "libtexture-etc.so",
@@ -925,7 +926,7 @@ class Graph:
             request["source_inputs"]["dotnet"] = "${native}/" + INSTALLED_CODE_TOOLS["dotnet"]
             request["android_tools"] = {name: "${native}/" + path for name, path in INSTALLED_CODE_TOOLS.items()}
             request["android_tools"]["resource_dir"] = "${installed_runtime}/clang/21"
-            cache_witnesses = sorted(set(cache_witnesses) | {"${native}/" + path for path in (*INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so")})
+            cache_witnesses = sorted(set(cache_witnesses) | INSTALLED_CODE_WITNESSES | {"${native}/libhostfxr10.so"})
             request["audio_members"] = members
             outputs = {
                 "apk/assets/stage-receipt.json": "managed-production/staged/stage-receipt.json",
@@ -1016,7 +1017,9 @@ class Graph:
         if request.get("output") != "${output}":
             raise ValueError("native request must use the dispatcher output")
         arguments = ["${request}"]
+        cache_witnesses = request.pop("cache_witnesses", [])
         if conversion:
+            converted = self.jobs[conversion]["request"]
             receipt = self.artifact_pin(conversion, "receipt")
             request.update(
                 converter_receipt=receipt["path"],
@@ -1025,9 +1028,11 @@ class Graph:
                 sources=self.artifact_pin(conversion, "sources")["path"],
                 sources_compressed=True,
             )
+            if "android_tools" in converted and not {"android_tools", "linux_tools"} & request.keys():
+                request.update(sdk_install=converted["sdk_install"], android_tools=converted["android_tools"])
+                cache_witnesses = sorted(set(cache_witnesses) | INSTALLED_CODE_WITNESSES)
             arguments.append("--from-conversion")
         name = "recipe/jobs/owner-native-code.json"
-        cache_witnesses = request.pop("cache_witnesses", [])
         self.jobs[name] = {
             "schema": 1,
             "script": "tools/phone-build/owner-code/native.py",
@@ -1046,6 +1051,18 @@ class Graph:
         policy = "recipe/owner-native-arm64.json"
         self.job_profiles[name] = {"authored_inputs": {policy: digest(self.repo / policy)}}
         return name
+
+    def conversion_burst(self, request_path):
+        """Build Burst and check its preservation roots before stripping the same providers."""
+        request = json.loads((self.repo / request_path).read_text())
+        if request.get("output") != "${output}" or not all(isinstance(request.get(name), dict) for name in ("burst_tools", "linux_tools")):
+            raise ValueError("signed Android Burst requires the dispatcher output and explicit Burst and Linux tools")
+        conversion = self.jobs[self.conversion]
+        conversion["request"].update(burst_tools=request["burst_tools"], linux_tools=request["linux_tools"])
+        conversion["outputs"]["apk/lib/arm64-v8a/lib_burst_generated.so"] = "backend/burst/lib_burst_generated.so"
+        conversion["artifacts"]["burst_preservation"] = "backend/burst/burst.xml"
+        conversion["cache_witnesses"] = sorted(set(conversion["cache_witnesses"]) | set(request.get("cache_witnesses", [])))
+        self.public_files[self.conversion].extend((request_path, "recipe/owner-j850-code.json"))
 
     def sdk_extraction(self):
         name = "recipe/jobs/owner-sdk-inputs.json"
@@ -1147,6 +1164,8 @@ class Graph:
             raise ValueError("audio packaging requires code conversion and matching native production")
         self.package_inputs = self.package_preparation() if package_archives else None
         self.conversion = self.code_conversion(code_request, audio_stage_receipt) if code_request else None
+        if audio_stage_receipt is not None and burst_request:
+            self.conversion_burst(burst_request)
         self.android_sdk = self.sdk_extraction() if sdk_component else None
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         # Referenced donors and staged bundles remain runtime dependencies. Ship
@@ -1168,7 +1187,7 @@ class Graph:
             selected_jobs.append(self.conversion)
         if sdk_request:
             selected_jobs.append(self.sdk_package(sdk_request))
-        if burst_request:
+        if burst_request and audio_stage_receipt is None:
             selected_jobs.append(self.burst_code(burst_request))
         if self.android_sdk and not any(self.android_sdk in job["needs"] for job in self.jobs.values()):
             raise ValueError("Android SDK component requires a player or SDK package consumer")
