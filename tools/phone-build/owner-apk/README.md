@@ -457,6 +457,9 @@ Job schema 1 names an existing producer `script`, argument array, complete
 `outputs` map and optional `request`, prerequisite `needs` and named `artifacts`;
 `release_jobs.py` defines substitutions and checks dependency membership.
 Provision legitimate inputs through the existing owner-input flow, not releases.
+Each supported version's signed inventory must cover every original-file or
+directory binding in the install plan. Release authoring and installer
+preparation reject an incomplete binding before offering the import.
 
 **Install owner-built update** reuses PR #119's `OwnerInstaller` session owner.
 It checks the actual package, increasing version and retained signing certificate,
@@ -885,9 +888,10 @@ sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
 not APK or gameplay acceptance. The generated two-job synthetic fixture also
 checks receipt identity and reuse on the second run.
 
-The phase declaration additionally binds `scene_environment_result`,
-`scene_environment_request`, `scene_environment_bundle` and
-`scene_environment_images`. The environment producer runs separately. With a
+The current scene phase binds the installed `libtexture-pixels.so` hash and
+uses the original `level0.resS` stream. Phase declarations using the capture
+mode bind `scene_environment_result`, `scene_environment_request`,
+`scene_environment_bundle` and `scene_environment_images` explicitly. With a
 fresh code request, the separately acquired SDK supplies built-in uGUI
 `Runtime/UI/Core` and the macOS Unity binary read by the manager. Acquired mode
 binds `ugui_source` and `sdk_binary` explicitly. Manager shaders and startup

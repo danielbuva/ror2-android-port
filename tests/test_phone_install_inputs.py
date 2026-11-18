@@ -120,6 +120,26 @@ class InstallInputTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source changed"):
             INPUTS.describe(self.index, self.repo, self.inputs)
 
+    def test_newer_version_must_cover_release_bindings_before_import(self):
+        manifest = self.repo / self.plan["required_inputs"]
+        moved = {**self.manifest["files"][0], "path": "DataMoved/example.txt"}
+        newer = {"schema": 1, "game_version": "synthetic-v2", "files": [moved]}
+        catalog = {"schema": 2, "supported": [self.manifest, newer], "recognized": []}
+
+        def publish():
+            manifest.write_text(json.dumps(catalog))
+            self.index["files"][self.plan["required_inputs"]] = INPUTS.UPDATES.RELEASE.digest(manifest)
+
+        publish()
+        with self.assertRaisesRegex(ValueError, "synthetic-v2.*binding data: Data"):
+            INPUTS.describe(self.index, self.repo, self.inputs)
+        self.assertFalse((self.inputs / "install-inputs.json").exists())
+
+        catalog["recognized"].append(catalog["supported"].pop())
+        publish()
+        description = INPUTS.describe(self.index, self.repo, self.inputs)
+        self.assertEqual(description["recognized_versions"][0]["manifest"], newer)
+
     def test_stale_extra_private_files_never_reach_root_bindings(self):
         self.import_fixture()
         (self.inputs / "import/files/stale.txt").write_text("old synthetic release")

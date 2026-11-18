@@ -631,12 +631,14 @@ Lab authoring policy, binds the fresh registry/shared file and writes `level0`.
 `scene_sdk.py` reads paired ARM64 SDK code/symbol files to derive native tag
 registrations; shared `manager_sdk.py` owns constant argument decoding. Source
 schemas, SDK Cube identity, material parameters and every direct reference are
-checked. Setup supplies explicit environment result/request/bundle/image inputs
-and a new output; teardown closes readers/maps, retaining records, schemas and
-provider receipts under `default-scene-source/`. The player-data parent consumes
-its own fresh registry/shared outputs and adds the produced file. Native HDR,
-ambient and default-scene loading compatibility remain open; no raw-exact
-historical closure or game-runtime owner is added.
+checked. The staged release uses the original RenderSettings and its linked
+Cubemap stream. The existing native pixel decoder converts all BC6H face/mip
+chains to inline RGBAHalf. RenderSettings retains its ambient coefficients and
+indirect specular color. The capture path remains available with explicit
+result/request/bundle/image inputs. The player-data parent adds the produced file
+and closes readers, retaining schemas and provider receipts under
+`default-scene-source/`. Exact-editor loading and device visual acceptance of
+the original lighting remain open.
 `stage_contexts.py` owns original-record population and identity context production.
 `recipe/owner-stage-contexts.json` pins original scenes/catalog/pool suppliers and
 selects the existing global-root suppression policy. The shared
