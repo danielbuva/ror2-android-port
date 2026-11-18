@@ -226,7 +226,9 @@ class Acquisition:
         self.installer.set_phase(case)
         self.choose(phone, kind, name)
         start = time.monotonic()
-        phone.tap("Import / resume game files")
+        # The picker controls precede Import in the same ScrollView. The
+        # status above them can span multiple screens after a selection.
+        phone.tap("Import / resume game files", scroll_down_first=True)
         row = self.wait_import(phone, "ACTIVE" if expected == "CANCELLED" else expected)
         result = self.results[case] = {}
         if expected == "CANCELLED":
