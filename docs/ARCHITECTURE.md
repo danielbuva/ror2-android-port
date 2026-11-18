@@ -6729,6 +6729,20 @@ Receipts and raw motion evidence stay ignored. This verifies software delivery;
 it never qualifies physical buttons, a touchscreen digitizer or normal play.
 
 
+## Whole-catalog texture alpha
+
+The current whole-catalog full build calls `catalog_jpeg_alpha.stage` before
+bundle generation. It resolves each staged JPEG Texture2D through the accepted
+catalog and verifies the corresponding original bundle before decoding its
+pixels. Nonopaque images become lossless PNG input under their existing Unity
+paths and GUIDs. The exact-editor texture fixture verifies that the importer
+reads the PNG signature at the existing path. Ordinary textures in this cohort
+use Android RGBA32 and retain input alpha without RGB dilation or block
+compression. Packed normals decode X from source alpha and keep their NormalMap
+importer and Android format selection.
+The generated `.rebuild/catalog-jpeg-alpha.json` records the original channel
+hashes and restored image hashes. Code builds continue to use the frozen payload.
+
 ## Original collision policy
 
 `whole_catalog.stage_source_collision_policy` owns build-time restoration of

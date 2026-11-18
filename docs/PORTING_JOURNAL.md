@@ -4205,3 +4205,19 @@ Retained runtime `629cf5aa`, SHA-256 `b8d59ed5f6f86ed0876b135e4dc395c12aa8575642
 Evidence: `work/coordination/alpha-packaging-1117/acquisition-private-controls.done.json`.
 Owned scratch and installer were removed. External provider selection, cross-UID
 grant reopen and cancellation after copying begins remain open.
+
+## J1489 — Restore source texture alpha and Bison smoke rings
+
+2026-11-18. The full-catalog build restores 11 ordinary alpha textures
+and 12 packed normals from the accepted source while retaining Unity
+paths and GUIDs. The Android RGBA32 Twotone ramp matches all 1,024 source
+alpha values. Assisted Frozen Wall samples 60 and 70 show live Bison
+SmokeRings with the same material and blend and without the old opaque donuts.
+APK SHA-256 `80ba4f4b7d96c22588a307089951c10863c278fbeb17327110303f9d9fbb157f` (source `b8e69754`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/`:
+`direct-frozenwall-jpeg-alpha/terminal.done.json`, both sample screenshots
+and Unity logs, and the comparison in `direct-frozenwall-bison-visual/sample-60/`.
+The run held native authority for 91.148 s. Terminal snapshot was 32.75 FPS
+at 30.53 ms. SoC peaked at 94.3 °C, with 54.574 s above 80 °C. Battery peaked
+at 27 °C. Idle cleanup and OLED sleep passed. Black sheets in sample 70
+and visual verification of Acrid's two Twotone emitters remain open.
