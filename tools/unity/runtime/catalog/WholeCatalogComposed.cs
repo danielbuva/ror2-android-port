@@ -20,6 +20,8 @@ using System.Reflection;
 public static class WholeCatalogComposed
 {
     static AssetBundle owned;
+    const string SourceDefinitionsName = "source-definition-families";
+    static AssetBundle sourceDefinitions;
     static IResourceLocator[] priorLocators;
     static IResourceLocator ownedLocator;
     static HashSet<string> borrowedNames;
@@ -386,6 +388,28 @@ public static class WholeCatalogComposed
             throw new Exception("Shared whole-content dependency failed to load");
         sessionBundleOwnershipActive = true;
     }
+    internal static IEnumerator PrepareSourceDefinitions()
+    {
+        var bundle = ReadDefinitionManifest()["bundles"][SourceDefinitionsName];
+        if (bundle == null)
+            yield break;
+        var loaded = new HashSet<string>(AssetBundle.GetAllLoadedAssetBundles().Select(owner => owner.name), StringComparer.Ordinal);
+        if (loaded.Contains(SourceDefinitionsName) || bundle["dependencies"].Any(dependency => !loaded.Contains((string)dependency)))
+            throw new Exception("Source definitions bundle ownership or dependencies differ");
+        // Family registration loads native objects synchronously. Mount the owner once
+        // before any family or Addressables location can resolve an object from it.
+        var load = AssetBundle.LoadFromFileAsync(Path.Combine(Application.persistentDataPath, "payload", SourceDefinitionsName));
+        yield return load;
+        sourceDefinitions = load.assetBundle;
+        if (!sourceDefinitions || sourceDefinitions.name != SourceDefinitionsName)
+            throw new Exception("Source definitions bundle failed to load");
+    }
+    static void ReleaseSourceDefinitions()
+    {
+        if (sourceDefinitions)
+            sourceDefinitions.Unload(true);
+        sourceDefinitions = null;
+    }
     public static void ConfigureLocations()
     {
         if (!owned || ownedLocator != null)
@@ -439,6 +463,7 @@ public static class WholeCatalogComposed
             priorLocators = null;
         }
         definitionFamilies.Clear();
+        ReleaseSourceDefinitions();
         BorrowedAssetProvider.ResetFailures();
         borrowedNames = null;
         sessionBundleOwnershipActive = false;
@@ -475,7 +500,8 @@ public static class WholeCatalogComposed
                 location.Dependencies.Count == 0)
                 continue;
             var owner = location.Dependencies[0].PrimaryKey;
-            if (owner != "whole-game-content" && owner != "commando-prefab-lab" && owner != "objective-support-lab")
+            if (owner != "whole-game-content" && owner != "commando-prefab-lab" && owner != "objective-support-lab" &&
+                owner != SourceDefinitionsName)
                 continue;
             var operation = entry.Value;
             var asyncType = operation.GetType().GetInterfaces().SingleOrDefault(

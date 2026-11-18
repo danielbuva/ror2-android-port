@@ -502,6 +502,12 @@ public sealed partial class PortSession
                 while (preload.MoveNext())
                     yield return preload.Current;
             }
+            if (Resources.Load<TextAsset>("WholeCatalogBootstrap"))
+            {
+                var definitions = WholeCatalogComposed.PrepareSourceDefinitions();
+                while (definitions.MoveNext())
+                    yield return definitions.Current;
+            }
             coordinator.r.phase = "original-body-catalog-register";
             coordinator.Save();
             IEnumerable<string> selectedBodyPaths = cfg.enemySpine ? new[] { cfg.enemyBodyAsset } : Enumerable.Empty<string>();

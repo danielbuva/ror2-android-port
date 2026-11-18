@@ -4946,6 +4946,11 @@ end on return and add no retained state.
 Provider order, typed loads, identity checks, missing/duplicate-owner failures
 and existing family-cache teardown remain owned by the same loader. `SpawnStateBoundary` forwards the sparse family callback;
 its child markers retain no state.
+For converted catalogs that declare `source-definition-families`, the body
+catalog setup asks `WholeCatalogComposed` to mount it after its dependencies
+are loaded and before catalog registration. Direct typed family loads and
+Addressables borrow the same bundle instance. Session release detaches the
+borrowed operations and unloads the bundle.
 Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
 and family cache instead of broad bundle loading. Typed root selection, unique
 name/selected-identity checks and `Release` cache teardown keep their existing
