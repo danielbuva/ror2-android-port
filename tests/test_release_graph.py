@@ -738,7 +738,14 @@ class ReleaseGraphTests(unittest.TestCase):
         self.assertIn("recipe/composition-export-copies.json", index["files"])
         self.assertIn("smoke/Assets/Bootstrap.unity", index["files"])
         self.assertIn("${job_directory:recipe/jobs/owner-player-shaders.json:receipt}", job["arguments"])
-        self.assertIn("${input_sha256:scene_environment_result}", job["arguments"])
+        decoder = ["--scene-environment-decoder", "${native}/libtexture-pixels.so", "${native_sha256:libtexture-pixels.so}"]
+        start = job["arguments"].index(decoder[0])
+        self.assertEqual(job["arguments"][start : start + len(decoder)], decoder)
+        self.assertNotIn("${input_sha256:scene_environment_result}", job["arguments"])
+        del graph.phases["scene"]["environment"]
+        capture_arguments = graph.player_arguments({})
+        self.assertIn("${input_sha256:scene_environment_result}", capture_arguments)
+        self.assertNotIn(decoder[0], capture_arguments)
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory).resolve()
             target = "apk/assets/bin/Data/authored"

@@ -3,9 +3,11 @@
 import importlib.util
 from pathlib import Path
 import struct
+from subprocess import CompletedProcess
 import tempfile
 from types import SimpleNamespace as N
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -115,6 +117,67 @@ class SceneReferenceTests(unittest.TestCase):
         # q * (0,0,1) * conjugate(q) points right for a positive Y rotation.
         self.assertAlmostEqual(2 * (q["x"] * q["z"] + q["w"] * q["y"]), 1, places=6)
         self.assertAlmostEqual(1 - 2 * (q["x"] ** 2 + q["y"] ** 2), 0, places=6)
+
+
+class OriginalEnvironmentTests(unittest.TestCase):
+    def test_decodes_all_faces_in_source_order_and_keeps_serialized_lighting(self):
+        width = 128
+        edges = [max(1, width >> mip) for mip in range(8)]
+        chain = [((edge + 3) // 4) ** 2 * 16 for edge in edges]
+        payload = b"".join(bytes([face * 8 + mip]) * size for face in range(6) for mip, size in enumerate(chain))
+        indirect = dict(r=0.25, g=0.5, b=0.75, a=1.0)
+        render = dict(
+            m_GeneratedSkyboxReflection=C.pointer(1),
+            m_AmbientProbe={f"sh[{index:2}]": index / 32 for index in reversed(range(27))},
+            m_IndirectSpecularColor=indirect,
+        )
+        texture = {
+            "m_TextureFormat": 24,
+            "m_ImageCount": 6,
+            "m_TextureDimension": 2,
+            "m_MipCount": 8,
+            "m_MipsStripped": 0,
+            "m_Width": width,
+            "m_Height": width,
+            "m_CompleteImageSize": sum(chain),
+            "image data": b"",
+            "m_StreamData": dict(offset=0, size=len(payload), path="level0.resS"),
+        }
+        scene = object()
+        settings = N(path_id=73, type=N(value=104), asset=scene, node=True, read_typetree=lambda: render)
+        cube = N(path_id=1, type=N(value=89), asset=scene, node=True, read_typetree=lambda: texture)
+
+        def decode(command, *, input, capture_output, timeout):
+            face_mip = input[0]
+            edge = edges[face_mip % 8]
+            self.assertEqual(command[1:], [str(edge), str(edge), "bc6-half"])
+            self.assertEqual(input, bytes([face_mip]) * chain[face_mip % 8])
+            return CompletedProcess(command, 0, struct.pack("<4e", face_mip, 0, 0, 1) * edge**2, b"")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "level0.resS"
+            decoder = root / "decoder"
+            source.write_bytes(payload)
+            decoder.write_text("fixture")
+            selection = dict(environment=dict(width=width, stream=dict(path=source.name, bytes=len(payload), sha256=C.U.P.sha(source))))
+            store = C.M.Sources(root)
+            self.addCleanup(store.close)
+            with patch.object(C.subprocess, "run", side_effect=decode) as run:
+                pixels, ambient, actual_indirect = C.original_environment(store, selection, settings, cube, (decoder, C.U.P.sha(decoder)))
+                expected = b"".join(struct.pack("<4e", face * 8 + mip, 0, 0, 1) * edge**2 for face in range(6) for mip, edge in enumerate(edges))
+                self.assertEqual(pixels, expected)
+                self.assertEqual(ambient, [index / 32 for index in range(27)])
+                self.assertEqual(actual_indirect, indirect)
+                self.assertEqual(run.call_count, 48)
+                render["m_GeneratedSkyboxReflection"] = C.pointer(1, 1)
+                with self.assertRaisesRegex(ValueError, "does not link"):
+                    C.original_environment(store, selection, settings, cube, (decoder, C.U.P.sha(decoder)))
+                render["m_GeneratedSkyboxReflection"] = C.pointer(1)
+                texture["m_StreamData"]["size"] -= 16
+                with self.assertRaisesRegex(ValueError, "stream extent differs"):
+                    C.original_environment(store, selection, settings, cube, (decoder, C.U.P.sha(decoder)))
+                self.assertEqual(run.call_count, 48)
 
 
 if __name__ == "__main__":

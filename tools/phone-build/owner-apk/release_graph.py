@@ -52,13 +52,14 @@ TEXTURE_NATIVE = {
     "jpeg_codec": "libtexture-jpeg.so",
     "etc_codec": "libtexture-etc.so",
 }
+PIXEL_DECODER = "libtexture-pixels.so"
 TEXTURE_GUEST = "${installed_runtime}/texture-sdk/"
 TEXTURE_GUEST_LIB = "linux/lib/x86_64-linux-gnu/"
 
 
 def texture_sdk_request(library, guest_files):
     qemu = "libqemu-x86_64.so"
-    pixels = "libtexture-pixels.so"
+    pixels = PIXEL_DECODER
     return {
         "command": [
             "${native}/" + qemu,
@@ -220,7 +221,12 @@ class Graph:
             ]
         if {"manager", "scene"} & self.phases.keys():
             arguments += ["--sdk-binary", self.sdk_contents() + "/MacOS/Unity" if self.conversion else "${input:sdk_binary}"]
-        if "scene" in self.phases:
+        scene_environment = self.phases.get("scene", {}).get("environment", "capture")
+        if scene_environment == "original":
+            arguments += ["--scene-environment-decoder", "${native}/" + PIXEL_DECODER, "${native_sha256:" + PIXEL_DECODER + "}"]
+        elif scene_environment != "capture":
+            raise ValueError("unknown default scene environment: " + scene_environment)
+        elif "scene" in self.phases:
             for name in ("result", "request", "bundle"):
                 binding = "scene_environment_" + name
                 arguments += ["--scene-environment-" + name, "${input:" + binding + "}", "${input_sha256:" + binding + "}"]
