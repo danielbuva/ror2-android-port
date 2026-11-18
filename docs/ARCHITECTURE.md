@@ -4982,12 +4982,15 @@ intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
 startup selects a team entry. The original table is restored with the effect
 callbacks before world cleanup destroys the owned copies.
 The original body visual owner submits Mercenary's persistent and consume Expose
-prefabs, his configured direct finisher swing and Acrid's normal and combo-finisher
-swings. It reads the configured native
-Slash state and holds the finisher's typed provider lease through the run. Integrated
-world cleanup restores source slots and particle trails before the visual owner
-releases its leases and the session destroys its material copies. Source blend
-values remain intact.
+prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
+Acrid's normal and combo-finisher swings. It reads the configured native Croco
+Slash state for the normal swing and holds the Acrid
+finisher's typed provider lease through the run. Integrated world cleanup restores
+source slots and particle trails before the visual owner releases its leases and
+the session destroys its material copies. Source blend values remain intact.
+The detailed renderer report reads VagrantMesh's effective slot properties from
+the selected material property block and the shared material. It does not mutate
+the renderer or the source materials.
 The session counts objective projectile materials during catalog setup. The
 integrated-world report includes these counts from its first snapshot.
 
