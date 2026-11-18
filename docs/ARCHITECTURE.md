@@ -421,6 +421,11 @@ every produced bundle and the current runtime script
 registry, plus input/startup identity. Existing catalog helpers resolve ownership
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
+Optional `source_additions` pins metadata from the same input catalog and provider
+set and selects additional non-root location IDs. Completion restores the original
+location rows and aliases, preserving existing alias order. Explicit staged
+owners retain priority, and unclaimed paths use the whole-game fallback. The same
+container checks apply to each added location.
 Every emitted `ModelSkinController.skins` slot is checked against its actual
 local or external `RoR2.SkinDef` and registered MonoScript. The converter follows
 the serialized body `ModelLocator` to its model controller and records each

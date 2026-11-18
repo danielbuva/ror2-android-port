@@ -281,6 +281,44 @@ class CatalogCompletionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "catalog input differs"):
                 C.produce(path, root / "other")
 
+    def test_source_additions_restore_selected_typed_aliases_with_existing_order(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, request = self.fixture(root)
+            metadata = Path(request["metadata"]["path"])
+            staged = json.loads(metadata.read_text())
+            staged.update(source_catalog_sha256="source-catalog", providers=["provider"])
+            staged["keys"] = [dict(key="group", keyType="System.String", locations=[1])]
+            metadata.write_text(json.dumps(staged))
+            request["metadata"] = pin(metadata)
+            original = staged["locations"][0]
+            source = root / "source.json"
+            source.write_text(
+                json.dumps(
+                    dict(
+                        staged,
+                        attempt="source-discovery",
+                        locations=[dict(original, id=2, root=False), dict(original, id=3, root=False)],
+                        keys=[
+                            dict(key="group", keyType="System.String", locations=[2, 3, 1]),
+                            dict(key="ghost-guid", keyType="System.String", locations=[2]),
+                            dict(key="other-guid", keyType="System.String", locations=[3]),
+                        ],
+                    )
+                )
+            )
+            request["source_additions"] = dict(metadata=pin(source), locations=[2])
+            path.write_text(json.dumps(request))
+            result = C.produce(path, root / "output")
+            self.assertEqual(result["checks"]["locations"], 2)
+            emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
+            self.assertEqual([(row["id"], row["bundle"]) for row in emitted["locations"]], [(1, "generated-android-data"), (2, "generated-android-data")])
+            self.assertEqual([(row["key"], row["locations"]) for row in emitted["keys"]], [("group", [1, 2]), ("ghost-guid", [2])])
+            request["source_additions"]["locations"] = [99]
+            path.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "location selection differs"):
+                C.produce(path, root / "missing")
+
     def test_final_type_mismatch_refuses_output(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
