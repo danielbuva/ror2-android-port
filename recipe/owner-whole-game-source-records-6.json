@@ -1,0 +1,177 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "path": "Contents/Resources/unity editor resources",
+    "sha256": "25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190",
+    "path_id": -9215203055440829681
+  },
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4_static_assets_all_0697ff54b6972e7083342648968fda1a.bundle",
+      "sha256": "41e13315987059fdc06089f66e02a4e8958a807886aee13c183f5e9eb1831b86",
+      "members": [
+        {
+          "name": "CAB-9a62a3c3d5e29edc0f59db4d01a2119e",
+          "objects": [
+            {
+              "path_id": -7609045012685898404,
+              "class_id": 199,
+              "sha256": "e88618e0cb1c66ec3f3ad9881f8010f2b15b94d54669e6c0c551b8cf0cc3b2f0",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1839360277236198405,
+                  "bytes": 284,
+                  "sha256": "38af09e66f7525de931787e625620185dfe5ed80812a05d8368517c81badc377",
+                  "native_type_hash": "d2d286bd686b9bedd7fcec654f368c0c",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          3971896786241994076
+                        ],
+                        "to": [
+                          0,
+                          5821771661904471374
+                        ]
+                      },
+                      {
+                        "offset": 72,
+                        "from": [
+                          4,
+                          1996499613920611731
+                        ],
+                        "to": [
+                          0,
+                          3995031441509730236
+                        ]
+                      },
+                      {
+                        "offset": 216,
+                        "from": [
+                          5,
+                          -4334696495514631635
+                        ],
+                        "to": [
+                          0,
+                          3314799228731974708
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "path_id": 2148457506621308252,
+              "class_id": 199,
+              "sha256": "ee8050c01e2e1f590f93185d398ba5783b8864360f2e5a6f26263081f3102978",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4226126047751562559,
+                  "bytes": 284,
+                  "sha256": "079333f6cf88a55e6a7864ba9969805ae42774a76aa9dd5590db52bc3ea6f233",
+                  "native_type_hash": "d2d286bd686b9bedd7fcec654f368c0c",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -226016859694809764
+                        ],
+                        "to": [
+                          0,
+                          -6646298473569798563
+                        ]
+                      },
+                      {
+                        "offset": 72,
+                        "from": [
+                          4,
+                          -2514703366443293707
+                        ],
+                        "to": [
+                          0,
+                          -261173884404994969
+                        ]
+                      },
+                      {
+                        "offset": 216,
+                        "from": [
+                          5,
+                          -6476590250452040025
+                        ],
+                        "to": [
+                          0,
+                          -8300013200554199909
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "path_id": 2210348861978983772,
+              "class_id": 199,
+              "sha256": "f0cbbfe6e97962ef083230c0bf2648ddf5f63226b868e078b61bcdc8da06be1e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3661714551962780863,
+                  "bytes": 280,
+                  "sha256": "5bc40501c626c33db469e71ccf7f5035b186a85e7ead23c1f8984c96af3b3fda",
+                  "native_type_hash": "d2d286bd686b9bedd7fcec654f368c0c",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -789853078704669348
+                        ],
+                        "to": [
+                          0,
+                          -3585407529215185573
+                        ]
+                      },
+                      {
+                        "offset": 72,
+                        "from": [
+                          4,
+                          6683296234555216051
+                        ],
+                        "to": [
+                          0,
+                          -3492249343965617033
+                        ]
+                      },
+                      {
+                        "offset": 212,
+                        "from": [
+                          18,
+                          -6280564016290688686
+                        ],
+                        "to": [
+                          0,
+                          -8602487652529484721
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

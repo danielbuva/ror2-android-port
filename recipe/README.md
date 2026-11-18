@@ -6988,8 +6988,8 @@ equality as a diagnostic; generated bodies remain ignored.
 ## Whole-game source registry bindings (2026-11-18)
 
 `owner-whole-game-source-registry.json` pins 1,200 original MonoScript selectors
-and binds each to the current source-produced player registry by assembly,
-namespace and class. ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions
+and binds each by assembly, namespace and class to the registry file in the
+final `owner-player-data.json` receipt. ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions
 inform the identity checks. Preparation verifies the original layout and the
 registry's receipt, native type and body before structural bundle emission.
 Historical body hashes are diagnostic. The recipe contains authored selectors
@@ -6999,7 +6999,46 @@ serialized bodies, account data or private paths in the recipe.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-source-registry.json` | `0905584adc493c52234da6fc972a67e73097d50e94810b365f90be8eb6df1f8c` |
+| `owner-whole-game-source-registry.json` | `5f1da97a716aba762d8c855c17d2603f44eb2b66f6b38c257bee9d4b20004c2a` |
+
+## Whole-game original record and texture selectors (2026-11-18)
+
+These 20 profiles derive 76,905 whole-game records from the user's accepted
+game inventory. The release graph binds the record and texture producers plus
+the 1,200 registry selectors by exact original path, member and path ID.
+Native and managed layouts, output identity and retained pointer maps are
+checked by the existing pack and bundle preparation owners. The texture
+profiles copy compatible mip streams or expand source pixels to RGBA mips.
+Complete structural closure, Unity typed load and device play remain open.
+
+Manual provenance, licensing, privacy and sensitive-content review covered
+the JSON and decompressed JSONL. The recipes contain original asset identities,
+hashes, schema and stream selectors, and authored conversion and routing policy.
+The user's serialized bodies, texture pixels, proprietary tooling and generated
+packs stay local. The selectors include no private paths or account data.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-residual-managed-records.json` | `359f259c3f6f2d8a35ab83a44691ce975f947f64e31a159be82ac18996cc7ee1` |
+| `owner-whole-game-residual-native-records.jsonl.gz` | `8c693a507cc59b5a496e7f3ec09c786dfd7a631afe5e2fedf7341d08069059a2` |
+| `owner-whole-game-source-managed-records.json` | `12be41c98a67ca9e856afa792dfe0316cbd42a7ca8b852155aef8ca2bdf62722` |
+| `owner-whole-game-source-native-records.jsonl.gz` | `d3427f02de4139f54426cfd923663ff04a0da511b4c1aab21424d9906cc17c86` |
+| `owner-whole-game-source-records-10.json` | `b12e40ea85cd8eb5fe0220834e6a56cd875ba57608498ca3f6e0c12c0b8abeda` |
+| `owner-whole-game-source-records-11.json` | `0cd7618b3d2e6dad1c2c7e4987e8f782a4577003f0234ba4c3caefb78f41a33f` |
+| `owner-whole-game-source-records-12.json` | `d13481d00496c5d2fff3de93bd8c0424b61b3f3b81c11cc945e8a83ab3b6bd8b` |
+| `owner-whole-game-source-records-13.json` | `ac28a286b0bd14d190946d2c0c78b66c9990b64d873f76a774b0dbc4aa2e055f` |
+| `owner-whole-game-source-records-14.json` | `10d2787354aa02aad7e11e372491f2ae1da4e0ae2a97a016dc24cf4ad7e9ec12` |
+| `owner-whole-game-source-records-15.json` | `17065b1d3de478f90398fce9c511e7a23888eeabed7cad37d63c8c62cb30d087` |
+| `owner-whole-game-source-records-2.json` | `138a68b3e30f0c3f9c434e4687b2d3b0d6fd4732f671a5c1cb2d01151a1725b7` |
+| `owner-whole-game-source-records-3.json` | `a22add738ddcfc45f8e7e6eed39c0e8d7306320349795ba6c4735e3c2505d26b` |
+| `owner-whole-game-source-records-4.json` | `ee1cfd67140f83b7d07656f9947eb45fa32ac4ea1e7e2aa869dcc4394316c410` |
+| `owner-whole-game-source-records-5.json` | `ad3287695101b76611c7db1129f1545a9375b7e1e8f29fd58584b2132f36136b` |
+| `owner-whole-game-source-records-6.json` | `72dd31ff397e1a8a111192b1ce7914b5619cff884b7c06dbc97e18ea1a8f67a2` |
+| `owner-whole-game-source-records-7.json` | `67d1b3f864c1c1b4c8b80ded98e56036542858988d1236ca2a00c61f72dc8700` |
+| `owner-whole-game-source-records-8.json` | `bf2160d30f69af24e005b9e9c153bcb5f2563cb4aba6878ed756d623ae26542d` |
+| `owner-whole-game-source-records-9.json` | `57a3ec589fc1296b7d415eb13a49ac08edad1e4930802738b64def5384f86829` |
+| `owner-whole-game-source-textures-2.json` | `79d7c7420e3bb918cb86d3f8597682647dc2d46b49676593c45c556425112207` |
+| `owner-whole-game-source-textures.json` | `b5d68665f59b2d27ea3a89d01db5fa5bcfa55c646ea8f16ce5b281003629b816` |
 
 ## Current-script bundle comparison (2026-11-04)
 
