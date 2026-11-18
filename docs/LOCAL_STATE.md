@@ -1738,6 +1738,30 @@ do not fabricate it. No selection is shipped in Git. Once preserved baseline met
 a missing selection fails with registration guidance rather than silently
 picking historical input. A fully fresh clone must first supply that baseline.
 
+## Named historical scene-runtime evidence
+
+Historical scene preparation also uses `scripts/lab/historical_receipts.py`;
+there is no implicit timestamped folder fallback. Explicitly register reviewed
+retained receipts with the same `NAME work/RETAINED/file.json --sha256 HASH`
+command above. Each selection is an ignored
+`work/config/historical-receipts/NAME.json`, not a new acceptance decision.
+
+| Name | Retained source contract |
+| --- | --- |
+| `scene-runtime-original-assemblies` | `slice-provenance.json` with original assembly filenames and hashes |
+| `scene-runtime-audio-identities` | Audio-boundary `identities.json` with eight resolved, error-free rows |
+| `scene-runtime-audio-closure` | Audio-boundary `serialized-closure.json` with no unresolved entries and hash-bound relative files |
+| `scene-runtime-teleport-query` | `teleport-catalog-query.json` with one matching material location/key |
+
+Resolve selections before the corresponding staging pipeline. Existing assembly
+and audio source-byte checks, material identity checks and runtime acceptance
+remain unchanged. Preparation receipts retain each selected path and SHA-256;
+relocating evidence requires an explicit reviewed registration, never choosing
+"latest". Missing/drifted receipts refuse with no historical fallback. Preserve
+all existing evidence; restore only the needed historical tree under the
+retention policy. The VM tests use authored synthetic receipts and do not claim
+historical game-input or device qualification.
+
 ## Standalone requested-audio support evidence (J1056)
 
 Ignored `work/coordination/owner-audio-stage-v1/` retains explicit planning/staging

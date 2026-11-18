@@ -2772,6 +2772,11 @@ resolve an explicitly registered, hash-pinned optional-guard receipt against the
 preserved original assembly before inventory/probe work. This support owner has
 no runtime or build-selection side effects; its registration and local-state
 contract are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-optional-guard-evidence).
+The same owner resolves named hash-bound scene-runtime assembly provenance,
+audio identity/closure receipts and teleport catalog queries before their
+historical staging pipelines. Their selections are recorded in preparation
+receipts; source-byte and runtime acceptance checks are unchanged. Registration
+contracts are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-scene-runtime-evidence).
 
 `scripts/prune-generated.py` (current) discards rebuildable build outputs under
 `work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
@@ -2788,6 +2793,15 @@ entry referenced by each current-build/iteration-base receipt, the latest instal
 APK per device, explicit keeps and the age guard. Nested content hashes and sync
 inventories do not pin cache entries. `--json` includes `kept_items` with protection
 reasons and cache-specific protection counts. Retired entries retain JSON receipts.
+`--supersede OLD --by NEW` writes an exclusive `.superseded-by` marker for
+physical run/version folders under the existing experiment/coordination/rebuild
+roots. It binds the replacement and latest direct `result.json`/`*.done.json`
+receipt (strict `success: true`) by SHA-256. After a minimum of 24 hours without
+new writes, unchanged markers let existing generated-output candidates ignore
+historical manifest pins. State/baseline/device/coordination-lock pins, explicit
+keeps and `.prune-keep` still win; receipts, logs and authored files stay.
+Marking never deletes; normal dry-run/apply owns pruning and rechecks eligibility
+before the first deletion of each marked run. No symlinked runs are eligible.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
@@ -6262,8 +6276,10 @@ Still open:
    menu roots, settings visibility and others) still live on `PortSession`. 23 boundary files
    have no private state worth an owner, and the three Moon files were deferred because
    neither standard check reaches them.
-5. **Hard-coded run folders.** `scene_runtime.py:59`, `:515` and `:883`, and
-   `input_migration.py:90` read fixed timestamped evidence folders (all in historical actions).
+5. **Historical evidence registration.** `scene_runtime.py` and `input_migration.py`
+   now resolve explicit named, hash-pinned receipts rather than fixed timestamped
+   folders. Historical replay still requires operator-reviewed retained evidence;
+   this removes implicit path dependencies, not the evidence requirement or runtime gates.
 6. **Experiment drivers outside Git.** Broader gameplay runs still use about 89 untracked
    runner scripts in `work/experiments/whole-catalog/gameplay/`; the standard checks are
    tracked as `./dev check-baseline` and `--stage-exit` ([BASELINE.md](BASELINE.md)).
