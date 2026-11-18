@@ -84,16 +84,23 @@ namespace EntityStates.Croco
 }
 namespace EntityStates.Merc
 {
-    public static class GroundLight { public static GameObject finisherSwingEffectPrefab; }
+    public static class GroundLight
+    {
+        public static GameObject comboSwingEffectPrefab;
+        public static GameObject comboFinisherSwingEffectPrefab;
+    }
 }
 public static class WholeCatalogComposed
 {
+    public static GameObject mercNormal;
     public static GameObject mercFinisher;
     public static T LoadOwnedContent<T>(string path) where T : UnityEngine.Object
     {
-        if (path != "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab")
-            throw new InvalidOperationException("Unexpected owned swing path: " + path);
-        return mercFinisher as T;
+        if (path == "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordSlash.prefab")
+            return mercNormal as T;
+        if (path == "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab")
+            return mercFinisher as T;
+        throw new InvalidOperationException("Unexpected owned swing path: " + path);
     }
 }
 namespace RoR2
@@ -236,11 +243,13 @@ static class Fixture
     }
     static void CheckSwingAdmission(Material original)
     {
-        var merc = new Renderer { sharedMaterials = new[] { original } };
+        var mercNormal = new Renderer { sharedMaterials = new[] { original } };
+        var mercFinisher = new Renderer { sharedMaterials = new[] { original } };
         var normal = new Renderer { sharedMaterials = new[] { original } };
         var finisher = new Renderer { sharedMaterials = new[] { original } };
         var fallback = new Renderer { sharedMaterials = new[] { original } };
-        WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { merc } };
+        WholeCatalogComposed.mercNormal = new GameObject { components = new[] { mercNormal } };
+        WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { mercFinisher } };
         EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
         EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab = new EntityStates.Croco.Slash.SwingReference {
             addressableReference = new AssetReference { RuntimeKey = "native-finisher" },
@@ -253,14 +262,22 @@ static class Fixture
         var prepare = session.PrepareSwings(unavailable);
         Check(prepare.MoveNext() && normal.sharedMaterials[0] != original && finisher.sharedMaterials[0] == original,
               "normal source should be prepared while native finisher loads");
-        Check(!EntityStates.Merc.GroundLight.finisherSwingEffectPrefab &&
-              merc.sharedMaterials[0].shader.name.StartsWith("Recovered/") && session.worldLootSourceMaterials[merc][0] == original,
-              "owned Merc finisher did not receive presentation before native state configuration");
+        Check(!EntityStates.Merc.GroundLight.comboSwingEffectPrefab && !EntityStates.Merc.GroundLight.comboFinisherSwingEffectPrefab,
+              "Merc presentation must leave native state configuration to the game");
+        foreach (var renderer in new[] { mercNormal, mercFinisher })
+        {
+            var material = renderer.sharedMaterials[0];
+            Check(material.shader.name == "Recovered/" + original.shader.name &&
+                  material.srcBlend == original.srcBlend && material.dstBlend == original.dstBlend &&
+                  material.zWrite == original.zWrite && material.renderQueue == original.renderQueue &&
+                  session.worldLootSourceMaterials[renderer][0] == original,
+                  "owned Merc swing did not preserve source render state before native state configuration");
+        }
         operation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 && finisher.sharedMaterials[0] != original,
               "native finisher source should be prepared after loading");
         Check((string)Addressables.requestedKey == "native-finisher" && session.ownedOriginalVisualHandles[0] == operation &&
-              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 3,
+              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 4,
               "native address and source ownership must be preserved");
     }
     static void CheckIntersectionEffectAdmission()
