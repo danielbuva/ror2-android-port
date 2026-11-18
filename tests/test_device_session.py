@@ -1075,6 +1075,24 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(checks[-1]["processes"][0]["pid"], "73")
         thermal.launch.assert_not_called()
 
+    def test_only_resumed_peer_is_reset_before_converted_launch(self):
+        peer = "dev.ror2lab.arm64"
+        target = mock.Mock(package="dev.ror2lab.converted")
+        lease = mock.Mock()
+        result = dict(process_checkpoints=[], device_cleanup={})
+        target.sh.return_value = process_snapshot(("73", "03:19:58", peer))
+        target.cmd.return_value = f"am_proc_start: [0,73,99,{peer},activity,Main]\nunrelated"
+        with mock.patch.object(runner, "reset_other_lab") as reset:
+            runner.reset_resumed_peer(target, self.request, lease, result)
+            record = result["resumed_lab_reset"]
+            self.assertEqual(record["process_start_events"], [target.cmd.return_value.splitlines()[0]])
+            self.assertEqual(result["process_checkpoints"][-1]["phase"], "after-keyguard")
+            reset.assert_called_once_with(self.request, lease, record, result["device_cleanup"])
+            target.sh.return_value = process_snapshot(("73", "03:19:58", peer), ("74", "03:20:00", target.package))
+            with self.assertRaisesRegex(RuntimeError, "Unexpected owned lab process"):
+                runner.reset_resumed_peer(target, self.request, lease, result)
+            self.assertEqual(reset.call_count, 1)
+
     def test_mapping_binds_embedded_attempt_and_measured_checkpoint(self):
         accepted = dict(attempt="measured", observation="missing-observation", observation_sha256="a" * 64, axis=2)
         mapping = dict(accepted, attempt="candidate", accepted_mapping_attempt="measured")
