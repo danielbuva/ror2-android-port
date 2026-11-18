@@ -6154,8 +6154,9 @@ For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner
 stops after converter output validation and native planning. Confirmed jobs
-return converter, resource-use and thermal receipts and remove the owned test
-install. A signed-code request can pin an earlier retained toolhost by APK
+return converter, resource-use and thermal receipts. The runner retrieves
+producer logs and available crash evidence before removing owned scratch.
+A signed-code request can pin an earlier retained toolhost by APK
 hash. The runner verifies the installed bytes and uses a same-signer Android
 update when the target differs. It removes only the current job's scratch for
 a retained toolhost. Uncertain jobs retain the exact handle. The signed release graph binds

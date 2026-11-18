@@ -211,23 +211,74 @@ class EmissionTests(unittest.TestCase):
         self.signed_request()
         self.collected = None
         self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
+        self.phone.adb, self.phone.serial = "/synthetic/adb", "synthetic-device"
+        managed = Path("work/conversion/managed-production")
+        artifacts = {
+            managed / "logs/raw-managed.stderr.log": b"compiler startup\n" * 1024 + b"compiler failure\n",
+            managed / "logs/raw-managed.process.json": b'{"returncode":139}',
+            managed / "raw/adapter logs/compile.log": b"authored nested log\n",
+            managed / "raw/tombstone_01": b"authored app tombstone\n",
+        }
+        remote_fixture = self.root / "remote"
+        for path, data in artifacts.items():
+            target = remote_fixture / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        real_run = subprocess.run
 
         def read_remote(*args, **kwargs):
+            label = kwargs["label"]
+            if label == "emission-crash.log":
+                self.assertEqual(args, ("logcat", "-b", "crash", "-d", "-v", "threadtime"))
+                return subprocess.CompletedProcess([], 0, b"authored Android crash report", b"")
+            if label == "emission-exit-info.txt":
+                return subprocess.CompletedProcess([], 0, b"authored exit info", b"")
+            if label == "emission-tombstone-access.txt":
+                return subprocess.CompletedProcess([], 1, b"", b"Permission denied")
             command = shlex.split(args[1])
-            path = command[-1]
-            if path.endswith("/work/conversion/managed-production/result.json"):
+            if label == "emission-evidence-list":
+                self.assertEqual(command[:4], ["run-as", INSTALLER.PACKAGE, "sh", "-c"])
+                return real_run(["sh", "-c", command[4], command[5], remote_fixture, *command[7:]], capture_output=True, check=True)
+            if command[-1].endswith("/work/conversion/managed-production/result.json"):
                 return subprocess.CompletedProcess([], 0, b'{"phase":"raw-managed","success":false}', b"")
-            if path.endswith("/work/conversion/managed-production/logs/raw-managed.stderr.log"):
-                self.assertEqual(command[2:-1], ["tail", "-c", "8192"])
-                return subprocess.CompletedProcess([], 0, b"authored compiler failure", b"")
             return subprocess.CompletedProcess([], 1, b"", b"absent")
 
-        log = self.output / "logs/raw-managed.stderr.log"
+        def pull(argv, *, stdout, **kwargs):
+            self.assertEqual(argv[:-1], ["/synthetic/adb", "-s", "synthetic-device", "shell", "-T"])
+            command = shlex.split(argv[-1])
+            self.assertEqual(command[:-1], ["run-as", INSTALLER.PACKAGE, "cat"])
+            path = Path(command[-1].split("/work/conversion/", 1)[1])
+            stdout.write((remote_fixture / "work/conversion" / path).read_bytes())
+            return subprocess.CompletedProcess(argv, 0, None, b"")
+
+        def check_evidence():
+            for path, data in artifacts.items():
+                self.assertEqual((self.output / "logs/producer" / path).read_bytes(), data)
+            self.assertEqual((self.output / "logs/crash/crash.log").read_bytes(), b"authored Android crash report")
+            self.assertEqual((self.output / "logs/crash/exit-info.txt").read_bytes(), b"authored exit info")
+            self.assertEqual((self.output / "logs/crash/tombstone-access.txt").read_bytes(), b"Permission denied")
+
         self.phone.execute.side_effect = read_remote
-        self.phone.remove_owned_installer.side_effect = lambda: self.assertEqual(log.read_bytes(), b"authored compiler failure")
-        result = self.run_request()
+        self.phone.remove_owned_installer.side_effect = check_evidence
+        with patch.object(EMISSION.subprocess, "run", side_effect=pull):
+            result = self.run_request()
         self.assertFalse(result["success"])
         self.assertEqual(result["managed"]["phase"], "raw-managed")
+        self.assertTrue(result["owned_app_removed"])
+        self.phone.remove_owned_installer.assert_called_once()
+
+    def test_signed_code_keeps_scratch_if_evidence_capture_fails(self):
+        self.signed_request()
+        self.phone.execute.return_value = subprocess.CompletedProcess([], 1, b"", b"connection lost")
+        result = self.run_request()
+        self.assertEqual(result["error"], "emission-evidence-list-failed")
+        self.assertTrue(result["lease_retained"])
+        self.phone.remove_owned_installer.assert_not_called()
+        state = json.loads((self.output / "device-state.json").read_bytes())
+        self.assertNotIn("terminal", state)
+        self.phone.execute.return_value = subprocess.CompletedProcess([], 0, b"", b"")
+        self.assertTrue(self.run_request(resume=True)["reattached_without_launch"])
+        self.phone.transport.start_detached.assert_called_once()
         self.phone.remove_owned_installer.assert_called_once()
 
     def test_signed_code_runtime_stream_keeps_framework_libraries_in_installed_apk(self):

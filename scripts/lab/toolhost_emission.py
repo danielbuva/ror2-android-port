@@ -260,25 +260,63 @@ def collect(phone, state, destination, *, code_output=None, failed=False):
             value = json.loads(observed.stdout)
             write(destination / (name + ".json"), value)
             result[name] = value
-    if failed and result.get("managed", {}).get("phase") == "raw-managed":
-        # Nested commands redirect stderr away from the detached producer's
-        # log. Save their bounded tails before removing owned phone scratch.
-        managed = state["remote"] + "/" + code_output + "/managed-production/"
-        logs = (
-            "logs/raw-managed.process.json",
-            "logs/raw-managed.stderr.log",
-            "logs/raw-managed.log",
-            "raw/logs/abi-adapter.log",
-        )
-        for suffix in logs:
-            name = Path(suffix).name
-            command = shlex.join(["run-as", "dev.ror2lab.installertest", "tail", "-c", "8192", managed + suffix])
-            observed = phone.execute("shell", command, label="emission-" + name, timeout=15, idempotent=True)
-            if observed.returncode == 0 and observed.stdout:
-                path = destination / "logs" / name
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(observed.stdout)
     return result
+
+
+def collect_evidence(phone, package, state, destination, *, code_output, failed):
+    """Keep producer logs and crash artifacts before deleting owned scratch."""
+    if failed:
+        crash = destination / "logs/crash"
+        crash.mkdir(parents=True, exist_ok=True)
+        # Android exposes native tombstone reports in the crash buffer. Physical
+        # /data/tombstones files are normally inaccessible on retail devices.
+        for name, argv in (
+            ("crash.log", ["logcat", "-b", "crash", "-d", "-v", "threadtime"]),
+            ("exit-info.txt", ["shell", "dumpsys", "activity", "exit-info", package]),
+            ("tombstone-access.txt", ["shell", "ls", "/data/tombstones"]),
+        ):
+            observed = phone.execute(*argv, label="emission-" + name, idempotent=True)
+            (crash / name).write_bytes(observed.stdout if not observed.returncode else observed.stderr)
+    output_roots = [state["attempt"]]
+    if code_output is not None:
+        output_roots.append(code_output)
+    command = r"""
+cd "$1" || exit
+shift
+for dir do
+    if [ -d "$dir" ]; then
+        find "$dir" -type f \( -path '*/logs/*' -o -name '*.log' -o -iname '*tombstone*' -o -iname '*crash*' -o -name 'hs_err_pid*.txt' \) -print0 || exit
+    fi
+done
+"""
+    prefix = ["run-as", package]
+    remote = state["remote"]
+    listed = phone.execute(
+        "shell", shlex.join([*prefix, "sh", "-c", command, "emission", remote, *output_roots]), label="emission-evidence-list", idempotent=True
+    )
+    if listed.returncode:
+        raise RuntimeError("emission-evidence-list-failed")
+    for name in filter(None, listed.stdout.split(b"\0")):
+        path = relative(os.fsdecode(name))
+        if not any(path.is_relative_to(root) for root in output_roots):
+            raise RuntimeError("emission-evidence-path")
+        target = destination / "logs/producer" / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_name(target.name + ".partial")
+        try:
+            with temporary.open("wb") as stream:
+                pulled = subprocess.run(
+                    [str(phone.adb), "-s", phone.serial, "shell", "-T", shlex.join([*prefix, "cat", remote + "/" + path.as_posix()])],
+                    stdout=stream,
+                    stderr=subprocess.PIPE,
+                    timeout=120,
+                    check=False,
+                )
+            if pulled.returncode:
+                raise RuntimeError("emission-evidence-pull-failed")
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
 
 
 def execute(path, installer, *, dry_run=False, resume=False, restage=False):
@@ -445,40 +483,46 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         else:
             job = installer.TRANSPORT.DetachedJob(**handle)
         observed = phone.transport.wait_detached(job, destination / "logs", timeout=request["timeout_seconds"] + 60, poll_interval=2, capture_logs=False)
-        terminal = True
-        state["terminal"] = observed.returncode
-        write(state_path, state)
-        (lease / "retain.json").unlink(missing_ok=True)
+        code_output = None
         if signed_code:
             code_request = json.loads(Path(files[request["request"]]["source"]).read_bytes())
-            code_output = relative(request["request"]).parent / "work" / relative(code_request["output"])
-            result.update(collect(phone, state, destination, code_output=code_output.as_posix(), failed=observed.returncode != 0))
-            code = result.get("code", {})
-            backend, converter = code.get("backend", {}), result.get("converter", {})
-            result["success"] = (
-                observed.returncode == 0
-                and code.get("success") is True
-                and code.get("phase") == "converted-native-planned"
-                and code.get("upstream_managed_generation_qualified") is True
-                and code.get("managed_providers") == request["expected_managed_providers"]
-                and backend.get("native", {}).get("success") is True
-                and converter.get("inputs_unchanged") is True
-                and converter.get("input_assemblies") == backend.get("stripped_assemblies")
-                and "data/Metadata/global-metadata.dat" in converter.get("files", {})
-                and "measurements" in result
-                and "thermal" in result
-            )
-        else:
-            result.update(collect(phone, state, destination))
-            emission = result.get("emission", {})
-            native_result = emission.get("emission", {})
-            count = native_result.get("records", native_result.get("objects"))
-            result["success"] = observed.returncode == 0 and native_result.get("structural_accepted") is True and count == request["expected_records"]
-            result["records"] = count
-            result["bundle"] = {key: emission.get(key) for key in ("bundle", "bytes", "sha256")}
+            code_output = (relative(request["request"]).parent / "work" / relative(code_request["output"])).as_posix()
+        try:
+            if signed_code:
+                result.update(collect(phone, state, destination, code_output=code_output, failed=observed.returncode != 0))
+                code = result.get("code", {})
+                backend, converter = code.get("backend", {}), result.get("converter", {})
+                result["success"] = (
+                    observed.returncode == 0
+                    and code.get("success") is True
+                    and code.get("phase") == "converted-native-planned"
+                    and code.get("upstream_managed_generation_qualified") is True
+                    and code.get("managed_providers") == request["expected_managed_providers"]
+                    and backend.get("native", {}).get("success") is True
+                    and converter.get("inputs_unchanged") is True
+                    and converter.get("input_assemblies") == backend.get("stripped_assemblies")
+                    and "data/Metadata/global-metadata.dat" in converter.get("files", {})
+                    and "measurements" in result
+                    and "thermal" in result
+                )
+            else:
+                result.update(collect(phone, state, destination))
+                emission = result.get("emission", {})
+                native_result = emission.get("emission", {})
+                count = native_result.get("records", native_result.get("objects"))
+                result["success"] = observed.returncode == 0 and native_result.get("structural_accepted") is True and count == request["expected_records"]
+                result["records"] = count
+                result["bundle"] = {key: emission.get(key) for key in ("bundle", "bytes", "sha256")}
+        finally:
+            collect_evidence(phone, installer.PACKAGE, state, destination, code_output=code_output, failed=not result["success"])
+        state["terminal"] = observed.returncode
+        write(state_path, state)
+        terminal = True
+        (lease / "retain.json").unlink(missing_ok=True)
         result["elapsed_seconds"] = time.monotonic() - started
         result["storage_after"] = device.storage()
     except BaseException as error:
+        result["success"] = False
         result["error"] = str(error) or type(error).__name__
     finally:
         if job is None and state and state.get("job") and state.get("terminal") is None:
