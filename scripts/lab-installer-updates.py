@@ -1753,6 +1753,13 @@ class Phone:
             )
             self.shell("run-as", PACKAGE, "sh", "-c", "'" + script + "'", label="device-apk-" + tool + "-log", timeout=15)
 
+    def remove_owned_installer(self):
+        if not self.owned_installer or self.package_hash(PACKAGE) != self.installer_hash:
+            raise Failure("cleanup-installer-ownership-changed")
+        self.command("uninstall", PACKAGE, label="cleanup-installer-uninstall")
+        if self.occupied(PACKAGE):
+            raise Failure("cleanup-installer-still-installed")
+
     def cleanup(self):
         # Only delete exact packages installed by this fresh run. Unknown or
         # changed packages, including a failed in-flight alpha, are retained.
@@ -1774,11 +1781,7 @@ class Phone:
                     self.command("uninstall", GAME, label="cleanup-alpha-uninstall")
                     if self.occupied(GAME):
                         raise Failure("cleanup-alpha-still-installed")
-                if self.package_hash(PACKAGE) != self.installer_hash:
-                    raise Failure("cleanup-installer-ownership-changed")
-                self.command("uninstall", PACKAGE, label="cleanup-installer-uninstall")
-                if self.occupied(PACKAGE):
-                    raise Failure("cleanup-installer-still-installed")
+                self.remove_owned_installer()
                 packages_absent = True
             elif self.install_attempted:
                 # Installation may have completed before an ADB/readback error.
@@ -2588,7 +2591,7 @@ def main(argv=None):
     global DIAGNOSTICS
     set_phase("setup")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--emission-request", help="Current shared-runner operation: pinned source bundle emission; no synthetic installer UI")
+    parser.add_argument("--emission-request", help="Current shared-runner request for pinned bundle emission or signed-code conversion")
     parser.add_argument("--resume-emission", action="store_true", help="Reattach a retained job, or retry its confirmed failure with the same durable cache")
     parser.add_argument("--restage-emission", action="store_true", help="Replace this owned confirmed-terminal staging from the new pinned manifest")
     parser.add_argument(

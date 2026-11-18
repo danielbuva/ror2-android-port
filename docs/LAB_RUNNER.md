@@ -76,7 +76,12 @@ source scripts/env.sh
 This compiles the current Java and manifest, packages the tracked installer
 sources, and verifies every retained runtime asset and Android library.
 The build refuses changed native/runtime inputs and records the base commit
-and hash next to the new APK. The cache is still keyed by the checkout commit.
+and hash next to the new APK. The rebuilt APK is cached by the checkout commit.
+An explicitly staged Android build can also seed this rebuild. Use its
+request-keyed cache directory. For an older receipt without source and signer
+fields, replay its original packaging request against the original checkout with
+a fresh terminal path. A cache hit rechecks the signed APK against the original
+stage and writes those fields without a device lease.
 
 For Android input qualification, set `operation` to `acquisition` and add
 `current_inventory`, `current_source`, `older_inventory` and `older_source`.
@@ -182,6 +187,24 @@ the active producer to cool down. The final done-file is written after runner
 cleanup and pruning, including on failure. Retention is temporary: after downstream
 consumers finish, dispose of the owned toolhost with its exact identity receipt.
 Host tests cover this contract; on-device qualification remains separate.
+
+### Signed source code qualification
+
+For current signed code conversion, add `"operation": "signed-code"` and use
+`expected_managed_providers` in place of `expected_records`. The pinned private
+request selects `source_inputs`, the signed `audio_members` roster and an
+`output` relative to its private `work/` directory. Stage the accepted input
+inventory, `input-hashes.json`, original game and compiler inputs beside that
+request. Include the matching public producer closure under `repo/`.
+
+The same runner stages Python, both .NET frameworks and Clang resources from
+the pinned toolhost APK. Its existing Android code adapter runs fresh managed
+compilation, audio roster verification, UnityLinker, IL2CPP conversion and native
+planning. The terminal receipt records the provider count, converter file
+hashes, wall time, peak memory, storage and thermal sampling. This gate ends at
+the native plan. The runner collects terminal evidence and removes its exact
+owned toolhost and scratch. `--resume-emission` reattaches an uncertain handle.
+After a confirmed result, use a fresh request directory for another attempt.
 
 ## Safety model
 

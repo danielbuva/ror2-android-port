@@ -172,7 +172,7 @@ class RefusedLeaseTest(unittest.TestCase):
                 out.mkdir(parents=True)
                 remote = root + "/synthetic-run"
                 tar = out / "stage.tar"
-                toolhost_build.stage_archive(tar, *plan[:-1], remote, lab_runner.TEST_PACKAGE)
+                toolhost_build.stage_archive(tar, *plan[:4], remote, lab_runner.TEST_PACKAGE)
                 with open_tar(tar) as archive:
                     backend = json.load(archive.extractfile("stage/backend-tools.json"))
                     path = "providers/libpyext__socket.so/_socket.so"
@@ -181,6 +181,7 @@ class RefusedLeaseTest(unittest.TestCase):
                 self.assertEqual(backend["package"], lab_runner.TEST_PACKAGE)
                 apk = out / "signed.apk"
                 apk.write_bytes(apk_data)
+                (out / "build-receipt.json").write_text(json.dumps({"apk_sha256": toolhost_build.digest(apk)}))
                 outputs.append(out)
                 return 0, {"success": True, "apk_sha256": toolhost_build.digest(apk)}
 
@@ -190,6 +191,7 @@ class RefusedLeaseTest(unittest.TestCase):
             with (
                 mock.patch.object(lab_runner.subprocess, "check_output", side_effect=command),
                 mock.patch.object(lab_runner.Runner, "execute", side_effect=run),
+                mock.patch.object(toolhost_build, "verify_apk") as verify,
             ):
                 for attempt, source in enumerate(("first", "first", "second")):
                     receipt.write_text(json.dumps(dict(success=True, game_inputs=False, files=files, source_hint=source)))
@@ -210,7 +212,17 @@ class RefusedLeaseTest(unittest.TestCase):
                     )
                     self.assertEqual(lab_runner.local_packaging(request), 0)
                     self.assertEqual(json.loads(done.read_bytes()).get("cached", False), attempt == 1)
+                    result = outputs[-1] / "result.json"
+                    cached = json.loads(result.read_bytes())
+                    self.assertEqual(cached["source_commit"], "synthetic-commit")
+                    self.assertEqual(cached["cache_key"], outputs[-1].name)
+                    self.assertEqual(cached["package"], lab_runner.TEST_PACKAGE)
+                    self.assertEqual(cached["signer_sha256"], inputs["signer_sha256"])
+                    if attempt == 0:
+                        result.write_text(json.dumps({"success": True, "apk_sha256": cached["apk_sha256"], "cache_key": cached["cache_key"]}))
                 self.assertEqual(len(set(outputs)), 2)
+                verify.assert_called_once()
+                self.assertEqual(verify.call_args.args[-1], lab_runner.TEST_PACKAGE)
                 provider.write_bytes(b"changed")
                 inputs = json.loads(request.read_bytes())["toolhost_inputs"]
                 with self.assertRaisesRegex(ValueError, "input pin mismatch"):
