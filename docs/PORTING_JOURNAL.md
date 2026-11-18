@@ -6,6 +6,17 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1490 — Build a pinned managed installer stage on Android
+
+2026-11-18. The shared runner verified 1,249 staged inputs and built the
+disposable installer fixture under phone thermal supervision. The host
+verified the APK signature, packaged source and native libraries.
+APK SHA-256: `2f19c4e52b01112f3569461e5bd696039ca302137fe0086d3905b0b83f9cb6cd` (source `dbb7bcda`).
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-shared-toolhost-v5-1118.usyzmlhR/terminal.done.json`.
+The 798,251,717-byte APK took 260.8 s to build. CPU/GPU peak was 58.5 C,
+with no thermal pauses. The runner removed its device scratch and released the
+lease. Installation, owner-file conversion and gameplay remain open.
+
 ## J1481 — Retire Sky Meadow rock spawners before teardown
 
 2026-11-17. Stage geometry stops pending native rock spawners before retiring
