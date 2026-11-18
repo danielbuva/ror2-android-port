@@ -16,3 +16,34 @@ control size or appearance. No policy is inferred for control actions or anchors
 `tests/test_layout_projection.py` compiles actual sources with host Mono/mcs or the
 pinned Unity Mono/Roslyn. It skips executable geometry checks when neither exists;
 a source-only check is not equivalent to executing the C# model.
+
+## Touch document and transactions
+
+`TouchLayoutDocument` owns immutable named profiles and generic control IDs, with
+safe-area normalized rectangles, scale (.25..4) and opacity (0..1). Arrays are
+copied on construction and access. Scale is independent authored metadata, not a
+second rectangle transform: this model does not compute rendered size or hitboxes.
+No ID maps to gameplay actions. Profiles preserve their authored ordering.
+
+The bounded interchange format is UTF-8-compatible ASCII text: header
+`touch-layout<TAB>1<LF>`, then `P<TAB>profile-name<LF>` followed by one or more
+`C<TAB>id<TAB>x<TAB>y<TAB>width<TAB>height<TAB>scale<TAB>opacity<LF>` records.
+Numbers use invariant round-trip formatting. IDs/names are 1..64 ASCII letters,
+digits, underscores or hyphens, case-sensitive; localized display labels are not
+part of this format. Limits: 16 profiles, 128 controls each, 1 MiB text. Imports
+refuse unknown records/versions, duplicates, nonfinite/out-of-bounds geometry and
+invalid limits rather than silently repairing them. Only LF line endings are
+accepted. Caller owns file I/O and atomic durable persistence.
+
+`TouchLayoutEditor` owns the committed document, one selected control draft, and
+32 in-memory undo/redo snapshots. Begin/SetDraft/DragResize never change committed
+state; Confirm commits, Cancel discards. DragResize explicitly clamps through the
+projection contract and pixel minimums. Import validates completely before commit.
+Import, Reset and history navigation refuse while a draft is active; callers must
+confirm or cancel it first. Reset restores a profile from the constructor defaults;
+unknown default names refuse. Successful new commits discard redo; failed actions
+leave committed data and history unchanged. Undo history is session-only, not
+serialized. Named profile construction/import is the data API, not a live editor UI.
+
+`tests/test_touch_layout_document.py` exercises actual C# isolation, history,
+round-trip/import refusals and bounds when the same host compiler is available.
