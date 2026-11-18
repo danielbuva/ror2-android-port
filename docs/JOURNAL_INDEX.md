@@ -328,3 +328,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1481](PORTING_JOURNAL.md#j1481--retire-sky-meadow-rock-spawners-before-teardown) | 2026-11-17 | Retire Sky Meadow rock spawners before teardown | 2026-11-17. |
 | [J1490](PORTING_JOURNAL.md#j1490--build-a-pinned-managed-installer-stage-on-android) | 2026-11-17 | Build a pinned managed installer stage on Android | 2026-11-18. |
 | [J1493](PORTING_JOURNAL.md#j1493--restore-the-stone-titans-pre-fist-ground-warning) | 2026-11-17 | Restore the Stone Titan's pre-fist ground warning | 2026-11-18. |
+| [J1495](PORTING_JOURNAL.md#j1495--restore-the-original-collision-policy-in-the-converted-apk) | 2026-11-18 | Restore the original collision policy in the converted APK | 2026-11-18. |
