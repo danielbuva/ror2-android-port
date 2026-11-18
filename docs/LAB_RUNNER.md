@@ -76,7 +76,12 @@ source scripts/env.sh
 This compiles the current Java and manifest, packages the tracked installer
 sources, and verifies every retained runtime asset and Android library.
 The build refuses changed native/runtime inputs and records the base commit
-and hash next to the new APK. The cache is still keyed by the checkout commit.
+and hash next to the new APK. The rebuilt APK is cached by the checkout commit.
+An explicitly staged Android build can also seed this rebuild. Use its
+request-keyed cache directory. For an older receipt without source and signer
+fields, replay its original packaging request against the original checkout with
+a fresh terminal path. A cache hit rechecks the signed APK against the original
+stage and writes those fields without a device lease.
 
 For Android input qualification, set `operation` to `acquisition` and add
 `current_inventory`, `current_source`, `older_inventory` and `older_source`.
