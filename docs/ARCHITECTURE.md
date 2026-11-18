@@ -3820,6 +3820,11 @@ runtime source selection. Generated request and bank pins default to disabled;
 build-time generators must write derived sources to ignored output directories.
 Original audio can be admitted only after all declared preparation succeeds;
 actual engine, bank and event results require device evidence.
+The existing bank stager and runtime stage-pin generator accept `--owner-work`
+for the reviewed full import inventory and the decoder-free bank index. The
+stager writes its private receipt and payload beneath that workspace. The pin
+generator verifies the receipt and staged bytes before emitting C# constants.
+Signed APK assembly and native Wwise playback remain qualification gates.
 The payload copier preflights existing bank/media paths, file types and sizes
 without reading their contents for capacity accounting. It hashes each existing
 payload at the actual reuse point; integrity results never survive a yield.
