@@ -99,6 +99,12 @@ producer extents and complete layouts. A newly selected external field requires
 its measured owner, field path, pointer and endpoint. The emitter checks the
 resulting closure, including staged endpoints and current managed scripts,
 before writing any catalog declaration.
+`bundle_prepare` also owns retained relocation requalification for a pack
+with surviving bodies and a missing witness. It checks the receipt's index and
+body hashes, reads the preceding producer, and replays the measured PPtr
+fields under the retained member table. A fresh witness is written only when
+that replay reproduces the complete body. The emitter then uses the resulting
+provider through its usual alias and qualification path.
 The same checked invocation writes `catalog-profile.json` from the emitted
 bundle identity and required asset groups, and pins that declaration and the
 actual final bundle in its receipt. The alias donor remains a separate catalog
