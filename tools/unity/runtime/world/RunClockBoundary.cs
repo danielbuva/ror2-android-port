@@ -114,7 +114,7 @@ public sealed partial class PortSession
             coordinator.Check(clockSceneMap.Count == 0, "Existing scene name map");
             priorSceneAvailability = SceneCatalog.availability;
             priorContentScenes = ContentManager._sceneDefs;
-            var firstSceneAsset = coordinator.firstStagePolicyConsumed
+            var firstSceneAsset = coordinator.firstStagePolicyConsumed || coordinator.DirectStageDiagnosticRequested
                                       ? cfg.runSceneDefAssets.Single(asset => System.IO.Path.GetFileNameWithoutExtension(asset).Equals(
                                                                          coordinator.firstStageName, StringComparison.OrdinalIgnoreCase))
                                       : cfg.runSceneDefAsset;
@@ -126,7 +126,10 @@ public sealed partial class PortSession
                                 ? stagedFirst
                                 : sourceScenes.SingleOrDefault(scene => scene.cachedName == (coordinator.firstStageName ?? "golemplains"));
             coordinator.Check(stagedFirst && clockSceneDef && clockSceneDef.cachedName == (coordinator.firstStageName ?? "golemplains") &&
-                                  clockSceneDef.sceneType == SceneType.Stage && clockSceneDef.stageOrder == 1 &&
+                                  clockSceneDef.sceneType == SceneType.Stage &&
+                                  (coordinator.DirectStageDiagnosticRequested
+                                       ? clockSceneDef.stageOrder >= 1 && clockSceneDef.stageOrder <= 5
+                                       : clockSceneDef.stageOrder == 1) &&
                                   !clockSceneDef.requiredExpansion && stagedFirst.cachedName == clockSceneDef.cachedName &&
                                   stagedFirst.sceneType == clockSceneDef.sceneType && stagedFirst.stageOrder == clockSceneDef.stageOrder,
                               "Original base stage metadata changed");

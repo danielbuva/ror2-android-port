@@ -99,13 +99,10 @@ public sealed partial class PortSession
                 priorOriginalVisualSlots.Add(entry.Item1, null);
                 entry.Item1.SetValue(null, handle.Result);
             }
-            var exposed = typeof(CharacterBody)
-                              .GetNestedType("AssetReferences", BindingFlags.NonPublic)
-                              .GetField("mercExposeEffectPrefab", BindingFlags.Public | BindingFlags.Static);
-            coordinator.Check(exposed != null && (GameObject)exposed.GetValue(null),
-                              "Original Merc expose visual missing after source reference load");
             coordinator.Check(healthUnavailable.Count == 0,
                               "Original HealthComponent visual-reference closure failed: " + string.Join(",", healthUnavailable.ToArray()));
+            PresentNativeVisualSource(typeof(CharacterBody), "mercExposeEffectPrefab");
+            PresentNativeVisualSource(typeof(HealthComponent), "mercExposeConsumeEffectPrefab");
             coordinator.r.world.bodyVisualSlots =
                 priorOriginalVisualSlots.Keys.Count(field => field.DeclaringType.DeclaringType == typeof(CharacterBody));
             coordinator.r.world.healthVisualSlots =
@@ -113,6 +110,14 @@ public sealed partial class PortSession
             coordinator.r.world.bodyVisualUnavailable = bodyUnavailable.ToArray();
             coordinator.r.world.healthVisualUnavailable = healthUnavailable.ToArray();
             coordinator.Save();
+        }
+        void PresentNativeVisualSource(Type ownerType, string fieldName)
+        {
+            var slot = ownerType.GetNestedType("AssetReferences", BindingFlags.NonPublic)
+                               .GetField(fieldName, BindingFlags.Public | BindingFlags.Static);
+            var source = slot?.GetValue(null) as GameObject;
+            coordinator.Check(source, "Original visual missing after source reference load: " + fieldName);
+            coordinator.GetTeleporterWorldSession().PresentNativeEffectSource(source);
         }
         public void Dispose()
         {

@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-11-17 UTC. This laboratory is not a finished port. Evidence lives in
+Updated 2026-11-18 UTC. This laboratory is not a finished port. Evidence lives in
 [the journal](docs/PORTING_JOURNAL.md) and [index](docs/JOURNAL_INDEX.md);
 [J1–J1177 are frozen](docs/history/journal-J1-J1177/JOURNAL_INDEX.md).
 Named APK hashes are protected by the pruner.
@@ -11,9 +11,9 @@ Named APK hashes are protected by the pruner.
 | --- | --- |
 | Input and toolchain | Accepted Steam 25475991; Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan. Pins: `environment/toolchain.json`. |
 | Compatibility reference (P1) | Lab APK `9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`, source `6c12b506`. Match behaviour, content, visuals and performance as closely as possible; structural/gameplay checks stay strict, byte equality is diagnostic. |
-| Latest device-verified APK | Lab APK `48b8a7f5ca26d15d53a6fb86bec9c5264e7419e4e5ab3cfe8a1b6c9b482192c1`, source `f94c0c30`, completed the J1477 stage-transition and passive-tail diagnostic. Converted APK `20726b61542cc5d08ece1b1030a7512a5b05fafd995f4baa7b364ac817ca608a`, source `538d1f1c`, reached the original-catalog survivor menu (J1476). Converted ordinary stage play and End Run remain open. |
-| Installed now (last recorded) | Main Nova: the lab and converted packages above, on adopted storage. The J1477 and J1476 receipts record backing, stopped/asleep readback and lease release for their respective packages. |
-| Runtime source since the converted APK | Subsequent merged runtime changes include native results cleanup, settings interaction and HUD presentation. The installed converted APK predates those changes. |
+| Latest device-verified APK | Lab APK `954762f99f172761afe8d45308c5cd764f4556047aba1e1fe44147dd04d81b5c`, source `12e4f205`, verified Huntress/Acrid skin binding, Mercenary Expose material bindings and diagnostic Sky Meadow End Run. Converted APK `20726b61542cc5d08ece1b1030a7512a5b05fafd995f4baa7b364ac817ca608a`, source `538d1f1c`, reached the original-catalog survivor menu (J1476). Converted ordinary stage play and End Run remain open. |
+| Installed now (last recorded) | Nova B: the lab APK above on internal storage, stopped with the display asleep. J1476 records the last converted package observation, on adopted storage on the main Nova. |
+| Runtime source since those APKs | The converted APK predates native results cleanup, settings interaction, HUD presentation and the verified lab gameplay changes above. |
 | Converter | Android emitted all 290,498 records of the strict whole-game bundle request. The output hash matches the host run (J1478). Unity typed load and playable APK integration of this specific bundle remain open. |
 | Installer | [#241](https://github.com/danielbuva/ror2-android-port/pull/241) ships authorized synthetic prompts and readable live status. [#417](https://github.com/danielbuva/ror2-android-port/pull/417) qualifies visible installer permission and consent. Check for updates, same-key update/rollback and real profile retention still need complete phone qualification. |
 
@@ -61,6 +61,10 @@ retention, a memory plateau and sustained performance remain open.
    for the game and complete converter. Heat is a metric; safety limits remain.
    [Lighting tolerance](docs/ADR-003-lighting-tolerance.md) still needs numerical
    and visual admission of a real record.
+
+Retained J1477 stage-transition and passive-tail diagnostic APK
+`48b8a7f5ca26d15d53a6fb86bec9c5264e7419e4e5ab3cfe8a1b6c9b482192c1`,
+source `f94c0c30`.
 
 Retained gameplay baseline: J1121/R58
 `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`;

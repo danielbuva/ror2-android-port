@@ -92,12 +92,15 @@ public sealed partial class PortSession
         }
         Save();
     }
+    bool DeveloperRunAssisted => r.developerSkillVariantAssisted || r.developerSkillIsolationAssisted || DirectStageDiagnosticRequested;
+
     bool IsRunAssisted()
     {
         if (r == null)
             return false;
         bool nativeLifecycleDiagnostic = r.nativeFirstStageLifecycleDiagnosticAttempt;
-        if ((r.developerSkillVariantAssisted || r.developerSkillIsolationAssisted || nativeLifecycleDiagnostic) && r.debugAcceleration != null)
+        bool developerAssisted = DeveloperRunAssisted;
+        if ((developerAssisted || nativeLifecycleDiagnostic) && r.debugAcceleration != null)
         {
             r.debugAcceleration.everAssisted = true;
             r.debugAcceleration.normalGameAcceptanceEligible = false;
@@ -105,7 +108,7 @@ public sealed partial class PortSession
                 r.debugAcceleration.nativeFirstStageLifecycleDiagnostic = true;
         }
         return LabPort.SourceStageLifecycle.FirstStageDiagnosticGate.IsAssisted(
-            nativeLifecycleDiagnostic, r.developerSkillVariantAssisted || r.developerSkillIsolationAssisted,
+            nativeLifecycleDiagnostic, developerAssisted,
             r.debugAcceleration != null && r.debugAcceleration.everAssisted);
     }
     void ApplyDebugAcceleration(DebugAccelerationOptions next, string source)
@@ -163,15 +166,13 @@ public sealed partial class PortSession
             coordinator.Check(!debugBody && !ownsDebugAcceleration, "Debug acceleration owner already exists");
             debugBody = body;
             debugPriorGodMode = body.healthComponent.godMode;
+            bool assisted = coordinator.DeveloperRunAssisted || coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt;
             coordinator.r.debugAcceleration = new DebugAccelerationReport {
                 purpose = coordinator.r.debugOptions == null || string.IsNullOrWhiteSpace(coordinator.r.debugOptions.purpose)
                               ? "Interactive developer controls"
                               : coordinator.r.debugOptions.purpose,
-                everAssisted = coordinator.r.developerSkillVariantAssisted || coordinator.r.developerSkillIsolationAssisted ||
-                               coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
-                normalGameAcceptanceEligible =
-                    !coordinator.r.developerSkillVariantAssisted && !coordinator.r.developerSkillIsolationAssisted &&
-                    !coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
+                everAssisted = assisted,
+                normalGameAcceptanceEligible = !assisted,
                 nativeFirstStageLifecycleDiagnostic = coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
                 originalBaseDamage = body.baseDamage,
                 originalLevelDamage = body.levelDamage,

@@ -935,7 +935,7 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
                 'IEnumeratorStart(){if(File.Exists(System.IO.Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json")))yieldbreak;'
             )
         )
-        startup = start[: start.index("if(File.Exists(path))")]
+        startup = start[: start.index("File.ReadAllText(path)")]
         self.assertNotIn("WaitForSeconds", startup)
 
     def test_body_catalog_prepares_and_releases_the_composed_catalog(self):
