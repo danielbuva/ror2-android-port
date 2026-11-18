@@ -213,12 +213,17 @@ class Runner:
                 time.sleep(10)
         return refusal  # Three positive-current observations, ten seconds apart.
 
-    def worktree(self, ref):
+    def worktree(self, ref, *, local_ref=False):
         path = self.repo / ".local/worktrees" / f"lab-run-{self.run_id}"
         git = ["git", "-C", str(self.repo)]
-        if self.run(git + ["fetch", "-q", "origin", ref], self.repo, timeout=600) != 0:
-            raise CommandError(f"cannot fetch ref `{ref}`")
-        if self.run(git + ["worktree", "add", "-q", "--detach", str(path), "FETCH_HEAD"], self.repo, timeout=600) != 0:
+        if local_ref:
+            if not re.fullmatch(r"[0-9a-f]{40}", ref):
+                raise CommandError("local device run requires a full commit hash")
+        else:
+            if self.run(git + ["fetch", "-q", "origin", ref], self.repo, timeout=600) != 0:
+                raise CommandError(f"cannot fetch ref `{ref}`")
+            ref = "FETCH_HEAD"
+        if self.run(git + ["worktree", "add", "-q", "--detach", str(path), ref], self.repo, timeout=600) != 0:
             raise CommandError("cannot create the job worktree")
         (path / "work").symlink_to(self.repo / "work")
         (path / ".local").mkdir(exist_ok=True)
@@ -256,7 +261,7 @@ class Runner:
                 rows.append(f"{alias}: unreachable ({type(error).__name__})")
         return "\n".join(rows)
 
-    def execute(self, request, *, local_checkout=None, workstream=None):
+    def execute(self, request, *, local_checkout=None, workstream=None, local_ref=False):
         if request["job"] == "status":
             return 0, self.status()
         serial = None
@@ -264,7 +269,7 @@ class Runner:
             serial = self.devices.get(request["device"])
             if not serial:
                 raise CommandError(f"unknown device alias; configured: {', '.join(sorted(self.devices)) or 'none'}")
-        checkout = local_checkout or self.worktree(request["ref"])
+        checkout = local_checkout or self.worktree(request["ref"], local_ref=local_ref)
         toolhosts = self.repo / "work/coordination/lab-runner/toolhost"
         lease = None
         try:
@@ -544,6 +549,9 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
 
     previous = {number: signal.signal(number, interrupt) for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)}
     try:
+        local_ref = configuration.get("local_ref", False)
+        if local_ref and (local_ref is not True or not workstream):
+            raise CommandError("local emission commit requires a dispatcher workstream")
         command = "/lab script " + shlex.join(
             [
                 "ref=" + configuration["ref"],
@@ -558,7 +566,7 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
             command += " --resume-emission"
         if restage:
             command += " --resume-emission --restage-emission" if not resume else " --restage-emission"
-        code, _ = runner.execute(parse_command(command), workstream=workstream)
+        code, _ = runner.execute(parse_command(command), workstream=workstream, local_ref=local_ref)
         operation = done.with_suffix(".operation.json")
         if operation.exists():
             result.update(json.loads(operation.read_bytes()))
