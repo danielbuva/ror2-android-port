@@ -463,7 +463,7 @@ _ENTRIES = (
         "host_skin_bundles",
         {},
         "current",
-        "Typed-load actual body skin slots from the pinned converted catalog request (--target); no device acceptance.",
+        "Typed-load body skin slots and optional objective state-config projectile ghosts from the pinned converted catalog request (--target).",
         handler=_target,
     ),
     Action(
