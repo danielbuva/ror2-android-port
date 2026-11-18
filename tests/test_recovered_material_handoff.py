@@ -20,12 +20,13 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
         source = (ROOT / "tests/fixtures/recovered_material_handoff.cs").read_text()
         source += "\npublic static partial class AndroidMaterialPresentation {\n"
         source += next(line for line in presentation.splitlines() if "const string IntersectionShader" in line) + "\n"
+        source += next(line for line in presentation.splitlines() if "static bool IsIntersectionMaterial(" in line) + "\n"
         source += "\n".join(
             source_method(presentation, declaration)
             for declaration in (
                 "static bool ApplyNative(",
                 "public static int ApplyRecovered(",
-                "public static Material RecoverTeamAreaMaterial(",
+                "public static Material RecoverIntersectionMaterial(",
                 "public static void SetEnabled(",
             )
         )
@@ -43,7 +44,8 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
             )
         )
         visuals = (ROOT / "tools/unity/runtime/catalog/OriginalBodyVisualBoundary.cs").read_text()
-        source += "\n" + source_method(visuals, "IEnumerator PrepareCrocoSwingEffects(")
+        source += "\n" + next(line for line in visuals.splitlines() if "const string MercFinisherVisualPath" in line) + "\n"
+        source += "\n" + source_method(visuals, "IEnumerator PrepareNativeSwingEffects(")
         source += "\n}\n"
         with tempfile.TemporaryDirectory() as temporary:
             scratch = Path(temporary)
