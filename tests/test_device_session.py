@@ -84,6 +84,96 @@ class DeviceSessionTests(unittest.TestCase):
             runner.save(receipt_path, dict(receipt, package=request["package"]))
             self.assertEqual(runner.load_request(self.request_file)["apk_sha256"], self.digest)
 
+    def test_owner_unplugged_requires_ordinary_adopted_30_minute_run(self):
+        request = dict(self.request, mode="owner-unplugged", duration_seconds=1800)
+        runner.save(self.request_file, request)
+        self.assertEqual(runner.load_request(self.request_file)["mode"], "owner-unplugged")
+        for changes, error in (
+            (dict(duration_seconds=30), "requires 30 minutes"),
+            (dict(adopted_install=False), "adopted_install"),
+            (dict(selection={}), "physical play"),
+            (dict(start_from_menu=True), "physical play"),
+        ):
+            with self.subTest(changes=changes):
+                runner.save(self.request_file, dict(request, **changes))
+                with self.assertRaisesRegex(ValueError, error):
+                    runner.load_request(self.request_file)
+
+    def test_unplugged_trace_checks_coverage_ownership_and_signed_energy(self):
+        config = dict(nonce="a" * 32, zones=[["cpu", "cpu-path"], ["gpu", "gpu-path"]])
+        base = dict(nonce=config["nonce"], pid=42)
+        samples = [
+            dict(
+                base,
+                kind="sample",
+                elapsed_ms=ms,
+                gap_ms=1000,
+                plugged=0,
+                frames=ms * 60 // 1000,
+                current_ua=-250000,
+                voltage_mv=4000,
+                level=80 - ms // 900000,
+                scale=100,
+                battery_decic=300,
+                zones_millic=[81000, 64000],
+            )
+            for ms in range(0, 1800001, 1000)
+        ]
+        trace = self.root / "observed.jsonl"
+        ready = dict(base, kind="ready", zones=config["zones"])
+        complete = dict(base, kind="complete")
+
+        def write(rows):
+            trace.write_text("".join(json.dumps(row) + "\n" for row in rows))
+
+        write([ready, *samples, complete])
+        summary = runner.unplugged_summary(trace, config, "42")
+        self.assertEqual(summary["signed_terminal_energy_mwh"], -500)
+        self.assertEqual(summary["foreground_frames_per_elapsed_second"], 60)
+        self.assertEqual(summary["time_above80_seconds"], 1800)
+        self.assertEqual((summary["battery_start_percent"], summary["battery_end_percent"]), (80, 78))
+        for rows, error in (
+            ([ready, *samples[:-1], complete], "does not cover"),
+            ([ready, *samples, dict(complete, pid=43)], "different nonce or process"),
+            ([ready, *samples, dict(base, kind="aborted", reason="early reconnect")], "early reconnect"),
+            ([ready, dict(samples[0], plugged=2), *samples[1:], complete], "powered"),
+            ([ready, dict(samples[0], gap_ms=5001), *samples[1:], complete], "thermal coverage"),
+            ([ready, dict(samples[0], battery_decic=430), *samples[1:], complete], "Battery thermal limit"),
+        ):
+            with self.subTest(error=error):
+                write(rows)
+                with self.assertRaisesRegex(RuntimeError, error):
+                    runner.unplugged_summary(trace, config, "42")
+
+    def test_owner_unplugged_waits_without_adb_then_collects_after_usb_reconnect(self):
+        config = dict(nonce="a" * 32, zones=[["cpu", "cpu-path"], ["gpu", "gpu-path"]])
+        runner.save(self.output / runner.UNPLUGGED_REQUEST, config)
+        target = mock.Mock()
+        target.read_receipt.return_value = dict(persistentDataPath="/owned")
+        target.sh.side_effect = [json.dumps(dict(kind="ready", pid=42, **config)), '{"kind":"complete"}']
+        target.cmd.side_effect = ["offline", "device"]
+        result = dict(device_cleanup={})
+
+        def wait(seconds):
+            if seconds == 1800:
+                target.cmd.assert_not_called()
+                self.assertEqual(target.sh.call_count, 1)
+                self.assertTrue((self.output / "unplug-now.json").is_file())
+
+        with (
+            mock.patch.object(runner.time, "sleep", side_effect=wait) as sleeper,
+            mock.patch.object(runner, "verify_owned") as verify,
+            mock.patch.object(device_module, "retain_device_file", return_value="trace-hash") as retain,
+            mock.patch.object(runner, "unplugged_summary", return_value=dict(samples=7201)) as summary,
+        ):
+            runner.observe_unplugged(target, self.request, self.output, result, "42")
+        self.assertEqual(sleeper.call_args_list, [mock.call(1800), mock.call(5)])
+        trace = f"owner-unplugged-{config['nonce']}.jsonl"
+        self.assertEqual(result["owner_unplugged"], dict(trace=trace, sha256="trace-hash", samples=7201))
+        verify.assert_called_once_with(target, self.digest)
+        retain.assert_called_once_with(target, "/owned/" + trace, self.output / trace, {})
+        summary.assert_called_once_with(self.output / trace, config, "42")
+
     def test_device_option_selects_only_the_workstreams_granted_serial(self):
         self.request.pop("serial")
         self.request.pop("adopted_install")
