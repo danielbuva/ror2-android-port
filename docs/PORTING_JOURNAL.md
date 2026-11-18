@@ -4141,3 +4141,52 @@ APK SHA-256 `3fe278af144ff6b428bd7ed48edd6cdf5a07e60bd531f1f2ba6178b083d146b1` (
 Evidence lives in `work/coordination/alpha-120hz-energy-20261117/nova/terminal.done.json`.
 The [retained analysis](performance-game.md#120-hz-battery-and-clock-observation) reports
 frame pacing and thermal exposure. Unplugged energy budget and ordinary play remain open.
+
+## J1484 — Keep assisted MUL-T input live through stance swaps
+
+2026-11-18. The lab combat driver waits for MUL-T's native primary slot to
+return after a stance swap before reading its skill definition.
+APK SHA-256 `1b62d59eb1a3b5d2c52f703251d3de0e3ceaadaa74a5af5e27439a637f74a62e` (source `1612a712`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/toolbot-fix/`.
+The assisted Distant Roost variant run held 141.80 s live. Native authority/server
+activations were 29/29, 14/14, 16/16 and 10/10. Terminal capture and PID log
+match the stage. Foreground camera obstruction and unassisted play remain open.
+
+## J1485 — Apply selected skins on the ordinary Huntress and Acrid player path
+
+2026-11-18. The native SkinDef supplies the meshes, animator and first renderer
+materials. The lab camera remains active and aim starts after animator readiness.
+APK SHA-256 `954762f99f172761afe8d45308c5cd764f4556047aba1e1fe44147dd04d81b5c` (source `12e4f205`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/`,
+`ordinary-huntress-selected-skin/` and `ordinary-acrid-selected-skin/`.
+Sample 75 and PID logs show Huntress's body, scarf and bow and Acrid's body and
+spine with supported Android materials. Verdant Falls dwell reached 132.103 s
+and 91.101 s with native authority and all four skill callback pairs.
+Huntress used menu Start and Acrid used developer selection. Both used assisted
+input and invincibility. Other skins and matched PC visual parity remain open.
+
+## J1486 — Start Sky Meadow's native projectiles and return to Lab after End Run
+
+2026-11-18. The direct stage diagnostic starts the owned projectile service
+before scene activation, validates skill-less native network objects, and
+consumes the diagnostic selector on menu return.
+APK SHA-256 `954762f99f172761afe8d45308c5cd764f4556047aba1e1fe44147dd04d81b5c` (source `12e4f205`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/direct-skymeadow-menu-return/`.
+Sample 105 shows 2 rock zones, 6/6 spawner slots, 24 initial MaulingRock serializer
+entries and native player authority. World dwell reached 83.700 s.
+End Run returned both effect loans, removed the owned client, and reached Lab
+without generating a result. Lab held for 43.63 s after the first menu sample.
+Progression, repeated salvo timing and profile hash comparison remain open.
+
+## J1487 — Prepare native Mercenary Expose materials before pooling
+
+2026-11-18. The body visual owner supplies both native Expose prefabs to the
+existing effect presenter. The native material blend values are preserved.
+APK SHA-256 `954762f99f172761afe8d45308c5cd764f4556047aba1e1fe44147dd04d81b5c` (source `12e4f205`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/visual-merc-pooled-expose/`.
+Sample 90 and terminal record pooled Slash, Backdrop and Ring in view at
+queue 3000. Slash and Ring used One/One. Backdrop used SrcAlpha/OneMinusSrcAlpha.
+Samples 105 and 120 show the same supported blend paths for persistent Expose.
+The assisted Titanic Plains run held 95.991 s with native authority.
+The screenshots match scene and PID. Per-effect pixel attribution, the pale
+Vagrant and matched PC rendering remain open.

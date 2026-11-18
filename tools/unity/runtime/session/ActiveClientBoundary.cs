@@ -33,10 +33,6 @@ public sealed partial class PortSession
             activeClientSession = new ActiveClientSession(this);
         return activeClientSession;
     }
-    void CheckActiveClientSerializers()
-    {
-        GetActiveClientSession().CheckActiveClientSerializers();
-    }
     IEnumerator ConnectActiveBodyClient(CharacterBody player)
     {
         return GetActiveClientSession().ConnectActiveBodyClient(player);
@@ -65,7 +61,7 @@ public sealed partial class PortSession
         {
             this.coordinator = coordinator;
         }
-        public void CheckActiveClientSerializers()
+        void CheckActiveClientSerializers(NetworkIdentity playerIdentity)
         {
             coordinator.Check(RoR2.EntitlementManagement.EntitlementCatalog.entitlementDefs.Length == 0 &&
                                   LocalUserManager.readOnlyLocalUsersList.Count == 0,
@@ -80,13 +76,21 @@ public sealed partial class PortSession
                         Call(skills, "Awake");
                         coordinator.r.activeClient.skillCacheInitializations++;
                     }
-                    coordinator.Check(skills.AllSkills.SequenceEqual(identity.GetComponents<GenericSkill>()) &&
-                                          skills.AllSkills.Length >= (coordinator.r.integratedWorld ? 1 : 4) &&
-                                          ReferenceEquals(typeof(SkillLocator)
-                                                              .GetField("networkIdentity", BindingFlags.Instance | BindingFlags.NonPublic)
-                                                              .GetValue(skills),
-                                                          identity),
-                                      "Original active skill serializer cache mismatch");
+                    // Native hazards such as MaulingRock have a SkillLocator and no GenericSkills.
+                    var sourceSkills = identity.GetComponents<GenericSkill>();
+                    int minimumSkills = identity == playerIdentity ? (coordinator.r.integratedWorld ? 1 : 4) : 0;
+                    bool validCache = skills.AllSkills.SequenceEqual(sourceSkills) && sourceSkills.Length >= minimumSkills &&
+                                      ReferenceEquals(typeof(SkillLocator)
+                                                          .GetField("networkIdentity", BindingFlags.Instance | BindingFlags.NonPublic)
+                                                          .GetValue(skills),
+                                                      identity);
+                    coordinator.Check(
+                        validCache,
+                        validCache
+                            ? null
+                            : $"Original active skill serializer cache mismatch on " +
+                                  $"{identity.name} ({identity.netId}): {skills.AllSkills.Length} cached, {sourceSkills.Length} source, " +
+                                  $"{minimumSkills} minimum");
                 }
                 var tracker = identity.GetComponent<PlayerCharacterMasterControllerEntitlementTracker>();
                 if (tracker)
@@ -142,7 +146,7 @@ public sealed partial class PortSession
             coordinator.Check(identity.localPlayerAuthority && !identity.hasAuthority && identity.clientAuthorityOwner == null &&
                                   player.hasEffectiveAuthority,
                               "Original pre-client authority configuration changed");
-            CheckActiveClientSerializers();
+            CheckActiveClientSerializers(identity);
             NetworkServer.RegisterHandler(MsgType.Connect, msg =>
                                                            {});
             NetworkServer.RegisterHandler(MsgType.Disconnect, msg =>

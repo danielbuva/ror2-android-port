@@ -13,7 +13,7 @@ static class AdapterContractTests
     }
     static AndroidNativeSourceSkinLifecycle Prepare(out GameObject gameObject, out CharacterModel model,
                                                      out ModelSkinController skin, out Renderer renderer,
-                                                     out Material source)
+                                                     out Material source, bool useCharacterModelCallbacks = true)
     {
         gameObject = new GameObject("owned source model") { activeSelf = false };
         model = gameObject.AddComponent<CharacterModel>();
@@ -37,9 +37,9 @@ static class AdapterContractTests
             }
         };
         GameAudioOriginalOwner.Ready = false;
-        WwiseIntegrationManager.noAudio = true;
+        WwiseIntegrationManager.noAudio = useCharacterModelCallbacks;
         return AndroidNativeSourceSkinLifecycle.PrepareInactive(gameObject, body,
-            new AndroidNativeSourceSkinLifecycle.Report { requested = true });
+            new AndroidNativeSourceSkinLifecycle.Report { requested = true }, useCharacterModelCallbacks);
     }
     static AndroidNativeSourceSkinLifecycle.Report GetReport(AndroidNativeSourceSkinLifecycle adapter)
     {
@@ -159,6 +159,27 @@ static class AdapterContractTests
         skin.CompleteNativeSkin(5); // wrong/unselected index must not rewrite the body-selected skin
         Check(ReferenceEquals(model.baseRendererInfos[0].defaultMaterial, firstCopy), "nonselected skin notification ignored");
     }
+    static void TestOrdinarySelectedSkinBindsFirstMaterialSlot()
+    {
+        var adapter = Prepare(out var go, out var model, out var skin, out var renderer, out var source,
+                              useCharacterModelCallbacks: false);
+        var retained = new Material("retained second slot");
+        renderer.sharedMaterials = new[] { null, retained };
+        model.enabled = false;
+        go.activeSelf = true;
+        skin.CompleteNativeSkin(4);
+
+        var translated = model.baseRendererInfos[0].defaultMaterial;
+        Check(translated && translated != source && renderer.sharedMaterials[0] == translated &&
+              renderer.sharedMaterials[1] == retained, "ordinary selected skin binds the translated first slot only");
+        Check(!model.enabled && !model.forceUpdate && !GetReport(adapter).nativeOwnersActive,
+              "ordinary selected skin keeps CharacterModel callbacks inactive");
+        Check(adapter.NativeAnimatorInitialized &&
+              !adapter.IsActiveInventoryDisplayOwner(model.body, model, GetReport(adapter)),
+              "ordinary skin readies the Animator while retaining the lab inventory owner");
+        CallPrivate(adapter, "OnDestroy");
+    }
+
     static void TestActiveInventoryDisplayOwnerPredicate()
     {
         var adapter = Prepare(out var go, out var model, out var skin, out var renderer, out var source);
@@ -684,6 +705,7 @@ static class AdapterContractTests
         TestOriginalAudioReadyBoundaryAllowsOptIn();
         TestDisabledAuthoredOwnerIsNeverForceEnabled();
         TestNativeSkinEventAndMetadata();
+        TestOrdinarySelectedSkinBindsFirstMaterialSlot();
         TestActiveInventoryDisplayOwnerPredicate();
         TestRetirementWaitsForNativeRendererRelease();
         TestBodyLifetimeCleanupUnsubscribesAndReleasesCopies();

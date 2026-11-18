@@ -1231,7 +1231,25 @@ public sealed partial class PortSession
                 return;
             CheckEffectLoanPoolOwnership(batch);
             coordinator.Check(batch.issued, "Owned stage effect return callbacks were not fully issued");
-            coordinator.Check(batch.map.Values.All(x => x.InUseCount() == 0), "Owned stage effect loans survived original return callbacks");
+            if (batch.pools.Any(entry => entry.Value.InUseCount() != 0))
+            {
+                // Read the native orphan list without advancing effect completion.
+                var orphanField = typeof(EffectPool).GetField("_OrphanedEffects", BindingFlags.Instance | BindingFlags.NonPublic);
+                var remaining = Enumerable.Range(0, batch.pools.Length)
+                    .Where(i => batch.pools[i].Value.InUseCount() != 0).Take(4).Select(i =>
+                    {
+                        var entry = batch.pools[i];
+                        var orphans = orphanField?.GetValue(entry.Value) as List<EffectManagerHelper>;
+                        var helpers = entry.Value.InUse.Take(4).Select(effect =>
+                            (effect ? $"{effect.gameObject.name}#{effect.gameObject.GetInstanceID()} active={effect.gameObject.activeSelf}" : "destroyed") +
+                            $" issued={Array.Exists(batch.loans[i], loan => ReferenceEquals(loan, effect))}" +
+                            $" orphan={orphans?.Contains(effect).ToString() ?? "unknown"}");
+                        return $"{(entry.Key ? entry.Key.name : "destroyed")} inUse={entry.Value.InUseCount()} " +
+                               $"pooled={entry.Value.PoolCount()} [{string.Join(", ", helpers)}]";
+                    });
+                coordinator.Check(false, "Owned stage effect loans survived original return callbacks " +
+                    $"(issuedFrame={batch.issuedFrame}, currentFrame={Time.frameCount}): {string.Join("; ", remaining)}");
+            }
             for (int i = 0; i < batch.pools.Length; i++)
                 foreach (var effect in batch.loans[i])
                     coordinator.Check(!effect || (ReferenceEquals(effect.OwningPool, batch.pools[i].Value) &&

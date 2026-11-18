@@ -1,5 +1,5 @@
 // Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
-// Session phases: setup PrepareCombatConfigs, PrepareCombatScene (CombatSpineSession); teardown CleanupCombatScene, then CleanupCombatConfigs (Dispose).
+// Session phases: setup PrepareCombatConfigs, PrepareProjectileService, PrepareCombatScene (CombatSpineSession); teardown CleanupCombatScene, then CleanupCombatConfigs (Dispose).
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -153,13 +153,23 @@ public sealed partial class PortSession
             }
             return combatConfigs.ToArray();
         }
+        public void PrepareProjectileService()
+        {
+            if (projectileHost)
+            {
+                coordinator.Check(ProjectileManager.instance && ProjectileManager.instance.gameObject == projectileHost,
+                                  "Owned projectile manager is not active");
+                return;
+            }
+            coordinator.Check(!ProjectileManager.instance, "Existing projectile manager");
+            projectileHost = new GameObject("Owned original projectile manager");
+            projectileHost.AddComponent<ProjectileManager>();
+        }
         public void PrepareCombatScene(CharacterBody player, SessionConfig cfg)
         {
             coordinator.r.phase = "integrated-combat-setup";
             coordinator.Save();
-            coordinator.Check(!ProjectileManager.instance, "Existing projectile manager");
-            projectileHost = new GameObject("Owned original projectile manager");
-            projectileHost.AddComponent<ProjectileManager>();
+            PrepareProjectileService();
             if (cfg.integratedWorld)
             {
                 GlobalEventManager.onServerDamageDealt += ObserveCombatDamage;
@@ -431,10 +441,17 @@ public sealed partial class PortSession
             }
             if (targetVisual)
                 Destroy(targetVisual);
-            if (projectileHost)
-                Destroy(projectileHost);
+            ReleaseProjectileService();
             if (coordinator.r.combat != null)
                 coordinator.r.combat.cleaned = true;
+        }
+        public void ReleaseProjectileService()
+        {
+            if (!projectileHost)
+                return;
+            coordinator.StopStageRockCoroutines();
+            Destroy(projectileHost);
+            projectileHost = null;
         }
         public void Dispose()
         {

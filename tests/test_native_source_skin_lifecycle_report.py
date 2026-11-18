@@ -42,7 +42,8 @@ class NativeSourceSkinLifecycleReportTests(unittest.TestCase):
         self.assertIn("AndroidNativeSourceSkinLifecycle.Report nativeSourceSkinLifecycle;", nova)
         self.assertIn("coordinator.r.nativeSourceSkinLifecycleDiagnosticRequested", nova)
         self.assertIn("nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle", nova)
-        self.assertIn("PrepareInactive(model.gameObject, selectedBody, sourceSkinReport)", display)
+        self.assertIn("AndroidNativeSourceSkinLifecycle.PrepareInactive(", display)
+        self.assertIn("model.gameObject, selectedBody, sourceSkinReport, useCharacterModelCallbacks: sourceSkinLifecycleDiagnostic", display)
         self.assertIn("RecordDisplayDeactivated()", display)
         self.assertNotIn("Destroy(nativeSourceSkinLifecycle)", display)
 

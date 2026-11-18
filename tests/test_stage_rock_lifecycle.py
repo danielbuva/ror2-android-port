@@ -7,6 +7,20 @@ RUNTIME = Path(__file__).resolve().parents[1] / "tools/unity/runtime"
 
 
 class StageRockLifecycleTests(unittest.TestCase):
+    def test_direct_entry_starts_owned_projectile_service_before_scene_activation(self):
+        geometry = (RUNTIME / "stage/StageGeometryBoundary.cs").read_text()
+        combat = (RUNTIME / "world/CombatSpineBoundary.cs").read_text()
+        session = (RUNTIME / "session/PortSession.cs").read_text()
+
+        direct_entry = geometry.split("public IEnumerator PrepareStageGeometry", 1)[1]
+        self.assertLess(direct_entry.index("PrepareProjectileService();"), direct_entry.index("load.MoveNext()"))
+        combat_setup = combat.split("public void PrepareCombatScene", 1)[1]
+        self.assertIn("PrepareProjectileService();", combat_setup)
+        release = combat.split("public void ReleaseProjectileService()", 1)[1]
+        self.assertLess(release.index("coordinator.StopStageRockCoroutines();"), release.index("Destroy(projectileHost);"))
+        session_cleanup = session.split("CleanupLanding();", 1)[1]
+        self.assertLess(session_cleanup.index("ReleaseProjectileService();"), session_cleanup.index("NetworkServer.Shutdown();"))
+
     def test_owned_spawners_retire_before_their_services(self):
         geometry = (RUNTIME / "stage/StageGeometryBoundary.cs").read_text()
         transport = (RUNTIME / "stage/IntegratedStageBoundary.cs").read_text()

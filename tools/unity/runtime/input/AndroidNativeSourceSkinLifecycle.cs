@@ -1,4 +1,4 @@
-// Opt-in owner for the selected player's original async skin lifecycle plus Android material copies.
+// Owner for the selected player's original async skin lifecycle plus Android material copies.
 using System;
 using System.Collections.Generic;
 using RoR2;
@@ -69,6 +69,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public int index, instanceId, layer, defaultShadowCastingMode, materialSlotCount, sampledMaterialCount, sampledNullMaterialSlots;
         public string rendererType, rendererName, meshIdentity, rendererRecordMaterialIdentity;
         public bool exists, active, enabled, visible, ignoreOverlays, materialsTruncated, sampledNamesTruncated, materialSlotCountKnown;
+        public bool forceRenderingOff, firstShaderSupported;
         public Vector3 boundsCenter, boundsExtents;
         public string[] materialIdentities;
         public bool screenBoundsKnown, crossesNearClip, hasBehindCameraCorner;
@@ -164,7 +165,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public Vector3 viewCameraPosition, rigCameraPosition;
         public VisualRendererSnapshot[] renderers;
     }
-    const int MaxVisualRendererRecords = 32;
+    internal const int MaxVisualRendererRecords = 32;
     const int MaxVisualMaterialSlots = 8;
     const int MaxRenderCameras = 12;
     int visualCaptureSequence;
@@ -181,6 +182,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     CharacterModel model;
     ModelSkinController skinController;
     Animator animator;
+    bool useCharacterModelCallbacks;
     RuntimeAnimatorController selectedControllerSnapshot;
     Avatar selectedAvatarSnapshot;
     int selectedSnapshotSkinIndex = -1;
@@ -206,7 +208,8 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
 
     public bool NativeAnimatorInitialized => NativeSelectedSkinReady && animator.isInitialized;
 
-    public static AndroidNativeSourceSkinLifecycle PrepareInactive(GameObject modelObject, CharacterBody expectedBody, Report report)
+    public static AndroidNativeSourceSkinLifecycle PrepareInactive(GameObject modelObject, CharacterBody expectedBody, Report report,
+                                                                  bool useCharacterModelCallbacks = true)
     {
         if (report == null)
             throw new ArgumentNullException(nameof(report));
@@ -226,9 +229,10 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         if (!model || !skin || !animator || !model.body || !expectedBody || model.body != expectedBody ||
             !expectedBody.modelLocator || expectedBody.modelLocator.modelTransform != modelObject.transform)
             throw Refuse(report, "Selected source model/body/catalog linkage is incomplete or mismatched");
-        // Only continue when both native callbacks were enabled by the selected source prefab.
-        // Do not force-enable a source-disabled callback.
-        if (!AndroidNativeSkinActivationPolicy.ShouldActivate(true, true, audioLifecycleSafeBoundary, model.enabled, skin.enabled))
+        if (!skin.enabled)
+            throw Refuse(report, "Selected ModelSkinController is disabled in the source prefab");
+        if (useCharacterModelCallbacks &&
+            !AndroidNativeSkinActivationPolicy.ShouldActivate(true, true, audioLifecycleSafeBoundary, model.enabled, skin.enabled))
             throw Refuse(report, "Opt-in source skin lifecycle refused by source/audio/authored-enabled gate");
 
         // Initialize only this retained original cache after source/catalog/audio gates and
@@ -243,7 +247,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         var lifecycle = modelObject.GetComponent<AndroidNativeSourceSkinLifecycle>();
         if (!lifecycle)
             lifecycle = modelObject.AddComponent<AndroidNativeSourceSkinLifecycle>();
-        lifecycle.Bind(model, skin, animator, report);
+        lifecycle.Bind(model, skin, animator, report, useCharacterModelCallbacks);
         return lifecycle;
     }
 
@@ -253,17 +257,20 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         return new InvalidOperationException(reason);
     }
 
-    void Bind(CharacterModel sourceModel, ModelSkinController sourceSkinController, Animator sourceAnimator, Report sourceReport)
+    void Bind(CharacterModel sourceModel, ModelSkinController sourceSkinController, Animator sourceAnimator, Report sourceReport,
+              bool useCharacterModelCallbacks)
     {
         if (model)
         {
-            if (model != sourceModel || skinController != sourceSkinController || animator != sourceAnimator)
+            if (model != sourceModel || skinController != sourceSkinController || animator != sourceAnimator ||
+                this.useCharacterModelCallbacks != useCharacterModelCallbacks)
                 throw new InvalidOperationException("Native skin lifecycle cannot change source model ownership");
             return;
         }
         model = sourceModel;
         skinController = sourceSkinController;
         animator = sourceAnimator;
+        this.useCharacterModelCallbacks = useCharacterModelCallbacks;
         report = sourceReport;
         report.attached = true;
         CaptureNativeState();
@@ -521,54 +528,11 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             }
             for (int i = 0; i < count; i++)
             {
-                var renderer = records[i].renderer;
-                var item = new VisualRendererSnapshot { index = i, exists = renderer };
+                var item = CaptureRenderer(records[i].renderer, i, ownedCamera, captureRenderEvidenceNow);
                 snapshot.renderers[i] = item;
                 item.rendererRecordMaterialIdentity = Identity(records[i].defaultMaterial);
                 item.defaultShadowCastingMode = (int)records[i].defaultShadowCastingMode;
                 item.ignoreOverlays = records[i].ignoreOverlays;
-                if (!renderer)
-                    continue;
-                item.instanceId = renderer.GetInstanceID();
-                item.rendererType = ShortText(renderer.GetType().FullName, 96);
-                item.rendererName = ShortText(renderer.name, 96);
-                item.layer = renderer.gameObject.layer;
-                item.active = renderer.gameObject.activeInHierarchy;
-                item.enabled = renderer.enabled;
-                item.visible = renderer.isVisible;
-                var bounds = renderer.bounds;
-                item.boundsCenter = bounds.center;
-                item.boundsExtents = bounds.extents;
-                Mesh mesh = null;
-                var skinned = renderer as SkinnedMeshRenderer;
-                if (skinned)
-                    mesh = skinned.sharedMesh;
-                else
-                {
-                    var filter = renderer.GetComponent<MeshFilter>();
-                    if (filter)
-                        mesh = filter.sharedMesh;
-                }
-                item.meshIdentity = Identity(mesh);
-                // Unity 2021.3 exposes all shared materials as a list, so avoid
-                // enumerating an unbounded slot array at this 5-second cadence.
-                // Sample only the non-instantiating first sharedMaterial getter.
-                item.materialSlotCount = -1;
-                item.materialSlotCountKnown = false;
-                item.materialsTruncated = true;
-                if (captureRenderEvidenceNow)
-                    CaptureFirstRendererMaterial(item, renderer);
-                else
-                {
-                    var material = renderer.sharedMaterial;
-                    item.sampledMaterialCount = material ? 1 : 0;
-                    item.sampledNullMaterialSlots = 0;
-                    item.materialIdentities = material
-                        ? new[] { ShortText(Identity(material) + "|" + (material.shader ? material.shader.name : "<null-shader>"), 192) }
-                        : Array.Empty<string>();
-                }
-                if (captureRenderEvidenceNow && ownedCamera)
-                    CaptureRendererProjection(item, ownedCamera, bounds);
             }
             if (captureRenderEvidenceNow)
             {
@@ -967,7 +931,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         return copy;
     }
 
-    static VisualCameraSnapshot CaptureCamera(Camera camera, bool ownedSourceCamera)
+    internal static VisualCameraSnapshot CaptureCamera(Camera camera, bool ownedSourceCamera)
     {
         if (!camera)
             return new VisualCameraSnapshot();
@@ -1009,25 +973,53 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         };
     }
 
-    void CaptureFirstRendererMaterial(VisualRendererSnapshot item, Renderer renderer)
+    internal static VisualRendererSnapshot CaptureRenderer(Renderer renderer, int index, Camera camera, bool detailed)
     {
-        // Preserve the lifecycle report's existing first-shared-material
-        // observation. Do not enumerate a renderer's full material array here:
+        var item = new VisualRendererSnapshot { index = index, exists = renderer };
+        if (!renderer)
+            return item;
+        item.instanceId = renderer.GetInstanceID();
+        item.rendererType = ShortText(renderer.GetType().FullName, 96);
+        item.rendererName = ShortText(renderer.name, 96);
+        item.layer = renderer.gameObject.layer;
+        item.active = renderer.gameObject.activeInHierarchy;
+        item.enabled = renderer.enabled;
+        item.visible = renderer.isVisible;
+        item.forceRenderingOff = renderer.forceRenderingOff;
+        var bounds = renderer.bounds;
+        item.boundsCenter = bounds.center;
+        item.boundsExtents = bounds.extents;
+        var skinned = renderer as SkinnedMeshRenderer;
+        var filter = skinned ? null : renderer.GetComponent<MeshFilter>();
+        item.meshIdentity = Identity(skinned ? skinned.sharedMesh : filter ? filter.sharedMesh : null);
+        CaptureFirstRendererMaterial(item, renderer, detailed);
+        if (detailed && camera)
+            CaptureRendererProjection(item, camera, bounds);
+        return item;
+    }
+
+    static void CaptureFirstRendererMaterial(VisualRendererSnapshot item, Renderer renderer, bool detailed)
+    {
+        // Do not enumerate a renderer's full material array here:
         // Unity exposes no slot count that is safe to query without materializing
         // the complete list, so the total and all later names remain unknown.
         var material = renderer.sharedMaterial;
+        var shader = material ? material.shader : null;
         item.materialSlotCount = -1;
         item.materialSlotCountKnown = false;
         item.materialsTruncated = true;
         item.sampledMaterialCount = material ? 1 : 0;
         item.sampledNullMaterialSlots = 0;
+        item.materialIdentities = material
+            ? new[] { ShortText(Identity(material) + "|" + (shader ? shader.name : "<null-shader>"), 192) }
+            : Array.Empty<string>();
+        if (!detailed)
+            return;
+        item.firstShaderSupported = shader && shader.isSupported;
         item.sampledNamedMaterialCount = material ? 1 : 0;
         item.sampledNamesTruncated = true;
-        item.materialIdentities = material
-            ? new[] { ShortText(Identity(material) + "|" + (material.shader ? material.shader.name : "<null-shader>"), 192) }
-            : Array.Empty<string>();
         item.sampledMaterialNames = material ? new[] { ShortText(material.name, 96) } : Array.Empty<string>();
-        item.sampledShaderNames = material && material.shader ? new[] { ShortText(material.shader.name, 96) } : Array.Empty<string>();
+        item.sampledShaderNames = shader ? new[] { ShortText(shader.name, 96) } : Array.Empty<string>();
     }
 
     static void CaptureRendererProjection(VisualRendererSnapshot item, Camera camera, Bounds bounds)
@@ -1187,10 +1179,14 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             // ignoreOverlays, and future fields) and replace only its material reference.
             record.defaultMaterial = Translate(record.defaultMaterial);
             records[i] = record;
+            // The ordinary display uses the source RendererInfo with CharacterModel disabled.
+            // Setting sharedMaterial updates the first slot and preserves any remaining slots.
+            if (!useCharacterModelCallbacks && record.renderer)
+                record.renderer.sharedMaterial = record.defaultMaterial;
         }
         model.baseRendererInfos = records;
-        // CharacterModel's source Update consumes these records and refreshes actual slots.
-        model.forceUpdate = true;
+        if (useCharacterModelCallbacks)
+            model.forceUpdate = true;
         QueueNoLongerSelectedCopies();
         RetireIfNativeOwnersReleasedCopies();
     }
