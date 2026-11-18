@@ -3082,8 +3082,9 @@ payload source. The uninstall clears its data. The runner revalidates placement
 on the configured volume, recreates the runtime directory, syncs the payload and
 records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
-route observations in either package. After any bootstrap input, it waits for the
-package's installed attempt/PID-bound native menu, requires owned display-zero
+route observations in either package. The runner resolves the installed APK's
+attempt before thermal sampling begins. After any bootstrap input, it waits for the
+attempt/PID-bound native menu, requires owned display-zero
 focus, taps the reported Start button and waits for a ready world before the
 observation clock begins. Existing periodic captures retain PSS,
 native heap and managed/allocation snapshots across stage transitions. The

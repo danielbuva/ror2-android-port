@@ -689,12 +689,12 @@ def check_player_screens(device, thermal, request, output):
     raise RuntimeError("Confirmed Quit did not exit")
 
 
-def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=False):
+def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=False, attempt=None):
     """Start the observed owned menu and return the current world report."""
     from session_cleanup_check import menu_start_coordinates
     from touch_gesture import owned_display_zero_focus
 
-    menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240, report_id=report_id)
+    menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240, report_id=report_id, attempt=attempt)
     save(output / "start-menu.json", menu)
     if thermal.error:
         raise RuntimeError(thermal.error)
@@ -707,7 +707,7 @@ def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=F
         if coordinates is None:
             raise RuntimeError("Current native menu Start geometry unavailable")
         x, y = coordinates
-        device.sh("input", "-d", "0", "tap", str(x), str(y))
+        device.sh("input", "-d", "0", "tap", str(x), str(y), timeout=5)
     else:
         device.sh("input", "keyboard", "keyevent", "KEYCODE_ENTER")
     world = wait_for_settings_report(
@@ -723,7 +723,7 @@ def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=F
     return world
 
 
-def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
+def run_workload(device, thermal, request, output, result, *, _reset_idle=None, start_attempt=None):
     if request["mode"] == "profile-write-interrupt":
         from settings_write_interrupt_check import check_profile_write_interrupt
 
@@ -781,10 +781,10 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
     pid = str(launched["pid"])
     capture_events = capture_golem_attacks(device, thermal, pid, output / "golem-attacks") if request.get("capture_golem_attacks") else nullcontext()
     with capture_events:
-        observe_launch(device, thermal, request, output, result, pid)
+        observe_launch(device, thermal, request, output, result, pid, start_attempt=start_attempt)
 
 
-def observe_launch(device, thermal, request, output, result, pid):
+def observe_launch(device, thermal, request, output, result, pid, *, start_attempt=None):
     if "input_script" in request:
         import touch_gesture
 
@@ -795,7 +795,7 @@ def observe_launch(device, thermal, request, output, result, pid):
         from session_cleanup_check import SPINE_ID
 
         report_id = SPINE_ID.removesuffix("-bringup") if device.package == "dev.ror2lab.converted" else SPINE_ID
-        start_from_menu(device, thermal, pid, output, report_id=report_id, tap_start=True)
+        start_from_menu(device, thermal, pid, output, report_id=report_id, tap_start=True, attempt=start_attempt)
     began = time.monotonic()
     next_capture = 0
     scheduled = iter(enumerate(request.get("input_schedule", [])))
@@ -866,6 +866,7 @@ def execute(request):
     from alpha_stability_batch import _GameThermalOwner, _idle_readback, _prune
     from device import PACKAGE, Device, InstallSignatureMismatch, remove_device_file
     from device_context import command_selectors, set_command_selector
+    from installed_attempt import attempt_from_installed
 
     output.mkdir(parents=True, exist_ok=True)
     done = output / "terminal.done.json"
@@ -953,6 +954,11 @@ def execute(request):
         initial_exception_bytes = exception_log_size(device, exception_log)
         initial_scratch = diagnostic_scratch(device, runtime)
         mapping = checked_mapping(request) if "input_mapping" in request else None
+        start_attempt = None
+        if request.get("start_from_menu"):
+            # APK inspection can starve the in-process thermal sampler. A checked
+            # mapping already binds its attempt to the installed APK hash.
+            start_attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(device.owned())
         for name, payload in (
             ("diagnostics.json", request.get("diagnostics")),
             ("movement-batch-selection.json", request.get("selection") if request["mode"] == "launch" else None),
@@ -975,7 +981,15 @@ def execute(request):
         thermal.phase = request["mode"]
         prepare_launch(device, result.setdefault("prelaunch", {}))
         thermal.start()
-        run_workload(device, thermal, request, output, result, _reset_idle=lambda current, record: reset_idle(current, lease, record, cleanup))
+        run_workload(
+            device,
+            thermal,
+            request,
+            output,
+            result,
+            _reset_idle=lambda current, record: reset_idle(current, lease, record, cleanup),
+            start_attempt=start_attempt,
+        )
         result["success"] = True
     except BaseException:
         result["error"] = traceback.format_exc()

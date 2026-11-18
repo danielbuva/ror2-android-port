@@ -103,13 +103,14 @@ class DeviceSessionTests(unittest.TestCase):
         menu = dict(phase="offline-start-menu", hud=hud, attempt="owned-attempt")
         gameplay_report = dict(phase="integrated-world-playing", world=dict(ready=True))
         reports = [menu, gameplay_report, menu, gameplay_report]
+        attempts = iter([None, menu["attempt"], menu["attempt"], menu["attempt"]])
         gameplay_route = "body-state-spawn-state-auto-player"
 
         def observed(device, monitor, pid, predicate, timeout, *, report_id, attempt=None):
             self.assertEqual(report_id, gameplay_route)
             report = reports.pop(0)
             self.assertTrue(predicate(report))
-            self.assertEqual(attempt, None if report is menu else menu["attempt"])
+            self.assertEqual(attempt, next(attempts))
             return report
 
         with (
@@ -117,9 +118,12 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
         ):
             self.assertEqual(runner.start_from_menu(target, thermal, "12", self.output, report_id=gameplay_route), gameplay_report)
-            self.assertEqual(runner.start_from_menu(target, thermal, "12", self.output, report_id=gameplay_route, tap_start=True), gameplay_report)
+            self.assertEqual(
+                runner.start_from_menu(target, thermal, "12", self.output, report_id=gameplay_route, tap_start=True, attempt=menu["attempt"]),
+                gameplay_report,
+            )
         target.sh.assert_any_call("input", "keyboard", "keyevent", "KEYCODE_ENTER")
-        target.sh.assert_any_call("input", "-d", "0", "tap", "171", "757")
+        target.sh.assert_any_call("input", "-d", "0", "tap", "171", "757", timeout=5)
         self.assertTrue((self.output / "world-start.json").is_file())
         with (
             mock.patch.object(runner, "wait_for_settings_report", return_value=menu),
@@ -157,12 +161,12 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner, "start_from_menu", calls.menu),
             mock.patch.object(runner, "capture", calls.capture),
         ):
-            runner.observe_launch(device, thermal, request, self.output, result, "7")
+            runner.observe_launch(device, thermal, request, self.output, result, "7", start_attempt="converted-attempt")
         self.assertEqual(
             calls.mock_calls[:2],
             [
                 mock.call.input(self.output / "input.json", self.digest, device=device),
-                mock.call.menu(device, thermal, "7", self.output, report_id=SPINE_ID.removesuffix("-bringup"), tap_start=True),
+                mock.call.menu(device, thermal, "7", self.output, report_id=SPINE_ID.removesuffix("-bringup"), tap_start=True, attempt="converted-attempt"),
             ],
         )
 
@@ -684,7 +688,17 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.assert_any_call("sha256sum", "/owned/files/il2cpp/Metadata/global-metadata.dat", check=False)
         self.assertIn("Unity:D", target.cmd.call_args_list[0].args)
 
-    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False, exception_rows="", signature_failure=False):
+    def run_case(
+        self,
+        *,
+        workload_error=False,
+        terminal_error=False,
+        thermal_error=False,
+        payload=False,
+        exception_rows="",
+        signature_failure=False,
+        start_from_menu=False,
+    ):
         events = []
         transient_paths = {"/owned/" + suffix for suffix in runner.TRANSIENTS}
         live_transients = set(transient_paths)
@@ -786,10 +800,20 @@ class DeviceSessionTests(unittest.TestCase):
         thermal = mock.Mock(error="safety stop" if thermal_error else None, peak_cpu_gpu_celsius=81, time_above_80_seconds=3, admission_battery={})
         thermal.thread = thermal.stopper = None
         thermal.finish.side_effect = RuntimeError("safety stop") if thermal_error else lambda: events.append("thermal-finish")
+        thermal.start.side_effect = lambda: events.append("thermal-start")
+
+        if start_from_menu:
+            self.request["start_from_menu"] = True
+
+        def read_attempt(receipt):
+            self.assertEqual(receipt, installed)
+            events.append("read-attempt")
+            return "owned-attempt"
 
         def workload(*args, **kwargs):
             self.assertTrue(lease_path.is_dir())
             self.assertIsNotNone(kwargs["_reset_idle"])
+            self.assertEqual(kwargs["start_attempt"], "owned-attempt" if start_from_menu else None)
             if self.request["mode"] == "sustained":
                 self.assertFalse(any(call.args[0] == "push" and call.args[-1].endswith("movement-batch-selection.json") for call in target.cmd.call_args_list))
             events.append("workload")
@@ -821,6 +845,7 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner, "placement", return_value={}) as placement,
             mock.patch.object(runner, "run_workload", side_effect=workload),
             mock.patch.object(runner, "prepare_launch") as prepare,
+            mock.patch("installed_attempt.attempt_from_installed", side_effect=read_attempt) as attempt,
             mock.patch.object(batch, "_GameThermalOwner", return_value=thermal) as owner,
             mock.patch.object(batch, "_idle_readback", side_effect=idle),
             mock.patch.object(batch, "_prune", side_effect=prune),
@@ -855,6 +880,11 @@ class DeviceSessionTests(unittest.TestCase):
             )
         self.assertEqual(owner.call_args.args[-1], 1060)  # run-local cooldown deadline
         self.assertEqual(thermal.deadline, 1630)  # independent workload deadline
+        if start_from_menu:
+            attempt.assert_called_once_with(installed)
+            self.assertLess(events.index("read-attempt"), events.index("thermal-start"))
+        else:
+            attempt.assert_not_called()
         self.assertEqual(events[-1], "prune")
         self.assertIn("asleep", events)
         self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
@@ -878,6 +908,9 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertTrue(result["terminal_readback"]["oled_asleep"])
         self.assertEqual((self.output / "exceptions.jsonl").read_text(), "")
+
+    def test_menu_observation_binds_installed_attempt_before_thermal_sampling(self):
+        self.assertTrue(self.run_case(start_from_menu=True)["success"])
 
     def test_owned_lab_signer_mismatch_reinstalls_once_and_resyncs_under_lease(self):
         result = self.run_case(payload=True, signature_failure=True)
