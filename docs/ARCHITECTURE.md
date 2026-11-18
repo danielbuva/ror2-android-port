@@ -589,7 +589,8 @@ Standalone Sprite media uses the shared UI owner. Current source hierarchies sta
 intact; historical graph differences and phone/runtime compatibility remain open.
 `player_managers.py` owns the optional complete source manager phase selected by
 player-data `--manager-profile`. `manager_settings.py` projects public settings
-over original native schemas; `manager_sdk.py` reads bounded SDK resource
+over original native schemas and retains the source collision matrix and its
+TagManager layer indices. `manager_sdk.py` reads bounded SDK resource
 registrations and Android shader selection; `manager_graph.py` owns resource
 roots, binary/schema reads and direct dependency closure, including script edges.
 Setup requires fresh Menu/HUD/context/registry player outputs, a complete pinned

@@ -48,6 +48,30 @@ class ManagerGraphTests(unittest.TestCase):
 
 
 class ManagerSettingsTests(unittest.TestCase):
+    def test_physics_projects_android_settings_and_retains_source_collision_rows(self):
+        def require(condition, message):
+            if not condition:
+                raise ValueError(message)
+
+        rows = [0xFFFFFFFF] * 32
+        rows[2] &= ~(1 << 2 | 1 << 6)
+        rows[6] &= ~(1 << 2)
+        layers = [""] * 32
+        layers[2], layers[6] = "FixtureProjectile", "FixtureHull"
+        original = {S.COLLISION_MATRIX: rows, "m_SolverIterations": 6}
+        smoke = {S.COLLISION_MATRIX: "ff" * 128, "m_SolverIterations": 8}
+        actual = S.project_physics(original, smoke, layers, require)
+        self.assertEqual(actual, {S.COLLISION_MATRIX: rows, "m_SolverIterations": 8})
+        self.assertIsNot(actual[S.COLLISION_MATRIX], rows)
+
+        with self.assertRaisesRegex(ValueError, "complete layer table"):
+            S.project_physics(original, smoke, layers[:-1], require)
+        with self.assertRaisesRegex(ValueError, "32 uint32 rows"):
+            S.project_physics({S.COLLISION_MATRIX: rows[:-1]}, smoke, layers, require)
+        rows[6] = 0xFFFFFFFF
+        with self.assertRaisesRegex(ValueError, "not symmetric"):
+            S.project_physics(original, smoke, layers, require)
+
     def test_yaml_native_projection_preserves_unselected_fields_and_binary_arrays(self):
         yaml = b"%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n--- !u!5 &1\nFixture:\n  value: 2.5\n  flags: 0100000002000000\n  objects: []\n  pointer: {fileID: 0}\n"
         selected = S.yaml_settings(yaml)
