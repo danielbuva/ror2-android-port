@@ -5,11 +5,13 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from tarfile import open as open_tar
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/lab"))
 import lab_runner  # noqa: E402
+import toolhost_build  # noqa: E402
 
 GUARD = ROOT / "scripts/lab/lab-runner-guard.sh"
 REPO = "danielbuva/ror2-android-port"
@@ -132,6 +134,87 @@ class RefusedLeaseTest(unittest.TestCase):
                 self.assertEqual(lab_runner.local_packaging(request), 1)
             self.assertEqual(execute.call_args.kwargs, dict(local_checkout=repo, workstream="fixture-worker"))
             self.assertEqual(json.loads(done.read_bytes())["error"], "fixture failure")
+
+    def test_explicit_toolhost_plan_is_validated_and_cached_by_input_pin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            stage = repo / "work/stage"
+            stage.mkdir(parents=True)
+            config = repo / "work/config/lab-runner.json"
+            config.parent.mkdir()
+            config.write_text(json.dumps({"devices": {"thor": "fixture"}}))
+            provider = repo / "_socket.so"
+            provider.write_bytes(b"synthetic-provider")
+            apk_data = b"synthetic-apk"
+            tools = {"natives": {"libpyext__socket.so": {"path": str(provider), "sha256": toolhost_build.digest(provider)}}}
+            for name, value in {
+                "backend-tools.json": json.dumps(tools),
+                "python-native-plan.json": "{}",
+                "build_fixture.py": "# synthetic",
+                "apksigner.jar": "fixture",
+                "release-trust.json": "{}",
+                "repo/synthetic.py": "# pinned checkout",
+            }.items():
+                file = stage / name
+                file.parent.mkdir(exist_ok=True)
+                file.write_text(value)
+            (repo / "synthetic.py").write_text("# pinned checkout")
+            files = {path.relative_to(stage).as_posix(): toolhost_build.digest(path) for path in stage.rglob("*") if path.is_file()}
+            receipt = stage / "stage-receipt.json"
+            request = repo / "request.json"
+            root = "/data/local/tmp/synthetic-tools"
+            outputs = []
+
+            def run(command, **kwargs):
+                inputs, plan, out = command["local_toolhost"]
+                self.assertEqual(inputs["tool_root"], root)
+                self.assertEqual(kwargs, {"local_checkout": repo, "workstream": "fixture-worker"})
+                out.mkdir(parents=True)
+                remote = root + "/synthetic-run"
+                tar = out / "stage.tar"
+                toolhost_build.stage_archive(tar, *plan[:-1], remote, lab_runner.TEST_PACKAGE)
+                with open_tar(tar) as archive:
+                    backend = json.load(archive.extractfile("stage/backend-tools.json"))
+                    path = "providers/libpyext__socket.so/_socket.so"
+                    self.assertEqual(backend["natives"]["libpyext__socket.so"]["path"], remote + "/" + path)
+                    self.assertEqual(archive.extractfile(path).read(), provider.read_bytes())
+                self.assertEqual(backend["package"], lab_runner.TEST_PACKAGE)
+                apk = out / "signed.apk"
+                apk.write_bytes(apk_data)
+                outputs.append(out)
+                return 0, {"success": True, "apk_sha256": toolhost_build.digest(apk)}
+
+            def command(*args, **kwargs):
+                return str(repo / ".git") if "--git-common-dir" in args[0] else "synthetic-commit"
+
+            with (
+                mock.patch.object(lab_runner.subprocess, "check_output", side_effect=command),
+                mock.patch.object(lab_runner.Runner, "execute", side_effect=run),
+            ):
+                for attempt, source in enumerate(("first", "first", "second")):
+                    receipt.write_text(json.dumps(dict(success=True, game_inputs=False, files=files, source_hint=source)))
+                    done = repo / "work" / f"done-{attempt}.json"
+                    inputs = dict(stage_receipt=dict(path=str(receipt), sha256=toolhost_build.digest(receipt)), tool_root=root, signer_sha256="a" * 64)
+                    request.write_text(
+                        json.dumps(
+                            dict(
+                                repo=str(repo),
+                                checkout=str(repo),
+                                workstream="fixture-worker",
+                                device="thor",
+                                operation="toolhost",
+                                toolhost_inputs=inputs,
+                                done_file=str(done),
+                            )
+                        )
+                    )
+                    self.assertEqual(lab_runner.local_packaging(request), 0)
+                    self.assertEqual(json.loads(done.read_bytes()).get("cached", False), attempt == 1)
+                self.assertEqual(len(set(outputs)), 2)
+                provider.write_bytes(b"changed")
+                inputs = json.loads(request.read_bytes())["toolhost_inputs"]
+                with self.assertRaisesRegex(ValueError, "input pin mismatch"):
+                    toolhost_build.read_plan(inputs, repo)
 
     def test_explicit_restage_uses_the_shared_installer_resume_path(self):
         with tempfile.TemporaryDirectory() as directory:
