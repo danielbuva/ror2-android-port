@@ -9,7 +9,7 @@ lease atomically; it never waits for a peer, publishes, or grants itself a slot.
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager, nullcontext
+from contextlib import contextmanager, ExitStack
 from functools import partial
 import hashlib
 import json
@@ -28,6 +28,7 @@ PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
 PROCESS_TIME = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 TRANSIENTS = ("movement-batch-selection.json", "offline-settings-v1/preferences.json.pending")
 GOLEM_ATTACK = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+EntityStates\.GolemMonster\.(ClapState|FireLaser):OnEnter\(\)\s*$")
+TITAN_INDICATOR = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+lab-titan-prefist-visible frame=\d+\s*$")
 DEVICE_RESERVE_BYTES = 20 * 1024**3
 INTERNAL_INSTALL_FLOOR_BYTES = 15 * 1024**3
 
@@ -61,6 +62,7 @@ def load_request(path, serial=None):
         "pacing_diagnostics",
         "start_from_menu",
         "capture_golem_attacks",
+        "capture_titan_indicator",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -97,13 +99,14 @@ def load_request(path, serial=None):
         raise ValueError("Persistence workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
-    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks"):
+    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks", "capture_titan_indicator"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
         raise ValueError("start_from_menu requires the launch workload")
-    if value.get("capture_golem_attacks") and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
-        raise ValueError("capture_golem_attacks requires the native lab launch workload")
+    for name in ("capture_golem_attacks", "capture_titan_indicator"):
+        if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
+            raise ValueError(name + " requires the native lab launch workload")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
@@ -432,13 +435,13 @@ def capture(device, output, pid):
     device.collect("perf", output, include_exceptions=False)
 
 
-def record_golem_frames(device, thermal, pid, output, lines, stopping, events):
+def record_event_frames(device, thermal, pid, output, lines, stopping, events, pattern):
     from touch_gesture import owned_display_zero_focus
 
     for line in lines:
         if stopping.is_set() or thermal.cancelled.is_set():
             return
-        match = GOLEM_ATTACK.fullmatch(line)
+        match = pattern.fullmatch(line)
         if not match or match[2] != pid or len(events) >= 8:
             continue
         event = dict(log=line.strip(), received_epoch=time.time(), frames=[])
@@ -457,14 +460,14 @@ def record_golem_frames(device, thermal, pid, output, lines, stopping, events):
             began = time.time()
             data = subprocess.run(device.base + ["exec-out", "screencap", "-p"], capture_output=True, check=True, timeout=5).stdout
             if not data.startswith(b"\x89PNG\r\n\x1a\n"):
-                raise RuntimeError("Invalid Golem event screenshot")
+                raise RuntimeError("Invalid combat event screenshot")
             filename = f"event-{len(events):02d}-frame-{frame}.png"
             (output / filename).write_bytes(data)
             event["frames"].append(dict(file=filename, began_epoch=began, finished_epoch=time.time()))
 
 
 @contextmanager
-def capture_golem_attacks(device, thermal, pid, output):
+def capture_combat_events(device, thermal, pid, output, pattern):
     """Watch the live Unity log while the normal workload collects full samples."""
     from device import require_device_access
 
@@ -478,7 +481,7 @@ def capture_golem_attacks(device, thermal, pid, output):
         subprocess.Popen(command, stdout=subprocess.PIPE, stderr=error_log, text=True, errors="replace") as logs,
         ThreadPoolExecutor(max_workers=1) as worker,
     ):
-        capture_job = worker.submit(record_golem_frames, device, thermal, pid, output, logs.stdout, stopping, events)
+        capture_job = worker.submit(record_event_frames, device, thermal, pid, output, logs.stdout, stopping, events, pattern)
         try:
             yield
         finally:
@@ -494,7 +497,7 @@ def capture_golem_attacks(device, thermal, pid, output):
             try:
                 capture_job.result()
                 if early_exit is not None:
-                    raise RuntimeError(f"Golem log stream ended before observation completed ({early_exit})")
+                    raise RuntimeError(f"Combat log stream ended before observation completed ({early_exit})")
             finally:
                 save(output / "events.json", events)
 
@@ -839,8 +842,11 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
-    capture_events = capture_golem_attacks(device, thermal, pid, output / "golem-attacks") if request.get("capture_golem_attacks") else nullcontext()
-    with capture_events:
+    with ExitStack() as captures:
+        if request.get("capture_golem_attacks"):
+            captures.enter_context(capture_combat_events(device, thermal, pid, output / "golem-attacks", GOLEM_ATTACK))
+        if request.get("capture_titan_indicator"):
+            captures.enter_context(capture_combat_events(device, thermal, pid, output / "titan-indicator", TITAN_INDICATOR))
         observe_launch(device, thermal, request, output, result, pid, start_attempt=start_attempt)
 
 

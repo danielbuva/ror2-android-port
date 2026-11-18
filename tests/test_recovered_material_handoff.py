@@ -19,11 +19,13 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
         native = (ROOT / "tools/unity/runtime/shaders/AndroidNativeDeferredPresentation.cs").read_text()
         source = (ROOT / "tests/fixtures/recovered_material_handoff.cs").read_text()
         source += "\npublic static partial class AndroidMaterialPresentation {\n"
+        source += next(line for line in presentation.splitlines() if "const string IntersectionShader" in line) + "\n"
         source += "\n".join(
             source_method(presentation, declaration)
             for declaration in (
                 "static bool ApplyNative(",
                 "public static int ApplyRecovered(",
+                "public static Material RecoverTeamAreaMaterial(",
                 "public static void SetEnabled(",
             )
         )
@@ -36,6 +38,7 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
             for declaration in (
                 "public void PresentRegisteredNativeEffects(",
                 "void StopPresentingNativeEffectReferences(",
+                "void PrepareNativeTeamAreaMaterials(",
                 "void PresentNativeEffectSource(",
             )
         )
