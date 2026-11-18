@@ -1,4 +1,4 @@
-// Opt-in owner for the selected player's original async skin lifecycle plus Android material copies.
+// Owner for the selected player's original async skin lifecycle plus Android material copies.
 using System;
 using System.Collections.Generic;
 using RoR2;
@@ -182,6 +182,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     CharacterModel model;
     ModelSkinController skinController;
     Animator animator;
+    bool useCharacterModelCallbacks;
     RuntimeAnimatorController selectedControllerSnapshot;
     Avatar selectedAvatarSnapshot;
     int selectedSnapshotSkinIndex = -1;
@@ -207,7 +208,8 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
 
     public bool NativeAnimatorInitialized => NativeSelectedSkinReady && animator.isInitialized;
 
-    public static AndroidNativeSourceSkinLifecycle PrepareInactive(GameObject modelObject, CharacterBody expectedBody, Report report)
+    public static AndroidNativeSourceSkinLifecycle PrepareInactive(GameObject modelObject, CharacterBody expectedBody, Report report,
+                                                                  bool useCharacterModelCallbacks = true)
     {
         if (report == null)
             throw new ArgumentNullException(nameof(report));
@@ -227,9 +229,10 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         if (!model || !skin || !animator || !model.body || !expectedBody || model.body != expectedBody ||
             !expectedBody.modelLocator || expectedBody.modelLocator.modelTransform != modelObject.transform)
             throw Refuse(report, "Selected source model/body/catalog linkage is incomplete or mismatched");
-        // Only continue when both native callbacks were enabled by the selected source prefab.
-        // Do not force-enable a source-disabled callback.
-        if (!AndroidNativeSkinActivationPolicy.ShouldActivate(true, true, audioLifecycleSafeBoundary, model.enabled, skin.enabled))
+        if (!skin.enabled)
+            throw Refuse(report, "Selected ModelSkinController is disabled in the source prefab");
+        if (useCharacterModelCallbacks &&
+            !AndroidNativeSkinActivationPolicy.ShouldActivate(true, true, audioLifecycleSafeBoundary, model.enabled, skin.enabled))
             throw Refuse(report, "Opt-in source skin lifecycle refused by source/audio/authored-enabled gate");
 
         // Initialize only this retained original cache after source/catalog/audio gates and
@@ -244,7 +247,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         var lifecycle = modelObject.GetComponent<AndroidNativeSourceSkinLifecycle>();
         if (!lifecycle)
             lifecycle = modelObject.AddComponent<AndroidNativeSourceSkinLifecycle>();
-        lifecycle.Bind(model, skin, animator, report);
+        lifecycle.Bind(model, skin, animator, report, useCharacterModelCallbacks);
         return lifecycle;
     }
 
@@ -254,17 +257,20 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         return new InvalidOperationException(reason);
     }
 
-    void Bind(CharacterModel sourceModel, ModelSkinController sourceSkinController, Animator sourceAnimator, Report sourceReport)
+    void Bind(CharacterModel sourceModel, ModelSkinController sourceSkinController, Animator sourceAnimator, Report sourceReport,
+              bool useCharacterModelCallbacks)
     {
         if (model)
         {
-            if (model != sourceModel || skinController != sourceSkinController || animator != sourceAnimator)
+            if (model != sourceModel || skinController != sourceSkinController || animator != sourceAnimator ||
+                this.useCharacterModelCallbacks != useCharacterModelCallbacks)
                 throw new InvalidOperationException("Native skin lifecycle cannot change source model ownership");
             return;
         }
         model = sourceModel;
         skinController = sourceSkinController;
         animator = sourceAnimator;
+        this.useCharacterModelCallbacks = useCharacterModelCallbacks;
         report = sourceReport;
         report.attached = true;
         CaptureNativeState();
@@ -1173,10 +1179,14 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
             // ignoreOverlays, and future fields) and replace only its material reference.
             record.defaultMaterial = Translate(record.defaultMaterial);
             records[i] = record;
+            // The ordinary display uses the source RendererInfo with CharacterModel disabled.
+            // Setting sharedMaterial updates the first slot and preserves any remaining slots.
+            if (!useCharacterModelCallbacks && record.renderer)
+                record.renderer.sharedMaterial = record.defaultMaterial;
         }
         model.baseRendererInfos = records;
-        // CharacterModel's source Update consumes these records and refreshes actual slots.
-        model.forceUpdate = true;
+        if (useCharacterModelCallbacks)
+            model.forceUpdate = true;
         QueueNoLongerSelectedCopies();
         RetireIfNativeOwnersReleasedCopies();
     }

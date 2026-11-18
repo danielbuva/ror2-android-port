@@ -285,13 +285,14 @@ public sealed partial class PortSession
                                                   spawnedBodyId = body.netId.Value,
                                                   masterId = body.master.netId.Value };
             bool nativeSourceSkinRequested = coordinator.r.nativeSourceSkinLifecycleDiagnosticRequested;
+            string sourceSurvivor = coordinator.SelectedSourceSurvivor() ? coordinator.r.selectedSurvivor : null;
             if (nativeSourceSkinRequested)
-            {
-                coordinator.r.nova.nativeSourceSkinLifecycle =
-                    new AndroidNativeSourceSkinLifecycle.Report { requested = true };
-                coordinator.Check(spine && cfg.integratedWorld && coordinator.SelectedSourceSurvivor(),
+                coordinator.Check(spine && cfg.integratedWorld && sourceSurvivor != null,
                                   "Native source skin lifecycle request requires an integrated run and an actual source-selected player model");
-            }
+            // These source models leave their body meshes unbound until ModelSkinController.Start.
+            bool bindSelectedSkin = nativeSourceSkinRequested || (spine && (sourceSurvivor == "Huntress" || sourceSurvivor == "Croco"));
+            if (bindSelectedSkin)
+                coordinator.r.nova.nativeSourceSkinLifecycle = new AndroidNativeSourceSkinLifecycle.Report { requested = true };
             NovaInputBridge.Mapping mapping = null;
             if (physicalInputAvailable)
             {
@@ -370,10 +371,10 @@ public sealed partial class PortSession
                 body.SetAimTimer(130);
                 display = new NovaDiagnosticDisplay(body.modelLocator.modelTransform, coordinator.artifactBundle, cfg.displayAssets,
                                                     coordinator.obstacle, spine, cfg.originalAimPresentation ? body : null,
-                                                    coordinator.SelectedSourceSurvivor() ? coordinator.r.selectedSurvivor : null,
+                                                    sourceSurvivor,
                                                     nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle,
                                                     coordinator.stageGeometryScene);
-                if (nativeSourceSkinRequested)
+                if (bindSelectedSkin)
                 {
                     float assetDeadline = Time.realtimeSinceStartup + 15f;
                     while (!display.NativeSourceSkinAssetsReady && Time.realtimeSinceStartup < assetDeadline)

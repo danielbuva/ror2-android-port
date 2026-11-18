@@ -4852,6 +4852,15 @@ callback; successful refusal and post-transaction reporting failures retain it.
 Session disposal clears the set. The extracted production-method fixture in
 `tests/test_offline_achievement_event_retry.py` checks this host contract (J1039).
 
+Ordinary Huntress and Acrid runs attach `AndroidNativeSourceSkinLifecycle`
+before the detached source model activates. Their original
+`ModelSkinController` applies the selected SkinDef and supplies the meshes,
+renderer records, controller and avatar. The adapter publishes translated
+materials into the first slot of each source renderer record. The lab camera
+and item-display owners remain active with the CharacterModel callbacks disabled.
+Input setup waits for the selected assets and initialized Animator before
+enabling native aim. The subscription and material copies follow model lifetime.
+
 For the explicitly selected native-skin diagnostic only,
 `NovaDiagnosticDisplay.CaptureNativeSourceSkinReport` asks the existing lifecycle
 owner for a read-only visual sample at the five-second report-save cadence.

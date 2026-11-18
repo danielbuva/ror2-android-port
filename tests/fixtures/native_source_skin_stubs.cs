@@ -70,7 +70,17 @@ namespace UnityEngine
     {
         public Material[] sharedMaterials = Array.Empty<Material>();
         public int getSharedMaterialsCalls, sharedMaterialGetterCalls;
-        public Material sharedMaterial { get { sharedMaterialGetterCalls++; if (throwSharedMaterialGetter) throw new InvalidOperationException("synthetic sharedMaterial read failure"); return sharedMaterials.Length > 0 ? sharedMaterials[0] : null; } }
+        public Material sharedMaterial
+        {
+            get
+            {
+                sharedMaterialGetterCalls++;
+                if (throwSharedMaterialGetter)
+                    throw new InvalidOperationException("synthetic sharedMaterial read failure");
+                return sharedMaterials.Length > 0 ? sharedMaterials[0] : null;
+            }
+            set { sharedMaterials[0] = value; }
+        }
         public bool isVisible, forceRenderingOff;
         public bool throwSharedMaterialGetter;
         public Bounds bounds;
