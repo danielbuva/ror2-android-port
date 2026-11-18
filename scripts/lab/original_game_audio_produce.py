@@ -71,7 +71,7 @@ NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
 OWNER_ANCESTOR_MANIFEST_SHA256 = "6d8df2d0cc74466d6bb8908783930fdfe1cba9799f462001548ec9142e904765"
 STAGE_PIN_TOOL_SHA256 = "03844d131eed33e72ef7472027b1ded4d48a9cbe1974dce70c8b7e8b003c6267"
-REQUEST_PIN_TOOL_SHA256 = "945533162905e763869a00480be064e6b3c31ff5b62f6de81ef1393219c1459b"
+REQUEST_PIN_TOOL_SHA256 = "f3f52af68d44cb9b3cb1416dc77911812f2e914007635f548e6541ab3d037d5d"
 MANAGED_PRODUCER_SHA256 = "b3f1806afa9e7f82159052a7524f0ae389df6ab255e735e3344b714ad5dfb34d"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
@@ -950,6 +950,8 @@ def generate_request_contract(
     passive_pcm_capture_requested: bool = False,
     passive_pcm_capture_music_output_requested: bool = False,
     passive_pcm_capture_after_authority_skill_requested: bool = False,
+    *,
+    owner_work: Path | None = None,
 ) -> tuple[Path, Path]:
     """Create the pre-derivative input contract and same-build request.
 
@@ -969,7 +971,10 @@ def generate_request_contract(
         raise ValueError("specific-output PCM selection requires passive PCM capture")
     if passive_pcm_capture_after_authority_skill_requested and (not passive_pcm_capture_requested or passive_pcm_capture_music_output_requested):
         raise ValueError("skill-deferred PCM requires MainOutput passive PCM capture")
-    local = json.loads((ROOT / "work/config/local.json").read_text(encoding="utf-8"))
+    work_root = (ROOT / "work").resolve(strict=True) if owner_work is None else owner_work
+    if work_root != work_root.resolve(strict=True):
+        raise ValueError("owner work root must be canonical")
+    local = json.loads((work_root / "config/local.json").read_text(encoding="utf-8"))
     game_root = Path(local["game_path"]).expanduser().resolve(strict=True)
     managed_root = game_root / "Risk of Rain 2_Data/Managed"
     raw_game = managed_root / "RoR2.dll"
@@ -1017,9 +1022,8 @@ def generate_request_contract(
         "adapted_init_sha256": adapted_init,
     }
     request_generator = load_module(TOOLS / "generate_accepted_request_pin.py", "audio_request_pin_contract")
-    expected = request_generator.EXPECTED
+    expected = request_generator.expected_sources(owner_work)
     rows = []
-    work_root = (ROOT / "work").resolve(strict=True)
     for role, path in members.items():
         resolved = path.resolve(strict=True)
         if path.is_symlink() or not resolved.is_file() or not resolved.is_relative_to(work_root):

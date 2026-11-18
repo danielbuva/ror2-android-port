@@ -3841,6 +3841,9 @@ The existing bank stager and runtime stage-pin generator accept `--owner-work`
 for the reviewed full import inventory and the decoder-free bank index. The
 stager writes its private receipt and payload beneath that workspace. The pin
 generator verifies the receipt and staged bytes before emitting C# constants.
+The runtime opt-in request generator also accepts this explicit workspace. It
+binds the same-build managed and native inputs to the selected index, the
+owner inventory and the exact stage receipt.
 Signed APK assembly and native Wwise playback remain qualification gates.
 The payload copier preflights existing bank/media paths, file types and sizes
 without reading their contents for capacity accounting. It hashes each existing

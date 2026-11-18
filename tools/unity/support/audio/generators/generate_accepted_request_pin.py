@@ -13,6 +13,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[5]
 WORK = (ROOT / "work").resolve()
+OWNER_BANK_INDEX_SHA256 = "063944216e330019b171e8d654b3f0c53ca33289888a2615100abc9e27fa2b76"
 EXPECTED = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
     "adapted_init_sha256": "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90",
@@ -52,16 +53,27 @@ def sha_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def checked_work_file(path: Path, label: str) -> Path:
+def work_root(owner_work: Path | None) -> Path:
+    work = WORK if owner_work is None else owner_work
+    if work != work.resolve(strict=True):
+        raise ValueError("owner work root must be canonical")
+    return work
+
+
+def expected_sources(owner_work: Path | None) -> dict:
+    return EXPECTED if owner_work is None else {**EXPECTED, "current_bank_index_sha256": OWNER_BANK_INDEX_SHA256}
+
+
+def checked_work_file(path: Path, label: str, work: Path) -> Path:
     lexical = path.absolute()
     try:
         resolved = lexical.resolve(strict=True)
-        relative = lexical.relative_to(WORK)
+        relative = lexical.relative_to(work)
     except (OSError, ValueError) as error:
         raise ValueError(f"{label} must be an existing file under work/") from error
-    if not resolved.is_relative_to(WORK) or not resolved.is_file():
+    if not resolved.is_relative_to(work) or not resolved.is_file():
         raise ValueError(f"{label} must be a regular file under work/")
-    cursor = WORK
+    cursor = work
     for part in relative.parts:
         cursor = cursor / part
         if cursor.is_symlink():
@@ -69,15 +81,16 @@ def checked_work_file(path: Path, label: str) -> Path:
     return resolved
 
 
-def validate_input_contract(path: Path) -> str:
-    path = checked_work_file(path, "build input contract")
+def validate_input_contract(path: Path, *, owner_work: Path | None = None) -> str:
+    work, pins = work_root(owner_work), expected_sources(owner_work)
+    path = checked_work_file(path, "build input contract", work)
     raw = path.read_bytes()
     contract = json.loads(raw)
     if (
         not isinstance(contract, dict)
         or set(contract) != {"schema", "accepted_input_id", "inputs"}
         or contract.get("schema") != CONTRACT_SCHEMA
-        or contract.get("accepted_input_id") != EXPECTED["accepted_input_id"]
+        or contract.get("accepted_input_id") != pins["accepted_input_id"]
         or not isinstance(contract.get("inputs"), list)
     ):
         raise ValueError("build input contract schema or accepted input ID mismatch")
@@ -95,11 +108,11 @@ def validate_input_contract(path: Path) -> str:
         parts = Path(relative).parts
         if any(part in ("", ".", "..") for part in parts):
             raise ValueError("build input contract path is not canonical")
-        candidate = checked_work_file(WORK / relative, "build input contract member")
+        candidate = checked_work_file(work / relative, "build input contract member", work)
         actual_sha = sha_file(candidate)
         if not HASH_RE.fullmatch(str(declared)) or declared != actual_sha:
             raise ValueError(f"build input contract member hash mismatch: {role}")
-        if EXPECTED.get(role) != actual_sha:
+        if pins.get(role) != actual_sha:
             raise ValueError(f"build input contract accepted pin mismatch: {role}")
         actual[role] = actual_sha
     if set(actual) != CONTRACT_ROLES:
@@ -107,7 +120,7 @@ def validate_input_contract(path: Path) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def streamed_media_rows(receipt: dict) -> list[dict]:
+def streamed_media_rows(receipt: dict, *, bank_index_sha256: str) -> list[dict]:
     validator_path = ROOT / "scripts/lab/original_game_audio_stage.py"
     spec = importlib.util.spec_from_file_location("original_audio_stage_validator", validator_path)
     if spec is None or spec.loader is None:
@@ -117,7 +130,7 @@ def streamed_media_rows(receipt: dict) -> list[dict]:
     validator = getattr(module, "validate_streamed_media_rows", None)
     if not callable(validator):
         raise ValueError("shared streamed-media receipt validator unavailable")
-    rows = validator(receipt)
+    rows = validator(receipt, bank_index_sha256=bank_index_sha256)
     if not isinstance(rows, list) or len(rows) != 120:
         raise ValueError("R2 receipt must validate exactly 120 streamed media rows")
     return rows
@@ -139,9 +152,10 @@ def validate_pcm_capture_options(request: dict) -> tuple[bool, bool, bool]:
     return capture, music, after_skill
 
 
-def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
-    request_path = checked_work_file(request_path, "opt-in request")
-    stage_path = checked_work_file(stage_path, "stage receipt")
+def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner_work: Path | None = None) -> dict:
+    work, pins = work_root(owner_work), expected_sources(owner_work)
+    request_path = checked_work_file(request_path, "opt-in request", work)
+    stage_path = checked_work_file(stage_path, "stage receipt", work)
     raw = request_path.read_bytes()
     request = json.loads(raw)
     if (
@@ -161,7 +175,7 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
         raise ValueError("request_id must be a UUID in compact hex form") from error
     if len(request_id) != 32:
         raise ValueError("request_id must use compact N form")
-    contract_sha = validate_input_contract(manifest_path)
+    contract_sha = validate_input_contract(manifest_path, owner_work=owner_work)
     if request.get("build_input_contract_sha256") != contract_sha:
         raise ValueError("request does not bind the exact build input contract")
     stage_raw = stage_path.read_bytes()
@@ -171,14 +185,14 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
     stage_sha = hashlib.sha256(stage_raw).hexdigest()
     if request.get("stage_receipt_sha256") != stage_sha:
         raise ValueError("request does not bind exact generated stage receipt")
-    if request.get("adapted_init_sha256") != EXPECTED["adapted_init_sha256"]:
+    if request.get("adapted_init_sha256") != pins["adapted_init_sha256"]:
         raise ValueError("adapted Init hash is not the accepted adaptation")
-    for field, value in EXPECTED.items():
+    for field, value in pins.items():
         if request.get(field) != value:
             raise ValueError(f"accepted source pin mismatch: {field}")
     if (
         stage.get("schema") != "original-game-wwise-bank-cohort-r2"
-        or stage.get("accepted_input_id") != EXPECTED["accepted_input_id"]
+        or stage.get("accepted_input_id") != pins["accepted_input_id"]
         or stage.get("soundbanks_info_sha256") != SOUNDBANKS_INFO_SHA256
         or stage.get("requested_banks") != 153
         or stage.get("runtime_private_copy_required") is not True
@@ -187,10 +201,10 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
         or stage.get("runtime_bank_ready") is not False
     ):
         raise ValueError("stage receipt is outside the accepted 153-bank runtime contract")
-    inventory_path = WORK / "inventory/files.json"
+    inventory_path = checked_work_file(work / "inventory/files.json", "owner inventory", work)
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
     if (
-        inventory.get("input_id") != EXPECTED["accepted_input_id"]
+        inventory.get("input_id") != pins["accepted_input_id"]
         or inventory.get("hash_mode") != "full"
         or stage.get("accepted_inventory_sha256") != sha_file(inventory_path)
     ):
@@ -202,7 +216,7 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
         "init_adaptation_candidate_sha256",
         "global_accepted_original_sha256",
     ):
-        expected = EXPECTED["adapted_init_sha256"] if key == "init_adaptation_candidate_sha256" else EXPECTED.get(key)
+        expected = pins["adapted_init_sha256"] if key == "init_adaptation_candidate_sha256" else pins.get(key)
         if stage.get(key) != expected:
             raise ValueError(f"stage receipt source pin mismatch: {key}")
     outputs = stage.get("outputs")
@@ -222,7 +236,7 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
             raise ValueError("stage output lacks a valid hash/size")
         if filename == "Init.bnk":
             found_init = True
-            if row["sha256"] != EXPECTED["adapted_init_sha256"]:
+            if row["sha256"] != pins["adapted_init_sha256"]:
                 raise ValueError("staged Init differs from accepted adapted Init")
             continue
         name = row.get("requested_name")
@@ -231,7 +245,7 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
         names.add(name)
     if not found_init or len(names) != 153:
         raise ValueError("stage receipt must bind the exact 153-name set plus Init")
-    media_rows = streamed_media_rows(stage)
+    media_rows = streamed_media_rows(stage, bank_index_sha256=pins["current_bank_index_sha256"])
     if len(media_rows) != 120:
         raise ValueError("stage receipt must validate exactly 120 streamed media rows")
     if any(not set(row["referenced_by"]).issubset(names) for row in media_rows):
@@ -246,12 +260,14 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path) -> dict:
     }
 
 
-def emit(request_path: Path, manifest_path: Path, stage_path: Path, output: Path) -> dict:
-    if not output.absolute().resolve(strict=False).is_relative_to(WORK):
+def emit(request_path: Path, manifest_path: Path, stage_path: Path, output: Path, *, owner_work: Path | None = None) -> dict:
+    work = work_root(owner_work)
+    output = output.absolute()
+    if output.resolve(strict=False) != output or not output.is_relative_to(work):
         raise ValueError("generated source output must remain under ignored work/")
     if output.exists():
         raise ValueError("generated source output must be a new file")
-    result = validate(request_path, manifest_path, stage_path)
+    result = validate(request_path, manifest_path, stage_path, owner_work=owner_work)
     request = result["request"]
     capture_requested, music_output_requested, after_authority_skill_requested = validate_pcm_capture_options(request)
     fields = {
@@ -284,7 +300,7 @@ def emit(request_path: Path, manifest_path: Path, stage_path: Path, output: Path
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(source, encoding="utf-8")
     return {
-        "output": str(Path("work") / output.relative_to(WORK)),
+        "output": str(Path("work") / output.relative_to(work)),
         "source_sha256": sha_file(output),
         **{k: v for k, v in result.items() if k != "request"},
     }
@@ -296,10 +312,11 @@ def main() -> None:
     parser.add_argument("build_manifest", type=Path)
     parser.add_argument("stage_receipt", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--owner-work", type=Path, help="explicit admitted owner work root and decoder-free index")
     args = parser.parse_args()
     print(
         json.dumps(
-            emit(args.request, args.build_manifest, args.stage_receipt, args.output),
+            emit(args.request, args.build_manifest, args.stage_receipt, args.output, owner_work=args.owner_work),
             indent=2,
             sort_keys=True,
         )
