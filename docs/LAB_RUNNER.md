@@ -87,8 +87,9 @@ An optional `toolhost_source_commit` selects a previously built cache entry.
 The acquisition runner checks its stage/build receipts and requires matching
 installer runtime sources and the disposable APK's document fixture. The dry-run
 checks the catalogs and source shape. The detached run stages a temporary ZIP and
-two folders under the fresh installer's external files. It verifies cancellation
-in the system picker and uses the fixture's Android document grants to qualify
+two folders under the fresh installer's external files. A private one-use command
+invokes the normal buttons in the debuggable installer-test package. The run sends
+Back to the system picker and uses the fixture's Android document grants to qualify
 folder and ZIP imports. It then removes its owned files and installer.
 
 ## Current local emission request

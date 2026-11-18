@@ -33,7 +33,12 @@ public final class ToolHostActivity extends Activity {
     private Button checkButton, rollbackButton, recoveryButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
     private static final int PICK_TREE = 120, PICK_ZIP = 121;
     private String flowDetail = "";
-    private final Runnable refresh = new Runnable() { public void run() { refreshStatus(); handler.postDelayed(this, 500); } };
+    private final Runnable refresh = new Runnable() { public void run() {
+        refreshStatus();
+        try { AcquisitionFixture.control(ToolHostActivity.this); }
+        catch (Exception error) { updateStatus(ToolHostActivity.this, "ERROR", error.getMessage()); }
+        handler.postDelayed(this, 500);
+    } };
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener installObserver =
         new android.content.SharedPreferences.OnSharedPreferenceChangeListener() {
             public void onSharedPreferenceChanged(android.content.SharedPreferences preferences, String key) {
@@ -72,6 +77,17 @@ public final class ToolHostActivity extends Activity {
         Button result = new Button(this); result.setText(label); layout.addView(result);
         result.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) { action.run(); } });
         return result;
+    }
+    Button acquisitionControl(String action) throws IOException {
+        switch (action) {
+            case "check": return checkButton;
+            case "prepare": return prepareButton;
+            case "choose-folder": return treeButton;
+            case "choose-zip": return zipButton;
+            case "import": return importButton;
+            case "cancel": return cancelButton;
+            default: throw new IOException("Unknown lab acquisition control");
+        }
     }
     @Override protected void onDestroy() {
         if (graphicsPicker != null) graphicsPicker.close();

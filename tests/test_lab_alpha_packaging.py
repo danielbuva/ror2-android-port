@@ -45,6 +45,25 @@ def bound(version=1, publisher=1, purpose="update", prior=None):
 
 
 class AlphaPackagingTests(unittest.TestCase):
+    def test_acquisition_publishes_one_use_control_and_waits_for_matching_ack(self):
+        command = {"action": "cancel", "id": "current"}
+        phone = Mock(timeout=10)
+        phone.read.side_effect = [{"action": "cancel", "id": "old"}, command]
+        with patch.object(ACQUISITION.secrets, "token_hex", return_value="current"), patch.object(ACQUISITION.time, "sleep"):
+            ACQUISITION.dispatch_control(phone, A.INSTALLER, "cancel")
+
+        phone.put.assert_called_once_with("acquisition-control.json.pending", A.INSTALLER.encoded(command))
+        phone.shell.assert_called_once_with(
+            "run-as",
+            A.INSTALLER.PACKAGE,
+            "mv",
+            "files/owner-input/acquisition-control.json.pending",
+            "files/owner-input/acquisition-control.json",
+            label="acquisition-publish-control",
+        )
+        self.assertEqual(phone.read.call_count, 2)
+        phone.tap.assert_not_called()
+
     def test_acquisition_creates_nested_directories_before_adb_sync(self):
         phone = Mock()
         source = Path("owned game files")

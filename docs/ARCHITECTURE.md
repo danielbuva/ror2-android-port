@@ -1633,6 +1633,8 @@ It checks Android picker cancellation with Back. For deterministic selection,
 `AcquisitionFixture.java` returns read-only tree and ZIP grants through the
 installer's normal activity-result handler. Only the disposable test APK
 registers the fixture, and a one-use private request selects its document.
+The debuggable fixture consumes separate one-use control requests while the
+installer is resumed and invokes the same enabled buttons used by the owner.
 The runner owns its temporary archive and an external-files subtree on the
 phone. It hashes staged sources and successful private imports, then removes
 staging and disposes of the fresh installer through the existing cleanup owner.

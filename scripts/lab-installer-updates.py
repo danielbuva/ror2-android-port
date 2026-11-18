@@ -1243,7 +1243,7 @@ class Phone:
                 return True
         return False
 
-    def tap(self, label, *, required=True, scroll_down_first=False):
+    def tap(self, label, *, required=True):
         if self.tap_visible(label):
             return True
         if not required:
@@ -1259,10 +1259,7 @@ class Phone:
             raise Failure("ui-scroll-bounds")
         x1, y1, x2, y2 = coordinates
         x, top, bottom = (x1 + x2) // 2, y1 + (y2 - y1) // 5, y2 - (y2 - y1) // 5
-        directions = ((top, bottom), (bottom, top))
-        if scroll_down_first:
-            directions = directions[::-1]
-        for direction in directions:
+        for direction in ((top, bottom), (bottom, top)):
             previous = None
             deadline = time.monotonic() + 30
             while time.monotonic() < deadline:

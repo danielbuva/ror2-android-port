@@ -14,6 +14,7 @@ import zipfile
 
 DOCUMENTS = ("com.android.documentsui", "com.google.android.documentsui")
 IMPORT = "files/owner-input/import"
+CONTROL = "acquisition-control.json"
 GIB = 1024**3
 
 
@@ -66,6 +67,20 @@ def selected_document(preferences, kind, relative_path):
     segment = "tree" if kind == "tree" else "document"
     prefix, _, document = uri.path.rpartition("/")
     return prefix == "/" + segment and unquote(document) == relative_path and not (uri.query or uri.fragment)
+
+
+def dispatch_control(phone, installer, action):
+    command = {"action": action, "id": secrets.token_hex(8)}
+    pending = CONTROL + ".pending"
+    phone.put(pending, installer.encoded(command))
+    prefix = "files/owner-input/"
+    phone.shell("run-as", installer.PACKAGE, "mv", prefix + pending, prefix + CONTROL, label="acquisition-publish-control")
+    deadline = time.monotonic() + min(phone.timeout, 15)
+    while time.monotonic() < deadline:
+        if phone.read("acquisition-control-ack.json") == command:
+            return
+        time.sleep(0.2)
+    raise installer.Failure("acquisition-control-unacknowledged-" + action)
 
 
 class Acquisition:
@@ -154,7 +169,7 @@ class Acquisition:
     def choose(self, phone, kind, name=None):
         if name is not None:
             phone.put("acquisition-selection.json", self.installer.encoded({"document": f"{self.stage_name}/{name}"}))
-        phone.tap("Choose game folder" if kind == "tree" else "Choose game ZIP")
+        dispatch_control(phone, self.installer, "choose-folder" if kind == "tree" else "choose-zip")
         if name is None:
             phone.ui_windows(DOCUMENTS, recovery=False)
             phone.shell("input", "keyevent", "KEYCODE_BACK", label="acquisition-cancel-focused-picker")
@@ -174,8 +189,10 @@ class Acquisition:
     def prepare_plan(self, phone, service, version):
         self.installer.publish(service, self.releases[version], version)
         if version > 1:
-            phone.check(version)
-        phone.tap("Prepare signed installation plan")
+            dispatch_control(phone, self.installer, "check")
+            update = phone.wait_state({"UPDATE_AVAILABLE"})
+            self.require(update.get("release", {}).get("version_code") == version, "acquisition-release-version-not-observed")
+        dispatch_control(phone, self.installer, "prepare")
         state = phone.wait_state({"INPUTS_REQUIRED"})
         plan = phone.read("install-inputs.json")
         expected = self.plans[version]
@@ -226,17 +243,13 @@ class Acquisition:
         self.installer.set_phase(case)
         self.choose(phone, kind, name)
         start = time.monotonic()
-        # The picker controls precede Import in the same ScrollView. The
-        # status above them can span multiple screens after a selection.
-        phone.tap("Import / resume game files", scroll_down_first=True)
+        dispatch_control(phone, self.installer, "import")
         row = self.wait_import(phone, "ACTIVE" if expected == "CANCELLED" else expected)
         result = self.results[case] = {}
         if expected == "CANCELLED":
             result["cancel_observed"] = row["state"]
             result["copied_bytes_at_cancel"] = row.get("completed", 0)
-            # The import starts above the cancellation control. Scroll toward
-            # it while validation or copying is still active.
-            phone.tap("Cancel (keep verified checkpoints)", scroll_down_first=True)
+            dispatch_control(phone, self.installer, "cancel")
             row = self.wait_import(phone, expected)
         self.require(all(part in row.get("message", "") for part in message), "acquisition-import-report-mismatch")
         self.visible_status(phone, expected, message)
@@ -303,6 +316,7 @@ class Acquisition:
         }
         phone.start()
         self.results["document_delivery"] = "android-documents-provider-fixture"
+        self.results["control_delivery"] = "private-lab-command-to-installer-button"
         self.prepare_plan(phone, service, 1)
         installer.set_phase("saf-picker-cancelled")
         prior = phone.read("update-state.json")

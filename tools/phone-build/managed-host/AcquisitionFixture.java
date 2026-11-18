@@ -13,9 +13,11 @@ import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import android.provider.DocumentsProvider;
+import android.widget.Button;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import org.json.JSONObject;
 
 /** In the disposable installer, return an Android document result from a runner-owned fixture. */
 public final class AcquisitionFixture {
@@ -27,6 +29,18 @@ public final class AcquisitionFixture {
 
     private static boolean enabled(Context app) {
         return PACKAGE.equals(app.getPackageName()) && (app.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
+
+    static void control(ToolHostActivity app) throws Exception {
+        if (!enabled(app)) return;
+        File request = new File(app.getFilesDir(), "owner-input/acquisition-control.json");
+        if (!request.isFile()) return;
+        JSONObject command = ToolHostActivity.readJson(request);
+        Button button = app.acquisitionControl(command.getString("action"));
+        if (!button.isEnabled()) return;
+        if (!request.delete()) throw new IOException("Could not consume the lab control");
+        if (!button.performClick()) throw new IOException("Lab control did not dispatch");
+        ToolHostActivity.writeJson(app, new File(app.getFilesDir(), "owner-input/acquisition-control-ack.json"), command);
     }
 
     static Intent selection(Context app) throws Exception {
