@@ -106,3 +106,27 @@ File content is flushed, but no portable directory-fsync or hardware power-loss
 guarantee is claimed. Host tests use authored temporary files, real replace/read
 operations and injected write/publish/read failures. Physical interruption, Android
 storage behavior and runtime integration remain device-worker responsibilities.
+
+## Editor pointer gestures
+
+`TouchEditorGesture` drives only `TouchLayoutEditor` drafts. Down hit-tests authored
+rectangles using top-left display pixels, last control first (topmost), half-open
+right/bottom edges. Touch scale/opacity remain metadata, not hit-test transforms.
+The caller chooses drag versus bottom-right resize, such as from an editor handle;
+this class does not render handles or interpret gameplay actions. Positive pixel
+minimums constrain draft sizes. Move uses the initial rectangle and absolute
+pointer displacement, preventing repeated-event accumulation. Up applies its final
+sample then confirms once; wrong/repeated pointer IDs are ignored.
+
+CancelPointer handles a matching pointer cancellation. Cancel handles focus loss,
+navigation/teardown or a display-change notification. A changed safe rectangle on
+Move/Up cancels rather than using stale pixel coordinates. Invalid finite-coordinate
+samples throw without committing; the caller can cancel the gesture. While active,
+this helper exclusively owns its editor draft: do not mutate that editor directly
+or import/reset externally until the gesture ends. It never cancels a separate
+external draft when idle. No gesture or editor confirmation writes files.
+
+The authored harness covers overlap selection, wrong/repeated IDs, drag/resize,
+clamp/minimums, cancellation, aspect/inset interruption and undo after commit.
+Physical pointer events and live input remain unqualified. Integration entry
+points and device-worker responsibilities are in [INTEGRATION.md](INTEGRATION.md).

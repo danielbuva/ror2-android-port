@@ -7889,3 +7889,9 @@ loads and uses flushed same-directory temporary files plus atomic replace, never
 delete-then-move. Invalid existing data is preserved for explicit caller recovery.
 The adapter is independent of live settings/UI; cross-process ownership, path
 security and physical durability qualification belong to its eventual integrator.
+
+`TouchEditorGesture.cs` owns editor-only hit selection and single-pointer drag or
+bottom-right-resize transactions over `TouchLayoutEditor`; interruption cancels
+rather than committing stale display coordinates. It neither dispatches gameplay
+input nor writes files. The layout `INTEGRATION.md` lists entry points and remaining
+live wiring/device acceptance for the gameplay owners.
