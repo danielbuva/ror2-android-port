@@ -2651,7 +2651,9 @@ changes the existing refusal probe or reports security qualification.
 
 `tools/phone-build/managed-host/` owns the connected experimental app-host
 support. `stage.py` checks the public source/native metadata contract and stages
-new owner-supplied SDK inputs; its builder owns the separate phone-built APK.
+owner-supplied SDK inputs and an optional private backend plan into canonical
+ignored work, including shared worktree storage. Its builder checks the plan's
+provider bytes and owns the separate phone-built APK.
 `NativePythonHost.c` selects the existing interpreter's isolated configuration;
 `NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
 `NativeJavaHost.c` invokes the separately acquired headless JDK through JNI;
