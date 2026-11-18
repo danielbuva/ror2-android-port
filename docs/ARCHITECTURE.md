@@ -11,6 +11,13 @@ hierarchy and slot count before reporting component and script PPtrs, their
 resolved members and whether Android listed the owning bundles as loaded.
 Ordinary template preparation still enforces its original checks.
 
+`ValidateConvertedSkins` uses the native content-provider family selection to
+check typed bodies and masters. Every non-null `CharacterMaster.bodyPrefab`
+must be the same Unity object as a body in the active family. The exact-editor
+report records the completed catalog and loaded bundle digests.
+`accepted-output/catalog_compare.py` groups raw master body pointer changes
+and can join this report after matching those digests to the candidate APK.
+
 For retained staged prefabs, `accepted-output/staged_projectiles.py` updates the
 projectile components from the current object recipe, original prototype, SDK
 base schema and produced player registry. It checks reciprocal ownership by
@@ -269,7 +276,10 @@ The current `bundle_preload.py --repack` action reuses an existing qualified
 emission through a hash-pinned request; it retains source/type/ownership checks
 and avoids repeating record production for these reference repairs. The request
 includes selected records for canonical aliases and retained SkinDef source
-matches.
+matches. For a canonical row backed by a record producer, an optional
+`canonical_record_profiles` pin list supplies the exact recipes named by the
+row's record digest. The producer must map the canonical output and duplicate
+to the same unique original body.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
@@ -483,9 +493,10 @@ Optional `early_ward` and `early_commando` replay earlier load orders. The fixtu
 opens the three startup owners, leaves deferred owners unopened, loads the typed
 bodies in provider order, and checks the same model controller as startup. It
 then resolves the typed SkinDefParams and checks each bake transform with the
-native prefab path function, including base skins. All opened bundles are
-released in `finally`. Its local receipt records failures before the Android
-gameplay gate.
+native prefab path function, including base skins. It checks that each catalog
+CharacterMaster's assigned body resolves to the same Unity object as a typed
+CharacterBody family member. All opened bundles are released in `finally`.
+Its local receipt records failures before the Android gameplay gate.
 The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
 After the skin checks, the fixture loads the objective state configs from
 `commando-prefab-lab`. It follows projectile and trail references from those
@@ -578,7 +589,8 @@ Standalone Sprite media uses the shared UI owner. Current source hierarchies sta
 intact; historical graph differences and phone/runtime compatibility remain open.
 `player_managers.py` owns the optional complete source manager phase selected by
 player-data `--manager-profile`. `manager_settings.py` projects public settings
-over original native schemas; `manager_sdk.py` reads bounded SDK resource
+over original native schemas and retains the source collision matrix and its
+TagManager layer indices. `manager_sdk.py` reads bounded SDK resource
 registrations and Android shader selection; `manager_graph.py` owns resource
 roots, binary/schema reads and direct dependency closure, including script edges.
 Setup requires fresh Menu/HUD/context/registry player outputs, a complete pinned
@@ -7827,6 +7839,13 @@ payload. Its private report groups differences in component slots, referenced
 objects, script bindings, fields and container preloads by bundle, member and
 object ID. Reused IDs with different classes carry the available candidate
 source witness. A shared ID alone does not establish object identity.
+
+The physics comparison in `accepted-output/catalog_physics.py` follows named
+prefabs and scene GameObject hierarchies to compare layers, colliders, rigidbodies
+and ProjectileController fields. It reports unmatched routes and references
+without a cross-build identity. It also reads the signed players' PhysicsManager
+and TagManager, the pinned Android project settings and the pinned original
+game managers when the caller supplies `--pc`.
 
 The owner APK builder binds the Android resource table's package name to an
 explicit installation ID alongside the manifest rewrite. This preserves resource

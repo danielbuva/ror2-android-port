@@ -1926,6 +1926,7 @@ def repack_canonical_aliases(
     codec_sha256=None,
     cache_directory=None,
     endpoint_record=None,
+    canonical_record_profiles=(),
 ):
     """Route consumers to explicit catalog owners after strict native emission.
 
@@ -1953,7 +1954,7 @@ def repack_canonical_aliases(
     check_preload_seeds(required, endpoint_record)
     if (codec is None) != (codec_sha256 is None):
         raise ValueError("Canonical repack compression needs codec and SHA-256")
-    paths = [source, canonical_bundle, *Path(__file__).parent.glob("*.py")]
+    paths = [source, canonical_bundle, *canonical_record_profiles, *Path(__file__).parent.glob("*.py")]
     if codec is not None:
         paths.append(Path(codec))
 
@@ -1986,6 +1987,11 @@ def repack_canonical_aliases(
         selected = {tuple(row["destination"]): row for row in selected_records if tuple(row["destination"]) in mapping}
         if not mapping or len(mapping) != len(aliases) or selected.keys() != mapping.keys():
             raise ValueError("Canonical aliases require distinct selected duplicate endpoints")
+        from types import SimpleNamespace
+
+        record_sources = module("bundle_prepare").canonical_record_sources(
+            SimpleNamespace(**globals()), canonical_profile, canonical_record_profiles, {tuple(row["canonical"]) for row in aliases}
+        )
         bundle, target_bundle = W.B.Bundle(source), W.B.Bundle(canonical_bundle)
         with bundle.member(member) as stream, target_bundle.member(canonical["member"]) as target_stream:
             layout, target_layout = W.read_serialized(stream), W.read_serialized(target_stream)
@@ -2017,9 +2023,13 @@ def repack_canonical_aliases(
                 specification = specifications[destination[2]]
                 selector = specification.get("properties_hash", {}).get("behaviour", specification.get("source"))
                 if selector is None:
-                    raise ValueError("Canonical alias needs original body provenance, not type_source")
-                original = canonical_profile["sources"][selector[0]]
-                if [original["path"], original["member"], selector[1]] != alias["source"]:
+                    candidates = record_sources.get(destination, set())
+                    if not candidates:
+                        raise ValueError("Canonical alias needs original body provenance, not type_source")
+                else:
+                    original = canonical_profile["sources"][selector[0]]
+                    candidates = {(original["path"], original["member"], selector[1])}
+                if candidates != {tuple(alias["source"])}:
                     raise ValueError("Canonical profile selects a different original body")
                 old, new = objects[key[2]], target_objects[destination[2]]
                 old_body, new_body = record(stream, layout, old), record(target_stream, target_layout, new)
@@ -2304,12 +2314,14 @@ def repack_request(inputs, output, *, cache_directory=None):
     inputs = Path(inputs).resolve(strict=True)
     request = json.loads(inputs.read_bytes())
     fields = {"source", "required", "aliases", "selected_records", "qualified_types", "canonical_profile", "canonical_bundle"}
-    if request.keys() != fields | {"schema", "codec"} or request["schema"] != "owner-bundle-canonical-inputs-v1":
+    fields |= {"schema", "codec"}
+    if request.keys() - {"canonical_record_profiles"} != fields or request["schema"] != "owner-bundle-canonical-inputs-v1":
         raise ValueError("unsupported canonical repack input contract")
     pins = module("bundle_endpoints").InputPins(inputs.parent, SimpleNamespace(**globals()))
     pins.add(inputs)
     values = {key: pins.read(request[key]) for key in ("required", "aliases", "qualified_types", "canonical_profile")}
     values["selected_records"] = list(json_rows(pins.pin(request["selected_records"])))
+    values["canonical_record_profiles"] = [pins.pin(pin) for pin in request.get("canonical_record_profiles", [])]
     values.update({key: pins.pin(request[key]) for key in ("source", "canonical_bundle")})
     codec = None if request["codec"] is None else pins.pin(request["codec"])
     result = repack_canonical_aliases(
@@ -2416,6 +2428,7 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
     if canonical is not None:
         aliases, profile = pins.read(canonical["aliases"]), pins.read(canonical["profile"])
         canonical_bundle = pins.pin(canonical["bundle"])
+        canonical_record_profiles = [pins.pin(pin) for pin in canonical.get("record_profiles", [])]
     root = Path(__file__).resolve().parents[3]
     for path in (root / "scripts/lab").glob("*.py"):
         pins.add(path)
@@ -2459,6 +2472,7 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
                 codec_sha256=request["codec"]["sha256"],
                 cache_directory=cache_directory,
                 endpoint_record=qualification.endpoints,
+                canonical_record_profiles=canonical_record_profiles,
             )
             qualification.check_final(final["bundle"])
         pins.check()

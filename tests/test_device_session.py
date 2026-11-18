@@ -44,6 +44,7 @@ class DeviceSessionTests(unittest.TestCase):
         )
         self.request_file = self.root / "request.json"
         runner.save(self.request_file, self.request)
+        runner.save(self.root / "work/config/local.json", {"device_serial": self.request["serial"]})
 
     def test_request_smoke_checks_exact_bytes_without_adb(self):
         with mock.patch.object(runner.subprocess, "run") as process:
@@ -52,6 +53,36 @@ class DeviceSessionTests(unittest.TestCase):
         self.apk.write_bytes(b"changed")
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
+
+    def test_menu_start_rejects_selector_for_a_different_apk_attempt(self):
+        request = dict(self.request, start_from_menu=True, selection={"attempt": "run-folder"})
+        runner.save(self.request_file, request)
+        with (
+            mock.patch.object(device_module, "validate_apk_identity") as identity,
+            mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"),
+        ):
+            with self.assertRaisesRegex(ValueError, "selector attempt must match.*embedded"):
+                runner.load_request(self.request_file)
+            identity.assert_called_once_with(self.apk.resolve(), self.request["package"])
+            runner.save(self.request_file, dict(request, selection={"attempt": "embedded"}))
+            self.assertEqual(runner.load_request(self.request_file)["selection"]["attempt"], "embedded")
+
+    def test_pre_dispatch_rejects_another_packages_local_receipt(self):
+        request = dict(self.request, start_from_menu=True)
+        runner.save(self.request_file, request)
+        receipt_path = self.root / "work/device/installed.json"
+        receipt = dict(serial=request["serial"], package="dev.ror2lab.converted", package_path="package:/fixture/base.apk", apk_sha256="0" * 64)
+        runner.save(receipt_path, receipt)
+        with (
+            mock.patch.object(device_module, "validate_apk_identity"),
+            mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"),
+            mock.patch.object(runner.Lease, "acquire") as lease,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "receipt does not match selected package/device"):
+                runner.main(["--request", str(self.request_file), "--detach"])
+            lease.assert_not_called()
+            runner.save(receipt_path, dict(receipt, package=request["package"]))
+            self.assertEqual(runner.load_request(self.request_file)["apk_sha256"], self.digest)
 
     def test_owner_unplugged_requires_ordinary_adopted_30_minute_run(self):
         request = dict(self.request, mode="owner-unplugged", duration_seconds=1800)
@@ -256,9 +287,10 @@ class DeviceSessionTests(unittest.TestCase):
 
     def test_menu_start_request_is_explicit_launch_only(self):
         self.request["start_from_menu"] = True
-        for package in ("dev.ror2lab.arm64", "dev.ror2lab.converted"):
-            runner.save(self.request_file, dict(self.request, package=package))
-            self.assertTrue(runner.load_request(self.request_file)["start_from_menu"])
+        with mock.patch.object(device_module, "validate_apk_identity"), mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"):
+            for package in ("dev.ror2lab.arm64", "dev.ror2lab.converted"):
+                runner.save(self.request_file, dict(self.request, package=package))
+                self.assertTrue(runner.load_request(self.request_file)["start_from_menu"])
         for field, value in (("start_from_menu", "yes"), ("mode", "sustained")):
             runner.save(self.request_file, dict(self.request, **{field: value}))
             with self.assertRaises(ValueError):

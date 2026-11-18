@@ -145,12 +145,13 @@ def extend_selection(owner, member, required, selected, types, routes, extension
     required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
 
 
-def original_identities(owner, path, source_files=None):
+def original_identities(owner, path, source_files=None, *, destinations=None):
     """Reverse body-producing profile selectors, never schema-only type_source."""
     result = {}
 
     def add(record, source):
-        result.setdefault(tuple(record), set()).add(tuple(source))
+        if destinations is None or record in destinations:
+            result.setdefault(record, set()).add(tuple(source))
 
     if str(path).endswith(".jsonl.gz"):
         bundles = owner.A.profile_bundles(path)
@@ -179,6 +180,25 @@ def original_identities(owner, path, source_files=None):
                     for target in row["outputs"]:
                         add((target["bundle"], target["member"], target["path_id"]), (bundle["path"], member["name"], row["path_id"]))
     return result
+
+
+def canonical_record_sources(owner, canonical, paths, destinations):
+    """Resolve record-backed canonical rows through their exact body producers."""
+    if not paths:
+        return {}
+    bundle = canonical["bundle"]
+    by_producer = {}
+    for row in canonical["objects"]:
+        endpoint = bundle["name"], bundle["member"], row["path_id"]
+        if endpoint in destinations and "record" in row and "source" not in row and "behaviour" not in row.get("properties_hash", {}):
+            by_producer.setdefault(row["record"], set()).add(endpoint)
+    sources = {}
+    for path in paths:
+        digest = owner.O.B.sha(path)
+        if digest not in by_producer:
+            raise ValueError("Canonical record profile does not supply any requested alias")
+        sources.update(original_identities(owner, path, destinations=by_producer.pop(digest)))
+    return sources
 
 
 def prepare(owner, inputs, output):
@@ -558,6 +578,9 @@ def prepare(owner, inputs, output):
         )
         if canonical:
             donor_sources = original_identities(owner, pins.pin(canonical["profile"]))
+            record_profiles = [pins.pin(pin) for pin in canonical.get("record_profiles", [])]
+            destinations = {tuple(pair["canonical"]) for pair in canonical["pairs"]}
+            donor_sources.update(canonical_record_sources(owner, canonical_profile, record_profiles, destinations))
             aliases = []
             for pair in canonical["pairs"]:
                 duplicate, endpoint = tuple(pair["duplicate"]), tuple(pair["canonical"])
@@ -581,6 +604,10 @@ def prepare(owner, inputs, output):
                 profile=dict(canonical["profile"], path=str(pins.pin(canonical["profile"]))),
                 bundle=dict(canonical["bundle"], path=str(pins.pin(canonical["bundle"]))),
             )
+            if record_profiles:
+                prepared["canonical"]["record_profiles"] = [
+                    dict(pin, path=str(path)) for pin, path in zip(canonical["record_profiles"], record_profiles, strict=True)
+                ]
         pins.check()
         result = dict(
             success=True,

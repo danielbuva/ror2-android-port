@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1498 — Restore the original collision policy in the converted APK
+
+2026-11-18. The converter preserves the source PhysicsManager collision matrix
+at the original TagManager layer indices. The signed readback verified all
+528 layer pairs and the device confirmed the original collision policy.
+Ordinary Commando Start loaded Titanic Plains and passed all 27 objective actors.
+APK SHA-256: `58ad500f4d63450a180e24bea082f12df47f21cfab00c241140e99d8baea6fa3`.
+Evidence: `work/coordination/p1-scenes-w/source-collision-policy-v23/v23-ordinary-start-retry/`,
+`terminal.done.json` and the native report. Adopted placement, OLED sleep and
+lease release passed. CPU/GPU peaked at 70.1 C, with no time above 80 C.
+Results initialization still needs the original item-relationship families.
+Ordinary stage play, sustained FPS and End Run remain open.
 ## J1497 — Restore native Vagrant cannon intersection material
 
 2026-11-18. The native effect owner prepares Cloud Intersection Remap slots
