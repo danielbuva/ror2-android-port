@@ -1294,7 +1294,9 @@ pixel tool and dependency pins. The existing texture owner admits it through
 attributed public bcdec header and owns the same integer transparency dilation
 with bounded native coordinate buffers; `sdk_texture_codec.c` calls the separately supplied
 SDK codec. Host-native SDK execution is an oracle; Android uses the public QEMU
-runner and genuine GNU runtime. The managed app-host builder packages the
+runner and genuine GNU runtime. The same builder's `--pixels-only` action
+produces the public native helper, its license and build receipt independently
+of SDK acquisition. The managed app-host builder packages the
 pinned public guest files as verified assets and installs the native helpers
 through its PackageManager library plan. The signed graph binds those installed
 paths and the separately extracted owner SDK member into the worker request.
