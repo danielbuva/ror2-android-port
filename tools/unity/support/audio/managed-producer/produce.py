@@ -302,11 +302,14 @@ def main() -> None:
     require(not args.output_dir.resolve().is_relative_to(game_root), "output cannot be inside the accepted game installation")
     out = output_directory(args.output_dir, args.owner_work)
     compiler = None
+    abi_tool = ROOT / "tools/wwise-android-abi/generate.py"
+    abi_command = [sys.executable, str(abi_tool)]
     if args.android_sdk_install:
         sys.path.insert(0, str(ROOT / "scripts/lab"))
-        from phone_sdk_compiler import SdkCompiler
+        from phone_sdk_compiler import SdkCompiler, python_command
         from phone_unity_compile import references
 
+        abi_command = python_command(abi_tool)
         sdk = args.android_sdk_install.resolve(strict=True)
         compiler = SdkCompiler(sdk, dotnet, out)
         contents = compiler.contents
@@ -358,11 +361,9 @@ def main() -> None:
     # Generate adapted API bytes directly from the accepted raw installation.
     abi_plan = out / "abi-plan.json"
     adapted_api = out / "api-adapted.dll"
-    abi_tool = ROOT / "tools/wwise-android-abi/generate.py"
     run(
         [
-            sys.executable,
-            str(abi_tool),
+            *abi_command,
             "--android-source",
             str(args.android_source.resolve(strict=True)),
             "--android-os-string-source",

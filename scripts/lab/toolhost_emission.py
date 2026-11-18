@@ -1,4 +1,4 @@
-"""Current shared-runner operation: pinned, resumable on-phone bundle emission.
+"""Current shared-runner operations for pinned on-phone bundle and code producers.
 
 The lab runner owns the device lease. Installer Phone owns exact-APK admission;
 Device owns storage/display policy; phone_runner owns thermal duty cycling. No
@@ -17,6 +17,19 @@ import time
 import uuid
 import zipfile
 import tarfile
+
+
+SIGNED_CODE = "signed-code"
+NET8_LIBRARIES = (
+    "libcoreclr.so",
+    "libhostpolicy.so",
+    "libSystem.Native.so",
+    "libSystem.Globalization.Native.so",
+    "libSystem.IO.Compression.Native.so",
+    "libSystem.Net.Security.Native.so",
+    "libSystem.Security.Cryptography.Native.Android.so",
+    "libSystem.Security.Cryptography.Native.OpenSsl.so",
+)
 
 
 def digest(path):
@@ -42,13 +55,17 @@ def relative(value):
 def load_request(path, *, refresh_repo=False):
     request = json.loads(Path(path).read_bytes())
     required = {"runner", "tool_apk", "manifest", "request", "done_file", "expected_records", "estimated_output_bytes", "profile", "timeout_seconds"}
+    signed_code = request.get("operation") == SIGNED_CODE
+    count = "expected_managed_providers" if signed_code else "expected_records"
+    if signed_code:
+        required = (required - {"expected_records"}) | {"operation", count}
     if set(request) != required or request["profile"] not in ("nova", "thor"):
         raise ValueError("emission-request-contract")
     for key in ("tool_apk", "manifest"):
         pin = request[key]
         if set(pin) != {"path", "sha256"} or digest(pin["path"]) != pin["sha256"]:
             raise ValueError("emission-input-pin")
-    for name in ("expected_records", "estimated_output_bytes", "timeout_seconds"):
+    for name in (count, "estimated_output_bytes", "timeout_seconds"):
         if type(request[name]) is not int or request[name] <= 0:
             raise ValueError("emission-positive-budget-required")
     relative(request["request"])
@@ -63,6 +80,14 @@ def load_request(path, *, refresh_repo=False):
         path = Path(pin["source"])
         if path.stat().st_size != pin["bytes"] or digest(path) != pin["sha256"]:
             raise ValueError("emission-staged-input-pin")
+    if signed_code:
+        root = relative(request["request"]).parent
+        code = json.loads(Path(files[request["request"]]["source"]).read_bytes())
+        if set(code) != {"source_inputs", "audio_members", "output"} or any(
+            (root / name).as_posix() not in files for name in ("input-hashes.json", "work/inventory/files.json")
+        ):
+            raise ValueError("signed-code-staged-input-contract")
+        relative(code["output"])
     return request, files
 
 
@@ -99,11 +124,18 @@ def refresh_manifest(path, checkout):
     return dict(success=True, refreshed_repo_files=replaced, input_bytes=manifest["bytes"], source_commit=commit)
 
 
-def transfer(phone, apk, files, remote, native):
+def transfer(phone, apk, files, remote, native, *, signed_code=False):
     """Stream pinned inputs/runtime once, without another host copy or archive."""
     with zipfile.ZipFile(apk) as archive:
         pins = json.loads(archive.read("assets/native-hashes.json"))
         links = json.loads(archive.read("assets/python-links.json"))
+        roots = ("python/",)
+        link_roots = ("python/", "native-links/")
+        if signed_code:
+            roots += ("dotnet/", "clang/21/")
+            link_roots += ("dotnet/",)
+            links.update({"dotnet/shared/Microsoft.NETCore.App/8.0.32/" + lib: lib for lib in NET8_LIBRARIES})
+            links.update({"native-links/libcrypto.so.3": "libcrypto.so", "native-links/libssl.so.3": "libssl.so"})
         command = shlex.join(["run-as", "dev.ror2lab.installertest", "tar", "-xf", "-", "-C", remote])
         process = subprocess.Popen(
             [str(phone.adb), "-s", phone.serial, "shell", command], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
@@ -111,13 +143,13 @@ def transfer(phone, apk, files, remote, native):
         try:
             with tarfile.open(fileobj=process.stdin, mode="w|", format=tarfile.GNU_FORMAT) as tar:
                 for name in archive.namelist():
-                    if name.startswith("assets/python/") and not name.endswith("/"):
+                    if name.startswith(tuple("assets/" + root for root in roots)) and not name.endswith("/"):
                         info = tarfile.TarInfo("runtime/" + name.removeprefix("assets/"))
                         info.size, info.mode = archive.getinfo(name).file_size, 0o600
                         with archive.open(name) as stream:
                             tar.addfile(info, stream)
                 for name, target in links.items():
-                    if name.startswith(("python/", "native-links/")):
+                    if name.startswith(link_roots):
                         if target not in pins:
                             raise ValueError("emission-native-link-pin")
                         info = tarfile.TarInfo("runtime/" + str(relative(name)))
@@ -135,6 +167,10 @@ def transfer(phone, apk, files, remote, native):
                         info.type, info.linkname, info.size = tarfile.REGTYPE, "", pin["bytes"]
                         with open(pin["source"], "rb") as stream:
                             tar.addfile(info, stream)
+                if signed_code:
+                    info = tarfile.TarInfo("runtime/repo")
+                    info.type, info.linkname = tarfile.SYMTYPE, "../repo"
+                    tar.addfile(info)
             process.stdin.close()
             if process.wait(timeout=600):
                 raise RuntimeError("emission-transfer-failed")
@@ -146,17 +182,42 @@ def transfer(phone, apk, files, remote, native):
 
 
 def invocation(remote, native, request, attempt):
-    python = [native + "/libpythonhost.so", native + "/libpython3.14.so", remote + "/runtime/python"]
-    owner = remote + "/repo/tools/phone-build/accepted-output/"
+    runtime = remote + "/runtime"
+    python = [native + "/libpythonhost.so", native + "/libpython3.14.so", runtime + "/python"]
+    owner = remote + "/repo/tools/phone-build/"
+    environment = ["LD_LIBRARY_PATH=" + native + ":" + runtime + "/native-links"]
+    if request.get("operation") == SIGNED_CODE:
+        environment += [
+            "ROR2LAB_BUILD_DOTNET_ROOT=" + runtime + "/dotnet",
+            "ROR2LAB_BUILD_HOSTFXR=" + native + "/libhostfxr10.so",
+            "ROR2LAB_BUILD_DOTNET_LAUNCHER=" + native + "/libdotnetmuxer.so",
+            "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1",
+            "DOTNET_MULTILEVEL_LOOKUP=0",
+        ]
+        producer = [owner + "owner-code/run_android.py", remote + "/" + request["request"], runtime, native]
+    else:
+        producer = [
+            owner + "accepted-output/bundle_preload.py",
+            "--inputs",
+            remote + "/" + request["request"],
+            "--output",
+            remote + "/" + attempt + "/output",
+            "--cache",
+            remote + "/cache",
+            # The APK's Python lacks _multiprocessing; host emission stays parallel.
+            "--workers",
+            "1",
+        ]
     return [
         "sh",
         "-c",
-        'cd "$1" && export LD_LIBRARY_PATH="$2" && shift 2 && exec "$@"',
+        'cd "$1" && shift && exec "$@"',
         "emission",
         remote,
-        native + ":" + remote + "/runtime/native-links",
+        "env",
+        *environment,
         *python,
-        owner + "phone_runner.py",
+        owner + "accepted-output/phone_runner.py",
         "--profile",
         request["profile"],
         "--timeout",
@@ -167,25 +228,25 @@ def invocation(remote, native, request, attempt):
         remote + "/live-thermal.json",
         "--",
         *python,
-        owner + "bundle_preload.py",
-        "--inputs",
-        remote + "/" + request["request"],
-        "--output",
-        remote + "/" + attempt + "/output",
-        "--cache",
-        remote + "/cache",
-        # The packaged Android interpreter has no _multiprocessing extension.
-        # Use the existing checked serial emitter; host defaults stay parallel.
-        "--workers",
-        "1",
+        *producer,
     ]
 
 
-def collect(phone, state, destination):
+def collect(phone, state, destination, *, code_output=None):
     """Small receipts only; generated bundles remain on their device filesystem."""
     result = {}
-    for name, suffix in (("emission", "/output/result.json"), ("progress", "/output/emitted/progress.json"), ("thermal", "/thermal.json")):
-        path = state["remote"] + "/" + state["attempt"] + suffix
+    attempt = state["attempt"]
+    receipts = {"thermal": attempt + "/thermal.json"}
+    if code_output is None:
+        receipts.update(emission=attempt + "/output/result.json", progress=attempt + "/output/emitted/progress.json")
+    else:
+        receipts.update(
+            code=code_output + "/result.json",
+            converter=code_output + "/backend/converter/result.json",
+            measurements=code_output + "/android-measurements.json",
+        )
+    for name, suffix in receipts.items():
+        path = state["remote"] + "/" + suffix
         observed = phone.execute("shell", shlex.join(["run-as", "dev.ror2lab.installertest", "cat", path]), label="emission-" + name, idempotent=True)
         if observed.returncode == 0:
             value = json.loads(observed.stdout)
@@ -198,6 +259,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     """Run beneath Runner.execute; its lease spans transfer, wait and cleanup."""
     started = time.monotonic()
     request = json.loads(Path(path).read_bytes())
+    signed_code = request.get("operation") == SIGNED_CODE
     done = Path(request["done_file"])
     root = Path(os.environ["LAB_CANONICAL_ROOT"]).resolve()
     if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(root / "work"):
@@ -211,7 +273,11 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     destination.mkdir(parents=True, exist_ok=True)
     (destination / ".prune-keep").touch()
     state_path = destination / "device-state.json"
-    result = dict(success=False, device_accepted=False, typed_load_accepted=False, record_workers=1)
+    result = dict(success=False, device_accepted=False)
+    if signed_code:
+        result["operation"] = SIGNED_CODE
+    else:
+        result.update(typed_load_accepted=False, record_workers=1)
     device = phone = state = None
     job = None
     terminal = False
@@ -243,6 +309,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         if resume:
             state = json.loads(state_path.read_bytes())
         active = bool(state and state.get("job") and state.get("terminal") is None)
+        if signed_code and (restage or (resume and not active)):
+            raise RuntimeError("signed-code-resume-requires-active-handle")
         if restage and (not resume or active or state.get("terminal") is None):
             raise RuntimeError("emission-restage-confirmed-terminal-required")
         if not active:
@@ -304,11 +372,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
             )
             write(state_path, state)  # Ownership survives transfer failure.
             phone.shell("run-as", installer.PACKAGE, "mkdir", "-p", state["remote"], label="emission-input-directory")
-            transfer(phone, request["tool_apk"]["path"], files, state["remote"], native)
-            state["staged"] = True
-            write(state_path, state)
         if not state.get("staged"):
-            transfer(phone, request["tool_apk"]["path"], files, state["remote"], state["native"])
+            transfer(phone, request["tool_apk"]["path"], files, state["remote"], state["native"], signed_code=signed_code)
             state["staged"] = True
             write(state_path, state)
         phone.storage()  # Installed-code placement and actual app-data backing.
@@ -337,25 +402,52 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         state["terminal"] = observed.returncode
         write(state_path, state)
         (lease / "retain.json").unlink(missing_ok=True)
-        result.update(collect(phone, state, destination))
-        emission = result.get("emission", {})
-        native_result = emission.get("emission", {})
-        count = native_result.get("records", native_result.get("objects"))
-        result["success"] = observed.returncode == 0 and native_result.get("structural_accepted") is True and count == request["expected_records"]
-        result["records"] = count
-        result["bundle"] = {key: emission.get(key) for key in ("bundle", "bytes", "sha256")}
+        if signed_code:
+            code_request = json.loads(Path(files[request["request"]]["source"]).read_bytes())
+            code_output = relative(request["request"]).parent / "work" / relative(code_request["output"])
+            result.update(collect(phone, state, destination, code_output=code_output.as_posix()))
+            code = result.get("code", {})
+            backend, converter = code.get("backend", {}), result.get("converter", {})
+            result["success"] = (
+                observed.returncode == 0
+                and code.get("success") is True
+                and code.get("phase") == "converted-native-planned"
+                and code.get("upstream_managed_generation_qualified") is True
+                and code.get("managed_providers") == request["expected_managed_providers"]
+                and backend.get("native", {}).get("success") is True
+                and converter.get("inputs_unchanged") is True
+                and converter.get("input_assemblies") == backend.get("stripped_assemblies")
+                and "data/Metadata/global-metadata.dat" in converter.get("files", {})
+                and "measurements" in result
+                and "thermal" in result
+            )
+        else:
+            result.update(collect(phone, state, destination))
+            emission = result.get("emission", {})
+            native_result = emission.get("emission", {})
+            count = native_result.get("records", native_result.get("objects"))
+            result["success"] = observed.returncode == 0 and native_result.get("structural_accepted") is True and count == request["expected_records"]
+            result["records"] = count
+            result["bundle"] = {key: emission.get(key) for key in ("bundle", "bytes", "sha256")}
         result["elapsed_seconds"] = time.monotonic() - started
         result["storage_after"] = device.storage()
     except BaseException as error:
         result["error"] = str(error) or type(error).__name__
     finally:
-        if phone is not None and phone.owned_installer:
-            result["owned_app_and_cache_retained"] = True
         if job is None and state and state.get("job") and state.get("terminal") is None:
             job = installer.TRANSPORT.DetachedJob(**state["job"])
         if job is not None and not terminal:
             write(lease / "retain.json", dict(reason="emission-remote-outcome-unknown", job=job.as_dict(), state=str(state_path)))
             result["lease_retained"] = True
+        if phone is not None and phone.owned_installer:
+            if signed_code and (terminal or job is None):
+                try:
+                    phone.remove_owned_installer()
+                    result["owned_app_removed"] = True
+                except BaseException as error:
+                    result.update(success=False, cleanup_error=str(error), owned_app_and_cache_retained=True)
+            else:
+                result["owned_app_and_cache_retained"] = True
         if device is not None:
             try:
                 if not device.display(False):

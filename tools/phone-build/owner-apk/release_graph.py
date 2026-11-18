@@ -27,6 +27,12 @@ INSTALLED_BUNDLE_CODEC = dict(
     sha256="${native_sha256:libbundlelz4.so}",
     bytes="${native_bytes:libbundlelz4.so}",
 )
+INSTALLED_CODE_TOOLS = {
+    "dotnet": "libdotnetmuxer.so",
+    "clang": "libclang.so",
+    "linker": "lib-ld.lld-.so",
+    "objcopy": "libobjcopy.so",
+}
 TEXTURE_NATIVE = {
     "jpeg_codec": "libtexture-jpeg.so",
     "etc_codec": "libtexture-etc.so",
@@ -916,6 +922,10 @@ class Graph:
                 raise ValueError("canonical Wwise stage membership required")
             members = sorted([*banks, *media])
             request["source_inputs"].pop("decoder", None)
+            request["source_inputs"]["dotnet"] = "${native}/" + INSTALLED_CODE_TOOLS["dotnet"]
+            request["android_tools"] = {name: "${native}/" + path for name, path in INSTALLED_CODE_TOOLS.items()}
+            request["android_tools"]["resource_dir"] = "${installed_runtime}/clang/21"
+            cache_witnesses = sorted(set(cache_witnesses) | {"${native}/" + path for path in (*INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so")})
             request["audio_members"] = members
             outputs = {
                 "apk/assets/stage-receipt.json": "managed-production/staged/stage-receipt.json",

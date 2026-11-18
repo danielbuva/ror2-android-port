@@ -15,6 +15,22 @@ SPEC.loader.exec_module(fixture)
 
 
 class InstallerToolhostTest(unittest.TestCase):
+    def test_base_receipt_binds_request_key_and_source_commit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            commit, key = "a" * 40, "b" * 64
+            base = Path(directory) / key
+            base.mkdir()
+            apk = base / "signed.apk"
+            apk.write_bytes(b"synthetic APK")
+            built = dict(success=True, game_inputs=False, apk_bytes=apk.stat().st_size, apk_sha256=fixture.digest(apk), native_hashes={})
+            fixture.save(base / "build-receipt.json", built)
+            receipt = dict(success=True, package=fixture.PACKAGE, source_commit=commit, cache_key=key, signer_sha256="c" * 64, apk_sha256=built["apk_sha256"])
+            fixture.save(base / "result.json", receipt)
+            self.assertEqual(fixture.base_receipt(base), (receipt, {}))
+            fixture.save(base / "result.json", dict(receipt, cache_key="d" * 64))
+            with self.assertRaisesRegex(ValueError, "base receipt or APK differs"):
+                fixture.base_receipt(base)
+
     def test_backup_validates_private_files_before_publishing_and_reuses_them(self):
         with tempfile.TemporaryDirectory() as directory:
             keys = Path(directory).resolve() / "keys/installer-test"

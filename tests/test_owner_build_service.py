@@ -50,8 +50,8 @@ public void startForeground(int id,Notification n){if(foregroundFail)throw new I
     + "OwnerInputSource.java": """package dev.ror2lab.phonebuildhostfixture;import android.content.*;public class OwnerInputSource {public static class Access {public void cancel(){}}public static void run(Context c,OwnerInputImport.Observer o,Access a)throws Exception{o.checkpoint();}}""",
     PACKAGE
     + "ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;import android.content.*;import java.io.*;import java.util.concurrent.*;import org.json.*;public class ToolHostActivity {
-public static String status;public static int controls;public static JSONObject readJson(File f){return new JSONObject();}public static void writeJson(Context c,File f,JSONObject j){controls++;}public static void updateStatus(Context c,String s,String m){status=s;}public static void installPrepared(Context c){OwnerInstaller.busy=true;}
-public static class Worker {public static volatile int executions,cancels;public static CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1);public Worker(Context c){}public void executeUpdate(String a)throws Exception {executions++;entered.countDown();release.await();}public void cancel(){cancels++;}}}""",
+public static String status;public static int controls,installs;public static JSONObject readJson(File f){return new JSONObject().put("state",status);}public static void writeJson(Context c,File f,JSONObject j){controls++;}public static void updateStatus(Context c,String s,String m){status=s;}public static void installPrepared(Context c){installs++;}
+public static class Worker {public static volatile int executions,cancels;public static CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1);Context context;public Worker(Context c){context=c;}public void executeUpdate(String a)throws Exception {executions++;entered.countDown();release.await();if("release-build".equals(a)){File f=new File(context.getFilesDir(),"owner-input/update-state.json");f.getParentFile().mkdirs();f.createNewFile();status="READY";}}public void cancel(){cancels++;}}}""",
 }
 HARNESS = r"""
 import dev.ror2lab.phonebuildhostfixture.*;import android.content.*;import android.os.*;import java.io.*;import java.util.concurrent.*;
@@ -73,6 +73,11 @@ OwnerAlphaInstall.pending=true;recreated.onStartCommand(action("release-build"),
 recreated.onStartCommand(action("profile-recover"),0,7);finish();check(OwnerInstaller.verifies==1&&!OwnerAlphaInstall.pending);
 OwnerBuildService failed=new OwnerBuildService();failed.foregroundFail=true;try{failed.onStartCommand(action("release-check"),0,8);}catch(IllegalStateException ok){}check(!OwnerBuildService.isRunning());check(!failed.power.lock.isHeld());
 OwnerBuildService.launch(c,"release-check");OwnerBuildService retry=new OwnerBuildService();retry.onStartCommand(action("release-check"),0,9);finish();check(ToolHostActivity.Worker.executions==2);
+ToolHostActivity.Worker.entered=new CountDownLatch(1);ToolHostActivity.Worker.release=new CountDownLatch(1);
+OwnerBuildService late=new OwnerBuildService();late.onStartCommand(action("release-build"),0,10);check(ToolHostActivity.Worker.entered.await(5,TimeUnit.SECONDS));
+late.onStartCommand(action("control-cancel"),0,11);ToolHostActivity.Worker.release.countDown();finish();
+check("CANCELLED".equals(ToolHostActivity.status)&&ToolHostActivity.installs==0);
+OwnerBuildService resumed=new OwnerBuildService();resumed.onStartCommand(action("release-build"),0,12);finish();check(ToolHostActivity.installs==1);
 System.out.println("single-flight lifecycle PASS");
 }}
 """

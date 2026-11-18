@@ -225,6 +225,38 @@ class UpdateTests(unittest.TestCase):
             self.assertFalse((self.inputs / "owner-apk-ready.json").exists())
             self.assertFalse((self.inputs / "installed-release.json").exists())
 
+    def test_candidate_publication_failure_and_state_failure_retry_without_build(self):
+        original_write = U.write_json
+        with FakeGitHub(self.release, self.bundle) as server:
+            for boundary in ("candidate", "available"):
+                with self.subTest(boundary=boundary):
+                    self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+                    candidate_path = self.inputs / "release-candidate.json"
+                    candidate = candidate_path.read_bytes()
+                    observed = []
+
+                    def interrupted(path, value):
+                        if (boundary == "candidate" and path.name == "release-candidate.json") or (
+                            boundary == "available" and path.name == "update-state.json" and value.get("state") == "UPDATE_AVAILABLE"
+                        ):
+                            raise OSError("synthetic publication interruption")
+                        original_write(path, value)
+                        if path.name == "update-state.json":
+                            observed.append(value["state"])
+
+                    with patch.object(U, "write_json", side_effect=interrupted), self.assertRaisesRegex(OSError, "publication interruption"):
+                        self.run_check(server)
+                    state = P.load_json((self.inputs / "update-state.json").read_bytes())
+                    self.assertEqual(state["state"], "ERROR")
+                    self.assertNotIn("release", state)
+                    self.assertNotIn("changed_entries", state)
+                    self.assertEqual(observed, ["CHECKING", "ERROR"])
+                    self.assertEqual(candidate_path.read_bytes(), candidate)
+                    self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+            self.assertNotIn("/public-tools.zip", server.requests)
+            self.assertFalse((self.inputs / "owner-apk-ready.json").exists())
+            self.assertFalse((self.inputs / "installed-release.json").exists())
+
     def test_context_refuses_rollback_package_and_installer_upgrade(self):
         for field, value in (("installed_release_version", 3), ("application_id", "other.package"), ("installer_version", 0)):
             request = dict(self.request, **{field: value})

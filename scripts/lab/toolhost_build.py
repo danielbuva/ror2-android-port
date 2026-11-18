@@ -68,7 +68,7 @@ def read_plan(request, checkout):
         backend[field] = "@run/" + field
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=checkout, text=True).strip()
     cache_key = hashlib.sha256(json.dumps([commit, request], sort_keys=True).encode()).hexdigest()
-    return stage, files, backend, transfers, cache_key
+    return stage, files, backend, transfers, cache_key, commit
 
 
 def stage_archive(path, stage, files, backend, transfers, remote, package):
@@ -117,7 +117,9 @@ def invocation(root, remote):
     ]
 
 
-def verify_apk(apk, stage, files, build, request):
+def verify_apk(apk, stage, files, build, request, package):
+    from device import validate_apk_identity
+
     if build["success"] is not True or digest(apk) != build["apk_sha256"]:
         raise ValueError("toolhost APK receipt mismatch")
     with ZipFile(apk) as archive:
@@ -132,13 +134,14 @@ def verify_apk(apk, stage, files, build, request):
     signers = re.findall(r"Signer #[0-9]+ certificate SHA-256 digest: ([a-f0-9]+)", output)
     if signers != [request["signer_sha256"]]:
         raise ValueError("toolhost APK signer mismatch")
+    validate_apk_identity(apk, package)
 
 
 def execute(request, plan, out, *, runner, serial, lease, transport_module, package):
     from alpha_stability_batch import _GameThermalOwner
     from device import Device
 
-    stage, files, backend, transfers, cache_key = plan
+    stage, files, backend, transfers, cache_key, _ = plan
     root = request["tool_root"]
     remote = root + "/toolhost-" + uuid.uuid4().hex
     transport = transport_module.AdbTransport(runner.adb, serial)
@@ -182,7 +185,7 @@ def execute(request, plan, out, *, runner, serial, lease, transport_module, pack
             raise ValueError("toolhost supervised build failed")
         apk = out / "signed.apk"
         transport.run("pull", remote + "/output/signed.apk", apk, label="toolhost-apk", timeout=300, idempotent=True)
-        verify_apk(apk, stage, files, build, request)
+        verify_apk(apk, stage, files, build, request, package)
     finally:
         archive.unlink(missing_ok=True)
         if terminal:
