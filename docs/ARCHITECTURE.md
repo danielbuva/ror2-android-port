@@ -7637,6 +7637,13 @@ reads native player members directly, and writes a standalone audit receipt.
 The check covers package and plugin images and reports scriptless components
 separately. Native typed loads still qualify runtime behaviour.
 
+For reference-build comparisons, `accepted-output/catalog_compare.py` reads
+the signed candidate, its catalog request and the accepted build's pinned
+payload. Its private report groups differences in component slots, referenced
+objects, script bindings, fields and container preloads by bundle, member and
+object ID. Reused IDs with different classes carry the available candidate
+source witness. A shared ID alone does not establish object identity.
+
 The owner APK builder binds the Android resource table's package name to an
 explicit installation ID alongside the manifest rewrite. This preserves resource
 IDs and bodies while allowing Unity's context-package string lookup to resolve

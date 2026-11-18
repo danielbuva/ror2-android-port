@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import struct
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -37,6 +38,29 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_differential_retains_array_indices_and_resolves_file_ids_per_member(self):
+        mesh = module("catalog_comparison_mesh", "unity_mesh.py")
+        with patch.dict(sys.modules, catalog_complete=C, unity_mesh=mesh):
+            compare = module("catalog_comparison_test", "catalog_compare.py")
+
+        array = mesh.Node(0, 1, "Array", "Array", -1, 0)
+        count = mesh.Node(1, 0, "int", "size", 4, 0)
+        element = mesh.Node(1, 0, "PPtr<Component>", "data", 12, 0)
+        element.children = [mesh.Node(2, 0, "int", "m_FileID", 4, 0), mesh.Node(2, 0, "SInt64", "m_PathID", 8, 0)]
+        array.children = [count, element]
+        with patch.object(mesh, "type_tree", return_value=array):
+            root, _ = compare.schema(b"fixture")
+        body = struct.pack("<Iiqiq", 2, 1, 7, 0, 8)
+        self.assertEqual(compare.pointers(body, root), {(0,): (1, 7), (1,): (0, 8)})
+        with self.assertRaisesRegex(ValueError, "incomplete serialized object"):
+            compare.pointers(body + bytes(4), root)
+
+        catalog = compare.Catalog.__new__(compare.Catalog)
+        catalog.members = {"base": (None, {"externals": [{"path": "archive:/other/CAB"}]}, {8: {}}), "CAB": (None, {}, {7: {}})}
+        self.assertEqual(catalog.endpoint("base", (1, 7)), ("CAB", 7))
+        self.assertEqual(catalog.endpoint("base", (1, 8)), ("missing-target", "CAB", 8))
+        self.assertIsNone(catalog.endpoint("base", (0, 0)))
+
     def test_player_binding_uses_image_identity_and_serialized_script_table(self):
         def text(value):
             raw = struct.pack("<I", len(value)) + value.encode()
