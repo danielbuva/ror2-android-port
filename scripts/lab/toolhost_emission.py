@@ -238,7 +238,7 @@ def invocation(remote, native, request, attempt):
     ]
 
 
-def collect(phone, state, destination, *, code_output=None):
+def collect(phone, state, destination, *, code_output=None, failed=False):
     """Small receipts only; generated bundles remain on their device filesystem."""
     result = {}
     attempt = state["attempt"]
@@ -251,6 +251,8 @@ def collect(phone, state, destination, *, code_output=None):
             converter=code_output + "/backend/converter/result.json",
             measurements=code_output + "/android-measurements.json",
         )
+        if failed:
+            receipts["managed"] = code_output + "/managed-production/result.json"
     for name, suffix in receipts.items():
         path = state["remote"] + "/" + suffix
         observed = phone.execute("shell", shlex.join(["run-as", "dev.ror2lab.installertest", "cat", path]), label="emission-" + name, idempotent=True)
@@ -258,6 +260,24 @@ def collect(phone, state, destination, *, code_output=None):
             value = json.loads(observed.stdout)
             write(destination / (name + ".json"), value)
             result[name] = value
+    if failed and result.get("managed", {}).get("phase") == "raw-managed":
+        # Nested commands redirect stderr away from the detached producer's
+        # log. Save their bounded tails before removing owned phone scratch.
+        managed = state["remote"] + "/" + code_output + "/managed-production/"
+        logs = (
+            "logs/raw-managed.process.json",
+            "logs/raw-managed.stderr.log",
+            "logs/raw-managed.log",
+            "raw/logs/abi-adapter.log",
+        )
+        for suffix in logs:
+            name = Path(suffix).name
+            command = shlex.join(["run-as", "dev.ror2lab.installertest", "tail", "-c", "8192", managed + suffix])
+            observed = phone.execute("shell", command, label="emission-" + name, timeout=15, idempotent=True)
+            if observed.returncode == 0 and observed.stdout:
+                path = destination / "logs" / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(observed.stdout)
     return result
 
 
@@ -432,7 +452,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         if signed_code:
             code_request = json.loads(Path(files[request["request"]]["source"]).read_bytes())
             code_output = relative(request["request"]).parent / "work" / relative(code_request["output"])
-            result.update(collect(phone, state, destination, code_output=code_output.as_posix()))
+            result.update(collect(phone, state, destination, code_output=code_output.as_posix(), failed=observed.returncode != 0))
             code = result.get("code", {})
             backend, converter = code.get("backend", {}), result.get("converter", {})
             result["success"] = (

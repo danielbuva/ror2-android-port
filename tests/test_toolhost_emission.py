@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tarfile
@@ -85,7 +86,8 @@ class EmissionTests(unittest.TestCase):
             thermal.return_value.admission_battery = dict(level=80, current_now=0, temperature=300)
             stack.enter_context(patch.object(INSTALLER, "Phone", return_value=self.phone))
             stack.enter_context(patch.object(EMISSION, "transfer"))
-            stack.enter_context(patch.object(EMISSION, "collect", return_value=self.collected))
+            if self.collected is not None:
+                stack.enter_context(patch.object(EMISSION, "collect", return_value=self.collected))
             return EMISSION.execute(self.path, INSTALLER, resume=resume, restage=restage)
 
     def test_explicit_restage_replaces_only_confirmed_terminal_owned_inputs(self):
@@ -203,6 +205,29 @@ class EmissionTests(unittest.TestCase):
         self.assertTrue(final["success"])
         self.assertTrue(final["reattached_without_launch"])
         self.phone.transport.start_detached.assert_called_once()
+        self.phone.remove_owned_installer.assert_called_once()
+
+    def test_signed_code_retains_nested_raw_managed_failure_before_cleanup(self):
+        self.signed_request()
+        self.collected = None
+        self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
+
+        def read_remote(*args, **kwargs):
+            command = shlex.split(args[1])
+            path = command[-1]
+            if path.endswith("/work/conversion/managed-production/result.json"):
+                return subprocess.CompletedProcess([], 0, b'{"phase":"raw-managed","success":false}', b"")
+            if path.endswith("/work/conversion/managed-production/logs/raw-managed.stderr.log"):
+                self.assertEqual(command[2:-1], ["tail", "-c", "8192"])
+                return subprocess.CompletedProcess([], 0, b"authored compiler failure", b"")
+            return subprocess.CompletedProcess([], 1, b"", b"absent")
+
+        log = self.output / "logs/raw-managed.stderr.log"
+        self.phone.execute.side_effect = read_remote
+        self.phone.remove_owned_installer.side_effect = lambda: self.assertEqual(log.read_bytes(), b"authored compiler failure")
+        result = self.run_request()
+        self.assertFalse(result["success"])
+        self.assertEqual(result["managed"]["phase"], "raw-managed")
         self.phone.remove_owned_installer.assert_called_once()
 
     def test_signed_code_runtime_stream_keeps_framework_libraries_in_installed_apk(self):

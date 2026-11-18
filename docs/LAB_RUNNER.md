@@ -207,6 +207,9 @@ planning. The terminal receipt records the provider count, converter file
 hashes, wall time, peak memory, storage and thermal sampling. This gate ends at
 the native plan. The runner collects terminal evidence and removes its exact
 owned toolhost and scratch. `--resume-emission` reattaches an uncertain handle.
+If raw managed production fails, the runner saves its stage receipt and the
+last 8 KiB of each available child log under the private run directory before
+cleanup.
 After a confirmed result, use a fresh request directory for another attempt.
 
 ## Safety model
