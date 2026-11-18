@@ -55,6 +55,7 @@ public final class OwnerBuildService extends Service {
             File file = new File(getFilesDir(), "owner-input/" + ("import".equals(action(this)) ? "import-state.json" : "update-state.json"));
             if (file.isFile()) detail = ToolHostActivity.readJson(file).optString("message", detail);
         } catch (Exception ignored) { }
+        if ("release-build".equals(action(this)) || "release-rollback".equals(action(this))) detail += " · " + ToolHostActivity.backgroundProgress(this);
         PendingIntent open = PendingIntent.getActivity(this, 0, new Intent(this, ToolHostActivity.class), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         Notification.Builder builder = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL) : new Notification.Builder(this);
         builder.setSmallIcon(android.R.drawable.stat_sys_download).setContentTitle("Owner game installer")
