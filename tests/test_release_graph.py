@@ -1030,16 +1030,6 @@ if 'resource_dir' in tools:
             admission, plan = load("install_inputs"), load("install_flow")
             code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
             package_job = "recipe/jobs/owner-package-inputs.json"
-            selected = {
-                "schema": 1,
-                "required_inputs": input_manifest,
-                "workspace_bytes": 0,
-                "configuration": {"bindings": {"original": "Data/source.txt", "pc": "."}},
-                "stages": [
-                    {"id": name, "title": name, "jobs": {"assembly": [package_job, code, player, witness, bundle], "native": [native_job]}.get(name, [])}
-                    for name in plan.STAGES
-                ],
-            }
             progress = []
             audio_layout = root / "private-stage-receipt.json"
             write(
@@ -1066,8 +1056,7 @@ if 'resource_dir' in tools:
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
-                index["files"][input_manifest] = G.digest(repo / input_manifest)
-                index["install_plan"] = selected
+                graph.attach_install_plan(index, required_inputs=input_manifest, workspace_bytes=0, bindings={"original": "Data/source.txt", "pc": "."})
                 if current:
                     self.assertIn("tools/wwise-android-abi/generate.py", graph.jobs[code]["source_files"])
                     self.assertIn("recipe/original-audio-owner-sources.json", graph.jobs[code]["source_files"])
@@ -1104,7 +1093,7 @@ if 'resource_dir' in tools:
                     repo, index, release, inputs, runtime, native, config, identity, python=[sys.executable], progress=lambda *args: progress.append(args)
                 )
                 self.assertEqual(
-                    plan.validate_plan(selected, index, dispatcher.descriptor),
+                    plan.validate_plan(index["install_plan"], index, dispatcher.descriptor),
                     {package_job: "assembly", code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"},
                 )
                 dispatcher.execute(bundle)

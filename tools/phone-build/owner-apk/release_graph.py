@@ -1146,6 +1146,47 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in policies}}
         return name
 
+    def attach_install_plan(self, index, *, required_inputs, workspace_bytes, bindings):
+        """Assign producers to the earliest install stage that has their inputs."""
+
+        def load(name):
+            path = Path(__file__).with_name(name + ".py")
+            spec = importlib.util.spec_from_file_location("graph_" + name, path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+
+        admission, flow = load("install_inputs"), load("install_flow")
+        production = {stage: [] for stage in flow.PRODUCTION}
+        positions = {}
+
+        def assign(name):
+            if name not in positions:
+                job = self.jobs[name]
+                producer = Path(job["script"]).stem
+                minimum = {"texture_produce": 1, "native": 2, "sdk_package": 2}.get(producer, 0)
+                position = max(minimum, max((assign(parent) for parent in job["needs"]), default=0))
+                positions[name] = position
+                production[flow.PRODUCTION[position]].append(name)
+            return positions[name]
+
+        for row in index["entries"].values():
+            assign(row["job"])
+        plan = {
+            "schema": 1,
+            "required_inputs": required_inputs,
+            "workspace_bytes": workspace_bytes,
+            "configuration": {"bindings": bindings},
+            "stages": [{"id": stage, "title": stage.title(), "jobs": production.get(stage, [])} for stage in flow.STAGES],
+        }
+        files = index["files"].keys() | self.jobs.keys() | {required_inputs}
+        admission.validate_plan(plan, files)
+        manifest = admission.UPDATES.within(self.repo, required_inputs, exists=True)
+        admission.input_description(plan, admission.UPDATES.public().load_json(manifest.read_bytes()))
+        flow.validate_plan(plan, {**index, "files": files}, self.jobs.__getitem__)
+        index["files"][required_inputs] = digest(manifest)
+        index["install_plan"] = plan
+
     def compile(
         self,
         selected,
@@ -1241,6 +1282,7 @@ def main():
     parser.add_argument("--package-archives", action="store_true", help="prepare compile-selected sources from owner Unity package archives before conversion")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
+    parser.add_argument("--install-plan", type=Path, help="JSON with required_inputs, workspace_bytes and original input bindings")
     parser.add_argument("--output", type=Path, required=True, help="new public job staging root; overlay into a release source checkout")
     args = parser.parse_args()
     graph = Graph(args.repo, json.loads(args.extra_arguments.read_text()) if args.extra_arguments else {}, args.player_phases)
@@ -1256,6 +1298,8 @@ def main():
         burst_request=args.burst_request,
         audio_stage_receipt=args.audio_stage_receipt,
     )
+    if args.install_plan:
+        graph.attach_install_plan(index, **json.loads(args.install_plan.read_text()))
     args.output.mkdir(parents=True, exist_ok=False)
     for name, job in graph.jobs.items():
         path = args.output / name
