@@ -1735,7 +1735,10 @@ the native-code owner. Startup metadata uses the admitted content hashes by
 default, so copying identical inputs again preserves its identity.
 `install_inputs.py` also generates the source-output assembly receipt.
 `install_flow.py` owns durable stage
-checkpoints and failure/retry state; producer receipts remain the authority for
+checkpoints and failure/retry state, including stage-admission write failures
+before a producer starts. If persisting the failure also fails, the existing
+in-memory error snapshot remains available; explicit retry revalidates receipts.
+Producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
 foreground operation independently of `ToolHostActivity`. Pending/active admission
