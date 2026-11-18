@@ -1202,7 +1202,10 @@ The signed release graph selects the installed Android codec executables per
 texture operation. The release dispatcher materializes the existing SDK
 toolchain JSON with the installed QEMU and pixel decoder paths and hash-pinned
 guest files, then includes those provider witnesses in incremental cache
-identity. The SDK guest files are provisioned under the private acquired root.
+identity. SDK texture jobs share one `sdk_inputs.py --linux-texture` job that
+verifies the owner's Linux Editor archive and streams only the pinned codec
+member into a private artifact. The reader closes on exit and retains a
+receipt. The GNU runtime and guest adapter use the private acquired root.
 The same owner's current experimental `--resume` reuses its original profile,
 input/tool pins and existing output. Data fsync precedes every committed index
 row; recovery checks the ordered persisted prefix before truncating uncommitted
