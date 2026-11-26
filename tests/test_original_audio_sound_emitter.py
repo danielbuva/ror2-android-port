@@ -166,5 +166,32 @@ class SoundEmitterRestoreTests(unittest.TestCase):
             self.assertEqual(target.read_bytes(), before)
 
 
+class CommandoBankRestoreTests(unittest.TestCase):
+    def test_round_trip_preserves_migrated_body(self):
+        bank = (
+            "--- !u!114 &3\n"
+            "MonoBehaviour:\n"
+            "  m_GameObject: {fileID: 1}\n"
+            f"  {module.AK_BANK_SCRIPT}\n"
+            "  data:\n"
+            f"    WwiseObjectReference: {{fileID: 11400000, guid: {module.COMMANDO_BANK_GUID}, type: 2}}\n"
+        )
+        attachment = "  - component: {fileID: 3}\n"
+        other_attachment = "  - component: {fileID: 5}\n"
+        other_bank = bank.replace("&3", "&5").replace(module.COMMANDO_BANK_GUID, "c" * 32)
+        source = STRIPPED.replace("  - component: {fileID: 2}\n", "  - component: {fileID: 2}\n" + attachment + other_attachment)
+        source += bank + other_bank
+        migrated = STRIPPED.replace("  m_Name: SoundEmitter", "  m_Name: CommandoBody\n  m_IsActive: 0")
+        restored = module._commando_bank_prefab(source, migrated, requested=True)
+        self.assertEqual(
+            restored,
+            migrated.replace("  - component: {fileID: 2}\n", "  - component: {fileID: 2}\n" + attachment) + bank,
+        )
+        self.assertEqual(module._commando_bank_prefab(source, restored, requested=True), restored)
+        self.assertEqual(module._commando_bank_prefab(source, restored, requested=False), migrated)
+        with self.assertRaisesRegex(ValueError, "staged CommandoBody AkBank attachment changed"):
+            module._commando_bank_prefab(source, restored.replace(attachment, ""), requested=True)
+
+
 if __name__ == "__main__":
     unittest.main()

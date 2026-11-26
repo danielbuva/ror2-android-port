@@ -229,12 +229,17 @@ SOUND_EMITTER_ACCEPTED_SOURCE_SHA256 = "9eeef75a0a96fb748820b26775720ae14e6d2718
 SOUND_EMITTER_WWISE_PATH = "Assets/RoR2/Base/Core/Audio/WwiseGlobal.prefab"
 AK_GAME_OBJECT_SCRIPT_FILE_ID = "-130519023"
 AK_GAME_OBJECT_SCRIPT_GUID = "2b6c926553287666f24ffd5af5ba21cb"
+COMMANDO_BODY_ASSET = Path("Assets/RoR2/Base/Characters/Commando/CommandoBody.prefab")
+SOUNDBANK_REFERENCES = Path("Assets/WholeGame/Wwise/ScriptableObjects/Soundbank")
+COMMANDO_BANK_GUID = "5fb6c7f5716f3ed469d5955cf69cb429"
+WWISE_BANK_REFERENCE_SCRIPT = "m_Script: {fileID: 604064435, guid: a9e21bc7bb762a5cf3086c00d123625f, type: 3}"
+AK_BANK_SCRIPT = "m_Script: {fileID: -1867892377, guid: " + AK_GAME_OBJECT_SCRIPT_GUID + ", type: 3}"
 
 
 def _asset_guid(meta: Path) -> str:
     match = re.search(r"^guid: ([a-f0-9]{32})", meta.read_text(encoding="utf-8", errors="replace"), re.M)
     if not match:
-        raise ValueError("accepted SoundEmitter metadata has no unique asset GUID")
+        raise ValueError("audio asset metadata has no GUID")
     return match[1]
 
 
@@ -267,35 +272,57 @@ def _sound_emitter_stripped_text(source_text: str) -> str:
 def _safe_project_file(path: Path, project: Path) -> None:
     resolved_project = project.resolve(strict=True)
     if not path.absolute().is_relative_to(resolved_project):
-        raise ValueError("SoundEmitter target escapes the selected project")
+        raise ValueError("audio target escapes the selected project")
     cursor = resolved_project
     for part in path.absolute().relative_to(resolved_project).parts:
         cursor /= part
         if cursor.is_symlink():
-            raise ValueError("SoundEmitter target refuses symlink components")
+            raise ValueError("audio target refuses symlink components")
     if not path.is_file() or path.stat().st_nlink != 1:
-        raise ValueError("SoundEmitter target must be an owned regular project file")
+        raise ValueError("audio target must be an owned regular project file")
+
+
+def _accepted_audio_export(project: Path, work: Path) -> Path:
+    if not project.is_relative_to(work):
+        raise ValueError("audio output project must remain under ignored work/")
+    accepted = json.loads((work / "config/accepted-input.json").read_text(encoding="utf-8"))
+    reconstruction = json.loads((work / "config/reconstruction.json").read_text(encoding="utf-8"))
+    project_input = json.loads((project / ".port-input.json").read_text(encoding="utf-8"))
+    input_id = accepted.get("input_id")
+    if input_id != SOUND_EMITTER_ACCEPTED_INPUT_ID or reconstruction.get("input_id") != input_id or project_input.get("input_id") != input_id:
+        raise ValueError("accepted input does not match the selected audio project")
+    projects = reconstruction.get("projects")
+    if reconstruction.get("success") is not True or not isinstance(projects, list) or len(projects) != 1:
+        raise ValueError("audio requires one successful accepted export project")
+    export_value = projects[0]
+    if not isinstance(export_value, str) or not export_value.startswith("work/"):
+        raise ValueError("accepted export path must be relative to work/")
+    return work_path(work, export_value.removeprefix("work/"), "accepted export", directory=True)
+
+
+def _write_prefab_if_changed(target: Path, prior: bytes, desired: bytes) -> None:
+    if prior == desired:
+        return
+    mode = target.stat().st_mode & 0o777
+    temp_name = None
+    try:
+        with tempfile.NamedTemporaryFile(prefix=".audio-prefab-", dir=target.parent, delete=False) as stream:
+            temp_name = Path(stream.name)
+            stream.write(desired)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(temp_name, mode)
+        os.replace(temp_name, target)
+    finally:
+        if temp_name is not None:
+            temp_name.unlink(missing_ok=True)
 
 
 def synchronize_sound_emitter(project: Path, work: Path, *, requested: bool, resolved: dict[str, Path] | None = None) -> dict:
     """Select the exact accepted SoundEmitter prefab form before the build key."""
     project = project.resolve(strict=True)
     work = work.resolve(strict=True)
-    if not project.is_relative_to(work):
-        raise ValueError("SoundEmitter output project must remain under ignored work/")
-    accepted = json.loads((work / "config/accepted-input.json").read_text(encoding="utf-8"))
-    reconstruction = json.loads((work / "config/reconstruction.json").read_text(encoding="utf-8"))
-    project_input = json.loads((project / ".port-input.json").read_text(encoding="utf-8"))
-    input_id = accepted.get("input_id")
-    if input_id != SOUND_EMITTER_ACCEPTED_INPUT_ID or reconstruction.get("input_id") != input_id or project_input.get("input_id") != input_id:
-        raise ValueError("SoundEmitter accepted input does not match the selected project")
-    projects = reconstruction.get("projects")
-    if reconstruction.get("success") is not True or not isinstance(projects, list) or len(projects) != 1:
-        raise ValueError("SoundEmitter requires one successful accepted export project")
-    export_value = projects[0]
-    if not isinstance(export_value, str) or not export_value.startswith("work/"):
-        raise ValueError("accepted export path must be relative to work/")
-    export = work_path(work, export_value.removeprefix("work/"), "accepted export", directory=True)
+    export = _accepted_audio_export(project, work)
     source_relative = export.relative_to(work) / SOUND_EMITTER_ASSET
     source = work_path(work, source_relative.as_posix(), "SoundEmitter source")
     source_meta = work_path(work, source_relative.as_posix() + ".meta", "SoundEmitter source metadata")
@@ -324,20 +351,7 @@ def synchronize_sound_emitter(project: Path, work: Path, *, requested: bool, res
     if prior_text not in {source_text, stripped_text}:
         raise ValueError("staged SoundEmitter differs beyond the exact source AkGameObj removal")
     desired_bytes = source_bytes if requested else stripped_text.encode("utf-8")
-    if prior_bytes != desired_bytes:
-        mode = target.stat().st_mode & 0o777
-        temp_name = None
-        try:
-            with tempfile.NamedTemporaryFile(prefix=".sound-emitter-", dir=target.parent, delete=False) as stream:
-                temp_name = Path(stream.name)
-                stream.write(desired_bytes)
-                stream.flush()
-                os.fsync(stream.fileno())
-            os.chmod(temp_name, mode)
-            os.replace(temp_name, target)
-        finally:
-            if temp_name is not None:
-                temp_name.unlink(missing_ok=True)
+    _write_prefab_if_changed(target, prior_bytes, desired_bytes)
     return {
         "requested": requested,
         "path": "Assets/WholeGame/RoR2/Base/Utility/SoundEmitter.prefab",
@@ -347,6 +361,79 @@ def synchronize_sound_emitter(project: Path, work: Path, *, requested: bool, res
         "before_sha256": hashlib.sha256(prior_bytes).hexdigest(),
         "after_sha256": file_sha(target),
         "component_restored": requested,
+    }
+
+
+def _commando_bank_prefab(source: str, current: str, *, requested: bool) -> str:
+    """Overlay the original component and its attachment on the migrated body."""
+    document = re.compile(r"(?=^--- !u!)", re.M)
+    component = re.compile(r"^  - component: \{fileID: -?\d+\}\n", re.M)
+    source_blocks = document.split(source)
+    reference = f"    WwiseObjectReference: {{fileID: 11400000, guid: {COMMANDO_BANK_GUID}, type: 2}}\n"
+    banks = [block for block in source_blocks if block.startswith("--- !u!114 ") and AK_BANK_SCRIPT in block and reference in block]
+    if len(banks) != 1:
+        raise ValueError("CommandoBody source AkBank binding changed")
+    bank = banks[0]
+    bank_header = bank.splitlines()[0]
+    bank_ref = "  - component: {fileID: " + bank_header.removeprefix("--- !u!114 &") + "}\n"
+    owner_id = re.search(r"^  m_GameObject: \{fileID: (-?\d+)\}$", bank, re.M)
+    if not owner_id:
+        raise ValueError("CommandoBody source AkBank has no owner")
+    owner_header = f"--- !u!1 &{owner_id[1]}\n"
+    source_owners = [block for block in source_blocks if block.startswith(owner_header)]
+    source_refs = component.findall(source_owners[0]) if len(source_owners) == 1 else []
+    if source_refs.count(bank_ref) != 1:
+        raise ValueError("CommandoBody source AkBank attachment changed")
+
+    blocks = document.split(current)
+    owners = [block for block in blocks if block.startswith(owner_header)]
+    existing = [block for block in blocks if block.startswith(bank_header + "\n") or (AK_BANK_SCRIPT in block and reference in block)]
+    if len(owners) != 1 or (existing and existing != [bank]) or current.count(bank_ref) != len(existing) or owners[0].count(bank_ref) != len(existing):
+        raise ValueError("staged CommandoBody AkBank attachment changed")
+    if bool(existing) == requested:
+        return current
+    owner = owners[0]
+    if not requested:
+        return current.replace(owner, owner.replace(bank_ref, "", 1), 1).replace(bank, "", 1)
+    for previous in reversed(source_refs[: source_refs.index(bank_ref)]):
+        if previous in owner:
+            return current.replace(owner, owner.replace(previous, previous + bank_ref, 1), 1) + bank
+    raise ValueError("staged CommandoBody lacks the source AkBank attachment context")
+
+
+def synchronize_commando_bank(project: Path, work: Path, *, requested: bool) -> dict:
+    export = _accepted_audio_export(project, work)
+    source = work_path(work, (export.relative_to(work) / COMMANDO_BODY_ASSET).as_posix(), "CommandoBody source")
+    target = project / "Assets/WholeGame" / COMMANDO_BODY_ASSET.relative_to("Assets")
+    _safe_project_file(target, project)
+    target_meta = target.with_suffix(".prefab.meta")
+    _safe_project_file(target_meta, project)
+    source_meta = work_path(work, str(source.relative_to(work)) + ".meta", "CommandoBody source metadata")
+    if _asset_guid(source_meta) != _asset_guid(target_meta):
+        raise ValueError("CommandoBody source/project asset GUID relationship changed")
+    if requested:
+        matches = [meta for meta in (project / SOUNDBANK_REFERENCES).glob("*.asset.meta") if _asset_guid(meta) == COMMANDO_BANK_GUID]
+        if len(matches) != 1:
+            raise ValueError("staged CommandoBody soundbank GUID did not resolve uniquely")
+        reference_meta = matches[0]
+        reference = reference_meta.with_suffix("")
+        _safe_project_file(reference, project)
+        _safe_project_file(reference_meta, project)
+        reference_text = reference.read_text(encoding="utf-8")
+        if (
+            "--- !u!114 &11400000\n" not in reference_text
+            or WWISE_BANK_REFERENCE_SCRIPT not in reference_text
+            or "  objectName: char_Commando\n" not in reference_text
+        ):
+            raise ValueError("staged CommandoBody soundbank reference changed")
+    prior = target.read_bytes()
+    desired = _commando_bank_prefab(source.read_text(encoding="utf-8"), prior.decode("utf-8"), requested=requested).encode("utf-8")
+    _write_prefab_if_changed(target, prior, desired)
+    return {
+        "path": target.relative_to(project).as_posix(),
+        "component_restored": requested,
+        "before_sha256": hashlib.sha256(prior).hexdigest(),
+        "after_sha256": hashlib.sha256(desired).hexdigest(),
     }
 
 
@@ -408,6 +495,11 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
         payload["receipt_bound_payload"] = bank_receipt["outputs"]
         payload["receipt_bound_streamed_media"] = bank_receipt.get("streamed_media", [])
     sound_emitter = None if authored_only else synchronize_sound_emitter(project, work, requested=variant == "requested", resolved=resolved)
+    commando_bank = None
+    if not authored_only:
+        cohort = json.loads(resolved["stage_receipt"].read_text(encoding="utf-8")) if variant == "requested" else {}
+        commando_available = any(row["filename"] == "char_Commando.bnk" for row in cohort.get("outputs", []))
+        commando_bank = synchronize_commando_bank(project, work, requested=commando_available)
     stage_output = (
         (
             lambda _project, manifest, request, receipt: dict(
@@ -438,6 +530,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
             "stage": receipt,
             "variant": variant,
             "sound_emitter": sound_emitter,
+            "commando_bank": commando_bank,
         }
 
     if variant == "default-off":
@@ -483,7 +576,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
             output / "generated/request.json",
             resolved["stage_receipt"],
         )
-    return {"producer": result, "stage": receipt, "variant": variant, "sound_emitter": sound_emitter}
+    return {"producer": result, "stage": receipt, "variant": variant, "sound_emitter": sound_emitter, "commando_bank": commando_bank}
 
 
 def restage_authored_for_lane(project: Path, work: Path) -> dict:
