@@ -176,7 +176,7 @@ def execute(request, plan, out, *, runner, serial, lease, transport_module, pack
     if storage["mode"] != "internal" or storage["internal"]["free_bytes"] < 22 * 1024**3:
         raise ValueError("toolhost requires internal tool storage and 22 GiB free")
     (out / "storage-before.json").write_text(json.dumps(storage) + "\n")
-    cooldown = _GameThermalOwner(device, None, out / "admission.jsonl", time.monotonic() + 900)
+    cooldown = _GameThermalOwner(device, None, out / "admission.jsonl", time.monotonic() + 900, charge_override=runner.charge_override)
     cooldown.cool()
     archive = out / "stage.tar"
     job = None
