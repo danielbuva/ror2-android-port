@@ -7147,6 +7147,24 @@ authored output identities. Original bodies and producer receipts stay local.
 | `owner-whole-game-v30-original-managed-tail.jsonl.gz` | `21d6b5707f63832c13fad07f0c52e38ba2767696c6e7a9ca9045b41c41d342f1` |
 | `owner-whole-game-v30-original-retained-tail.jsonl.gz` | `a0cd71c133ed06e3e0388257676af15bf83d1475a6795a83592f1773d2da907e` |
 
+## V30 retained source records (2026-11-26)
+
+`owner-whole-game-v30-retained-source-records.json` supplies 8,230 records
+from 244 original PC bundles through `record_produce.py`. The managed rows
+derive properties hashes from the original MonoScript and the pinned editor
+resource. Host qualification matched the persisted bodies, complete types
+and non-null PPtr routes in the staged canonical ledger. Composed bundle
+loadability and phone execution remain open.
+
+The provenance, licensing, privacy and sensitive-content review covered
+source selectors, expected hashes and sizes, script selectors and field
+offsets with their pointer relocations. Source files, serialized bodies,
+SDK resources and receipts stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-retained-source-records.json` | `4a9a098e015aa054830f1b216469795e4c9cc34857124d08db813e62dd82272c` |
+
 ## V30 specialized record suppliers (2026-11-26)
 
 The texture and mesh profiles select 47 Texture2D and 22 Mesh records for
