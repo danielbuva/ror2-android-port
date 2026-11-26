@@ -4138,12 +4138,12 @@ project/cache hashing. Requested audio restores its exact accepted `AkGameObj`
 component; default off restores the sanitizer's stripped form. Accepted input,
 source bytes, asset/script GUIDs and the selected project must match before
 writing. The original component owns its runtime lifecycle. The hook also
-restores the accepted `CommandoBody` `AkBank` component and attachment when
-the selected cohort stages `char_Commando.bnk`. The hook checks the prefab
-and bank reference identities and removes that attachment when the bank is
-unavailable or audio is off. The original component loads the bank at Start
-and unloads it at Destroy. `source_scene_candidate.prepare` also consumes that existing
-validated audio selection: requested scenes preserve original Wwise/RTPC
+follows the source `AkBank` references on the eleven base survivor bodies.
+For each staged `char_*` bank, it verifies the body and bank reference identities
+and restores the source component and its attachment. When the bank is absent
+or audio is off, it removes that attachment. The original component loads the
+bank at Start and unloads it at Destroy. `source_scene_candidate.prepare`
+also consumes that validated audio selection: requested scenes preserve original Wwise/RTPC
 components, serialized fields, references and enable states. Default-off scenes
 retain the historical omission. Global-owner roots remain inactive. The current
 full build synchronizes that mode before stage-map/cache generation; code-only
@@ -5429,6 +5429,11 @@ Cleanup detaches both managed callbacks, including after Unity
 destroys the native body, then clears all body/skill/definition references before
 world teardown. The report is `SessionReport.survivorSkills`; it proves callback
 execution, not targeting, placement, effects or complete ability semantics.
+An explicit skill-triggered PCM observation also permits one native event
+catalog query on the first eligible Huntress primary authority callback.
+The report records the Wwise result, resolved object count and service frame
+for the character-bank event. The query releases its buffer immediately and
+observes event residency independently of audible playback.
 The separate `components` report covers every GenericSkill on that body by exact
 component identity, including Toolbot/Captain auxiliary loadout components that
 native `FindSkillSlot` maps to None. It retains current component indices and
