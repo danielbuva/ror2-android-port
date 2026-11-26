@@ -180,7 +180,7 @@
     }
   ],
   "public_profile_source_hashes": {
-    "recipe/assembly-transforms.json": "f6ed66e4cc324f7888a270b601882710d5f9f7d60da38068540d6121d031265b",
+    "recipe/assembly-transforms.json": "39edfb5559c472388eeda60abed0c8d7b94577a76ae92cd9895f6b6e47b468ed",
     "recipe/owner-public-tools.json": "1f4b333652fbb38174f8e2f7c54366369171b543789a4fbfe54fd8db4cc2fec1",
     "scripts/lab/assembly_transforms.py": "9e30fa8771789a6b5a47cb81231aba38219cb13ce1ed74d7a8c88700f3843ec4",
     "scripts/lab/common.py": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55",
@@ -189,6 +189,7 @@
     "tools/assembly-transforms/AudioGuard.cs": "ac5d6dd4e08786d54346bc14c69f640785e04f98d8a104da9c39c86c6a00ffd6",
     "tools/assembly-transforms/CatalogContract.cs": "5c9ec3e42209d7f1cf1f7cbc18e2ff61c16e314363b3fc9135fc77c8747e1da4",
     "tools/assembly-transforms/CatalogNames.cs": "ff18bcf18c58de1e5a2113bcfb35b02d98b1c33db80e7345bd077daea6ace682",
+    "tools/assembly-transforms/CommandoPostObserverMarker.cs": "971caade316b7a8d7e1c975185ca82458dcc9b0bc6eff34c02e44151dabb11e5",
     "tools/assembly-transforms/MigrationSurface.cs": "771f9ecb44b76328b135eecb3539a611ffc3f8ab3fff7213494865e84d7a56af",
     "tools/assembly-transforms/MusicOutputObserverCecilTransform.cs": "c94e64eda96e1d969087272d0684ce1a809a00b2e18eed30e35a0a5825a77b95",
     "tools/assembly-transforms/MusicOutputObserverCecilTransform.csproj": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
