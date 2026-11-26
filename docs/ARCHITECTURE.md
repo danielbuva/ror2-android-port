@@ -3268,6 +3268,12 @@ For sessions requesting the 85 C SoC ceiling, the existing gameplay thermal
 owner checks the highest readable CPU, GPU or SoC sensor during admission and
 runtime. Its receipt records that reading and its existing stop path verifies
 package ownership before stopping the game.
+Segmented mission coverage uses the native offline settings owner to save and
+verify a 60 FPS app cap before Start and to pause gameplay before each cooldown.
+The same thermal observer keeps sampling while the OLED sleeps and admits the
+next segment at battery `<=35 C` and CPU, GPU and skin `<=50 C`. The runner
+verifies package focus and same-process resume. The receipt labels the cap
+as coverage and retains each admission separately from active observation time.
 For `owner-unplugged`, the same runner arms a one-shot request on adopted
 app storage and verifies that the launched PID can read the admitted thermal
 sensors before prompting the owner. `LabDiagnostics` reports foreground

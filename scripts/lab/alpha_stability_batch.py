@@ -165,6 +165,7 @@ class _GameThermalOwner:
         self.admission_battery = None
         self.battery_current_now = None
         self.battery_zone_celsius = None
+        self.cool_start_celsius = None
 
     def battery_current(self):
         return int(self.device.sh("cat", "/sys/class/power_supply/battery/current_now", timeout=0.7))
@@ -247,6 +248,12 @@ class _GameThermalOwner:
             ]
             processor_peak = max(processors)
             if self.enforce_soc_ceiling:
+                skin = [
+                    int(raw) / 1000
+                    for name, raw, *_ in (line.split() for line in text.splitlines())
+                    if name.lower().startswith("skin") and raw != "UNREADABLE" and int(raw) > -30000
+                ]
+                self.cool_start_celsius = max([processor_peak, *skin])
                 self.soc_celsius = processor_peak
                 for line in text.splitlines():
                     name, raw, *_ = line.split()
@@ -380,10 +387,10 @@ class _GameThermalOwner:
         self.thread.start()
         self.stopper.start()
 
-    def between_sessions(self):
-        """Cool at the verified menu while the runtime observer stays active."""
+    def between_sessions(self, *, cool_start=False):
+        """Cool with OLED asleep while the runtime observer stays active."""
         phase = self.phase
-        self.phase = "session-memory-cooldown"
+        self.phase = "coverage-cooldown" if cool_start else "session-memory-cooldown"
         try:
             if not self.device.display(False):
                 raise RuntimeError("Between-session cooldown requires verified OLED sleep")
@@ -391,7 +398,11 @@ class _GameThermalOwner:
                 if self.error:
                     raise ThermalCancelled(self.error)
                 admitted = dict(battery=self.battery.copy(), battery_zone_celsius=self.battery_zone_celsius)
-                if max(admitted["battery"]["celsius"], admitted["battery_zone_celsius"]) <= 35:
+                if cool_start:
+                    admitted["cpu_gpu_skin_celsius"] = self.cool_start_celsius
+                    admitted["soc_celsius"] = self.soc_celsius
+                battery_cool = max(admitted["battery"]["celsius"], admitted["battery_zone_celsius"]) <= 35
+                if battery_cool and (not cool_start or admitted["cpu_gpu_skin_celsius"] <= 50 and admitted["soc_celsius"] < 85):
                     break
                 time.sleep(THERMAL_INTERVAL_SECONDS)
             if not self.device.display(True):

@@ -378,6 +378,26 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual(self.owner.battery_zone_celsius, 36)
         self.assertEqual(self.device.display.call_args_list, [mock.call(False), mock.call(True)])
 
+    def test_coverage_cooldown_also_requires_live_processor_skin_admission(self):
+        self.owner.battery = dict(celsius=34)
+        self.owner.battery_zone_celsius = 35
+        self.owner.cool_start_celsius = 55
+        self.owner.soc_celsius = 55
+
+        def cool(_seconds):
+            self.assertEqual(self.owner.phase, "coverage-cooldown")
+            self.assertEqual(self.device.display.call_args_list, [mock.call(False)])
+            self.owner.cool_start_celsius = 50
+            self.owner.soc_celsius = 50
+
+        with mock.patch.object(batch.time, "sleep", side_effect=cool) as sleep, mock.patch.object(self.owner, "sample") as sample:
+            result = self.owner.between_sessions(cool_start=True)
+        sleep.assert_called_once()
+        sample.assert_not_called()
+        self.assertEqual(result["cpu_gpu_skin_celsius"], 50)
+        self.assertEqual(result["soc_celsius"], 50)
+        self.assertEqual(self.device.display.call_args_list, [mock.call(False), mock.call(True)])
+
     def test_between_sessions_cancellation_leaves_oled_asleep(self):
         self.owner.battery = dict(celsius=40)
         self.owner.battery_zone_celsius = 40

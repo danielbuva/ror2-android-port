@@ -67,6 +67,7 @@ def load_request(path, serial=None):
         "capture_golem_attacks",
         "capture_titan_indicator",
         "enforce_soc_ceiling",
+        "coverage_segment_seconds",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -139,6 +140,17 @@ def load_request(path, serial=None):
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
         raise ValueError("start_from_menu requires the launch workload")
+    if "coverage_segment_seconds" in value:
+        seconds = value["coverage_segment_seconds"]
+        if type(seconds) is not int or not 0 < seconds <= value["duration_seconds"]:
+            raise ValueError("coverage_segment_seconds must be within the observation duration")
+        if (
+            value["package"] != "dev.ror2lab.arm64"
+            or not value.get("start_from_menu")
+            or not value.get("enforce_soc_ceiling")
+            or value.get("require_high_refresh")
+        ):
+            raise ValueError("Segmented coverage requires native lab menu Start with the SoC ceiling and no high-refresh requirement")
     for name in ("capture_golem_attacks", "capture_titan_indicator"):
         if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
             raise ValueError(name + " requires the native lab launch workload")
@@ -822,13 +834,64 @@ def check_player_screens(device, thermal, request, output, process_checks):
     raise RuntimeError("Confirmed Quit did not exit")
 
 
-def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=None, tap_start=False, attempt=None):
+def tap_settings(device, thermal, x, y):
+    from touch_gesture import owned_display_zero_focus
+
+    if thermal.error:
+        raise RuntimeError(thermal.error)
+    if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays"), device.package):
+        raise RuntimeError("Owned display-zero focus absent before settings input")
+    device.sh("input", "-d", "0", "tap", str(round(x)), str(round(y)), timeout=5)
+
+
+def set_coverage_refresh(device, thermal, pid, menu, report_id):
+    settings = menu["settings"]
+    if settings["highRefreshRate"] is False:
+        return menu
+
+    def wait(predicate):
+        return wait_for_settings_report(device, thermal, pid, predicate, timeout=15, report_id=report_id, attempt=menu["attempt"])
+
+    tap_settings(device, thermal, settings["buttonX"], settings["buttonY"])
+    opened = wait(lambda report: report["settings"]["visible"])["settings"]
+    center_x, center_y = opened["screenWidth"] / 2, opened["screenHeight"] / 2
+    tap_settings(device, thermal, center_x - 195, center_y + 14)
+    tap_settings(device, thermal, center_x - 110, center_y + 62.5)
+    return wait(
+        lambda report: report.get("phase") == "offline-start-menu"
+        and report["settings"]["visible"] is False
+        and report["settings"]["persisted"] is True
+        and report["settings"]["highRefreshRate"] is False
+    )
+
+
+def cool_coverage_segment(device, thermal, pid, report_id, attempt, receipt):
+    def wait(predicate):
+        return wait_for_settings_report(device, thermal, pid, predicate, timeout=30, report_id=report_id, attempt=attempt)
+
+    world = wait(lambda report: report.get("phase") == "integrated-world-playing" and report.get("world", {}).get("ready") is True)
+    settings = world["settings"]
+    tap_settings(device, thermal, settings["buttonX"], settings["buttonY"])
+    paused = wait(lambda report: report["settings"]["paused"] and report["settings"]["timeScale"] == 0)
+    receipt.update(scene=paused.get("stageProgress", {}).get("actualScene"), paused_run_seconds=paused["settings"]["runSeconds"])
+    receipt["admission"] = thermal.between_sessions(cool_start=True)
+    prepare_launch(device, receipt.setdefault("wake", {}))
+    resumed_menu = wait(lambda report: report["settings"]["paused"] and report["settings"]["timeScale"] == 0)["settings"]
+    tap_settings(device, thermal, resumed_menu["buttonX"], resumed_menu["buttonY"])
+    wait(lambda report: report["settings"]["paused"] is False and report["settings"]["timeScale"] > 0)
+    receipt["resumed_same_process"] = True
+
+
+def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=None, tap_start=False, attempt=None, coverage=None):
     """Start the observed owned menu and return the current world report."""
     from session_cleanup_check import menu_start_coordinates
     from touch_gesture import owned_display_zero_focus
 
     menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240, report_id=report_id, attempt=attempt)
     save(output / "start-menu.json", menu)
+    if coverage is not None:
+        menu = set_coverage_refresh(device, thermal, pid, menu, report_id)
+        save(output / "coverage-settings.json", menu)
     if thermal.error:
         raise RuntimeError(thermal.error)
     check_lab_processes(device, process_checks, "start", pid)
@@ -852,6 +915,12 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
         attempt=menu["attempt"],
     )
     save(output / "world-start.json", world)
+    if coverage is not None:
+        requested = world.get("performance", {}).get("requestedFrameRate")
+        high_refresh = world["settings"]["highRefreshRate"]
+        if requested != 60 or high_refresh is not False:
+            raise RuntimeError("Ready world did not verify the 60 FPS cap for coverage")
+        coverage.update(label="60 FPS cap (coverage)", requested_frame_rate=requested, high_refresh=high_refresh)
     return world
 
 
@@ -1038,6 +1107,9 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
 
 
 def observe_launch(device, thermal, request, output, result, pid, *, start_attempt=None):
+    segment_seconds = request.get("coverage_segment_seconds")
+    next_cooldown = segment_seconds
+    coverage = result.setdefault("coverage", {"cooldowns": []}) if segment_seconds else None
     if "input_script" in request:
         import touch_gesture
 
@@ -1048,7 +1120,7 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
         from session_cleanup_check import SPINE_ID
 
         report_id = SPINE_ID.removesuffix("-bringup") if device.package == "dev.ror2lab.converted" else SPINE_ID
-        start_from_menu(
+        world = start_from_menu(
             device,
             thermal,
             pid,
@@ -1057,7 +1129,10 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
             report_id=report_id,
             tap_start=True,
             attempt=start_attempt,
+            coverage=coverage,
         )
+        if coverage is not None:
+            start_attempt = world["attempt"]
     began = time.monotonic()
     next_capture = 0
     scheduled = iter(enumerate(request.get("input_schedule", [])))
@@ -1084,6 +1159,13 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
             next_capture += request.get("capture_interval_seconds", 60)
         if elapsed >= request["duration_seconds"]:
             break
+        if next_cooldown is not None and elapsed >= next_cooldown:
+            cooldown = {"at_active_seconds": elapsed}
+            coverage["cooldowns"].append(cooldown)
+            cooldown_began = time.monotonic()
+            cool_coverage_segment(device, thermal, pid, report_id, start_attempt, cooldown)
+            began += time.monotonic() - cooldown_began
+            next_cooldown += segment_seconds
         time.sleep(0.5)
     capture(device, output / "final", pid)
     result["observed_seconds"] = time.monotonic() - began

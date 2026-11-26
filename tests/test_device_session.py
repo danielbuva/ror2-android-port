@@ -327,9 +327,79 @@ class DeviceSessionTests(unittest.TestCase):
                     report_id=SPINE_ID.removesuffix("-bringup"),
                     tap_start=True,
                     attempt="converted-attempt",
+                    coverage=None,
                 ),
             ],
         )
+
+    def test_segmented_coverage_requires_native_start_and_soc_limit(self):
+        request = dict(self.request, start_from_menu=True, enforce_soc_ceiling=True, coverage_segment_seconds=1)
+        with mock.patch.object(device_module, "validate_apk_identity"), mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"):
+            runner.save(self.request_file, request)
+            self.assertEqual(runner.load_request(self.request_file)["coverage_segment_seconds"], 1)
+            for change in (
+                dict(coverage_segment_seconds=True),
+                dict(coverage_segment_seconds=request["duration_seconds"] + 1),
+                dict(start_from_menu=False),
+                dict(enforce_soc_ceiling=False),
+                dict(require_high_refresh=True),
+                dict(package="dev.ror2lab.converted"),
+            ):
+                runner.save(self.request_file, dict(request, **change))
+                with self.assertRaisesRegex(ValueError, "coverage"):
+                    runner.load_request(self.request_file)
+
+    def test_coverage_saves_low_refresh_through_native_menu(self):
+        settings = dict(highRefreshRate=True, buttonX=1167.5, buttonY=30, screenWidth=1280, screenHeight=960)
+        menu = dict(phase="offline-start-menu", attempt="attempt", settings=settings)
+        opened = dict(menu, settings=dict(settings, visible=True))
+        saved = dict(menu, settings=dict(settings, visible=False, persisted=True, highRefreshRate=False))
+        device, thermal = mock.Mock(), mock.Mock()
+
+        def observed(_device, _thermal, _pid, predicate, **kwargs):
+            self.assertEqual(kwargs["attempt"], "attempt")
+            report = next(reports)
+            self.assertTrue(predicate(report))
+            return report
+
+        reports = iter((opened, saved))
+        with mock.patch.object(runner, "tap_settings") as tap, mock.patch.object(runner, "wait_for_settings_report", side_effect=observed) as wait:
+            self.assertEqual(runner.set_coverage_refresh(device, thermal, "7", menu, "report"), saved)
+            self.assertEqual(runner.set_coverage_refresh(device, thermal, "7", saved, "report"), saved)
+        self.assertEqual(wait.call_count, 2)
+        self.assertEqual(
+            tap.call_args_list, [mock.call(device, thermal, 1167.5, 30), mock.call(device, thermal, 445, 494), mock.call(device, thermal, 530, 542.5)]
+        )
+
+    def test_coverage_cools_after_verified_pause_and_resumes_same_process(self):
+        settings = dict(buttonX=1167.5, buttonY=30, paused=False, timeScale=1, runSeconds=21)
+        ready = dict(phase="integrated-world-playing", world=dict(ready=True), settings=settings)
+        paused = dict(ready, settings=dict(settings, paused=True, timeScale=0), stageProgress=dict(actualScene="goldshores"))
+        device, thermal = mock.Mock(), mock.Mock()
+        thermal.between_sessions.return_value = dict(cpu_gpu_skin_celsius=49)
+        reports = iter((ready, paused, paused, ready))
+
+        def observed(_device, _thermal, pid, predicate, **kwargs):
+            self.assertEqual(pid, "7")
+            self.assertEqual(kwargs["attempt"], "attempt")
+            report = next(reports)
+            self.assertTrue(predicate(report))
+            return report
+
+        receipt = {}
+        calls = mock.Mock()
+        calls.observe.side_effect = observed
+        calls.cool.return_value = thermal.between_sessions.return_value
+        thermal.between_sessions = calls.cool
+        with (
+            mock.patch.object(runner, "wait_for_settings_report", calls.observe),
+            mock.patch.object(runner, "tap_settings", calls.tap),
+            mock.patch.object(runner, "prepare_launch", calls.wake),
+        ):
+            runner.cool_coverage_segment(device, thermal, "7", "report", "attempt", receipt)
+        self.assertEqual([call[0] for call in calls.mock_calls], ["observe", "tap", "observe", "cool", "wake", "observe", "tap", "observe"])
+        self.assertEqual(receipt["scene"], "goldshores")
+        self.assertTrue(receipt["resumed_same_process"])
 
     def test_combat_capture_is_opt_in_for_native_lab_launch(self):
         for flag in ("capture_golem_attacks", "capture_titan_indicator"):
