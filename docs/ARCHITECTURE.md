@@ -5190,10 +5190,12 @@ returned by the original Commando pistol sound call on the controlled body
 while it has effective authority. The lab R3 camera composition adds a
 static callback at that call site and preserves the original return handling.
 The primary owner attaches it before input dispatch and clears its callback
-during teardown. After a nonzero return it samples the body's active Wwise
-event IDs at most 12 times, with a new successful original audio service frame
-for each follow-up. The report records post acceptance, active event matches
-with their render-frame ordinal, and aggregate MainOutput PCM separately.
+during teardown. It records the first post's configured event name, audio gate,
+emitter registration and service-frame ordinal even when the call returns zero.
+After a nonzero return it samples the body's active Wwise event IDs at most 12
+times, with a new successful original audio service frame for each follow-up.
+The report records post acceptance, active event matches with their
+render-frame ordinal, and aggregate MainOutput PCM separately.
 
 Once the original audio owner is ready, existing actor, projectile, pickup,
 effect and model adapters preserve source sound identities and authored Wwise

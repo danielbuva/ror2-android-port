@@ -49,14 +49,15 @@ public sealed partial class PortSession
     {
         public bool sourceAudioObservationCaptured, sourceAudioGameObjectPresent, sourceAudioGameObjectEnabled,
             sourceAudioManagedRegistered, sourceAudioPlayingQueryReturned, sourceAudioVolumeQueryReturned,
-            sourceAudioVolumeValueFinite, sourceAudioExpectedEventObserved, sourceAudioPostObserverAttached;
+            sourceAudioVolumeValueFinite, sourceAudioExpectedEventObserved, sourceAudioPostObserverAttached,
+            sourceAudioNoAudioAtFirstPost;
         public int sourceAudioPostReturns, sourceAudioPostAcceptedReturns;
         public uint sourceAudioPostPlayingId;
         public float sourceAudioObservationRealtime, sourceAudioVolumeValue;
         public uint sourceAudioExpectedEventId, sourceAudioPlayingIdCount;
         public int sourceAudioPlayingQueryResult, sourceAudioVolumeQueryResult, sourceAudioVolumeReturnedType,
             sourceAudioPlayingQueryAttempts;
-        public ulong sourceAudioPlayingQueryRenderFrame;
+        public ulong sourceAudioFirstPostRenderFrame, sourceAudioPlayingQueryRenderFrame;
         public uint[] sourceAudioPlayingIds, sourceAudioEventIds;
         public string sourceAudioSoundName, sourceAudioObservationError;
         public int observerTicks;
@@ -188,11 +189,24 @@ public sealed partial class PortSession
                 if (!body || !ReferenceEquals(emitter, body.gameObject) || !Util.HasEffectiveAuthority(body.networkIdentity))
                     return;
                 report.sourceAudioPostReturns++;
-                if (playingId == AkSoundEngine.AK_INVALID_PLAYING_ID)
-                    return;
-                report.sourceAudioPostAcceptedReturns++;
-                if (report.sourceAudioPostPlayingId == AkSoundEngine.AK_INVALID_PLAYING_ID)
-                    report.sourceAudioPostPlayingId = playingId;
+                if (playingId != AkSoundEngine.AK_INVALID_PLAYING_ID)
+                {
+                    report.sourceAudioPostAcceptedReturns++;
+                    if (report.sourceAudioPostPlayingId == AkSoundEngine.AK_INVALID_PLAYING_ID)
+                        report.sourceAudioPostPlayingId = playingId;
+                }
+                if (report.sourceAudioPostReturns == 1)
+                {
+                    report.sourceAudioObservationCaptured = true;
+                    report.sourceAudioObservationRealtime = Time.realtimeSinceStartup;
+                    report.sourceAudioSoundName = FirePistol2.firePistolSoundString;
+                    report.sourceAudioNoAudioAtFirstPost = WwiseIntegrationManager.noAudio;
+                    report.sourceAudioFirstPostRenderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
+                    var sourceObject = body.GetComponent<AkGameObj>();
+                    report.sourceAudioGameObjectPresent = sourceObject;
+                    report.sourceAudioGameObjectEnabled = sourceObject && sourceObject.enabled;
+                    report.sourceAudioManagedRegistered = AkSoundEngine.IsGameObjectRegistered(body.gameObject);
+                }
             };
             field.SetValue(null, callback);
             postObserverField = field;
@@ -209,7 +223,7 @@ public sealed partial class PortSession
                 report.sourceAudioObservationError != null || !coordinator.r.integratedWorld ||
                 !PortSessionOriginalAudioOwner.PassivePcmCaptureRequested || !GameAudioOriginalOwner.Ready)
                 return;
-            bool first = !report.sourceAudioObservationCaptured;
+            bool first = report.sourceAudioPlayingQueryAttempts == 0;
             ulong renderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
             if (!first && renderFrame <= report.sourceAudioPlayingQueryRenderFrame)
                 return;
@@ -222,18 +236,8 @@ public sealed partial class PortSession
             report.sourceAudioEventIds = null;
             try
             {
-                if (first)
-                {
-                    report.sourceAudioObservationCaptured = true;
-                    report.sourceAudioObservationRealtime = Time.realtimeSinceStartup;
-                    report.sourceAudioSoundName = FirePistol2.firePistolSoundString;
-                    var sourceObject = body.GetComponent<AkGameObj>();
-                    report.sourceAudioGameObjectPresent = sourceObject;
-                    report.sourceAudioGameObjectEnabled = sourceObject && sourceObject.enabled;
-                    report.sourceAudioManagedRegistered = AkSoundEngine.IsGameObjectRegistered(body.gameObject);
-                    if (!String.IsNullOrEmpty(report.sourceAudioSoundName))
-                        report.sourceAudioExpectedEventId = AkSoundEngine.GetIDFromString(report.sourceAudioSoundName);
-                }
+                if (first && !String.IsNullOrEmpty(FirePistol2.firePistolSoundString))
+                    report.sourceAudioExpectedEventId = AkSoundEngine.GetIDFromString(FirePistol2.firePistolSoundString);
                 ulong id = AkSoundEngine.GetAkGameObjectID(body.gameObject);
                 uint count = 8;
                 var ids = new uint[8];
