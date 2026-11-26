@@ -7042,6 +7042,24 @@ packs stay local. The selectors include no private paths or account data.
 | `owner-whole-game-source-textures-2.json` | `79d7c7420e3bb918cb86d3f8597682647dc2d46b49676593c45c556425112207` |
 | `owner-whole-game-source-textures.json` | `b5d68665f59b2d27ea3a89d01db5fa5bcfa55c646ea8f16ce5b281003629b816` |
 
+## V30 original native records (2026-11-26)
+
+`owner-whole-game-v30-original-native-records.jsonl.gz` supplies 12,332 records
+from 244 original PC bundles through `record_produce.py`. The release graph
+binds them by original bundle, serialized member and path ID. Bundle
+preparation still resolves the final PPtr routes and checks serialized types.
+Host readback matched all 12,332 relocated bodies and their complete native
+types against the V30 canonical bundle. Device acceptance requires the full
+graph.
+
+The provenance, licensing, privacy and sensitive-content review covered the
+decompressed recipe. It contains original selectors, size and SHA-256 pins,
+and authored record identities. Original bodies and generated packs stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-original-native-records.jsonl.gz` | `12fc40399cece246488f785ad2202f38588cb1ab127336b56f63ddeba44f2893` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison
