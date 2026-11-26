@@ -222,8 +222,10 @@ optional canonical repack in one workspace. `release_graph.py` accepts
 `owner-bundle-preload-release-v1` profiles declaring prerequisite source profiles
 and that request. Public file pins join the signed source closure; supplier
 artifacts name declared jobs. Referenced donor/staged containers remain payload
-and native-manifest dependencies. Catalog production consumes each actual final
-bundle and its emitted profile, independently of canonical body-identity proof.
+and native-manifest dependencies. The graph assigns stable artifact names to
+object bundles and built-in player resources when it compiles their producers.
+Follower bundles and catalog production bind the same staged files. The catalog
+also consumes each emitted profile, independently of canonical body-identity proof.
 Managed witnesses must name generated artifacts, with registry body, receipt and
 schemas supplied by one final player job. When `--code-request` selects fresh
 conversion, witness production reads the same pinned managed provider manifest
@@ -8007,8 +8009,11 @@ and bundle/device loadability are separate gates.
 
 The release graph's `--catalog-request` binds source catalog metadata to selected
 final object bundles and the player's actual runtime script registry through
-`catalog_complete.py`. Supplier packs, Windows shader passthrough and derived
-manifest/catalog outputs are excluded from native catalog ownership. The signed
+`catalog_complete.py`. The canonical whole-game profile contributes paths to
+source projection. Catalog ownership gives explicit builds precedence over
+canonical copies, with the whole-game bundle owning remaining ordinary assets.
+Supplier packs, Windows shader passthrough and derived manifest/catalog outputs
+are excluded from native catalog ownership. The signed
 closure retains the metadata pin, final profiles and embedded bootstrap recipe;
 metadata contents stay in private input bindings. Compilation checks the embedded
 bootstrap pin and shared input/attempt identity before emission.

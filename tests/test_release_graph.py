@@ -240,6 +240,44 @@ class ReleaseGraphTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "final player registry"):
                 G.Graph(repo, {}).build(G.digest(profile))
 
+    def test_bundle_preload_binds_staged_outputs_before_catalog_fanin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            recipes = repo / "recipe"
+            recipes.mkdir()
+            staged = []
+            profiles = [
+                ("donor", dict(sources=[], bundle=dict(name="donor")), "catalog_bundle", "payload/donor"),
+                (
+                    "shader",
+                    dict(shaders=[], authored_inputs={}, includes_sha256={}, builtin={}),
+                    "builtin_extra",
+                    "apk/assets/bin/Data/Resources/unity_builtin_extra",
+                ),
+                ("player", dict(project_assemblies=[], outputs=[]), "default_resources", "apk/assets/bin/Data/unity default resources"),
+            ]
+            for name, profile, artifact, _ in profiles:
+                (recipes / f"owner-{name}.json").write_text(json.dumps(profile))
+                staged.append(dict(file=G.Graph.artifact_pin(f"recipe/jobs/owner-{name}.json", artifact)))
+            follower = recipes / "owner-follower.json"
+            follower.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-bundle-preload-release-v1",
+                        profiles=[f"recipe/owner-{name}.json" for name, _, _, _ in profiles],
+                        request=dict(policy=dict(bundle="follower"), staged=staged, managed_inputs={}),
+                    )
+                )
+            )
+            graph = G.Graph(repo, {})
+            job = graph.jobs[graph.build(G.digest(follower))]
+            self.assertEqual(job["request"]["request"]["staged"], staged)
+            for name, _, artifact, output in profiles:
+                dependency = f"recipe/jobs/owner-{name}.json"
+                self.assertIn(dependency, job["needs"])
+                self.assertEqual(graph.jobs[dependency]["artifacts"][artifact], output)
+                self.assertEqual(graph.jobs[dependency]["outputs"][output], output)
+
     def test_catalog_fanin_binds_actual_outputs_and_embedded_bootstrap(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
@@ -283,7 +321,9 @@ class ReleaseGraphTests(unittest.TestCase):
                 target = "apk/assets/bin/Data/registry.assets" if name == "player" else "payload/" + name
                 if name == "final":
                     target = "payload/authored"
-                graph.jobs[name] = dict(script=G.PREFIX + "object_produce.py", outputs={target: "actual/" + name}, artifacts={}, needs=[])
+                output = "actual/" + name
+                artifacts = {"catalog_bundle": output} if name == "final" else {}
+                graph.jobs[name] = dict(script=G.PREFIX + "object_produce.py", outputs={target: output}, artifacts=artifacts, needs=[])
             name = graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
             job = graph.jobs[name]
             self.assertIn(job["script"], J.PRODUCERS)
@@ -421,10 +461,10 @@ class ReleaseGraphTests(unittest.TestCase):
 
             for name, job in graph.jobs.items():
                 index["files"][name] = hashlib.sha256(wire(job)).hexdigest()
-            # Descriptor fixture includes final object layouts and record type tables,
-            # retaining exact closure ordering and source-index serialization.
+            # Descriptor fixture includes final bundles, object layouts, and record
+            # type tables, retaining exact closure ordering and index serialization.
             self.assertEqual(
-                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "9073f8bf0e83bbab85307c0dcb5d625471949ac878e9b2dc8131a5160e84f062"
+                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "1e04a58911f605a1d9991cea5a2e1d553491a5a83050dcf5a5e04ff3a9edadb6"
             )
 
     def test_scene_record_suppliers_close_published_consumers(self):
