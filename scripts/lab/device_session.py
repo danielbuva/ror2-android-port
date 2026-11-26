@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, ExitStack
 from functools import partial
 import hashlib
+from io import BytesIO
 import json
 import os
 from pathlib import Path
@@ -55,6 +56,7 @@ def load_request(path, serial=None):
         "cooldown_seconds",
         "mode",
         "input_script",
+        "bootstrap_play_reference",
         "input_schedule",
         "input_mapping",
         "selection",
@@ -132,6 +134,17 @@ def load_request(path, serial=None):
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
         raise ValueError("start_from_menu requires the launch workload")
+    if "bootstrap_play_reference" in value:
+        if value["package"] != "dev.ror2lab.converted" or not value.get("start_from_menu") or "input_script" in value:
+            raise ValueError("bootstrap_play_reference requires converted menu Start without a startup script")
+        reference = value["bootstrap_play_reference"]
+        if not isinstance(reference, dict) or set(reference) != {"png", "bounds"}:
+            raise ValueError("Bootstrap Play reference requires png and bounds")
+        image_path = (path.parent / reference["png"]).resolve(strict=True)
+        if not image_path.is_relative_to(root / "work"):
+            raise ValueError("Bootstrap Play reference must be a private screenshot under work/")
+        reference["png"] = str(image_path)
+        load_bootstrap_play_image(reference)
     for name in ("capture_golem_attacks", "capture_titan_indicator"):
         if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
             raise ValueError(name + " requires the native lab launch workload")
@@ -482,11 +495,29 @@ def _launch_converted(device, thermal):
     return dict(pid=pid, launch=result, activity=component)
 
 
-def play_from_bootstrap(device, thermal, pid, output):
+def load_bootstrap_play_image(reference):
+    from PIL import Image
+
+    bounds = reference["bounds"]
+    with Image.open(reference["png"], formats=["PNG"]) as screen:
+        if not isinstance(bounds, list) or len(bounds) != 4 or any(type(edge) is not int for edge in bounds):
+            raise ValueError("Bootstrap Play bounds must be four pixel coordinates")
+        x1, y1, x2, y2 = bounds
+        if not (0 <= x1 < x2 <= screen.width and 0 <= y1 < y2 <= screen.height):
+            raise ValueError("Bootstrap Play bounds must be inside the reference screenshot")
+        return screen.size, screen.crop(bounds).convert("RGB").tobytes()
+
+
+def play_from_bootstrap(device, thermal, pid, output, reference=None):
     """Wait for the owner bootstrap's enabled Play button on display zero."""
     from touch_gesture import owned_display_zero_focus
 
-    path = "/sdcard/.ror2lab-bootstrap-" + uuid4().hex + ".xml"
+    path = "/sdcard/.ror2lab-bootstrap-" + uuid4().hex + ".xml" if reference is None else None
+    if reference is not None:
+        from PIL import Image
+
+        size, pixels = load_bootstrap_play_image(reference)
+        x1, y1, x2, y2 = reference["bounds"]
     deadline = time.monotonic() + 240
     try:
         while time.monotonic() < deadline:
@@ -494,6 +525,15 @@ def play_from_bootstrap(device, thermal, pid, output):
                 raise RuntimeError(thermal.error)
             if device.sh("pidof", device.package, check=False).strip() != pid:
                 raise RuntimeError("Owned process changed during bootstrap preparation")
+            if reference is not None:
+                if owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), device.package):
+                    frame = subprocess.run(device.base + ["exec-out", "screencap", "-p"], capture_output=True, check=True, timeout=5).stdout
+                    with Image.open(BytesIO(frame), formats=["PNG"]) as screen:
+                        if screen.size == size and screen.crop(reference["bounds"]).convert("RGB").tobytes() == pixels:
+                            (output / "bootstrap-play.png").write_bytes(frame)
+                            break
+                time.sleep(2)
+                continue
             dump = device.sh("uiautomator", "dump", path, check=False, timeout=20)
             # A null root or idle timeout can exit successfully without writing XML.
             if dump.endswith("dumped to: " + path):
@@ -516,7 +556,8 @@ def play_from_bootstrap(device, thermal, pid, output):
         else:
             raise RuntimeError("Owner bootstrap Play button unavailable before launch deadline")
     finally:
-        device.sh("rm", "-f", path, timeout=5)
+        if path is not None:
+            device.sh("rm", "-f", path, timeout=5)
 
     if thermal.error:
         raise RuntimeError(thermal.error)
@@ -526,7 +567,7 @@ def play_from_bootstrap(device, thermal, pid, output):
         raise RuntimeError("Owned display-zero focus absent before bootstrap Play")
     x, y = (x1 + x2) // 2, (y1 + y2) // 2
     device.sh("input", "-d", "0", "tap", str(x), str(y), timeout=5)
-    save(output / "bootstrap-play.json", dict(pid=pid, bounds=[x1, y1, x2, y2], tap=[x, y]))
+    save(output / "bootstrap-play.json", dict(pid=pid, bounds=[x1, y1, x2, y2], tap=[x, y], observed_by="screenshot" if reference else "accessibility"))
 
 
 def capture(device, output, pid):
@@ -1070,12 +1111,12 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
-    if (
-        request.get("start_from_menu")
-        and "input_script" not in request
-        and launched.get("activity") == device.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity"
-    ):
-        play_from_bootstrap(device, thermal, pid, output)
+    if request.get("start_from_menu") and "input_script" not in request:
+        reference = request.get("bootstrap_play_reference")
+        if launched.get("activity") == device.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity":
+            play_from_bootstrap(device, thermal, pid, output, reference)
+        elif reference is not None:
+            raise RuntimeError("Bootstrap Play reference requires the resolved owner launcher")
     with ExitStack() as captures:
         if request.get("capture_golem_attacks"):
             captures.enter_context(capture_combat_events(device, thermal, pid, output / "golem-attacks", GOLEM_ATTACK))

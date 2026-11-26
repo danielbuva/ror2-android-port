@@ -1,4 +1,5 @@
 import hashlib
+from io import BytesIO
 import json
 from pathlib import Path
 import subprocess
@@ -371,6 +372,48 @@ class DeviceSessionTests(unittest.TestCase):
         scratch = next(call.args[-1] for call in device.sh.call_args_list if call.args[0] == "uiautomator")
         self.assertTrue(scratch.startswith("/sdcard/"))
         device.sh.assert_any_call("rm", "-f", scratch, timeout=5)
+
+    def test_bootstrap_play_reference_waits_for_label_at_matching_viewport(self):
+        from PIL import Image, ImageDraw
+
+        def screen(label, size=(128, 96)):
+            frame = Image.new("RGB", size, "gold")
+            ImageDraw.Draw(frame).text((40, 51), label, fill="black")
+            buffer = BytesIO()
+            frame.save(buffer, format="PNG")
+            return buffer.getvalue()
+
+        self.output.mkdir(parents=True)
+        reference = self.output / "ready.png"
+        ready = screen("Play")
+        reference.write_bytes(ready)
+        request = dict(
+            self.request,
+            package="dev.ror2lab.converted",
+            start_from_menu=True,
+            bootstrap_play_reference=dict(png=str(reference), bounds=[36, 46, 68, 66]),
+        )
+        runner.save(self.request_file, request)
+        with (
+            mock.patch.object(device_module, "validate_apk_identity"),
+            mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"),
+        ):
+            request = runner.load_request(self.request_file)
+
+        device = mock.Mock(package=request["package"], base=["adb", "-s", "synthetic-device"])
+        device.sh.return_value = "7"
+        thermal = mock.Mock(error=None)
+        frames = [mock.Mock(stdout=image) for image in (screen("Pause"), screen("Play", (140, 96)), ready)]
+        with (
+            mock.patch.object(runner.subprocess, "run", side_effect=frames) as capture,
+            mock.patch.object(runner.time, "sleep"),
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
+        ):
+            runner.play_from_bootstrap(device, thermal, "7", self.output, request["bootstrap_play_reference"])
+        self.assertEqual(capture.call_count, 3)
+        self.assertEqual([call.args for call in device.sh.call_args_list if call.args[0] == "input"], [("input", "-d", "0", "tap", "52", "56")])
+        self.assertEqual((self.output / "bootstrap-play.png").read_bytes(), ready)
+        self.assertEqual(json.loads((self.output / "bootstrap-play.json").read_text())["observed_by"], "screenshot")
 
     def test_combat_capture_is_opt_in_for_native_lab_launch(self):
         for flag in ("capture_golem_attacks", "capture_titan_indicator"):

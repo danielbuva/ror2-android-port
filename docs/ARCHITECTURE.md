@@ -3304,9 +3304,12 @@ The shared device runner's launch request accepts `start_from_menu` for automati
 route observations in either package. The runner resolves the installed APK's
 attempt before thermal sampling begins. When the converted owner bootstrap is
 the resolved Activity and no startup script is supplied, the runner waits for
-its enabled Play button and taps its observed bounds on display zero. It removes
-the temporary hierarchy on exit and records the selected bounds in the private
-run receipt. After bootstrap input, it waits for the
+its enabled Play button and taps its observed bounds on display zero. The
+default reads the accessibility hierarchy and removes the temporary device
+file on exit. A private Play reference screenshot can instead match the visible
+label and viewport when the WebView hierarchy is unavailable. The runner
+retains the matching frame and records the observation method and tap bounds
+in the private receipt. After bootstrap input, it waits for the
 attempt/PID-bound native menu, requires owned display-zero focus, captures the
 menu and taps the reported Start button. It waits for a ready world before the
 observation clock begins. Existing periodic captures retain PSS,
