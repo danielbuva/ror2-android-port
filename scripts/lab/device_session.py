@@ -24,6 +24,7 @@ import threading
 import time
 import traceback
 from uuid import uuid4
+from xml.etree import ElementTree
 
 PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
 PROCESS_TIME = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
@@ -479,6 +480,53 @@ def _launch_converted(device, thermal):
     if thermal.error:
         raise RuntimeError(thermal.error)
     return dict(pid=pid, launch=result, activity=component)
+
+
+def play_from_bootstrap(device, thermal, pid, output):
+    """Wait for the owner bootstrap's enabled Play button on display zero."""
+    from touch_gesture import owned_display_zero_focus
+
+    path = "/sdcard/.ror2lab-bootstrap-" + uuid4().hex + ".xml"
+    deadline = time.monotonic() + 240
+    try:
+        while time.monotonic() < deadline:
+            if thermal.error:
+                raise RuntimeError(thermal.error)
+            if device.sh("pidof", device.package, check=False).strip() != pid:
+                raise RuntimeError("Owned process changed during bootstrap preparation")
+            dump = device.sh("uiautomator", "dump", path, check=False, timeout=20)
+            # A null root or idle timeout can exit successfully without writing XML.
+            if dump.endswith("dumped to: " + path):
+                hierarchy = ElementTree.fromstring(device.sh("cat", path, timeout=5))
+                buttons = [
+                    node
+                    for node in hierarchy.iter("node")
+                    if node.get("package") == device.package
+                    and node.get("class") == "android.widget.Button"
+                    and node.get("enabled") == "true"
+                    and "Play" in (node.get("text"), node.get("content-desc"))
+                ]
+                if len(buttons) == 1:
+                    bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", buttons[0].get("bounds", ""))
+                    if bounds:
+                        x1, y1, x2, y2 = map(int, bounds.groups())
+                        if x2 > x1 and y2 > y1:
+                            break
+            time.sleep(1)
+        else:
+            raise RuntimeError("Owner bootstrap Play button unavailable before launch deadline")
+    finally:
+        device.sh("rm", "-f", path, timeout=5)
+
+    if thermal.error:
+        raise RuntimeError(thermal.error)
+    if device.sh("pidof", device.package, check=False).strip() != pid:
+        raise RuntimeError("Owned process changed before bootstrap Play")
+    if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), device.package):
+        raise RuntimeError("Owned display-zero focus absent before bootstrap Play")
+    x, y = (x1 + x2) // 2, (y1 + y2) // 2
+    device.sh("input", "-d", "0", "tap", str(x), str(y), timeout=5)
+    save(output / "bootstrap-play.json", dict(pid=pid, bounds=[x1, y1, x2, y2], tap=[x, y]))
 
 
 def capture(device, output, pid):
@@ -1022,6 +1070,12 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
+    if (
+        request.get("start_from_menu")
+        and "input_script" not in request
+        and launched.get("activity") == device.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity"
+    ):
+        play_from_bootstrap(device, thermal, pid, output)
     with ExitStack() as captures:
         if request.get("capture_golem_attacks"):
             captures.enter_context(capture_combat_events(device, thermal, pid, output / "golem-attacks", GOLEM_ATTACK))

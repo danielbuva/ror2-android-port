@@ -332,6 +332,46 @@ class DeviceSessionTests(unittest.TestCase):
             ],
         )
 
+    def test_converted_menu_workload_waits_for_visible_bootstrap_play(self):
+        package = "dev.ror2lab.converted"
+        request = dict(self.request, package=package, start_from_menu=True)
+        device, thermal = mock.Mock(package=package), mock.Mock(error=None)
+        states = iter((None, "Pause", "Resume", "Play"))
+        taps = []
+        current = None
+
+        def shell(*args, **kwargs):
+            nonlocal current
+            if args[0] == "pidof":
+                return "7"
+            if args[0] == "uiautomator":
+                current = next(states)
+                return "ERROR: could not get idle state." if current is None else "UI hierchary dumped to: " + args[-1]
+            if args[0] == "cat":
+                return (
+                    f'<hierarchy><node package="{package}" class="android.widget.Button" enabled="true" text="{current}" bounds="[10,20][50,60]"/></hierarchy>'
+                )
+            if args[0] == "input":
+                taps.append((current, args))
+            return ""
+
+        device.sh.side_effect = shell
+        activity = package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity"
+        with (
+            mock.patch.object(runner, "launch", return_value=dict(pid="7", activity=activity)),
+            mock.patch.object(runner, "observe_launch") as observe,
+            mock.patch.object(runner.time, "sleep"),
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
+        ):
+            result = {}
+            runner.run_workload(device, thermal, request, self.output, result, start_attempt="converted-attempt")
+        self.assertEqual(taps, [("Play", ("input", "-d", "0", "tap", "30", "40"))])
+        observe.assert_called_once_with(device, thermal, request, self.output, result, "7", start_attempt="converted-attempt")
+        self.assertEqual(json.loads((self.output / "bootstrap-play.json").read_text())["tap"], [30, 40])
+        scratch = next(call.args[-1] for call in device.sh.call_args_list if call.args[0] == "uiautomator")
+        self.assertTrue(scratch.startswith("/sdcard/"))
+        device.sh.assert_any_call("rm", "-f", scratch, timeout=5)
+
     def test_combat_capture_is_opt_in_for_native_lab_launch(self):
         for flag in ("capture_golem_attacks", "capture_titan_indicator"):
             with self.subTest(flag=flag):
