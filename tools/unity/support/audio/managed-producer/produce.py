@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = Path(__file__).resolve().parents[5]
 WORK = ROOT / "work"
@@ -53,16 +54,29 @@ def require(ok: bool, message: str) -> None:
 
 
 def run(command: list[str], *, cwd: Path, env: dict[str, str], log: Path, timeout: int = 180) -> None:
-    result = subprocess.run(
-        command,
-        cwd=cwd,
-        env=env,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        timeout=timeout,
-    )
     log.parent.mkdir(parents=True, exist_ok=True)
+    clock = getattr(time, "CLOCK_BOOTTIME", time.CLOCK_MONOTONIC)
+    started = time.clock_gettime(clock)
+    result = None
+    try:
+        result = subprocess.run(
+            command,
+            cwd=cwd,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=timeout,
+        )
+    finally:
+        ended = time.clock_gettime(clock)
+        receipt = {
+            "started_boottime_seconds": started,
+            "ended_boottime_seconds": ended,
+            "seconds": ended - started,
+            "exit_code": result.returncode if result is not None else None,
+        }
+        log.with_suffix(".process.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     log.write_text(result.stdout, encoding="utf-8")
     if result.returncode:
         raise RuntimeError(f"command failed ({result.returncode}); see {log}\n{result.stdout}")
@@ -618,7 +632,11 @@ def main() -> None:
             "stage_to_apk_binding": False,
             "dispatch_ready": False,
         },
-        "outputs_relative_to_work": {work_relative(p, work): sha(p) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "manifest.json"},
+        "outputs_relative_to_work": {
+            work_relative(p, work): sha(p)
+            for p in sorted(out.rglob("*"))
+            if p.is_file() and p.name != "manifest.json" and not (p.parent == out / "logs" and p.name.endswith(".process.json"))
+        },
     }
     manifest_path = out / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n", encoding="utf-8")
