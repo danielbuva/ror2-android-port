@@ -19,6 +19,19 @@ Evidence: `work/coordination/alpha-record-pass-thor-20261126/`, both v6 terminal
 receipts. OLED sleep and scratch cleanup passed. Full-cohort timing and Unity
 typed load remain open.
 
+## J1503 — Restore live equipment-barrel lock materials
+
+2026-11-26. The teleporter world owner follows tracked equipment barrels to
+their native purchase locks as they spawn and recovers their particle materials.
+The assisted native seed-3 Start reached Distant Roost (`blackbeach2`) with
+107.1 s of native authority. Three live lock renderers had 10 particles each,
+Android family 0 variant 105, queue 3000 and One/One blending.
+APK SHA-256 `f9cfbafd21a627934da1062fa62eea2381d3259f545dcf03b2b9ebceba1f7a6d` (source `1a1bfd8d`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/roost-seed3-first-operands-main-native-start/`
+includes `final/` renderer reports, screenshot and logcat, plus `terminal.done.json`.
+Peak CPU/GPU was 88.8 °C with 25.9 s above 80 °C. Adopted placement, scratch
+cleanup, OLED sleep and lease release passed. Matched PC pixels remain open.
+
 ## J1502 — Stage the phone toolhost Python dependencies
 
 2026-11-26. The shared toolhost stages a pinned Python import plan, 14 wheels

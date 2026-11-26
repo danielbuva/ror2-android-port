@@ -1742,16 +1742,33 @@ public sealed partial class PortSession
             }
         }
 
+        static IEnumerable<GameObject> EquipmentLockRoots(IEnumerable<ChestBehavior> barrels)
+        {
+            foreach (var barrel in barrels)
+            {
+                if (!barrel)
+                    continue;
+                var purchase = barrel.GetComponent<PurchaseInteraction>();
+                if (!purchase)
+                    continue;
+                var lockRoot = purchase.GetLockObject();
+                if (lockRoot)
+                    yield return lockRoot;
+            }
+        }
+
         public void ObserveTeleporterWorld()
         {
             // Native startup and attack states create prongs, debris and targeting
-            // renderers after preparation. Actor models may detach from their bodies.
+            // renderers after preparation. Equipment locks also spawn after preparation.
+            // Actor models may detach from their bodies.
             // Retain source layers, controllers and unknown material families.
             if (AndroidNativeDeferredPresentation.report.available && Time.frameCount % 30 == 0)
             {
                 var roots = coordinator.directorActors.Where(actor => actor.model).Select(actor => actor.model);
                 if (coordinator.objectiveHost)
                     roots = roots.Concat(new[] { coordinator.objectiveHost });
+                roots = roots.Concat(EquipmentLockRoots(coordinator.worldEquipmentChests));
                 foreach (var renderer in roots.SelectMany(root => root.GetComponentsInChildren<Renderer>(true)).Distinct())
                     coordinator.r.objective.lateNativeMaterials +=
                         AndroidMaterialPresentation.ApplyRecovered(renderer, coordinator.worldMaterials);
