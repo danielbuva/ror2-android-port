@@ -229,11 +229,14 @@ SOUND_EMITTER_ACCEPTED_SOURCE_SHA256 = "9eeef75a0a96fb748820b26775720ae14e6d2718
 SOUND_EMITTER_WWISE_PATH = "Assets/RoR2/Base/Core/Audio/WwiseGlobal.prefab"
 AK_GAME_OBJECT_SCRIPT_FILE_ID = "-130519023"
 AK_GAME_OBJECT_SCRIPT_GUID = "2b6c926553287666f24ffd5af5ba21cb"
-COMMANDO_BODY_ASSET = Path("Assets/RoR2/Base/Characters/Commando/CommandoBody.prefab")
-SOUNDBANK_REFERENCES = Path("Assets/WholeGame/Wwise/ScriptableObjects/Soundbank")
-COMMANDO_BANK_GUID = "5fb6c7f5716f3ed469d5955cf69cb429"
+SURVIVOR_BODIES = tuple(
+    Path("RoR2/Base/Characters") / directory / f"{Path(directory).name}Body.prefab"
+    for directory in ("Commando", "Huntress", "Bandit2", "Toolbot", "Engi/Engi", "Mage", "Merc", "Treebot", "Loader", "Croco", "Captain")
+)
+SOUNDBANK_REFERENCES = Path("Wwise/ScriptableObjects/Soundbank")
 WWISE_BANK_REFERENCE_SCRIPT = "m_Script: {fileID: 604064435, guid: a9e21bc7bb762a5cf3086c00d123625f, type: 3}"
 AK_BANK_SCRIPT = "m_Script: {fileID: -1867892377, guid: " + AK_GAME_OBJECT_SCRIPT_GUID + ", type: 3}"
+UNITY_DOCUMENT = re.compile(r"(?=^--- !u!)", re.M)
 
 
 def _asset_guid(meta: Path) -> str:
@@ -364,32 +367,25 @@ def synchronize_sound_emitter(project: Path, work: Path, *, requested: bool, res
     }
 
 
-def _commando_bank_prefab(source: str, current: str, *, requested: bool) -> str:
+def _survivor_bank_prefab(source_blocks: list[str], current: str, bank: str, reference: str, *, requested: bool) -> str:
     """Overlay the original component and its attachment on the migrated body."""
-    document = re.compile(r"(?=^--- !u!)", re.M)
     component = re.compile(r"^  - component: \{fileID: -?\d+\}\n", re.M)
-    source_blocks = document.split(source)
-    reference = f"    WwiseObjectReference: {{fileID: 11400000, guid: {COMMANDO_BANK_GUID}, type: 2}}\n"
-    banks = [block for block in source_blocks if block.startswith("--- !u!114 ") and AK_BANK_SCRIPT in block and reference in block]
-    if len(banks) != 1:
-        raise ValueError("CommandoBody source AkBank binding changed")
-    bank = banks[0]
     bank_header = bank.splitlines()[0]
     bank_ref = "  - component: {fileID: " + bank_header.removeprefix("--- !u!114 &") + "}\n"
     owner_id = re.search(r"^  m_GameObject: \{fileID: (-?\d+)\}$", bank, re.M)
     if not owner_id:
-        raise ValueError("CommandoBody source AkBank has no owner")
+        raise ValueError("source AkBank has no owner")
     owner_header = f"--- !u!1 &{owner_id[1]}\n"
     source_owners = [block for block in source_blocks if block.startswith(owner_header)]
     source_refs = component.findall(source_owners[0]) if len(source_owners) == 1 else []
     if source_refs.count(bank_ref) != 1:
-        raise ValueError("CommandoBody source AkBank attachment changed")
+        raise ValueError("source AkBank attachment changed")
 
-    blocks = document.split(current)
+    blocks = UNITY_DOCUMENT.split(current)
     owners = [block for block in blocks if block.startswith(owner_header)]
     existing = [block for block in blocks if block.startswith(bank_header + "\n") or (AK_BANK_SCRIPT in block and reference in block)]
     if len(owners) != 1 or (existing and existing != [bank]) or current.count(bank_ref) != len(existing) or owners[0].count(bank_ref) != len(existing):
-        raise ValueError("staged CommandoBody AkBank attachment changed")
+        raise ValueError("staged AkBank attachment changed")
     if bool(existing) == requested:
         return current
     owner = owners[0]
@@ -398,43 +394,87 @@ def _commando_bank_prefab(source: str, current: str, *, requested: bool) -> str:
     for previous in reversed(source_refs[: source_refs.index(bank_ref)]):
         if previous in owner:
             return current.replace(owner, owner.replace(previous, previous + bank_ref, 1), 1) + bank
-    raise ValueError("staged CommandoBody lacks the source AkBank attachment context")
+    raise ValueError("staged body lacks the source AkBank attachment context")
 
 
-def synchronize_commando_bank(project: Path, work: Path, *, requested: bool) -> dict:
+def _bank_reference_name(reference: Path) -> str:
+    reference_text = reference.read_text(encoding="utf-8")
+    name = re.search(r"^  objectName: (\w+)$", reference_text, re.M)
+    if not name or "--- !u!114 &11400000\n" not in reference_text or WWISE_BANK_REFERENCE_SCRIPT not in reference_text:
+        raise ValueError(f"invalid soundbank reference {reference.name}")
+    return name[1]
+
+
+def _bank_reference_index(assets: Path) -> dict[str, list[Path]]:
+    references = {}
+    for meta in (assets / SOUNDBANK_REFERENCES).glob("*.asset.meta"):
+        references.setdefault(_asset_guid(meta), []).append(meta)
+    return references
+
+
+def synchronize_survivor_banks(project: Path, work: Path, staged_banks: set[str]) -> list[dict]:
     export = _accepted_audio_export(project, work)
-    source = work_path(work, (export.relative_to(work) / COMMANDO_BODY_ASSET).as_posix(), "CommandoBody source")
-    target = project / "Assets/WholeGame" / COMMANDO_BODY_ASSET.relative_to("Assets")
-    _safe_project_file(target, project)
-    target_meta = target.with_suffix(".prefab.meta")
-    _safe_project_file(target_meta, project)
-    source_meta = work_path(work, str(source.relative_to(work)) + ".meta", "CommandoBody source metadata")
-    if _asset_guid(source_meta) != _asset_guid(target_meta):
-        raise ValueError("CommandoBody source/project asset GUID relationship changed")
-    if requested:
-        matches = [meta for meta in (project / SOUNDBANK_REFERENCES).glob("*.asset.meta") if _asset_guid(meta) == COMMANDO_BANK_GUID]
-        if len(matches) != 1:
-            raise ValueError("staged CommandoBody soundbank GUID did not resolve uniquely")
-        reference_meta = matches[0]
-        reference = reference_meta.with_suffix("")
-        _safe_project_file(reference, project)
-        _safe_project_file(reference_meta, project)
-        reference_text = reference.read_text(encoding="utf-8")
-        if (
-            "--- !u!114 &11400000\n" not in reference_text
-            or WWISE_BANK_REFERENCE_SCRIPT not in reference_text
-            or "  objectName: char_Commando\n" not in reference_text
-        ):
-            raise ValueError("staged CommandoBody soundbank reference changed")
-    prior = target.read_bytes()
-    desired = _commando_bank_prefab(source.read_text(encoding="utf-8"), prior.decode("utf-8"), requested=requested).encode("utf-8")
-    _write_prefab_if_changed(target, prior, desired)
-    return {
-        "path": target.relative_to(project).as_posix(),
-        "component_restored": requested,
-        "before_sha256": hashlib.sha256(prior).hexdigest(),
-        "after_sha256": hashlib.sha256(desired).hexdigest(),
-    }
+    export_assets = export.relative_to(work) / "Assets"
+    project_assets = project / "Assets/WholeGame"
+    source_references = _bank_reference_index(work / export_assets)
+    target_references = _bank_reference_index(project_assets) if staged_banks else {}
+
+    pending = []
+    for body in SURVIVOR_BODIES:
+        source = work_path(work, (export_assets / body).as_posix(), "survivor body source")
+        source_meta = work_path(work, str(source.relative_to(work)) + ".meta", "survivor body source metadata")
+        target = project_assets / body
+        target_meta = target.with_suffix(".prefab.meta")
+        _safe_project_file(target, project)
+        _safe_project_file(target_meta, project)
+        if _asset_guid(source_meta) != _asset_guid(target_meta):
+            raise ValueError(f"{body.stem} source/project asset GUID relationship changed")
+
+        source_blocks = UNITY_DOCUMENT.split(source.read_text(encoding="utf-8"))
+        primary_banks = []
+        for block in source_blocks:
+            if not block.startswith("--- !u!114 ") or AK_BANK_SCRIPT not in block:
+                continue
+            ref = re.search(r"^    WwiseObjectReference: \{fileID: 11400000, guid: ([a-f0-9]{32}), type: 2\}\n", block, re.M)
+            matches = source_references.get(ref[1], []) if ref else []
+            if len(matches) != 1:
+                raise ValueError(f"{body.stem} source AkBank reference did not resolve uniquely")
+            source_reference = matches[0].with_suffix("")
+            name = _bank_reference_name(source_reference)
+            if name.startswith("char_"):
+                primary_banks.append((name, block, ref[0], ref[1]))
+        if len(primary_banks) != 1:
+            raise ValueError(f"{body.stem} did not resolve one source character bank")
+
+        name, bank, reference, guid = primary_banks[0]
+        requested = f"{name}.bnk" in staged_banks
+        if requested:
+            matches = target_references.get(guid, [])
+            if len(matches) != 1:
+                raise ValueError(f"{body.stem} staged soundbank GUID did not resolve uniquely")
+            target_reference_meta = matches[0]
+            target_reference = target_reference_meta.with_suffix("")
+            _safe_project_file(target_reference, project)
+            _safe_project_file(target_reference_meta, project)
+            if _bank_reference_name(target_reference) != name:
+                raise ValueError(f"{body.stem} staged soundbank reference changed")
+        prior = target.read_bytes()
+        desired = _survivor_bank_prefab(source_blocks, prior.decode("utf-8"), bank, reference, requested=requested).encode("utf-8")
+        pending.append((target, prior, desired, name, requested))
+
+    receipts = []
+    for target, prior, desired, name, requested in pending:
+        _write_prefab_if_changed(target, prior, desired)
+        receipts.append(
+            {
+                "path": target.relative_to(project).as_posix(),
+                "bank": name,
+                "component_restored": requested,
+                "before_sha256": hashlib.sha256(prior).hexdigest(),
+                "after_sha256": hashlib.sha256(desired).hexdigest(),
+            }
+        )
+    return receipts
 
 
 def build_selection_path() -> Path:
@@ -495,11 +535,8 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
         payload["receipt_bound_payload"] = bank_receipt["outputs"]
         payload["receipt_bound_streamed_media"] = bank_receipt.get("streamed_media", [])
     sound_emitter = None if authored_only else synchronize_sound_emitter(project, work, requested=variant == "requested", resolved=resolved)
-    commando_bank = None
-    if not authored_only:
-        cohort = json.loads(resolved["stage_receipt"].read_text(encoding="utf-8")) if variant == "requested" else {}
-        commando_available = any(row["filename"] == "char_Commando.bnk" for row in cohort.get("outputs", []))
-        commando_bank = synchronize_commando_bank(project, work, requested=commando_available)
+    staged_banks = {row["filename"] for row in payload.get("receipt_bound_payload", [])}
+    survivor_banks = None if authored_only else synchronize_survivor_banks(project, work, staged_banks)
     stage_output = (
         (
             lambda _project, manifest, request, receipt: dict(
@@ -530,7 +567,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
             "stage": receipt,
             "variant": variant,
             "sound_emitter": sound_emitter,
-            "commando_bank": commando_bank,
+            "survivor_banks": survivor_banks,
         }
 
     if variant == "default-off":
@@ -576,7 +613,7 @@ def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = 
             output / "generated/request.json",
             resolved["stage_receipt"],
         )
-    return {"producer": result, "stage": receipt, "variant": variant, "sound_emitter": sound_emitter, "commando_bank": commando_bank}
+    return {"producer": result, "stage": receipt, "variant": variant, "sound_emitter": sound_emitter, "survivor_banks": survivor_banks}
 
 
 def restage_authored_for_lane(project: Path, work: Path) -> dict:

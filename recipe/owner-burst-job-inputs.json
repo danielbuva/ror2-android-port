@@ -17,7 +17,7 @@
       "-L",
       "${inputs}/acquired/android-sdk/linux",
       "-E",
-      "LD_LIBRARY_PATH=${inputs}/acquired/burst/runtime:${inputs}/acquired/burst/mono/usr/lib:${inputs}/acquired/burst/mono/usr/lib/x86_64-linux-gnu:${inputs}/acquired/burst/native-linux/lib64:${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu",
+      "LD_LIBRARY_PATH=${inputs}/acquired/burst/runtime:${inputs}/acquired/burst/mono/usr/lib:${inputs}/acquired/burst/mono/usr/lib/x86_64-linux-gnu:${inputs}/acquired/burst/mono/lib/x86_64-linux-gnu:${inputs}/acquired/burst/native-linux/lib64:${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu",
       "-E",
       "LD_PRELOAD=${installed_runtime}/gnu/libgnu-tool-adapter.so",
       "-E",

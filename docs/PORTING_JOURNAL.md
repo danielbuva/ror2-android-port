@@ -6,6 +6,33 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1510 — Observe Huntress primary audio on the native emitter
+
+2026-11-26. Assisted seed-2 native Start reached Verdant Falls with Huntress.
+The original primary callback found one Wwise object for `Play_huntress_m1_ready`.
+The next Wwise service frame returned a playing ID with the expected event ID
+on Huntress's emitter. All 153 startup banks completed.
+APK SHA-256 `30a681e52231f0dbbee2baa2fbe6f7c13db186f7080fad2fdc211d574dea7d2c` (source `050c1a08`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/huntress-active-event-main-nova/`
+includes `terminal.done.json` and the screenshot, logcat and bringup report in `terminal-capture/`.
+Frame pacing averaged 13.097 ms over 8,104 frames. CPU/GPU peaked at 92.3 °C
+with 59.239 s above 80 °C. Battery held 26 °C. Adopted placement, scratch cleanup,
+OLED sleep and lease release passed. Event-specific output and PC audibility remain open.
+
+## J1509 — Restore original base-survivor bank attachments
+
+2026-11-26. The audio build hook restores the eleven original base-survivor
+AkBank attachments when their character banks are staged. Assisted seed-2
+native Start reached Verdant Falls with Huntress, 75.421 s of effective
+authority, and all four native skill callbacks. Wwise returned AK_Success
+and one audio object for `Play_huntress_m1_ready`, confirming bank residency.
+All 153 startup banks completed. Huntress playback and audibility remain open.
+APK SHA-256 `d1e95d6451890963de1c7decab0b94533d74363a92795cd22f84645cc83d825b` (source `6d205382`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/huntress-bank-query-main-nova/`
+includes `terminal.done.json` and the PID-bound screenshot, logcat and report.
+Frame pacing averaged 11.022 ms over 8,173 frames. CPU/GPU peaked at 95.5 °C
+with 73.003 s above 80 °C. Adopted backing, scratch cleanup, OLED sleep and lease release passed.
+
 ## J1508 — Start original Wwise banks in the staged converted player
 
 2026-11-26. Converted player data registers the audio and observation assemblies

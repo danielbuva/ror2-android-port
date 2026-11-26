@@ -342,3 +342,5 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1506](PORTING_JOURNAL.md#j1506--restore-commando-pistol-event-playback-through-the-source-bank) | 2026-11-26 | Restore Commando pistol event playback through the source bank | 2026-11-26. |
 | [J1507](PORTING_JOURNAL.md#j1507--convert-signed-release-managed-code-on-android) | 2026-11-26 | Convert signed-release managed code on Android | 2026-11-26. |
 | [J1508](PORTING_JOURNAL.md#j1508--start-original-wwise-banks-in-the-staged-converted-player) | 2026-11-26 | Start original Wwise banks in the staged converted player | 2026-11-26. |
+| [J1509](PORTING_JOURNAL.md#j1509--restore-original-base-survivor-bank-attachments) | 2026-11-26 | Restore original base-survivor bank attachments | 2026-11-26. |
+| [J1510](PORTING_JOURNAL.md#j1510--observe-huntress-primary-audio-on-the-native-emitter) | 2026-11-26 | Observe Huntress primary audio on the native emitter | 2026-11-26. |

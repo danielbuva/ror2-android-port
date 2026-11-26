@@ -62,10 +62,10 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "9a9546d9db4e7a5f57482205704f2ade63f97e3fa802de2411e46c61f659bd71"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "f1278ba142212e31efa078ca993f9aa01d2efafa0a4ef402fcea5269ea905178"
 STAGE_PIN_TOOL_SHA256 = "e58420236cadec75e47b959e2ed0dd36dace0d55638b462f552422af9d236b28"
 REQUEST_PIN_TOOL_SHA256 = "b4c8abdc7e98be1db34c1b20f35abcc154487caa36aaafafd5b48fc70fb47a5e"
-MANAGED_PRODUCER_SHA256 = "faeac333b573a181c28de42c8b7d126b722f70c5039beca2736fbfbacaba0569"
+MANAGED_PRODUCER_SHA256 = "30e9f856a511a71faa88b7bd1e25e89d4f17001f136aa5e666b9611797f1ece1"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
 ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6"
@@ -82,9 +82,9 @@ OWNER_SOURCE_HASHES = {
     "../../runtime/session/PortSession.cs": "364d1e567f19792581f50ac81ca3aef2ae2e3e7060ad01241272e8ee30351a29",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "0c08a4e06977e68ec5bc1acc20014f6cdabb7d3f71dd2874caaa6455f3f9b059",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
-    "../../runtime/world/IntegratedWorldBoundary.cs": "a9867aadcb63dab37f6a9dc67bcebb3d295c0d973e18422da71302c206d668d1",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "dd9465137d7405b6bba295cbbe7da2f02da4f965130b4a5785be9bd5da995879",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "d1d197dc12526614f37b9c3c3699be3bf16a96315abd3ac698c15b4270bfe8b6",
-    "../../runtime/world/SurvivorSkillObserver.cs": "b8e2627c42355831d52fb382d4cfa9d9f932a98a3900abb0dfa76d8b4ca2006b",
+    "../../runtime/world/SurvivorSkillObserver.cs": "00f496749c33bdb1c2fcc7ec8fa87c3abb8abb7e0048b7e1404aa9505d061e6b",
     "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "31cceff4ae1ea0df0b94fc6a63fc07c1e687f38bde9e12fd9c1330118997aa7d",
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "fdce9ba21e249c7c9a8d2eed788c7561907a5327f9e9b8dc28ce23334e71ee70",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "b70f8914fbc05eb6a88729b25c63ed10aee20256604cc259b3d8a5134705a7cf",

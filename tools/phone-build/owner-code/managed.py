@@ -105,13 +105,12 @@ def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=Non
     version = invoke([dotnet, ilspy, "--disable-updatecheck", "--version"], out, "ilspy-version", env=decompiler_env).read_text()
     if profile["ilspy_version"] not in version:
         raise ValueError("qualified source decompiler version differs")
-    for name, assembly in (("support-original", "Assembly-CSharp.dll"), ("maps-original", "RoR2.dll")):
-        invoke(
-            [dotnet, ilspy, "--disable-updatecheck", "-lv", "CSharp9_0", "-p", "-r", managed, "-o", out / name, managed / assembly],
-            out,
-            name,
-            env=decompiler_env,
-        )
+    decompile = [dotnet, ilspy, "--disable-updatecheck", "-lv", "CSharp9_0", "-r", managed]
+    recipes = json.loads((source_root / "recipe/build-entry-inputs.json").read_text())["decompiled"]
+    map_assembly = managed / recipes["assembly"]
+    if native.sha(map_assembly) != recipes["assembly_sha256"]:
+        raise ValueError("map source assembly differs")
+    invoke([*decompile, "-p", "-o", out / "support-original", managed / "Assembly-CSharp.dll"], out, "support-original", env=decompiler_env)
     probe_env = decompiler_env
     if probe_provider_sha256:
         probe_env = dict(probe_env or os.environ, ROR2LAB_CECIL_SHA256=probe_provider_sha256)
@@ -132,13 +131,17 @@ def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=Non
     catalog = catalog_reader.read_shipped(catalog_path, "/_/owner-original-aa", names)
     native.write(out / "original-catalog.json", dict(catalog, input_id=identity, source_catalog_sha256=catalog_sha))
     manifest = {"keys": catalog["keys"]}
-    recipes = json.loads((source_root / "recipe/build-entry-inputs.json").read_text())["decompiled"]
-    if native.sha(managed / recipes["assembly"]) != recipes["assembly_sha256"]:
-        raise ValueError("map source assembly differs")
     generated = out / "maps"
     generated.mkdir()
+    map_sources = out / "maps-original"
+    map_sources.mkdir()
     for name, row in recipes["files"].items():
-        source = out / "maps-original" / native.relative(row["path"])
+        relative = native.relative(row["path"])
+        type_name = ".".join(relative.with_suffix("").parts)
+        invoke([*decompile, "-t", type_name, "-o", map_sources, map_assembly], out, "maps-original-" + type_name, env=decompiler_env)
+        source = map_sources / relative
+        source.parent.mkdir(parents=True, exist_ok=True)
+        (map_sources / (type_name + ".decompiled.cs")).rename(source)
         if native.sha(source) != row["sha256"]:
             raise ValueError("original map source decompilation differs: " + name)
         target = (

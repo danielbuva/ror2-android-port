@@ -7216,20 +7216,21 @@ The recipe contains tool hashes and assembly/member identifiers. Its generated
 module stays under ignored `work/`. No sound data, original implementation,
 private paths, or identifiers are included.
 
-Audit 2026-11-26. The existing original-audio build hook uses the Commando
-prefab path and Wwise script and object references to restore the locally
-imported base-character bank attachment when the selected cohort stages
-`char_Commando.bnk`. The authored overlay reads the component from the
-accepted export. Review covered provenance, licensing, privacy and sensitive
-content. Git carries the transformation and the identifiers it needs.
+Audit 2026-11-26. The existing original-audio build hook uses the eleven base
+survivor prefab paths and Wwise script and object references to restore each
+locally imported `char_*` bank attachment when the selected cohort stages its
+bank. The overlay reads the components from the accepted export. Review covered
+provenance, licensing, privacy and sensitive content. Git carries the
+transformation and the identifiers it needs.
 
 Audit 2026-11-26. `owner-code-job-inputs.json` and
 `owner-burst-job-inputs.json` describe dispatcher-relative paths to the
 original-input compiler providers, SDK, and GNU tools. The provenance,
 privacy, licensing and sensitive-content review covered tool arguments and
-path tokens. SDK, middleware, original files and outputs stay local.
+path tokens, including Mono's two multiarch library directories. SDK,
+middleware, original files and outputs stay local.
 
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-code-job-inputs.json` | `6a9db9c77118f96c2d064c4696a95160092e47303dca2e8d4217aef4ac389714` |
-| `owner-burst-job-inputs.json` | `840735f1945efe8ad687078d00b7fa66d903acb2071ae55770f47b668291ecda` |
+| `owner-burst-job-inputs.json` | `3a4d0dbbdfbc8dcd7d170322c58e95333cc941e9d8155a92db980bfec9adcac8` |

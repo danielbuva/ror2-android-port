@@ -26,6 +26,16 @@ public sealed class SurvivorSkillObserver : IDisposable
         public SlotReport[] slots;
         public SkillComponentReport[] components;
         public SkillVariantInventoryReport skillVariantInventory;
+        public SourceBankReport sourceBank;
+    }
+    [Serializable]
+    public sealed class SourceBankReport
+    {
+        public string eventName, error, playbackError;
+        public int result, playbackResult, playbackQueries;
+        public uint objectCount, playingId, playingEventId;
+        public ulong renderFrame, playbackRenderFrame;
+        public bool returned;
     }
     [Serializable]
     public sealed class SkillVariantInventoryReport
@@ -68,6 +78,7 @@ public sealed class SurvivorSkillObserver : IDisposable
     CharacterBody body;
     SkillLocator locator;
     Action onRecognizedAuthoritySkill;
+    readonly bool observeHuntressSourceBank;
     readonly GenericSkill[] skills;
     readonly SkillDef[] definitions;
     readonly List<SkillComponentEntry> componentEntries = new List<SkillComponentEntry>();
@@ -211,6 +222,11 @@ public sealed class SurvivorSkillObserver : IDisposable
         body = player;
         locator = player.skillLocator;
         this.onRecognizedAuthoritySkill = onRecognizedAuthoritySkill;
+        if (onRecognizedAuthoritySkill != null)
+        {
+            var huntressIndex = BodyCatalog.FindBodyIndex("HuntressBody");
+            observeHuntressSourceBank = huntressIndex != BodyIndex.None && player.bodyIndex == huntressIndex;
+        }
         skills = new[] { locator.primary, locator.secondary, locator.utility, locator.special };
         definitions = new SkillDef[skills.Length];
         var names = new[] { "primary", "secondary", "utility", "special" };
@@ -230,8 +246,92 @@ public sealed class SurvivorSkillObserver : IDisposable
     void AuthorityActivated(GenericSkill skill)
     {
         if (Record(skill, true) && body && body.networkIdentity && body.networkIdentity.hasAuthority)
+        {
             onRecognizedAuthoritySkill?.Invoke();
+            ObservePrimarySourceBank(skill);
+        }
     }
+
+    void ObservePrimarySourceBank(GenericSkill skill)
+    {
+        if (!observeHuntressSourceBank || report.sourceBank != null || skill != locator.primary ||
+            !GameAudioOriginalOwner.Ready || GameAudioOriginalOwner.SuccessfulOriginalRenderFrames == 0)
+            return;
+
+        // Both source primary configs reference this char_Huntress-only event.
+        // Query the loaded event catalog without posting or altering an event.
+        const int capacity = 8;
+        var observation = new SourceBankReport {
+            eventName = "Play_huntress_m1_ready",
+            renderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames
+        };
+        report.sourceBank = observation;
+        try
+        {
+            uint count = capacity;
+            using (var objects = new AkObjectInfoArray(capacity))
+            {
+                var result = AkSoundEngine.QueryAudioObjectIDs(observation.eventName, ref count, objects);
+                observation.result = (int)result;
+                if (result == AKRESULT.AK_Success)
+                    observation.objectCount = count;
+                observation.returned = true;
+            }
+        }
+        catch (Exception error)
+        {
+            observation.error = error.GetType().Name + ": " + error.Message;
+        }
+    }
+
+    public void SamplePrimarySourcePlayback()
+    {
+        const int maxQueries = 12;
+        var observation = report.sourceBank;
+        if (observation == null || observation.objectCount == 0 ||
+            observation.playingId != AkSoundEngine.AK_INVALID_PLAYING_ID ||
+            observation.playbackQueries >= maxQueries || observation.playbackError != null ||
+            report.cleaned || !body || !GameAudioOriginalOwner.Ready)
+            return;
+
+        ulong renderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
+        if (renderFrame <= Math.Max(observation.renderFrame, observation.playbackRenderFrame))
+            return;
+
+        observation.playbackRenderFrame = renderFrame;
+        observation.playbackQueries++;
+        try
+        {
+            const int capacity = 8;
+            uint count = capacity;
+            var ids = new uint[capacity];
+            ulong emitter = AkSoundEngine.GetAkGameObjectID(body.gameObject);
+            var result = AkSoundEngine.GetPlayingIDsFromGameObject(emitter, ref count, ids);
+            observation.playbackResult = (int)result;
+            if (result != AKRESULT.AK_Success)
+                return;
+
+            uint expected = AkSoundEngine.GetIDFromString(observation.eventName);
+            if (expected == 0)
+                return;
+            for (int index = 0; index < Math.Min(count, (uint)ids.Length); index++)
+            {
+                uint playingId = ids[index];
+                if (playingId == AkSoundEngine.AK_INVALID_PLAYING_ID ||
+                    AkSoundEngine.GetEventIDFromPlayingID(playingId) != expected)
+                    continue;
+
+                observation.playingId = playingId;
+                observation.playingEventId = expected;
+                break;
+            }
+        }
+        catch (Exception error)
+        {
+            observation.playbackError = error.GetType().Name + ": " + error.Message;
+        }
+    }
+
     void ServerActivated(GenericSkill skill)
     {
         Record(skill, false);

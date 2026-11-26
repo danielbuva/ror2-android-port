@@ -368,6 +368,122 @@ class PrimaryOperandWitnessTests(unittest.TestCase):
         fixture += "\n" + marker.removeprefix("using System;\n")
         self.compile_run(fixture, "")
 
+    def test_huntress_source_event_observation_requires_primary_and_ready_service(self):
+        source = (ROOT / "tools/unity/runtime/world/SurvivorSkillObserver.cs").read_text(encoding="utf-8")
+        members = "\n".join(
+            extract_member(source, declaration)
+            for declaration in (
+                "public sealed class SourceBankReport",
+                "void ObservePrimarySourceBank(",
+                "public void SamplePrimarySourcePlayback(",
+            )
+        )
+        fixture = r"""
+using System;
+public sealed class GenericSkill {}
+public sealed class CharacterBody {
+    public readonly object gameObject = new object();
+    public static implicit operator bool(CharacterBody body) => body != null;
+}
+public enum AKRESULT { AK_Success = 1, AK_IDNotFound = 15 }
+public sealed class AkObjectInfoArray : IDisposable {
+    public static int disposed;
+    public AkObjectInfoArray(int capacity) { if (capacity != 8) throw new Exception("capacity"); }
+    public void Dispose() { disposed++; }
+}
+public static class GameAudioOriginalOwner {
+    public static bool Ready;
+    public static ulong SuccessfulOriginalRenderFrames;
+}
+public static class AkSoundEngine {
+    public const uint AK_INVALID_PLAYING_ID = 0;
+    public static AKRESULT result = AKRESULT.AK_IDNotFound;
+    public static object emitter;
+    public static int playingQueries;
+    public static bool matchingVoice;
+    public static AKRESULT QueryAudioObjectIDs(string name, ref uint count, AkObjectInfoArray objects) {
+        if (name != "Play_huntress_m1_ready" || count != 8) throw new Exception("event query arguments");
+        if (result == AKRESULT.AK_Success) count = 2;
+        return result;
+    }
+    public static ulong GetAkGameObjectID(object candidate) {
+        if (!ReferenceEquals(candidate, emitter)) throw new Exception("wrong emitter");
+        return 42;
+    }
+    public static AKRESULT GetPlayingIDsFromGameObject(ulong candidate, ref uint count, uint[] ids) {
+        if (candidate != 42 || count != 8 || ids.Length != 8) throw new Exception("playing query arguments");
+        playingQueries++;
+        ids[0] = 10;
+        ids[1] = matchingVoice ? 11u : AK_INVALID_PLAYING_ID;
+        count = 2;
+        return AKRESULT.AK_Success;
+    }
+    public static uint GetIDFromString(string name) => name == "Play_huntress_m1_ready" ? 123u : 0;
+    public static uint GetEventIDFromPlayingID(uint id) => id == 11 ? 123u : 456u;
+}
+public sealed class Observer {
+    sealed class Report { public SourceBankReport sourceBank; public bool cleaned; }
+    sealed class Locator { public readonly GenericSkill primary = new GenericSkill(); }
+    readonly Report report = new Report();
+    readonly Locator locator = new Locator();
+    readonly CharacterBody body = new CharacterBody();
+    readonly bool observeHuntressSourceBank;
+    Observer(bool enabled) { observeHuntressSourceBank = enabled; }
+    static void Need(bool value) { if (!value) throw new Exception("source bank observation"); }
+    public static void Main() {
+        var observer = new Observer(true);
+        observer.ObservePrimarySourceBank(observer.locator.primary);
+        GameAudioOriginalOwner.Ready = true;
+        observer.ObservePrimarySourceBank(observer.locator.primary);
+        GameAudioOriginalOwner.SuccessfulOriginalRenderFrames = 30;
+        observer.ObservePrimarySourceBank(new GenericSkill());
+        var disabled = new Observer(false);
+        disabled.ObservePrimarySourceBank(disabled.locator.primary);
+        Need(observer.report.sourceBank == null && disabled.report.sourceBank == null && AkObjectInfoArray.disposed == 0);
+        observer.ObservePrimarySourceBank(observer.locator.primary);
+        observer.ObservePrimarySourceBank(observer.locator.primary);
+        var missing = observer.report.sourceBank;
+        Need(missing.returned && missing.result == 15 && missing.objectCount == 0 && AkObjectInfoArray.disposed == 1);
+        AkSoundEngine.result = AKRESULT.AK_Success;
+        var admitted = new Observer(true);
+        admitted.ObservePrimarySourceBank(admitted.locator.primary);
+        var found = admitted.report.sourceBank;
+        Need(found.returned && found.result == 1 && found.objectCount == 2 && found.renderFrame == 30 && AkObjectInfoArray.disposed == 2);
+        AkSoundEngine.emitter = admitted.body.gameObject;
+        admitted.SamplePrimarySourcePlayback();
+        GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;
+        disabled.SamplePrimarySourcePlayback();
+        observer.SamplePrimarySourcePlayback();
+        GameAudioOriginalOwner.Ready = false;
+        admitted.SamplePrimarySourcePlayback();
+        Need(AkSoundEngine.playingQueries == 0);
+        GameAudioOriginalOwner.Ready = true;
+        admitted.SamplePrimarySourcePlayback();
+        admitted.SamplePrimarySourcePlayback();
+        Need(AkSoundEngine.playingQueries == 1 && found.playingId == 0 && found.playbackRenderFrame == 31);
+        AkSoundEngine.matchingVoice = true;
+        GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;
+        admitted.SamplePrimarySourcePlayback();
+        GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;
+        admitted.SamplePrimarySourcePlayback();
+        Need(AkSoundEngine.playingQueries == 2 && found.playbackQueries == 2 &&
+             found.playingId == 11 && found.playingEventId == 123 && found.playbackRenderFrame == 32);
+
+        var unmatched = new Observer(true);
+        unmatched.ObservePrimarySourceBank(unmatched.locator.primary);
+        AkSoundEngine.emitter = unmatched.body.gameObject;
+        AkSoundEngine.matchingVoice = false;
+        for (int frame = 0; frame < 20; frame++) {
+            GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;
+            unmatched.SamplePrimarySourcePlayback();
+        }
+        Need(unmatched.report.sourceBank.playbackQueries == 12 && unmatched.report.sourceBank.playingId == 0);
+    }
+    __PRODUCTION__
+}
+"""
+        self.compile_run(fixture.replace("__PRODUCTION__", members), "")
+
     def test_integrated_configs_preserve_native_audio_and_restore_owned_state(self):
         source = PRIMARY.read_text(encoding="utf-8")
         members = "\n".join(
