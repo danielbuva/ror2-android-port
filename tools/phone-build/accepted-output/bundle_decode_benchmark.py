@@ -9,20 +9,25 @@ import resource
 import sys
 import time
 
-from unity_bundle import Bundle, decompress, exact
+
+def load_decoder(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    decoder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(decoder)
+    return decoder
 
 
-def compare(path, baseline):
+def compare(path, baseline, candidate):
     started = time.monotonic()
-    bundle = Bundle(path)
+    bundle = candidate.Bundle(path)
     decoded = hashlib.sha256()
-    decoders = (baseline, decompress)
+    decoders = (baseline.decompress, candidate.decompress)
     cpu_ns = [0, 0]
     decoded_bytes = 0
     with path.open("rb") as stream:
         for index, (position, expanded, compressed, flags) in enumerate(bundle.blocks):
             stream.seek(position)
-            data = exact(stream, compressed)
+            data = candidate.exact(stream, compressed)
             outputs = [None, None]
             # Alternate first use of the same compressed bytes to balance cache effects.
             first = index % 2
@@ -52,10 +57,9 @@ def main():
     parser.add_argument("baseline", type=Path)
     parser.add_argument("receipt", type=Path)
     args = parser.parse_args()
-    spec = importlib.util.spec_from_file_location("baseline_unity_bundle", args.baseline)
-    baseline = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(baseline)
-    args.receipt.write_text(json.dumps(compare(args.bundle, baseline.decompress)) + "\n")
+    baseline = load_decoder("baseline_unity_bundle", args.baseline)
+    candidate = load_decoder("candidate_unity_bundle", Path(__file__).with_name("unity_bundle.py"))
+    args.receipt.write_text(json.dumps(compare(args.bundle, baseline, candidate)) + "\n")
 
 
 if __name__ == "__main__":

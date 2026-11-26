@@ -111,7 +111,7 @@ class UnityWriteTests(unittest.TestCase):
             baseline.write_text(
                 "import lz4.block\ndef decompress(data, size, flags):\n    return lz4.block.decompress(data, uncompressed_size=size) if flags & 63 else data\n"
             )
-            command = [sys.executable, str(Path(SPEC.origin).with_name("bundle_decode_benchmark.py")), bundle, baseline, receipt]
+            command = [sys.executable, "-I", str(Path(SPEC.origin).with_name("bundle_decode_benchmark.py")), bundle, baseline, receipt]
             subprocess.run(command, check=True)
             report = json.loads(receipt.read_text())
             self.assertEqual(report["blocks"], 3)
