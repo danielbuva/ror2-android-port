@@ -295,6 +295,12 @@ matches. For a canonical row backed by a record producer, an optional
 row's record digest. The producer must map the canonical output and duplicate
 to the same unique original body.
 
+`bundle_preload.py --expose-local-assets REQUEST --output NEW_DIRECTORY`
+registers ordered, typed roots already present in a pinned Android bundle.
+It derives the new preload intervals from their local PPtrs and preserves the
+old rows, dependency metadata, object bodies and resource members. Catalog
+production still checks each advertised address against the resulting bundle.
+
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
 remaining interaction gates.

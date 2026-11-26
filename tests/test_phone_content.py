@@ -49,6 +49,8 @@ class PhoneContentTests(unittest.TestCase):
                 "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
                 "assets": [*({"name": name.lower(), "type": name} for name in sorted(NATIVE_CONTENT_TYPES))],
             }
+            sprite = next(asset for asset in request["assets"] if asset["type"] == "Sprite")
+            sprite.update(name="texture2d", subasset="icon")
             manifest_asset = next(asset for asset in request["assets"] if asset["type"] == "AssetBundleManifest")
             manifest_asset["manifest"] = [
                 {"name": "content", "hash": "a" * 32, "dependencies": ["shared"]},
@@ -64,7 +66,7 @@ class PhoneContentTests(unittest.TestCase):
                 "sha256": request["sha256"],
                 "count": len(NATIVE_CONTENT_TYPES),
                 "unloaded": True,
-                "assets": [asset | {"loaded_name": "", "loaded_type": "UnityEngine." + asset["type"]} for asset in request["assets"]],
+                "assets": [asset | {"loaded_name": asset.get("subasset", ""), "loaded_type": "UnityEngine." + asset["type"]} for asset in request["assets"]],
             }
             output = attempt / "native-content-check.json"
             output.write_text(json.dumps(report))
@@ -78,6 +80,7 @@ class PhoneContentTests(unittest.TestCase):
                 lambda r: r["assets"].pop(),
                 lambda r: r["assets"][0].update(loaded_type="UnityEngine.Object"),
                 lambda r: r["assets"][1].update(name="wrong-address"),
+                lambda r: next(asset for asset in r["assets"] if asset["type"] == "Sprite").update(loaded_name="different-icon"),
             ):
                 changed = copy.deepcopy(report)
                 mutate(changed)

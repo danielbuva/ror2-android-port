@@ -87,6 +87,45 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(list(rows), [key])
             self.assertEqual(dict(rows.items()), {key: {"edges": [[0, 2**63 - 1]]}})
 
+    def test_expose_local_assets_keeps_existing_rows_and_resource_member(self):
+        W, C = P.module("unity_write"), P.module("catalog_complete")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            required = inputs["required"]
+            name, member = required["name"], required["member"]
+            source = inputs["source"]
+            groups = [dict(guid="34" * 16, path="Assets/Added.asset", roots=[dict(path_id=50, class_id=108), dict(path_id=40, class_id=1)])]
+            result = P.expose_local_assets(source, root / "extended", name, member, groups, codec=None, codec_sha256=None)
+            self.assertEqual(result["local_objects"], 2)
+
+            def read_bundle(path):
+                bundle = W.B.Bundle(path)
+                with bundle.member(member) as stream:
+                    layout = W.read_serialized(stream)
+                    bodies = {}
+                    for row in layout["objects"]:
+                        stream.seek(layout["data_offset"] + row["offset"])
+                        bodies[row["path_id"]] = W.B.exact(stream, row["bytes"])
+                with bundle.member(member + ".resS") as stream:
+                    return layout, bodies, stream.read()
+
+            before, old_bodies, old_resource = read_bundle(source)
+            after, new_bodies, new_resource = read_bundle(Path(result["bundle"]))
+            self.assertEqual(old_resource, new_resource)
+            self.assertEqual(before["types"], after["types"])
+            self.assertEqual(before["externals"], after["externals"])
+            previous_rows, _ = C.containers(old_bodies.pop(1))
+            actual_rows, _ = C.containers(new_bodies.pop(1))
+            self.assertEqual(old_bodies, new_bodies)
+            self.assertEqual(
+                actual_rows,
+                [("assets/added.asset", (0, pid), [(0, 40), (0, 50)]) for pid in (50, 40)] + previous_rows,
+            )
+            groups[0]["roots"][0]["class_id"] = 28
+            with self.assertRaisesRegex(ValueError, "different native type"):
+                P.expose_local_assets(source, root / "invalid", name, member, groups, codec=None, codec_sha256=None)
+
     def canonical_fixture(self, root, broken=None):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 
