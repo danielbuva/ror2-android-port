@@ -330,10 +330,11 @@ class Graph:
             ]
         if producer == "shader_produce":
             arguments += ["--sdk", self.sdk_contents()]
-            if "camera_compute" in profile:
-                package_recipe = profile["camera_compute"]["package_recipe"]
+            camera_selection = next((key for key in ("camera_compute", "camera_shader") if key in profile), None)
+            if camera_selection:
+                package_recipe = profile[camera_selection]["package_recipe"]
                 if package_recipe not in profile["authored_inputs"]:
-                    raise ValueError("camera compute package recipe lacks an authored input pin")
+                    raise ValueError("camera package recipe lacks an authored input pin")
                 archive = Path(json.loads((self.repo / package_recipe).read_bytes())["package_archive"]).name
                 package = f"{PACKAGE_ARCHIVES}/{archive}"
                 arguments += ["--camera-package", package]
