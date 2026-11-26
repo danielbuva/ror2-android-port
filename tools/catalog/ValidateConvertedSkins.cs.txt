@@ -20,6 +20,7 @@ var pins=(Newtonsoft.Json.Linq.JObject)request["bundles"];
 var startupOwners=fixture==null?pins.Properties().Select(row=>row.Name).ToArray():new[]{"whole-game-content","commando-prefab-lab","objective-support-lab"};
 var bundles=new System.Collections.Generic.Dictionary<string,UnityEngine.AssetBundle>();
 var rows=new System.Collections.Generic.List<object>();var failures=new System.Collections.Generic.List<object>();
+var commandoBanks = new System.Collections.Generic.List<object>();
 var identityFailures = new System.Collections.Generic.List<object>();
 System.Action<object> failIdentity = row => { identityFailures.Add(row); failures.Add(row); };
 bool identityComplete = false;
@@ -164,6 +165,27 @@ try{
   }catch(System.Exception error){failIdentity(new{path,owner,error=error.ToString()});}
  }
  if(commandoPath!=null&&!earlyCommando)loadBody("commando-prefab-lab",commandoPath);
+ if (fixture?["ak_banks"] is Newtonsoft.Json.Linq.JArray expectedBanks)
+ {
+     var body = loadBody("commando-prefab-lab", commandoPath);
+     var banks = body.GetComponents<AkBank>();
+     if (banks.Length != expectedBanks.Count)
+         failures.Add(new { path = commandoPath, error = "AkBank component count differs", expected = expectedBanks.Count, actual = banks.Length });
+     for (int i = 0; i < banks.Length; i++)
+     {
+         var bank = banks[i];
+         var name = bank.data?.Name;
+         bool hasReference = bank.data?.ObjectReference;
+         var load = bank.triggerList.ToArray();
+         var unload = bank.unloadTriggerList.ToArray();
+         commandoBanks.Add(new { name, bank.enabled, hasReference, load, unload });
+         var expected = i < expectedBanks.Count ? expectedBanks[i] : null;
+         if (expected == null || !bank.enabled || !hasReference || name != (string)expected["name"] ||
+             !load.SequenceEqual(expected["load"].Select(value => (int)value)) ||
+             !unload.SequenceEqual(expected["unload"].Select(value => (int)value)))
+             failures.Add(new { path = commandoPath, index = i, name, error = "AkBank source reference or triggers differ", expected });
+     }
+ }
  if(wardPath!=null&&!earlyWard)loadBody("objective-support-lab",wardPath);
  foreach(var entry in typedBodies){
   var path=entry.Key;var body=entry.Value;
@@ -620,5 +642,5 @@ var definitionIdentity = definitionSourceHash == null ? null : new { complete = 
     publication = definitionPublication, sourceMetadataSha256 = definitionSourceHash, failures = definitionFailures };
 var displayIdentity = definitionSourceHash == null ? null : new { complete = displaysComplete, bodies = bodyDisplays,
     prefabs = displayPrefabs.Count, slots = displaySlots, failures = displayFailures };
-var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures,masterBodyIdentity,definitionIdentity,displayIdentity};
+var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures,masterBodyIdentity,definitionIdentity,displayIdentity,commandoBanks};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;

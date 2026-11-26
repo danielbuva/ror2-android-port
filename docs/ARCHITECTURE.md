@@ -590,6 +590,15 @@ their pinned cohort. Current scripting assembly metadata also reads the
 successful managed producer's pinned provider manifest. It registers the
 authored audio and observation assemblies for Unity serialization and retains
 the editor integration assembly only when the compiler supplies it.
+The current `owner-code/managed.py` path composes the original music lifecycle
+and Commando post observers on the source-derived `RoR2.dll`. The music owner
+uses the original AddOutput result before enabling the intro trigger. The
+Commando observer records the playing ID returned by the original sound call
+when passive PCM qualification is requested. The converter shares the lab's
+Cecil transforms and compiles against the same provider it passes to IL2CPP.
+The converted-body editor fixture can verify both source Commando AkBank
+components, their typed references and their load and unload triggers before
+releasing the loaded bundles.
 Existing importer GUIDs survive; first-import owners use
 stable converter path identities. The registry and all dependent writers share
 the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
