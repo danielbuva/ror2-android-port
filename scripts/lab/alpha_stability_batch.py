@@ -26,6 +26,9 @@ import common
 from device_context import command_selectors, set_command_selector, validate_serial
 from installed_attempt import bind_installed_apk, validate_expected_apk_sha256
 
+# The owner may run plugged-in devices above the charge limit (lab_runner battery_charge_override).
+CHARGE_OVERRIDE = os.environ.get("LAB_BATTERY_CHARGE_OVERRIDE") == "1"
+
 
 DEVICE_FREE_RESERVE_BYTES = 15 * 1024**3
 # J1091's native capture sizes inform this allowance. Only one capture remains
@@ -261,7 +264,7 @@ class _GameThermalOwner:
         if at >= self.deadline:
             raise RuntimeError("Device run thermal deadline reached")
         if all_zones:
-            if self.battery["level"] > 85:
+            if self.battery["level"] > 85 and not CHARGE_OVERRIDE:
                 raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
             self.hot_core_zones.clear()
         else:
@@ -319,7 +322,7 @@ class _GameThermalOwner:
         charging_since = None
         while True:
             maximum = self.sample(all_zones=True)
-            if self.battery["level"] >= 80 and self.battery_current_now > 0:
+            if self.battery["level"] >= 80 and self.battery_current_now > 0 and not CHARGE_OVERRIDE:
                 now = time.monotonic()
                 if charging_since is None:
                     charging_since = now
