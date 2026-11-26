@@ -39,9 +39,9 @@ class CatalogRebuildTests(unittest.TestCase):
             15950: (
                 "scripts/lab/shader_ramp_fog.py",
                 "recipe/shader-ramp-fog-candidate.json",
-                "a81eade20c1771e4511925a64d6c3b66fe7acab6ef3687fc19b08fe3b17dfece",
-                "088940070767d0c4c13ac6a30846e4a96d733780ab76f947fd0d6d332674045b",
-                "generated-shader-candidates/ramp-fog-r5/{input_id}",
+                "631d8c13694327a1e19bca5757463949a7cbbacf80a2dc8d630d1c00ed7c7017",
+                "bdf740713b02a5b1b8c566d1492123cda21da1e6ca284a99d3b708da7b7ca443",
+                "generated-shader-candidates/ramp-fog-r6/{input_id}",
             ),
         }
         expected[8943] = (
@@ -49,7 +49,7 @@ class CatalogRebuildTests(unittest.TestCase):
             "recipe/shader-screen-damage-candidate.json",
             sha(REPO_ROOT / "scripts/lab/shader_ramp_fog.py"),
             sha(REPO_ROOT / "recipe/shader-screen-damage-candidate.json"),
-            "generated-shader-candidates/screen-damage-r1/{input_id}",
+            "generated-shader-candidates/screen-damage-r2/{input_id}",
         )
         for location, kind in ((16024, "sobel-buffer"), (15952, "sobel-outline")):
             recipe_path = f"recipe/shader-{kind}-candidate.json"
@@ -58,7 +58,7 @@ class CatalogRebuildTests(unittest.TestCase):
                 recipe_path,
                 sha(REPO_ROOT / "scripts/lab/shader_ramp_fog.py"),
                 sha(REPO_ROOT / recipe_path),
-                f"generated-shader-candidates/{kind}-r1/{{input_id}}",
+                f"generated-shader-candidates/{kind}-r2/{{input_id}}",
             )
         translucent = read(REPO_ROOT / "recipe/shader-translucent-candidate.json")
         translucent_generator = sha(REPO_ROOT / "scripts/lab/shader_translucent.py")
