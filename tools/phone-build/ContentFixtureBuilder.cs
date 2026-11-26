@@ -54,6 +54,7 @@ public static class ContentFixtureBuilder
             case "GameObject": return typeof(GameObject);
             case "AvatarMask": return typeof(AvatarMask);
             case "PhysicMaterial": return typeof(PhysicMaterial);
+            case "BillboardAsset": return typeof(BillboardAsset);
             case "AnimatorOverrideController": return typeof(AnimatorOverrideController);
             default: throw new Exception("Unsupported native-content type: " + name);
         }

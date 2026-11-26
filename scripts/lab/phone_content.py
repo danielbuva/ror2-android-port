@@ -25,6 +25,7 @@ NATIVE_CONTENT_TYPES = frozenset(
         "GameObject",
         "AvatarMask",
         "PhysicMaterial",
+        "BillboardAsset",
         "AnimatorOverrideController",
     )
 )
