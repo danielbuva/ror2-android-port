@@ -53,6 +53,43 @@ class CompilerHosting(unittest.TestCase):
         self.assertEqual(call.kwargs["authored_files"], ["first", "second"])
 
 
+class ComputeRecords(unittest.TestCase):
+    def test_same_buffer_name_can_have_distinct_kernel_layouts(self):
+        compute = N.module("_compute_fixture", Path(N.__file__).with_name("shader_compute.py"))
+        names = {"First": 16, "Second": 32, "Third": 16}
+        declarations = [{"name": name, "defines": []} for name in names]
+
+        def string(value):
+            data = value.encode()
+            return struct.pack("<I", len(data)) + data
+
+        def compile_kernel(source, filename, name, **kwargs):
+            data = struct.pack("<QIQQ", 0, 0, 1, 1)
+            data += string("Constants") + struct.pack("<iQQ", names[name], 0, 1)
+            data += string(name) + struct.pack("<Q", 1)
+            data += string("Constants") + string("Constants") + struct.pack("<iii", 2, -1, 0)
+            data += struct.pack("<QQQQQ", 0, 0, 0, 0, 20)
+            data += bytes.fromhex("03022307") + bytes(16) + struct.pack("<IIIB", 4, 2, 1, 1)
+            return {"success": True, "data": data}
+
+        compiler = SimpleNamespace(
+            preprocess_compute=lambda *args, **kwargs: dict(
+                kernels=declarations, requirements=32, keywords={}, requirement_overrides=[], source="source", flags=0
+            ),
+            compile_compute=compile_kernel,
+        )
+        filename = SimpleNamespace(read_text=lambda **kwargs: "compute")
+        tree = compute.compile_tree(compiler, filename, "Fixture", dict.fromkeys(names, [4, 2, 1]))
+        variant = tree["variants"][0]
+        self.assertEqual([row["byteSize"] for row in variant["constantBuffers"]], [16, 32])
+        kernels = [row["variantMap"][0][1] for row in variant["kernels"]]
+        self.assertEqual([row["cbVariantIndices"] for row in kernels], [[0], [1], [0]])
+        self.assertEqual([row["requirements"] for row in kernels], [32, 32, 32])
+        data = compile_kernel(None, None, "First")["data"]
+        with self.assertRaisesRegex(ValueError, "terminal status"):
+            compute.kernel_binary(data + b"x")
+
+
 class AuthoredSelection(unittest.TestCase):
     def profile(self):
         profile = {key: {"witness": key} for key in ("input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs")}

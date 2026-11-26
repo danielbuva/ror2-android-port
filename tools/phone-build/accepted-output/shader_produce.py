@@ -1341,8 +1341,62 @@ def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connecti
     return name, {"bytes": destination.stat().st_size, "sha256": sha(destination)}
 
 
-def typed_shader_pack(root, sdk, profile, output, connection, compress, image, common, native_type, node, package_bodies):
-    """Write source-compiled Shader leaves for bundle preparation."""
+def camera_compute_sources(profile, root, archive, output, stream, layout, records):
+    """Resolve camera compute selectors from the original resource's local PPtrs."""
+    from shader_postprocessing_uber import archive_files, include_closure
+
+    W = records.W
+    camera = profile["camera_compute"]
+    recipe_path = camera["package_recipe"]
+    if recipe_path not in profile["authored_inputs"]:
+        raise ValueError("camera compute package recipe lacks an authored input pin")
+    package = json.loads(relative(root, recipe_path).read_text())
+    if package["input_id"] != profile["input_id"]:
+        raise ValueError("camera compute package and original input differ")
+    files = archive_files(archive, package)
+    directory = output / "camera-package"
+    directory.mkdir()
+    objects = {row["path_id"]: row for row in layout["objects"]}
+
+    def read(path_id, class_id):
+        row = objects.get(path_id)
+        if row is None or layout["types"][row["type_id"]]["class_id"] != class_id:
+            raise ValueError("camera program references an absent or mistyped original record")
+        stream.seek(layout["data_offset"] + row["offset"])
+        return W.B.exact(stream, row["bytes"]), layout["types"][row["type_id"]]
+
+    resources, typ = read(camera["resources_path_id"], 114)
+    fields = records.fields(resources, records.SCHEMA.type_tree(io.BytesIO(typ["tree"])))[1]
+    package_rows = {row["field"]: row for row in package["programs"] if row["kernels"]}
+    selected = {}
+    for entry in profile["typed_records"]:
+        if "camera_compute" not in entry:
+            continue
+        field = entry["camera_compute"]
+        pointer = ("computeShaders", field)
+        start, end = fields[pointer]
+        if end - start != 12 or pointer + ("m_PathID",) not in fields or pointer + ("m_FileID",) not in fields:
+            raise ValueError("camera compute resource selector is not a PPtr: " + field)
+        file_id, identity = struct.unpack_from("<iq", resources, start)
+        if file_id != 0 or identity != entry["source_path_id"]:
+            raise ValueError("camera compute resource selector changed: " + field)
+        body, native_type = read(identity, 72)
+        node = W.shader_node(native_type["tree"])
+        name = W.read_shader_body(node, body)["m_Name"]
+        row = package_rows[field]
+        filename = row["package_path"]
+        if hashlib.sha256(files[filename]).hexdigest() != row["package_sha256"]:
+            raise ValueError("camera compute package source differs: " + field)
+        for relative_name, data in include_closure(files, filename).items():
+            target = relative(directory, relative_name)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        selected[field] = (relative(directory, filename), name, dict(zip(row["kernels"], row["kernel_thread_groups"], strict=True)), native_type, node)
+    return directory, selected, package["package_sha256"]
+
+
+def typed_shader_pack(root, sdk, profile, output, connection, compress, image, common, native_type, node, package_bodies, camera_sources):
+    """Write source-compiled Shader and ComputeShader leaves for bundle preparation."""
     import shader_sdk
 
     O = module("_typed_shader_objects", Path(__file__).with_name("object_produce.py"))
@@ -1350,9 +1404,15 @@ def typed_shader_pack(root, sdk, profile, output, connection, compress, image, c
     graphics = profile["authored_inputs"]["smoke/ProjectSettings/GraphicsSettings.asset"]
     tiers = project_tiers(root, profile["settings"], graphics)
     sdk_pin = profile["sdk"]["Resources/unity_builtin_extra"]["sha256"]
+    compute = module("_shader_compute", Path(__file__).with_name("shader_compute.py")) if camera_sources else None
     with (output / "objects.bin").open("xb") as stream:
         for record in profile["typed_records"]:
-            if "sdk_shader" in record:
+            typ = native_type
+            if "camera_compute" in record:
+                filename, name, kernels, typ, compute_node = camera_sources[record["camera_compute"]]
+                tree = compute.compile_tree(connection, filename, name, kernels)
+                body = O.W.write_shader_body(compute_node, tree)
+            elif "sdk_shader" in record:
                 identity = record["sdk_shader"]
                 source = shader_sdk.sdk_source(sdk, identity, sdk_pin)
                 folder = output / ("sdk-" + str(identity))
@@ -1360,16 +1420,17 @@ def typed_shader_pack(root, sdk, profile, output, connection, compress, image, c
                 body, _, _ = shader_sdk.compile_body(connection, source, node, sdk_scene_selections(source), tiers, image, common, compress, folder)
             else:
                 body = package_bodies[record["file"]]
-            tree = O.W.read_shader_body(node, body)
-            if tree["m_ParsedForm"]["m_Name"] != record["name"] or tree["platforms"] != [18] or tree["m_Dependencies"]:
-                raise ValueError("produced Shader leaf identity, platform or dependencies differ")
+            if typ["class_id"] == 48:
+                tree = O.W.read_shader_body(node, body)
+                if tree["m_ParsedForm"]["m_Name"] != record["name"] or tree["platforms"] != [18] or tree["m_Dependencies"]:
+                    raise ValueError("produced Shader leaf identity, platform or dependencies differ")
             rows.append(
                 dict(
                     record["output"],
                     offset=stream.tell(),
                     bytes=len(body),
                     sha256=hashlib.sha256(body).hexdigest(),
-                    type_id=O.record_type(native_type, types, type_ids),
+                    type_id=O.record_type(typ, types, type_ids),
                 )
             )
             stream.write(body)
@@ -1418,6 +1479,7 @@ def produce(
     compiler_command=None,
     compiler_data=None,
     authored_files=None,
+    camera_package=None,
 ):
     """Reproduce all selected standalone shaders from original PC/public inputs.
 
@@ -1531,9 +1593,9 @@ def produce(
             tree = W.read_shader_body(node, W.B.exact(stream, extent["bytes"]))
             if tree["m_ParsedForm"]["m_Name"] != record["name"] or tree["m_Dependencies"]:
                 raise ValueError("original Shader leaf identity or dependencies differ")
-    source_member = W.B.Bundle(source_path).member(source["member"])
-    source_member.seek(layout["data_offset"] + selected["offset"])
-    original_form = W.read_shader_body(node, W.B.exact(source_member, selected["bytes"]))["m_ParsedForm"]
+    with W.B.Bundle(source_path).member(source["member"]) as source_member:
+        source_member.seek(layout["data_offset"] + selected["offset"])
+        original_form = W.read_shader_body(node, W.B.exact(source_member, selected["bytes"]))["m_ParsedForm"]
     if "native_intersection" in profile:
         environment = UnityPy.load(str(source_path))
     registry = original_form["m_KeywordNames"][:4], original_form["m_KeywordFlags"][:4]
@@ -1573,6 +1635,15 @@ def produce(
             native_sources.update(native)
             pins.extend(providers)
         include_dirs = [include_dir, root / "tools/unity/runtime/shaders"]
+        camera_sources = {}
+        if "camera_compute" in profile:
+            if camera_package is None:
+                raise ValueError("camera shader production requires the pinned Post Processing archive")
+            R = module("_camera_source_records", Path(__file__).with_name("record_produce.py"))
+            with W.B.Bundle(source_path).member(source["member"]) as stream:
+                directory, camera_sources, package_pin = camera_compute_sources(profile, root, Path(camera_package), output, stream, layout, R)
+            result["inputs"]["camera_package_sha256"] = package_pin
+            include_dirs.append(directory)
         if "tmp_mobile" in profile:
             package = sources.package_mobile_source(sdk, profile["tmp_mobile"]["package"])
             directory = output / "tmp-package"
@@ -1705,7 +1776,7 @@ def produce(
                 result["files"][name] = pin
             if typed:
                 result["outputs"] = typed_shader_pack(
-                    root, sdk, profile, output, connection, compress, sdk_image, common_bytes, native_type, node, package_bodies
+                    root, sdk, profile, output, connection, compress, sdk_image, common_bytes, native_type, node, package_bodies, camera_sources
                 )
         for path, pin in pins:
             checked(path, pin)
@@ -1739,6 +1810,7 @@ def main():
     parser.add_argument("--hlsl-tool-sha256", help="expected SHA-256 of the HLSLDecompiler executable")
     parser.add_argument("--asset-ripper-source", type=Path, help="pinned public AssetRipper Git repository or staged revision tree")
     add_compiler_arguments(parser)
+    parser.add_argument("--camera-package", type=Path, help="pinned Unity Post Processing archive for camera compute production")
     parser.add_argument(
         "--authored-file",
         action="append",
@@ -1762,6 +1834,7 @@ def main():
         compiler_command=args.compiler_command,
         compiler_data=args.compiler_data,
         authored_files=args.authored_file,
+        camera_package=args.camera_package,
     )
 
 
