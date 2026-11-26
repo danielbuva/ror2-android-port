@@ -5425,6 +5425,11 @@ Cleanup detaches both managed callbacks, including after Unity
 destroys the native body, then clears all body/skill/definition references before
 world teardown. The report is `SessionReport.survivorSkills`; it proves callback
 execution, not targeting, placement, effects or complete ability semantics.
+An explicit skill-triggered PCM observation also permits one native event
+catalog query on the first eligible Huntress primary authority callback.
+The report records the Wwise result, resolved object count and service frame
+for the character-bank event. The query releases its buffer immediately and
+observes event residency independently of audible playback.
 The separate `components` report covers every GenericSkill on that body by exact
 component identity, including Toolbot/Captain auxiliary loadout components that
 native `FindSkillSlot` maps to None. It retains current component indices and
