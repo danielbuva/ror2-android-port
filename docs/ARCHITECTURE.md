@@ -8000,6 +8000,15 @@ Vulkan program platforms and leaf dependencies. The signed release graph binds
 the resulting bodies and types to their PC or SDK identities. Compilation closes
 the standalone compiler and codec and retains a receipt for preparation.
 
+The same owner produces the camera ComputeShader leaf pack.
+`shader_compute.py` decodes the pinned SDK compiler's Vulkan kernel payloads
+and projects the executable, workgroup and reflected resources into the
+original native type. `shader_produce.py` resolves each selected local
+PostProcessResources PPtr before compiling its Post Processing package source.
+The signed graph witnesses the private archive and exposes the resulting
+typed pack to bundle preparation. Compiler lifetime and pack receipts are
+shared with the other Shader leaves.
+
 Fieldless component metadata uses the existing receipt-bound current MonoScript
 identity policy in `object_produce.py`; its schema/properties hash must still
 match the supplied script. Receipts record the actual script hash. Setup and

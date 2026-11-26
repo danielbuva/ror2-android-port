@@ -7358,3 +7358,14 @@ stay local.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-v30-bundle-shader-leaves.json` | `14971d549a51c613fc02549180054a962c603f04eb03aad199333e5acefc219d` |
+
+Audit 2026-11-26. `owner-v30-camera-compute.json` records the original
+PostProcessResources selectors, twelve destination identities and tool hashes.
+The provenance, licensing, privacy and sensitive-content review covered the
+selectors and the reused Unity Post Processing package recipe. The producer
+checks the official package's license and compiles its sources locally.
+Original records, SDK and package files, and compiled programs stay private.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-v30-camera-compute.json` | `d3f7c48ff6167f2a58381bf0fa45e8169720780c770c11e3e8669f0000979f95` |

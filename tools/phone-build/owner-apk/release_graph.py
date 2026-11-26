@@ -330,6 +330,14 @@ class Graph:
             ]
         if producer == "shader_produce":
             arguments += ["--sdk", self.sdk_contents()]
+            if "camera_compute" in profile:
+                package_recipe = profile["camera_compute"]["package_recipe"]
+                if package_recipe not in profile["authored_inputs"]:
+                    raise ValueError("camera compute package recipe lacks an authored input pin")
+                archive = Path(json.loads((self.repo / package_recipe).read_bytes())["package_archive"]).name
+                package = f"{PACKAGE_ARCHIVES}/{archive}"
+                arguments += ["--camera-package", package]
+                witnesses.append(package)
             if self.conversion:
                 recovered = ("native_ui", "native_materials", "native_internal", "native_intersection")
                 for flag, installed, required in (

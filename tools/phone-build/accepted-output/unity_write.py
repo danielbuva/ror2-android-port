@@ -159,7 +159,7 @@ def read_serialized(member):
     }
 
 
-# Native Shader48 common-string offsets from Unity's public serialization format.
+# Shader and ComputeShader common-string offsets from Unity's public serialization format.
 # Contract checked against pinned UnityPy 1.25.3 TypeTreeNode/TypeTreeHelper.
 SHADER_COMMON = {
     49: "Array",
@@ -183,6 +183,7 @@ SHADER_COMMON = {
     795: "size",
     814: "SInt64",
     821: "SInt8",
+    827: "staticvector",
     840: "string",
     907: "UInt16",
     928: "UInt8",
@@ -207,10 +208,10 @@ SHADER_SCALARS = {
 
 
 def shader_node(blob):
-    """Decode the original embedded v22 Shader48 schema, without UnityPy."""
+    """Decode the original embedded v22 shader schema, without UnityPy."""
     count, length = struct.unpack_from("<II", blob)
     if not 0 < count <= 100000 or len(blob) != 8 + count * 32 + length:
-        raise ValueError("invalid Shader48 schema extent")
+        raise ValueError("invalid shader schema extent")
     strings = blob[8 + count * 32 :]
 
     def name(offset):
@@ -223,7 +224,7 @@ def shader_node(blob):
     for _, level, _, typ, field, _, _, meta, _ in struct.iter_unpack("<hBBIIiiiQ", blob[8 : 8 + count * 32]):
         node = SimpleNamespace(m_Type=name(typ), m_Name=name(field), m_MetaFlag=meta, m_Children=[])
         if level > len(stack) or (root is not None and level == 0):
-            raise ValueError("invalid Shader48 schema hierarchy")
+            raise ValueError("invalid shader schema hierarchy")
         stack = stack[:level]
         if stack:
             stack[-1].m_Children.append(node)
@@ -261,13 +262,13 @@ def shader_value(node, stream, value=None, *, writing=False):
         aligned |= array.m_MetaFlag & 0x4000
         count = number("i", len(value) if writing else None)
         if not 0 <= count <= B.LIMIT:
-            raise ValueError("invalid Shader48 array length")
+            raise ValueError("invalid shader array length")
         element = array.m_Children[1]
         value = [shader_value(element, stream, value[i] if writing else None, writing=writing) for i in range(count)]
     elif node.m_Children:
         value = {child.m_Name: shader_value(child, stream, value[child.m_Name] if writing else None, writing=writing) for child in node.m_Children}
     else:
-        raise ValueError("unsupported Shader48 leaf: " + typ)
+        raise ValueError("unsupported shader schema leaf: " + typ)
     if aligned:
         if writing:
             padding(stream, 4)
@@ -280,7 +281,7 @@ def read_shader_body(node, body):
     stream = io.BytesIO(body)
     value = shader_value(node, stream)
     if stream.tell() != len(body):
-        raise ValueError("Shader48 schema did not consume complete body")
+        raise ValueError("shader schema did not consume complete body")
     return value
 
 

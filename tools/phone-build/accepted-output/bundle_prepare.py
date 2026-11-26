@@ -261,6 +261,11 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
                     if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
                         raise ValueError("original source file pins disagree")
                     add(record, (source["path"], source["member"], source["path_id"]))
+                elif "camera_compute" in row:
+                    source = profile["source_type"]
+                    if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
+                        raise ValueError("original source file pins disagree")
+                    add(record, (source["path"], source["member"], row["source_path_id"]))
                 else:
                     add(record, ("sdk", "Resources/unity_builtin_extra", row["sdk_shader"]))
             return result

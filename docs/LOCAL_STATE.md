@@ -977,6 +977,10 @@ owner verifies and stages the compile-selected files and their original
 metas. Keep the archives separate from the imported originals. The
 [package producer setup](../tools/phone-build/package-assemblies/README.md)
 specifies the archive names and uGUI layout.
+The camera ComputeShader release job also requires the pinned Post Processing
+2.3.0 tarball under `acquired/unity-packages/`. Use the same private archive
+documented for `shader_postprocessing_uber`. The producer checks the package
+revision, license and selected source hashes before compiling.
 `owner-player-registry.json` supplies the audited source witnesses and authored
 identity configuration. The default-scene shared file also requires the shader
 owner's successful standard object pack. These are explicit local inputs with
