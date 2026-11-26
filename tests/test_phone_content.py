@@ -49,6 +49,11 @@ class PhoneContentTests(unittest.TestCase):
                 "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
                 "assets": [*({"name": name.lower(), "type": name} for name in sorted(NATIVE_CONTENT_TYPES))],
             }
+            manifest_asset = next(asset for asset in request["assets"] if asset["type"] == "AssetBundleManifest")
+            manifest_asset["manifest"] = [
+                {"name": "content", "hash": "a" * 32, "dependencies": ["shared"]},
+                {"name": "shared", "hash": "b" * 32, "dependencies": []},
+            ]
             request_path = attempt / "native-content-request.json"
             request_path.write_text(json.dumps(request))
             report = {
@@ -78,6 +83,13 @@ class PhoneContentTests(unittest.TestCase):
                 mutate(changed)
                 output.write_text(json.dumps(changed))
                 with self.assertRaises(RuntimeError):
+                    validate_native_content(attempt, "c" * 40)
+            for change in ({"hash": "c" * 32}, {"dependencies": []}, {"name": "other-content"}):
+                changed = copy.deepcopy(report)
+                manifest = next(row["manifest"] for row in changed["assets"] if row["type"] == "AssetBundleManifest")
+                manifest[0].update(change)
+                output.write_text(json.dumps(changed))
+                with self.assertRaisesRegex(RuntimeError, "AssetBundleManifest"):
                     validate_native_content(attempt, "c" * 40)
             for change in (
                 {"assets": [{"name": "occlusion", "type": "OcclusionCullingData"}]},

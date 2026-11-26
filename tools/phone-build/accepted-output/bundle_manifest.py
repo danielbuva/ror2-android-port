@@ -73,7 +73,7 @@ def schemas():
         digest = S.md4(
             b"".join(r["type"].encode() + r["name"].encode() + struct.pack("<iiiI", r["size"], r["flags"], r["version"], r["meta"] & 0x4000) for r in rows)
         )
-        result.append(dict(class_id=cid, stripped=0, script_type=-1, hash=digest, tree=S._tree(rows)))
+        result.append(dict(class_id=cid, stripped=0, script_type=-1, hash=digest, tree=S._tree(rows), dependencies=[]))
     return result
 
 
@@ -123,7 +123,7 @@ def build(bundles):
         offset = (offset + 7) // 8 * 8
         rows.append(dict(path_id=index + 1, type_id=index, offset=offset, bytes=len(body)))
         offset += len(body)
-    layout = dict(engine=F.VERSION, platform=13, trees=False, types=types, objects=rows, scripts=[], externals=[], ref_types=[], user="")
+    layout = dict(engine=F.VERSION, platform=13, trees=True, types=types, objects=rows, scripts=[], externals=[], ref_types=[], user="")
     serialized = io.BytesIO()
     W.write_serialized(serialized, layout, lambda row: io.BytesIO(bodies[row["path_id"] - 1]))
     raw = serialized.getvalue()
