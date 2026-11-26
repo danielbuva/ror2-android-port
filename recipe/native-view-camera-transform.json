@@ -176,6 +176,13 @@
   },
   "restore_only_outputs": [
     {
+      "api_sha256": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
+      "input_sha256": "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
+      "output_sha256": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c",
+      "profile": "post-audio-native-music-results-lightning-r3-1ced",
+      "source": "pre-Commando observer output retained for matching receipt-bound restoration"
+    },
+    {
       "api_sha256": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
       "input_sha256": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
       "output_sha256": "236fab2c616b1a017971c316437ec1a9fa9f6b3999563263d4a8ab689a1e59b6",
