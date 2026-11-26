@@ -7992,6 +7992,14 @@ existing dispatcher cache identity; texture owners retain codec, schema and pixe
 extent validation. Setup supplies pinned tools; scoped producers close on exit
 and retain their receipts. Complete APK and device acceptance remain open.
 
+`shader_produce.py` can supply a typed Shader leaf pack to `bundle_prepare.py`.
+The V30 recipe compiles Sprites/Default and the legacy VertexLit shader from
+the acquired SDK, and TMP Sprite from the SDK package. The original PC Shader
+layout is used for serialization. The producer checks names, source layouts,
+Vulkan program platforms and leaf dependencies. The signed release graph binds
+the resulting bodies and types to their PC or SDK identities. Compilation closes
+the standalone compiler and codec and retains a receipt for preparation.
+
 Fieldless component metadata uses the existing receipt-bound current MonoScript
 identity policy in `object_produce.py`; its schema/properties hash must still
 match the supplied script. Receipts record the actual script hash. Setup and
