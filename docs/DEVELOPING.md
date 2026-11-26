@@ -66,7 +66,7 @@ visible retry, retained generations and cold recovery without filling storage.
 It requires the lab package and does not accept a custom `selection`.
 The device free-space reservation includes the requested payload size.
 `enforce_soc_ceiling: true` requires CPU, GPU and readable SoC zones below
-85 C at admission and stops gameplay when a measured zone reaches 85 C.
+90 C at admission and stops gameplay when a measured zone reaches 90 C.
 Requests and results stay private.
 
 Shared editor builds use current `./dev shared-build --request REQUEST.json`.

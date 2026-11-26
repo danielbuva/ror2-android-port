@@ -378,6 +378,10 @@ public sealed partial class SirenEncounterSession : IDisposable
         SirenEncounterContract.RunAttachTransaction(
             () =>
             {
+                // This table can load before the composed Run has its final tier lists.
+                // Refresh the native selector before the mission can award a pickup.
+                if (owner.bossGroup.dropTable is BasicPickupDropTable rewards)
+                    rewards.RegenerateDropTable(Run.instance);
                 BossGroup.onBossGroupDefeatedServer += owner.OnBossGroupDefeatedServer;
                 owner.ownsBossDefeatObservation = true;
                 try

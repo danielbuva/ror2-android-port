@@ -77,6 +77,13 @@ class SirenNativeEncounterContinuationTests(unittest.TestCase):
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
             self.assertIn("siren-native-boss-production-witness-all-passed", run.stdout)
 
+    def test_source_reward_table_refreshes_before_encounter_activation(self):
+        attach = extract_declaration(OWNER.read_text(), "public static SirenEncounterSession Attach(")
+        refresh = attach.index("rewards.RegenerateDropTable(Run.instance);")
+        self.assertLess(attach.index("owner.bossGroup.dropTable is BasicPickupDropTable rewards"), refresh)
+        self.assertLess(attach.index("SirenEncounterContract.RetainOwnerAfterPreflight("), refresh)
+        self.assertLess(refresh, attach.index("selected.SetActive(true);"))
+
     def test_selector_defaults_and_world_clock_wiring_remain_scoped(self):
         session = SESSION.read_text()
         source_files = [path.read_text() for path in SOURCE_ROOT.rglob("*.cs")]

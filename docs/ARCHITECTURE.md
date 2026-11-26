@@ -3276,7 +3276,7 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
-For sessions requesting the 85 C SoC ceiling, the existing gameplay thermal
+For sessions requesting the 90 C SoC ceiling, the existing gameplay thermal
 owner checks the highest readable CPU, GPU or SoC sensor during admission and
 runtime. Its receipt records that reading and its existing stop path verifies
 package ownership before stopping the game.
@@ -5359,7 +5359,9 @@ The Siren encounter draft activates and network-spawns only the original inactiv
 `shipgraveyard` encounter identity. It preserves the source FSM, scripted boss
 card, squad, rewards and separately expansion-gated portal callback. It never
 calls global scene spawning, so the existing source-disabled MapZones retain
-their own boundary. The report distinguishes a selected owner, live eggs, native
+their own boundary. Before activation, the encounter refreshes the source
+BossGroup's basic reward table from the ready Run's pickup lists. The report
+distinguishes a selected owner, live eggs, native
 encounter start and the exact native BossGroup defeat event. Native squad-member
 and summon callbacks identify the original boss and its probes without scanning
 all masters. The boss master may retain the authored card's exact body prefab
