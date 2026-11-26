@@ -37,6 +37,7 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
         source += "\n".join(
             source_method(stage, declaration)
             for declaration in (
+                "static IEnumerable<GameObject> EquipmentLockRoots(",
                 "public void PresentRegisteredNativeEffects(",
                 "void StopPresentingNativeEffectReferences(",
                 "void PrepareNativeTeamAreaMaterials(",
