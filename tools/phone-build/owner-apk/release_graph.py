@@ -685,6 +685,23 @@ class Graph:
         if self.conversion:
             request = dict(request, codec=INSTALLED_BUNDLE_CODEC)
         policy = request["policy"]
+        for table in policy.values():
+            if not isinstance(table, dict) or "shards" not in table:
+                continue
+            shards = table["shards"]
+            if (
+                set(table) != {"shards"}
+                or not isinstance(shards, list)
+                or not shards
+                or any(
+                    not isinstance(pin, dict)
+                    or set(pin) != {"path", "sha256", "bytes"}
+                    or not isinstance(pin["path"], str)
+                    or not pin["path"].startswith("${repo}/")
+                    for pin in shards
+                )
+            ):
+                raise ValueError("bundle policy shards require pinned repository files")
         sources = set()
 
         def visit(value):

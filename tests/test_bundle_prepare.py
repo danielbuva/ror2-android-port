@@ -207,6 +207,17 @@ class BundlePreparationTests(unittest.TestCase):
             policy["canonical"].update(profile=dict(pin(donor_identity), path="${repo}/recipe/donor-identity.json"), bundle=donor_pin)
             policy["field_routes"][0]["target"] = ["content", "CAB-content", 300]
             policy["asset_groups"][0]["preload_roots"] = [["content", "CAB-content", 300]]
+            selection = {
+                "bindings": [policy["bindings"][:2], policy["bindings"][2:]],
+                "asset_groups": [policy["asset_groups"]],
+            }
+            for field, shards in selection.items():
+                pins = []
+                for index, rows in enumerate(shards):
+                    path = repo / f"recipe/content-{field}-{index}.json"
+                    path.write_text(json.dumps(rows))
+                    pins.append(dict(pin(path), path="${repo}/" + path.relative_to(repo).as_posix()))
+                policy[field] = {"shards": pins}
             request.update(policy=policy, staged=[dict(bundle="canonical", file=donor_pin)])
             wrapper = repo / "recipe/owner-content.json"
             wrapper.write_text(json.dumps(dict(schema="owner-bundle-preload-release-v1", profiles=[*profiles, "recipe/owner-donor.json"], request=request)))
@@ -308,6 +319,8 @@ class BundlePreparationTests(unittest.TestCase):
             graph, index, release = compile_graph()
             content_job = "recipe/jobs/owner-content.json"
             self.assertIn("recipe/donor-identity.json", index["entries"]["payload/content"]["recipe_files"])
+            shard_names = {f"recipe/content-{field}-{index}.json" for field, shards in selection.items() for index in range(len(shards))}
+            self.assertTrue(shard_names <= set(index["entries"]["payload/content"]["recipe_files"]))
             self.assertIn("payload/canonical", release["entries"])
             self.assertEqual(graph.jobs[content_job]["outputs"]["payload/content"], "canonical/content.bundle")
             cold, progress = dispatch(index, release)
@@ -315,6 +328,7 @@ class BundlePreparationTests(unittest.TestCase):
             emitted = json.loads((cold.completed[content_job] / "result.json").read_bytes())
             self.assertEqual(emitted["canonical"]["canonical_roots"], 1)
             self.assertEqual(emitted["preparation"]["records"], 4)
+            self.assertTrue({str(repo / shard) for shard in shard_names} <= emitted["preparation"]["input_pins"].keys())
             actual = json.loads((root / "whole-catalog.json").read_bytes())
             self.assertEqual(actual["bundles"]["content"]["sha256"], emitted["sha256"])
             self.assertNotEqual(actual["bundles"]["content"]["sha256"], actual["bundles"]["canonical"]["sha256"])
@@ -323,7 +337,13 @@ class BundlePreparationTests(unittest.TestCase):
             _, progress = dispatch(index, release)
             self.assertTrue(all(reused is True for _, reused in progress))
             changed = json.loads(wrapper.read_text())
-            changed["request"]["policy"]["asset_groups"][0]["preload_roots"] = []
+            groups = repo / "recipe/content-asset_groups-0.json"
+            group_rows = json.loads(groups.read_bytes())
+            group_rows[0]["preload_roots"] = []
+            groups.write_text(json.dumps(group_rows))
+            with self.assertRaisesRegex(ValueError, "bundle public input pin differs"):
+                compile_graph()
+            changed["request"]["policy"]["asset_groups"]["shards"][0].update(sha256=G.digest(groups), bytes=groups.stat().st_size)
             wrapper.write_text(json.dumps(changed))
             _, index, release = compile_graph()
             _, progress = dispatch(index, release)
