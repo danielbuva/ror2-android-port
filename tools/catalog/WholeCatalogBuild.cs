@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 
 public sealed class WholeItemBehaviorPreservation : UnityEditor.Build.IPreprocessBuildWithReport
@@ -189,8 +190,40 @@ public static class WholeCatalogBuild
             EditorUtility.SetDirty(clip);
             clips++;
         }
+        int gestureOverrides = RestoreSourceGestureLayers(source["bandit_gesture_layers"]);
         AssetDatabase.SaveAssets();
-        return new { clips, curves };
+        return new { clips, curves, gestureOverrides };
+    }
+
+    static int RestoreSourceGestureLayers(JToken source)
+    {
+        if (source == null)
+            return 0;
+        string path = (string)source["controller"];
+        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+        var layers = controller.layers;
+        int baseIndex = Array.FindIndex(layers, layer => layer.name == (string)source["base"]);
+        int overrideIndex = Array.FindIndex(layers, layer => layer.name == (string)source["override"]);
+        var overlay = layers[overrideIndex];
+        overlay.syncedLayerIndex = baseIndex;
+        int count = 0;
+        foreach (string name in source["override_only"].Values<string>())
+        {
+            var state = layers[baseIndex].stateMachine.states.Single(child => child.state.name == name).state;
+            var motion = overlay.GetOverrideMotion(state);
+            if (state.motion)
+            {
+                overlay.SetOverrideMotion(state, state.motion);
+                state.motion = null;
+                EditorUtility.SetDirty(state);
+            }
+            else if (!motion)
+                throw new Exception("Original gesture motion absent from imported controller: " + name);
+            count++;
+        }
+        controller.layers = layers;
+        EditorUtility.SetDirty(controller);
+        return count;
     }
 
     // Compare imported settings with the locally generated original-input receipt.

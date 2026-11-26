@@ -8071,8 +8071,11 @@ other native AimPitch/AimYaw layers. It resolves current catalog containers
 against accepted input hashes and emits private source identities and Transform
 reference values through StageIO. The latter creates owned
 constant reference clips before bundle production and applies the original
-additive reference settings. Unsupported muscle streams remain unchanged and
-are reported explicitly; unknown Transform bindings refuse restoration.
+additive reference settings. It also restores Bandit2's gesture synchronization
+and override-only motions from the source controller's layer and motion slots.
+The generated controller persists in the composed project. Unsupported muscle
+streams remain unchanged and are reported explicitly; unknown Transform
+bindings refuse restoration.
 Generated clips persist with the composed project and are replaced on rebuild;
 there is no runtime owner. Code-only builds require unchanged source-pose inputs.
 The current `commando-animation-host` action also verifies persisted reference
@@ -8081,9 +8084,10 @@ clips. It samples Commando's muzzles and Huntress's torso, head and bow during
 aim, firing and hit reactions, and Captain's torso, head, gun and radio during
 aim, firing and call-ins. It samples Bandit2's torso, head and weapon attachment
 poses during aim, firing, reload, smoke bomb and blade gestures. Huntress firing
-and recovery and Captain's selected gestures play both gesture layers. The
-comparison overrides every controller clip with its original, including
-Captain's shared Commando clips.
+and recovery and Captain's selected gestures play both gesture layers. Their
+comparison overrides controller clips with the originals, including Captain's
+shared Commando clips. The Bandit2 fixture drives the source gesture layer and
+compares both synchronized layers against the original controller.
 Device aim, firing and hit-reaction presentation remain separate checks.
 
 `WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor

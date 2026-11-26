@@ -15,20 +15,24 @@ import zlib
 
 PARAMETER = re.compile(r"^  - m_Name: (.+)$", re.M)
 PLACEHOLDER = re.compile(r"^(    attribute: )typetree_0x([0-9A-Fa-f]+)_[^\r\n]+$", re.M)
+MOTION_GUID = re.compile(r"m_Motion: \{fileID: -?\d+, guid: ([a-f0-9]{32}), type: \d+\}")
 
 
-def additive_clip_guids(controller, *, aim_only=False):
+def additive_clip_guids(controller, *, aim_only=False, override_layer=None):
     """Follow native additive-layer states and blend trees, without following transitions."""
     parts = re.split(r"^--- !u!\d+ &(-?\d+)\n", controller, flags=re.M)
     objects = dict(zip(parts[1::2], parts[2::2]))
-    pending = []
+    pending, guids = [], set()
     for body in objects.values():
         for layer in re.split(r"^  - serializedVersion:", body, flags=re.M)[1:]:
             if aim_only and not re.search(r"^    m_Name: Aim(?:Pitch|Yaw)$", layer, re.M):
                 continue
             if re.search(r"^    m_BlendingMode: 1$", layer, re.M):
                 pending.extend(re.findall(r"m_StateMachine: \{fileID: (-?\d+)\}", layer))
-    seen, guids = set(), set()
+            if override_layer and re.search(r"^    m_Name: " + re.escape(override_layer) + r"$", layer, re.M):
+                guids.update(MOTION_GUID.findall(layer))
+                pending.extend(re.findall(r"m_Motion: \{fileID: (-?\d+)\}", layer))
+    seen = set()
     while pending:
         identity = pending.pop()
         if identity == "0" or identity in seen:
@@ -37,7 +41,7 @@ def additive_clip_guids(controller, *, aim_only=False):
         if identity not in objects:
             raise RuntimeError("Unresolved native additive state or blend tree")
         body = objects[identity]
-        guids.update(re.findall(r"m_Motion: \{fileID: -?\d+, guid: ([a-f0-9]{32}), type: \d+\}", body))
+        guids.update(MOTION_GUID.findall(body))
         pending.extend(re.findall(r"m_(?:State|StateMachine|Motion): \{fileID: (-?\d+)\}", body))
     return guids
 
@@ -73,6 +77,28 @@ def reference_curves(tree, exported):
     return curves
 
 
+def bandit_gesture_layers(tree, controller):
+    """Recover the synced layer and source motions omitted by the controller export."""
+    names = dict(tree["m_TOS"])
+    constant = tree["m_Controller"]
+    layers = {names[row["data"]["m_Binding"]]: row["data"] for row in constant["m_LayerArray"]}
+    base_name, override_name = "Gesture, Additive", "Gesture, Override"
+    base, override = layers[base_name], layers[override_name]
+    machine = base["m_StateMachineIndex"]
+    if (override["m_StateMachineIndex"], base["m_StateMachineSynchronizedLayerIndex"], override["m_StateMachineSynchronizedLayerIndex"]) != (machine, 0, 1):
+        raise RuntimeError("Original Bandit gesture layers changed their synchronized grouping")
+    motions = []
+    for row in constant["m_StateMachineArray"][machine]["data"]["m_StateConstantArray"]:
+        state = row["data"]
+        base_slot, override_slot = state["m_BlendTreeConstantIndexArray"]
+        if override_slot == -1:
+            continue
+        if (base_slot, override_slot) != (-1, 0):
+            raise RuntimeError("Original Bandit gesture has a distinct motion in both layers")
+        motions.append(names[state["m_NameID"]])
+    return dict(controller=controller, base=base_name, override=override_name, override_only=motions)
+
+
 def stage_additive_reference_poses(io, *, code_only=False):
     """Discover current native additive clips, retaining source identity and pose values locally."""
     import UnityPy
@@ -81,10 +107,14 @@ def stage_additive_reference_poses(io, *, code_only=False):
 
     root = io.project / "Assets/WholeGame"
     requested = set()
+    bandit = None
     for controller in io.glob(root, "**/*.controller"):
         # These controllers have exact-editor coverage for their source gestures.
         aim_only = controller.stem not in {"animCommando", "animHuntress", "animCaptain", "animBandit2"}
-        requested.update(additive_clip_guids(io.read_text(controller), aim_only=aim_only))
+        override_layer = "Gesture, Override" if controller.stem == "animBandit2" else None
+        requested.update(additive_clip_guids(io.read_text(controller), aim_only=aim_only, override_layer=override_layer))
+        if controller.stem == "animBandit2":
+            bandit = str(controller.relative_to(io.project))
     clips = {}
     for meta in io.glob(root, "**/*.anim.meta"):
         guid = re.search(r"^guid: ([a-f0-9]{32})$", io.read_text(meta), re.M)
@@ -117,6 +147,7 @@ def stage_additive_reference_poses(io, *, code_only=False):
     for row in inventory["files"]:
         file_index[Path(row["path"]).name].append(row)
     found = {}
+    gesture = None
     for identity in sorted(bundle_ids):
         basename = locations[identity]["internalId"].replace("\\", "/").rsplit("/", 1)[-1]
         matches = file_index[basename]
@@ -127,6 +158,10 @@ def stage_additive_reference_poses(io, *, code_only=False):
             raise RuntimeError("Original additive bundle drift; explicitly review and accept")
         environment = UnityPy.load(str(source))
         for obj in environment.objects:
+            if bandit and obj.type.name == "AnimatorController" and obj.peek_name() == "animBandit2":
+                if gesture is not None:
+                    raise RuntimeError("Ambiguous original Bandit gesture controller")
+                gesture = bandit_gesture_layers(obj.read_typetree(), bandit)
             if obj.type.name != "AssetBundle":
                 continue
             for address, info in obj.read().m_Container:
@@ -161,6 +196,10 @@ def stage_additive_reference_poses(io, *, code_only=False):
     if found.keys() != clips.keys():
         raise RuntimeError("Native additive clip missing from current source containers")
     result = dict(input_id=inventory["input_id"], clips=sorted(found.values(), key=lambda row: row["clip"]))
+    if bandit:
+        if gesture is None:
+            raise RuntimeError("Original Bandit gesture controller missing from accepted additive bundles")
+        result["bandit_gesture_layers"] = gesture
     path = io.project / ".rebuild/source-animation-reference-poses.json"
     if code_only:
         if not io.is_file(path) or io.read(path) != result:

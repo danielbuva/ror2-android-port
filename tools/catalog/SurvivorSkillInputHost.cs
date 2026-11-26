@@ -125,18 +125,19 @@ public static class SurvivorSkillInputHost
     public static object SampleCaptainGestures() =>
         SampleSourcePoses("Captain", "mdlCaptainAvatar", new[] { "chest", "head", "MuzzleGun", "MuzzleHandRadio" },
                           new[] { ("", 0), ("ChargeCaptainShotgun", 2), ("FireCaptainShotgun", 2),
-                                  ("FireTazer", 2), ("CallSupplyDrop", 2), ("CallAirstrike1", 2) }, "Commando");
+                                  ("FireTazer", 2), ("CallSupplyDrop", 2), ("CallAirstrike1", 2) }, new[] { "Commando" });
 
     public static object SampleBanditGestures() =>
         SampleSourcePoses("Bandit2", "mdlBandit2Avatar",
                           new[] { "chest", "head", "MuzzleShotgun", "MuzzlePistol", "MuzzleSlashBlade", "MuzzleSmokebomb" },
-                          new[] { ("", 0), ("FireMainWeapon", 1), ("FireSideWeapon", 1), ("Reload", 1),
-                                  ("ThrowSmokebomb", 1), ("SlashBlade", 1) });
+                          new[] { ("", 0), ("FireMainWeapon", 2), ("FireSideWeapon", 2), ("Reload", 2),
+                                  ("ThrowSmokebomb", 2), ("SlashBlade", 2) }, synchronizedDriver: "Gesture, Additive");
 
     const string SurvivorAssetRoot = "Assets/WholeGame/RoR2/Base/Characters/";
 
     static object SampleSourcePoses(string survivor, string avatarName, string[] poseNames,
-                                    (string Name, int Layers)[] gestures, params string[] sharedClipSurvivors)
+                                    (string Name, int Layers)[] gestures, string[] sharedClipSurvivors = null,
+                                    string synchronizedDriver = null)
     {
         string path = SurvivorAssetRoot + survivor + "/";
         string project = System.IO.Path.GetDirectoryName(Application.dataPath);
@@ -150,7 +151,7 @@ public static class SurvivorSkillInputHost
         AnimatorOverrideController overrides = null;
         try
         {
-            foreach (string owner in new[] { survivor }.Concat(sharedClipSurvivors))
+            foreach (string owner in new[] { survivor }.Concat(sharedClipSurvivors ?? Array.Empty<string>()))
             {
                 string ownerPath = SurvivorAssetRoot + owner + "/";
                 var row = recipe["clips"].First(x => ((string)x["clip"]).StartsWith(ownerPath, StringComparison.Ordinal));
@@ -183,25 +184,34 @@ public static class SurvivorSkillInputHost
                 .Where(t => poseNames.Contains(t.name)).OrderBy(t => t.name).ToArray();
             Require(poseTransforms.Select(t => t.name).SequenceEqual(poseNames.OrderBy(name => name)),
                     "Current source pose transforms missing or ambiguous: " + survivor);
-            var nativeClips = bundles.ToDictionary(pair => pair.Key, pair => pair.Value.LoadAllAssets<AnimationClip>());
-            overrides = new AnimatorOverrideController(controller);
             var pairs = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>>();
-            overrides.GetOverrides(pairs);
-            for (int i = 0; i < pairs.Count; i++)
+            RuntimeAnimatorController nativeController;
+            if (synchronizedDriver != null)
             {
-                var original = pairs[i].Key;
-                var ownerClips = nativeClips.Single(pair => AssetDatabase.GetAssetPath(original).StartsWith(pair.Key, StringComparison.Ordinal)).Value;
-                var native = ownerClips.FirstOrDefault(x => x.name == original.name);
-                Require(native, "Current native comparison clip missing: " + original.name);
-                pairs[i] = new System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>(original, native);
+                nativeController = bundles[path].LoadAllAssets<RuntimeAnimatorController>().Single(x => x.name == controller.name);
             }
-            overrides.ApplyOverrides(pairs);
+            else
+            {
+                var nativeClips = bundles.ToDictionary(pair => pair.Key, pair => pair.Value.LoadAllAssets<AnimationClip>());
+                overrides = new AnimatorOverrideController(controller);
+                overrides.GetOverrides(pairs);
+                for (int i = 0; i < pairs.Count; i++)
+                {
+                    var original = pairs[i].Key;
+                    var ownerClips = nativeClips.Single(pair => AssetDatabase.GetAssetPath(original).StartsWith(pair.Key, StringComparison.Ordinal)).Value;
+                    var native = ownerClips.FirstOrDefault(x => x.name == original.name);
+                    Require(native, "Current native comparison clip missing: " + original.name);
+                    pairs[i] = new System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>(original, native);
+                }
+                overrides.ApplyOverrides(pairs);
+                nativeController = overrides;
+            }
             var samples = new System.Collections.Generic.List<float[]>();
             float maximum = 0;
             int components = 0, sampleIndex = 0;
             foreach (bool native in new[] { false, true })
             {
-                animator.runtimeAnimatorController = native ? overrides : controller;
+                animator.runtimeAnimatorController = native ? nativeController : controller;
                 foreach (var gesture in gestures)
                     foreach (float cycle in new[] { 0f, .5f, .999f })
                         foreach (float time in new[] { 0f, .07f, .15f })
@@ -220,7 +230,9 @@ public static class SurvivorSkillInputHost
                                 int hash = Animator.StringToHash(gesture.Name);
                                 var layers = Enumerable.Range(0, animator.layerCount).Where(i => animator.HasState(i, hash)).ToArray();
                                 Require(layers.Length == gesture.Layers, "Native gesture layers changed: " + gesture.Name);
-                                foreach (int layer in layers)
+                                int[] drivers = synchronizedDriver == null ? layers : new[] { animator.GetLayerIndex(synchronizedDriver) };
+                                Require(drivers.All(layers.Contains), "Native gesture driver missing: " + gesture.Name);
+                                foreach (int layer in drivers)
                                     animator.PlayInFixedTime(hash, layer, time);
                                 animator.Update(0);
                                 Require(layers.All(layer => animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == hash),
@@ -239,7 +251,8 @@ public static class SurvivorSkillInputHost
                         }
             }
             Require(maximum <= .001f, survivor + " imported additive poses differ from native clips: " + maximum);
-            return new { samples = samples.Count, components, maximumComponentError = maximum, nativeClipOverrides = pairs.Count };
+            return new { samples = samples.Count, components, maximumComponentError = maximum,
+                         nativeClipOverrides = pairs.Count, sourceController = synchronizedDriver != null };
         }
         finally
         {
