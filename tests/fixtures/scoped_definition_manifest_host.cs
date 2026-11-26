@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Newtonsoft.Json.Linq;
@@ -25,6 +26,14 @@ namespace UnityEngine
         public static int enumerations;
         public static Action<string> onLoad;
         public static AssetBundle[] GetAllLoadedAssetBundles() { enumerations++; return loadedOwners ?? new[] { owner }; }
+        public class LoadRequest { public AssetBundle assetBundle; }
+        public static LoadRequest LoadFromFileAsync(string path)
+        {
+            var bundle = new AssetBundle { name = Path.GetFileName(path) };
+            loadedOwners = loadedOwners.Append(bundle).ToArray();
+            return new LoadRequest { assetBundle = bundle };
+        }
+        public void Unload(bool destroyAssets) { loadedOwners = loadedOwners.Where(bundle => bundle != this).ToArray(); }
         public static int typedLoads;
         public T LoadAsset<T>(string path) where T : Object { typedLoads++; onLoad?.Invoke(path); return (T)assets[path]; }
         public T[] LoadAllAssets<T>() where T : Object { throw new Exception("Unrelated drop table activated before native Run setup"); }
@@ -82,6 +91,8 @@ public class ExcludedProvider
 public static partial class WholeCatalogComposed
 {
     static AssetBundle owned = AssetBundle.owner;
+    const string SourceDefinitionsName = "source-definition-families";
+    static AssetBundle sourceDefinitions;
     static WeakReference definitionManifest;
     static readonly Dictionary<string, Object[]> definitionFamilies = new Dictionary<string, Object[]>();
     static readonly Dictionary<FieldInfo, object> priorDefinitionFields = new Dictionary<FieldInfo, object>();
@@ -231,6 +242,20 @@ public static partial class WholeCatalogComposed
         Check(CategoryFamily(data, "category", new Definition[0]).SequenceEqual(new[] { first, second }));
         Check(AssetBundle.enumerations == before + 2);
         AssetBundle.onLoad = null;
+        definitionFamilies.Clear();
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner };
+        data["locations"][1]["bundle"] = SourceDefinitionsName;
+        data["bundles"] = new JObject { [SourceDefinitionsName] = new JObject { ["dependencies"] = new JArray("source") } };
+        WriteManifest(data.ToString());
+        ResetDefinitionManifest();
+        Refuses(() => CategoryFamily(data, "category", new Definition[0]));
+        var preload = PrepareSourceDefinitions();
+        Check(preload.MoveNext() && preload.Current is AssetBundle.LoadRequest && !preload.MoveNext());
+        Check(CategoryFamily(data, "category", new[] { second }).SequenceEqual(unobserved));
+        ReleaseSourceDefinitions();
+        Check(AssetBundle.loadedOwners.SequenceEqual(new[] { AssetBundle.owner }));
+        ResetDefinitionManifest();
+        File.Delete("payload/whole-catalog.json");
         AssetBundle.loadedOwners = null;
         definitionFamilies.Clear();
     }

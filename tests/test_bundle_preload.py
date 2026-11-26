@@ -1160,6 +1160,27 @@ class BundlePreloadTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "input differs|[Ss]tructural"):
                     P.produce_request(inputs, root / "output")
 
+    def test_declarative_request_relocates_pinned_emission_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            inputs, request = self.request_fixture(root)
+            baseline = P.produce_request(inputs, root / "baseline")
+            staged = root / "staged"
+            staged.mkdir()
+            (root / "graph").rename(staged / "graph")
+            (root / "required.json").rename(staged / "required.json")
+            paths = staged / "input-paths.json"
+            aliases = {str(root / pin["path"]): pin["path"] for pin in [*request["graph"].values(), request["required"]]}
+            paths.write_text(json.dumps(aliases))
+            request["input_paths"] = dict(path=str(paths.relative_to(root)), bytes=paths.stat().st_size, sha256=P.O.B.sha(paths))
+            inputs.write_text(json.dumps(request))
+
+            actual = P.produce_request(inputs, root / "relocated")
+            self.assertEqual(actual["sha256"], baseline["sha256"])
+            (staged / "required.json").write_text("{}")
+            with self.assertRaisesRegex(ValueError, "input differs"):
+                P.produce_request(inputs, root / "drifted")
+
     def test_declarative_request_relocates_native_lineages_without_rewriting_proofs(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

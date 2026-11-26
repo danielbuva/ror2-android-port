@@ -463,6 +463,23 @@ class BundlePreparationTests(unittest.TestCase):
         inputs.write_text(json.dumps(request))
         return inputs, request, policy, pin
 
+    def test_rebuild_staged_descriptors_from_retained_routes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            inputs, _, _, _ = self.fixture(root)
+            prepared = P.prepare_request(inputs, root / "prepared")
+            request_path = Path(prepared["request"]["path"])
+            baseline = P.produce_request(request_path, root / "baseline")
+            request = json.loads(request_path.read_bytes())
+            Path(request["endpoints"]["path"]).unlink()
+            recovered = P.module("bundle_prepare").prepare_endpoints(P, request_path, root / "recovered")
+            self.assertEqual((recovered["records"], recovered["reachable"]), (1, 1))
+            request["endpoints"] = recovered["endpoints"]
+            request["schemas"].append(recovered["schemas"])
+            request_path.write_text(json.dumps(request))
+            actual = P.produce_request(request_path, root / "actual")
+            self.assertEqual(actual["sha256"], baseline["sha256"])
+
     def test_fresh_preparation_emission_repack_and_warm_reuse(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

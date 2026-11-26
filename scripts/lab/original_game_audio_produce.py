@@ -62,7 +62,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "a4e5b392906641c49019383d8c6de9fb345a5234c728bfdafecfbd26ec654c33"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "9a9546d9db4e7a5f57482205704f2ade63f97e3fa802de2411e46c61f659bd71"
 STAGE_PIN_TOOL_SHA256 = "e58420236cadec75e47b959e2ed0dd36dace0d55638b462f552422af9d236b28"
 REQUEST_PIN_TOOL_SHA256 = "b4c8abdc7e98be1db34c1b20f35abcc154487caa36aaafafd5b48fc70fb47a5e"
 MANAGED_PRODUCER_SHA256 = "faeac333b573a181c28de42c8b7d126b722f70c5039beca2736fbfbacaba0569"
@@ -72,7 +72,7 @@ ABI_HANDWRITTEN_SOURCE_SHA256 = "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf
 ABI_LLVM_NM_SHA256 = "6ffe6bb8699a354c4699a6cdfcebdb9ec6a2c8d0d89beaac978f629a0fc67ae0"
 ABI_NATIVE_EXPORT_SET_SHA256 = "1595a576edc694da66e3ba593a0f4b82212219bf2a4b959b4cbb0390db122d31"
 OWNER_SOURCE_HASHES = {
-    "../../runtime/catalog/BodyCatalogBoundary.cs": "829744578410b18515e86401fd6b34b3282bee7a0b92ef330384c8c2c973a429",
+    "../../runtime/catalog/BodyCatalogBoundary.cs": "4c1bef3c80b3d481b815ac94f60621244cbd526f5f312cbcf4de647e60856e88",
     "../../runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs": "f1249d463ee86e53c3ad8242b1366b303e3fff975b31acab71b542d4cab1270f",
     "../../runtime/input/AndroidNativeSourceOutlinePassObservationPolicy.cs": "6bca11a41705541793ff08eca604a3f0074be4ef2533a3fae62fa8ee92c241b0",
     "../../runtime/session/AkMusicPcmJoinQueryAdapter.cs": "ae116b7912efda498d6c1a1ecb0ddc4be1ec2dd6df223e0fff53426a37204ef8",
