@@ -287,7 +287,7 @@ def collect(phone, state, destination, *, code_output=None, decode=False, failed
 
 
 def collect_evidence(phone, package, state, destination, *, code_output, failed):
-    """Keep producer logs and crash artifacts before deleting owned scratch."""
+    """Keep producer logs, timings and crash artifacts before deleting owned scratch."""
     if failed:
         crash = destination / "logs/crash"
         crash.mkdir(parents=True, exist_ok=True)
@@ -308,7 +308,8 @@ cd "$1" || exit
 shift
 for dir do
     if [ -d "$dir" ]; then
-        find "$dir" -type f \( -path '*/logs/*' -o -name '*.log' -o -iname '*tombstone*' -o -iname '*crash*' -o -name 'hs_err_pid*.txt' \) -print0 || exit
+        find "$dir" -type f \( -path '*/logs/*' -o -name '*.log' -o -name '*.process.json' \
+            -o -iname 'tombstone_[0-9][0-9]' -o -iname 'tombstone_[0-9][0-9].pb' -o -name 'hs_err_pid*.txt' \) -print0 || exit
     fi
 done
 """
