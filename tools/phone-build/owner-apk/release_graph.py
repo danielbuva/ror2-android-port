@@ -453,7 +453,7 @@ class Graph:
             "shader_context",
             "shader_prefab",
             "payload_shader_records",
-        }:
+        } or (producer == "shader_produce" and "typed_records" in profile):
             artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
@@ -462,7 +462,7 @@ class Graph:
             outputs[target] = target
             if "original_bundle" not in profile:
                 artifacts["catalog_bundle"] = target
-        if producer in {"shader_produce", "player_data"}:
+        if producer == "player_data" or (producer == "shader_produce" and "typed_records" not in profile):
             artifacts = {"receipt": "result.json"}
             targets = [row["file"] for row in profile["shaders"]] if producer == "shader_produce" else list(profile["outputs"])
             if producer == "shader_produce":
@@ -574,7 +574,9 @@ class Graph:
                 profile = json.loads(path.read_bytes())
                 producer = owner(profile)
                 direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce"}
-                if producer not in direct and not (producer == "record_remap" and "original_sources" in profile):
+                typed_shaders = producer == "shader_produce" and "typed_records" in profile
+                registry_remap = producer == "record_remap" and "original_sources" in profile
+                if producer not in direct and not typed_shaders and not registry_remap:
                     raise ValueError("source lookup requires direct typed record selectors: " + pin)
             # Reuse preparation's body selectors; type_source is never evidence
             # that a profile produces that original object's serialized body.

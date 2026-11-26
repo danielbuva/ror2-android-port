@@ -1341,10 +1341,49 @@ def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connecti
     return name, {"bytes": destination.stat().st_size, "sha256": sha(destination)}
 
 
+def typed_shader_pack(root, sdk, profile, output, connection, compress, image, common, native_type, node, package_bodies):
+    """Write source-compiled Shader leaves for bundle preparation."""
+    import shader_sdk
+
+    O = module("_typed_shader_objects", Path(__file__).with_name("object_produce.py"))
+    rows, types, type_ids = [], [], {}
+    graphics = profile["authored_inputs"]["smoke/ProjectSettings/GraphicsSettings.asset"]
+    tiers = project_tiers(root, profile["settings"], graphics)
+    sdk_pin = profile["sdk"]["Resources/unity_builtin_extra"]["sha256"]
+    with (output / "objects.bin").open("xb") as stream:
+        for record in profile["typed_records"]:
+            if "sdk_shader" in record:
+                identity = record["sdk_shader"]
+                source = shader_sdk.sdk_source(sdk, identity, sdk_pin)
+                folder = output / ("sdk-" + str(identity))
+                folder.mkdir()
+                body, _, _ = shader_sdk.compile_body(connection, source, node, sdk_scene_selections(source), tiers, image, common, compress, folder)
+            else:
+                body = package_bodies[record["file"]]
+            tree = O.W.read_shader_body(node, body)
+            if tree["m_ParsedForm"]["m_Name"] != record["name"] or tree["platforms"] != [18] or tree["m_Dependencies"]:
+                raise ValueError("produced Shader leaf identity, platform or dependencies differ")
+            rows.append(
+                dict(
+                    record["output"],
+                    offset=stream.tell(),
+                    bytes=len(body),
+                    sha256=hashlib.sha256(body).hexdigest(),
+                    type_id=O.record_type(native_type, types, type_ids),
+                )
+            )
+            stream.write(body)
+    (output / "index.jsonl").write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+    (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
+    return {name: {"bytes": (output / name).stat().st_size, "sha256": sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")}
+
+
 def select_authored_files(profile, filenames):
     """Select standalone authored rows without initializing unrelated providers."""
     if filenames is None:
         return profile
+    if "typed_records" in profile:
+        raise ValueError("authored file selection requires a standalone shader profile")
     wanted = set(filenames)
     rows = [row for row in profile["shaders"] if row["file"] in wanted]
     if not wanted or {row["file"] for row in rows} != wanted:
@@ -1446,6 +1485,10 @@ def produce(
         pins.append((relative(pc, profile["builtin"]["source"]["path"]), profile["builtin"]["source"]))
         pins.extend((relative(pc, row["path"]), row) for row in profile["builtin"]["sprite_materials"])
         pins.append((relative(pc, profile["shared_shaders"]["source"]["path"]), profile["shared_shaders"]["source"]))
+    typed = profile.get("typed_records", [])
+    for record in typed:
+        if "source" in record:
+            pins.append((relative(pc, record["source"]["path"]), record["source"]))
     for path, pin in pins:
         checked(path, pin)
         if path.is_relative_to(output) or output.is_relative_to(path):
@@ -1475,6 +1518,19 @@ def produce(
     if native_type["class_id"] != 48:
         raise ValueError("original schema provider is not Shader48")
     node = W.shader_node(native_type["tree"])
+    for record in typed:
+        if "source" not in record:
+            continue
+        selected_source = record["source"]
+        with W.B.Bundle(relative(pc, selected_source["path"])).member(selected_source["member"]) as stream:
+            metadata = W.read_serialized(stream)
+            extent = next(row for row in metadata["objects"] if row["path_id"] == selected_source["path_id"])
+            if metadata["types"][extent["type_id"]] != native_type:
+                raise ValueError("original Shader leaf type differs")
+            stream.seek(metadata["data_offset"] + extent["offset"])
+            tree = W.read_shader_body(node, W.B.exact(stream, extent["bytes"]))
+            if tree["m_ParsedForm"]["m_Name"] != record["name"] or tree["m_Dependencies"]:
+                raise ValueError("original Shader leaf identity or dependencies differ")
     source_member = W.B.Bundle(source_path).member(source["member"])
     source_member.seek(layout["data_offset"] + selected["offset"])
     original_form = W.read_shader_body(node, W.B.exact(source_member, selected["bytes"]))["m_ParsedForm"]
@@ -1586,6 +1642,7 @@ def produce(
                 else:
                     shader_sources[shader["file"]] = relative(root, shader["source"]).read_text()
             names_to_files = {re.search(r'\bShader\s+"([^\"]+)"', text)[1]: name for name, text in shader_sources.items()}
+            package_bodies = {}
             for shader, name in zip(profile["shaders"], destinations):
                 text = shader_sources[shader["file"]]
                 pre = connection.preprocess(
@@ -1621,6 +1678,9 @@ def produce(
                 tree = construct(node, text, pre, compiled_passes, compress, registry, original, kind == "ui-alpha", kind == "intersection")
                 externals = fallback_externals(tree, names_to_files)
                 body = W.write_shader_body(node, tree)
+                if typed:
+                    package_bodies[shader["file"]] = body
+                    continue
                 destination = output / name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 standalone = {
@@ -1643,6 +1703,10 @@ def produce(
             if "builtin" in profile:
                 name, pin = produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connection, compress, sdk_image, common_bytes)
                 result["files"][name] = pin
+            if typed:
+                result["outputs"] = typed_shader_pack(
+                    root, sdk, profile, output, connection, compress, sdk_image, common_bytes, native_type, node, package_bodies
+                )
         for path, pin in pins:
             checked(path, pin)
         if includes(include_dir)[0] != inventory:

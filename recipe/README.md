@@ -7347,3 +7347,14 @@ middleware, original files and outputs stay local.
 | --- | --- |
 | `owner-code-job-inputs.json` | `6a9db9c77118f96c2d064c4696a95160092e47303dca2e8d4217aef4ac389714` |
 | `owner-burst-job-inputs.json` | `3a4d0dbbdfbc8dcd7d170322c58e95333cc941e9d8155a92db980bfec9adcac8` |
+
+Audit 2026-11-26. `owner-v30-bundle-shader-leaves.json` uses original game
+bundle selectors and the acquired Unity SDK to compile three Shader leaves.
+The provenance, licensing, privacy and sensitive-content review covered the
+minimal member and object identifiers, SDK package selectors, authored settings
+and input hashes. Original assets, SDK files, compiled programs and evidence
+stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-v30-bundle-shader-leaves.json` | `14971d549a51c613fc02549180054a962c603f04eb03aad199333e5acefc219d` |
