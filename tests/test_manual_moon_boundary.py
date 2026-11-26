@@ -5,6 +5,15 @@ CANDIDATE = Path(__file__).resolve().parents[1]
 
 
 class ManualMoonBoundaryPatchTests(unittest.TestCase):
+    def test_native_moon_transport_uses_destination_scene_without_legacy_loot(self):
+        transport = (CANDIDATE / "tools/unity/runtime/stage/IntegratedStageBoundary.cs").read_text()
+        self.assertIn("info && info.gameObject.scene == coordinator.stageGeometryScene", transport)
+        self.assertIn("sourceSceneInfoActive = next.moonMission || coordinator.stageSourceObjects;", transport)
+        layout = transport[transport.index("var origin = solver.TransientPosition;") : transport.index("coordinator.PrepareMoonWorld()")]
+        self.assertIn("if (coordinator.r.liveCatalogs == null)\n            {", layout)
+        self.assertLess(layout.index("if (coordinator.r.liveCatalogs == null)"), layout.index("coordinator.AddEquipmentBarrel("))
+        self.assertLess(layout.index("coordinator.AddEquipmentBarrel("), layout.index("if (next.moonMission)"))
+
     def test_input_and_transport_use_the_effective_session_gate(self):
         session = (CANDIDATE / "tools/unity/runtime/session/PortSession.cs").read_text()
         self.assertLess(session.index("if (r.attempt != config.attempt)"), session.index("ManualMoonBoundary.AllowsAssistedContinuation"))

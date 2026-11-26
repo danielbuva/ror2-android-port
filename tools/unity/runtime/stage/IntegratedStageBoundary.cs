@@ -975,7 +975,11 @@ public sealed partial class PortSession
                               "Actual next scene catalog/name mismatch");
             SceneInfo info;
             if (next.moonMission)
+            {
                 info = SceneInfo.instance;
+                coordinator.Check(info && info.gameObject.scene == coordinator.stageGeometryScene,
+                                  "Original Moon SceneInfo is not in the destination scene");
+            }
             else if (coordinator.stageSourceObjects)
                 info = coordinator.ActivateSourceSceneInfo();
             else
@@ -995,9 +999,9 @@ public sealed partial class PortSession
             yield return null;
             coordinator.Check(SceneInfo.instance == info && info.groundNodes.GetNodeCount() > 0 && info.airNodes.GetNodeCount() > 0,
                               "Recovered next-stage navigation missing");
+            coordinator.r.stage.sourceSceneInfoActive = next.moonMission || coordinator.stageSourceObjects;
             if (coordinator.stageSourceObjects)
             {
-                coordinator.r.stage.sourceSceneInfoActive = true;
                 coordinator.r.stage.sourceStagePopulationActive =
                     ClassicStageInfo.instance == coordinator.sourceSceneInfoRoot.GetComponent<ClassicStageInfo>() &&
                     ClassicStageInfo.instance.monsterSelection != null;
@@ -1060,9 +1064,10 @@ public sealed partial class PortSession
             coordinator.stagePickupBaseline = coordinator.r.world.pickupMessages;
             coordinator.worldLastPress = -1;
             var origin = solver.TransientPosition;
-            var chestSource = coordinator.artifactBundle.LoadAsset<GameObject>(integratedStageConfig.chestAsset);
-            if (coordinator.r.liveCatalogs == null || next.moonMission)
+            // The native run already owns its loot domain. Only the legacy run owns this test layout.
+            if (coordinator.r.liveCatalogs == null)
             {
+                var chestSource = coordinator.artifactBundle.LoadAsset<GameObject>(integratedStageConfig.chestAsset);
                 foreach (var offset in new[] { new Vector3(2, 0, 0), new Vector3(-2, 0, 0), new Vector3(0, 0, 3), new Vector3(4, 0, 3),
                                                new Vector3(-4, 0, 3), new Vector3(0, 0, -3) })
                 {
@@ -1082,9 +1087,9 @@ public sealed partial class PortSession
                     coordinator.AddWorldChestBreadth(integratedStageConfig, origin);
                 coordinator.Check(coordinator.worldBarrels.Count >= 3 && coordinator.worldChests.Count >= 2,
                                   "Recovered next-stage layout lacks walkable interactables");
-                coordinator.r.world.barrels = coordinator.worldBarrels.Count;
-                coordinator.r.world.chests = coordinator.worldChests.Count;
             }
+            coordinator.r.world.barrels = coordinator.worldBarrels.Count;
+            coordinator.r.world.chests = coordinator.worldChests.Count;
             if (next.moonMission)
             {
                 coordinator.rewardDirector.enabled = false;

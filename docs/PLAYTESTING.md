@@ -59,6 +59,14 @@ first failure. If the ten-minute window ends before a natural defeat, a stage
 transition or either Golem attack, leave that observation pending. Keep captures,
 receipts and profiles local.
 
+### Commencement finale
+
+In a separate owner playtest, reach Commencement from Sky Meadow with assists
+off. Use physical controls to traverse the stage and make the required jumps.
+Activate and charge the pillars, fight all Mithrix phases, then return to the
+dropship and escape. Verify that the native results save. Record the first
+checkpoint that fails and retain its screenshot and logs locally.
+
 ### Arm the 30-minute unplugged session
 
 The retained APK above predates this recorder. Use a newly built matching
