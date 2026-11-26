@@ -5432,8 +5432,11 @@ execution, not targeting, placement, effects or complete ability semantics.
 An explicit skill-triggered PCM observation also permits one native event
 catalog query on the first eligible Huntress primary authority callback.
 The report records the Wwise result, resolved object count and service frame
-for the character-bank event. The query releases its buffer immediately and
-observes event residency independently of audible playback.
+for the character-bank event. The query releases its buffer immediately.
+After a positive residency result, the per-frame integrated world update
+checks the live body's emitter on up to 12 newer Wwise service frames.
+A matching playing ID and event ID establish active playback on that emitter.
+Event-specific output and audible comparison require separate captures.
 The separate `components` report covers every GenericSkill on that body by exact
 component identity, including Toolbot/Captain auxiliary loadout components that
 native `FindSkillSlot` maps to None. It retains current component indices and

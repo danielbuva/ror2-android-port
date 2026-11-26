@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1510 — Observe Huntress primary audio on the native emitter
+
+2026-11-26. Assisted seed-2 native Start reached Verdant Falls with Huntress.
+The original primary callback found one Wwise object for `Play_huntress_m1_ready`.
+The next Wwise service frame returned a playing ID with the expected event ID
+on Huntress's emitter. All 153 startup banks completed.
+APK SHA-256 `30a681e52231f0dbbee2baa2fbe6f7c13db186f7080fad2fdc211d574dea7d2c` (source `050c1a08`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/huntress-active-event-main-nova/`
+includes `terminal.done.json` and the screenshot, logcat and bringup report in `terminal-capture/`.
+Frame pacing averaged 13.097 ms over 8,104 frames. CPU/GPU peaked at 92.3 °C
+with 59.239 s above 80 °C. Battery held 26 °C. Adopted placement, scratch cleanup,
+OLED sleep and lease release passed. Event-specific output and PC audibility remain open.
+
 ## J1509 — Restore original base-survivor bank attachments
 
 2026-11-26. The audio build hook restores the eleven original base-survivor
