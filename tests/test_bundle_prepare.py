@@ -480,6 +480,49 @@ class BundlePreparationTests(unittest.TestCase):
             actual = P.produce_request(request_path, root / "actual")
             self.assertEqual(actual["sha256"], baseline["sha256"])
 
+    def test_fresh_sdk_witnesses_follow_staged_resource_pointers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root)
+            source = root / "original/a.bundle"
+            typ = P.O.source_record_type(source, "CAB-a", 10, 134)
+            resource = root / "unity_builtin_extra"
+            linked = struct.pack("<iq", 0, 11) + bytes(28)
+            records = [dict(path_id=pid, type=typ, body=linked if pid == 10 else bytes(40)) for pid in (10, 11, 12)]
+            resource.write_bytes(self.serialized(records, trees=False))
+            member = "Resources/unity_builtin_extra"
+            target = ["sdk", member, 10]
+            policy["field_routes"][0]["target"] = target
+            policy["asset_groups"][0]["preload_roots"][1] = target
+            policy_path = root / "policy.json"
+            policy_path.write_text(json.dumps(policy))
+            request["policy"] = pin(policy_path)
+            request["staged"][0] = dict(
+                bundle="sdk",
+                member=member,
+                file=pin(resource),
+                source_types=[dict(path_id=pid, source=[source.name, "CAB-a", 10], sha256=pin(source)["sha256"]) for pid in (10, 11, 12)],
+            )
+            inputs.write_text(json.dumps(request))
+            result = P.prepare_request(inputs, root / "prepared")
+            self.assertEqual(result["endpoints"], 2)
+            prepared = json.loads(Path(result["request"]["path"]).read_bytes())
+            sdk = prepared["staged"][0]
+            self.assertNotIn("source_types", sdk)
+            witnesses = json.loads(Path(sdk["full"]["path"]).read_bytes())
+            self.assertEqual([row["destination"] for row in witnesses], [target, ["sdk", member, 11]])
+            self.assertEqual(witnesses[0]["edges"], [[0, 0], [0, 11]])
+            self.assertEqual(witnesses[0]["provider_file_sha256"], pin(resource)["sha256"])
+            self.assertEqual(witnesses[0]["type_layout"], P.O.json_layout(typ))
+            self.assertTrue(P.produce_request(result["request"]["path"], root / "emitted")["success"])
+
+            records[0]["type"] = dict(typ, hash=b"b" * 16)
+            resource.write_bytes(self.serialized(records, trees=False))
+            request["staged"][0]["file"] = pin(resource)
+            inputs.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "SDK full metadata differs"):
+                P.prepare_request(inputs, root / "wrong-native-metadata")
+
     def test_fresh_preparation_emission_repack_and_warm_reuse(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

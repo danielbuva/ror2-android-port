@@ -428,6 +428,30 @@ def prepare(owner, inputs, output):
             if row["bundle"] == "sdk":
                 leaves = pins.read(row["leaves"]) if "leaves" in row else []
                 full = pins.read(row["full"]) if "full" in row else []
+                if "source_types" in row:
+                    if "full" in row or "leaves" in row:
+                        raise ValueError("SDK source types cannot be combined with retained witnesses")
+                    name = row["member"]
+                    staged.add_sdk(pin, name)
+                    for selector in normalized.pop("source_types"):
+                        source, source_sha = selector["source"], selector["sha256"]
+                        if source_files.setdefault(source[0], source_sha) != source_sha:
+                            raise ValueError("original source file pins disagree")
+                        _, typ, _ = original(source)
+                        pid = selector["path_id"]
+                        _, _, body = staged.members.record(name, (0, pid))
+                        full.append(
+                            descriptor(
+                                ("sdk", name, pid),
+                                body,
+                                typ,
+                                provider="sdk/" + name,
+                                provider_kind="serialized_file",
+                                provider_file_sha256=pin["sha256"],
+                                type_layout=owner.O.json_layout(typ),
+                            )
+                        )
+                    normalized["full"] = write(f"sdk-{Path(name).name}-source-types.json", full)
                 for witness in leaves + full:
                     target = tuple(witness["destination"])
                     if target in staged_descriptors and staged_descriptors[target] != witness:
@@ -435,7 +459,8 @@ def prepare(owner, inputs, output):
                     staged_descriptors[target] = witness
                     types[witness["full_type"]] = witness["type_layout"]
                     providers[witness["provider"]] = Path(pin["path"])
-                staged.add_sdk(pin, row["member"], leaves)
+                if "source_types" not in row:
+                    staged.add_sdk(pin, row["member"], leaves)
                 if full:
                     staged.qualify_sdk_full(row["member"], full, provider_paths=providers)
             else:
