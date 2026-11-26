@@ -616,6 +616,32 @@ def include_source_locations(metadata, source, location_ids):
     return result
 
 
+def validate_required_routes(metadata, required):
+    """Check exact typed string routes in the final catalog projection."""
+    if not isinstance(required, list):
+        raise ValueError("required catalog routes must be a list")
+    types = {row["id"]: row["type"] for row in metadata["locations"]}
+    keys = {}
+    for row in metadata["keys"]:
+        if row.get("keyType", "System.String") == "System.String":
+            keys.setdefault(row["key"], []).extend(row["locations"])
+    failures = []
+    for route in required:
+        if (
+            not isinstance(route, dict)
+            or set(route) != {"key", "type", "location"}
+            or not all(isinstance(route[field], str) and route[field] for field in ("key", "type"))
+            or type(route["location"]) is not int
+        ):
+            raise ValueError("required catalog route must specify a string key, exact type and integer location")
+        key, expected, location = route["key"], route["type"], route["location"]
+        candidates = [candidate for candidate in keys.get(key, []) if types.get(candidate) == expected]
+        if candidates != [location]:
+            failures.append(f"{key} ({expected} at {location}, found {candidates})")
+    if failures:
+        raise ValueError("required catalog routes differ: " + "; ".join(failures))
+
+
 def project_source_catalog(source, policy, builds, *, input_id, attempt):
     """Select source locations by the produced asset paths and explicit relocations."""
     from whole_catalog import integration_metadata
@@ -725,7 +751,7 @@ def produce(inputs, output, player_apk=None):
     request_bytes = inputs.read_bytes()
     request = json.loads(request_bytes)
     common = {"schema", "profiles", "bundles", "registry", "input_id", "attempt"}
-    mode = set(request) - common - {"resources", "source_additions"}
+    mode = set(request) - common - {"resources", "source_additions", "required_routes"}
     if mode not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
         raise ValueError("unsupported catalog completion input contract")
     pins = {}
@@ -762,6 +788,8 @@ def produce(inputs, output, player_apk=None):
             raise ValueError("unsupported catalog addition contract")
         source = json.loads(pinned(additions["metadata"]).read_bytes())
         metadata = include_source_locations(metadata, source, additions["locations"])
+    if "required_routes" in request:
+        validate_required_routes(metadata, request["required_routes"])
     files = {name: pinned(row) for name, row in request["bundles"].items()}
     registry = pinned(request["registry"])
     resources = {name: pinned(row) for name, row in request.get("resources", {}).items()}
@@ -790,6 +818,8 @@ def produce(inputs, output, player_apk=None):
         facts = produced_bundle_metadata(files)
         checks = validate_locations(metadata, members, "@runtime-registry")
         raw = integration_catalog(metadata, facts, bundle_names=names)
+    if "required_routes" in request:
+        checks["required_routes"] = len(request["required_routes"])
     if inputs.read_bytes() != request_bytes or any(dict(bytes=path.stat().st_size, sha256=W.B.sha(path)) != pin for path, pin in pins.items()):
         raise ValueError("catalog inputs changed during production")
     output = Path(output)

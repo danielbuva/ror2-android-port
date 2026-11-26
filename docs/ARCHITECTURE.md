@@ -3195,7 +3195,12 @@ mesh aliases. A projection policy can move selected aliases to the end of
 their keys in source order. Keys that also introduce a selected root keep the
 original order. The source input identity and catalog hash bind that policy. The
 same invocation verifies actual Android containers and MonoScripts before writing
-the runtime catalog. Retained metadata remains available for historical requests.
+the runtime catalog. A catalog request can declare `required_routes` by string
+key, exact serialized type and source location ID. `catalog_complete` checks
+each route in the projected catalog after source additions and before reading
+bundle payloads. It rejects missing or ambiguous matches and records the number
+checked alongside the existing endpoint checks. Retained metadata remains
+available for historical requests.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Ordinary launcher startup selects
