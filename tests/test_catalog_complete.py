@@ -493,6 +493,35 @@ class CatalogCompletionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "catalog projection source identity differs"):
                 C.produce(path, root / "other")
 
+    def test_projection_appends_selected_aliases_in_source_order_and_preserves_root_keys(self):
+        locations = [dict(id=i, internalId=f"Assets/{i}.asset", type="UnityEngine.GameObject", primaryKey=str(i)) for i in range(1, 6)]
+        source = dict(
+            input_id="source",
+            source_catalog_sha256="catalog-hash",
+            locations=locations,
+            keys=[dict(key="aliases", locations=[4, 1, 3, 2]), dict(key="roots", locations=[3, 1, 5, 2])],
+            providers=[],
+        )
+        policy = dict(
+            schema="owner-catalog-projection-v1",
+            source_catalog_sha256="catalog-hash",
+            remaps={},
+            exclusions=[],
+            provider_roots=[1],
+            runtime_roots=[],
+            extra_roots=[5],
+            mesh_subobjects=[],
+            append_locations=[3, 4, 5],
+        )
+        builds = [dict(assetNames=[row["internalId"] for row in locations])]
+        with patch.object(sys, "path", [str(ROOT / "scripts/lab"), *sys.path]):
+            result = C.project_source_catalog(source, policy, builds, input_id="source", attempt="startup")
+            self.assertEqual(result["keys"], [dict(key="aliases", locations=[1, 2, 4, 3]), source["keys"][1]])
+            self.assertEqual(result["roots"], [1, 5])
+            for invalid in ([3, 3], [6]):
+                with self.assertRaisesRegex(ValueError, "catalog projection append selection differs"):
+                    C.project_source_catalog(source, dict(policy, append_locations=invalid), builds, input_id="source", attempt="startup")
+
     def test_player_resource_is_pinned_and_loaded_for_pointer_resolution(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

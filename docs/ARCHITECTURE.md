@@ -221,7 +221,11 @@ signed policy, prepares fresh suppliers and runs the same checked emitter and
 optional canonical repack in one workspace. `release_graph.py` accepts
 `owner-bundle-preload-release-v1` profiles declaring prerequisite source profiles
 and that request. Public file pins join the signed source closure; supplier
-artifacts name declared jobs. Referenced donor/staged containers remain payload
+artifacts name declared jobs. Large binding, asset and field-route tables may
+use ordered, individually pinned JSON shards within the same policy. The
+compiler includes each shard in the signed job closure, and preparation
+verifies and records each input before emission. Bundle and donor routing stay
+in the bounded job descriptor. Referenced donor/staged containers remain payload
 and native-manifest dependencies. The graph assigns stable artifact names to
 object bundles and built-in player resources when it compiles their producers.
 Follower bundles and catalog production bind the same staged files. The catalog
@@ -3165,7 +3169,9 @@ Signed catalog requests can select a projection policy and consume the original
 catalog emitted by managed-code production. `catalog_complete` joins that catalog
 to selected bundle profiles by asset path and explicit relocations, retains the
 original typed key ordering, and applies the pinned exclusions, root roles and
-mesh aliases. The source input identity and catalog hash bind that policy. The
+mesh aliases. A projection policy can move selected aliases to the end of
+their keys in source order. Keys that also introduce a selected root keep the
+original order. The source input identity and catalog hash bind that policy. The
 same invocation verifies actual Android containers and MonoScripts before writing
 the runtime catalog. Retained metadata remains available for historical requests.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
