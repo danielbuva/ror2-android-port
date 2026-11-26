@@ -1914,13 +1914,15 @@ def skin_hierarchy_fields(skin_type, fields):
     return {field for field in fields if len(field) == 4 and field[1] == "Array" and members.get(field[0]) == field[3]}
 
 
-def write_repacked_bundle(output, bundle, member, stream, layout, replacements, *, codec, codec_sha256):
+def write_repacked_bundle(output, bundle, member, stream, layout, replacements, *, codec, codec_sha256, additions=()):
     from contextlib import nullcontext
     import copy
     import tempfile
 
     W = module("unity_write")
     revised = copy.deepcopy(layout)
+    if additions:
+        revised["objects"] = sorted([*revised["objects"], *additions], key=lambda row: row["path_id"])
     objects = {obj["path_id"]: obj for obj in layout["objects"]}
     offset = 0
     for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
@@ -1929,7 +1931,10 @@ def write_repacked_bundle(output, bundle, member, stream, layout, replacements, 
         if obj["path_id"] in replacements:
             obj["bytes"] = len(replacements[obj["path_id"]])
         offset += obj["bytes"]
-    revised["bytes"] = revised["data_offset"] + offset
+    if additions:
+        del revised["data_offset"], revised["bytes"]
+    else:
+        revised["bytes"] = revised["data_offset"] + offset
 
     def body_for(obj):
         path_id = obj["path_id"]
@@ -1943,6 +1948,10 @@ def write_repacked_bundle(output, bundle, member, stream, layout, replacements, 
         serialized = Path(scratch) / "member"
         with serialized.open("xb") as handle:
             W.write_serialized(handle, revised, body_for)
+        if additions:
+            with serialized.open("rb") as handle:
+                handle.seek(24)
+                revised["bytes"], revised["data_offset"] = W.B.unpack(handle, ">qq")
         members = [
             (m, flags, serialized.stat().st_size if m == member else size, lambda m=m: serialized.open("rb") if m == member else bundle.member(m))
             for m, (_, size, flags) in bundle.members.items()
@@ -1951,6 +1960,47 @@ def write_repacked_bundle(output, bundle, member, stream, layout, replacements, 
         with compression as compress, output.open("xb") as handle:
             result = W.write_bundle(handle, members, compress, engine=layout["engine"], flags=0x243 if codec is not None else 0x40, hash_output=True)
     return result, revised
+
+
+def extend_component_preloads(body, root, endpoints):
+    """Extend every existing container extent that preloads the changed prefab."""
+    C = module("catalog_complete")
+    original = io.BytesIO(body)
+    C.text(original)
+    prefix = body[: original.tell()]
+    (count,) = O.B.unpack(original, "<I")
+    preload = [O.B.unpack(original, "<iq") for _ in range(count)]
+    row_count = O.B.unpack(original, "<I")[0]
+    rows = io.BytesIO()
+    extents = {}
+    changed = []
+    for _ in range(row_count):
+        name = C.text(original)
+        start, size, file_id, path_id = O.B.unpack(original, "<iiiq")
+        if not 0 <= start <= start + size <= count:
+            raise ValueError("Invalid existing component preload extent")
+        current = preload[start : start + size]
+        if root in current:
+            extent = (start, size)
+            if extent not in extents:
+                extra = sorted(endpoints.difference(current))
+                extents[extent] = (len(preload), size + len(extra))
+                preload.extend(current + extra)
+            start, size = extents[extent]
+            changed.append(name)
+        O.aligned_string(rows, name)
+        rows.write(struct.pack("<iiiq", start, size, file_id, path_id))
+    if not changed:
+        raise ValueError("Changed prefab has no existing preload extent")
+    return (
+        prefix
+        + struct.pack("<I", len(preload))
+        + b"".join(struct.pack("<iq", *entry) for entry in preload)
+        + struct.pack("<I", row_count)
+        + rows.getvalue()
+        + original.read(),
+        changed,
+    )
 
 
 def expose_local_assets(source, output, name, member, groups, *, codec, codec_sha256):
@@ -2437,6 +2487,171 @@ def repack_request(inputs, output, *, cache_directory=None):
     return result
 
 
+def restore_bank_components_request(inputs, output):
+    """Restore source AkBanks on a staged prefab using already produced bank references."""
+    from contextlib import ExitStack
+    import json
+    from types import SimpleNamespace
+
+    C = module("catalog_complete")
+    W = C.W
+    inputs = Path(inputs).resolve(strict=True)
+    pins = module("bundle_endpoints").InputPins(inputs.parent, SimpleNamespace(**globals()))
+    request = json.loads(pins.add(inputs).read_bytes())
+    if request["schema"] != "owner-bundle-bank-components-v1":
+        raise ValueError("Unsupported bank component restoration input contract")
+    source, donor = (W.B.Bundle(pins.pin(request[key])) for key in ("source", "bank_bundle"))
+    codec = pins.pin(request["codec"])
+    source_profile = pins.read(request["profile"])
+    repair = pins.read(request["repair"])
+    if (repair["profile_sha256"], repair["staged_sha256"], repair["bank_bundle_sha256"]) != tuple(
+        request[key]["sha256"] for key in ("profile", "source", "bank_bundle")
+    ):
+        raise ValueError("Bank component repair does not match the pinned inputs")
+    member, name = (source_profile["bundle"][key] for key in ("member", "name"))
+    source_root = Path(request["game"]).resolve(strict=True)
+    root_row = repair["root_row"]
+    root = (0, root_row["path_id"])
+    sources = {}
+    schemas = {}
+
+    with ExitStack() as stack:
+
+        def original(selector):
+            index, _ = selector
+            if index not in sources:
+                pin = source_profile["sources"][index]
+                path = O.M.safe_input(source_root, pin["path"])
+                pins.add(path, dict(bytes=path.stat().st_size, sha256=pin["sha256"]))
+                stream = stack.enter_context(O.source_member(path, pin["member"]))
+                layout = W.read_serialized(stream)
+                sources[index] = (path, None, stream, layout, {row["path_id"]: row for row in layout["objects"]})
+            return O.source_record(sources, selector)
+
+        def source_body(row, *, inactive=False):
+            body, typ = original(row["source"])
+            if hashlib.sha256(body).hexdigest() != row["source_sha256"]:
+                raise ValueError("Bank component original body differs")
+            if inactive:
+                body = O.deactivate_global_owner(body, row["inactive_global_owner"])
+            body = O.remap_record(body, typ, row["references"], externals, records=A)
+            if (len(body), hashlib.sha256(body).hexdigest()) != (row["bytes"], row["sha256"]):
+                raise ValueError("Bank component produced body differs")
+            return body, typ
+
+        native = C.ProducedMembers()
+        stream = stack.enter_context(source.member(member))
+        native.add(member, stream, name)
+        donor_member = request["bank_member"]
+        native.add(donor_member, stack.enter_context(donor.member(donor_member)), "bank_bundle")
+        _, layout, objects = native.members[member]
+        externals = layout["externals"]
+        resolved_banks, bank_preloads = set(), set()
+        for bank in repair["bank_references"]:
+            endpoint = tuple(bank["destination"])
+            owner, staged_type, staged = native.record(member, endpoint)
+            identity = ("WwiseBankReference", "", "AK.Wwise.Unity.API.WwiseTypes.dll")
+            if owner != donor_member or native.managed_identity(owner, staged_type, staged) != identity:
+                raise ValueError("Staged Wwise bank reference has a different script or owner")
+            raw, typ = original(bank["source"])
+            script = struct.unpack_from("<iq", staged, 16)
+            relocation = {"offset": 16, "from": list(struct.unpack_from("<iq", raw, 16)), "to": list(script)}
+            schema = A.SCHEMA.type_tree(io.BytesIO(staged_type["tree"]))
+            name_start, name_end = A.fields(staged, schema)[1][("objectName",)]
+            if (
+                dict(staged_type, script_type=typ["script_type"]) != typ
+                or O.remap_record(raw, typ, [relocation], externals, records=A) != staged
+                or C.text(io.BytesIO(staged[name_start:name_end])) != bank["name"]
+            ):
+                raise ValueError("Staged Wwise bank reference differs from its source")
+            if set(pointers(staged, staged_type, schemas).values()) - {(0, 0), script} or script[0]:
+                raise ValueError("Wwise bank reference does not have the expected local script dependency")
+            resolved_banks.add(endpoint)
+            bank_preloads.update((endpoint, (endpoint[0], script[1])))
+
+        additions, replacements, components = [], {}, []
+        records = [(row, *source_body(row)) for row in repair["retained_source_rows"]]
+        (script_row,) = [(row, raw, typ) for row, raw, typ in records if typ["class_id"] == 115]
+        script_id = script_row[0]["path_id"]
+        binding = (0, script_id)
+        identity = ("AkBank", "", "AK.Wwise.Unity.MonoBehaviour.dll")
+        O.current_script_identity(script_row[1], script_row[2]["class_id"], list(reversed(identity)))
+        script_index = len(layout["scripts"])
+        layout["scripts"].append(binding)
+        used_banks = set()
+        for row, raw, typ in records:
+            pid = row["path_id"]
+            if pid in objects or pid in replacements:
+                raise ValueError("Restored bank component overlaps an existing object")
+            if typ["class_id"] == 114:
+                edges = set(pointers(raw, typ, schemas).values()) - {(0, 0)}
+                (bank_endpoint,) = edges - {root, binding}
+                if (
+                    edges != {root, binding, bank_endpoint}
+                    or struct.unpack_from("<iq", raw) != root
+                    or struct.unpack_from("<iq", raw, 16) != binding
+                    or raw[12] != 1
+                    or bank_endpoint not in resolved_banks - used_banks
+                    or typ["script_id"] != C.S.md4("".join(identity).encode())
+                ):
+                    raise ValueError("Source AkBank is missing an enabled reciprocal binding")
+                used_banks.add(bank_endpoint)
+                components.append(pid)
+                typ = dict(typ, script_type=script_index)
+            elif typ["class_id"] != 115:
+                raise ValueError("Bank component repair must contain only AkBanks and their MonoScript")
+            if typ not in layout["types"]:
+                layout["types"].append(typ)
+            additions.append(dict(path_id=pid, offset=layout["bytes"], bytes=len(raw), type_id=layout["types"].index(typ)))
+            replacements[pid] = raw
+        if used_banks != resolved_banks:
+            raise ValueError("Source bank reference has no restored component")
+        _, before_type, before = native.record(member, root)
+        revised_root, root_type = source_body(root_row, inactive=True)
+        original_root, _ = original(root_row["source"])
+        fields = pointers(original_root, root_type, schemas)
+        removals = [
+            dict(index=int(field[2]), path_id=ptr[1])
+            for field, ptr in fields.items()
+            if field[:2] == ("m_Component", "Array") and ptr in {(0, pid) for pid in components}
+        ]
+        if root_type != before_type or len(removals) != len(components) or O.remove_components(revised_root, removals) != before:
+            raise ValueError("Restoring source bank slots changed another prefab field")
+        replacements[root[1]] = revised_root
+
+        (container,) = (pid for pid, obj in objects.items() if layout["types"][obj["type_id"]]["class_id"] == 142)
+        _, _, old_container = native.record(member, (0, container))
+        asset_rows, scene = C.containers(old_container)
+        if scene or (repair["asset_group"]["path"], root) not in {(path, pointer) for path, pointer, _ in asset_rows}:
+            raise ValueError("Staged prefab container has a different root")
+        replacements[container], groups = extend_component_preloads(old_container, root, bank_preloads | {(0, pid) for pid in replacements if pid != root[1]})
+        target = output / (name + ".bundle")
+        written, revised = write_repacked_bundle(
+            target, source, member, stream, layout, replacements, codec=codec, codec_sha256=request["codec"]["sha256"], additions=additions
+        )
+        actual = W.B.Bundle(target)
+        with actual.member(member) as persisted:
+            if W.read_serialized(persisted) != revised:
+                raise ValueError("Persisted bank component metadata differs")
+            for row in sorted(revised["objects"], key=lambda entry: entry["offset"]):
+                pid = row["path_id"]
+                expected = replacements[pid] if pid in replacements else native.record(member, (0, pid))[2]
+                persisted.seek(revised["data_offset"] + row["offset"])
+                if W.B.exact(persisted, row["bytes"]) != expected:
+                    raise ValueError("Persisted bank component repack changed a staged body")
+        for other in source.members.keys() - {member}:
+            with source.member(other) as before, actual.member(other) as after:
+                while block := before.read(1024 * 1024):
+                    if after.read(len(block)) != block:
+                        raise ValueError("Persisted bank component repack changed a resource member")
+    pins.check()
+    result = dict(
+        success=True, bundle=str(target.resolve()), sha256=written["sha256"], bytes=target.stat().st_size, components=components, preload_groups=groups
+    )
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
 def expose_local_assets_request(inputs, output):
     from types import SimpleNamespace
     import json
@@ -2653,6 +2868,7 @@ def main():
     action.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
     action.add_argument("--repack", type=Path, help="current: canonical repack of an existing qualified emission with pinned inputs")
     action.add_argument("--expose-local-assets", type=Path, help="current: register typed local roots in a pinned Android bundle")
+    action.add_argument("--restore-bank-components", type=Path, help="current: restore source AkBanks on a pinned staged prefab")
     action.add_argument("--prepare", type=Path, help="derive emission inputs from pinned source packs and declarative policy")
     action.add_argument("--prepare-endpoints", type=Path, help="derive staged descriptors and schemas from pinned emission routes and actual providers")
     action.add_argument("--release", type=Path, help="prepare and emit a signed release-graph policy in one private workspace")
@@ -2684,6 +2900,11 @@ def main():
         if any(value is not None for value in (*legacy, args.cache)):
             parser.error("--expose-local-assets requires only --output")
         print(json.dumps(expose_local_assets_request(args.expose_local_assets, args.output), indent=2))
+        return
+    if args.restore_bank_components is not None:
+        if args.output is None or args.cache is not None:
+            parser.error("--restore-bank-components requires only --output")
+        print(json.dumps(restore_bank_components_request(args.restore_bank_components, args.output), indent=2))
         return
     if args.release is not None:
         if any(value is not None for value in (*legacy, args.cache)):

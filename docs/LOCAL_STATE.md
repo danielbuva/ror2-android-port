@@ -40,6 +40,7 @@ producer or acquisition reason must be recorded with the request.
 | `scene_environment_result`, `scene_environment_request`, `scene_environment_bundle`, `scene_environment_images` | Explicit source environment/SDK fixture inputs described under Source default-scene phase below; retain matching requests, result, bundle and face/mip images together. The request is caller-selected local fixture policy; no historical scene is an implicit provider. |
 | `sdk_android_jar`, `sdk_aapt`, `sdk_java`, `sdk_javac`, `sdk_jar_<filename>` | Caller-acquired Android/JDK/Maven tools from the Generic Android SDK package inputs section; `owner-sdk-job-inputs.json` names the pinned JAR cohort. |
 | Catalog metadata binding selected by a catalog request | Existing source catalog/player owners generate the selected metadata; the request explicitly names its binding rather than prescribing a local filename. |
+| Staged AkBank restoration request and source-row selection | The caller supplies the qualified prefab/bank bundle pins, original object profile, and source component slot and PPtr selections for `bundle_preload.py --restore-bank-components`. The selections describe relocations for this staged build and contain no object bodies. The tool reads original body bytes from the selected PC installation and generates the revised prefab bundle and receipt. |
 
 `release_graph.py` generates `recipe/jobs/*.json` and `source-index.json` in its
 new staging root. `release_jobs.py` generates expanded `.release-job-*.json`

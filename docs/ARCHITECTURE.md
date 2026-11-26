@@ -26,6 +26,13 @@ and reads back every object, member flag, resource and serialized table before
 publishing the output bundle. Fresh prefab production uses the same fieldless
 component recipe through `object_produce.py`.
 
+For staged converted prefabs, `accepted-output/bundle_preload.py` restores
+source AkBank component slots and their local MonoScript from pinned original
+records. It verifies the existing external bank references against their
+original records, extends every container extent that reaches the changed
+prefab, and reads back the serialized member and resource bytes. The original
+AkBank component retains its native load and unload callbacks.
+
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
 `OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns
