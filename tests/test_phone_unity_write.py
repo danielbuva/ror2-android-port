@@ -3,8 +3,10 @@
 import hashlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -98,6 +100,32 @@ class UnityWriteTests(unittest.TestCase):
                     if flags & 63:
                         self.assertTrue(any(block[3] == 0 for block in parsed.blocks))
                     self.assertEqual(parsed.read(0, sum(map(len, data))), b"".join(data))
+
+    def test_decode_benchmark_checks_every_block_against_the_baseline(self):
+        data = b"authored repeated bytes " * 32
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            bundle, baseline, receipt = (root / name for name in ("bundle", "baseline.py", "receipt.json"))
+            with bundle.open("wb") as stream:
+                W.write_bundle(stream, [("authored", 0, len(data), lambda: io.BytesIO(data))], compress, block_size=256)
+            baseline.write_text(
+                "import lz4.block\ndef decompress(data, size, flags):\n    return lz4.block.decompress(data, uncompressed_size=size) if flags & 63 else data\n"
+            )
+            command = [sys.executable, str(Path(SPEC.origin).with_name("bundle_decode_benchmark.py")), bundle, baseline, receipt]
+            subprocess.run(command, check=True)
+            report = json.loads(receipt.read_text())
+            self.assertEqual(report["blocks"], 3)
+            self.assertEqual(report["decoded_bytes"], len(data))
+            self.assertEqual(report["decoded_sha256"], hashlib.sha256(data).hexdigest())
+            self.assertGreater(report["baseline_cpu_seconds"], 0)
+            self.assertGreater(report["candidate_cpu_seconds"], 0)
+
+            baseline.write_text("def decompress(data, size, flags): return bytes(size)\n")
+            receipt.unlink()
+            failed = subprocess.run(command, capture_output=True)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertIn(b"decoder output mismatch at block 0", failed.stderr)
+            self.assertFalse(receipt.exists())
 
     def test_compressed_native_fixture_is_independently_loadable(self):
         with tempfile.TemporaryDirectory() as temporary:

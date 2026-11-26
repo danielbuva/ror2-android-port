@@ -20,6 +20,10 @@ import tarfile
 
 
 SIGNED_CODE = "signed-code"
+BUNDLE_DECODE = "bundle-decode"
+DECODE_OWNER = "repo/tools/phone-build/accepted-output/"
+DECODE_BASELINE = "baseline-unity_bundle.py"
+DECODE_FILES = {DECODE_BASELINE, *(DECODE_OWNER + name for name in ("bundle_decode_benchmark.py", "unity_bundle.py", "phone_runner.py"))}
 NET8_LIBRARIES = (
     "libcoreclr.so",
     "libhostpolicy.so",
@@ -55,10 +59,14 @@ def relative(value):
 def load_request(path, *, refresh_repo=False):
     request = json.loads(Path(path).read_bytes())
     required = {"runner", "tool_apk", "manifest", "request", "done_file", "expected_records", "estimated_output_bytes", "profile", "timeout_seconds"}
-    signed_code = request.get("operation") == SIGNED_CODE
-    count = "expected_managed_providers" if signed_code else "expected_records"
-    if signed_code:
+    operation = request.get("operation")
+    signed_code = operation == SIGNED_CODE
+    decode = operation == BUNDLE_DECODE
+    count = {SIGNED_CODE: "expected_managed_providers", BUNDLE_DECODE: "expected_blocks"}.get(operation, "expected_records")
+    if signed_code or decode:
         required = (required - {"expected_records"}) | {"operation", count}
+    if decode:
+        required |= {"expected_decoded_sha256", "retained_tool_sha256"}
     if "retained_tool_sha256" in request:
         required.add("retained_tool_sha256")
         previous = request["retained_tool_sha256"]
@@ -68,6 +76,8 @@ def load_request(path, *, refresh_repo=False):
             raise ValueError("emission-bundle-retained-tool-must-match-apk")
     if set(request) != required or request["profile"] not in ("nova", "thor"):
         raise ValueError("emission-request-contract")
+    if decode and not re.fullmatch(r"[0-9a-f]{64}", request["expected_decoded_sha256"]):
+        raise ValueError("emission-decode-result-pin")
     for key in ("tool_apk", "manifest"):
         pin = request[key]
         if set(pin) != {"path", "sha256"} or digest(pin["path"]) != pin["sha256"]:
@@ -80,6 +90,8 @@ def load_request(path, *, refresh_repo=False):
     files = manifest["files"]
     if request["request"] not in files:
         raise ValueError("emission-request-not-staged")
+    if decode and not DECODE_FILES <= files.keys():
+        raise ValueError("emission-decode-producer-not-staged")
     for name, pin in files.items():
         relative(name)
         if refresh_repo and name.startswith("repo/"):
@@ -202,6 +214,13 @@ def invocation(remote, native, request, attempt):
             "DOTNET_MULTILEVEL_LOOKUP=0",
         ]
         producer = [owner + "owner-code/run_android.py", remote + "/" + request["request"], runtime, native]
+    elif request.get("operation") == BUNDLE_DECODE:
+        producer = [
+            owner + "accepted-output/bundle_decode_benchmark.py",
+            remote + "/" + request["request"],
+            remote + "/" + DECODE_BASELINE,
+            remote + "/" + attempt + "/decode.json",
+        ]
     else:
         producer = [
             owner + "accepted-output/bundle_preload.py",
@@ -240,12 +259,14 @@ def invocation(remote, native, request, attempt):
     ]
 
 
-def collect(phone, state, destination, *, code_output=None, failed=False):
+def collect(phone, state, destination, *, code_output=None, decode=False, failed=False):
     """Small receipts only; generated bundles remain on their device filesystem."""
     result = {}
     attempt = state["attempt"]
     receipts = {"thermal": attempt + "/thermal.json"}
-    if code_output is None:
+    if decode:
+        receipts["decode"] = attempt + "/decode.json"
+    elif code_output is None:
         receipts.update(emission=attempt + "/output/result.json", progress=attempt + "/output/emitted/progress.json")
     else:
         receipts.update(
@@ -326,6 +347,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     started = time.monotonic()
     request = json.loads(Path(path).read_bytes())
     signed_code = request.get("operation") == SIGNED_CODE
+    decode = request.get("operation") == BUNDLE_DECODE
     done = Path(request["done_file"])
     root = Path(os.environ["LAB_CANONICAL_ROOT"]).resolve()
     if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(root / "work"):
@@ -340,8 +362,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     (destination / ".prune-keep").touch()
     state_path = destination / "device-state.json"
     result = dict(success=False, device_accepted=False)
-    if signed_code:
-        result["operation"] = SIGNED_CODE
+    if signed_code or decode:
+        result["operation"] = request["operation"]
     else:
         result.update(typed_load_accepted=False, record_workers=1)
     device = phone = state = None
@@ -509,6 +531,15 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                     and converter.get("input_assemblies") == backend.get("stripped_assemblies")
                     and "data/Metadata/global-metadata.dat" in converter.get("files", {})
                     and "measurements" in result
+                    and "thermal" in result
+                )
+            elif decode:
+                result.update(collect(phone, state, destination, decode=True))
+                report = result.get("decode", {})
+                result["success"] = (
+                    observed.returncode == 0
+                    and report.get("blocks") == request["expected_blocks"]
+                    and report.get("decoded_sha256") == request["expected_decoded_sha256"]
                     and "thermal" in result
                 )
             else:

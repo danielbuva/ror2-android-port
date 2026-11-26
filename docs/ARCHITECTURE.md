@@ -6201,6 +6201,12 @@ must dispose of them after use. Runner finalization sleeps the display and prune
 before publishing the terminal file. Current staging refuses adopted storage;
 host fixtures establish lifecycle contracts, not phone or gameplay acceptance.
 
+The same owner accepts a `bundle-decode` request for a retained UnityFS bundle.
+`bundle_decode_benchmark.py` compares the pinned baseline and candidate
+decoder on each block, tracks CPU time and peak RSS, and returns a decoded hash
+and block count. The runner verifies those against the request and owns thermal
+supervision, receipt collection and scratch cleanup.
+
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner

@@ -161,6 +161,18 @@ storage and display owners.
 The current runtime staging supports configured internal-only devices; adopted
 storage is refused without an internal-storage fallback.
 
+For a paired UnityFS decoder benchmark, set `operation` to `bundle-decode`
+and replace `expected_records` with `expected_blocks` and
+`expected_decoded_sha256`. The latter pins the SHA-256 of the concatenated
+decoded blocks. Set `request` to the staged bundle path and provide the exact
+`retained_tool_sha256`. The manifest includes `baseline-unity_bundle.py` from
+the baseline revision and the candidate's tracked `bundle_decode_benchmark.py`,
+`unity_bundle.py` and `phone_runner.py` under
+`repo/tools/phone-build/accepted-output/`. The supervised child decodes each
+block with both versions in alternating order and requires equal bytes. Only
+the receipt is written. It records per-decoder CPU time, elapsed time and peak
+RSS. The runner retains the thermal trace and removes the staged inputs.
+
 Before a new producer qualification, repin the existing manifest explicitly:
 
 ```
