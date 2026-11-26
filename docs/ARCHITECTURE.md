@@ -8152,11 +8152,13 @@ Device aim, firing and hit-reaction presentation remain separate checks.
 `./dev editor --target lab --action enemy-material-audit` inventory. It reads
 native-provider body/projectile candidates and the prepared session's registered
 effect prefabs, including inactive renderer slots, Billboard materials, particle
-meshes and trails. Private receipts retain source keywords, texture bindings and
-recovered-resource coverage. It does not initialize native catalogs, mutate
-materials or establish Android shader support or visual parity. Setup requires
-the prepared lab project and generated catalog; completion retains a private
-editor receipt and adds no runtime state.
+meshes and trails. It also resolves the Titan pre-fist projectile's addressed
+ghost and the Vagrant default skin's addressed body material, and inspects the
+direct Mercenary Expose and Acrid disease impact effects. The audit selects
+recovered resources from saved source keywords, as the runtime owner does.
+Setup requires the prepared lab project and generated catalog. The private
+editor receipt records typed bindings and resource coverage. Android rendering
+and pixel attribution require matched captures.
 
 `WholeCatalogHost.AuditBodyAnimations` owns the current exact-editor
 `./dev editor --target lab --action body-animation-audit` census. It identifies
