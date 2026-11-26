@@ -3279,7 +3279,10 @@ Portable requests can omit `serial` and `adopted_install`. Existing requests
 can embed `serial` and assert adopted-only placement with `adopted_install: true`.
 The dispatcher grants a device first; the child takes the canonical atomic
 lease before ADB, sources the pinned environment and stops Unity's port-5038
-ADB server. Its request selects the canonical checkout, private output,
+ADB server. If discovery fails before the device context opens, the runner
+releases its lease and writes a failed receipt. Once a device context opens,
+the runner requires verified idle cleanup before releasing the lease.
+Its request selects the canonical checkout, private output,
 workstream, disposable package, APK path/hash, duration and optional targeted-touch
 JSON. The same workload uses the selected device's configured storage profile:
 adopted storage on the main Nova and internal storage on the second Nova.
