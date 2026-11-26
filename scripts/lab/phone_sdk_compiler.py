@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import time
 
 from phone_managed_compile import INPUTS, RUNTIMES, sha
 from public_transform_tools import GLOBALS
@@ -90,8 +91,14 @@ class SdkCompiler:
             + "\n"
         )
         log = assembly.with_suffix(".compile.log")
+        receipt = assembly.with_suffix(".compile.process.json")
+        started = time.monotonic()
+        exit_code = None
         with log.open("w") as stream:
-            result = subprocess.run(self.command + ["@" + str(rsp)], env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=180)
-        if result.returncode:
+            try:
+                exit_code = subprocess.run(self.command + ["@" + str(rsp)], env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=180).returncode
+            finally:
+                receipt.write_text(json.dumps({"exit_code": exit_code, "seconds": time.monotonic() - started}) + "\n")
+        if exit_code:
             diagnostics = log.read_text().strip().splitlines()[-6:]
             raise RuntimeError(f"SDK Roslyn failed for {assembly.name} ({log}): " + "\n".join(diagnostics))
