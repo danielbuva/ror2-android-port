@@ -18,6 +18,29 @@ import java.util.Locale;
 /** Installs a completed owner build without uninstalling or touching game data. */
 public final class OwnerInstaller {
     public static final String STATUS = "owner-install";
+    // The framework-owned intent is process-local and handled on the main thread.
+    // Persist only session/status; never serialize or manufacture a consent intent.
+    private static String confirmationSession;
+    private static Intent pendingConfirmation;
+    private static boolean confirmationOpened;
+
+    static boolean hasConfirmation(Context app) {
+        return pendingConfirmation != null && !confirmationOpened && "AWAITING_CONFIRMATION".equals(state(app))
+            && confirmationSession.equals(app.getSharedPreferences(STATUS, 0).getString("session", ""));
+    }
+
+    static void openConfirmation(Context activity) {
+        if (!hasConfirmation(activity)) return;
+        try {
+            activity.startActivity(pendingConfirmation);
+        } catch (RuntimeException unavailable) {
+            status(activity, "AWAITING_CONFIRMATION", "Android confirmation could not open. Tap Open Android install confirmation to retry the existing session.");
+            return;
+        }
+        confirmationOpened = true;
+        pendingConfirmation = null;
+        status(activity, "AWAITING_CONFIRMATION", "Complete the Android install confirmation, then return here.");
+    }
 
     public static String state(Context app) {
         return app.getSharedPreferences(STATUS, 0).getString("state", "IDLE");
@@ -29,6 +52,9 @@ public final class OwnerInstaller {
 
     public static void clearTerminalStatus(Context app) {
         if (busy(app) || OwnerAlphaInstall.pending(app)) throw new IllegalStateException("Installation or profile recovery is pending");
+        confirmationSession = null;
+        pendingConfirmation = null;
+        confirmationOpened = false;
         app.getSharedPreferences(STATUS, 0).edit().putString("state", "IDLE").putString("status", "").putString("session", "").commit();
     }
 
@@ -237,13 +263,30 @@ public final class OwnerInstaller {
             diagnostic(app, null, code == PackageInstaller.STATUS_PENDING_USER_ACTION ? "pending-user-action" : code == PackageInstaller.STATUS_SUCCESS ? "success" : code == PackageInstaller.STATUS_FAILURE ? "failure" : "unknown", matches);
             if (!matches) return;
             if (code == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                if (!"INSTALLING".equals(state(app)) && !"AWAITING_CONFIRMATION".equals(state(app))) return;
+                if (!session.equals(confirmationSession)) {
+                    confirmationSession = session;
+                    pendingConfirmation = null;
+                    confirmationOpened = false;
+                }
+                if (confirmationOpened) return;
                 Intent confirmation = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-                if (confirmation == null) { status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; the existing install session is retained. No second session will be created."); return; }
-                status(app, "AWAITING_CONFIRMATION", "Confirm installation in Android, then return here.");
-                confirmation.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                try { app.startActivity(confirmation); }
-                catch (RuntimeException error) { status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; existing session retained: " + error.getMessage()); }
-            } else if (code == PackageInstaller.STATUS_SUCCESS) {
+                if (confirmation != null) pendingConfirmation = confirmation;
+                if (pendingConfirmation == null) {
+                    status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; the existing install session is retained. No second session will be created.");
+                    return;
+                }
+                status(app, "AWAITING_CONFIRMATION", "Android confirmation required. If the prompt is not visible, return to the installer and tap Open Android install confirmation.");
+                ToolHostActivity visible = ToolHostActivity.activeForConfirmation();
+                if (visible != null) openConfirmation(visible);
+                // Otherwise the ongoing build notification returns the owner here.
+                // A visible button also works when notifications are disabled.
+                return;
+            }
+            confirmationSession = null;
+            pendingConfirmation = null;
+            confirmationOpened = false;
+            if (code == PackageInstaller.STATUS_SUCCESS) {
                 if (OwnerAlphaInstall.pending(app)) {
                     status(app, "VERIFYING_PROFILE", "Verifying installed identity and retained profiles/settings…");
                     if (!OwnerBuildService.isRunning()) OwnerBuildService.launch(app, "install-verify");

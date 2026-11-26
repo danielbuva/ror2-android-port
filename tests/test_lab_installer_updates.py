@@ -770,7 +770,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             patch.object(phone, "ui_for", return_value=app),
         ):
             phone.allow_visible_install_permission()
-        tap.assert_called_once_with("Install verified owner build")
+        tap.assert_called_once_with("Reconstruct and install verified game")
         self.assertEqual(
             [c.args for c in shell.call_args_list],
             [
@@ -2021,13 +2021,17 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         first_install = phone.installed.call_args_list[0]
         self.assertEqual(first_install.args, (1,))
         self.assertEqual(first_install.kwargs, {"require_pending_prompt": True})
-        events = [(c[0], c.args) for c in phone.mock_calls if c[0] in ("wait_state", "allow_visible_install_permission", "passed", "installed")]
+        events = [(c[0], c.args) for c in phone.mock_calls if c[0] in ("read", "tap", "allow_visible_install_permission", "passed", "installed")]
         self.assertEqual(
-            events[:5],
+            events[:9],
             [
-                ("wait_state", ({"READY"},)),
+                ("read", ("update-request.json",)),
+                ("read", ("install-checkpoint.json",)),
                 ("allow_visible_install_permission", ()),
+                ("read", ("update-request.json",)),
+                ("read", ("install-checkpoint.json",)),
                 ("passed", ("install-unknown-apps-visible",)),
+                ("tap", ("Reconstruct and install verified game",)),
                 ("installed", (1,)),
                 ("passed", ("pending-user-action-visible",)),
             ],

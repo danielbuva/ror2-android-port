@@ -64,9 +64,8 @@ class FlowMetrics:
     STAGES = (
         "fresh-installer",
         "synthetic-provision-and-check",
-        "baseline-reconstruction",
         "visible-install-permission",
-        "baseline-install",
+        "baseline-reconstruct-and-install",
         "seed-retention-witness",
         "check-for-updates",
         "in-place-update",
@@ -1618,8 +1617,9 @@ class Phone:
 
     def allow_visible_install_permission(self):
         self.require_ungranted_install_permission()
-        # The app, not an adb deep link, must open its own per-app Settings page.
-        self.tap("Install verified owner build")
+        # An attempted reconstruction must open this installer's settings
+        # without issuing conversion work, not an adb deep link.
+        self.tap("Reconstruct and install verified game")
         settings = "com.android.settings"
         deadline = time.monotonic() + 30
         identity = settings_activity_summary(None, None)
@@ -1880,14 +1880,21 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
         set_phase("baseline-N-install")
         phone.storage()
         if qualify_install_prompts:
-            with stage("baseline-reconstruction"):
-                phone.tap("Reconstruct and install verified game")
-                phone.wait_state({"READY"})
             with stage("visible-install-permission"):
+                request = phone.read("update-request.json")
+                checkpoint = phone.read("install-checkpoint.json")
                 phone.allow_visible_install_permission()
+                if (
+                    phone.read("update-request.json") != request
+                    or phone.read("install-checkpoint.json") != checkpoint
+                    or "/public-tools.zip" in service.requests
+                ):
+                    raise Failure("install-permission-return-started-reconstruction")
                 passed("install-unknown-apps-visible")
-            with stage("baseline-install"):
-                phone.tap("Install verified owner build")
+            # With permission already granted, the build automatically enters
+            # PackageInstaller. READY is transient, not a separate timed stage.
+            with stage("baseline-reconstruct-and-install"):
+                phone.tap("Reconstruct and install verified game")
                 first = phone.installed(1, require_pending_prompt=True)
                 passed("pending-user-action-visible")
         else:
