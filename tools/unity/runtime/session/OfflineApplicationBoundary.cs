@@ -11,6 +11,13 @@ using UnityEngine;
 // This screen is not the stock menu and creates no platform user or stock profile.
 public sealed partial class PortSession
 {
+    [Serializable]
+    public sealed class CoverageGraphicsReport
+    {
+        public float widthScale, heightScale;
+        public bool shadowsDisabled, cameraAllowsDynamicResolution, cameraPostProcessingDisabled;
+    }
+
     // Shared with survivor/loadout UI, recovered HUD, settings and session restart.
     bool offlineStartVisible, offlineStartSelected, returnToOfflineMenu;
     Vector2 offlineRosterScroll;
@@ -134,6 +141,9 @@ public sealed partial class PortSession
         int priorDisplayFrameRate, requestedDisplayFrameRate;
         bool ownsDisplayPreference;
         bool appliedHighRefreshRate;
+        bool ownsCoverageGraphics;
+        ShadowQuality priorShadows;
+        float priorWidthScale, priorHeightScale;
 #if UNITY_ANDROID && !UNITY_EDITOR
         AndroidJavaObject displayPreference;
 #endif
@@ -150,15 +160,30 @@ public sealed partial class PortSession
                 priorDisplayFrameRate = Application.targetFrameRate;
                 ownsDisplayPreference = true;
             }
-            requestedDisplayFrameRate = appliedHighRefreshRate ? 300 : 60;
+            requestedDisplayFrameRate = appliedHighRefreshRate && !ownsCoverageGraphics ? 300 : 60;
             Application.targetFrameRate = requestedDisplayFrameRate;
 #if UNITY_ANDROID && !UNITY_EDITOR
             if (displayPreference == null)
                 using (var unity = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
                 using (var activity = unity.GetStatic<AndroidJavaObject>("currentActivity"))
                     displayPreference = new AndroidJavaObject("dev.ror2lab.diagnostics.LabDisplayPreference", activity);
-            displayPreference.Call("apply", appliedHighRefreshRate);
+            displayPreference.Call("apply", appliedHighRefreshRate && !ownsCoverageGraphics);
 #endif
+        }
+        void PrepareCoverageGraphics()
+        {
+            if (!coordinator.r.diagnosticLowLoadCoverage || ownsCoverageGraphics)
+                return;
+            coordinator.Check(SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Vulkan,
+                              "Low-load coverage requires Vulkan dynamic resolution");
+            priorShadows = QualitySettings.shadows;
+            priorWidthScale = ScalableBufferManager.widthScaleFactor;
+            priorHeightScale = ScalableBufferManager.heightScaleFactor;
+            QualitySettings.shadows = ShadowQuality.Disable;
+            ScalableBufferManager.ResizeBuffers(.5f, .5f);
+            coordinator.r.coverageGraphics = new CoverageGraphicsReport();
+            ownsCoverageGraphics = true;
+            ReapplyDisplayPreference();
         }
         public void RestoreGameplayFrameRate(int priorFrameRate)
         {
@@ -174,6 +199,12 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+            if (ownsCoverageGraphics)
+            {
+                QualitySettings.shadows = priorShadows;
+                ScalableBufferManager.ResizeBuffers(priorWidthScale, priorHeightScale);
+                ownsCoverageGraphics = false;
+            }
 #if UNITY_ANDROID && !UNITY_EDITOR
             if (displayPreference != null)
             {
@@ -272,7 +303,10 @@ public sealed partial class PortSession
         public IEnumerator AwaitOfflineRunStart(SessionConfig cfg)
         {
             if (cfg.integratedWorld && cfg.integratedResults)
+            {
                 coordinator.PrepareOfflineSettings();
+                PrepareCoverageGraphics();
+            }
             if (string.IsNullOrEmpty(coordinator.r.selectedSurvivor))
                 coordinator.r.selectedSurvivor = pendingOfflineSurvivor;
             // Developer launches begin with the selected survivor and the stored loadout.

@@ -374,6 +374,20 @@ public sealed partial class PortSession
                                                     sourceSurvivor,
                                                     nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle,
                                                     coordinator.stageGeometryScene);
+                var coverageGraphics = coordinator.r.coverageGraphics;
+                if (coverageGraphics != null)
+                {
+                    var camera = display.camera;
+                    camera.allowDynamicResolution = true;
+                    var postProcessing = camera.GetComponent<UnityEngine.Rendering.PostProcessing.PostProcessLayer>();
+                    if (postProcessing)
+                        postProcessing.enabled = false;
+                    coverageGraphics.cameraAllowsDynamicResolution = camera.allowDynamicResolution;
+                    coverageGraphics.cameraPostProcessingDisabled = !postProcessing || !postProcessing.enabled;
+                    coverageGraphics.widthScale = ScalableBufferManager.widthScaleFactor;
+                    coverageGraphics.heightScale = ScalableBufferManager.heightScaleFactor;
+                    coverageGraphics.shadowsDisabled = QualitySettings.shadows == ShadowQuality.Disable;
+                }
                 if (bindSelectedSkin)
                 {
                     float assetDeadline = Time.realtimeSinceStartup + 15f;

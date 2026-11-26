@@ -263,6 +263,8 @@ public sealed partial class PortSession : MonoBehaviour
         public string[] developerItemGrants, developerEquipmentSequence;
         public DebugAccelerationOptions debugOptions;
         public DebugAccelerationReport debugAcceleration;
+        public bool diagnosticLowLoadCoverage;
+        public CoverageGraphicsReport coverageGraphics;
         public MoonCatalogSpec moonCatalog;
         public bool integratedResults;
         public IntegratedResultsReport results;
@@ -700,6 +702,7 @@ public sealed partial class PortSession : MonoBehaviour
         {
             string selectionJson = File.ReadAllText(path);
             r = JsonUtility.FromJson<SessionReport>(selectionJson);
+            r.coverageGraphics = null;
             if (r.attempt != config.attempt)
                 yield break;
             // The selector requests observation; only a successful native arm owns
@@ -868,6 +871,15 @@ public sealed partial class PortSession : MonoBehaviour
         {
             r.phase = "direct-stage-diagnostic-refused";
             r.firstFailure = "Direct stage selection requires a lab free-play session with integrated stages";
+            r.firstFailurePhase = r.phase;
+            Save();
+            yield break;
+        }
+        if (r.diagnosticLowLoadCoverage &&
+            (Application.identifier != "dev.ror2lab.arm64" || !config.integratedWorld || !config.integratedResults || !r.freePlay || !IsPlayableSpine()))
+        {
+            r.phase = "low-load-coverage-refused";
+            r.firstFailure = "Low-load coverage requires the integrated lab free-play session";
             r.firstFailurePhase = r.phase;
             Save();
             yield break;

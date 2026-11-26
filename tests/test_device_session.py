@@ -354,6 +354,37 @@ class DeviceSessionTests(unittest.TestCase):
             runner.save(self.request_file, dict(request, start_from_menu=False, selection=selection))
             self.assertEqual(runner.load_request(self.request_file)["selection"], selection)
 
+    def test_low_load_coverage_requires_segmented_play(self):
+        selection = dict(attempt="embedded", diagnosticStage="goolake", diagnosticLowLoadCoverage=True)
+        request = dict(self.request, selection=selection, enforce_soc_ceiling=True, coverage_segment_seconds=1)
+        with mock.patch.object(device_module, "validate_apk_identity"), mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"):
+            runner.save(self.request_file, request)
+            self.assertEqual(runner.load_request(self.request_file)["selection"], selection)
+            for change in (
+                dict(selection=dict(selection, diagnosticLowLoadCoverage="true")),
+                dict(selection=dict(selection, detailedVisualDiagnostics=True)),
+                dict(pacing_diagnostics=True),
+            ):
+                runner.save(self.request_file, dict(request, **change))
+                with self.assertRaisesRegex(ValueError, "Low-load coverage"):
+                    runner.load_request(self.request_file)
+            runner.save(self.request_file, dict(self.request, selection=selection))
+            with self.assertRaisesRegex(ValueError, "Low-load coverage"):
+                runner.load_request(self.request_file)
+
+    def test_low_load_coverage_verifies_effective_camera_settings(self):
+        graphics = dict(widthScale=0.5, heightScale=0.5, shadowsDisabled=True, cameraAllowsDynamicResolution=True, cameraPostProcessingDisabled=True)
+        world = dict(settings=dict(highRefreshRate=True), performance=dict(requestedFrameRate=60), coverageGraphics=graphics)
+        coverage = dict(low_load_requested=True)
+        with mock.patch.object(runner, "wait_for_settings_report", return_value=world):
+            result = runner.wait_for_world_start(mock.Mock(), mock.Mock(), "7", self.output, "report", "attempt", coverage)
+            self.assertIs(result, world)
+            self.assertEqual(coverage["requested_frame_rate"], 60)
+            self.assertEqual(coverage["graphics"], graphics)
+            graphics["cameraPostProcessingDisabled"] = False
+            with self.assertRaisesRegex(RuntimeError, "low-load coverage graphics"):
+                runner.wait_for_world_start(mock.Mock(), mock.Mock(), "7", self.output, "report", "attempt", coverage)
+
     def test_segmented_direct_entry_requires_matching_world_and_cap(self):
         request = dict(self.request, selection=dict(diagnosticStage="goolake"), coverage_segment_seconds=1, duration_seconds=0)
         device, thermal = mock.Mock(package=request["package"]), mock.Mock()

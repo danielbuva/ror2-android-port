@@ -3172,8 +3172,16 @@ device acceptance; host fixtures exercise the authored flow and refusal paths.
 `android/Assets/LabDiagnostics.cs` (`LabDiagnostics`) requests 300 FPS in `Start`,
 before its first frame yield and the lab menu, for the player process lifetime.
 `NovaInputBoundary` captures that prior value, requests 300 FPS during gameplay
-and restores the captured value on teardown. This is a request; actual FPS depends on device load.
-It replaces `snapshot.json` on its existing periodic schedule.
+and restores the captured value on teardown. Actual FPS depends on device load.
+`LabDiagnostics` replaces `snapshot.json` on its existing periodic schedule.
+
+For the explicit lab-only low-load coverage selector, `OfflineApplicationSession`
+requests 60 FPS and applies half-scale Vulkan buffers and disabled shadows before
+entering the stage. `NovaInputSession` enables dynamic resolution on the owned
+gameplay camera and disables its post-processing layer before the view is ready.
+The shared runner verifies the effective settings in the ready-world report.
+The selector marks the run assisted. Session teardown restores the captured
+global graphics settings, and the owned camera is destroyed with its normal owner.
 Periodic snapshots retain live scalar, timing and controller facts; full scene
 hierarchy/material discovery and assembly enumeration run only for startup or
 explicit `./dev diagnostics --scene-details`, `--subtree` or `--fields` inspection.

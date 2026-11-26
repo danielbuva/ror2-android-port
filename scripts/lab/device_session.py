@@ -140,11 +140,16 @@ def load_request(path, serial=None):
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
         raise ValueError("start_from_menu requires the launch workload")
+    selection = value.get("selection")
+    low_load = selection.get("diagnosticLowLoadCoverage", False) if isinstance(selection, dict) else False
+    if type(low_load) is not bool or (
+        low_load and ("coverage_segment_seconds" not in value or value.get("pacing_diagnostics") or selection.get("detailedVisualDiagnostics"))
+    ):
+        raise ValueError("Low-load coverage requires segmented play without pacing or detailed visual diagnostics")
     if "coverage_segment_seconds" in value:
         seconds = value["coverage_segment_seconds"]
         if type(seconds) is not int or not 0 < seconds <= value["duration_seconds"]:
             raise ValueError("coverage_segment_seconds must be within the observation duration")
-        selection = value.get("selection")
         diagnostic_stage = selection.get("diagnosticStage") if isinstance(selection, dict) else None
         direct_entry = isinstance(diagnostic_stage, str) and bool(diagnostic_stage.strip())
         menu_start = value.get("start_from_menu", False)
@@ -895,7 +900,7 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
 
     menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240, report_id=report_id, attempt=attempt)
     save(output / "start-menu.json", menu)
-    if coverage is not None:
+    if coverage is not None and not coverage.get("low_load_requested"):
         menu = set_coverage_refresh(device, thermal, pid, menu, report_id)
         save(output / "coverage-settings.json", menu)
     if thermal.error:
@@ -928,9 +933,20 @@ def wait_for_world_start(device, thermal, pid, output, report_id, attempt, cover
     if coverage is not None:
         requested = world.get("performance", {}).get("requestedFrameRate")
         high_refresh = world["settings"]["highRefreshRate"]
-        if requested != 60 or high_refresh is not False:
+        if coverage.get("low_load_requested"):
+            graphics = world.get("coverageGraphics") or {}
+            if (
+                requested != 60
+                or graphics.get("widthScale") != 0.5
+                or graphics.get("heightScale") != 0.5
+                or any(graphics.get(key) is not True for key in ("shadowsDisabled", "cameraAllowsDynamicResolution", "cameraPostProcessingDisabled"))
+            ):
+                raise RuntimeError("Ready world did not verify the low-load coverage graphics settings")
+            coverage.update(label="low-load coverage", requested_frame_rate=requested, graphics=graphics)
+        elif requested != 60 or high_refresh is not False:
             raise RuntimeError("Ready world did not verify the 60 FPS cap for coverage")
-        coverage.update(label="60 FPS cap (coverage)", requested_frame_rate=requested, high_refresh=high_refresh)
+        else:
+            coverage.update(label="60 FPS cap (coverage)", requested_frame_rate=requested, high_refresh=high_refresh)
     return world
 
 
@@ -1120,6 +1136,8 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
     segment_seconds = request.get("coverage_segment_seconds")
     next_cooldown = segment_seconds
     coverage = result.setdefault("coverage", {"cooldowns": []}) if segment_seconds else None
+    if coverage is not None and request.get("selection", {}).get("diagnosticLowLoadCoverage"):
+        coverage["low_load_requested"] = True
     if "input_script" in request:
         import touch_gesture
 
