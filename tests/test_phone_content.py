@@ -94,6 +94,48 @@ class PhoneContentTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "SHA-256"):
                 native_content_request(request_path)
 
+    def test_native_material_receipt_binds_loaded_dependencies_and_references(self):
+        with tempfile.TemporaryDirectory() as root:
+            attempt = Path(root).resolve()
+            pins = []
+            for name in ("materials", "shaders"):
+                bundle = attempt / name
+                bundle.write_text(name)
+                pins.append({"path": str(bundle), "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest()})
+            material = {
+                "shader": "Authored/Control",
+                "textures": [{"property": "_Base", "texture": "base"}, {"property": "_Normal", "texture": "normal"}],
+            }
+            asset = {"name": "assets/fixture/control.mat", "type": "Material", "material": material}
+            request = pins[0] | {"dependencies": [pins[1]], "assets": [asset]}
+            request_path = attempt / "native-content-request.json"
+            request_path.write_text(json.dumps(request))
+            report = pins[0] | {
+                "dependencies": [pins[1]],
+                "unity": "2021.3.45f2",
+                "source_commit": "c" * 40,
+                "request_sha256": hashlib.sha256(request_path.read_bytes()).hexdigest(),
+                "count": 1,
+                "unloaded": True,
+                "assets": [asset | {"loaded_name": "control", "loaded_type": "UnityEngine.Material"}],
+            }
+            output = attempt / "native-content-check.json"
+            output.write_text(json.dumps(report))
+            self.assertEqual(validate_native_content(attempt, "c" * 40)["count"], 1)
+            for mutate in (
+                lambda r: r["dependencies"].clear(),
+                lambda r: r["assets"][0]["material"].update(shader="Hidden/InternalErrorShader"),
+                lambda r: r["assets"][0]["material"]["textures"].pop(),
+            ):
+                changed = copy.deepcopy(report)
+                mutate(changed)
+                output.write_text(json.dumps(changed))
+                with self.assertRaisesRegex(RuntimeError, "dependencies|Material"):
+                    validate_native_content(attempt, "c" * 40)
+            Path(pins[1]["path"]).write_text("changed dependency")
+            with self.assertRaisesRegex(RuntimeError, "SHA-256"):
+                native_content_request(request_path)
+
     def test_editor_runner_requires_native_content_report_when_requested(self):
         def launched(args, *, env, **kwargs):
             oracle = Path(env["ROR2_PHONE_ORACLE_REPORT"])
