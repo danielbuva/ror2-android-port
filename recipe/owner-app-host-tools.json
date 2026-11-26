@@ -203,8 +203,93 @@
     "tools/owner-build/licenses/Roslyn-LICENSE.txt": "ae48df11a335dc1a615f4f938b69cba73bcf4485c4f97af49b38efb0f216353b"
   },
   "python_version": "3.14.8",
+  "python_android_distribution": {
+    "url": "https://www.python.org/ftp/python/3.14.8/python-3.14.8-aarch64-linux-android.tar.gz",
+    "sha256": "11324313957da3736f44e90257304d288864321a4dd376ed0cc35a54eacf9a33",
+    "extensions": {
+      "_asyncio.cpython-314-aarch64-linux-android.so": "e7ca5c385033af6acd877615b544cdfc2c72dd96b221e0fa8055b80f2f6b7edb",
+      "_ctypes.cpython-314-aarch64-linux-android.so": "dabc48bcfaac67c285f171595915e964d9e1be0e323b31ba40e12c10d5827f2d",
+      "_queue.cpython-314-aarch64-linux-android.so": "ded4f84ab893a47edab6a4d5f2db4213c9c1356937b741043e5465783556a64c"
+    }
+  },
+  "python_imports": {
+    "entries": [
+      "run_profile.py",
+      "repo/scripts/lab/phone_apk.py",
+      "repo/scripts/lab/public_transform_tools.py",
+      "repo/tools/phone-build/accepted-output/bundle_decode_benchmark.py",
+      "repo/tools/phone-build/accepted-output/bundle_preload.py",
+      "repo/tools/phone-build/accepted-output/phone_runner.py",
+      "repo/tools/phone-build/accepted-output/sdk_package.py",
+      "repo/tools/phone-build/accepted-output/texture_produce.py",
+      "repo/tools/phone-build/accepted-output/unity_bundle.py",
+      "repo/tools/phone-build/owner-apk/build_owner_apk.py",
+      "repo/tools/phone-build/owner-apk/updates.py",
+      "repo/tools/phone-build/owner-code/managed.py",
+      "repo/tools/phone-build/owner-code/produce.py",
+      "repo/tools/phone-build/owner-code/run_android.py"
+    ],
+    "entry_paths": {
+      "repo/scripts/lab/public_transform_tools.py": "repo/scripts/lab"
+    },
+    "release_dispatcher": "repo/tools/phone-build/owner-apk/release_jobs.py",
+    "stdlib_modules": ["_asyncio", "_queue", "ctypes", "resource"],
+    "modules": [
+      "PIL._imaging",
+      "UnityPy",
+      "archspec.cpu",
+      "astc_encoder",
+      "attrs",
+      "brotli",
+      "dnfile",
+      "etcpak",
+      "fsspec",
+      "lz4.frame",
+      "pefile",
+      "texture2ddecoder",
+      "tpk_ar",
+      "yaml"
+    ]
+  },
+  "python_notices": {
+    "IJG-README.txt": "6783159a601b23fb42abbcc9e7f57b89a23ddf39cfa862c364844580520a7b43"
+  },
+  "python_source_wheels": {
+    "astc_encoder_py-0.1.12": {
+      "sha256": "03759ac32804cae32bc238e72f94c5ba27e228507df00816b741f7961f1184f9"
+    },
+    "brotli-1.2.0": {
+      "sha256": "e310f77e41941c13340a95976fe66a8a95b01e783d430eeaf7a2f87e0a57dd0a"
+    },
+    "etcpak-0.9.15": {
+      "sha256": "fe09e32d8aa75b8163832428c3d6df65a51b2b7e0237292c10c1224ca5728a43"
+    },
+    "lz4-4.4.5": {
+      "sha256": "5f0b9e53c1e82e88c10d7c180069363980136b9d7a8306c4dca4f760d60c39f0"
+    },
+    "pillow-12.3.0": {
+      "sha256": "3b8182a766685eaa002637e28b4ec8d6b18819a0c71f579bf0dbaa5830297cce"
+    },
+    "pyyaml-6.0.3": {
+      "pure": true,
+      "sha256": "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f"
+    },
+    "texture2ddecoder-1.0.6": {
+      "sha256": "88f04d8951018ac13b8dacd07e57e8adad4a6f1cfe5509646e8a1020346a81ca"
+    },
+    "tpk_ar-0.2.4": {
+      "pure": true,
+      "sha256": "d64897e5a0bcddd58e8a7d4dd922f372da984a0f98bc3b460ec869aab906ee78"
+    },
+    "unitypy-1.25.3": {
+      "sha256": "41b3e830a04469dfabeadc097f59ba7008e289864604728e1ad623c22d7c30dc"
+    }
+  },
   "python_wheels": {
+    "archspec-0.2.6-py3-none-any.whl": "22463371fe8e9fa92fa144bf320cb445373a99f2ca6a5914c890e0c0b7816f8f",
+    "attrs-26.1.0-py3-none-any.whl": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309",
     "dnfile-0.18.0-py3-none-any.whl": "7579fe2d6bb1d854aa154929c309fbf34e70b622053a043a51d42f079fad1772",
+    "fsspec-2026.7.0-py3-none-any.whl": "b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279",
     "pefile-2024.8.26-py3-none-any.whl": "76f8b485dcd3b1bb8166f1128d395fa3d87af26360c2358fb75b80019b957c6f"
   },
   "schema": 1,

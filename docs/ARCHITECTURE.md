@@ -927,8 +927,7 @@ hash-matched original Wisp schema, SDK Material/resource records and the shader
 owner's standard record pack. Its Cube and diagnostics preloads follow the
 authored LabBuild policy. No generated project, private schema cache or Editor
 fixture output is a production input. Registry metadata inspection lazily uses
-the pinned `dnfile`/`pefile` dependencies. The managed app-host builder installs
-those wheels and notices from its explicit backend inputs into the isolated
+the pinned `dnfile`/`pefile` dependencies in the managed app-host's isolated
 CPython dependency directory, with a hash-bound Android `mmap` provider.
 The registry projects only the raw CLR metadata consumed
 by serialization and closes each PE immediately. It releases SDK and original
@@ -2853,8 +2852,12 @@ changes the existing refusal probe or reports security qualification.
 `tools/phone-build/managed-host/` owns the connected experimental app-host
 support. `stage.py` checks the public source/native metadata contract and stages
 owner-supplied SDK inputs and an optional private backend plan into canonical
-ignored work, including shared worktree storage. Its builder checks the plan's
-provider bytes and owns the separate phone-built APK.
+ignored work, including shared worktree storage. `build_python_wheels.py` builds
+the Android wheelhouse on the host from pinned public sources.
+`build_fixture.py` verifies the wheelhouse, stages Python data and notices,
+and installs extensions through the APK's hashed native-library inventory.
+`check_python.py` checks staged entry-point imports against the same manifest,
+including the producers registered by the release dispatcher.
 `NativePythonHost.c` selects the existing interpreter's isolated configuration;
 `NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
 `NativeJavaHost.c` invokes the separately acquired headless JDK through JNI;
