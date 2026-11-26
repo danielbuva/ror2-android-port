@@ -268,6 +268,9 @@ candidate, retaining the previous record identity in the policy's `selection`
 lineage. Original source and destination stay fixed; unresolved candidates remain
 explicit. Selector discovery compiles only the suppliers actually chosen and
 does not admit their bodies, routes or graph.
+The V30 retained-source recipe supplies canonical records through
+`record_produce.py`. Original script selectors and the pinned editor base
+schema provide managed type hashes in the same producer job.
 
 `bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
 destination triples, separate from advertised container roots/subassets. Local
