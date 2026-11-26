@@ -7060,6 +7060,24 @@ and authored record identities. Original bodies and generated packs stay local.
 | --- | --- |
 | `owner-whole-game-v30-original-native-records.jsonl.gz` | `12fc40399cece246488f785ad2202f38588cb1ab127336b56f63ddeba44f2893` |
 
+## V30 reciprocal prefab records (2026-11-26)
+
+`owner-whole-game-v30-reciprocal-records.json` supplies 3,162 records from
+original PC bundles through `record_produce.py`. It retains the checked
+GameObject component and Transform hierarchy relocations. Managed records
+use the existing properties-hash path with the pinned editor resource.
+Fresh host production matched the staged ledger on persisted bodies,
+complete native types and individual PPtr routes. The composed bundle
+still requires Unity typed load and Android verification.
+
+The provenance, licensing, privacy and sensitive-content review covered
+the original selectors, expected sizes, digests and pointer relocations.
+The recipe contains no serialized bodies, SDK resources or local paths.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-reciprocal-records.json` | `790c63616a6a5f404ef20eaecd193bf9ec9b1afeb66435ca7bc519069eb62b02` |
+
 ## V30 original prefab and managed records (2026-11-26)
 
 Two more original-input profiles supply 608 native prefab records and 4,458
