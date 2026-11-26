@@ -16,6 +16,26 @@ SPEC.loader.exec_module(MANAGED)
 
 
 class OwnerCodeManagedTests(unittest.TestCase):
+    def test_skill_deferred_pcm_selects_main_output_in_the_audio_request(self):
+        for deferred in (False, True):
+            with (
+                self.subTest(deferred=deferred),
+                tempfile.TemporaryDirectory() as temporary,
+                patch.object(MANAGED.audio, "generate_request_contract", side_effect=RuntimeError("request boundary")) as generate,
+            ):
+                root = Path(temporary)
+                with self.assertRaisesRegex(RuntimeError, "request boundary"):
+                    MANAGED.audio_assemblies(root, root, {"wwise_native": root / "native"}, {}, root, root, root, root, {}, {}, pcm_after_skill=deferred)
+                self.assertEqual(
+                    generate.call_args.kwargs,
+                    {
+                        "passive_pcm_capture_requested": True,
+                        "passive_pcm_capture_music_output_requested": not deferred,
+                        "passive_pcm_capture_after_authority_skill_requested": deferred,
+                        "owner_work": None,
+                    },
+                )
+
     def test_nested_python_uses_the_embedded_android_host_abi(self):
         native = "/installed/lib/arm64/"
         runtime = "/private/runtime/python"
