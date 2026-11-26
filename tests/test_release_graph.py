@@ -27,6 +27,53 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_bundle_shader_leaves_resolve_original_and_sdk_sources(self):
+        profile = ROOT / "recipe/owner-v30-bundle-shader-leaves.json"
+        pin = G.digest(profile)
+        rows = []
+        for row in json.loads(profile.read_bytes())["typed_records"]:
+            destination = [row["output"][key] for key in ("bundle", "member", "path_id")]
+            source = row.get("source")
+            original = [source[key] for key in ("path", "member", "path_id")] if source else ["sdk", "Resources/unity_builtin_extra", row["sdk_shader"]]
+            rows.append(dict(destination=destination, source=original, record_source=destination, record="a" * 64))
+
+        graph = G.Graph(ROOT, {})
+        graph.conversion = graph.code_conversion("recipe/owner-code-job-inputs.json")
+        bindings = graph.bundle_bindings(rows, *rows[0]["destination"][:2], source_profiles=[pin])
+        self.assertEqual(bindings["unresolved"], [])
+        self.assertEqual([row["source"] for row in bindings["bindings"]], [row["source"] for row in rows])
+        self.assertEqual([row["supplier"] for row in bindings["bindings"]], [pin] * len(rows))
+        self.assertEqual(len(bindings["suppliers"]), 1)
+        job = graph.jobs["recipe/jobs/owner-v30-bundle-shader-leaves.json"]
+        self.assertEqual(job["outputs"], {})
+        self.assertEqual(set(job["artifacts"]), {"receipt", "objects", "index", "types"})
+        self.assertIn("--compiler-command", job["arguments"])
+        self.assertIn("recipe/jobs/owner-sdk-shader-inputs.json", job["needs"])
+
+    def test_camera_program_packs_resolve_original_records_and_archive(self):
+        for name, count in (("owner-v30-camera-compute.json", 12), ("owner-v30-camera-shaders.json", 24)):
+            with self.subTest(profile=name):
+                profile = ROOT / "recipe" / name
+                pin = G.digest(profile)
+                selection = json.loads(profile.read_bytes())
+                original = selection["source_type"]
+                rows = []
+                for row in selection["typed_records"]:
+                    destination = [row["output"][key] for key in ("bundle", "member", "path_id")]
+                    source = [original["path"], original["member"], row["source_path_id"]]
+                    rows.append(dict(destination=destination, source=source, record_source=destination, record="a" * 64))
+
+                graph = G.Graph(ROOT, {})
+                graph.conversion = graph.code_conversion("recipe/owner-code-job-inputs.json")
+                bindings = graph.bundle_bindings(rows, *rows[0]["destination"][:2], source_profiles=[pin])
+                self.assertEqual(bindings["unresolved"], [])
+                self.assertEqual([row["source"] for row in bindings["bindings"]], [row["source"] for row in rows])
+                self.assertEqual([row["supplier"] for row in bindings["bindings"]], [pin] * count)
+                job = graph.jobs["recipe/jobs/" + name]
+                archive = "${inputs}/acquired/unity-packages/com.unity.postprocessing-2.3.0.tgz"
+                self.assertIn(archive, job["cache_witnesses"])
+                self.assertEqual(job["arguments"][job["arguments"].index("--camera-package") + 1], archive)
+
     def test_install_plan_reports_unbound_producer_inputs(self):
         graph = G.Graph(ROOT, {})
         producer, dependency = "recipe/jobs/fixture.json", "recipe/jobs/dependency.json"
@@ -240,6 +287,44 @@ class ReleaseGraphTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "final player registry"):
                 G.Graph(repo, {}).build(G.digest(profile))
 
+    def test_bundle_preload_binds_staged_outputs_before_catalog_fanin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            recipes = repo / "recipe"
+            recipes.mkdir()
+            staged = []
+            profiles = [
+                ("donor", dict(sources=[], bundle=dict(name="donor")), "catalog_bundle", "payload/donor"),
+                (
+                    "shader",
+                    dict(shaders=[], authored_inputs={}, includes_sha256={}, builtin={}),
+                    "builtin_extra",
+                    "apk/assets/bin/Data/Resources/unity_builtin_extra",
+                ),
+                ("player", dict(project_assemblies=[], outputs=[]), "default_resources", "apk/assets/bin/Data/unity default resources"),
+            ]
+            for name, profile, artifact, _ in profiles:
+                (recipes / f"owner-{name}.json").write_text(json.dumps(profile))
+                staged.append(dict(file=G.Graph.artifact_pin(f"recipe/jobs/owner-{name}.json", artifact)))
+            follower = recipes / "owner-follower.json"
+            follower.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-bundle-preload-release-v1",
+                        profiles=[f"recipe/owner-{name}.json" for name, _, _, _ in profiles],
+                        request=dict(policy=dict(bundle="follower"), staged=staged, managed_inputs={}),
+                    )
+                )
+            )
+            graph = G.Graph(repo, {})
+            job = graph.jobs[graph.build(G.digest(follower))]
+            self.assertEqual(job["request"]["request"]["staged"], staged)
+            for name, _, artifact, output in profiles:
+                dependency = f"recipe/jobs/owner-{name}.json"
+                self.assertIn(dependency, job["needs"])
+                self.assertEqual(graph.jobs[dependency]["artifacts"][artifact], output)
+                self.assertEqual(graph.jobs[dependency]["outputs"][output], output)
+
     def test_catalog_fanin_binds_actual_outputs_and_embedded_bootstrap(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
@@ -283,7 +368,9 @@ class ReleaseGraphTests(unittest.TestCase):
                 target = "apk/assets/bin/Data/registry.assets" if name == "player" else "payload/" + name
                 if name == "final":
                     target = "payload/authored"
-                graph.jobs[name] = dict(script=G.PREFIX + "object_produce.py", outputs={target: "actual/" + name}, artifacts={}, needs=[])
+                output = "actual/" + name
+                artifacts = {"catalog_bundle": output} if name == "final" else {}
+                graph.jobs[name] = dict(script=G.PREFIX + "object_produce.py", outputs={target: output}, artifacts=artifacts, needs=[])
             name = graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
             job = graph.jobs[name]
             self.assertIn(job["script"], J.PRODUCERS)
@@ -421,10 +508,10 @@ class ReleaseGraphTests(unittest.TestCase):
 
             for name, job in graph.jobs.items():
                 index["files"][name] = hashlib.sha256(wire(job)).hexdigest()
-            # Descriptor fixture includes final object layouts and record type tables,
-            # retaining exact closure ordering and source-index serialization.
+            # Descriptor fixture includes final bundles, object layouts, and record
+            # type tables, retaining exact closure ordering and index serialization.
             self.assertEqual(
-                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "9073f8bf0e83bbab85307c0dcb5d625471949ac878e9b2dc8131a5160e84f062"
+                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "1e04a58911f605a1d9991cea5a2e1d553491a5a83050dcf5a5e04ff3a9edadb6"
             )
 
     def test_scene_record_suppliers_close_published_consumers(self):

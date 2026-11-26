@@ -1764,12 +1764,15 @@ def integration_profile_builds(profiles):
 def integration_bundle_metadata(metadata, builds):
     """Assign location owners from explicit AssetBundleBuild declarations, without I/O.
 
-    Mirrors WholeCatalogBuild.Append ownership, not imported dependencies or hashes.
-    Callers supply every explicit build, including presentation and geometry inputs.
+    Mirrors WholeCatalogBuild.Append ownership. The generated whole-game build
+    can contain copies of paths owned by explicit presentation or geometry builds.
     """
     owners = {}
     names = {build["assetBundleName"] for build in builds}
+    fallback = "whole-game-content"
     for build in builds:
+        if build["assetBundleName"] == fallback:
+            continue
         for path in build["assetNames"]:
             key = path.casefold()
             if key in owners:
@@ -1780,7 +1783,7 @@ def integration_bundle_metadata(metadata, builds):
         key = row["path"].casefold()
         if key not in owners:
             paths.setdefault(key, row["path"])
-    names.add("whole-game-content")
+    names.add(fallback)
     for key, path in paths.items():
         if path.lower().endswith(".unity"):
             name = "whole-scene-" + Path(path).stem.lower()
@@ -1788,7 +1791,7 @@ def integration_bundle_metadata(metadata, builds):
                 raise RuntimeError("Scene bundle name collision: " + name)
             names.add(name)
         else:
-            name = "whole-game-content"
+            name = fallback
         owners[key] = name
     return dict(metadata, locations=[dict(row, bundle=owners[row["path"].casefold()]) for row in metadata["locations"]])
 

@@ -7042,6 +7042,137 @@ packs stay local. The selectors include no private paths or account data.
 | `owner-whole-game-source-textures-2.json` | `79d7c7420e3bb918cb86d3f8597682647dc2d46b49676593c45c556425112207` |
 | `owner-whole-game-source-textures.json` | `b5d68665f59b2d27ea3a89d01db5fa5bcfa55c646ea8f16ce5b281003629b816` |
 
+## V30 original native records (2026-11-26)
+
+`owner-whole-game-v30-original-native-records.jsonl.gz` supplies 12,332 records
+from 244 original PC bundles through `record_produce.py`. The release graph
+binds them by original bundle, serialized member and path ID. Bundle
+preparation still resolves the final PPtr routes and checks serialized types.
+Host readback matched all 12,332 relocated bodies and their complete native
+types against the V30 canonical bundle. Device acceptance requires the full
+graph.
+
+The provenance, licensing, privacy and sensitive-content review covered the
+decompressed recipe. It contains original selectors, size and SHA-256 pins,
+and authored record identities. Original bodies and generated packs stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-original-native-records.jsonl.gz` | `12fc40399cece246488f785ad2202f38588cb1ab127336b56f63ddeba44f2893` |
+
+## V30 reciprocal prefab records (2026-11-26)
+
+`owner-whole-game-v30-reciprocal-records.json` supplies 3,162 records from
+original PC bundles through `record_produce.py`. It retains the checked
+GameObject component and Transform hierarchy relocations. Managed records
+use the existing properties-hash path with the pinned editor resource.
+Fresh host production matched the staged ledger on persisted bodies,
+complete native types and individual PPtr routes. The composed bundle
+still requires Unity typed load and Android verification.
+
+The provenance, licensing, privacy and sensitive-content review covered
+the original selectors, expected sizes, digests and pointer relocations.
+The recipe contains no serialized bodies, SDK resources or local paths.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-reciprocal-records.json` | `790c63616a6a5f404ef20eaecd193bf9ec9b1afeb66435ca7bc519069eb62b02` |
+
+## V30 original prefab and managed records (2026-11-26)
+
+Two more original-input profiles supply 608 native prefab records and 4,458
+managed records through `record_produce.py`. Of the managed records, 2,772
+retain their original complete serialized types and 1,469 use the pinned SDK
+properties hash for the original MonoScript. The other 217 use the existing
+field projection against the original CLR assemblies.
+
+Both profiles replayed from the admitted PC inputs. The release graph bound
+all 5,066 destinations to the replayed packs. Host readback checked relocated
+PPtrs and complete serialized types against V30, including the managed script
+bindings. Final bundle loadability and Android playback remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered both
+recipes, including the decompressed native rows. The recipes contain only
+source selectors, sizes, digests and authored transformation settings. Game
+bodies, assemblies, SDK material and local receipts stay outside the repository.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-original-prefab-records.jsonl.gz` | `76f37da3ed9d2ba2c2cbbfbd1dc2286625fcae089c78436ea9111c2d5aa6d8b5` |
+| `owner-whole-game-v30-original-managed-records.json` | `57df68401046e5174ad0a0018ccf0199bbbd3efc0f5467a3e146bd6a57fab69c` |
+
+## V30 remaining original native cohort (2026-11-26)
+
+`owner-whole-game-v30-original-native-tail.jsonl.gz` supplies 1,397 records
+from 207 original PC bundles through `record_produce.py`. It covers 593
+missing suppliers and 804 ambiguous selections. For ambiguous selections,
+the output selector uses the exact historical destination identity so the
+release graph can select the checked record for that destination.
+
+Host readback checked each complete native type and replayed the original
+PPtrs against the V30 canonical bundle. Every field route agreed with the
+original endpoint identity or an existing checked field route. The composed
+bundle still requires Unity typed load and Android verification.
+
+The provenance, licensing, privacy and sensitive-content review covered the
+decompressed recipe. It contains only source selectors, sizes, digests and
+authored output identities. Game bodies, relocation evidence and producer
+receipts stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-original-native-tail.jsonl.gz` | `866bb756bad6a66b3bf3248ceee3dd5dc338ef7a6678f3fc986725c745a60966` |
+
+## V30 remaining directly replayable records (2026-11-26)
+
+`owner-whole-game-v30-original-managed-tail.jsonl.gz` selects 145
+MonoBehaviours from 73 original PC bundles. Each output names the historical
+destination so the release graph can select it among competing suppliers.
+The existing record producer retains the original bodies and complete types.
+Host qualification checked the final script-table binding and all 427
+nonnull PPtr routes, then matched the relocated bodies to V30.
+
+`owner-whole-game-v30-original-retained-tail.jsonl.gz` adds 308 records from
+71 original PC bundles. The same producer replayed each complete type and
+body, and relocation readback matched canonical V30. The remaining textures
+and meshes need their specialized producers. Composed bundle loadability and
+Android verification remain open.
+
+The provenance, licensing, privacy and sensitive-content review covered the
+decompressed recipes. They contain source selectors, sizes, digests and
+authored output identities. Original bodies and producer receipts stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-original-managed-tail.jsonl.gz` | `21d6b5707f63832c13fad07f0c52e38ba2767696c6e7a9ca9045b41c41d342f1` |
+| `owner-whole-game-v30-original-retained-tail.jsonl.gz` | `a0cd71c133ed06e3e0388257676af15bf83d1475a6795a83592f1773d2da907e` |
+
+## V30 specialized record suppliers (2026-11-26)
+
+The texture and mesh profiles select 47 Texture2D and 22 Mesh records for
+the existing platform producers. Texture profiles preserve source pixels or
+select the established Android encoding and streaming operations. The mesh
+profile retains source geometry and applies the existing mesh usage and
+collision-cache transformations where specified.
+
+Seven Materials use the established keyword policy and two checked PPtr
+routes each, to the canonical Shader and each Material's texture. Two
+MonoScripts resolve from the generated player registry by assembly, namespace
+and class, with their original source identities declared for bundle binding.
+Whole-bundle Unity loadability and Android checks remain open.
+
+Manual provenance, licensing, privacy and sensitive-content review covered
+source selectors, digests, type and field extents, and authored output
+relationships. Original bodies, pixels, geometry and generated packs stay
+local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-platform-textures.json` | `1a5d2211dfc0241073c67cba051d678b9c708284c4ae9f57e67353d4785800a3` |
+| `owner-whole-game-v30-platform-meshes.json` | `2efcf8ea3c576f56583d1e0cc7beada333a1010d3a044dbbac95185833072d24` |
+| `owner-whole-game-v30-platform-materials.json` | `e7f6769d02ccc78a8a2b634d0f2d5a9785ace8abca4ebe02fa0d8ec05218982a` |
+| `owner-whole-game-v30-platform-registry.json` | `c09d3bb84e6c0418114ee8173ae7722ccb0dcfa7349f259e55b1c4ca97fc8e66` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison
@@ -7234,3 +7365,27 @@ middleware, original files and outputs stay local.
 | --- | --- |
 | `owner-code-job-inputs.json` | `6a9db9c77118f96c2d064c4696a95160092e47303dca2e8d4217aef4ac389714` |
 | `owner-burst-job-inputs.json` | `3a4d0dbbdfbc8dcd7d170322c58e95333cc941e9d8155a92db980bfec9adcac8` |
+
+Audit 2026-11-26. `owner-v30-bundle-shader-leaves.json` uses original game
+bundle selectors and the acquired Unity SDK to compile three Shader leaves.
+The provenance, licensing, privacy and sensitive-content review covered the
+minimal member and object identifiers, SDK package selectors, authored settings
+and input hashes. Original assets, SDK files, compiled programs and evidence
+stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-v30-bundle-shader-leaves.json` | `14971d549a51c613fc02549180054a962c603f04eb03aad199333e5acefc219d` |
+
+Audit 2026-11-26. `owner-v30-camera-compute.json` and
+`owner-v30-camera-shaders.json` record the original PostProcessResources
+selectors, 12 compute and 24 graphics destinations, and tool hashes.
+The provenance, licensing, privacy and sensitive-content review covered the
+selectors and the reused Unity Post Processing package recipe. The producer
+checks the official package's license and compiles its sources locally.
+Original records, SDK and package files, and compiled programs stay private.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-v30-camera-compute.json` | `d3f7c48ff6167f2a58381bf0fa45e8169720780c770c11e3e8669f0000979f95` |
+| `owner-v30-camera-shaders.json` | `06570358826e12296b97f43d7b44c53e779aca01f3362dadbe251d2be79b4ebd` |

@@ -621,7 +621,8 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
     from whole_catalog import integration_metadata
 
     if (
-        set(policy) != {"schema", "source_catalog_sha256", "remaps", "exclusions", "provider_roots", "runtime_roots", "extra_roots", "mesh_subobjects"}
+        set(policy) - {"append_locations"}
+        != {"schema", "source_catalog_sha256", "remaps", "exclusions", "provider_roots", "runtime_roots", "extra_roots", "mesh_subobjects"}
         or policy["schema"] != "owner-catalog-projection-v1"
     ):
         raise ValueError("unsupported catalog projection policy")
@@ -659,10 +660,18 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
         raise ValueError("catalog projection remap must select an asset location")
 
     location_ids = {int(selector) for selector in mapped}
+    append_locations = policy.get("append_locations", [])
+    appended = set(append_locations)
+    if len(appended) != len(append_locations) or not appended <= location_ids:
+        raise ValueError("catalog projection append selection differs")
+    appended_roots = appended.intersection(policy["provider_roots"] + policy["runtime_roots"] + policy["extra_roots"])
     keys = []
     for row in source["keys"]:
         selected = [location for location in row["locations"] if location in location_ids]
         if selected:
+            # Staged aliases came last unless the key also introduced a root.
+            if appended and appended_roots.isdisjoint(selected):
+                selected.sort(key=appended.__contains__)
             keys.append(dict(row, locations=selected))
     mesh_subobjects = []
     for row in policy["mesh_subobjects"]:

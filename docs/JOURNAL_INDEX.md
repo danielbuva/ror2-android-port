@@ -345,3 +345,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1509](PORTING_JOURNAL.md#j1509--restore-original-base-survivor-bank-attachments) | 2026-11-26 | Restore original base-survivor bank attachments | 2026-11-26. |
 | [J1510](PORTING_JOURNAL.md#j1510--observe-huntress-primary-audio-on-the-native-emitter) | 2026-11-26 | Observe Huntress primary audio on the native emitter | 2026-11-26. |
 | [J1511](PORTING_JOURNAL.md#j1511--return-to-the-native-menu-after-end-run-in-the-converted-player) | 2026-11-26 | Return to the native menu after End Run in the converted player | 2026-11-26. |
+| [J1512](PORTING_JOURNAL.md#j1512--build-signed-release-il2cpp-and-burst-on-android) | 2026-11-26 | Build signed-release IL2CPP and Burst on Android | 2026-11-26. |

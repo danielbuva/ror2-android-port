@@ -1308,9 +1308,6 @@ def execute(request):
         if result["host_storage"]["free_bytes"] < 21 * 1024**3:
             raise RuntimeError("Host capture output plus 20 GiB margin unavailable")
         lease.acquire()
-        subprocess.run(
-            ["/opt/homebrew/bin/adb", "kill-server"], env=dict(os.environ, ANDROID_ADB_SERVER_PORT="5038"), check=True, capture_output=True, timeout=30
-        )
         set_command_selector(request["serial"], None)
         device = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
         reset_other_lab(request, lease, result.setdefault("initial_lab_reset", {}), cleanup)
@@ -1528,7 +1525,9 @@ def execute(request):
             result["cleanup_errors"] = cleanup_errors
             if cleanup_errors or not result.get("terminal_readback"):
                 result["success"] = False
-            else:
+            # Discovery only reads ADB inventory. Before it succeeds, there is
+            # no device state from this run to verify or restore.
+            if not cleanup_errors and (device is None or result.get("terminal_readback")):
                 clean("lease-release", lease.release)
                 result["lease_released"] = not lease.acquired
         try:

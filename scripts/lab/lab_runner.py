@@ -207,10 +207,6 @@ class Runner:
         if not grant.is_file() or grant.read_text().strip() != workstream:
             raise CommandError("local packaging device grant required")
 
-    def stop_unity_adb(self, checkout):
-        if self.run([self.adb, "kill-server"], checkout, timeout=15, extra_env={"ANDROID_ADB_SERVER_PORT": "5038"}):
-            raise CommandError("could not stop Unity ADB server")
-
     def admit_battery(self, serial, *, heavy=False):
         for sample in range(3):
             level, current, temperature = self.battery(serial)
@@ -289,7 +285,6 @@ class Runner:
                 if workstream:
                     self.require_grant(serial, workstream)
                     lease = self.take_lease(request["device"], serial, workstream=workstream)
-                    self.stop_unity_adb(checkout)
                 else:
                     lease = self.take_lease(request["device"], serial)
                 heavy = request["job"] == "toolhost" or "--emission-request" in request["args"]
@@ -365,7 +360,7 @@ def installer_signer_source(output):
     return remote, receipt["signer_sha256"]
 
 
-def retain_installer_signer(runner, checkout, device, workstream, output):
+def retain_installer_signer(runner, device, workstream, output):
     """Copy only the existing installer-test signer while the granted Thor is leased."""
     remote, certificate = installer_signer_source(output)
     spec = importlib.util.spec_from_file_location("lab_installer_toolhost", Path(__file__).with_name("installer_toolhost.py"))
@@ -375,7 +370,6 @@ def retain_installer_signer(runner, checkout, device, workstream, output):
     runner.require_grant(serial, workstream)
     lease = runner.take_lease(device, serial, workstream=workstream)
     try:
-        runner.stop_unity_adb(checkout)
 
         def fetch(name, stream):
             command = [runner.adb, "-s", serial, "exec-out", "cat", remote + "/" + name]
@@ -502,7 +496,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
             (output / ".prune-keep").touch()
             result["toolhost"] = toolhost_summary(output)
         elif cached_signer is not None:
-            retain_installer_signer(runner, checkout, device, workstream, output)
+            retain_installer_signer(runner, device, workstream, output)
             result["signing_key_backed_up"] = True
             code = 0
         elif build_toolhost:
@@ -517,7 +511,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
                 (output / ".prune-keep").touch()
                 result["toolhost"] = summary.splitlines()[0]
                 if retain_signer:
-                    retain_installer_signer(runner, checkout, device, workstream, output)
+                    retain_installer_signer(runner, device, workstream, output)
                     result["signing_key_backed_up"] = True
         else:
             code, _ = runner.execute(command, local_checkout=checkout, workstream=workstream)

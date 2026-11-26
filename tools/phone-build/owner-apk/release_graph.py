@@ -17,6 +17,10 @@ from types import SimpleNamespace
 
 PREFIX = "tools/phone-build/accepted-output/"
 PLAYER_RESOURCE_ASSEMBLIES = ("System.Data", "System.Drawing", "mscorlib")
+PLAYER_RESOURCE_ARTIFACTS = {
+    "Resources/unity_builtin_extra": "builtin_extra",
+    "unity default resources": "default_resources",
+}
 ANDROID_COMPONENT = "${inputs}/acquired/unity-android-support.pkg"
 LINUX_COMPONENT = "${inputs}/acquired/unity-linux-editor.tar.xz"
 LEGACY_SHADER_SDK = "${inputs}/acquired/unity-legacy-sdk/Contents"
@@ -326,6 +330,15 @@ class Graph:
             ]
         if producer == "shader_produce":
             arguments += ["--sdk", self.sdk_contents()]
+            camera_selection = next((key for key in ("camera_compute", "camera_shader") if key in profile), None)
+            if camera_selection:
+                package_recipe = profile[camera_selection]["package_recipe"]
+                if package_recipe not in profile["authored_inputs"]:
+                    raise ValueError("camera package recipe lacks an authored input pin")
+                archive = Path(json.loads((self.repo / package_recipe).read_bytes())["package_archive"]).name
+                package = f"{PACKAGE_ARCHIVES}/{archive}"
+                arguments += ["--camera-package", package]
+                witnesses.append(package)
             if self.conversion:
                 recovered = ("native_ui", "native_materials", "native_internal", "native_intersection")
                 for flag, installed, required in (
@@ -449,14 +462,16 @@ class Graph:
             "shader_context",
             "shader_prefab",
             "payload_shader_records",
-        }:
+        } or (producer == "shader_produce" and "typed_records" in profile):
             artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
         if producer == "object_produce":
             target = "payload/" + ("windows-shaders.bundle" if "original_bundle" in profile else profile["bundle"]["name"])
             outputs[target] = target
-        if producer in {"shader_produce", "player_data"}:
+            if "original_bundle" not in profile:
+                artifacts["catalog_bundle"] = target
+        if producer == "player_data" or (producer == "shader_produce" and "typed_records" not in profile):
             artifacts = {"receipt": "result.json"}
             targets = [row["file"] for row in profile["shaders"]] if producer == "shader_produce" else list(profile["outputs"])
             if producer == "shader_produce":
@@ -487,6 +502,7 @@ class Graph:
                 if "shared_defaults" in profile:
                     targets.append(profile["shared_defaults"]["file"])
             outputs = {"apk/assets/bin/Data/" + target: "apk/assets/bin/Data/" + target for target in targets}
+            artifacts.update({artifact: "apk/assets/bin/Data/" + target for target, artifact in PLAYER_RESOURCE_ARTIFACTS.items() if target in targets})
         self.jobs[name] = {"schema": 1, "script": PREFIX + producer + ".py", "arguments": arguments, "needs": needs, "outputs": outputs, "artifacts": artifacts}
         if request is not None:
             self.jobs[name]["request"] = request
@@ -567,7 +583,9 @@ class Graph:
                 profile = json.loads(path.read_bytes())
                 producer = owner(profile)
                 direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce"}
-                if producer not in direct and not (producer == "record_remap" and "original_sources" in profile):
+                typed_shaders = producer == "shader_produce" and "typed_records" in profile
+                registry_remap = producer == "record_remap" and "original_sources" in profile
+                if producer not in direct and not typed_shaders and not registry_remap:
                     raise ValueError("source lookup requires direct typed record selectors: " + pin)
             # Reuse preparation's body selectors; type_source is never evidence
             # that a profile produces that original object's serialized body.
@@ -667,6 +685,23 @@ class Graph:
         if self.conversion:
             request = dict(request, codec=INSTALLED_BUNDLE_CODEC)
         policy = request["policy"]
+        for table in policy.values():
+            if not isinstance(table, dict) or "shards" not in table:
+                continue
+            shards = table["shards"]
+            if (
+                set(table) != {"shards"}
+                or not isinstance(shards, list)
+                or not shards
+                or any(
+                    not isinstance(pin, dict)
+                    or set(pin) != {"path", "sha256", "bytes"}
+                    or not isinstance(pin["path"], str)
+                    or not pin["path"].startswith("${repo}/")
+                    for pin in shards
+                )
+            ):
+                raise ValueError("bundle policy shards require pinned repository files")
         sources = set()
 
         def visit(value):
@@ -844,13 +879,9 @@ class Graph:
                 descriptor["artifacts"]["catalog_registry"] = descriptor["outputs"][target]
                 registries.append(self.artifact_pin(job, "catalog_registry"))
                 needs.append(job)
-            for target, member in (
-                ("apk/assets/bin/Data/Resources/unity_builtin_extra", "unity_builtin_extra"),
-                ("apk/assets/bin/Data/unity default resources", "unity default resources"),
-            ):
-                if target in descriptor["outputs"]:
-                    artifact = "catalog_resource_" + str(len(resources))
-                    descriptor["artifacts"][artifact] = descriptor["outputs"][target]
+            for target, artifact in PLAYER_RESOURCE_ARTIFACTS.items():
+                if artifact in descriptor["artifacts"]:
+                    member = Path(target).name
                     if member in resources:
                         raise ValueError("duplicate catalog player resource: " + member)
                     resources[member] = self.artifact_pin(job, artifact)
@@ -868,8 +899,6 @@ class Graph:
             path = self.profile_files[job]
             source = self.repo / path
             profiles.append(dict(path="${repo}/" + path, sha256=digest(source), bytes=source.stat().st_size))
-            target = "payload/" + profile["bundle"]["name"]
-            descriptor["artifacts"]["catalog_bundle"] = descriptor["outputs"][target]
             bundles[profile["bundle"]["name"]] = self.artifact_pin(job, "catalog_bundle")
             needs.append(job)
         if len(registries) != 1 or not bundles:

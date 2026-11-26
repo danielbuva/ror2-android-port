@@ -228,9 +228,19 @@ signed policy, prepares fresh suppliers and runs the same checked emitter and
 optional canonical repack in one workspace. `release_graph.py` accepts
 `owner-bundle-preload-release-v1` profiles declaring prerequisite source profiles
 and that request. Public file pins join the signed source closure; supplier
-artifacts name declared jobs. Referenced donor/staged containers remain payload
-and native-manifest dependencies. Catalog production consumes each actual final
-bundle and its emitted profile, independently of canonical body-identity proof.
+artifacts name declared jobs. Large binding, asset and field-route tables may
+use ordered, individually pinned JSON shards within the same policy. The
+compiler includes each shard in the signed job closure, and preparation
+verifies and records each input before emission. Bundle and donor routing stay
+in the bounded job descriptor. Referenced donor/staged containers remain payload
+and native-manifest dependencies. The graph assigns stable artifact names to
+object bundles and built-in player resources when it compiles their producers.
+Follower bundles and catalog production bind the same staged files. The catalog
+also consumes each emitted profile, independently of canonical body-identity proof.
+For SDK resource endpoints, preparation can generate full witnesses from pinned
+original type layouts and the produced resource bodies. The endpoint checker
+verifies native type metadata, body extents and recursively resolved pointers
+against those same staged files during preparation and emission.
 Managed witnesses must name generated artifacts, with registry body, receipt and
 schemas supplied by one final player job. When `--code-request` selects fresh
 conversion, witness production reads the same pinned managed provider manifest
@@ -328,15 +338,18 @@ playtest limits and reviewed feedback. It introduces no installer or runtime ste
 [Branding notes](assets/branding/README.md) record the two repository-only
 promotional graphics and their sources; they are not part of the runtime pipeline.
 
-Unity editor and batch launchers set `ANDROID_ADB_SERVER_PORT=5038` only in
-their child environment, isolating the bundled ADB server from the lab's canonical
-ADB on port 5037. `scripts/lab/build.py::editor` owns `./dev editor`;
+Unity editor and batch launchers share the lab's Homebrew ADB server on port
+5037. `scripts/lab/build_lock.py::unity_editor_env` configures the child to
+connect to the numeric loopback address so the bundled ADB client cannot start
+its own daemon. Device tooling starts the shared server when needed. Android
+user and Gradle homes remain isolated where configured.
+`scripts/lab/build.py::editor` owns `./dev editor`.
 `scripts/build-smoke.sh`, `scripts/lab/unity_rebuild.py`, `phone_content.py`,
-the `phone_*_oracle.py` launchers and `source_camera_bundle.py` own their batch
-children. `open-smoke.sh` delegates to `./dev editor`; existing editors must
-restart to inherit the isolated port. Child exit retains each launcher's log,
-process and mutex cleanup; device tooling and thermal cancellation keep their
-current owners. No global ADB environment or device-server setting is changed.
+the `phone_*_oracle.py` launchers, `source_camera_bundle.py` and
+`scripts/build-graphics-preload-fixture.py` own their batch children.
+`open-smoke.sh` delegates to `./dev editor`. Existing editors must restart to
+inherit the shared endpoint. Each launcher handles its logs, processes and mutex
+cleanup when its child exits.
 
 Launcher presentation: [`launcher/`](../launcher/README.md) owns the approved
 original background and dependency-free frontend. `controller.js` owns the
@@ -481,8 +494,8 @@ kernels. Host exposure reflection admits the public 8-wide kernel shapes;
 `source_camera_bundle.py::validate_vulkan_programs` independently reads the
 emitted Vulkan variants and requires the original kernel names/thread groups,
 nonempty variant maps and compiled code. The shared editor mutex serializes
-compilation, with child ADB isolated on port 5038. Setup protects the output with
-`.prune-keep`; compilation/validation exit writes `result.json`, and teardown
+compilation. The editor uses the shared ADB endpoint. Setup protects the output
+with `.prune-keep`. Compilation/validation exit writes `result.json`, and teardown
 removes the isolated project even when staging or editor configuration fails,
 retaining pinned sources, logs, a failure receipt or any compiled bundle. Host
 lifecycle regressions live in `tests/test_shader_postprocessing_uber.py`.
@@ -3178,7 +3191,9 @@ Signed catalog requests can select a projection policy and consume the original
 catalog emitted by managed-code production. `catalog_complete` joins that catalog
 to selected bundle profiles by asset path and explicit relocations, retains the
 original typed key ordering, and applies the pinned exclusions, root roles and
-mesh aliases. The source input identity and catalog hash bind that policy. The
+mesh aliases. A projection policy can move selected aliases to the end of
+their keys in source order. Keys that also introduce a selected root keep the
+original order. The source input identity and catalog hash bind that policy. The
 same invocation verifies actual Android containers and MonoScripts before writing
 the runtime catalog. Retained metadata remains available for historical requests.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
@@ -3299,9 +3314,12 @@ package; no parser or third-party implementation is vendored into the lab/player
 `--detach`. Use the serial from the workstream's queue grant for both commands.
 Portable requests can omit `serial` and `adopted_install`. Existing requests
 can embed `serial` and assert adopted-only placement with `adopted_install: true`.
-The dispatcher grants a device first; the child takes the canonical atomic
-lease before ADB, sources the pinned environment and stops Unity's port-5038
-ADB server. Its request selects the canonical checkout, private output,
+The dispatcher grants a device. The child takes the canonical atomic lease
+before ADB and sources the pinned environment. If discovery fails before the
+device context opens, the runner releases its lease and writes a failed receipt.
+Once a device context opens,
+the runner requires verified idle cleanup before releasing the lease.
+Its request selects the canonical checkout, private output,
 workstream, disposable package, APK path/hash, duration and optional targeted-touch
 JSON. The same workload uses the selected device's configured storage profile:
 adopted storage on the main Nova and internal storage on the second Nova.
@@ -6656,11 +6674,10 @@ prepared inputs, private writable editor/Gradle state, its own MCP port and a
 persistent lock outside the removable tree. Creation snapshots under the
 canonical mutex; later source selection/builds use only the lane lock. Creation
 and every build/editor-open restage authored inputs from the selected checkout
-through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging,
-`project_input_rebuild.stage_editor_inputs` for pinned baseline templates, and
-the ordinary Android/audio owners. The editor cohort includes
-`WholeCatalogHost.cs` in canonical builds and private lanes so its runtime
-contracts follow the selected source. Extra C# is retired only after matching a
+through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging, and
+the ordinary Android/audio owners. Lane restaging applies pinned baseline
+editors outside the current editor cohort. Canonical builds and private lanes
+stage `WholeCatalogHost.cs` from the selected source. Extra C# is retired only after matching a
 predecessor Git blob, with source/metadata hashes and a removal receipt. Unknown
 or edited files refuse. `original_game_audio_build_hook.restage_authored_for_lane`
 uses a small APFS reference clone to unwind camera/music without changing live
@@ -8010,6 +8027,26 @@ existing dispatcher cache identity; texture owners retain codec, schema and pixe
 extent validation. Setup supplies pinned tools; scoped producers close on exit
 and retain their receipts. Complete APK and device acceptance remain open.
 
+`shader_produce.py` can supply a typed Shader leaf pack to `bundle_prepare.py`.
+The V30 recipe compiles Sprites/Default and the legacy VertexLit shader from
+the acquired SDK, and TMP Sprite from the SDK package. The original PC Shader
+layout is used for serialization. The producer checks names, source layouts,
+Vulkan program platforms and leaf dependencies. The signed release graph binds
+the resulting bodies and types to their PC or SDK identities. Compilation closes
+the standalone compiler and codec and retains a receipt for preparation.
+
+The same owner produces the camera Shader and ComputeShader leaf packs.
+`shader_compute.py` decodes the pinned SDK compiler's Vulkan kernel payloads
+and projects the executable, workgroup and reflected resources into the
+original native type. `shader_produce.py` resolves each selected local
+PostProcessResources PPtr before compiling its Post Processing package source.
+Graphics compilation keeps the original pass order, render state and properties.
+It retains slots for passes excluded by the Vulkan renderer mask and writes
+reflected inline samplers into the pass's shared parameter table.
+The signed graph witnesses the private archive and exposes the resulting
+typed packs to bundle preparation. Compiler lifetime and pack receipts are
+shared with the other Shader leaves.
+
 Fieldless component metadata uses the existing receipt-bound current MonoScript
 identity policy in `object_produce.py`; its schema/properties hash must still
 match the supplied script. Receipts record the actual script hash. Setup and
@@ -8031,8 +8068,11 @@ and bundle/device loadability are separate gates.
 
 The release graph's `--catalog-request` binds source catalog metadata to selected
 final object bundles and the player's actual runtime script registry through
-`catalog_complete.py`. Supplier packs, Windows shader passthrough and derived
-manifest/catalog outputs are excluded from native catalog ownership. The signed
+`catalog_complete.py`. The canonical whole-game profile contributes paths to
+source projection. Catalog ownership gives explicit builds precedence over
+canonical copies, with the whole-game bundle owning remaining ordinary assets.
+Supplier packs, Windows shader passthrough and derived manifest/catalog outputs
+are excluded from native catalog ownership. The signed
 closure retains the metadata pin, final profiles and embedded bootstrap recipe;
 metadata contents stay in private input bindings. Compilation checks the embedded
 bootstrap pin and shared input/attempt identity before emission.

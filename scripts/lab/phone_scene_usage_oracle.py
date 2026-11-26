@@ -12,7 +12,7 @@ import sys
 import uuid
 
 import phone_wrapper_oracle as guard
-from build_lock import host_build_lock
+from build_lock import host_build_lock, unity_editor_env
 
 SOURCES = (
     "scripts/lab/phone_scene_usage_oracle.py",
@@ -207,7 +207,7 @@ def run(root, work, editor):
     if common.name != ".git":
         raise ValueError("Cannot locate primary Unity build mutex")
     output, log = destination / "oracle.json", destination / "editor.log"
-    env = dict(os.environ, ANDROID_ADB_SERVER_PORT="5038", ROR2_SCENE_USAGE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=inputs["source_commit"])
+    env = unity_editor_env(ROR2_SCENE_USAGE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=inputs["source_commit"])
     args = [
         str(editor),
         "-batchmode",

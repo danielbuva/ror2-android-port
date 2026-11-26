@@ -1,0 +1,153 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+    "bytes": 2601960,
+    "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+    "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+    "path_id": -8989458460904117762
+  },
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "authored_inputs": {
+    "scripts/lab/project_input_rebuild.py": {
+      "bytes": 6548,
+      "sha256": "ccf35babc8a9f1576e658b0e867f357cbb5c380df44209d8026ed616d0b4e2e8"
+    },
+    "recipe/project-inputs.json": {
+      "bytes": 2948,
+      "sha256": "de1ed235adfbc7b0b1c663289a33d19304b844afac01be1b69196a40914fc246"
+    },
+    "smoke/ProjectSettings/GraphicsSettings.asset": {
+      "bytes": 2445,
+      "sha256": "7e7101091125a933bbbaaed9ba2f9b3c7e69a38222c2554a29af9c9490b8687b"
+    },
+    "scripts/lab/shader_source.py": {
+      "bytes": 29161,
+      "sha256": "3c768c15f29f312347f2e99b0e3ddf8612207db8023f220dcb52c5d51218212a"
+    }
+  },
+  "tmp_source": {
+    "package": {
+      "name": "com.unity.textmeshpro",
+      "version": "3.0.6",
+      "sha256": "1ce172027b906a30be33cefe7b2ee46e1c8d35f729359b8b9785fc120d57b637",
+      "resource": "package/Package Resources/TMP Essential Resources.unitypackage",
+      "resource_sha256": "b1b2848548e67592087fa906f90c4ca4102ccad75d64942053c1762b2c07a754"
+    },
+    "materials": [
+      {
+        "path": "Risk of Rain 2_Data/sharedassets0.assets",
+        "bytes": 506080,
+        "sha256": "3d735244606be616f3ce8ed90a644d04afc9ecbe44cdc9823fb2ed8b6c081f77",
+        "path_id": 8
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-riskofrain_assets_all_af18ba36b0beea88fd31594edaa6d02b.bundle",
+        "bytes": 56204,
+        "sha256": "9e61d40123d807d523fc70532589c28aa76a01d291eef4fde17d2f193cb825f9",
+        "member": "CAB-bac8ed7ccae670f43410310604e51749",
+        "path_id": -2368549767984625940
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-items-sharedsuffering_assets_all_00fb14708d80a853c7e390241f52a430.bundle",
+        "bytes": 440501,
+        "sha256": "e52ce1003fc962c075dcf59c5654341b65bef83538f87d884c78903f5914af50",
+        "member": "CAB-37278393c77ce867b01e270506b66bfe",
+        "path_id": -2406584223105888589
+      },
+      {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+        "bytes": 15521356,
+        "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9",
+        "member": "CAB-6c8c13484990024e48f0af7d1ab3d2e1",
+        "path_id": -6869146203260279654
+      }
+    ]
+  },
+  "shaders": [
+    {
+      "file": "c91d9e1017850f541a8fb361fa673565",
+      "tmp_source": "TMP_Sprite.shader",
+      "filename": "Assets/SourceTMP/TMP_Sprite.shader"
+    }
+  ],
+  "typed_records": [
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 3262840161956400972
+      },
+      "name": "Sprites/Default",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": 3262840161956400972
+      },
+      "sdk_shader": 10753
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 3416126243364311598
+      },
+      "name": "TextMeshPro/Sprite",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources-shaders_assets_all_417237179ff4ade74c214cc315d331a9.bundle",
+        "bytes": 74541,
+        "sha256": "8a35d57bbc505e293298f717ee7b0460b57b54605d492ea34b5902b9280bb6a5",
+        "member": "CAB-fefb3bd8c2e00d01daf14c5ecd5a5d7d",
+        "path_id": 3416126243364311598
+      },
+      "file": "c91d9e1017850f541a8fb361fa673565"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -4404651390618690416
+      },
+      "name": "Legacy Shaders/Transparent/VertexLit",
+      "sdk_shader": 34
+    }
+  ]
+}

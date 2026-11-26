@@ -280,7 +280,7 @@ def validate_linker_capture(attempt, commit):
 
 def run_editor(project, *, build=False, ambient=False):
     """Use only the generated fixture and the primary checkout's build mutex."""
-    from build_lock import host_build_lock
+    from build_lock import host_build_lock, unity_editor_env
     from common import ROOT, WORK
 
     project = Path(project).resolve()
@@ -310,8 +310,7 @@ def run_editor(project, *, build=False, ambient=False):
     attempt.mkdir(exist_ok=False)
     log = attempt / "editor.log"
     method = "AmbientSkyFixture.Begin" if ambient else "ContentFixtureBuilder.Build" if build else "ContentFixtureBuilder.Check"
-    env = dict(os.environ)
-    env["ANDROID_ADB_SERVER_PORT"] = "5038"
+    env = unity_editor_env()
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
     if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
         if ambient:
