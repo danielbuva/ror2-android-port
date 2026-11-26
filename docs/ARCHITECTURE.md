@@ -5052,10 +5052,13 @@ and particle trails for owned actor templates and late actor-model descendants,
 including detached models. It preserves unknown/null slots and source material
 values, registers the existing presentation toggle, and retains copies in the
 session's `worldMaterials` list for teardown. `ObserveTeleporterWorld` performs
-the existing periodic handoff for objective and director-actor models; a renderer
-can receive new source slots after its first presentation. The authored
+the existing periodic handoff for objective and director-actor models and live
+purchase locks on tracked equipment barrels. It reads the lock from the native
+purchase interaction after the lock spawns. A renderer can receive new source
+slots after its first presentation. The authored
 `test_recovered_material_handoff.py` contract exercises slots, trails, late
-replacement, toggling and source ownership. Rendering remains a device gate.
+replacement, equipment lock selection, toggling and source ownership.
+Rendering remains a device gate.
 `TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
 effect sources and native projectile ghosts and DamageTrail segment references
 before their pools instantiate them. Source Cloud Intersection Remap slots on
