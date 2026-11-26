@@ -101,13 +101,48 @@ public static class SurvivorSkillInputHost
             Require(after.isMoving && after.forwardSpeed && after.rightSpeed,
                     "Native locomotion snapshot unavailable after native model detachment before main state");
             return new { initializedBeforeMainState = true, nativeModelDetachment = true,
-                         nativeParameterSnapshot = true, nativeGameplayTested = false };
+                         nativeParameterSnapshot = true, nativeGameplayTested = false,
+                         sourceControllers = new[] { "Bandit2", "Captain" }.Select(VerifySourceAnimatorBeforeMainState).ToArray() };
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(model);
             UnityEngine.Object.DestroyImmediate(body);
             UnityEngine.Object.DestroyImmediate(controller);
+        }
+    }
+
+    static string VerifySourceAnimatorBeforeMainState(string survivor)
+    {
+        string path = SurvivorAssetRoot + survivor + "/";
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + survivor + "Body.prefab");
+        var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path + "anim" + survivor + ".controller");
+        var avatar = AssetDatabase.LoadAssetAtPath<Avatar>(path + "mdl" + survivor + "Avatar.asset");
+        Require(prefab && controller && avatar, "Source locomotion fixture assets missing: " + survivor);
+        var parent = new GameObject("source-pre-state-animation-contract");
+        parent.SetActive(false);
+        Transform model = null;
+        try
+        {
+            var body = UnityEngine.Object.Instantiate(prefab, parent.transform);
+            var locator = body.GetComponent<ModelLocator>();
+            model = locator.modelTransform;
+            var animator = model.GetComponent<Animator>();
+            var before = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!before.isMoving && !before.forwardSpeed && !before.rightSpeed,
+                    "Inactive source fixture unexpectedly exposes locomotion parameters: " + survivor);
+            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, sourceSelected: true);
+            locator.Start();
+            animator.Update(0);
+            var after = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(animator.isInitialized && after.isMoving && after.forwardSpeed && after.rightSpeed,
+                    "Source locomotion parameters unavailable after native detachment: " + survivor);
+            return survivor;
+        }
+        finally
+        {
+            if (model) UnityEngine.Object.DestroyImmediate(model.gameObject);
+            UnityEngine.Object.DestroyImmediate(parent);
         }
     }
 

@@ -6,6 +6,21 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1519 — Bind direct-selected survivor Animators before native locomotion
+
+2026-11-26. Bind source controllers and avatars before native main-state entry.
+The exact editor verifies bindings after native ModelLocator detachment for
+Bandit and Captain. Assisted Distant Roost and Verdant Falls captures show
+native authority, all three cached locomotion parameters, and a moving Animator
+at nonzero motor speed with zero utility callbacks.
+APK SHA-256 `14d49b25da22d47547d7804cc0f91987d8373681b3c12d80b7b0ea30572ef3f4` (source `c2577e4f`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/`:
+`bandit-direct-survivor-locomotion-main-nova-retry2/` and
+`captain-direct-survivor-locomotion-main-nova-retry1/` retain reports, screenshots and logs.
+SoC peaks were 85.2 °C and 76.9 °C, with 1.403 s and 0 s above 80 °C.
+Both passed adopted placement, scratch removal and OLED sleep.
+Ordinary input, matched on-screen body motion and the other affected survivors remain open.
+
 ## J1518 — Observe the native Siren boss and restore its reward drop
 
 2026-11-26. Accept the authored Siren boss body at the exact catalog index

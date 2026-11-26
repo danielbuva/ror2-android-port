@@ -8128,18 +8128,21 @@ when installing the disposable converted package. Setup uses the verified SDK
 resource table; output hashes record the transformed entry. No runtime state or
 new lifecycle owner is added.
 
-Commando animation preparation stays in `AutomaticModelBoundary`: the artifact
-controller/avatar bind while the body is inactive. `NovaDiagnosticDisplay`
-isolates the existing model callbacks and enables the Animator/model before body
-activation. Native `ModelLocator.Start` detaches the model from its inactive
-model base, initializing the Animator. The boundary then verifies its locomotion
-parameters during `SpawnTeleporterState`, before native
-`BaseCharacterMain` snapshots them on its first entry. The display preserves the
-binding and reports the native movement cache and Animator state; its existing
-disposal owns teardown.
+`AutomaticModelBoundary` binds the Commando artifact Animator and direct-binding
+source survivor Animators while the body is inactive. `NovaDiagnosticDisplay`
+isolates model callbacks and enables the Animator and model before body activation.
+Native `ModelLocator.Start` detaches the model from its inactive model base,
+initializing the Animator. The boundary verifies locomotion parameters during
+`SpawnTeleporterState`, before native `BaseCharacterMain` snapshots them. It keeps
+direct-binding source renderers out of the loading view until the display has
+prepared their materials. The display retains the binding, enables native aim
+and reports the movement cache and Animator state. Native selected-skin loads
+retain their asynchronous controller and avatar owner. The existing display
+and detached-model disposal own teardown.
 `./dev editor --target lab --action commando-animation-host` is a current exact-editor
 contract check reproducing unavailable parameters under an inactive model base
-and parameter discovery after native detachment, before the main state
+and parameter discovery after native detachment, before the main state, including
+the imported Bandit and Captain controllers
 (`SurvivorSkillInputHost.VerifyAnimatorBeforeMainState`); gameplay remains a
 device gate.
 `NovaInputBridge` neutralizes unavailable physical input without suspending idle
