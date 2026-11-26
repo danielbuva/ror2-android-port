@@ -128,9 +128,11 @@ For source-produced native content qualification, set
 `phone-content-check`. The request is
 `{"path":"<absolute bundle>","sha256":"<bundle SHA-256>","assets":[{"name":"<container address>","type":"LightingSettings"}]}`;
 Supported exact types are `LightingSettings`, `Mesh`, `Avatar`, `AnimationClip`,
-`Material`, `Shader`, `Texture2D`, `Sprite`, `GameObject`, `AvatarMask`,
-`PhysicMaterial` and `AnimatorOverrideController`. The exact SDK has no managed
-`OcclusionCullingData` type; its consumer/native-load check remains open. The
+`Material`, `Shader`, `Texture2D`, `Cubemap`, `Sprite`, `GameObject`, `AvatarMask`,
+`PhysicMaterial`, `SpeedTreeWindAsset` and `AnimatorOverrideController`.
+The fixture resolves the SDK's internal `SpeedTreeWindAsset` type from the
+Terrain module. The exact SDK has no managed `OcclusionCullingData` type; its
+consumer/native-load check remains open. The
 runner snapshots the request beside the oracle. `native-content-check.json`
 records each actual native name/type and verifies destruction after
 `Unload(true)`; failures persist and fail the check. Host validation binds the
