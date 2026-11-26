@@ -7160,9 +7160,9 @@ and sensitive-content review found no game bytes, shader code, private paths,
 credentials or third-party implementation. Generated materials remain local;
 visual acceptance requires device evidence.
 
-### Whole-game PhysicMaterial and BillboardAsset source records
+### Whole-game PhysicMaterial and SpeedTreeWindAsset source records
 
-The profile selects 19 PhysicMaterials and eight BillboardAssets from 17
+The profile selects 19 PhysicMaterials and eight SpeedTreeWindAssets from 17
 original bundles. The record producer retains their original bodies and
 complete native types. Fresh bundle preparation checks the serialized PPtrs.
 The emitted records have no nonnull references. Host evidence is under

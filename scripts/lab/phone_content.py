@@ -25,7 +25,7 @@ NATIVE_CONTENT_TYPES = frozenset(
         "GameObject",
         "AvatarMask",
         "PhysicMaterial",
-        "BillboardAsset",
+        "SpeedTreeWindAsset",
         "AnimatorOverrideController",
     )
 )
@@ -58,7 +58,7 @@ def stage(destination, *, ambient=False):
         (folder / name).write_bytes(source.read_bytes())
     (destination / "Packages").mkdir()
     (destination / "Packages/manifest.json").write_text(
-        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0"}}\n'
+        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.terrain":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0"}}\n'
     )
     (destination / "ProjectSettings").mkdir()
     (destination / "ProjectSettings/ProjectVersion.txt").write_text(
