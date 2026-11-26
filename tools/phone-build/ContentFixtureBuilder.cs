@@ -27,6 +27,7 @@ public static class ContentFixtureBuilder
     {
         public string name;
         public string type;
+        public string subasset;
         public string loaded_name;
         public string loaded_type;
         public NativeMaterialReferences material;
@@ -140,10 +141,10 @@ public static class ContentFixtureBuilder
             receipt.path = Path.GetFullPath(request.path);
             receipt.sha256 = FileHash(receipt.path);
             if (receipt.sha256 != request.sha256) throw new Exception("Native-content bundle SHA-256 mismatch");
-            var names = new HashSet<string>();
+            var assets = new HashSet<(string, string, string)>();
             foreach (var asset in request.assets)
-                if (asset == null || String.IsNullOrEmpty(asset.name) || !names.Add(asset.name)
-                    || String.IsNullOrEmpty(asset.type))
+                if (asset == null || String.IsNullOrEmpty(asset.name) || String.IsNullOrEmpty(asset.type)
+                    || !assets.Add((asset.name, asset.type, asset.subasset ?? "")))
                     throw new Exception("Native-content asset name/type absent, duplicated or unsupported");
             foreach (var dependency in request.dependencies ?? Array.Empty<NativeContentBundle>())
             {
@@ -162,12 +163,13 @@ public static class ContentFixtureBuilder
             foreach (var asset in request.assets)
             {
                 var type = NativeContentType(asset.type);
-                var value = bundle.LoadAsset(asset.name, type);
+                var value = String.IsNullOrEmpty(asset.subasset) ? bundle.LoadAsset(asset.name, type)
+                    : Array.Find(bundle.LoadAssetWithSubAssets(asset.name, type), item => item.name == asset.subasset);
                 if (value == null || value.GetType() != type)
                     throw new Exception("Native-content typed load failed: " + asset.name + " as " + type.FullName);
                 loaded.Add(value);
                 receipt.assets.Add(new NativeContentAsset {
-                    name = asset.name, type = asset.type, loaded_name = value.name, loaded_type = value.GetType().FullName,
+                    name = asset.name, type = asset.type, subasset = asset.subasset, loaded_name = value.name, loaded_type = value.GetType().FullName,
                     material = asset.material != null && value is Material material ? ObserveMaterial(material) : null,
                     manifest = asset.manifest != null && value is AssetBundleManifest manifest ? ObserveManifest(manifest) : null
                 });

@@ -133,12 +133,15 @@ def native_content_request(path):
     assets = request["assets"]
     if not isinstance(assets, list) or not assets:
         raise RuntimeError("Native-content request needs typed assets")
-    names = set()
+    identities = set()
     for asset in assets:
-        name = asset.get("name")
-        if not isinstance(name, str) or not name or name in names or asset.get("type") not in NATIVE_CONTENT_TYPES:
+        name, asset_type, subasset = asset.get("name"), asset.get("type"), asset.get("subasset", "")
+        if not isinstance(name, str) or not name or asset_type not in NATIVE_CONTENT_TYPES or not isinstance(subasset, str):
             raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
-        names.add(name)
+        identity = (name, asset_type, subasset)
+        if identity in identities:
+            raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
+        identities.add(identity)
         if "material" in asset and (asset["type"] != "Material" or not material_references(asset["material"])):
             raise RuntimeError("Native-content Material needs expected shader and saved texture references")
         if "manifest" in asset and (asset["type"] != "AssetBundleManifest" or not manifest_entries(asset["manifest"])):
@@ -207,6 +210,7 @@ def validate_native_content(attempt, commit):
             or row.get("type") != asset["type"]
             or row.get("loaded_type") != "UnityEngine." + asset["type"]
             or not isinstance(row.get("loaded_name"), str)
+            or (asset.get("subasset") and (row.get("subasset") != asset["subasset"] or row.get("loaded_name") != asset["subasset"]))
         ):
             raise RuntimeError("Native-content typed load mismatch")
         if "material" in asset and material_references(row.get("material")) != material_references(asset["material"]):
