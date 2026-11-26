@@ -6,6 +6,7 @@ private Python driver is staged or executed. Receipts contain private paths and
 stay under ignored work/. A terminal producer failure retains its app and cache.
 """
 
+from bisect import bisect_left, bisect_right
 import hashlib
 import json
 import os
@@ -20,11 +21,15 @@ import tarfile
 
 
 SIGNED_CODE = "signed-code"
+SIGNED_NATIVE = "signed-native"
+CODE_OPERATIONS = (SIGNED_CODE, SIGNED_NATIVE)
 BUNDLE_DECODE = "bundle-decode"
 DECODE_OWNER = "repo/tools/phone-build/accepted-output/"
 DECODE_BASELINE = "baseline-unity_bundle.py"
 DECODE_FILES = {DECODE_BASELINE, *(DECODE_OWNER + name for name in ("bundle_decode_benchmark.py", "unity_bundle.py", "phone_runner.py"))}
 RESOURCE_TRACE = "phase-resources.jsonl"
+RESOURCE_SUMMARY = "phase-resources.json"
+THERMAL_KINDS = ("cpu", "gpu", "soc", "battery", "skin")
 NET8_LIBRARIES = (
     "libcoreclr.so",
     "libhostpolicy.so",
@@ -61,9 +66,9 @@ def load_request(path, *, refresh_repo=False):
     request = json.loads(Path(path).read_bytes())
     required = {"runner", "tool_apk", "manifest", "request", "done_file", "expected_records", "estimated_output_bytes", "profile", "timeout_seconds"}
     operation = request.get("operation")
-    signed_code = operation == SIGNED_CODE
+    signed_code = operation in CODE_OPERATIONS
     decode = operation == BUNDLE_DECODE
-    count = {SIGNED_CODE: "expected_managed_providers", BUNDLE_DECODE: "expected_blocks"}.get(operation, "expected_records")
+    count = "expected_managed_providers" if signed_code else "expected_blocks" if decode else "expected_records"
     if signed_code or decode:
         required = (required - {"expected_records"}) | {"operation", count}
     if signed_code and "profile_resources" in request:
@@ -107,9 +112,13 @@ def load_request(path, *, refresh_repo=False):
     if signed_code:
         root = relative(request["request"]).parent
         code = json.loads(Path(files[request["request"]]["source"]).read_bytes())
-        if set(code) != {"source_inputs", "audio_members", "output"} or any(
-            (root / name).as_posix() not in files for name in ("input-hashes.json", "work/inventory/files.json")
-        ):
+        required_code = {"source_inputs", "audio_members", "output"}
+        private_files = ("input-hashes.json", "work/inventory/files.json")
+        if operation == SIGNED_NATIVE:
+            required_code = {"bundle", "envelope", "public_key", "key_id", "output"}
+            if set(code) == required_code:
+                private_files += tuple(relative(code[key]) for key in ("bundle", "envelope", "public_key"))
+        if set(code) != required_code or any((root / name).as_posix() not in files for name in private_files):
             raise ValueError("signed-code-staged-input-contract")
         relative(code["output"])
     return request, files
@@ -148,7 +157,7 @@ def refresh_manifest(path, checkout):
     return dict(success=True, refreshed_repo_files=replaced, input_bytes=manifest["bytes"], source_commit=commit)
 
 
-def transfer(phone, apk, files, remote, native, *, signed_code=False):
+def transfer(phone, apk, files, remote, native, *, signed_code=False, signed_native=False):
     """Stream pinned inputs/runtime once, without another host copy or archive."""
     with zipfile.ZipFile(apk) as archive:
         pins = json.loads(archive.read("assets/native-hashes.json"))
@@ -160,6 +169,10 @@ def transfer(phone, apk, files, remote, native, *, signed_code=False):
             link_roots += ("dotnet/",)
             links.update({"dotnet/shared/Microsoft.NETCore.App/8.0.32/" + lib: lib for lib in NET8_LIBRARIES})
             links.update({"native-links/libcrypto.so.3": "libcrypto.so", "native-links/libssl.so.3": "libssl.so"})
+        if signed_native:
+            roots += ("gnu/", "data-hashes.json")
+            for name in ("assets/gnu/libgnu-tool-adapter.so", "assets/data-hashes.json"):
+                archive.getinfo(name)
         command = shlex.join(["run-as", "dev.ror2lab.installertest", "tar", "-xf", "-", "-C", remote])
         process = subprocess.Popen(
             [str(phone.adb), "-s", phone.serial, "shell", command], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
@@ -210,7 +223,7 @@ def invocation(remote, native, request, attempt):
     python = [native + "/libpythonhost.so", native + "/libpython3.14.so", runtime + "/python"]
     owner = remote + "/repo/tools/phone-build/"
     environment = ["LD_LIBRARY_PATH=" + native + ":" + runtime + "/native-links"]
-    if request.get("operation") == SIGNED_CODE:
+    if request.get("operation") in CODE_OPERATIONS:
         environment += [
             "ROR2LAB_BUILD_DOTNET_ROOT=" + runtime + "/dotnet",
             "ROR2LAB_BUILD_HOSTFXR=" + native + "/libhostfxr10.so",
@@ -265,7 +278,7 @@ def invocation(remote, native, request, attempt):
     ]
 
 
-def collect(phone, state, destination, *, code_output=None, decode=False, failed=False):
+def collect(phone, state, destination, *, code_output=None, decode=False, signed_native=False, failed=False):
     """Small receipts only; generated bundles remain on their device filesystem."""
     result = {}
     attempt = state["attempt"]
@@ -274,6 +287,8 @@ def collect(phone, state, destination, *, code_output=None, decode=False, failed
         receipts["decode"] = attempt + "/decode.json"
     elif code_output is None:
         receipts.update(emission=attempt + "/output/result.json", progress=attempt + "/output/emitted/progress.json")
+    elif signed_native:
+        receipts["native_release"] = code_output + "/result.json"
     else:
         receipts.update(
             code=code_output + "/result.json",
@@ -287,12 +302,13 @@ def collect(phone, state, destination, *, code_output=None, decode=False, failed
         observed = phone.execute("shell", shlex.join(["run-as", "dev.ror2lab.installertest", "cat", path]), label="emission-" + name, idempotent=True)
         if observed.returncode == 0:
             value = json.loads(observed.stdout)
-            write(destination / (name + ".json"), value)
+            filename = "code-result.json" if name == "code" else name + ".json"
+            write(destination / filename, value)
             result[name] = value
     return result
 
 
-def collect_evidence(phone, package, state, destination, *, code_output, failed):
+def collect_evidence(phone, package, state, destination, *, code_output, failed, jobs_root=None):
     """Keep producer logs, timings and crash artifacts before deleting owned scratch."""
     if failed:
         crash = destination / "logs/crash"
@@ -309,6 +325,8 @@ def collect_evidence(phone, package, state, destination, *, code_output, failed)
     output_roots = [state["attempt"]]
     if code_output is not None:
         output_roots.append(code_output)
+    if jobs_root is not None:
+        output_roots.append(jobs_root)
     command = r"""
 cd "$1" || exit
 shift
@@ -349,11 +367,61 @@ done
             temporary.unlink(missing_ok=True)
 
 
+def summarize_resources(trace, code_output):
+    """Join captured producer-tree samples to subprocess BOOTTIME windows."""
+    with trace.open() as stream:
+        samples = [json.loads(line) for line in stream]
+    ticks = [sample["boottime_seconds"] for sample in samples]
+    if any(left > right for left, right in zip(ticks, ticks[1:])):
+        raise ValueError("resource trace BOOTTIME moved backwards")
+
+    stages, unclocked = [], []
+    for path in sorted(code_output.rglob("*.process.json")):
+        name = path.relative_to(code_output).as_posix()
+        process = json.loads(path.read_bytes())
+        start, end = process.get("started_boottime_seconds"), process.get("ended_boottime_seconds")
+        if start is None or end is None:
+            unclocked.append(name)
+            continue
+        if end < start:
+            raise ValueError("reversed subprocess BOOTTIME window: " + name)
+        left, right = bisect_left(ticks, start), bisect_right(ticks, end)
+        window = samples[left:right]
+        resources = [sample for sample in window if "process_tree_rss_bytes" in sample]
+        volume = [sample["volume_available_bytes"] for sample in resources]
+        boundaries = [start, *ticks[left:right], end]
+        stages.append(
+            dict(
+                process=name,
+                exit_code=process.get("exit_code"),
+                started_boottime_seconds=start,
+                ended_boottime_seconds=end,
+                boottime_elapsed_seconds=end - start,
+                observed_pause_seconds=process.get("paused_seconds"),
+                samples=len(window),
+                paused_samples=sum(sample["paused"] for sample in window),
+                largest_sample_gap_seconds=max(right - left for left, right in zip(boundaries, boundaries[1:])),
+                resource_samples=len(resources),
+                sampled_peak_celsius={
+                    kind: max((sample[kind + "_celsius"] for sample in window if sample.get(kind + "_celsius") is not None), default=None)
+                    for kind in THERMAL_KINDS
+                },
+                sampled_process_tree_rss_peak_bytes=max((sample["process_tree_rss_bytes"] for sample in resources), default=None),
+                sampled_volume_available_bytes=dict(
+                    first=volume[0] if volume else None, minimum=min(volume, default=None), last=volume[-1] if volume else None
+                ),
+            )
+        )
+    stages.sort(key=lambda stage: stage["started_boottime_seconds"])
+    return dict(samples=len(samples), stages=stages, unclocked_process_receipts=unclocked)
+
+
 def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     """Run beneath Runner.execute; its lease spans transfer, wait and cleanup."""
     started = time.monotonic()
     request = json.loads(Path(path).read_bytes())
-    signed_code = request.get("operation") == SIGNED_CODE
+    signed_native = request.get("operation") == SIGNED_NATIVE
+    signed_code = request.get("operation") in CODE_OPERATIONS
     decode = request.get("operation") == BUNDLE_DECODE
     done = Path(request["done_file"])
     root = Path(os.environ["LAB_CANONICAL_ROOT"]).resolve()
@@ -493,7 +561,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
             write(state_path, state)  # Ownership survives transfer failure.
             phone.shell("run-as", installer.PACKAGE, "mkdir", "-p", state["remote"], label="emission-input-directory")
         if not state.get("staged"):
-            transfer(phone, request["tool_apk"]["path"], files, state["remote"], state["native"], signed_code=signed_code)
+            transfer(phone, request["tool_apk"]["path"], files, state["remote"], state["native"], signed_code=signed_code, signed_native=signed_native)
             state["staged"] = True
             write(state_path, state)
         phone.storage()  # Installed-code placement and actual app-data backing.
@@ -523,7 +591,17 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
             code_request = json.loads(Path(files[request["request"]]["source"]).read_bytes())
             code_output = (relative(request["request"]).parent / "work" / relative(code_request["output"])).as_posix()
         try:
-            if signed_code:
+            if signed_native:
+                result.update(collect(phone, state, destination, code_output=code_output, signed_native=True, failed=observed.returncode != 0))
+                report = result.get("native_release", {})
+                result["success"] = (
+                    observed.returncode == 0
+                    and report.get("success") is True
+                    and report.get("phase") == "native-built"
+                    and report.get("managed_providers") == request["expected_managed_providers"]
+                    and "thermal" in result
+                )
+            elif signed_code:
                 result.update(collect(phone, state, destination, code_output=code_output, failed=observed.returncode != 0))
                 code = result.get("code", {})
                 backend, converter = code.get("backend", {}), result.get("converter", {})
@@ -558,7 +636,16 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 result["records"] = count
                 result["bundle"] = {key: emission.get(key) for key in ("bundle", "bytes", "sha256")}
         finally:
-            collect_evidence(phone, installer.PACKAGE, state, destination, code_output=code_output, failed=not result["success"])
+            jobs_root = (relative(request["request"]).parent / "work/releases/jobs").as_posix() if signed_native else None
+            collect_evidence(phone, installer.PACKAGE, state, destination, code_output=code_output, failed=not result["success"], jobs_root=jobs_root)
+            if request.get("profile_resources"):
+                evidence = destination / "logs/producer"
+                try:
+                    profile = summarize_resources(evidence / state["attempt"] / RESOURCE_TRACE, evidence / (jobs_root or code_output))
+                    write(destination / RESOURCE_SUMMARY, profile)
+                    result["phase_resource_summary"] = RESOURCE_SUMMARY
+                except (OSError, ValueError, KeyError, TypeError) as error:
+                    result["phase_resource_summary_error"] = str(error)
         state["terminal"] = observed.returncode
         write(state_path, state)
         terminal = True

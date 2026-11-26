@@ -54,7 +54,10 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
         self._write_inputs()
         self.module.streamed_media_rows = self._fixture_media_rows
 
-    def _fixture_media_rows(self, receipt: dict, *, bank_index_sha256: str, init_receipt_sha256: str) -> list[dict]:
+    def _fixture_media_rows(
+        self, receipt: dict, *, bank_index_sha256: str, init_receipt_sha256: str, accepted_inventory_sha256: str | None = None
+    ) -> list[dict]:
+        self.assertIsNone(accepted_inventory_sha256)
         self.assertEqual(self.expected["current_bank_index_sha256"], bank_index_sha256)
         self.assertEqual(self.expected["init_adaptation_receipt_sha256"], init_receipt_sha256)
         return [
