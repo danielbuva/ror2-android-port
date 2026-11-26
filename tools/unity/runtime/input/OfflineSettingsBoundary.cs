@@ -212,10 +212,19 @@ public sealed partial class PortSession
             coordinator.Save();
             return saved;
         }
-        bool CanRebind()
+        bool CanRebind(string[] names)
         {
-            return coordinator.offlineSettingsPaused && coordinator.r.nova != null &&
-                   coordinator.r.nova.physicalInputAvailable && coordinator.r.nova.mapping != null;
+            return Application.isFocused && coordinator.offlineSettingsPaused && coordinator.r.nova != null &&
+                   coordinator.r.nova.physicalInputAvailable && coordinator.r.nova.mapping != null &&
+                   NovaInputBridge.ControllerPresence.Matches(names, NovaInputBridge.MeasuredControllerName);
+        }
+        public void CancelRebindCapture()
+        {
+            if (!rebindVisible)
+                return;
+            rebind = null;
+            rebindError = "Capture unavailable. Reconnect the measured controller and return to the game.";
+            Observe();
         }
         public void ObserveControllerInput()
         {
@@ -223,14 +232,14 @@ public sealed partial class PortSession
             // buttons. Raw sampling uses realtime while the native run stays paused.
             if (rebindVisible)
             {
-                if (!CanRebind() || !Application.isFocused)
-                {
-                    rebind = null;
-                    rebindError = "Capture cancelled. Reconnect and choose an action again.";
-                }
+                var names = UnityEngine.Input.GetJoystickNames();
+                if (!CanRebind(names))
+                    CancelRebindCapture();
                 else if (rebind != null)
-                    rebind.Observe(UnityEngine.Input.GetJoystickNames(), NovaInputBridge.ReadRaw(), Time.realtimeSinceStartup);
-                Observe();
+                {
+                    rebind.Observe(names, NovaInputBridge.ReadRaw(), Time.realtimeSinceStartup);
+                    Observe();
+                }
                 return;
             }
             if (coordinator.offlineSettings == null || coordinator.r == null || !coordinator.r.freePlay ||
@@ -396,7 +405,7 @@ public sealed partial class PortSession
                 coordinator.Save();
                 return true;
             }
-            if (CanRebind() && GUI.Button(new Rect(x, y + 446, 420, 45), "Rebind controller buttons"))
+            if (CanRebind(UnityEngine.Input.GetJoystickNames()) && GUI.Button(new Rect(x, y + 446, 420, 45), "Rebind controller buttons"))
             {
                 rebindVisible = true;
                 coordinator.r.settings.rebindSavedForNextSession = false;
@@ -466,7 +475,9 @@ public sealed partial class PortSession
             var x = Screen.width * .5f - 260;
             var y = Screen.height * .5f - 210;
             GUI.Box(new Rect(x, y, 520, 420), "Controller buttons · paused");
-            if (rebind == null)
+            if (!CanRebind(UnityEngine.Input.GetJoystickNames()))
+                CancelRebindCapture();
+            else if (rebind == null)
             {
                 GUI.Label(new Rect(x + 20, y + 35, 480, 55),
                           "Choose an action. Changes apply next session.\nAxes and action availability stay unchanged.");

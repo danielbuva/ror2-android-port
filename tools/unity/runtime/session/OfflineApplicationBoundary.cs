@@ -253,14 +253,20 @@ public sealed partial class PortSession
         public void OnApplicationFocus(bool focused)
         {
             if (!focused)
+            {
                 offlineUiPresence?.Suspend();
+                coordinator.offlineSettingsSession?.CancelRebindCapture();
+            }
             else if (ownsDisplayPreference)
                 ReapplyDisplayPreference();
         }
         public void OnApplicationPause(bool paused)
         {
             if (paused)
+            {
                 offlineUiPresence?.Suspend();
+                coordinator.offlineSettingsSession?.CancelRebindCapture();
+            }
             else if (ownsDisplayPreference)
                 ReapplyDisplayPreference();
         }

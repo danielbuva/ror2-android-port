@@ -111,7 +111,8 @@ namespace UnityEngine
     public static class Input
     {
         public static HashSet<KeyCode> down = new HashSet<KeyCode>();
-        public static string[] GetJoystickNames() => new[] { "Authored controller" };
+        public static string[] joystickNames = new[] { "Authored controller" };
+        public static string[] GetJoystickNames() => joystickNames;
         public static bool GetKeyDown(KeyCode key) => down.Contains(key);
     }
 }
@@ -132,7 +133,7 @@ namespace RoR2
         public T GetComponent<T>() where T : new() => new T();
     }
 }
-public class NovaInputBridge : UnityEngine.Object
+public partial class NovaInputBridge : UnityEngine.Object
 {
     public static bool ownGuiMouse;
     public bool OwnsTouchGuiMouse => ownGuiMouse;
@@ -253,6 +254,11 @@ public sealed partial class PortSession
     }
     public void DraftHighRefresh(bool high) { offlineSettings.values.highRefreshRate = high; }
     public void ReapplyDisplay() { applicationInput.ReapplyDisplayPreference(); }
+    public void BackgroundRoundTrip()
+    {
+        applicationInput.OnApplicationPause(true);
+        applicationInput.OnApplicationPause(false);
+    }
     public void FinishGameplayFrameRate(int prior) { applicationInput.RestoreGameplayFrameRate(prior); }
     public void ApplicationController()
     {
@@ -450,6 +456,43 @@ public static class AndroidFeedbackHost
         session.Dispose();
         Check(!session.r.settings.rebindVisible && !session.Paused, "teardown retained modal/pause");
     }
+    static void RebindLifecycle()
+    {
+        var session = new PortSession(); session.Prepare(); session.Show(true);
+        GUI.click = "Rebind controller buttons"; session.Render();
+        GUI.click = "jump"; session.Render();
+        var capture = NovaInputBridge.ButtonRebind.last;
+        capture.ready = true; capture.candidate = capture.draft.jump = 18;
+
+        Application.isFocused = false;
+        GUI.click = "Confirm button and save for next session"; session.Render();
+        Check(NovaInputBridge.MappingStore.saves == 0 && !session.r.settings.rebindReady && session.Paused,
+              "focus loss allowed a stale capture to save");
+
+        Application.isFocused = true;
+        Input.joystickNames = new string[0];
+        GUI.click = "jump"; session.Render();
+        Check(NovaInputBridge.ButtonRebind.last == capture && LabelContains("Reconnect"),
+              "disconnected chooser began a capture or hid the recovery message");
+        session.r.nova.mapping = null;
+        session.Render();
+        Check(session.r.settings.rebindVisible && session.Paused, "missing mapping broke the paused chooser");
+
+        session.r.nova.mapping = new PortSession.Mapping();
+        Input.joystickNames = new[] { "Authored controller" };
+        GUI.click = "jump"; session.Render();
+        Check(NovaInputBridge.ButtonRebind.last != capture && session.r.settings.rebindAction == "jump",
+              "reconnected controller could not start a fresh capture");
+        capture = NovaInputBridge.ButtonRebind.last;
+        capture.ready = true; capture.candidate = capture.draft.jump = 18;
+        session.BackgroundRoundTrip();
+        GUI.click = "Confirm button and save for next session"; session.Render();
+        Check(NovaInputBridge.MappingStore.saves == 0 && !session.r.settings.rebindReady && session.Paused,
+              "background and return allowed a ready capture to save without a new input sample");
+        GUI.click = "Cancel"; session.Render();
+        Check(!session.r.settings.rebindVisible && session.Paused && session.r.nova.mapping.jump == 0 &&
+              NovaInputBridge.MappingStore.saves == 0, "cancel after reconnect changed pause or mapping");
+    }
     static void PlayerScreens()
     {
         var s = new PortSession(); s.Prepare(); s.StartMenu(); s.r.hud = new PortSession.Report();
@@ -598,6 +641,7 @@ public static class AndroidFeedbackHost
             case "screen-errors": ScreenErrors(); break;
             case "screen-escape": ScreenEscape(); break;
             case "rebind-modal": RebindModal(); break;
+            case "rebind-lifecycle": RebindLifecycle(); break;
             case "settings-lifecycle": SettingsLifecycle(); break;
             case "player-screens": PlayerScreens(); break;
             case "software-notices": SoftwareNotices(); break;

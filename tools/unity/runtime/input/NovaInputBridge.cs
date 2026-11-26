@@ -222,9 +222,10 @@ public sealed class NovaInputBridge : MonoBehaviour
                 throw new ArgumentException("Measured controller name required", nameof(name));
             expectedName = name;
         }
-        public bool Matches(string[] names)
+        public bool Matches(string[] names) => Matches(names, expectedName);
+        public static bool Matches(string[] names, string expectedName)
         {
-            if (names == null || names.Length == 0 || names[0] != expectedName)
+            if (string.IsNullOrEmpty(expectedName) || names == null || names.Length == 0 || names[0] != expectedName)
                 return false;
             for (int i = 1; i < names.Length; i++)
                 if (!string.IsNullOrEmpty(names[i]))
