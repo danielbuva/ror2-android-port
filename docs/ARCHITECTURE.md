@@ -6270,6 +6270,13 @@ available for replay. It retrieves producer logs, adjacent process timing
 receipts and available crash evidence before removing owned scratch. Android
 SDK Roslyn writes elapsed time and exit status beside its private compile logs,
 including a timing receipt on timeout.
+With `profile_resources: true` on a signed-code request, the same supervisor
+retains an attempt-local resource trace on the phone. Production temperature
+samples and subprocess start/end receipts share Android's BOOTTIME clock.
+The trace samples summed live descendant RSS and bytes available on the
+staging volume once per second. RSS can include shared pages, volume changes
+can include other activity, and short subprocesses may have no resource sample.
+The runner retrieves this trace beside the private process receipts.
 A signed-code request can pin an earlier retained toolhost by APK
 hash. The runner verifies the installed bytes and uses a same-signer Android
 update when the target differs. It removes only the current job's scratch for

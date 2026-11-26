@@ -24,6 +24,7 @@ BUNDLE_DECODE = "bundle-decode"
 DECODE_OWNER = "repo/tools/phone-build/accepted-output/"
 DECODE_BASELINE = "baseline-unity_bundle.py"
 DECODE_FILES = {DECODE_BASELINE, *(DECODE_OWNER + name for name in ("bundle_decode_benchmark.py", "unity_bundle.py", "phone_runner.py"))}
+RESOURCE_TRACE = "phase-resources.jsonl"
 NET8_LIBRARIES = (
     "libcoreclr.so",
     "libhostpolicy.so",
@@ -65,6 +66,10 @@ def load_request(path, *, refresh_repo=False):
     count = {SIGNED_CODE: "expected_managed_providers", BUNDLE_DECODE: "expected_blocks"}.get(operation, "expected_records")
     if signed_code or decode:
         required = (required - {"expected_records"}) | {"operation", count}
+    if signed_code and "profile_resources" in request:
+        if type(request["profile_resources"]) is not bool:
+            raise ValueError("signed-code-resource-profile-selector")
+        required.add("profile_resources")
     if decode:
         required |= {"expected_decoded_sha256", "retained_tool_sha256"}
     if "retained_tool_sha256" in request:
@@ -253,6 +258,7 @@ def invocation(remote, native, request, attempt):
         remote + "/" + attempt + "/thermal.json",
         "--status",
         remote + "/live-thermal.json",
+        *(["--samples", remote + "/" + attempt + "/" + RESOURCE_TRACE] if request.get("profile_resources") else []),
         "--",
         *python,
         *producer,
@@ -309,7 +315,7 @@ cd "$1" || exit
 shift
 for dir do
     if [ -d "$dir" ]; then
-        find "$dir" -type f \( -path '*/logs/*' -o -name '*.log' -o -name '*.process.json' \
+        find "$dir" -type f \( -path '*/logs/*' -o -name '*.log' -o -name '*.process.json' -o -name 'phase-resources.jsonl' \
             -o -iname 'tombstone_[0-9][0-9]' -o -iname 'tombstone_[0-9][0-9].pb' -o -name 'hs_err_pid*.txt' \) -print0 || exit
     fi
 done

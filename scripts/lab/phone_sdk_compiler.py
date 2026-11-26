@@ -92,13 +92,25 @@ class SdkCompiler:
         )
         log = assembly.with_suffix(".compile.log")
         receipt = assembly.with_suffix(".compile.process.json")
+        clock = getattr(time, "CLOCK_BOOTTIME", time.CLOCK_MONOTONIC)
+        started_boottime = time.clock_gettime(clock)
         started = time.monotonic()
         exit_code = None
         with log.open("w") as stream:
             try:
                 exit_code = subprocess.run(self.command + ["@" + str(rsp)], env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=180).returncode
             finally:
-                receipt.write_text(json.dumps({"exit_code": exit_code, "seconds": time.monotonic() - started}) + "\n")
+                receipt.write_text(
+                    json.dumps(
+                        dict(
+                            exit_code=exit_code,
+                            seconds=time.monotonic() - started,
+                            started_boottime_seconds=started_boottime,
+                            ended_boottime_seconds=time.clock_gettime(clock),
+                        )
+                    )
+                    + "\n"
+                )
         if exit_code:
             diagnostics = log.read_text().strip().splitlines()[-6:]
             raise RuntimeError(f"SDK Roslyn failed for {assembly.name} ({log}): " + "\n".join(diagnostics))

@@ -384,7 +384,7 @@ def wait_active(child, timeout, pause_clock, record):
 
 def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600, pause_clock=None):
     started = time.monotonic()
-    record = {"argv": argv, "exit_code": None, "timeout_seconds": timeout}
+    record = {"argv": argv, "exit_code": None, "timeout_seconds": timeout, "started_boottime_seconds": elapsed_clock()}
 
     def interrupted(signum, frame):
         raise KeyboardInterrupt("native tool interrupted")
@@ -420,6 +420,7 @@ def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600,
         for signum, handler in previous.items():
             signal.signal(signum, handler)
         record["seconds"] = time.monotonic() - started
+        record["ended_boottime_seconds"] = elapsed_clock()
         write(output / "logs" / (name + ".process.json"), record)
 
 
