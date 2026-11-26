@@ -1,0 +1,60 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "original_sources": {
+    "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022"
+  },
+  "records": [
+    {
+      "bytes": 80,
+      "class_id": 115,
+      "destination": [
+        "whole-game-content",
+        "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        -5027203180066796682
+      ],
+      "native_type_hash": "f46e8e30ecc293493f18ab27134210ee",
+      "original": [
+        "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+        "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+        2911926830216348225
+      ],
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DronePickupDef"
+      ],
+      "sha256": "ccc8b21011d05435b31eeaae00eda743522cfef7bf880fde048696f1b56f1c73",
+      "source": [
+        "apk/assets/bin/Data/globalgamemanagers.assets",
+        0
+      ],
+      "source_profile_sha256": "1c5388eb5856d73a7e00ef1c4543ae2cb5ae82671fd31be1e025a641a27a1d01"
+    },
+    {
+      "bytes": 80,
+      "class_id": 115,
+      "destination": [
+        "whole-game-content",
+        "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        -42899618856933019
+      ],
+      "native_type_hash": "f46e8e30ecc293493f18ab27134210ee",
+      "original": [
+        "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+        "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+        -1825452364947764757
+      ],
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SkinDefParams"
+      ],
+      "sha256": "afe39a5f1c65393f9c26607b62f2154e85b7f0a3f19f3d90bd14c399d6b5069c",
+      "source": [
+        "apk/assets/bin/Data/globalgamemanagers.assets",
+        0
+      ],
+      "source_profile_sha256": "1c5388eb5856d73a7e00ef1c4543ae2cb5ae82671fd31be1e025a641a27a1d01"
+    }
+  ]
+}

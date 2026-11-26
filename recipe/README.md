@@ -7129,6 +7129,32 @@ authored output identities. Original bodies and producer receipts stay local.
 | `owner-whole-game-v30-original-managed-tail.jsonl.gz` | `21d6b5707f63832c13fad07f0c52e38ba2767696c6e7a9ca9045b41c41d342f1` |
 | `owner-whole-game-v30-original-retained-tail.jsonl.gz` | `a0cd71c133ed06e3e0388257676af15bf83d1475a6795a83592f1773d2da907e` |
 
+## V30 specialized record suppliers (2026-11-26)
+
+The texture and mesh profiles select 47 Texture2D and 22 Mesh records for
+the existing platform producers. Texture profiles preserve source pixels or
+select the established Android encoding and streaming operations. The mesh
+profile retains source geometry and applies the existing mesh usage and
+collision-cache transformations where specified.
+
+Seven Materials use the established keyword policy and two checked PPtr
+routes each, to the canonical Shader and each Material's texture. Two
+MonoScripts resolve from the generated player registry by assembly, namespace
+and class, with their original source identities declared for bundle binding.
+Whole-bundle Unity loadability and Android checks remain open.
+
+Manual provenance, licensing, privacy and sensitive-content review covered
+source selectors, digests, type and field extents, and authored output
+relationships. Original bodies, pixels, geometry and generated packs stay
+local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-platform-textures.json` | `1a5d2211dfc0241073c67cba051d678b9c708284c4ae9f57e67353d4785800a3` |
+| `owner-whole-game-v30-platform-meshes.json` | `2efcf8ea3c576f56583d1e0cc7beada333a1010d3a044dbbac95185833072d24` |
+| `owner-whole-game-v30-platform-materials.json` | `e7f6769d02ccc78a8a2b634d0f2d5a9785ace8abca4ebe02fa0d8ec05218982a` |
+| `owner-whole-game-v30-platform-registry.json` | `c09d3bb84e6c0418114ee8173ae7722ccb0dcfa7349f259e55b1c4ca97fc8e66` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison
