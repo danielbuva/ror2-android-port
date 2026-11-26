@@ -152,7 +152,7 @@ class LightningSourceCallTransformTests(unittest.TestCase):
 
         plugins = ROOT / "work/lab-project/Assets/LabLoadingScene/Plugins"
         references = {
-            plugins / "RoR2.dll": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c",
+            plugins / "RoR2.dll": "324fa10f959cdbceed69ebcea5f847a5cdafcfe6891b7805849e80cd72a34ee7",
             UNITY.parent / "Managed/UnityEngine/UnityEngine.CoreModule.dll": "b2de8697a8e44aaa3b4ba2662015003c55fe3089ceee6ba8677716214e41c34d",
             UNITY.parent / "Managed/UnityEngine/UnityEngine.PhysicsModule.dll": "273dc7ef4525dcfa59d2f8232aa9fa4334ada763111dc01e99fbe3dc41a06696",
             plugins / "com.unity.multiplayer-hlapi.Runtime.dll": "76d55b3e90e5fe6c0f8738302b01d54141e5a07931fa4cfa370f6a20832d37cf",

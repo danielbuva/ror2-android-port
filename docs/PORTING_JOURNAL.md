@@ -6,7 +6,7 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
-## J1506 — Convert signed-release managed code on Android
+## J1507 — Convert signed-release managed code on Android
 
 2026-11-26. The two audio pin generators validate the exact owner inventory
 used by staging, including when the full inventory is relocated to Android.
@@ -19,6 +19,19 @@ scratch growth. Peak CPU/GPU was 71.2 °C with one duty-cycle pause.
 Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-thor-signed-code-v6-roster-1126/terminal.done.json`.
 Scratch cleanup, OLED sleep and lease release passed. Native compilation,
 APK assembly and in-place update still need phone qualification.
+## J1506 — Restore Commando pistol event playback through the source bank
+
+2026-11-26. The audio build hook restores CommandoBody's original bank component
+when the selected cohort contains `char_Commando.bnk`. The component owns load
+and unload. Assisted native seed-3 Start reached Distant Roost (`blackbeach2`)
+with 96.640 s of effective authority. Wwise accepted all 218 pistol posts.
+The first returned playing ID 13 and the next service frame reported active
+`Play_commando_R`. All 153 startup banks completed. Mixed MainOutput recorded
+675 callbacks and 777,600 finite nonzero samples. Pistol audibility remains open.
+APK SHA-256 `4422cf9dc4131cb9887bf8f8902e6c6b8d9772485f5fc7a3ae0e90b557bd3aa6` (source `565e8f7e`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/roost-seed3-native-commando-bank-main-nova/`
+includes `terminal.done.json` and the PID-bound screenshot, logcat and report
+in `terminal-capture/`. Adopted backing, cleanup, OLED sleep and lease release passed.
 
 ## J1505 — Reach Titanic Plains from the staged converted APK
 

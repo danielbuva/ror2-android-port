@@ -355,7 +355,17 @@ class PrimaryOperandWitnessTests(unittest.TestCase):
         source = PRIMARY.read_text(encoding="utf-8")
         fixture = (ROOT / "tests/fixtures/primary_original_audio_observation.cs").read_text(encoding="utf-8")
         fixture = fixture.replace("__REPORT__", extract_member(source, "public class PrimaryFireReport"))
-        fixture = fixture.replace("__PRODUCTION__", extract_member(source, "void ObserveOriginalPrimaryAudio("))
+        members = "\n".join(
+            extract_member(source, declaration)
+            for declaration in (
+                "public void AttachPrimaryPostObserver(",
+                "void ObserveRejectedPrimaryAudioPost(",
+                "void ObserveOriginalPrimaryAudio(",
+            )
+        )
+        fixture = fixture.replace("__PRODUCTION__", members)
+        marker = (ROOT / "tools/assembly-transforms/CommandoPostObserverMarker.cs").read_text(encoding="utf-8")
+        fixture += "\n" + marker.removeprefix("using System;\n")
         self.compile_run(fixture, "")
 
     def test_integrated_configs_preserve_native_audio_and_restore_owned_state(self):
@@ -394,6 +404,7 @@ class PrimaryOperandWitnessTests(unittest.TestCase):
             + "\n    public sealed class PrimaryObserverHarness\n    {\n"
             + "        readonly PortSession coordinator;\n"
             + "        void ObserveOriginalPrimaryAudio(CharacterBody body, PrimaryFireReport report) { }\n"
+            + "        void ObserveRejectedPrimaryAudioPost(PrimaryFireReport report) { }\n"
             + "        EntityStates.EntityState lastSpineWeaponState;\n"
             + "        public PrimaryObserverHarness(PortSession owner) { coordinator=owner; }\n"
             + observer_members

@@ -180,7 +180,7 @@
     }
   ],
   "public_profile_source_hashes": {
-    "recipe/assembly-transforms.json": "f6ed66e4cc324f7888a270b601882710d5f9f7d60da38068540d6121d031265b",
+    "recipe/assembly-transforms.json": "39edfb5559c472388eeda60abed0c8d7b94577a76ae92cd9895f6b6e47b468ed",
     "recipe/owner-public-tools.json": "1f4b333652fbb38174f8e2f7c54366369171b543789a4fbfe54fd8db4cc2fec1",
     "scripts/lab/assembly_transforms.py": "9e30fa8771789a6b5a47cb81231aba38219cb13ce1ed74d7a8c88700f3843ec4",
     "scripts/lab/common.py": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55",
@@ -189,15 +189,16 @@
     "tools/assembly-transforms/AudioGuard.cs": "ac5d6dd4e08786d54346bc14c69f640785e04f98d8a104da9c39c86c6a00ffd6",
     "tools/assembly-transforms/CatalogContract.cs": "5c9ec3e42209d7f1cf1f7cbc18e2ff61c16e314363b3fc9135fc77c8747e1da4",
     "tools/assembly-transforms/CatalogNames.cs": "ff18bcf18c58de1e5a2113bcfb35b02d98b1c33db80e7345bd077daea6ace682",
+    "tools/assembly-transforms/CommandoPostObserverMarker.cs": "971caade316b7a8d7e1c975185ca82458dcc9b0bc6eff34c02e44151dabb11e5",
     "tools/assembly-transforms/MigrationSurface.cs": "771f9ecb44b76328b135eecb3539a611ffc3f8ab3fff7213494865e84d7a56af",
     "tools/assembly-transforms/MusicOutputObserverCecilTransform.cs": "c94e64eda96e1d969087272d0684ce1a809a00b2e18eed30e35a0a5825a77b95",
     "tools/assembly-transforms/MusicOutputObserverCecilTransform.csproj": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
-    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
+    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "8e566d3c6cacaf1cf58044ddfc3e952657a860baa81dfb7d1fd3df69daead4c2",
     "tools/assembly-transforms/OptionalPresentationGuard.cs": "a78d5d453bfe7d78a2df3b2040ff3ca09f22ef6ef9dd9047be751b5ed6e962f0",
     "tools/assembly-transforms/Program.cs": "f4fd626746cd6a2a970e3a543a62ce1f487587c5ce10bf356a3611e4c5d6bf28",
     "tools/assembly-transforms/RewiredContract.cs": "ed300e3f88ed25823d05ef9ab22e732d9d37d6dee0e5968e837c50ec63c8b8f3",
     "tools/assembly-transforms/Slice.cs": "6d25f9bf0c8f8f4107708d32d0275fb728ffe06de81ec1fdee7fcb32962bf494",
-    "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
+    "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs": "9ea24c13453d5753bcb46f4efe09b705d7ab7498c4cd51039046998f9588caaa",
     "tools/assembly-transforms/WwiseUnavailable.cs": "81ebaa69b8c40a19c2068dfcb856ceffe67a0b3d4be8852936ffcbedb8486ba3",
     "tools/owner-build/PublicProviderWitness.cs": "d3cd2fe4d237774dde69470b7f45cb10872d99f66b73bab60550d11731520ce0",
     "tools/owner-build/licenses/Roslyn-LICENSE.txt": "ae48df11a335dc1a615f4f938b69cba73bcf4485c4f97af49b38efb0f216353b"

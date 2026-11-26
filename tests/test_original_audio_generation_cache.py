@@ -350,6 +350,7 @@ class GenerationCacheTests(unittest.TestCase):
                         mock.patch.object(hook, "load", side_effect=[producer, stager]),
                         mock.patch.object(hook.shutil, "which", return_value=str(dotnet)),
                         mock.patch.object(hook, "synchronize_sound_emitter", return_value={"fixture": True}),
+                        mock.patch.object(hook, "synchronize_commando_bank", return_value={"fixture": True}),
                     ):
                         return hook.stage_for_build(project, work, selection_path=selection_path)
 
@@ -394,6 +395,7 @@ class GenerationCacheTests(unittest.TestCase):
                     mock.patch.object(hook, "load", side_effect=[producer, stager]),
                     mock.patch.object(hook.shutil, "which", return_value=str(dotnet)),
                     mock.patch.object(hook, "synchronize_sound_emitter", return_value={"fixture": True}),
+                    mock.patch.object(hook, "synchronize_commando_bank", return_value={"fixture": True}),
                     self.assertRaisesRegex(RuntimeError, "requested cache miss compiled"),
                 ):
                     hook.stage_for_build(project, work, selection_path=selection_path)
@@ -422,6 +424,7 @@ class GenerationCacheTests(unittest.TestCase):
                     mock.patch.object(hook, "load", side_effect=[producer, stager]),
                     mock.patch.object(hook.shutil, "which", return_value=str(dotnet)),
                     mock.patch.object(hook, "synchronize_sound_emitter", return_value={"fixture": True}),
+                    mock.patch.object(hook, "synchronize_commando_bank", return_value={"fixture": True}),
                 ):
                     with self.assertRaisesRegex(ValueError, "differs from current source/input identity"):
                         hook.stage_for_build(project, work, selection_path=selection_path)
