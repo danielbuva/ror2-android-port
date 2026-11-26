@@ -8066,9 +8066,10 @@ and full cancellation through `Neutral`.
 
 Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
 and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
-Commando, Huntress and Captain additive states and blend trees, plus other native AimPitch/AimYaw
-layers, resolves current catalog containers against accepted input hashes, and
-emits private source identities and Transform reference values through StageIO. The latter creates owned
+Commando, Huntress, Captain and Bandit2 additive states and blend trees, plus
+other native AimPitch/AimYaw layers. It resolves current catalog containers
+against accepted input hashes and emits private source identities and Transform
+reference values through StageIO. The latter creates owned
 constant reference clips before bundle production and applies the original
 additive reference settings. Unsupported muscle streams remain unchanged and
 are reported explicitly; unknown Transform bindings refuse restoration.
@@ -8078,9 +8079,11 @@ The current `commando-animation-host` action also verifies persisted reference
 curves and compares positions and directions on a frozen rig against the original
 clips. It samples Commando's muzzles and Huntress's torso, head and bow during
 aim, firing and hit reactions, and Captain's torso, head, gun and radio during
-aim, firing and call-ins. Huntress firing and recovery and Captain's selected
-gestures play both gesture layers. The comparison overrides every controller
-clip with its original, including Captain's shared Commando clips.
+aim, firing and call-ins. It samples Bandit2's torso, head and weapon attachment
+poses during aim, firing, reload, smoke bomb and blade gestures. Huntress firing
+and recovery and Captain's selected gestures play both gesture layers. The
+comparison overrides every controller clip with its original, including
+Captain's shared Commando clips.
 Device aim, firing and hit-reaction presentation remain separate checks.
 
 `WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor

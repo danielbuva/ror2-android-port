@@ -127,6 +127,12 @@ public static class SurvivorSkillInputHost
                           new[] { ("", 0), ("ChargeCaptainShotgun", 2), ("FireCaptainShotgun", 2),
                                   ("FireTazer", 2), ("CallSupplyDrop", 2), ("CallAirstrike1", 2) }, "Commando");
 
+    public static object SampleBanditGestures() =>
+        SampleSourcePoses("Bandit2", "mdlBandit2Avatar",
+                          new[] { "chest", "head", "MuzzleShotgun", "MuzzlePistol", "MuzzleSlashBlade", "MuzzleSmokebomb" },
+                          new[] { ("", 0), ("FireMainWeapon", 1), ("FireSideWeapon", 1), ("Reload", 1),
+                                  ("ThrowSmokebomb", 1), ("SlashBlade", 1) });
+
     const string SurvivorAssetRoot = "Assets/WholeGame/RoR2/Base/Characters/";
 
     static object SampleSourcePoses(string survivor, string avatarName, string[] poseNames,
