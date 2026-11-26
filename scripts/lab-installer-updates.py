@@ -64,9 +64,8 @@ class FlowMetrics:
     STAGES = (
         "fresh-installer",
         "synthetic-provision-and-check",
-        "baseline-reconstruction",
         "visible-install-permission",
-        "baseline-install",
+        "baseline-reconstruct-and-install",
         "seed-retention-witness",
         "check-for-updates",
         "in-place-update",
@@ -1892,7 +1891,9 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
                 ):
                     raise Failure("install-permission-return-started-reconstruction")
                 passed("install-unknown-apps-visible")
-            with stage("baseline-install"):
+            # With permission already granted, the build automatically enters
+            # PackageInstaller. READY is transient, not a separate timed stage.
+            with stage("baseline-reconstruct-and-install"):
                 phone.tap("Reconstruct and install verified game")
                 first = phone.installed(1, require_pending_prompt=True)
                 passed("pending-user-action-visible")
