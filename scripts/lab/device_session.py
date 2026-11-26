@@ -1469,7 +1469,9 @@ def execute(request):
             result["cleanup_errors"] = cleanup_errors
             if cleanup_errors or not result.get("terminal_readback"):
                 result["success"] = False
-            else:
+            # Discovery only reads ADB inventory. Before it succeeds, there is
+            # no device state from this run to verify or restore.
+            if not cleanup_errors and (device is None or result.get("terminal_readback")):
                 clean("lease-release", lease.release)
                 result["lease_released"] = not lease.acquired
         try:
