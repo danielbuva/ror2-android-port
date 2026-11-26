@@ -1710,7 +1710,11 @@ keeps generated descriptors and caller-owned producer results. The managed-host
 `tools/phone-build/managed-host/ToolHostActivity.java` binds explicit
 check/prepare/import/build/install/resume actions to durable worker/install state.
 `onResume` registers the install-state observer and 500 ms refresh; `onPause`
-removes both. `OwnerUpdateState.java` owns Android-free presentation policy;
+removes both. The Activity opens Android's app-specific install-permission
+screen on an explicit request or attempted build. Returning from Settings never
+launches work; the foreground service independently gates build, rollback and
+installation before starting any worker. `OwnerUpdateState.java` owns
+Android-free presentation policy;
 its fresh `Screen` snapshot binds progress guidance and all Activity actions to
 current worker, consent, recovery and import-receipt facts. A failed import file
 is not build admission, and retained recovery disables Resume and other work.
@@ -1718,9 +1722,12 @@ its `StatusRender` coalesces changing same-phase text to two seconds while
 rendering phase changes immediately. Sampling and durable work remain separate.
 `OwnerInstaller.java` owns PackageInstaller sessions, streamed hashing,
 package/version/signer continuity and persistent asynchronous status. Its
-session-matched `Result` receiver owns Android confirmation intents. Missing or
-unlaunchable confirmation retains `AWAITING_CONFIRMATION` and the existing
-session; retry never creates a duplicate session. Android 12+ same-key updates
+session-matched `Result` receiver opens confirmation immediately only in the
+focused installer Activity. Otherwise its foreground-service notification and
+an in-app button let the owner return and open the system dialog. Unlaunchable
+confirmation can be retried in the foreground and never creates a second session.
+The platform intent is process-local; missing confirmation retains the session
+and does not imply success or authorize recovery. Android 12+ same-key updates
 request `USER_ACTION_NOT_REQUIRED`, with actual Android consent authoritative.
 `reconcile` recovers persisted session state after recreation; installed identity
 and required profile readback gate success and advancement of the installed

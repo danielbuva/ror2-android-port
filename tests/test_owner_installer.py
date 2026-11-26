@@ -15,7 +15,9 @@ STUBS = {
     "dev/ror2lab/phonebuildhostfixture/OwnerBuildService.java": """package dev.ror2lab.phonebuildhostfixture;public class OwnerBuildService {public static boolean isRunning(){return false;}public static void launch(android.content.Context c,String action){OwnerInstaller.finishVerification(c);}}""",
     "dev/ror2lab/phonebuildhostfixture/OwnerAlphaInstall.java": """package dev.ror2lab.phonebuildhostfixture; public class OwnerAlphaInstall {public static final String PACKAGE="dev.ror2lab.alpha";public static boolean pending(android.content.Context c){return false;}public static void prepare(android.content.Context c,java.io.File f,String h,android.content.pm.PackageInfo n,android.content.pm.PackageInfo o){}public static void complete(android.content.Context c,android.content.pm.PackageInfo p){}public static boolean recover(android.content.Context c){return false;}}""",
     "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
-public class ToolHostActivity {public static String checkpointState;
+public class ToolHostActivity extends android.content.Context {public static String checkpointState;
+public static ToolHostActivity active;
+public static ToolHostActivity activeForConfirmation(){return active;}
 public static java.util.List<String> diagnosticEvents=new java.util.ArrayList<>(),receiverEvents=new java.util.ArrayList<>();public static boolean failDiagnostic;
 public static void updateInstallReceiverDiagnostic(android.content.Context c,String registration,boolean entered){
 if(failDiagnostic)throw new IllegalStateException("synthetic diagnostic error");receiverEvents.add(entered?"entry":registration);}
@@ -111,6 +113,7 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
 }
 
 HARNESS = r"""
+package dev.ror2lab.phonebuildhostfixture;
 import android.content.*;
 import android.content.pm.*;
 import android.os.Build;
@@ -174,7 +177,7 @@ public class Harness {
         check(c.manager.installer.params.mode==PackageInstaller.SessionParams.MODE_FULL_INSTALL && c.manager.installer.params.action==0);
         c=update();OwnerInstaller.install(c,apk,hash);check(c.manager.installer.params.action==2);
         for(int api:new int[]{24,30,31,33}) {
-            Build.VERSION.SDK_INT=api;c=new Context();OwnerInstaller.install(c,apk,hash);
+            Build.VERSION.SDK_INT=api;c=new ToolHostActivity();ToolHostActivity.active=(ToolHostActivity)c;OwnerInstaller.clearTerminalStatus(c);OwnerInstaller.install(c,apk,hash);
             IntentSender callback=c.manager.installer.session.receiver;
             check(callback!=null && callback.requestCode==7);
             check(callback.callback.target==OwnerInstaller.Result.class);
@@ -186,15 +189,17 @@ public class Harness {
             // not a separately selected receiver. Android delivery remains a phone gate.
             Intent confirmation=new Intent();confirmation.flags=8;
             callback.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,confirmation);
-            check(c.started==confirmation && confirmation.flags==(8|Intent.FLAG_ACTIVITY_NEW_TASK));
+            check(c.started==confirmation && confirmation.flags==8);
             check("AWAITING_CONFIRMATION".equals(c.stateAtStart) && OwnerInstaller.busy(c));
             check(ToolHostActivity.receiverEvents.get(ToolHostActivity.receiverEvents.size()-1).equals("entry"));
         }
-        Context callbackDiagnosticFailure=new Context();OwnerInstaller.install(callbackDiagnosticFailure,apk,hash);
+        Context callbackDiagnosticFailure=new ToolHostActivity();ToolHostActivity.active=(ToolHostActivity)callbackDiagnosticFailure;
+        OwnerInstaller.clearTerminalStatus(callbackDiagnosticFailure);OwnerInstaller.install(callbackDiagnosticFailure,apk,hash);
         ToolHostActivity.failDiagnostic=true;Intent stillConfirms=new Intent();
         callbackDiagnosticFailure.manager.installer.session.receiver.send(callbackDiagnosticFailure,7,PackageInstaller.STATUS_PENDING_USER_ACTION,stillConfirms);
         ToolHostActivity.failDiagnostic=false;
         check(callbackDiagnosticFailure.started==stillConfirms && OwnerInstaller.busy(callbackDiagnosticFailure));
+        ToolHostActivity.active=null;
         Context earlyEntry=new Context();OwnerInstaller.install(earlyEntry,apk,hash);earlyEntry.prefsFail=true;
         try {earlyEntry.manager.installer.session.receiver.send(earlyEntry,7,PackageInstaller.STATUS_PENDING_USER_ACTION,new Intent());
             throw new AssertionError("preference failure ignored");}catch(IllegalStateException expected){}
@@ -221,12 +226,12 @@ public class Harness {
         check(c.manager.installer.params==null);
         c=new Context();try {OwnerInstaller.install(c,apk,hash,"authored.game",3);throw new AssertionError();}catch(IOException expected){}
         check(c.manager.installer.params==null);
-        OwnerInstaller.Result receiver=new OwnerInstaller.Result();c=new Context();OwnerInstaller.install(c,apk,hash,"authored.game",2);
+        OwnerInstaller.Result receiver=new OwnerInstaller.Result();c=new ToolHostActivity();ToolHostActivity.active=(ToolHostActivity)c;OwnerInstaller.clearTerminalStatus(c);OwnerInstaller.install(c,apk,hash,"authored.game",2);
         try {OwnerInstaller.install(c,apk,hash);throw new AssertionError();}catch(IOException expected){check(expected.getMessage().contains("already pending"));}
         Intent i=new Intent();i.code=-1;i.confirmation=new Intent();
         i.session=99;receiver.onReceive(c,i);check(c.started==null);
         check(ToolHostActivity.diagnosticEvents.get(ToolHostActivity.diagnosticEvents.size()-1).equals("callback:pending-user-action:false"));i.session=7;
-        receiver.onReceive(c,i);check(c.started==i.confirmation && OwnerInstaller.status(c).contains("Confirm"));
+        receiver.onReceive(c,i);check(c.started==i.confirmation && OwnerInstaller.status(c).contains("confirmation"));ToolHostActivity.active=null;
         check(ToolHostActivity.diagnosticEvents.get(ToolHostActivity.diagnosticEvents.size()-1).equals("callback:pending-user-action:true"));
         check(OwnerInstaller.busy(c));c.manager.current=new PackageInfo();
         i.code=0;receiver.onReceive(c,i);check(OwnerInstaller.status(c).contains("complete"));
@@ -241,17 +246,25 @@ public class Harness {
         OwnerInstaller.reconcile(c);check(OwnerInstaller.state(c).equals("INSTALLED"));check(ToolHostActivity.checkpointState.equals("INSTALLED"));
         c=new Context();OwnerInstaller.install(c,apk,hash);c.manager.installer.info=null;
         OwnerInstaller.reconcile(c);check(OwnerInstaller.state(c).equals("ERROR"));
-        c=new Context();OwnerInstaller.install(c,apk,hash);
+        c=new ToolHostActivity();OwnerInstaller.clearTerminalStatus(c);OwnerInstaller.install(c,apk,hash);
         c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,null);
-        check(OwnerInstaller.state(c).equals("AWAITING_CONFIRMATION") && c.started==null);
+        check(OwnerInstaller.state(c).equals("AWAITING_CONFIRMATION") && c.started==null && !OwnerInstaller.hasConfirmation(c));
         check(OwnerInstaller.busy(c) && !c.manager.installer.abandoned);
         noSecondInstall(c,apk,hash);
-        c=new Context();OwnerInstaller.install(c,apk,hash);c.startFails=true;
-        c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,new Intent());
-        check(OwnerInstaller.state(c).equals("AWAITING_CONFIRMATION") && c.started==null);
-        check("AWAITING_CONFIRMATION".equals(c.stateAtStart));
-        check(OwnerInstaller.busy(c) && !c.manager.installer.abandoned);
+        Intent deferred=new Intent();
+        c.manager.installer.session.receiver.send(c,8,PackageInstaller.STATUS_PENDING_USER_ACTION,new Intent());
+        check(!OwnerInstaller.hasConfirmation(c));
+        c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,deferred);
+        check(c.started==null && OwnerInstaller.hasConfirmation(c));
+        c.startFails=true;OwnerInstaller.openConfirmation(c);
+        check(c.started==null && OwnerInstaller.hasConfirmation(c) && "AWAITING_CONFIRMATION".equals(c.stateAtStart));
+        c.startFails=false;OwnerInstaller.openConfirmation(c);
+        check(c.started==deferred && !OwnerInstaller.hasConfirmation(c));
+        c.started=null;c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,new Intent());
+        OwnerInstaller.openConfirmation(c);check(c.started==null && !OwnerInstaller.hasConfirmation(c));
         noSecondInstall(c,apk,hash);
+        c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_FAILURE,null);
+        check(!OwnerInstaller.hasConfirmation(c) && "ERROR".equals(OwnerInstaller.state(c)));
         // No observed callback is not permission to abandon a sealed session or
         // create a second install. The harness alone bounds its acceptance wait.
         c=new Context();OwnerInstaller.install(c,apk,hash);OwnerInstaller.reconcile(c);
@@ -387,6 +400,17 @@ class OwnerInstallerTests(unittest.TestCase):
         self.assertNotIn("setDefaultHostnameVerifier", activity)
         self.assertNotIn("checkServerTrusted", activity)
 
+    def test_permission_screen_is_explicit_and_precedes_reconstruction(self):
+        activity = SOURCE.with_name("ToolHostActivity.java").read_text()
+        start = activity.split("private void startUpdate", 1)[1].split("private void installReady", 1)[0]
+        self.assertLess(start.index("!requestInstallPermission()"), start.index("OwnerInstaller.clearTerminalStatus(app)"))
+        gate = activity.split("private boolean requestInstallPermission", 1)[1].split("static JSONObject readJson", 1)[0]
+        self.assertIn('Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null)', gate)
+        self.assertNotIn("OwnerBuildService.launch", gate)
+        resumed = activity.split("public void onResume()", 1)[1].split("public void onPause()", 1)[0]
+        self.assertNotIn("OwnerBuildService.launch", resumed)
+        self.assertIn("OwnerInstaller.hasConfirmation(this)", activity)
+
     def test_session_lifecycle(self):
         home = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/PlaybackEngines/AndroidPlayer/OpenJDK")
         compiler = home / "bin/javac"
@@ -410,7 +434,9 @@ class OwnerInstallerTests(unittest.TestCase):
             compiled = subprocess.run([str(compiler), "-d", str(root), *paths, str(SOURCE), str(STATE_SOURCE), str(harness)], capture_output=True, text=True)
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             result = subprocess.run(
-                [str(compiler.with_name("java")), "-cp", str(root), "Harness", str(root / "owner-stream.bin")], capture_output=True, text=True
+                [str(compiler.with_name("java")), "-cp", str(root), "dev.ror2lab.phonebuildhostfixture.Harness", str(root / "owner-stream.bin")],
+                capture_output=True,
+                text=True,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("contracts PASS", result.stdout)

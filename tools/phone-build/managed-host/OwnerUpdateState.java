@@ -76,6 +76,10 @@ public final class OwnerUpdateState {
                          String importState, boolean rollbackAvailable, boolean resumable) {
         return new Screen(this, running, installing, pendingRecovery, inputsAvailable, importState, rollbackAvailable, resumable);
     }
+    static boolean requiresInstallPermission(String action) {
+        return "release-build".equals(action) || "release-rollback".equals(action) || "install".equals(action);
+    }
+
     public static boolean resumableAction(String action) {
         return "import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)
             || "install-prepare".equals(action) || "release-check".equals(action);
