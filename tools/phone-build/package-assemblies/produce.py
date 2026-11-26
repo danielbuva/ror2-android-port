@@ -207,7 +207,8 @@ def pathmap_option(directory):
 
 def invoke(args, name, out):
     started = time.monotonic()
-    result = {"name": name, "argv": [str(p) for p in args], "exit_code": None}
+    clock = getattr(time, "CLOCK_BOOTTIME", time.CLOCK_MONOTONIC)
+    result = {"name": name, "argv": [str(p) for p in args], "exit_code": None, "started_boottime_seconds": time.clock_gettime(clock)}
     with (out / (name + ".log")).open("xb") as log:
         process = subprocess.Popen(
             result["argv"],
@@ -231,6 +232,7 @@ def invoke(args, name, out):
             raise
         finally:
             result["seconds"] = time.monotonic() - started
+            result["ended_boottime_seconds"] = time.clock_gettime(clock)
             (out / (name + ".process.json")).write_text(json.dumps(result, indent=2) + "\n")
     if result["exit_code"]:
         raise RuntimeError(name + " failed; see retained log")
