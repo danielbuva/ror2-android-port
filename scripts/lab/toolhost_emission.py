@@ -287,7 +287,8 @@ def collect(phone, state, destination, *, code_output=None, decode=False, failed
         observed = phone.execute("shell", shlex.join(["run-as", "dev.ror2lab.installertest", "cat", path]), label="emission-" + name, idempotent=True)
         if observed.returncode == 0:
             value = json.loads(observed.stdout)
-            write(destination / (name + ".json"), value)
+            filename = "code-result.json" if name == "code" else name + ".json"
+            write(destination / filename, value)
             result[name] = value
     return result
 

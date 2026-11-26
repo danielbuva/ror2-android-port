@@ -195,11 +195,19 @@ def verify_request(manifest: dict, request_path: Path | None) -> dict:
     }
 
 
-def validate_streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None = None, init_receipt_sha256: str | None = None) -> list[dict]:
+def validate_streamed_media_rows(
+    receipt: dict,
+    *,
+    accepted_inventory_sha256: str | None = None,
+    bank_index_sha256: str | None = None,
+    init_receipt_sha256: str | None = None,
+) -> list[dict]:
     """Validate the accepted fixed media closure; reusable by producer/pin tooling."""
     if not isinstance(receipt, dict) or receipt.get("schema") != "original-game-wwise-bank-cohort-r2":
         raise ValueError("bank stage receipt must use streamed-media cohort r2")
     pins = dict(R2_RECEIPT_PINS)
+    if accepted_inventory_sha256 is not None:
+        pins["accepted_inventory_sha256"] = accepted_inventory_sha256
     if bank_index_sha256 is not None:
         pins["current_bank_index_sha256"] = bank_index_sha256
     if init_receipt_sha256 is not None:
