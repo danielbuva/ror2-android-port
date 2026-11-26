@@ -154,7 +154,7 @@ def validate_report(report, commit):
 
 
 def run_editor(project, root, work):
-    from build_lock import host_build_lock
+    from build_lock import host_build_lock, unity_editor_env
 
     root, work, project = Path(root), Path(work), Path(project).absolute()
     receipt = validate_project(project, root, work)
@@ -167,7 +167,7 @@ def run_editor(project, root, work):
     attempt = project.parent / ("editor-check-" + uuid.uuid4().hex)
     attempt.mkdir(exist_ok=False)
     output, log = attempt / "oracle.json", attempt / "editor.log"
-    env = dict(os.environ, ANDROID_ADB_SERVER_PORT="5038", ROR2_WRAPPER_ORACLE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=receipt["source_commit"])
+    env = unity_editor_env(ROR2_WRAPPER_ORACLE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=receipt["source_commit"])
     args = [
         str(editor),
         "-batchmode",

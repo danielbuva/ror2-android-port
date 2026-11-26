@@ -10,7 +10,7 @@ import uuid
 
 import phone_platform_features as features
 import phone_wrapper_oracle as guard
-from build_lock import host_build_lock
+from build_lock import host_build_lock, unity_editor_env
 
 SOURCES = tuple(
     sorted(
@@ -140,9 +140,7 @@ def run(root, work, editor):
     if common.name != ".git":
         raise ValueError("Cannot locate the primary Unity mutex")
     output, log = destination / "oracle.json", destination / "editor.log"
-    env = dict(
-        os.environ,
-        ANDROID_ADB_SERVER_PORT="5038",
+    env = unity_editor_env(
         ROR2_FEATURE_ORACLE_REPORT=str(output),
         ROR2_FEATURE_ORACLE_QUERIES=str(destination / "queries.json"),
         ROR2_PHONE_BUILD_SOURCE=inputs["source_commit"],

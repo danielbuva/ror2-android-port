@@ -1021,8 +1021,6 @@ class DeviceSessionTests(unittest.TestCase):
             target.write_receipt.side_effect = write_receipt
 
         def adb_process(args, **kwargs):
-            if args[-1] == "kill-server":
-                return subprocess.CompletedProcess(args, 0, b"", b"")
             self.assertEqual(args[:3], target.base)
             self.assertTrue(lease_path.is_dir())
             if args[3] == "install":

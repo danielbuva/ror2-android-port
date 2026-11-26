@@ -325,15 +325,18 @@ playtest limits and reviewed feedback. It introduces no installer or runtime ste
 [Branding notes](assets/branding/README.md) record the two repository-only
 promotional graphics and their sources; they are not part of the runtime pipeline.
 
-Unity editor and batch launchers set `ANDROID_ADB_SERVER_PORT=5038` only in
-their child environment, isolating the bundled ADB server from the lab's canonical
-ADB on port 5037. `scripts/lab/build.py::editor` owns `./dev editor`;
+Unity editor and batch launchers share the lab's Homebrew ADB server on port
+5037. `scripts/lab/build_lock.py::unity_editor_env` configures the child to
+connect to the numeric loopback address so the bundled ADB client cannot start
+its own daemon. Device tooling starts the shared server when needed. Android
+user and Gradle homes remain isolated where configured.
+`scripts/lab/build.py::editor` owns `./dev editor`.
 `scripts/build-smoke.sh`, `scripts/lab/unity_rebuild.py`, `phone_content.py`,
-the `phone_*_oracle.py` launchers and `source_camera_bundle.py` own their batch
-children. `open-smoke.sh` delegates to `./dev editor`; existing editors must
-restart to inherit the isolated port. Child exit retains each launcher's log,
-process and mutex cleanup; device tooling and thermal cancellation keep their
-current owners. No global ADB environment or device-server setting is changed.
+the `phone_*_oracle.py` launchers, `source_camera_bundle.py` and
+`scripts/build-graphics-preload-fixture.py` own their batch children.
+`open-smoke.sh` delegates to `./dev editor`. Existing editors must restart to
+inherit the shared endpoint. Each launcher handles its logs, processes and mutex
+cleanup when its child exits.
 
 Launcher presentation: [`launcher/`](../launcher/README.md) owns the approved
 original background and dependency-free frontend. `controller.js` owns the
@@ -478,8 +481,8 @@ kernels. Host exposure reflection admits the public 8-wide kernel shapes;
 `source_camera_bundle.py::validate_vulkan_programs` independently reads the
 emitted Vulkan variants and requires the original kernel names/thread groups,
 nonempty variant maps and compiled code. The shared editor mutex serializes
-compilation, with child ADB isolated on port 5038. Setup protects the output with
-`.prune-keep`; compilation/validation exit writes `result.json`, and teardown
+compilation. The editor uses the shared ADB endpoint. Setup protects the output
+with `.prune-keep`. Compilation/validation exit writes `result.json`, and teardown
 removes the isolated project even when staging or editor configuration fails,
 retaining pinned sources, logs, a failure receipt or any compiled bundle. Host
 lifecycle regressions live in `tests/test_shader_postprocessing_uber.py`.
@@ -3289,10 +3292,10 @@ package; no parser or third-party implementation is vendored into the lab/player
 `--detach`. Use the serial from the workstream's queue grant for both commands.
 Portable requests can omit `serial` and `adopted_install`. Existing requests
 can embed `serial` and assert adopted-only placement with `adopted_install: true`.
-The dispatcher grants a device first; the child takes the canonical atomic
-lease before ADB, sources the pinned environment and stops Unity's port-5038
-ADB server. If discovery fails before the device context opens, the runner
-releases its lease and writes a failed receipt. Once a device context opens,
+The dispatcher grants a device. The child takes the canonical atomic lease
+before ADB and sources the pinned environment. If discovery fails before the
+device context opens, the runner releases its lease and writes a failed receipt.
+Once a device context opens,
 the runner requires verified idle cleanup before releasing the lease.
 Its request selects the canonical checkout, private output,
 workstream, disposable package, APK path/hash, duration and optional targeted-touch
