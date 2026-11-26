@@ -59,11 +59,13 @@ def load_request(path, *, refresh_repo=False):
     count = "expected_managed_providers" if signed_code else "expected_records"
     if signed_code:
         required = (required - {"expected_records"}) | {"operation", count}
-        if "retained_tool_sha256" in request:
-            required.add("retained_tool_sha256")
-            previous = request["retained_tool_sha256"]
-            if not isinstance(previous, str) or not re.fullmatch(r"[0-9a-f]{64}", previous):
-                raise ValueError("emission-retained-tool-pin")
+    if "retained_tool_sha256" in request:
+        required.add("retained_tool_sha256")
+        previous = request["retained_tool_sha256"]
+        if not isinstance(previous, str) or not re.fullmatch(r"[0-9a-f]{64}", previous):
+            raise ValueError("emission-retained-tool-pin")
+        if not signed_code and previous != request["tool_apk"]["sha256"]:
+            raise ValueError("emission-bundle-retained-tool-must-match-apk")
     if set(request) != required or request["profile"] not in ("nova", "thor"):
         raise ValueError("emission-request-contract")
     for key in ("tool_apk", "manifest"):
@@ -376,6 +378,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         active = bool(state and state.get("job") and state.get("terminal") is None)
         if signed_code and (restage or (resume and not active)):
             raise RuntimeError("signed-code-resume-requires-active-handle")
+        if state and state.get("retained_tool") and not active:
+            raise RuntimeError("emission-retained-tool-requires-fresh-request")
         if restage and (not resume or active or state.get("terminal") is None):
             raise RuntimeError("emission-restage-confirmed-terminal-required")
         if not active:
@@ -418,8 +422,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 result["restaged_after_terminal"] = True
         else:
             apk = Path(request["tool_apk"]["path"])
+            previous = request.get("retained_tool_sha256")
             if phone.occupied(installer.PACKAGE):
-                previous = request.get("retained_tool_sha256")
                 if not previous or phone.package_hash(installer.PACKAGE) != previous:
                     raise RuntimeError("emission-preexisting-package")
                 retained_tool = True
@@ -437,6 +441,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                         reconcile=lambda: phone.package_hash(installer.PACKAGE) == apk_hash,
                     )
             else:
+                if previous and not signed_code:
+                    raise RuntimeError("emission-retained-tool-not-installed")
                 phone.install_volume = "internal"
                 phone.install(apk)
             home = phone.shell("run-as", installer.PACKAGE, "pwd", label="emission-home").decode().strip()

@@ -128,6 +128,7 @@ The ignored JSON config has exactly these fields:
 | --- | --- |
 | `runner` | `repo` canonical checkout path, `ref` fetchable branch/commit, `device` configured alias |
 | `tool_apk`, `manifest` | Each has an absolute `path` and `sha256` |
+| `retained_tool_sha256` | Optional exact hash of the already-installed bundle toolhost, matching `tool_apk.sha256` |
 | `request` | Relative staged request path for `bundle_preload.py --inputs` |
 | `done_file` | New absolute terminal JSON path under canonical `work/` |
 | `expected_records` | Positive expected native record count |
@@ -147,6 +148,11 @@ checkpoints are the same in both modes.
 
 The operation streams the pinned APK's Python runtime and pinned inputs without
 host archive copies.
+With the retained toolhost pin, each fresh request discovers the installed
+runtime path and creates a fresh staging root and cache. After collecting
+terminal evidence it removes that root and preserves the installed toolhost.
+Use a separate terminal directory for each cold run. Resume applies only to an
+unconfirmed handle in this mode.
 Dry-run validates pins without device access. Live execution with `--workstream`
 verifies the named grant, takes the lease and stops Unity's ADB server before
 device admission. Use the same workstream to reattach to a retained lease.
