@@ -6,6 +6,17 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1502 — Stage the phone toolhost Python dependencies
+
+2026-11-26. The shared toolhost stages a pinned Python import plan, 14 wheels
+including UnityPy, and Android extensions. An isolated host interpreter imports
+the staged entry points and registered release producers.
+Thor built APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a859516807c00a4`
+from `d4dd34af` in 255.7 s. Peak CPU/GPU temperature was 56.1 °C with zero pauses.
+The runner verified the retained signer, packaged import plan and 126 ARM64 library hashes.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/python-closure-1126/admission-fixed.done.json`.
+Android runtime imports, signed-code conversion and installer qualification remain open.
+
 ## J1501 — Speed up checked UnityFS LZ4 decoding on Android
 
 2026-11-26. The UnityFS decoder streamlines common LZ4 lengths and disjoint

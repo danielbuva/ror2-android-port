@@ -20,7 +20,10 @@ MANAGED = Path("tools/phone-build/managed-host")
 SIGNER = Path("tools/phone-build/owner-apk/build_owner_apk.py")
 REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "dev")
 RUNTIME_INPUTS = (
+    MANAGED / "stage.py",
     MANAGED / "build_fixture.py",
+    MANAGED / "check_python.py",
+    MANAGED / "run_profile.py",
     MANAGED / "NativePythonHost.c",
     MANAGED / "NativeDotnetMuxer.c",
     MANAGED / "NativeJavaHost.c",

@@ -64,6 +64,37 @@ class SanitizeTest(unittest.TestCase):
 
 
 class BatteryRuleTest(unittest.TestCase):
+    def test_explicit_toolhost_cooldown_honors_owner_override(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            config = repo / "work/config/lab-runner.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(json.dumps({"battery_charge_override": True}))
+            runner = lab_runner.Runner(repo, {})
+            device = mock.Mock()
+            device.storage.return_value = {"mode": "internal", "internal": {"free_bytes": 22 * 1024**3}}
+            device.cmd.return_value = "cpu-0 45000 /thermal_zone0/temp\nbattery 34000 /thermal_zone1/temp\n"
+            device.sh.side_effect = ["temperature: 360\nlevel: 90\nstatus: 2", "500", "temperature: 340\nlevel: 90\nstatus: 2", "500"]
+            out = repo / "output"
+            with (
+                mock.patch("device.Device", return_value=device),
+                mock.patch("alpha_stability_batch.time.sleep") as sleep,
+                mock.patch.object(toolhost_build, "stage_archive", side_effect=RuntimeError("fixture admitted")),
+                self.assertRaisesRegex(RuntimeError, "fixture admitted"),
+            ):
+                toolhost_build.execute(
+                    {"tool_root": "/data/local/tmp/synthetic"},
+                    (None, None, None, None, None, None),
+                    out,
+                    runner=runner,
+                    serial="synthetic",
+                    lease=repo,
+                    transport_module=mock.Mock(),
+                    package=lab_runner.TEST_PACKAGE,
+                )
+            sleep.assert_called_once()
+            device.display.assert_called_once_with(False)
+
     def test_user_battery_rule(self):
         self.assertIsNone(lab_runner.battery_refusal(80, 0, 260))  # limit holding with zero current
         self.assertIsNotNone(lab_runner.battery_refusal(80, 500, 260))  # actually charging at the limit
