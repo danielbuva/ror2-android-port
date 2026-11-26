@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1508 — Start original Wwise banks in the staged converted player
+
+2026-11-26. Converted player data registers the audio and observation assemblies
+from the paired managed producer and omits the editor integration when absent.
+Unity decoded the original audio receipt and Wwise completed all 153 startup
+banks from the 247-bank, 120-media staged payload. Visible Play and native
+Start reached Titanic Plains as Commando with diagnostic invincibility.
+APK SHA-256 `d06ebd3b61550893db5a12fc652c648c21c7492cbf27bdb63a76d788913619fb`.
+Evidence: `work/coordination/p1-scenes-w/full-audio-v30/v30-audio-menu-end-run/`.
+Adopted backing, scratch cleanup, OLED sleep and lease release passed.
+Peak CPU/GPU was 74.9 °C. Gameplay PCM, menu return after End Run and a
+native next-stage transition remain open.
+
 ## J1507 — Convert signed-release managed code on Android
 
 2026-11-26. The two audio pin generators validate the exact owner inventory
