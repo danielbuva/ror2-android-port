@@ -1,0 +1,3670 @@
+{
+  "bundles": [
+    {
+      "members": [
+        {
+          "name": "CAB-ffb0c4d761352d4e85e55c070848efff",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_ColorSpace": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_MipCount": [
+                  56,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 512,
+              "offset": 1420328,
+              "operation": "sdk-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 10,
+                  "name": "texCloudDifferenceBW1",
+                  "path_id": 4816263366006545603,
+                  "pixel_bytes": 349552,
+                  "pixel_sha256": "932a7fab36c56c3178639280b4f8ddd82ea260eed30b2d6647aeda8f96e01191",
+                  "sha256": "9050ca26b77ea2f0d319e0675b32dcebce461e144b44795669da70623c80ba42",
+                  "stream": {
+                    "offset": 0,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 349552
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": 6177799839838059743,
+              "pixels": {
+                "bytes": 349552,
+                "member": "CAB-ffb0c4d761352d4e85e55c070848efff.resS",
+                "offset": 21529776,
+                "sha256": "608e154d9790540ece7607bcd963cbd5f42b0ccbe46ae17481f7d218f9669a6a"
+              },
+              "sha256": "fad83483ae8e67e2de7703fb7b5c64fc506e9829cee5ee7627ad68a97b3ee212",
+              "width": 512
+            },
+            {
+              "bytes": 212,
+              "fields": {
+                "image data": [
+                  104,
+                  4
+                ],
+                "m_ColorSpace": [
+                  96,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  36,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  25,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  92,
+                  4
+                ],
+                "m_MipCount": [
+                  48,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  20
+                ],
+                "m_StreamData": [
+                  108,
+                  104
+                ],
+                "m_TextureFormat": [
+                  44,
+                  4
+                ]
+              },
+              "height": 1024,
+              "offset": 356760,
+              "operation": "sdk-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 236,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texCloudOrganic1",
+                  "path_id": -2504605998300925643,
+                  "pixel_bytes": 1398128,
+                  "pixel_sha256": "ef6fcbc0ec6aa181530f275aea0a05a22e5ec47d16d06ff598e2db1790f58008",
+                  "sha256": "72166496852c29b4ce574ef13c9fdbc8d5795644534fe1c6491b1760757c570e",
+                  "stream": {
+                    "offset": 349552,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 1398128
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -6480006357738878459,
+              "pixels": {
+                "bytes": 1398128,
+                "member": "CAB-ffb0c4d761352d4e85e55c070848efff.resS",
+                "offset": 5330448,
+                "sha256": "dac8f76479fd11ac953457e9762568dc62e941bdf121c90674328fffd3a08c1a"
+              },
+              "sha256": "6770af6079985d3903fc52718ae15ba7e660da97465d44c0da3a28633eb5762f",
+              "width": 1024
+            },
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_ColorSpace": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_MipCount": [
+                  56,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "jpeg": false,
+              "offset": 357632,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "colour_space": 0,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "texRockyNormalsFlattened",
+                  "path_id": 6703610953031764658,
+                  "pixel_bytes": 2744,
+                  "pixel_sha256": "1f2a5e0ba49b3ccf1cac4fb0efb493958e612f89d59a67b453e7d3afb690f28b",
+                  "sha256": "19b7887bdcc4198ec1990c1691edbc5062d9855f485c59446f71d036cc8f8be7",
+                  "stream": {
+                    "offset": 70667344,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 2744
+                  },
+                  "usage": 4
+                }
+              ],
+              "path_id": -5601459100257977657,
+              "pixels": {
+                "bytes": 5488,
+                "member": "CAB-ffb0c4d761352d4e85e55c070848efff.resS",
+                "offset": 7515088,
+                "sha256": "14462085946ff23e456f380a8fcb447eb8995541c12841e8f49fce44fde26fed"
+              },
+              "sha256": "467af51de9d9252eb843fcac038ee8dff15c88607d29ca6287ce68f0f01f671e",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-tiledtextures_assets_all_29cf297455c3c0c7eb664ffa131f5f76.bundle",
+      "sha256": "884085876d4e3f23ea8dbbdee774f42e9b68852794bccdf06d089bcb04149c25"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-62938927b11643a21a3e779791df79c8",
+          "textures": [
+            {
+              "bytes": 216,
+              "fields": {
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_ColorSpace": [
+                  100,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_MipCount": [
+                  52,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 34544,
+              "operation": "sdk-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 8,
+                  "name": "texAlphaGradient2",
+                  "path_id": -1964733898564644737,
+                  "pixel_bytes": 21872,
+                  "pixel_sha256": "5bfe2f1a40f7a020d4a6490c27860667a6daad923bf980810bbf78d82db26eab",
+                  "sha256": "d93c2f34f0b0053cd639e145813a0bea8e501ffcfc432e85b0c9b19d2fb33b11",
+                  "stream": {
+                    "offset": 17503760,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 21872
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": 8439838008878880714,
+              "pixels": {
+                "bytes": 21872,
+                "member": "CAB-62938927b11643a21a3e779791df79c8.resS",
+                "offset": 10967840,
+                "sha256": "a8e2d5e4fc857d00899d1bd6202ec81b3ed7f24f5baddd0b9644d80df0316566"
+              },
+              "sha256": "67c50002e0c7901a2cebcd4b50d7b9b2b8b2e9890fffba7ddf84488f144164fe",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-vfx-particlemasks_assets_all_bbb9bf19da64bbc1f92348b0fdab0867.bundle",
+      "sha256": "7d6c6a8dfdd292f7b984e2996a5e7a3c2926729a0520f03300e217d49256c22b"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-947f652112b7ace89968ce148546714d",
+          "textures": [
+            {
+              "bytes": 212,
+              "fields": {
+                "image data": [
+                  104,
+                  4
+                ],
+                "m_ColorSpace": [
+                  96,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  36,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  25,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  92,
+                  4
+                ],
+                "m_MipCount": [
+                  48,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  20
+                ],
+                "m_StreamData": [
+                  108,
+                  104
+                ],
+                "m_TextureFormat": [
+                  44,
+                  4
+                ]
+              },
+              "height": 1024,
+              "offset": 2327576,
+              "operation": "sdk-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 236,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texMire_Ruin_DA",
+                  "path_id": 2889434067687216526,
+                  "pixel_bytes": 1398128,
+                  "pixel_sha256": "b15cfaab79e4bd1c05c729298437d8010dccf67c767f26f4887ff23c7d94105a",
+                  "sha256": "2f1b34db51a6fb72b0753cca3d5823f8f037dc2d0fe6b6b195222dfe0b0fa1d2",
+                  "stream": {
+                    "offset": 51082096,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 1398128
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -8790821303392557363,
+              "pixels": {
+                "bytes": 1398128,
+                "member": "CAB-947f652112b7ace89968ce148546714d.resS",
+                "offset": 1048624,
+                "sha256": "664c3b018739461b8db7ae91ae5dd80710640b514c72dbc55a3e66364c0c2802"
+              },
+              "sha256": "5a586f743eab527456bb709574d5d66b1562ea67f63fb3887ba1f27411a66be7",
+              "width": 1024
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-mire_assets_all_7b2dfc45145b93f01092fa8e4529bc1d.bundle",
+      "sha256": "fef33e1221e5ec1d20035cf9b282ca8aa4a869514657760bffc0d4da660f5677"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-3788351750ff3a53159509d46ec934c9",
+          "textures": [
+            {
+              "bytes": 216,
+              "fields": {
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_ColorSpace": [
+                  100,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_MipCount": [
+                  52,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ]
+              },
+              "height": 1024,
+              "offset": 15216200,
+              "operation": "sdk-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texRCWaterfallBase",
+                  "path_id": 7429765349307612164,
+                  "pixel_bytes": 1398128,
+                  "pixel_sha256": "1217469febbed8bfff1a42699ad7b1f71f004100878a5254dae4b9dd6de3701a",
+                  "sha256": "ba957f90f9e4713515c3a7d2649a5756be2d45026a72abe97e428f8183b1aaa0",
+                  "stream": {
+                    "offset": 53878352,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 1398128
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": 6114360652603928576,
+              "pixels": {
+                "bytes": 1398128,
+                "member": "CAB-3788351750ff3a53159509d46ec934c9.resS",
+                "offset": 68612992,
+                "sha256": "f346615a7efd8b471da5df261e882e3c70e83412f432143705ff4068b2279452"
+              },
+              "sha256": "7e27316ec332ef660d628ebd341df6d40789d5ff876bd453af02060d72cc3c9b",
+              "width": 1024
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-repurposedcrater_assets_all_cd4b7388ba0a171f285bb6c137bf198b.bundle",
+      "sha256": "18a597e10be1829654519d97eadfd16e2a2d25412486c15120ecb70d207c8706"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-418f3135d46f1168256dce9d8009f434",
+          "textures": [
+            {
+              "bytes": 212,
+              "fields": {
+                "image data": [
+                  104,
+                  4
+                ],
+                "m_ColorSpace": [
+                  96,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  36,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  25,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  92,
+                  4
+                ],
+                "m_MipCount": [
+                  48,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  20
+                ],
+                "m_StreamData": [
+                  108,
+                  104
+                ],
+                "m_TextureFormat": [
+                  44,
+                  4
+                ]
+              },
+              "height": 1024,
+              "offset": 47560,
+              "operation": "sdk-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 236,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texMeteorCloud",
+                  "path_id": -3169011029399807291,
+                  "pixel_bytes": 1398128,
+                  "pixel_sha256": "365667be418d5f57e429731bd0142a4a0d8229dfb52b847240a3dabd30c870d1",
+                  "sha256": "e21a4a602116bee0676fe53c89a92ef1555e3de8c1ed4dfdaab2940a4599406e",
+                  "stream": {
+                    "offset": 59929760,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 1398128
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -3842696272080791514,
+              "pixels": {
+                "bytes": 1398128,
+                "member": "CAB-418f3135d46f1168256dce9d8009f434.resS",
+                "offset": 786432,
+                "sha256": "96118eacd7f7ebf1ecf3daa445adf3c61177e525201e0838609f7f654ea4aeb4"
+              },
+              "sha256": "493634877ae7f1a4fea7eac9558294637bf54fe53651626c7de143a1936d2529",
+              "width": 1024
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base_assets_all_041d96552b447e68ad4792bcd5267e75.bundle",
+      "sha256": "8bce6948e6b97d7b65aae9f4a13e438b69fb92ac1428bf4d639df8257377cbc1"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-56c1ada082a94d3630126bca45cc46c9",
+          "textures": [
+            {
+              "bytes": 212,
+              "fields": {
+                "image data": [
+                  104,
+                  4
+                ],
+                "m_ColorSpace": [
+                  96,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  36,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  25,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  92,
+                  4
+                ],
+                "m_MipCount": [
+                  48,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  20
+                ],
+                "m_StreamData": [
+                  108,
+                  104
+                ],
+                "m_TextureFormat": [
+                  44,
+                  4
+                ]
+              },
+              "height": 1024,
+              "offset": 5991632,
+              "operation": "sdk-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 236,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texIADustTop_DA",
+                  "path_id": -2715175939268670933,
+                  "pixel_bytes": 1398128,
+                  "pixel_sha256": "adf4b0b79ca4a335e97fe8c9fb2835b85925e06e6d5c5592f8e969e82ee269d1",
+                  "sha256": "c1360c4bca3666954f1046e3b98844de829cd74f8e122ba3621d9c811da21672",
+                  "stream": {
+                    "offset": 61327888,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 1398128
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -2860225302959441388,
+              "pixels": {
+                "bytes": 1398128,
+                "member": "CAB-56c1ada082a94d3630126bca45cc46c9.resS",
+                "offset": 4197232,
+                "sha256": "2f97bcd85b07b58c2af2f6173ae7d10c08497bbfa693d59ad3ca52db2c4c5157"
+              },
+              "sha256": "cdf8270576bdf3352939d009cb201a0f34155005c0931e743195630c56c64291",
+              "width": 1024
+            },
+            {
+              "bytes": 212,
+              "fields": {
+                "image data": [
+                  104,
+                  4
+                ],
+                "m_ColorSpace": [
+                  96,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  36,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  25,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  92,
+                  4
+                ],
+                "m_MipCount": [
+                  48,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  20
+                ],
+                "m_StreamData": [
+                  108,
+                  104
+                ],
+                "m_TextureFormat": [
+                  44,
+                  4
+                ]
+              },
+              "height": 1024,
+              "offset": 3331440,
+              "operation": "sdk-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 236,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texIASandDiffuse",
+                  "path_id": 1883325729111091136,
+                  "pixel_bytes": 1398128,
+                  "pixel_sha256": "8f3208cca825b9a6ccf28f4bb8961544be7e0c7ffcbb04a9e95b2921abb7b24e",
+                  "sha256": "59d418ab4f299f614aa53971ca5714d41c5e94517af7d2d3b825c04948c7b590",
+                  "stream": {
+                    "offset": 62726016,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 1398128
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -5956512980374367959,
+              "pixels": {
+                "bytes": 1398128,
+                "member": "CAB-56c1ada082a94d3630126bca45cc46c9.resS",
+                "offset": 701904,
+                "sha256": "c023000fcd036c5ea31fd35f3d92479e856bdef7c7b4236612a8a08316eff5dc"
+              },
+              "sha256": "41d5e1ef2d2f22d2f3aebbb11595159bb617112396dd7b53619e27d0904507f9",
+              "width": 1024
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-ironalluvium_assets_all_68f38f34ee5dc89dfc4d5075223d07c3.bundle",
+      "sha256": "252df6ef3114c8dd1cc8201051ac20dd3457e780b588667a4087d668c15b62f5"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-eaebb18b70f57fc21a04c5bde375f03a",
+          "textures": [
+            {
+              "bytes": 216,
+              "fields": {
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 393496,
+              "operation": "sdk-rgba",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "texMovespeedBuffIcon",
+                  "path_id": 4056396687230734512,
+                  "pixel_bytes": 16384,
+                  "pixel_sha256": "f5b4469b3856335bf20f9cac95fb7f14b53ed918d8df816c8cf015f53ca3f9a0",
+                  "sha256": "a3bcb20a7b442430431d103097e7b8e5ab327b568083abbda536f5923b8e4cdd",
+                  "stream": {
+                    "offset": 68020176,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 16384
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": -4757966182409383488,
+              "pixels": {
+                "bytes": 16384,
+                "member": "CAB-eaebb18b70f57fc21a04c5bde375f03a.resS",
+                "offset": 1971968,
+                "sha256": "6373778256a30f32798b28b53868dd7511032acc0a5242aa64481300489d3c35"
+              },
+              "sha256": "1192d3f132c6e9c077c8697858a39416146c9e0bcfec88af32e9107644d90f8d",
+              "width": 128
+            },
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_ColorSpace": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_MipCount": [
+                  56,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 1024,
+              "jpeg": false,
+              "offset": 619272,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texCloudVertexMovement",
+                  "path_id": 5341903474652976789,
+                  "pixel_bytes": 699064,
+                  "pixel_sha256": "e8190ef9ad71ec02e31a52e682d85d21796d797f810c1ec8d5704712e4570c3d",
+                  "sha256": "51688d6a42e775f2e31ec605b6ec1af7ed1de35882fb9b8730e26938baa6548c",
+                  "stream": {
+                    "offset": 85732624,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 699064
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": 2782754529943960373,
+              "pixels": {
+                "bytes": 4194303,
+                "member": "CAB-eaebb18b70f57fc21a04c5bde375f03a.resS",
+                "offset": 8066032,
+                "sha256": "de8a4f208b3048b831fe65175e5ff3762c11c47d461ace9bf2fbab5588b2eb0e"
+              },
+              "sha256": "8b4add6cc0966a2e8143a41d2403e065c9b18e40f7d72959b9a584eca8dadb70",
+              "width": 1024
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common_assets_all_b6fdc58edc06db17638fcebe236610e4.bundle",
+      "sha256": "cd6fd1cec1d1df56068858a6744750e69c2931e88a8447d500f1204166af092a"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-51457c3bb5da9a193a2e9a8be44b2b6d",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 372472,
+              "operation": "sdk-rgba",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "texShieldTankDamageIcon",
+                  "path_id": 1199467286506320025,
+                  "pixel_bytes": 16384,
+                  "pixel_sha256": "bcf0be0eb26bb1d02293a7f462baadd10967ad23a37a369faa766419d32ee634",
+                  "sha256": "9dd9a00e08019c89d3790ebd96de3c86d5353829b920ab679a494a2324d61514",
+                  "stream": {
+                    "offset": 68844496,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 16384
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": 2059371919446415756,
+              "pixels": {
+                "bytes": 16384,
+                "member": "CAB-51457c3bb5da9a193a2e9a8be44b2b6d.resS",
+                "offset": 163840,
+                "sha256": "ca5d8b54c2e712ebf32813fcc84b7135e7c0112fcac67a8329781df9be7a1ae8"
+              },
+              "sha256": "cf7cc20df37557528e6fbbc28cb0138f42748784e5af12dbf8a292b066571827",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-buffs_static_assets_all_4b5bc666b23f3ebe3e8b00256a8abcf4.bundle",
+      "sha256": "62433860b96115bf41e84bb73ce629fc92d1e9efd20605f2abc6dd2c691714a5"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-bbeb009c98e65be6a2b6c918cbdca743",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 429840,
+              "operation": "sdk-rgba",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "texBuffRegenBoostIcon",
+                  "path_id": 6239499952694190946,
+                  "pixel_bytes": 16384,
+                  "pixel_sha256": "b949851338bdc6c909b59f4dc255bb18b4ce6bb70ea2dc1b38f80ca67de0b0dc",
+                  "sha256": "fdc13885c2ebfb1dd644f461f2c0ddee320eddbf138edf43b3e0dad5f6156338",
+                  "stream": {
+                    "offset": 69307344,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 16384
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": -8347653666444948789,
+              "pixels": {
+                "bytes": 16384,
+                "member": "CAB-bbeb009c98e65be6a2b6c918cbdca743.resS",
+                "offset": 0,
+                "sha256": "333339727c1e1b4f2035bb2bf0463264d77beef3c4cb9f2bf12e0c6550406cc7"
+              },
+              "sha256": "3ed234a1640f19cfc4fcb4da19785238cb9d46314a41ea4d92b7c938069fc28c",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-croco_static_assets_all_1f65751d41f45aa755c4f0912bed3221.bundle",
+      "sha256": "4bdbfb1dcbf90c9470c22a34bf5b17be1a4c821a5092ea72778498352484331a"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-e59e8cfe7f0a036fc72266f5a2ad4978",
+          "textures": [
+            {
+              "bytes": 216,
+              "fields": {
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 169080,
+              "operation": "sdk-rgba",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "texBuffDeathMarkIcon",
+                  "path_id": -950363730926243579,
+                  "pixel_bytes": 16384,
+                  "pixel_sha256": "9d352101211f962b139ee9dd79648d14ddbd3cc747a3ecec7f95495405a9ee0b",
+                  "sha256": "129efa26aa8b9471361896058a50a23e8ead55596140657053005b63482a46da",
+                  "stream": {
+                    "offset": 69323728,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 16384
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": -8972409584486038010,
+              "pixels": {
+                "bytes": 16384,
+                "member": "CAB-e59e8cfe7f0a036fc72266f5a2ad4978.resS",
+                "offset": 0,
+                "sha256": "dc008b43a09ec7315330061b0610e502e38562fa8bc5dfae14d93709bb3f8f30"
+              },
+              "sha256": "5e420312c332260456438d1260916d6af05c88be1d778fbfcc0c8ce498d7c772",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-deathmark_static_assets_all_aede7ca4176717af15c453e2500632c8.bundle",
+      "sha256": "3bced13c83d148cf16995ed40c303064b50ef7c51fb3e372186e81e4a2177be9"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-e284cbbdff63b468601fa46ee3a3c9f6",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 166720,
+              "operation": "sdk-rgba",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "texNoCooldownsBuffIcon",
+                  "path_id": 4751242467143252916,
+                  "pixel_bytes": 16384,
+                  "pixel_sha256": "6f8a4b21211ff9b34987ed22d825e61defd5c0e02b4ac6eb4aa7ba11ffc473b8",
+                  "sha256": "871bef4f986be67549fe6cc77fb46732affe99c34b699cea187daeafd33a2339",
+                  "stream": {
+                    "offset": 69340112,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 16384
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": -5513821586947318028,
+              "pixels": {
+                "bytes": 16384,
+                "member": "CAB-e284cbbdff63b468601fa46ee3a3c9f6.resS",
+                "offset": 0,
+                "sha256": "7157bc464b2bddda24e6851cf8e7b28db28b40cd1c17ba0e81436c1eb6ae651b"
+              },
+              "sha256": "b979bc71003d7c11a65b5de8eb34d7dca39d5509e6f5060b0fedb12a183d1f10",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-killelitefrenzy_static_assets_all_0f117ccd3abe3a20f399b35287432257.bundle",
+      "sha256": "d4a40096f5e074946d60826c31f09ed8f99c2eb539fdba03b4b170350fea91fd"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_ColorSpace": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_MipCount": [
+                  56,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 1024,
+              "jpeg": false,
+              "offset": 15199720,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "colour_space": 0,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "spmBbConif_Atlas_Normal",
+                  "path_id": -2491008258975592648,
+                  "pixel_bytes": 699064,
+                  "pixel_sha256": "b7c2f409d9f78d92c0a25a2543555dd2f6933a301ab1a17aea920fe8986e7122",
+                  "sha256": "6d7fbaf45af8b27c4b0d3af47275e1e4344f0d40a8a82e2f46cbdf09d99b9f93",
+                  "stream": {
+                    "offset": 81644496,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 699064
+                  },
+                  "usage": 4
+                }
+              ],
+              "path_id": 7608798543873363265,
+              "pixels": {
+                "bytes": 1398128,
+                "member": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a.resS",
+                "offset": 39695488,
+                "sha256": "8838b9d70653992d25d6e231c451b3490c015f762a6f2f8aa408c6bfb2cf0e62"
+              },
+              "sha256": "bd25ba4831278d098759478b90f377d1be50b5ee9046376458f4812dd9e4c061",
+              "width": 1024
+            },
+            {
+              "bytes": 224,
+              "fields": {
+                "image data": [
+                  116,
+                  4
+                ],
+                "m_ColorSpace": [
+                  108,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  48,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  37,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  104,
+                  4
+                ],
+                "m_MipCount": [
+                  60,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  32
+                ],
+                "m_StreamData": [
+                  120,
+                  104
+                ],
+                "m_TextureFormat": [
+                  56,
+                  4
+                ]
+              },
+              "height": 256,
+              "offset": 15274944,
+              "operation": "source-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 256,
+                  "colour_space": 0,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 9,
+                  "name": "spmBbBigFern1_Atlas_Normal",
+                  "path_id": -3303008424318072356,
+                  "pixel_bytes": 349524,
+                  "pixel_sha256": "c7d0d1d9cf0cb611a5d60062b51e5a8287cbd05caf12b991b2eeae3be7797fe9",
+                  "sha256": "86582735f2f53fb1491aa29020cc6c7115d93c6e31471e20b3cdb1982b7eac31",
+                  "stream": {
+                    "offset": 21856,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-discovered-textures-v6.resS",
+                    "size": 349524
+                  },
+                  "usage": 3
+                }
+              ],
+              "path_id": 7707251540397860379,
+              "pixels": {
+                "bytes": 87408,
+                "member": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a.resS",
+                "offset": 41093616,
+                "sha256": "21a340094aece729e5de69cb8f9dd5c93c9e7ff62ab8c60eb3720e40555e1ce2"
+              },
+              "sha256": "5890b8c9c37d521093ebdc3368ab993cd1ac492f86d3c742b367614b6856d783",
+              "width": 256
+            },
+            {
+              "bytes": 228,
+              "fields": {
+                "image data": [
+                  120,
+                  4
+                ],
+                "m_ColorSpace": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  52,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  41,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  108,
+                  4
+                ],
+                "m_MipCount": [
+                  64,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  36
+                ],
+                "m_StreamData": [
+                  124,
+                  104
+                ],
+                "m_TextureFormat": [
+                  60,
+                  4
+                ]
+              },
+              "height": 256,
+              "jpeg": false,
+              "offset": 9735368,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 252,
+                  "colour_space": 0,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 9,
+                  "name": "spmBbBigFern1Young_Atlas_Normal",
+                  "path_id": 8628616868279964315,
+                  "pixel_bytes": 43704,
+                  "pixel_sha256": "a326f1834d95659c647b1ddbd0db1bdf51da5a0e02aad610ecf7ef31db859d2d",
+                  "sha256": "b2996639b338f7aa47f6f182fd2ba450d75f7eedfcae855c556e8fd93b2a40cb",
+                  "stream": {
+                    "offset": 360512,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.resume-source-textures.resS",
+                    "size": 43704
+                  },
+                  "usage": 4
+                }
+              ],
+              "path_id": 4748114346227504235,
+              "pixels": {
+                "bytes": 87408,
+                "member": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a.resS",
+                "offset": 33398080,
+                "sha256": "21a340094aece729e5de69cb8f9dd5c93c9e7ff62ab8c60eb3720e40555e1ce2"
+              },
+              "sha256": "d54a3e44df9c45a8d9eee02508d8849d80f227ec5712b23669511f4a6f2f50c7",
+              "width": 256
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach_assets_all_8be51f888d4a9b679b288243f863a9a0.bundle",
+      "sha256": "78eeccaa037ae101f7e9f41d99508fe009d4374716d6660b7f17e2d9395d98fb"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-5bbc1fa332280928451cb5d6ec85095d",
+          "textures": [
+            {
+              "bytes": 216,
+              "fields": {
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_ColorSpace": [
+                  100,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_MipCount": [
+                  52,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ]
+              },
+              "height": 512,
+              "jpeg": false,
+              "offset": 548024,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 10,
+                  "name": "BroadleafBarkPainted",
+                  "path_id": -5032505611637300662,
+                  "pixel_bytes": 43720,
+                  "pixel_sha256": "13d1204c674629990d1c9b8d11831c8b50e66315b686e10f98f56b89e8ce8888",
+                  "sha256": "291ad773cb9f59bc5df4e20b1e32389841eff08e1dc2c980796b79410cebc9f1",
+                  "stream": {
+                    "offset": 83195632,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 43720
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7187690545341233112,
+              "pixels": {
+                "bytes": 43720,
+                "member": "CAB-5bbc1fa332280928451cb5d6ec85095d.resS",
+                "offset": 1136080,
+                "sha256": "cb6a0372aa70d7d1ad78f4a97789ae2f0f58e91b5c68137991c2055cfe37e44b"
+              },
+              "sha256": "4418d530c1e52db313c28a13e96184278d24e6d1e0b6d5f37ddc687d8fee9d27",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-meridian-assets_assets_all_c5b35bedfb7f40d76c0493f066d37182.bundle",
+      "sha256": "beacfd7823f4dadcf010a6ce4d3fbba02c33582b7c68b0650635bdbd2791cf6e"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-814602cd32214cdd5d489996e7556822",
+          "textures": [
+            {
+              "bytes": 208,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_ColorSpace": [
+                  92,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_MipCount": [
+                  44,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  104
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 1024,
+              "jpeg": false,
+              "offset": 17605160,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 232,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texRGBSplat1",
+                  "path_id": 7613260724947442833,
+                  "pixel_bytes": 699064,
+                  "pixel_sha256": "4c10d417849d046b153d4abcbd18ea343ec39707efb93869faea25fed8940c14",
+                  "sha256": "8e32f43b198f7a2a7084056c2bdac4ed060e2b6376a88b69bd8b603d66e986f9",
+                  "stream": {
+                    "offset": 83239360,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 699064
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -196317186864384340,
+              "pixels": {
+                "bytes": 699064,
+                "member": "CAB-814602cd32214cdd5d489996e7556822.resS",
+                "offset": 94731872,
+                "sha256": "30be7b1f464c78eb76a47bf146da7166d255f4cbe43e85a442d9d28dd291838a"
+              },
+              "sha256": "3b2c64bac01028612e47ed9662eca2cff4830e34007dc2b092ee38f7a5524c9f",
+              "width": 1024
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4_assets_all_e70b3dc3ef8cad59f67a90c07b4e1f35.bundle",
+      "sha256": "8244fa011c55c33172db6846df282ccd9a52a41157ef66cf1384fbcd5fa92e1e"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-42fd77510482be15bf98a2c46d20345a",
+          "textures": [
+            {
+              "bytes": 208,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_ColorSpace": [
+                  92,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_MipCount": [
+                  44,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  104
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 1024,
+              "jpeg": false,
+              "offset": 29408088,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 232,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texSAD1Splat",
+                  "path_id": -1077002096212619711,
+                  "pixel_bytes": 699064,
+                  "pixel_sha256": "cfc6c08f48b1094f16123189553f003ed9f3852ad84e45702db78a18f79d08c4",
+                  "sha256": "6edbcd8e5b43080c3348803caf98552855f51e824563fe576a1cbcfa6f2509b6",
+                  "stream": {
+                    "offset": 83938432,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 699064
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": 5149296834944486026,
+              "pixels": {
+                "bytes": 699064,
+                "member": "CAB-42fd77510482be15bf98a2c46d20345a.resS",
+                "offset": 13569024,
+                "sha256": "5271e83d96e5e83039d1f50e98b64dcf538876a65202fe827ef7788125e04601"
+              },
+              "sha256": "564f1b7440574eb568e5af6e86279d2a0a939c63014a62f60be8495287415038",
+              "width": 1024
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-sadism-common_assets_all_b73a821b3861b8aea31ece4317bbddea.bundle",
+      "sha256": "51db930e0043bf1a197e3364e8c229eadded9db579dbe4ac9ef80a370a9b40a2"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-2e26225c1f7ae095341b1dfda3d38b6e",
+          "textures": [
+            {
+              "bytes": 208,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_ColorSpace": [
+                  92,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_MipCount": [
+                  44,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  104
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 512,
+              "jpeg": false,
+              "offset": 36408,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 232,
+                  "colour_space": 0,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 10,
+                  "name": "Waves_2_N",
+                  "path_id": -2352355576298090273,
+                  "pixel_bytes": 174776,
+                  "pixel_sha256": "c8a8ac4dd2470344446919e3a772c3df3c4205b142c5d1258eb0cbbc52f9ce99",
+                  "sha256": "49a94ff38dbb2311d50f50a9f5d6d5329c80730ee885cd4d8a6be22321c4efc9",
+                  "stream": {
+                    "offset": 84637504,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 174776
+                  },
+                  "usage": 4
+                }
+              ],
+              "path_id": 6815606442932277552,
+              "pixels": {
+                "bytes": 349552,
+                "member": "CAB-2e26225c1f7ae095341b1dfda3d38b6e.resS",
+                "offset": 1182624,
+                "sha256": "66667d14ac6ee13762b8f99240837d2e03a970a9525ff999b1ac5cd4f3302a50"
+              },
+              "sha256": "6c16588d253a3f964024a2c62419667595c333d6bc808ee87ab64e182957f343",
+              "width": 512
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_assets_all_a16c1a11e509901e7476994993da244d.bundle",
+      "sha256": "63d592081320c7309fa047ccab449302ac44e4270b16520a604429267794c0a6"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-3fe450ed5e78aede2f6729957cbbbde1",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_ColorSpace": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_MipCount": [
+                  56,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 512,
+              "jpeg": false,
+              "offset": 4005352,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 10,
+                  "name": "texLynxTribeBodyNormal",
+                  "path_id": 5904649357899768657,
+                  "pixel_bytes": 174776,
+                  "pixel_sha256": "a9954a3ab08c445e17c66f897c8b833b686334a42bf425f18c41dfa952337f1f",
+                  "sha256": "6a618e587341ddce98994e28383fe3edd6a8b5f074374b5b0c23a68a30784ab4",
+                  "stream": {
+                    "offset": 84858768,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 174776
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": 2463513273067801985,
+              "pixels": {
+                "bytes": 174776,
+                "member": "CAB-3fe450ed5e78aede2f6729957cbbbde1.resS",
+                "offset": 1573952,
+                "sha256": "99e3e176f9c6820231e9e126ddccca0c7f187d00acc6ad58116a634ad267cfa0"
+              },
+              "sha256": "21e4fd433e4d02f6deaf0c6472412173c332efd78564dc4862b78f1aab56bedd",
+              "width": 512
+            },
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_ColorSpace": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_MipCount": [
+                  56,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 1024,
+              "jpeg": false,
+              "offset": 608240,
+              "operation": "etc1-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 244,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 11,
+                  "name": "texLynxTribeBodyDiffuse",
+                  "path_id": 2161278852478193418,
+                  "pixel_bytes": 699064,
+                  "pixel_sha256": "45187916e72243e9f3debace63d2271cbdccae14f31f39dd07c26521a20fd8e2",
+                  "sha256": "16930a7d60a716d3cc5641feb55bf727884092107d895aa2e801a72871d4c4b3",
+                  "stream": {
+                    "offset": 85033552,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-closure-textures.resS",
+                    "size": 699064
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7997743557568617348,
+              "pixels": {
+                "bytes": 699064,
+                "member": "CAB-3fe450ed5e78aede2f6729957cbbbde1.resS",
+                "offset": 0,
+                "sha256": "6255d70519297b23e041ca615ae109b646203daf93d199954938b422d66f4c21"
+              },
+              "sha256": "4b4bf62adfad142f078670ad6f58cf83e66d7fe53fe5c9c01ad0ed18c5f64937",
+              "width": 1024
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-lynx2_assets_all_5eae5bf6cdfb7b983c0d7a81d6e7dbd5.bundle",
+      "sha256": "586f4a9f189374176e4a4adb0d511e63dc6ca58946376a5b25b238c8c4f44027"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-c3fdd017b254763db68ada04ffd69f47",
+          "textures": [
+            {
+              "bytes": 200,
+              "fields": {
+                "image data": [
+                  92,
+                  4
+                ],
+                "m_ColorSpace": [
+                  84,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  24,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  13,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  80,
+                  4
+                ],
+                "m_MipCount": [
+                  36,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  8
+                ],
+                "m_StreamData": [
+                  96,
+                  104
+                ],
+                "m_TextureFormat": [
+                  32,
+                  4
+                ]
+              },
+              "height": 256,
+              "offset": 2280024,
+              "operation": "source-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": true,
+                  "bundle": "whole-game-content",
+                  "bytes": 232,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 9,
+                  "name": "Grid",
+                  "path_id": -270019263227911266,
+                  "pixel_bytes": 349524,
+                  "pixel_sha256": "72f1e6c76e1e53335b5f8f68c6d43e96a00f94c883b154cdbb7ffb1b26aaad65",
+                  "sha256": "e723f18a3e4cfde4ebbe050c97c91e59db20f2b4f254639b2ba64fb4f3b74f0c",
+                  "stream": {
+                    "offset": 0,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-discovered-textures-v5.resS",
+                    "size": 349524
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -4468443073417564444,
+              "pixels": {
+                "bytes": 43704,
+                "member": "CAB-c3fdd017b254763db68ada04ffd69f47.resS",
+                "offset": 131072,
+                "sha256": "a9839394a11113cd0b0e4b9af0887fd5c39ee6eeb7cf6394de15c9bc3702c4cf"
+              },
+              "sha256": "f2fdfffc1fc92bfad533ff11098547e771f7d6c9fcbc5211e46f941e845111bf",
+              "width": 256
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-captain_static_assets_all_4b35bc3735a116c4b633311b173fcf41.bundle",
+      "sha256": "f7c44570c1428ec407aa73e3467ae4216c36e0e7599af370531d6033e5f283b9"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-d7abf417646072edd2edd847b5502830",
+          "textures": [
+            {
+              "bytes": 216,
+              "fields": {
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ]
+              },
+              "height": 512,
+              "offset": 22448,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 248,
+                  "colour_space": 0,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 1,
+                  "name": "TRACER__ SDF Atlas",
+                  "path_id": 6340174707526835808,
+                  "pixel_bytes": 262144,
+                  "pixel_sha256": "b9173edde5be37b7fb84bb226ae2ce77f363f27fba2b2d9fd930ca34554b3345",
+                  "sha256": "5661c487b740c7d766bccbc98d3c0e67d5699b507c31c8698131b7a0198ad6fc",
+                  "stream": {
+                    "offset": 352608,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-discovered-textures-v5.resS",
+                    "size": 262144
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -8528747348235596697,
+              "pixels": {
+                "bytes": 262144,
+                "member": "CAB-d7abf417646072edd2edd847b5502830.resS",
+                "offset": 0,
+                "sha256": "b9173edde5be37b7fb84bb226ae2ce77f363f27fba2b2d9fd930ca34554b3345"
+              },
+              "sha256": "3dbf02807ca228c3dd700fd46c97a37f568076426d0a95de1bb092b14c3730d9",
+              "width": 512
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-traceroute_assets_all_c2f201b0c9c78ff9d24a7592202212eb.bundle",
+      "sha256": "8657251dc7decf4db51fa01b32c2c8847f10eea25de8ddfbb91edf95e6403944"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-2092c6286510543a91b81d4de1edb736",
+          "textures": [
+            {
+              "bytes": 208,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_ColorSpace": [
+                  92,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_MipCount": [
+                  44,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  104
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 220496,
+              "operation": "source-rgba-mips",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 1,
+                  "name": "texNullIcon",
+                  "path_id": -8944213670184111720,
+                  "pixel_bytes": 65536,
+                  "pixel_sha256": "b19c5a74ed9684fcde94ee7245fa2adad3f1c200a3cf60bc44c69e2408ab30d7",
+                  "sha256": "742d0b691afecece219341f47be6ef5bb4e8310d114e15006e421de81ce4b4ef",
+                  "stream": {
+                    "offset": 614752,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.source-discovered-textures-v5.resS",
+                    "size": 65536
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": -6883260469076054049,
+              "pixels": {
+                "bytes": 16384,
+                "member": "CAB-2092c6286510543a91b81d4de1edb736.resS",
+                "offset": 0,
+                "sha256": "9effeec51437b08cefe175537f49f4a28ca63b3ded5c2c5a60620ddb3f0bc373"
+              },
+              "sha256": "17571edac030e526a3dbeffa0ecc58c491b55e8b54c98afd3d2817cd49f1c3e9",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-core_assets_all_9511c82c5eb7adcd9903c47e0d3a0d63.bundle",
+      "sha256": "4d094646a4fdcdf0cdb7fd3003dbb9f0b875759853d0a6ab6f6d0a8a777599e4"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-f6ec265570c0972363ebeb4162baadc1",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 1092488,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 252,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-ParticleSystem",
+                  "path_id": -7407564285429107427,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b",
+                  "sha256": "4c5f2001d163f917af14b31edc93c092f32b0b472b9bb08c1eefa30106ce95f6",
+                  "stream": {
+                    "offset": 0,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7460452938429165748,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-f6ec265570c0972363ebeb4162baadc1.resS",
+                "offset": 0,
+                "sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b"
+              },
+              "sha256": "fca310d0b03a4eed0b61e378a3d94419e26fe07bb4a835a3a9b37be16cf20d63",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-brother_static_assets_all_05eeaadd2c2fa00674104ebfedb598e7.bundle",
+      "sha256": "476d4c9ba1002c19b06ee7d7ba8b17d8b48026abd484ee7990443ecb63a72d33"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-ec037781bd5edfa654eb59440880314c",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 232208,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 252,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-ParticleSystem",
+                  "path_id": -5265186098525741580,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b",
+                  "sha256": "5cbd507b7cbb42dfc60357779c8586ebc3f2e4d2b54cd9e85ea62baa19269fb7",
+                  "stream": {
+                    "offset": 21856,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7460452938429165748,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-ec037781bd5edfa654eb59440880314c.resS",
+                "offset": 0,
+                "sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b"
+              },
+              "sha256": "96efe480c593cac32cbc977fb6ce8d43228ffea2391f2b9a58ea1e5346042df6",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-deathprojectile_static_assets_all_49386148a2fb3e59f3fe498779af12bf.bundle",
+      "sha256": "29cb6bc55755957a8a992bb5512be77d64bf085d5e2bfa39549499f87c3f2289"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-f39e3cfcd84f82b9d4179074cbf9357b",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 228560,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 252,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-ParticleSystem",
+                  "path_id": -1859510131160639165,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b",
+                  "sha256": "1e91f75316ea9cb62a78723bab178935fb8b44ded6c9a759c64bc452e7cdad0a",
+                  "stream": {
+                    "offset": 43712,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7460452938429165748,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-f39e3cfcd84f82b9d4179074cbf9357b.resS",
+                "offset": 87408,
+                "sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b"
+              },
+              "sha256": "74b06de40e9392020dd43d4dcf4669fe4ea7dc4d53cd98a60af9eba153c0c1fc",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-lunarwisp_assets_all_b77d9e3646e6e87a43f7fb362bff9333.bundle",
+      "sha256": "ce9ee800d307cbb892471f960a5df4e492c266bb8089c538158c462b81ccaab9"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-2a39b27e252f4399c42b4435face818e",
+          "textures": [
+            {
+              "bytes": 208,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  104
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 32,
+              "offset": 4770056,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 6,
+                  "name": "Background",
+                  "path_id": 2456089967176126605,
+                  "pixel_bytes": 5460,
+                  "pixel_sha256": "9285e204990122772a4d06fb371f678c85fd0b39deb0a8a94707b1506271c5cb",
+                  "sha256": "aa35e19e628eacc81892c7e8b292e589bbab6e04587c7ea05051380062ac9b7d",
+                  "stream": {
+                    "offset": 109280,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 5460
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": 6476450905087086412,
+              "pixels": {
+                "bytes": 5460,
+                "member": "CAB-2a39b27e252f4399c42b4435face818e.resS",
+                "offset": 244677232,
+                "sha256": "9285e204990122772a4d06fb371f678c85fd0b39deb0a8a94707b1506271c5cb"
+              },
+              "sha256": "9bfb9ec6154e5afee061323834cbbe941b724cf4bf34323b7fd8a25bc2838c66",
+              "width": 32
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-creditspanel_assets_all_f81a8ccc73e21bde1e35366cb5a51671.bundle",
+      "sha256": "2bd6123f3cb08b1e27a5b81631b70808625113af0856c8384dc8164e68f83aaf"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-4fed147b30d170832ebc3c17a75296d9",
+          "textures": [
+            {
+              "bytes": 204,
+              "fields": {
+                "image data": [
+                  96,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  28,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  17,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  84,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  12
+                ],
+                "m_StreamData": [
+                  100,
+                  104
+                ],
+                "m_TextureFormat": [
+                  36,
+                  4
+                ]
+              },
+              "height": 32,
+              "offset": 683696,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 236,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 6,
+                  "name": "UIMask",
+                  "path_id": 8550981131433061174,
+                  "pixel_bytes": 5460,
+                  "pixel_sha256": "52d8df36212b2e03de8e57e9bf4e4e6a93fba45baecef270f17cc394d37be255",
+                  "sha256": "94bf6a45e9b547a1c9e7449276a8c664911a395421b4c5dbaf8f65beb845fad0",
+                  "stream": {
+                    "offset": 114752,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 5460
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": -7598044945395019956,
+              "pixels": {
+                "bytes": 5460,
+                "member": "CAB-4fed147b30d170832ebc3c17a75296d9.resS",
+                "offset": 4096,
+                "sha256": "52d8df36212b2e03de8e57e9bf4e4e6a93fba45baecef270f17cc394d37be255"
+              },
+              "sha256": "3d540062d479ad864df88b6fca372b7f746960ec78e47b44482252e25b7e03d2",
+              "width": 32
+            },
+            {
+              "bytes": 208,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  104
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 32,
+              "offset": 8459568,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 6,
+                  "name": "Background",
+                  "path_id": 5448846543196342283,
+                  "pixel_bytes": 5460,
+                  "pixel_sha256": "9285e204990122772a4d06fb371f678c85fd0b39deb0a8a94707b1506271c5cb",
+                  "sha256": "1a6574f3c31e153d20db7b6f3296b30735ed748eff8ec66f6b26b4947eabf70b",
+                  "stream": {
+                    "offset": 120224,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 5460
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": 6476450905087086412,
+              "pixels": {
+                "bytes": 5460,
+                "member": "CAB-4fed147b30d170832ebc3c17a75296d9.resS",
+                "offset": 5776864,
+                "sha256": "9285e204990122772a4d06fb371f678c85fd0b39deb0a8a94707b1506271c5cb"
+              },
+              "sha256": "d112e37987580479fbe1bb98eae5aa56bd385448afb281cfde582eaa2695c86b",
+              "width": 32
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-gamemodes-infinitetowerrun-itassets_assets_all_fc110545147a8b773e7a1bf6f460f649.bundle",
+      "sha256": "b2b7f5fc01a24e2f9aeb00be4e371f6fd99641d8b8780638745f2e8e8e007e97"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-afd65d3bcf83b9c17e2ee82f75a1731c",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 779944,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 252,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-ParticleSystem",
+                  "path_id": 2282106042847632457,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b",
+                  "sha256": "ca6746eb70d09ff731741f2cce10ff8aa9ad3d479e0770c72b2c35a622d18809",
+                  "stream": {
+                    "offset": 136640,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7460452938429165748,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-afd65d3bcf83b9c17e2ee82f75a1731c.resS",
+                "offset": 1753216,
+                "sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b"
+              },
+              "sha256": "e606134f0b36eb524d2c5bbf20ba3e309d491b3279ddd4ffd1a9b752e0f7f876",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-drones_assets_all_d5e0bd297ced27b91b466e47acfb8d5a.bundle",
+      "sha256": "93bc711ec8ae09f74c7cfc3888ee6184e4aa0838f7f1cdb2ff1698ac6b0364ee"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-0ae297230934bf38e6ebdfb0623cb5b7",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 390280,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 252,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-ParticleSystem",
+                  "path_id": 2006758388707556680,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b",
+                  "sha256": "a0e9bc76e6607142e485412dbc61717963f2a1e8a6468966e82ebbe79911abaf",
+                  "stream": {
+                    "offset": 180384,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7460452938429165748,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-0ae297230934bf38e6ebdfb0623cb5b7.resS",
+                "offset": 2796288,
+                "sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b"
+              },
+              "sha256": "ed1594f4072ad1b4157a12309cdadc2258eee2c9b497097699ad3d4f50bf6333",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-solusamalgamator_assets_all_436f4195567439a28357de298e0baefa.bundle",
+      "sha256": "0e53cc8413b3adaaaa13b9d096d0d75a63d25baa39da526c01231dd1765a8fab"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-ece03e78d3b281e5facf147cbb151497",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 633320,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 252,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-ParticleSystem",
+                  "path_id": 8196134869334036294,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b",
+                  "sha256": "45c34ea31e2be57548c5587cb83852a6bc7980bda5eb9c5a92d6e7c470c3ec7a",
+                  "stream": {
+                    "offset": 202240,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7460452938429165748,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-ece03e78d3b281e5facf147cbb151497.resS",
+                "offset": 0,
+                "sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b"
+              },
+              "sha256": "9b63bf0f4aa4af409f2ab5ea7820f102761e0dbd6030155ead93beddad6bb13f",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-soluswing_static_assets_all_7857755ddf1125d3fd2825d3d7f6c39d.bundle",
+      "sha256": "01fffaca58c7e2ba8c8ad6f0ccb11a8098dd01910396cc309184af2a37768ca1"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-5b6f76723578a4343aaec18bcfd01e90",
+          "textures": [
+            {
+              "bytes": 204,
+              "fields": {
+                "image data": [
+                  96,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  28,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  17,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  84,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  12
+                ],
+                "m_StreamData": [
+                  100,
+                  104
+                ],
+                "m_TextureFormat": [
+                  36,
+                  4
+                ]
+              },
+              "height": 32,
+              "offset": 188104,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 236,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 6,
+                  "name": "UIMask",
+                  "path_id": -2247328562449627707,
+                  "pixel_bytes": 5460,
+                  "pixel_sha256": "52d8df36212b2e03de8e57e9bf4e4e6a93fba45baecef270f17cc394d37be255",
+                  "sha256": "940504caf347ca501e15230cbb58697d840a615c59e1302299542bdd2599feb1",
+                  "stream": {
+                    "offset": 224096,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 5460
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": -7598044945395019956,
+              "pixels": {
+                "bytes": 5460,
+                "member": "CAB-5b6f76723578a4343aaec18bcfd01e90.resS",
+                "offset": 61472,
+                "sha256": "52d8df36212b2e03de8e57e9bf4e4e6a93fba45baecef270f17cc394d37be255"
+              },
+              "sha256": "49f74857ee8db44256e4115e21c0f29bf47e3479af6b44849b79a055768e3eb9",
+              "width": 32
+            },
+            {
+              "bytes": 208,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  104
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 32,
+              "offset": 331024,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 240,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 6,
+                  "name": "Background",
+                  "path_id": -7635828690982928931,
+                  "pixel_bytes": 5460,
+                  "pixel_sha256": "9285e204990122772a4d06fb371f678c85fd0b39deb0a8a94707b1506271c5cb",
+                  "sha256": "51b09a0599b5921070b31155318f5848ea9867641e629116e72a847f0661a8ed",
+                  "stream": {
+                    "offset": 229568,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 5460
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": 6476450905087086412,
+              "pixels": {
+                "bytes": 5460,
+                "member": "CAB-5b6f76723578a4343aaec18bcfd01e90.resS",
+                "offset": 15084480,
+                "sha256": "9285e204990122772a4d06fb371f678c85fd0b39deb0a8a94707b1506271c5cb"
+              },
+              "sha256": "10320090732eb119ea3134dfab48d45752724f306857febd4f3a051d3074d45b",
+              "width": 32
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-ui_assets_all_6364822e390e31d0b7e0a5eaeb1d848c.bundle",
+      "sha256": "4ad2fcbecf3429d87a0f695a3979b2c0d2556cbc27b1b550c66d899a0fd2edcf"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-ed0a0b5527f39b652bfbd27e019d6c8e",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 219312,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 252,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-ParticleSystem",
+                  "path_id": 125578260639522947,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b",
+                  "sha256": "0d3c0b770a32675759e7d2b29120f7f4fd86668f374cfbdf8e45e29008102b39",
+                  "stream": {
+                    "offset": 267840,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.current-collapsed-textures-v1.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7460452938429165748,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-ed0a0b5527f39b652bfbd27e019d6c8e.resS",
+                "offset": 0,
+                "sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b"
+              },
+              "sha256": "a4eff2ffd1077344e497c88d7668d66acd03de02bdd862aef90a07c8783d45cd",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-sconce_static_assets_all_33db7ea3fbef5c4c1d2c9b27f8c70e18.bundle",
+      "sha256": "17cffacf234acd6578dcace9feb4136b656a4ccf4c2c179ccc9acdd8f044164c"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-fd07531f060ac95fb2671c3674d9a286",
+          "textures": [
+            {
+              "bytes": 212,
+              "fields": {
+                "image data": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  36,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  25,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  92,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  20
+                ],
+                "m_StreamData": [
+                  108,
+                  104
+                ],
+                "m_TextureFormat": [
+                  44,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 855736,
+              "operation": "sdk-rgba",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 212,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "texAffixVoidIcon",
+                  "path_id": -3241942889707660905,
+                  "pixel_bytes": 16384,
+                  "pixel_sha256": "196db21982ea3643417ca27c6034683be0366918664a4623ab012889d920c1d4",
+                  "sha256": "202383745730da6cd307ccdf5a7510110ff6a0c01d32f7e2af056a579e486435",
+                  "stream": {
+                    "offset": 3965024,
+                    "path": "archive:/CAB-b0611b01bbffecd06329c6d6eecf278c/CAB-b0611b01bbffecd06329c6d6eecf278c.resS",
+                    "size": 16384
+                  },
+                  "usage": 6
+                },
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 216,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "texAffixEarthIcon",
+                  "path_id": 8414286375181937136,
+                  "pixel_bytes": 16384,
+                  "pixel_sha256": "196db21982ea3643417ca27c6034683be0366918664a4623ab012889d920c1d4",
+                  "sha256": "5c5b5b08ae3a095baef6de74d64dd81d3c41dfff57c08620be8e5b9a62674f14",
+                  "stream": {
+                    "offset": 56273600,
+                    "path": "archive:/CAB-b0611b01bbffecd06329c6d6eecf278c/CAB-b0611b01bbffecd06329c6d6eecf278c.resS",
+                    "size": 16384
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": 2305031487938935935,
+              "pixels": {
+                "bytes": 16384,
+                "member": "CAB-fd07531f060ac95fb2671c3674d9a286.resS",
+                "offset": 480672,
+                "sha256": "a5b83e434bea03e3dc7bab2b5b8354545ab0817bc52ca1015efecd468ee98eba"
+              },
+              "sha256": "49f968a7b04d7fd37d3ae9e1bf60ba4a462b1886052713ea01d28eeee84d59e1",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-elitevoid_assets_all_207e09dccc31d32bc3b862fbf0620f74.bundle",
+      "sha256": "5f0e3074ef06f14e98979f8458d6085481296808fe15ce2c8d7ec45eaaaea7dd"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-dacfa51bc5e7ce9b7491d0d496105144",
+          "textures": [
+            {
+              "bytes": 216,
+              "fields": {
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ]
+              },
+              "height": 128,
+              "offset": 100080,
+              "operation": "sdk-rgba",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 216,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "texAffixEarthIcon",
+                  "path_id": -1572283934698564164,
+                  "pixel_bytes": 16384,
+                  "pixel_sha256": "a5b83e434bea03e3dc7bab2b5b8354545ab0817bc52ca1015efecd468ee98eba",
+                  "sha256": "fee4ee60de878ff66ae57ccc8311132d6363d513a683d2f4d2f7d98ce6ec79ee",
+                  "stream": {
+                    "offset": 0,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.resS",
+                    "size": 16384
+                  },
+                  "usage": 6
+                }
+              ],
+              "path_id": 6854558971123537439,
+              "pixels": {
+                "bytes": 16384,
+                "member": "CAB-dacfa51bc5e7ce9b7491d0d496105144.resS",
+                "offset": 1136096,
+                "sha256": "a5b83e434bea03e3dc7bab2b5b8354545ab0817bc52ca1015efecd468ee98eba"
+              },
+              "sha256": "fee4ee60de878ff66ae57ccc8311132d6363d513a683d2f4d2f7d98ce6ec79ee",
+              "width": 128
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-eliteearth_assets_all_8a803698e64a5812aa3a279c7a4f36b5.bundle",
+      "sha256": "4b36c054335dac8387aee97859a4e6950683c45531d79e344ac2036b41bf67dc"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-46a81233d59874ab3e2d5f685fc3a09b",
+          "textures": [
+            {
+              "bytes": 120,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  16
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 0,
+              "offset": 24152,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 120,
+                  "inline": true,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "Font Texture",
+                  "path_id": -5985151331041065665,
+                  "pixel_bytes": 0,
+                  "pixel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "sha256": "cee4ee01807188f1a091c4c732e747d0c4dbebf026fd5f5a2013483a431eb7cb",
+                  "stream": {
+                    "offset": 0,
+                    "path": "",
+                    "size": 0
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -8157168446863769295,
+              "pixels": {
+                "bytes": 0,
+                "member": null,
+                "offset": 104,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "sha256": "cee4ee01807188f1a091c4c732e747d0c4dbebf026fd5f5a2013483a431eb7cb",
+              "width": 0
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-bombardier_assets_all_166164a969bd2f4d9fed6b4ec7d56ce5.bundle",
+      "sha256": "0e95eb21e2a33d2e9e9652e9effd235e046c96ee69a78cf0a30fbc90aaa82881"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-6c8c13484990024e48f0af7d1ab3d2e1",
+          "textures": [
+            {
+              "bytes": 120,
+              "fields": {
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_StreamData": [
+                  104,
+                  16
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ]
+              },
+              "height": 0,
+              "offset": 17940744,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 120,
+                  "inline": true,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "Font Texture",
+                  "path_id": 1502854795422589971,
+                  "pixel_bytes": 0,
+                  "pixel_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "sha256": "cee4ee01807188f1a091c4c732e747d0c4dbebf026fd5f5a2013483a431eb7cb",
+                  "stream": {
+                    "offset": 0,
+                    "path": "",
+                    "size": 0
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -2808260869936897169,
+              "pixels": {
+                "bytes": 0,
+                "member": null,
+                "offset": 104,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "sha256": "cee4ee01807188f1a091c4c732e747d0c4dbebf026fd5f5a2013483a431eb7cb",
+              "width": 0
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+      "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-e97c9e6c8bed112fb04327872790caa1",
+          "textures": [
+            {
+              "bytes": 212,
+              "fields": {
+                "image data": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  36,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  25,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  92,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  20
+                ],
+                "m_StreamData": [
+                  108,
+                  104
+                ],
+                "m_TextureFormat": [
+                  44,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 325568,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 212,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "name": "Default-Particle",
+                  "path_id": -116124829030620737,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "7120d29a22dd998b8d69f3bb0ca561ab7b595aacede42949bea06b5c0e523106",
+                  "sha256": "5bae74b448dfcaaf3af8cfe5b1f6e6b28350fc4cb9487da18d70656990476ab0",
+                  "stream": {
+                    "offset": 0,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": 5681093337556782924,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-e97c9e6c8bed112fb04327872790caa1.resS",
+                "offset": 10432064,
+                "sha256": "7120d29a22dd998b8d69f3bb0ca561ab7b595aacede42949bea06b5c0e523106"
+              },
+              "sha256": "5bae74b448dfcaaf3af8cfe5b1f6e6b28350fc4cb9487da18d70656990476ab0",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-junk-common-vfx_assets_all_fdc37f2f2766e700cd694096fa1a56ac.bundle",
+      "sha256": "7a12d00d15d05c1603d37a0eadb5d6555f4bfec84b63e8d9916252ffdf537e87"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-77bbff67608d3113ff6e53fd70045722",
+          "textures": [
+            {
+              "bytes": 220,
+              "fields": {
+                "image data": [
+                  112,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  44,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  33,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  100,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  28
+                ],
+                "m_StreamData": [
+                  116,
+                  104
+                ],
+                "m_TextureFormat": [
+                  52,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 560912,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 21976,
+                  "colour_space": 1,
+                  "inline": true,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-ParticleSystem",
+                  "path_id": 7009444854213698239,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b",
+                  "sha256": "eb54f0ed2ca0c9653e490af30729a663893334f254ce1f5b430431d4d524e399",
+                  "stream": {
+                    "offset": 0,
+                    "path": "",
+                    "size": 0
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": -7460452938429165748,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-77bbff67608d3113ff6e53fd70045722.resS",
+                "offset": 0,
+                "sha256": "39aaa91b87c20dae9524d337efd1cebe216a9b7bf5d0b947ec339d552b31b50b"
+              },
+              "sha256": "65fd148fc2ca595a5aded91b656f0404e9ed9c7508470bb6bf4f22d4ed6ab77f",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-teleporters_static_assets_all_1b001aa61d7ae0d4d0070f48af046990.bundle",
+      "sha256": "16f80505a39a56fbd616d694df6c85e822ceb5298f0cec93a07f46dded020e04"
+    },
+    {
+      "members": [
+        {
+          "name": "CAB-efe2e40cc1c813ad40080a7f3f9b79e2",
+          "textures": [
+            {
+              "bytes": 212,
+              "fields": {
+                "image data": [
+                  104,
+                  4
+                ],
+                "m_CompleteImageSize": [
+                  36,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  25,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  92,
+                  4
+                ],
+                "m_Name": [
+                  0,
+                  20
+                ],
+                "m_StreamData": [
+                  108,
+                  104
+                ],
+                "m_TextureFormat": [
+                  44,
+                  4
+                ]
+              },
+              "height": 64,
+              "offset": 3975624,
+              "operation": "copy",
+              "outputs": [
+                {
+                  "alpha_optional": false,
+                  "bundle": "whole-game-content",
+                  "bytes": 212,
+                  "colour_space": 1,
+                  "inline": false,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "mips": 7,
+                  "name": "Default-Particle",
+                  "path_id": -5934561618021229767,
+                  "pixel_bytes": 21844,
+                  "pixel_sha256": "7120d29a22dd998b8d69f3bb0ca561ab7b595aacede42949bea06b5c0e523106",
+                  "sha256": "3a9f648156f14b26736f44551aa2b4bfd70e2e5de22dd6e082f4bce06862a60e",
+                  "stream": {
+                    "offset": 0,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.resS",
+                    "size": 21844
+                  },
+                  "usage": 0
+                }
+              ],
+              "path_id": 5681093337556782924,
+              "pixels": {
+                "bytes": 21844,
+                "member": "CAB-efe2e40cc1c813ad40080a7f3f9b79e2.resS",
+                "offset": 1119600,
+                "sha256": "7120d29a22dd998b8d69f3bb0ca561ab7b595aacede42949bea06b5c0e523106"
+              },
+              "sha256": "2eba15172e44bdfe2879f6149861c7243cbe06ea93c3c96f4cde4ff7ab2ecde7",
+              "width": 64
+            }
+          ]
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-drifter_static_assets_all_209744b6ba845bc7503304923fe4b4d1.bundle",
+      "sha256": "6c59d85f24b965c49dd1595c0ede352ac1c70213af59e8403f2d48b3cebd9a28"
+    }
+  ],
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
+}
