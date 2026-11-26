@@ -211,9 +211,11 @@ class Runner:
         if self.run([self.adb, "kill-server"], checkout, timeout=15, extra_env={"ANDROID_ADB_SERVER_PORT": "5038"}):
             raise CommandError("could not stop Unity ADB server")
 
-    def admit_battery(self, serial):
+    def admit_battery(self, serial, *, heavy=False):
         for sample in range(3):
             level, current, temperature = self.battery(serial)
+            if heavy and level < 30:
+                return f"battery at {level} % (< 30 % for phone producers)"
             refusal = battery_refusal(level, current, temperature, self.charge_override)
             if level > 85 or temperature > 350 or not refusal:
                 return refusal
@@ -290,7 +292,8 @@ class Runner:
                     self.stop_unity_adb(checkout)
                 else:
                     lease = self.take_lease(request["device"], serial)
-                refusal = None if self.reattached else self.admit_battery(serial)
+                heavy = request["job"] == "toolhost" or "--emission-request" in request["args"]
+                refusal = None if self.reattached else self.admit_battery(serial, heavy=heavy)
                 if refusal:
                     raise CommandError(f"device {request['device']} not admitted: {refusal}")
             py = str(checkout / ".local/lab-venv/bin/python")

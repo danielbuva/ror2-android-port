@@ -59,43 +59,52 @@ def decompress(data, size, flags):
         raise ValueError("unqualified bundle compression")
     output = bytearray()
     cursor = 0
+    input_size = len(data)
 
-    def length(base):
+    def extended_length():
         nonlocal cursor
-        if base == 15:
-            while True:
-                if cursor >= len(data):
-                    raise ValueError("truncated LZ4 length")
-                extra = data[cursor]
-                cursor += 1
-                base += extra
-                if base > size:
-                    raise ValueError("LZ4 length exceeds output")
-                if extra != 255:
-                    break
-        return base
+        length = 15
+        while True:
+            if cursor >= input_size:
+                raise ValueError("truncated LZ4 length")
+            extra = data[cursor]
+            cursor += 1
+            length += extra
+            if length > size:
+                raise ValueError("LZ4 length exceeds output")
+            if extra != 255:
+                return length
 
-    while cursor < len(data):
+    while cursor < input_size:
         token = data[cursor]
         cursor += 1
-        literals = length(token >> 4)
-        if cursor + literals > len(data) or len(output) + literals > size:
+        literals = token >> 4
+        if literals == 15:
+            literals = extended_length()
+        literal_end = cursor + literals
+        if literal_end > input_size or len(output) + literals > size:
             raise ValueError("invalid LZ4 literal extent")
-        output.extend(data[cursor : cursor + literals])
-        cursor += literals
-        if cursor == len(data):
+        if literals:
+            output.extend(data[cursor:literal_end])
+        cursor = literal_end
+        if cursor == input_size:
             break
-        if cursor + 2 > len(data):
+        if cursor + 2 > input_size:
             raise ValueError("truncated LZ4 match")
-        distance = int.from_bytes(data[cursor : cursor + 2], "little")
+        distance = data[cursor] | (data[cursor + 1] << 8)
         cursor += 2
-        count = length(token & 15) + 4
-        if distance == 0 or distance > len(output) or len(output) + count > size:
+        match = token & 15
+        count = (extended_length() if match == 15 else match) + 4
+        produced = len(output)
+        if distance == 0 or distance > produced or produced + count > size:
             raise ValueError("invalid LZ4 match extent")
-        # Copy repeated spans rather than one Python iteration per output byte.
-        start = len(output) - distance
-        pattern = output[start : start + min(distance, count)]
-        output.extend((pattern * ((count + distance - 1) // distance))[:count])
+        start = produced - distance
+        if count <= distance:
+            output.extend(output[start : start + count])
+        else:
+            # Copy repeated spans rather than one Python iteration per output byte.
+            pattern = output[start:produced]
+            output.extend((pattern * ((count + distance - 1) // distance))[:count])
     if len(output) != size:
         raise ValueError("decompressed size differs")
     return bytes(output)

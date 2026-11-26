@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1501 — Speed up checked UnityFS LZ4 decoding on Android
+
+2026-11-26. The UnityFS decoder streamlines common LZ4 lengths and disjoint
+matches. Thor compared both decoders on all 13,212 blocks of the retained
+pre-#630 bundle. All 1,731,684,936 decoded bytes matched an independent host digest.
+Decoder CPU time fell from 905.0 to 451.5 s (50.1%), with 32.6 MB peak RSS,
+62.9 °C peak CPU/GPU at admission and zero thermal pauses. Sleep and cleanup passed.
+The current-input 27-record cold pair emitted identical structurally checked bundles
+(`5df987cd43526a18e9e415cdebfbd5e9e1103c27a6a7d029f9561cf1bdf3d8f5`).
+Toolhost APK SHA-256 `2f19c4e52b01112f3569461e5bd696039ca302137fe0086d3905b0b83f9cb6cd`.
+Evidence: `work/coordination/alpha-converter-lz4-thor-v5-20261126/`,
+`paired-smoke.md` and `pre630-full-decode-isolated/reconciliation.md`.
+Full current-input emission and end-to-end converter performance remain open.
+
 ## J1500 — Package the complete accepted Wwise bank roster
 
 2026-11-18. The shared stager packages 247 banks and 120 WEMs, restoring
