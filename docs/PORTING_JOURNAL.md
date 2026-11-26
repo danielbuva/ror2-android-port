@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1504 — Reuse required-route pointer validation during record emission
+
+2026-11-26. Required native record routes reuse their measured pointer
+comparison. The fallback route still checks measured edges independently.
+Both cold single-worker runs on Android passed required-set and structural
+validation with the same 27 records, 10,258 bytes, and SHA-256
+`5df987cd43526a18e9e415cdebfbd5e9e1103c27a6a7d029f9561cf1bdf3d8f5`.
+Records wall time was 171 → 146 ms and producer peak RSS was 47.6 → 47.4 MB.
+Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a859516807c00a4`.
+Evidence: `work/coordination/alpha-record-pass-thor-20261126/`, both v6 terminal
+receipts. OLED sleep and scratch cleanup passed. Full-cohort timing and Unity
+typed load remain open.
+
 ## J1502 — Stage the phone toolhost Python dependencies
 
 2026-11-26. The shared toolhost stages a pinned Python import plan, 14 wheels

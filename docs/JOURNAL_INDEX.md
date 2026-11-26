@@ -336,3 +336,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1500](PORTING_JOURNAL.md#j1500--package-the-complete-accepted-wwise-bank-roster) | 2026-11-18 | Package the complete accepted Wwise bank roster | 2026-11-18. |
 | [J1501](PORTING_JOURNAL.md#j1501--speed-up-checked-unityfs-lz4-decoding-on-android) | 2026-11-26 | Speed up checked UnityFS LZ4 decoding on Android | 2026-11-26. |
 | [J1502](PORTING_JOURNAL.md#j1502--stage-the-phone-toolhost-python-dependencies) | 2026-11-26 | Stage the phone toolhost Python dependencies | 2026-11-26. |
+| [J1504](PORTING_JOURNAL.md#j1504--reuse-required-route-pointer-validation-during-record-emission) | 2026-11-26 | Reuse required-route pointer validation during record emission | 2026-11-26. |
