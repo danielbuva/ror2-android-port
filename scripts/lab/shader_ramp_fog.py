@@ -410,7 +410,7 @@ def generate(work: Path = WORK, root: Path = ROOT, *, target: str = "ramp-fog") 
     work = Path(work).resolve()
     root = Path(root).resolve()
     target = target or "ramp-fog"
-    if target not in {"ramp-fog", "screen-damage", "sobel-buffer", "sobel-outline"}:
+    if target not in {"ramp-fog", "screen-damage", "sobel-buffer", "sobel-outline", "vision-limit"}:
         raise RuntimeError("Unsupported native post-process target")
     recipe_path = root / "recipe" / f"shader-{target}-candidate.json"
     recipe = json.loads(recipe_path.read_text(encoding="utf-8"))
@@ -424,6 +424,7 @@ def generate(work: Path = WORK, root: Path = ROOT, *, target: str = "ramp-fog") 
             "screen-damage": "ScreenDamageCandidate.shader",
             "sobel-buffer": "SobelBufferCandidate.shader",
             "sobel-outline": "SobelOutlineCandidate.shader",
+            "vision-limit": "VisionLimitCandidate.shader",
         }[target]
     )
     destination = output_path(work, source["input_id"], recipe=recipe)
