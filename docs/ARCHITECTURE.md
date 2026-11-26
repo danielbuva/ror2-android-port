@@ -222,8 +222,10 @@ optional canonical repack in one workspace. `release_graph.py` accepts
 `owner-bundle-preload-release-v1` profiles declaring prerequisite source profiles
 and that request. Public file pins join the signed source closure; supplier
 artifacts name declared jobs. Referenced donor/staged containers remain payload
-and native-manifest dependencies. Catalog production consumes each actual final
-bundle and its emitted profile, independently of canonical body-identity proof.
+and native-manifest dependencies. The graph assigns stable artifact names to
+object bundles and built-in player resources when it compiles their producers.
+Follower bundles and catalog production bind the same staged files. The catalog
+also consumes each emitted profile, independently of canonical body-identity proof.
 Managed witnesses must name generated artifacts, with registry body, receipt and
 schemas supplied by one final player job. When `--code-request` selects fresh
 conversion, witness production reads the same pinned managed provider manifest
