@@ -52,7 +52,13 @@ def checked_work_file(path: Path, label: str, work: Path) -> Path:
     return resolved
 
 
-def streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None = None, init_receipt_sha256: str | None = None) -> list[dict]:
+def streamed_media_rows(
+    receipt: dict,
+    *,
+    accepted_inventory_sha256: str | None = None,
+    bank_index_sha256: str | None = None,
+    init_receipt_sha256: str | None = None,
+) -> list[dict]:
     validator_path = ROOT / "scripts/lab/original_game_audio_stage.py"
     spec = importlib.util.spec_from_file_location("original_audio_stage_validator", validator_path)
     if spec is None or spec.loader is None:
@@ -62,7 +68,7 @@ def streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None = None, 
     validator = getattr(module, "validate_streamed_media_rows", None)
     if not callable(validator):
         raise ValueError("shared streamed-media receipt validator unavailable")
-    rows = validator(receipt, bank_index_sha256=bank_index_sha256, init_receipt_sha256=init_receipt_sha256)
+    rows = validator(receipt, accepted_inventory_sha256=accepted_inventory_sha256, bank_index_sha256=bank_index_sha256, init_receipt_sha256=init_receipt_sha256)
     if not isinstance(rows, list) or len(rows) != STREAMED_MEDIA_COUNT:
         raise ValueError("R2 receipt must validate exactly 120 streamed media rows")
     return rows
@@ -143,7 +149,8 @@ def generate(
         or receipt.get("output_relative_directory") != "Audio/GeneratedSoundBanks/Android"
     ):
         raise ValueError("stage receipt does not match current default-unaccepted contract")
-    if receipt.get("accepted_inventory_sha256") != sha_file(work / "inventory/files.json"):
+    inventory_sha = sha_file(work / "inventory/files.json")
+    if receipt.get("accepted_inventory_sha256") != inventory_sha:
         raise ValueError("stage receipt does not bind current full accepted inventory")
     outputs = receipt.get("outputs")
     if not isinstance(outputs, list) or len(outputs) < 154:
@@ -163,7 +170,7 @@ def generate(
     if owner_work is None:
         media_rows = streamed_media_rows(receipt)
     else:
-        media_rows = streamed_media_rows(receipt, bank_index_sha256=index_sha, init_receipt_sha256=init_receipt_sha)
+        media_rows = streamed_media_rows(receipt, accepted_inventory_sha256=inventory_sha, bank_index_sha256=index_sha, init_receipt_sha256=init_receipt_sha)
     expected = {row["output_filename"]: row for row in plan}
     expected["Init.bnk"] = {"source_sha256": INIT_SHA256, "size_bytes": adapted_init.stat().st_size}
     seen: set[str] = set()
