@@ -1393,11 +1393,13 @@ def _emit_closed_native(
                         or hashlib.sha256(typ["tree"]).hexdigest() != value["schema"]
                     ):
                         raise ValueError("Native type identity differs")
-                    edges = set(pointers(body, typ, cache).values())
-                    if edges != set(map(tuple, value["edges"])):
-                        raise ValueError("Measured native pointers differ from selected graph")
                     targets = {}
-                    if required is not None:
+                    if required is None:
+                        edges = set(pointers(body, typ, cache).values())
+                        if edges != set(map(tuple, value["edges"])):
+                            raise ValueError("Measured native pointers differ from selected graph")
+                    else:
+                        # Both required routes validate the owner's measured edges.
                         if structural_routes is None:
                             targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
                         else:

@@ -337,3 +337,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1501](PORTING_JOURNAL.md#j1501--speed-up-checked-unityfs-lz4-decoding-on-android) | 2026-11-26 | Speed up checked UnityFS LZ4 decoding on Android | 2026-11-26. |
 | [J1502](PORTING_JOURNAL.md#j1502--stage-the-phone-toolhost-python-dependencies) | 2026-11-26 | Stage the phone toolhost Python dependencies | 2026-11-26. |
 | [J1503](PORTING_JOURNAL.md#j1503--restore-live-equipment-barrel-lock-materials) | 2026-11-26 | Restore live equipment-barrel lock materials | 2026-11-26. |
+| [J1504](PORTING_JOURNAL.md#j1504--reuse-required-route-pointer-validation-during-record-emission) | 2026-11-26 | Reuse required-route pointer validation during record emission | 2026-11-26. |
