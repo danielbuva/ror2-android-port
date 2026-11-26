@@ -8,12 +8,17 @@ import io
 import json
 from pathlib import Path
 import struct
+import sys
 from zipfile import ZipFile
 
 import catalog_complete as C
 import unity_mesh as M
 
 CHARACTER_MASTER = ("CharacterMaster", "RoR2", "RoR2.dll")
+ITEM_DISPLAY_RULE_SET = ("ItemDisplayRuleSet", "RoR2", "RoR2.dll")
+DISPLAY_STRING_FIELDS = {"childName", "m_AssetGUID", "m_SubObjectName"}
+DISPLAY_FIXED_FIELDS = {"ruleType", "limbMask", "localPos", "localAngles", "localScale"}
+DISPLAY_POINTER_FIELDS = {"itemDisplayRuleSet", "keyAsset", "followerPrefab"}
 
 
 def pinned(path, digest):
@@ -35,31 +40,47 @@ def schema(tree):
             visit(child, path + (child.name,))
         fields.add((path, node.kind))
         node.has_pointer = node.pointer or any(child.has_pointer for child in node.children)
+        node.display_string = node.kind == "string" and node.name in DISPLAY_STRING_FIELDS
+        node.display_fixed = node.name in DISPLAY_FIXED_FIELDS
+        node.has_display_field = node.display_string or node.display_fixed or any(child.has_display_field for child in node.children)
 
     visit(root, ())
     return root, fields
 
 
-def pointers(body, root):
-    """Skip fixed non-reference spans and retain array indices on each PPtr."""
+def pointers(body, root, display_fields=None):
+    """Retain indexed PPtrs and, when requested, serialized display rule values."""
     cursor = 0
     found = {}
 
     def read(node, field):
         nonlocal cursor
-        end = None if node.has_pointer else M.fixed_end(node, cursor)
+        end = None if node.has_pointer or (display_fields is not None and node.has_display_field) else M.fixed_end(node, cursor)
         if end is not None:
             cursor = end
         elif node.pointer:
             found[field] = struct.unpack_from("<iq", body, cursor)
             cursor += 12
+        elif display_fields is not None and node.display_string:
+            size = struct.unpack_from("<I", body, cursor)[0]
+            cursor += 4
+            display_fields[field] = body[cursor : cursor + size].decode("utf-8")
+            cursor += size
+            if node.children[0].meta & 0x4000:
+                cursor = (cursor + 3) & ~3
+        elif display_fields is not None and node.display_fixed:
+            end = M.fixed_end(node, cursor)
+            if end is None:
+                raise ValueError("unknown display value extent")
+            display_fields[field] = body[cursor:end].hex()
+            cursor = end
         elif node.flags & 1:
             count = struct.unpack_from("<I", body, cursor)[0]
             cursor += 4
             if len(node.children) != 2 or count > len(body):
                 raise ValueError("invalid serialized array")
             element = node.children[1]
-            end = None if element.has_pointer else M.fixed_end(element, cursor)
+            end = None if element.has_pointer or (display_fields is not None and element.has_display_field) else M.fixed_end(element, cursor)
             if end is not None and count:
                 cursor = end + (count - 1) * (M.fixed_end(element, end) - end)
             else:
@@ -218,7 +239,108 @@ def typed_catalog_identity(receipt, request, candidate_apk):
     definitions = document.get("definitionIdentity")
     if definitions is not None and definitions["sourceMetadataSha256"] != request.get("source_additions", {}).get("metadata", {}).get("sha256"):
         raise ValueError("typed definition source metadata differs from catalog request")
-    return evidence, definitions
+    return evidence, definitions, document.get("displayIdentity")
+
+
+def source_game_objects(game, bundle, pin, expected_paths):
+    """Read typed local container roots from one accepted original bundle."""
+    path = pinned(game / pin["path"], pin["sha256"])
+    roots = {}
+    source = C.W.B.Bundle(path)
+    for member in source.members:
+        if member.endswith((".resS", ".resource")):
+            continue
+        with source.member(member) as stream:
+            layout = C.W.read_serialized(stream)
+            objects = {row["path_id"]: row for row in layout["objects"]}
+            for row in objects.values():
+                if layout["types"][row["type_id"]]["class_id"] != 142:
+                    continue
+                stream.seek(layout["data_offset"] + row["offset"])
+                _, entries, _, _ = container_table(C.W.B.exact(stream, row["bytes"]))
+                for name, file_id, path_id in entries:
+                    key = name.casefold()
+                    if key not in expected_paths:
+                        continue
+                    target = objects.get(path_id)
+                    if file_id or target is None or layout["types"][target["type_id"]]["class_id"] != 1:
+                        raise ValueError(f"original display root is not a local GameObject: {bundle}:{name}")
+                    roots.setdefault(key, set()).add((pin["path"], member, path_id))
+    return roots
+
+
+def missing_display_addresses(displays):
+    addresses = {
+        row["address"]
+        for row in displays["failures"]
+        if row.get("check") == "follower" or ("check" not in row and row.get("rule") is not None and not row["follower"])
+    }
+    if any(not isinstance(address, str) or not address for address in addresses):
+        raise ValueError("unresolved display follower has no address")
+    return addresses
+
+
+def source_display_roots(inputs, fixture, candidate_apk, inventory, game):
+    """Select missing follower locations and their source GameObject records."""
+    sys.path.insert(0, str(C.ROOT / "scripts/lab"))
+    from catalog_reader import read_shipped
+
+    request = json.loads(inputs.read_bytes())
+    _, definitions, displays = typed_catalog_identity(fixture, request, candidate_apk)
+    if not definitions or not definitions["complete"] or not displays or not displays["complete"]:
+        raise ValueError("display discovery requires a complete typed body fixture")
+    source_pin = request["source_additions"]["metadata"]
+    metadata_path = inputs.parent / source_pin["path"]
+    metadata = json.loads(pinned(metadata_path, source_pin["sha256"]).read_bytes())
+    accepted = json.loads(inventory.read_bytes())
+    if accepted["input_id"] != metadata["input_id"]:
+        raise ValueError("display discovery inventory differs from source input")
+    catalogs = [row for row in accepted["files"] if row["path"].endswith("/StreamingAssets/aa/catalog.json")]
+    if len(catalogs) != 1 or catalogs[0]["sha256"] != metadata["source_catalog_sha256"]:
+        raise ValueError("display discovery catalog differs from accepted input")
+    source_catalog = pinned(game / catalogs[0]["path"], metadata["source_catalog_sha256"])
+    source = read_shipped(source_catalog, "", {"labels": {}, "providers": {}})
+    files = {}
+    for row in accepted["files"]:
+        if Path(row["path"]).suffix == ".bundle":
+            files.setdefault(Path(row["path"]).name, []).append(row)
+
+    addresses = missing_display_addresses(displays)
+    locations = {row["id"]: row for row in metadata["locations"] if row["type"].split(",", 1)[0] == "UnityEngine.GameObject"}
+    original = {row["id"]: row for row in source["locations"]}
+    source_keys = {row["key"]: row["locations"] for row in metadata["keys"] if row.get("keyType", "System.String") == "System.String"}
+    original_keys = {row["key"]: row["locations"] for row in source["keys"] if row["keyType"] == "System.String"}
+    published = {row["id"] for row in json.loads(pinned(inputs.parent / request["metadata"]["path"], request["metadata"]["sha256"]).read_bytes())["locations"]}
+    published.update(request["source_additions"]["locations"])
+    groups = {}
+    for address in sorted(addresses):
+        targets = [identity for identity in source_keys.get(address, ()) if identity in locations]
+        if len(targets) != 1 or targets[0] in published:
+            raise ValueError(f"expected one unpublished source display location: {address}")
+        (identity,) = targets
+        row = original[identity]
+        active = locations[identity]
+        if identity not in original_keys.get(address, ()) or (row["type"], row["primaryKey"]) != (active["type"], active["primaryKey"]):
+            raise ValueError(f"source display location identity differs: {identity}")
+        path = row["internalId"].casefold()
+        dependencies = source["dependencySets"][row["dependencySet"]]
+        if not dependencies or not original[dependencies[0]]["bundle"]:
+            raise ValueError(f"source display location has no owning bundle: {identity}")
+        basename = original[dependencies[0]]["internalId"].replace("\\", "/").rsplit("/", 1)[-1]
+        groups.setdefault(basename, []).append((path, identity, address))
+
+    rows = []
+    for bundle, group in sorted(groups.items()):
+        pins = files.get(bundle, ())
+        if len(pins) != 1:
+            raise ValueError(f"expected one accepted display bundle: {bundle}")
+        roots = source_game_objects(game, bundle, pins[0], {path for path, _, _ in group})
+        for path, identity, address in group:
+            targets = roots.get(path, ())
+            if len(targets) != 1:
+                raise ValueError(f"expected one original display GameObject: {bundle}:{path}")
+            rows.append(dict(location=identity, guid=address, path=locations[identity]["path"], source=list(next(iter(targets)))))
+    return sorted(rows, key=lambda row: row["location"])
 
 
 def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None, typed_fixture=None, pc=None):
@@ -232,7 +354,7 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
     if baseline["apk_sha256"] != ref["sha256"]:
         raise ValueError("reference build result belongs to another APK")
     paths = candidate_paths(request, candidate_apk)
-    identity, definitions = typed_catalog_identity(typed_fixture, request, candidate_apk) if typed_fixture else (None, None)
+    identity, definitions, displays = typed_catalog_identity(typed_fixture, request, candidate_apk) if typed_fixture else (None, None, None)
     references = {name: pinned(Path(baseline["payload_directory"]) / name, baseline["payload"][name]) for name in paths.keys() & baseline["payload"].keys()}
     candidate = Catalog(paths, candidate_apk)
     reference = Catalog(references, reference_apk)
@@ -256,15 +378,22 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
             for failure in failures:
                 counts["typed-definition-identity"] += 1
                 table.write(json.dumps(dict(cause="typed-definition-identity", side="candidate", **failure), separators=(",", ":")) + "\n")
+        if displays is not None:
+            failures = list(displays["failures"])
+            if not displays["complete"] or not displays["prefabs"] or len(displays["bodies"]) != identity["bodies"]:
+                failures.append(dict(error="typed body display inspection incomplete"))
+            for failure in failures:
+                counts["typed-item-display-identity"] += 1
+                table.write(json.dumps(dict(cause="typed-item-display-identity", side="candidate", **failure), separators=(",", ":")) + "\n")
 
         def emit(cause, **details):
             counts[cause] += 1
             table.write(json.dumps(dict(cause=cause, bundle=bundle, member=member, path_id=pid, **details), separators=(",", ":")) + "\n")
 
-        def edges(side, catalog, body, typ):
+        def edges(side, catalog, body, typ, display_fields):
             root, _ = schema(typ["tree"])
             result = {}
-            for field, ptr in pointers(body, root).items():
+            for field, ptr in pointers(body, root, display_fields).items():
                 target = catalog.endpoint(member, ptr)
                 if target and len(target) != 2:
                     emit("unresolved-pointer", side=side, field=field, pointer=ptr, target=target)
@@ -307,6 +436,7 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                 records = {s: c.members[member][2] if member in c.bundles.get(bundle, ()) else {} for s, c in sides.items()}
                 for pid in sorted(records["candidate"].keys() | records["reference"].keys()):
                     types, bodies, links, bindings = {}, {}, {}, {}
+                    display_fields = {}
                     for side, catalog in sides.items():
                         if pid not in records[side]:
                             continue
@@ -314,12 +444,14 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                         _, typ, body = catalog.record(member, (0, pid))
                         types[side], bodies[side] = typ, body
                         try:
-                            if typ["class_id"] != 142:
-                                links[side] = edges(side, catalog, body, typ)
                             if typ["class_id"] == 114:
                                 bindings[side] = catalog.binding(member, typ, body)
                                 if bindings[side] is None:
                                     emit("scriptless", side=side)
+                                if bindings[side] == ITEM_DISPLAY_RULE_SET:
+                                    display_fields[side] = {}
+                            if typ["class_id"] != 142:
+                                links[side] = edges(side, catalog, body, typ, display_fields.get(side))
                         except (ValueError, KeyError, struct.error) as exc:
                             emit("object-inspection", side=side, error=str(exc))
                     if any(t["class_id"] == 142 for t in types.values()):
@@ -345,6 +477,11 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                                 emit("serialized-fields", candidate_only=sorted(fields[0] - fields[1]), reference_only=sorted(fields[1] - fields[0]))
                         if cid == 114 and bindings.get("candidate") != bindings.get("reference"):
                             emit("script-binding", identities=bindings)
+                        if len(display_fields) == 2:
+                            a, b = display_fields["candidate"], display_fields["reference"]
+                            for field in sorted(a.keys() | b.keys(), key=repr):
+                                if a.get(field) != b.get(field):
+                                    emit("item-display-rule-field", field=field, candidate=a.get(field), reference=b.get(field))
                         if len(links) == 2:
                             for field in sorted(links["candidate"].keys() | links["reference"].keys(), key=repr):
                                 a = links["candidate"].get(field, "absent")
@@ -353,6 +490,12 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                                     cause = "component-slot" if cid == 1 and field[0] == "m_Component" else "pointer-target"
                                     if field == ("bodyPrefab",) and CHARACTER_MASTER in bindings.values():
                                         cause = "character-master-body-target"
+                                    if (
+                                        field
+                                        and field[-1] in DISPLAY_POINTER_FIELDS
+                                        and (field[-1] == "itemDisplayRuleSet" or ITEM_DISPLAY_RULE_SET in bindings.values())
+                                    ):
+                                        cause = "item-display-pointer-target"
                                     if isinstance(b, tuple) and aliases.get(b, "unknown") == a:
                                         cause = "canonical-pointer-redirection"
                                     emit(cause, field=field, candidate=a, reference=b)
@@ -379,19 +522,34 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
         summary["typed_master_body_identity"] = {key: identity[key] for key in ("complete", "bodies", "masters", "metadataSha256", "bundles")}
     if definitions is not None:
         summary["typed_definition_identity"] = {key: value for key, value in definitions.items() if key != "failures"}
+    if displays is not None:
+        summary["typed_item_display_identity"] = {key: value for key, value in displays.items() if key not in {"failures", "slots"}}
     (output / "result.json").write_text(json.dumps(summary, indent=2) + "\n")
 
 
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--inputs", required=True, type=Path)
-    cli.add_argument("--emission", required=True, type=Path)
-    cli.add_argument("--assembly", required=True, type=Path)
+    cli.add_argument("--emission", type=Path)
+    cli.add_argument("--assembly", type=Path)
     cli.add_argument("--candidate-apk", required=True, type=Path)
     cli.add_argument("--candidate-sha256", required=True)
     cli.add_argument("--output", required=True, type=Path)
     cli.add_argument("--bundle", help="inspect only one bundle for a smoke run")
     cli.add_argument("--typed-fixture", type=Path, help="join the candidate's exact-editor catalog identity report")
-    cli.add_argument("--pc", type=Path, help="compare the pinned original game's physics settings and layer table")
+    cli.add_argument("--pc", type=Path, help="original game installation")
+    cli.add_argument("--discover-display-roots", action="store_true", help="discover missing display roots from the original catalog")
+    cli.add_argument("--inventory", type=Path, help="accepted input inventory for display root discovery")
     args = cli.parse_args()
-    compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle, args.typed_fixture, args.pc)
+    if args.discover_display_roots:
+        if not all((args.inventory, args.pc, args.typed_fixture)):
+            cli.error("display root discovery requires --inventory, --pc and --typed-fixture")
+        candidate = pinned(args.candidate_apk, args.candidate_sha256)
+        rows = source_display_roots(args.inputs, args.typed_fixture, candidate, args.inventory, args.pc)
+        with args.output.open("x") as handle:
+            json.dump(rows, handle, indent=2)
+            handle.write("\n")
+    else:
+        if not all((args.emission, args.assembly)):
+            cli.error("bundle comparison requires --emission and --assembly")
+        compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle, args.typed_fixture, args.pc)

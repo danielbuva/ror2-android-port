@@ -339,7 +339,10 @@ without hiding a host library or mutating the retained run. The Android request
 uses `relink` with explicit completed objects, converter receipt/hash, source
 frames/compression and metadata, plus `target`, `linux_tools` and new `output`.
 
-A failed native output in phase `compiling` can instead be supplied as `resume`.
+A failed native output in phase `compiling` can be supplied as `resume`.
+Phase `stripping` also allows resume when every object has a complete receipt.
+The new attempt relinks and strips those objects, then checks the live inputs
+again before issuing a successful output receipt.
 The owner validates the same original/SDK/converter/tool providers, compile
 plan, and the contiguous completed job-receipt prefix before creating a
 new output. It hard-links only hash-validated completed objects, or copies and

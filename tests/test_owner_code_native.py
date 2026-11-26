@@ -308,6 +308,23 @@ class OwnerCodeNativeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "job receipts"):
                 NATIVE.compiled_jobs(*fixture, resume=True)
 
+    def test_resume_reuses_complete_objects_after_final_input_check_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = self.compiled_fixture(Path(temporary).resolve())
+            folder, _, profile, _, _ = fixture
+            result_path = folder / "result.json"
+            result = dict(success=False, phase="stripping", input_id=profile["input_id"], compile_tasks=3)
+            result_path.write_text(json.dumps(result))
+            self.assertEqual(len(NATIVE.compiled_jobs(*fixture, resume=True)), 3)
+            with self.assertRaisesRegex(ValueError, "complete original compilation"):
+                NATIVE.compiled_jobs(*fixture)
+            (folder / "objects/1.o").write_bytes(b"changed compiled input")
+            with self.assertRaisesRegex(ValueError, "object/source"):
+                NATIVE.compiled_jobs(*fixture, resume=True)
+            result_path.write_text(json.dumps({**result, "compile_tasks": 2}))
+            with self.assertRaisesRegex(ValueError, "completed object receipts"):
+                NATIVE.compiled_jobs(*fixture, resume=True)
+
     def test_burst_ndk_layout_keeps_original_target_data_and_selects_linux_bfd(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

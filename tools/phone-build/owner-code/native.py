@@ -445,14 +445,17 @@ def lump_source(members):
 
 
 def compiled_jobs(folder, current, profile, sdk, inputs, *, resume=False):
-    """Validate retained object receipts before relinking or continuing a failure."""
+    """Validate retained object receipts before relinking or resuming native production."""
     old = json.loads((folder / "plan.json").read_text())
     previous = json.loads((folder / "inputs.json").read_text())
     result = json.loads((folder / "result.json").read_text())
     count = result.get("compile_tasks", 0) + result.get("reused_compile_tasks", 0)
     if resume:
-        if result.get("success") is not False or result.get("phase") != "compiling" or not 0 <= count < len(current["jobs"]):
-            raise ValueError("failed original compilation with a receipt prefix required for resume")
+        phase = result.get("phase")
+        prefix = phase == "compiling" and 0 <= count < len(current["jobs"])
+        complete = phase == "stripping" and count == len(current["jobs"])
+        if result.get("success") is not False or not (prefix or complete):
+            raise ValueError("failed native production with completed object receipts required for resume")
     elif result.get("success") is not True or result.get("phase") != "native-built" or count != len(current["jobs"]):
         raise ValueError("complete original compilation required for relinking")
     if result.get("input_id") != profile["input_id"]:
@@ -574,7 +577,7 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
     ):
         raise ValueError("nonempty unique valid measurement job indexes required; no plan-only measurement")
     if "compiled" in request and "resume" in request:
-        raise ValueError("select completed relink or failed compilation resume")
+        raise ValueError("select completed relink or failed native production resume")
     timeout = request.get("compile_timeout_seconds", 3600)
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("positive active compile timeout required")

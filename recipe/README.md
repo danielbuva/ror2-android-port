@@ -154,7 +154,7 @@ No clear recipe boundary violations or unresolved publication findings remain.
 
 | Recipe | Reviewed change | SHA-256 |
 | --- | --- | --- |
-| `native-view-camera-transform.json` | Authored build/camera source pins | `9556b07c4a3a045d3e1e50a1bd85dd4659e8415324b888c40e17f6475999b5db` |
+| `native-view-camera-transform.json` | Authored build/camera source pins | `de8ab58e720212da8171455229f806022b697076ee4ed8ab0e3ed2e011f59a91` |
 | `original-audio-owner-sources.json` | Authored runtime/audio source pins | `90a4d356a5af40fadc94724df38823c1b9ae80a1ef111f4f3248776ba97e4e99` |
 | `owner-artifactworld01-native-records.json` | Original component selectors and pointer relocations | `728ac3483b07550d4f46e1cfa50f011a69e0b24284dc62754a23ec61fb0cec80` |
 | `owner-champrush-director-records.json` | Original director selectors and pointer relocations | `a7d60a106ef9b5be7c22010acbb2ea9118f4cbe6ad6e6226f034e047ece16536` |

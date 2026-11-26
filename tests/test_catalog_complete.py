@@ -124,6 +124,27 @@ class CatalogCompletionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "incomplete serialized object"):
             compare.pointers(body + bytes(4), root)
 
+        child = mesh.Node(1, 0, "string", "childName", -1, 0)
+        child.children = [mesh.Node(2, 1, "Array", "Array", -1, 0x4000)]
+        child.children[0].children = [mesh.Node(3, 0, "int", "size", 4, 0), mesh.Node(3, 0, "char", "data", 1, 0)]
+        record = mesh.Node(0, 0, "ItemDisplayRule", "Base", -1, 0)
+        rule_type = mesh.Node(1, 0, "int", "ruleType", 4, 0)
+        angles = mesh.Node(1, 0, "Vector3f", "localAngles", 12, 0)
+        angles.children = [mesh.Node(2, 0, "float", name, 4, 0) for name in ("x", "y", "z")]
+        record.children = [child, element, rule_type, angles]
+        with patch.object(mesh, "type_tree", return_value=record):
+            root, _ = compare.schema(b"display-field-fixture")
+        display = {}
+        transform = struct.pack("<3f", 0, 90, 180)
+        self.assertEqual(compare.pointers(struct.pack("<I3sxiqi", 3, b"Gun", 1, 7, 1) + transform, root, display), {("data",): (1, 7)})
+        self.assertEqual(display, {("childName",): "Gun", ("ruleType",): "01000000", ("localAngles",): transform.hex()})
+
+        failures = [dict(check="child", rule=0, follower=None, address="child-only"), dict(check="follower", rule=0, address="follower")]
+        failures.extend([dict(rule=0, follower=None, address="legacy"), dict(rule=0, follower="loaded", address="legacy-child")])
+        self.assertEqual(compare.missing_display_addresses(dict(failures=failures)), {"follower", "legacy"})
+        with self.assertRaisesRegex(ValueError, "has no address"):
+            compare.missing_display_addresses(dict(failures=[dict(check="follower", address=None)]))
+
         catalog = compare.Catalog.__new__(compare.Catalog)
         catalog.members = {"base": (None, {"externals": [{"path": "archive:/other/CAB"}]}, {8: {}}), "CAB": (None, {}, {7: {}})}
         self.assertEqual(catalog.endpoint("base", (1, 7)), ("CAB", 7))
@@ -145,15 +166,16 @@ class CatalogCompletionTests(unittest.TestCase):
             evidence = dict(complete=True, bodies=2, masters=1, metadataSha256=pin(metadata)["sha256"], bundles={"fixture": "digest"}, failures=[])
             receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence)))
             request = dict(bundles={"fixture": dict(sha256="digest")})
-            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, None))
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, None, None))
             with self.assertRaisesRegex(ValueError, "bundle pins differ"):
                 compare.typed_catalog_identity(receipt, dict(bundles={}), apk)
             definitions = dict(sourceMetadataSha256="original")
-            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence, definitionIdentity=definitions)))
+            displays = dict(complete=True, bodies=[dict(path="body", groups=1)], prefabs=1, failures=[])
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence, definitionIdentity=definitions, displayIdentity=displays)))
             with self.assertRaisesRegex(ValueError, "definition source metadata differs"):
                 compare.typed_catalog_identity(receipt, request, apk)
             request["source_additions"] = dict(metadata=dict(sha256="original"))
-            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, definitions))
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, definitions, displays))
             receipt.write_text(json.dumps(dict(masterBodyIdentity=dict(evidence, metadataSha256="wrong"))))
             with self.assertRaisesRegex(ValueError, "metadata differs"):
                 compare.typed_catalog_identity(receipt, request, apk)

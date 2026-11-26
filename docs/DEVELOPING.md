@@ -26,8 +26,14 @@ Scheduled scripts resolve relative to the request and use the same live PID,
 APK hash and 30-second gesture limit. Times start after the startup input script;
 each dispatch and its actual elapsed time are retained in the terminal receipt.
 `start_from_menu: true` (launch mode) runs after any startup input script.
-It waits for the owned native menu, taps its reported Start button and waits
-for a ready world before the clock begins. The lab and converted packages
+For the converted owner bootstrap, omit `input_script` to let the shared runner
+wait for the enabled Play button and tap its observed bounds on display zero.
+If the accessibility hierarchy cannot expose the button, provide
+`bootstrap_play_reference` with `png` (a private Ready screenshot under
+`work/` at the same viewport) and `bounds` (four pixel coordinates enclosing
+the visible Play label). The runner requires an exact match before tapping.
+The runner then waits for the owned native menu, taps its reported Start button
+and waits for a ready world before the clock begins. The lab and converted packages
 use their respective gameplay reports. For a lab stage-transition memory
 soak, pair it with an explicit auto-route selector. Physical input
 qualification remains separate.
