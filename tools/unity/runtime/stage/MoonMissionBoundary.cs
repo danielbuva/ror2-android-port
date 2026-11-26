@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RoR2;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
 
 // Owned Android activation/visual/input boundary around recovered original mission callbacks.
@@ -453,12 +454,16 @@ public sealed partial class PortSession
             foreach (var category in deck.categories)
                 foreach (var card in category.cards)
                 {
-                    var source = card.spawnCard as CharacterSpawnCard;
+                    var source = card.GetSpawnCard() as CharacterSpawnCard;
                     if (!source)
                         continue;
                     var owned = objectiveCards.SingleOrDefault(x => x.name == source.name);
+                    // Scene directors can use actors outside the curated Moon encounters.
+                    if (!owned && r.liveCatalogs != null)
+                        owned = WholeSpawnCard(source);
                     Check(owned, "Original Moon director card has no compatible template: " + source.name);
                     card.spawnCard = owned;
+                    card.spawnCardReference = new AssetReferenceT<SpawnCard>("");
                 }
             director.monsterCards = deck;
         }
