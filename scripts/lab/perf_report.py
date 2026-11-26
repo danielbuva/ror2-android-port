@@ -135,8 +135,8 @@ def thermal_samples(rows):
     return sorted(result, key=lambda r: r["utc_seconds"])
 
 
-def median(rows, key):
-    values = [r[key] for r in rows if type(r.get(key)) in (int, float) and math.isfinite(r[key]) and r[key] > 0]
+def median(rows, key, *, allow_zero=False):
+    values = [r[key] for r in rows if type(r.get(key)) in (int, float) and math.isfinite(r[key]) and (r[key] > 0 or (allow_zero and r[key] == 0))]
     return statistics.median(values) if values else None
 
 
@@ -393,7 +393,8 @@ def analyze(session, thermal, raw_trace=None, completed=None):
                 dict(
                     start_seconds=begin,
                     samples=len(rows),
-                    **{key: median(rows, key) for key in ("fps", "cpu_frame_ms", "gpu_frame_ms", "live_enemies")},
+                    live_enemies=median(rows, "live_enemies", allow_zero=True),
+                    **{key: median(rows, key) for key in ("fps", "cpu_frame_ms", "gpu_frame_ms")},
                     **{key: median(temperatures, key) for key in ("cpu_c", "gpu_c", "battery_c")},
                 )
             )

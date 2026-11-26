@@ -22,7 +22,7 @@ this note does not authorize or claim that integration.
    then Confirm or Cancel. `HudLayoutModel.Project(profile, group, projection)`
    resolves sparse overrides and anchor scaling without changing preferences.
    Scene callers request only groups they can display, retaining other preferences.
-5. Confirm/Up changes memory only. Invoke SaveTouch/SaveHud explicitly on the
+5. Confirm/Up changes memory only. An unchanged gesture leaves undo/redo intact. Invoke SaveTouch/SaveHud explicitly on the
    committed model when saving is intended, handle I/O errors and retain unsaved
    UI state. One adapter serializes its calls; the integrator must serialize other
    writers and own private-path security. No directory-fsync or power-loss claim.

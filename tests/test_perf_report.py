@@ -33,6 +33,29 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def test_enemy_count_bins_keep_observed_zero_distinct_from_missing(self):
+        session, _ = fixture()
+        origin = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        rows = []
+        for index, (seconds, enemies) in enumerate(((0, 0), (10, 0), (20, 6), (300, 0), (310, 0), (600, None), (610, None))):
+            rows.append(
+                dict(
+                    session["samples"][0],
+                    host_seconds=seconds,
+                    snapshot_utc=(origin + timedelta(seconds=seconds)).isoformat(),
+                    pacing_frames=index * 100,
+                    pacing_total_ms=index * 2000,
+                    live_enemies=enemies,
+                    cpu_frame_ms=0,
+                    gpu_frame_ms=0,
+                )
+            )
+        report = perf.analyze(dict(session, samples=rows), [])
+        self.assertEqual([row["live_enemies"] for row in report["bins"]], [0, 0, None])
+        self.assertTrue(all(row["cpu_frame_ms"] is None and row["gpu_frame_ms"] is None for row in report["bins"]))
+        rows = [line for line in perf.markdown(report).splitlines() if line.startswith(("| 0.00 |", "| 5.00 |", "| 10.00 |"))]
+        self.assertEqual([line.split("|")[-2].strip() for line in rows], ["0.00", "0.00", "unavailable"])
+
     def test_clock_cooling_sparse_channels_and_valid_zero_state(self):
         rows = [
             dict(host_seconds=0, cpu_frequency_khz={"policy0": 1000}, cpu_limit_khz={"policy0": 2000}, cooling_states={"fan": 0}, gpu_limit_hz=500),
