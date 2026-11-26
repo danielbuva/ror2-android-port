@@ -5428,10 +5428,16 @@ The Siren encounter draft activates and network-spawns only the original inactiv
 `shipgraveyard` encounter identity. It preserves the source FSM, scripted boss
 card, squad, rewards and separately expansion-gated portal callback. It never
 calls global scene spawning, so the existing source-disabled MapZones retain
-their own boundary. The report distinguishes a selected owner, live eggs, native
-encounter start and the exact native BossGroup defeat event. Native squad-member
+their own boundary. Before activation, the encounter refreshes the source
+BossGroup basic reward table from the ready Run pickup lists. The report
+distinguishes a selected owner, live eggs, native encounter start and the exact
+native BossGroup defeat event. Native squad-member
 and summon callbacks identify the original boss and its probes without scanning
-all masters. Cleanup validates the complete owned actor set before requesting
+all masters. The boss master may retain the authored card's exact body prefab
+while native body creation uses the adapted catalog template at the same body
+index. Capture, death observation and cleanup recognize both references while
+retaining the original squad, server and ownership checks. Cleanup validates
+the complete owned actor set before requesting
 body/master destruction. A terminal original server-death witness permits accounting
 for an exact destroyed/unmapped captured master; any remaining corpse must still
 match the captured identity, dead health and server map before an owned cleanup

@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1518 — Observe the native Siren boss and restore its reward drop
+
+2026-11-26. Accept the authored Siren boss body at the exact catalog index
+and refresh the source BossGroup drop table before encounter activation.
+APK SHA-256 `ed894ca36f0e4f0be0b7568bd6c4237ed9bdcd1852c767ec3eb113f32acaa179` (source `77fab14b`).
+Evidence: `work/coordination/gameplay-coverage-20261126/siren-refresh-reward-table-nova-b/`.
+Assisted samples 120 and 132 show all six eggs cleared, native boss master
+141, the same-process BossGroup defeat and a valid reward droplet (143).
+Paired screenshots and logs retained. SoC peaked at 80.0 °C in play segment
+7 with 0 s above 80 °C. Battery started at 31 °C and peaked at 32 °C.
+Runner cleanup passed. Native encounter retirement and matched PC rendering remain open.
+
 ## J1517 — Recover the assisted Gold shrine-to-teleporter route
 
 2026-11-26. The assisted route keeps moving while earning the shrine cost
