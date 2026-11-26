@@ -307,6 +307,10 @@ public class Harness {
         check(OwnerUpdateState.stageProgress("running",11,10).equals("progress unavailable"));
         check(OwnerUpdateState.stageProgress("running",2,10).equals("2/10"));
         check(OwnerUpdateState.stageProgress("not_required",0,0).equals("not required"));
+        check(OwnerUpdateState.releaseChanges(false,8,0).equals("Installed release comparison unavailable."));
+        check(OwnerUpdateState.releaseChanges(true,1,2).equals("Changed outputs: 1; removed: 2"));
+        check(OwnerUpdateState.releaseChanges(true,0,0).equals("Changed outputs: 0; removed: 0"));
+        check(OwnerUpdateState.releaseChanges(true,1,-1).equals("Installed release comparison unavailable."));
         check(OwnerUpdateState.failureDetail("native","write failed").contains("Retry revalidates retained work"));
         OwnerUpdateState retryModel=new OwnerUpdateState();retryModel.observe("READY","ready");check(retryModel.canInstall());
         for(String phase:new String[]{"PAUSED","INTERRUPTED","ERROR"}){retryModel.observe(phase,"retry");check(!retryModel.canInstall()&&!retryModel.canBuild());}
@@ -363,6 +367,9 @@ class OwnerInstallerTests(unittest.TestCase):
         self.assertIn("handler.removeCallbacks(refresh)", ui)
         for helper in ("liveSeconds", "stageProgress", "failureDetail"):
             self.assertIn("OwnerUpdateState." + helper + "(", activity)
+        self.assertIn("OwnerUpdateState.releaseChanges(", ui)
+        self.assertIn('value.optBoolean("installed_manifest_known")', ui)
+        self.assertIn('value.optJSONArray("removed_entries")', ui)
         self.assertIn("statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())", ui)
         self.assertEqual(ui.count("statusView.setText("), 1)
         self.assertIn("OwnerInstaller.reconcile(this)", ui)

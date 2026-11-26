@@ -16,8 +16,28 @@ public static class ContentFixtureBuilder
     [Serializable] public sealed class BuildReceipt { public string unity; public string source_commit; public string build_report_guid; }
     static string Output(string name) { return Path.GetFullPath(Path.Combine(Application.dataPath, "../..", name)); }
 
-    [Serializable] public sealed class NativeContentAsset { public string name; public string type; public string loaded_name; public string loaded_type; }
-    [Serializable] public sealed class NativeContentRequest { public string path; public string sha256; public NativeContentAsset[] assets; }
+    [Serializable] public sealed class NativeContentBundle { public string path; public string sha256; }
+    [Serializable] public sealed class NativeMaterialTexture { public string property; public string texture; }
+    [Serializable] public sealed class NativeMaterialReferences
+    {
+        public string shader;
+        public List<NativeMaterialTexture> textures = new List<NativeMaterialTexture>();
+    }
+    [Serializable] public sealed class NativeContentAsset
+    {
+        public string name;
+        public string type;
+        public string loaded_name;
+        public string loaded_type;
+        public NativeMaterialReferences material;
+    }
+    [Serializable] public sealed class NativeContentRequest
+    {
+        public string path;
+        public string sha256;
+        public NativeContentBundle[] dependencies;
+        public NativeContentAsset[] assets;
+    }
     [Serializable] public sealed class NativeContentReceipt
     {
         public string unity;
@@ -25,6 +45,7 @@ public static class ContentFixtureBuilder
         public string request_sha256;
         public string path;
         public string sha256;
+        public List<NativeContentBundle> dependencies = new List<NativeContentBundle>();
         public List<NativeContentAsset> assets = new List<NativeContentAsset>();
         public int count;
         public bool unloaded;
@@ -54,9 +75,31 @@ public static class ContentFixtureBuilder
             case "GameObject": return typeof(GameObject);
             case "AvatarMask": return typeof(AvatarMask);
             case "PhysicMaterial": return typeof(PhysicMaterial);
+            case "SpeedTreeWindAsset": return typeof(Terrain).Assembly.GetType("UnityEngine.SpeedTreeWindAsset", throwOnError: true);
             case "AnimatorOverrideController": return typeof(AnimatorOverrideController);
             default: throw new Exception("Unsupported native-content type: " + name);
         }
+    }
+
+    static NativeMaterialReferences ObserveMaterial(Material material)
+    {
+        var references = new NativeMaterialReferences { shader = material.shader == null ? "" : material.shader.name };
+        using (var serialized = new SerializedObject(material))
+        {
+            var textures = serialized.FindProperty("m_SavedProperties.m_TexEnvs");
+            if (textures == null || !textures.isArray)
+                throw new Exception("Native Material saved texture array unavailable");
+            for (int i = 0; i < textures.arraySize; i++)
+            {
+                var pair = textures.GetArrayElementAtIndex(i);
+                var value = pair.FindPropertyRelative("second").FindPropertyRelative("m_Texture").objectReferenceValue;
+                if (value != null)
+                    references.textures.Add(new NativeMaterialTexture {
+                        property = pair.FindPropertyRelative("first").stringValue, texture = value.name
+                    });
+            }
+        }
+        return references;
     }
 
     static void CheckNativeContent(string oracle)
@@ -67,7 +110,7 @@ public static class ContentFixtureBuilder
             unity = Application.unityVersion,
             source_commit = Environment.GetEnvironmentVariable("ROR2_PHONE_BUILD_SOURCE")
         };
-        AssetBundle bundle = null;
+        var bundles = new List<AssetBundle>();
         var loaded = new List<UnityEngine.Object>();
         try
         {
@@ -85,8 +128,20 @@ public static class ContentFixtureBuilder
                 if (asset == null || String.IsNullOrEmpty(asset.name) || !names.Add(asset.name)
                     || String.IsNullOrEmpty(asset.type))
                     throw new Exception("Native-content asset name/type absent, duplicated or unsupported");
-            bundle = AssetBundle.LoadFromFile(receipt.path);
+            foreach (var dependency in request.dependencies ?? Array.Empty<NativeContentBundle>())
+            {
+                if (!Path.IsPathRooted(dependency.path) || FileHash(dependency.path) != dependency.sha256)
+                    throw new Exception("Native-content dependency path or SHA-256 mismatch");
+                var dependencyBundle = AssetBundle.LoadFromFile(dependency.path);
+                if (dependencyBundle == null) throw new Exception("Native-content dependency failed to load: " + dependency.path);
+                bundles.Add(dependencyBundle);
+                receipt.dependencies.Add(new NativeContentBundle {
+                    path = Path.GetFullPath(dependency.path), sha256 = dependency.sha256
+                });
+            }
+            var bundle = AssetBundle.LoadFromFile(receipt.path);
             if (bundle == null) throw new Exception("Native-content bundle failed to load");
+            bundles.Add(bundle);
             foreach (var asset in request.assets)
             {
                 var type = NativeContentType(asset.type);
@@ -95,21 +150,26 @@ public static class ContentFixtureBuilder
                     throw new Exception("Native-content typed load failed: " + asset.name + " as " + type.FullName);
                 loaded.Add(value);
                 receipt.assets.Add(new NativeContentAsset {
-                    name = asset.name, type = asset.type, loaded_name = value.name, loaded_type = value.GetType().FullName
+                    name = asset.name, type = asset.type, loaded_name = value.name, loaded_type = value.GetType().FullName,
+                    material = asset.material != null && value is Material material ? ObserveMaterial(material) : null
                 });
                 receipt.count = loaded.Count;
             }
             if (FileHash(receipt.path) != receipt.sha256) throw new Exception("Native-content bundle changed during load");
+            foreach (var dependency in receipt.dependencies)
+                if (FileHash(dependency.path) != dependency.sha256)
+                    throw new Exception("Native-content dependency changed during load: " + dependency.path);
         }
         catch (Exception error) { receipt.failure = error.ToString(); throw; }
         finally
         {
             try
             {
-                if (bundle != null)
+                if (bundles.Count != 0)
                 {
-                    bundle.Unload(true);
-                    receipt.unloaded = bundle == null && loaded.TrueForAll(value => value == null);
+                    for (int i = bundles.Count - 1; i >= 0; i--)
+                        bundles[i].Unload(true);
+                    receipt.unloaded = bundles.TrueForAll(value => value == null) && loaded.TrueForAll(value => value == null);
                     if (!receipt.unloaded) throw new Exception("Native-content objects survived unload");
                 }
             }
