@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1511 — Return to the native menu after End Run in the converted player
+
+2026-11-26. Visible Play and native Start reached Titanic Plains as Commando
+with diagnostic invincibility. End Run cleaned the world after 52.785 s and
+the same process opened a second native start-menu session.
+The skill-deferred MainOutput diagnostic observed an authority skill and
+the selected output. All 960,768 captured samples were finite and silent.
+APK SHA-256 `e79f311ef4b4bed11ca04da62dadab88971adc269fee01586f5ad869227cd0aa` (source `cc3ed263`).
+Evidence: `work/coordination/p1-scenes-w/full-audio-v31/v31-audio-menu-end-run/`.
+Frame pacing averaged 17.263 ms over 4,826 frames. CPU/GPU peaked at 81.2 °C
+with 0.355 s above 80 °C. Adopted placement, cleanup, OLED sleep and lease
+release passed. Audible output, missing variant addresses and stage transition remain open.
+
 ## J1510 — Observe Huntress primary audio on the native emitter
 
 2026-11-26. Assisted seed-2 native Start reached Verdant Falls with Huntress.
