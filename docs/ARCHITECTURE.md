@@ -7844,6 +7844,15 @@ readers, discovery and cache writes stay in the parent. Exit closes workers
 and SQLite after rechecking input pins. Endpoint input epochs share external
 managed checks, then final persisted-file readback starts a fresh epoch.
 Managed schema properties are shared within one immutable checker context.
+Emission requests can use the same pinned `input_paths` mapping as CLR
+witness generation. The emitter resolves staged files before verifying their
+recorded sizes and hashes. Native producer lineages retain their existing
+`provider_paths` mapping.
+`bundle_prepare.py` also rebuilds missing staged descriptors via
+`bundle_preload.py --prepare-endpoints`. It follows the pinned routes and preload
+roots through actual staged member tables and retains the supplied SDK proofs.
+The command closes its staged readers and returns descriptor and schema pins
+for the existing emitter to qualify against actual bytes.
 This host/converter qualification does not admit Unity loadability or play.
 
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
