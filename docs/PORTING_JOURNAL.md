@@ -6,6 +6,49 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1516 — Restore Bandit additive gestures and sidearm locomotion
+
+2026-11-26. The catalog build restores additive reference poses, synchronized
+gesture overrides and SideWeapon locomotion. Exact-editor comparisons
+matched the source for 54 gesture poses and 36 poses per weapon layer.
+APK SHA-256 `1fef2de40c3ea79759fa3d0e57ae912037f57b1cfcd558bec098fe7b5979324c` (source `5f1990a8`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/bandit-additive-gesture-main-nova/`.
+Assisted Distant Roost held 115.690 s of native authority with four paired
+skill callbacks. Sample 180 includes the PID-bound screenshot and logcat.
+The base Animator advanced. Mean frame time was 11.420 ms. SoC peaked at
+95.5 °C with 119.006 s above 80 °C. Battery peaked at 33 °C.
+Adopted placement, scratch removal and OLED sleep passed. Device sidearm
+motion and matched PC gesture visuals remain open.
+
+## J1515 — Restore Captain additive gesture reference poses
+
+2026-11-26. The catalog build restores 13 source clips, including Captain's
+shared Commando clips. The exact editor compared 54 Captain poses and
+reduced the maximum transform error from 1.019465 to 4.172325e-7.
+APK SHA-256 `1fef2de40c3ea79759fa3d0e57ae912037f57b1cfcd558bec098fe7b5979324c` (source `5f1990a8`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/captain-additive-gesture-main-nova-stacked-retry1/`.
+Assisted Verdant Falls held 120.746 s of native authority with four paired
+skill callbacks. Sample 135 includes the PID-bound screenshot and logcat.
+The base Animator advanced. Mean frame time was 13.207 ms. SoC peaked at
+95.5 °C with 116.330 s above 80 °C. Battery peaked at 30 °C.
+Adopted placement, scratch removal and OLED sleep passed.
+Matched PC gesture visuals remain open.
+
+## J1514 — Restore Huntress additive gesture reference poses
+
+2026-11-26. The catalog build restores Transform reference poses for seven
+original Huntress gesture clips. The exact editor compared 63 Huntress
+poses against the originals and recovered the source transforms.
+APK SHA-256 `1fef2de40c3ea79759fa3d0e57ae912037f57b1cfcd558bec098fe7b5979324c` (source `5f1990a8`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/huntress-additive-gesture-main-nova-stacked/`.
+Menu selection and assisted Start reached Verdant Falls. The stage held
+186.554 s of native authority with four paired skill callbacks. Sample 165
+includes the PID-bound screenshot and logcat. The base Animator advanced.
+Mean frame time was 16.612 ms. SoC peaked at 97.1 °C with 198.040 s above
+80 °C and no sustained exceedance of the 95 °C limit. Battery peaked at
+33 °C. Adopted placement, scratch removal and OLED sleep passed.
+Matched PC gesture visuals remain open.
+
 ## J1512 — Build signed-release IL2CPP and Burst on Android
 
 2026-11-26. The #651 Mono library repair let the signed native graph complete
