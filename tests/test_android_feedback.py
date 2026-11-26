@@ -32,23 +32,30 @@ class AndroidFeedbackTests(unittest.TestCase):
             "        public bool DrawOfflineStart()", 1
         )[0]
         application_caller = directory / "ApplicationInput.cs"
-        focus = application.split("        public void OnApplicationFocus(bool focused)\n", 1)[1].split(
+        admission_and_lifecycle = application.split("        public bool OfflineUiControllerPresent()\n", 1)[1].split(
             "        public static bool AllowsOfflineSessionMenu", 1
         )[0]
         application_caller.write_text(
-            "using UnityEngine;\npublic sealed partial class PortSession {\n"
+            "using System.Linq; using UnityEngine;\npublic sealed partial class PortSession {\n"
             "sealed partial class OfflineApplicationSession {\n"
             "NovaInputBridge.ControllerPresence offlineUiPresence;\n"
-            "public void OnApplicationFocus(bool focused)\n"
-            + focus
+            "public bool OfflineUiControllerPresent()\n"
+            + admission_and_lifecycle
             + "bool MenuKey(KeyCode key, int button, bool controller)\n"
             + application_method
             + "\n}\n}\n"
         )
         bridge = (RUNTIME / "NovaInputBridge.cs").read_text()
         presence = bridge.split("    public sealed class ControllerPresence\n", 1)[1].split("    public InputBankTest bank;", 1)[0]
+        stick_and_neutral = bridge.split("    static Vector2 Stick(", 1)[1].split("    void Update()", 1)[0]
         presence_caller = directory / "ControllerPresence.cs"
-        presence_caller.write_text("using System;\npublic partial class NovaInputBridge {\npublic sealed class ControllerPresence\n" + presence + "}\n")
+        presence_caller.write_text(
+            "using System; using UnityEngine;\npublic partial class NovaInputBridge {\npublic sealed class ControllerPresence\n"
+            + presence
+            + "static Vector2 Stick("
+            + stick_and_neutral
+            + "}\n"
+        )
         lifetime = application.split("        // Application screen lifetime:", 1)[1].split("        public DifficultyIndex SelectedOfflineDifficulty()", 1)[0]
         lifetime = lifetime.split("        int priorScreenSleepTimeout;", 1)[1]
         application_caller.write_text(
@@ -124,6 +131,9 @@ class AndroidFeedbackTests(unittest.TestCase):
 
     def test_controller_and_keyboard_loadout_quit_and_defeated_menu_routes(self):
         self.run_case("player-screens")
+
+    def test_menu_reconnect_requires_both_sticks_to_return_to_radial_neutral(self):
+        self.run_case("menu-controller-neutral")
 
     def test_original_software_notices_are_discovered_read_only_and_own_modal_input(self):
         self.run_case("software-notices")

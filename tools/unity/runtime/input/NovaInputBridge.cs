@@ -439,7 +439,7 @@ public sealed class NovaInputBridge : MonoBehaviour
                    ? Vector2.zero
                    : v / n * Mathf.Min(1, (n - AndroidOfflineSettings.current.deadzone) / (1 - AndroidOfflineSettings.current.deadzone));
     }
-    static bool NeutralSample(Raw raw, Mapping map)
+    internal static bool NeutralSample(Raw raw, Mapping map)
     {
         for (int i = 0; i < raw.buttons.Length; i++)
             if (raw.buttons[i])
