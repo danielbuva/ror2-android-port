@@ -32,11 +32,23 @@ class AndroidFeedbackTests(unittest.TestCase):
             "        public bool DrawOfflineStart()", 1
         )[0]
         application_caller = directory / "ApplicationInput.cs"
+        focus = application.split("        public void OnApplicationFocus(bool focused)\n", 1)[1].split(
+            "        public static bool AllowsOfflineSessionMenu", 1
+        )[0]
         application_caller.write_text(
             "using UnityEngine;\npublic sealed partial class PortSession {\n"
             "sealed partial class OfflineApplicationSession {\n"
-            "bool MenuKey(KeyCode key, int button, bool controller)\n" + application_method + "\n}\n}\n"
+            "NovaInputBridge.ControllerPresence offlineUiPresence;\n"
+            "public void OnApplicationFocus(bool focused)\n"
+            + focus
+            + "bool MenuKey(KeyCode key, int button, bool controller)\n"
+            + application_method
+            + "\n}\n}\n"
         )
+        bridge = (RUNTIME / "NovaInputBridge.cs").read_text()
+        presence = bridge.split("    public sealed class ControllerPresence\n", 1)[1].split("    public InputBankTest bank;", 1)[0]
+        presence_caller = directory / "ControllerPresence.cs"
+        presence_caller.write_text("using System;\npublic partial class NovaInputBridge {\npublic sealed class ControllerPresence\n" + presence + "}\n")
         lifetime = application.split("        // Application screen lifetime:", 1)[1].split("        public DifficultyIndex SelectedOfflineDifficulty()", 1)[0]
         lifetime = lifetime.split("        int priorScreenSleepTimeout;", 1)[1]
         application_caller.write_text(
@@ -67,6 +79,7 @@ class AndroidFeedbackTests(unittest.TestCase):
                 str(RUNTIME / "OfflineSettingsBoundary.cs"),
                 str(caller),
                 str(application_caller),
+                str(presence_caller),
                 str(notices_caller),
                 str(ROOT / "tests/fixtures/android_feedback_host.cs"),
             ],
@@ -99,6 +112,9 @@ class AndroidFeedbackTests(unittest.TestCase):
 
     def test_rebind_modal_owns_buttons_cancel_failed_save_retry_focus_and_cleanup(self):
         self.run_case("rebind-modal")
+
+    def test_rebind_draw_discards_stale_capture_and_waits_for_the_measured_controller(self):
+        self.run_case("rebind-lifecycle")
 
     def test_settings_pause_input_isolation_and_cleanup(self):
         self.run_case("settings-lifecycle")
