@@ -54,7 +54,9 @@ namespace OwnerLayout
             double dx = (x - startX) / safeArea.Width, dy = (y - startY) / safeArea.Height;
             if (!LayoutRect.Finite(dx) || !LayoutRect.Finite(dy)) throw new ArgumentException("Pointer delta overflow");
             var r = startRectangle;
-            if (resize)
+            if (x == startX && y == startY)
+                editor.SetDraft(r, editor.Draft.Scale, editor.Draft.Opacity);
+            else if (resize)
             {
                 // Keep the opposite corner fixed. If a pixel minimum cannot fit,
                 // remaining space wins instead of moving the control to satisfy it.
@@ -68,7 +70,11 @@ namespace OwnerLayout
         public bool Up(int pointerId, double x, double y, LayoutProjection projection)
         {
             if (!Move(pointerId, x, y, projection)) return false;
-            editor.Confirm(); Active = false; return true;
+            var r = editor.Draft.Rectangle;
+            if (r.X == startRectangle.X && r.Y == startRectangle.Y &&
+                r.Width == startRectangle.Width && r.Height == startRectangle.Height) editor.Cancel();
+            else editor.Confirm();
+            Active = false; return true;
         }
         public bool CancelPointer(int pointerId)
         {

@@ -96,11 +96,16 @@ def sanitize(text, secrets=()):
     return text
 
 
-def battery_refusal(level, current_now, temp_tenths):
-    """The user's battery rule: no run above 85 %, while charging at >= 80 %, or when the battery is warm."""
-    if level > 85:
+def battery_refusal(level, current_now, temp_tenths, charge_override=False):
+    """The user's battery rule: no run above 85 %, while charging at >= 80 %, or when the battery is warm.
+
+    ``charge_override`` is the owner's explicit choice (``battery_charge_override`` in the ignored
+    ``work/config/lab-runner.json``) to run plugged-in devices above the charge limit; the
+    temperature rule always applies.
+    """
+    if not charge_override and level > 85:
         return f"battery at {level} % (> 85 %)"
-    if level >= 80 and current_now > 0:
+    if not charge_override and level >= 80 and current_now > 0:
         return "battery is actually charging at >= 80 %"
     if temp_tenths > 350:
         return f"battery at {temp_tenths / 10:.1f} C (> 35 C)"
@@ -118,6 +123,7 @@ class Runner:
         config = self.repo / "work/config/lab-runner.json"
         self.config = json.loads(config.read_text()) if config.is_file() else {}
         self.devices = self.config.get("devices", {})
+        self.charge_override = bool(self.config.get("battery_charge_override", False))
         self.adb = shutil.which("adb", path="/opt/homebrew/bin") or "adb"
         self.leases = self.repo / ".local/orchestrator/leases"
         self.resume_state = None
@@ -141,6 +147,8 @@ class Runner:
 
     def run(self, argv, cwd, timeout=JOB_TIMEOUT, extra_env=None):
         env = dict(os.environ, **(extra_env or {}))
+        if self.charge_override:
+            env["LAB_BATTERY_CHARGE_OVERRIDE"] = "1"  # child device tools honour the owner's choice
         env.pop("GH_TOKEN", None)  # lab jobs never see the workflow token
         with self.log.open("a") as log:
             log.write(f"$ {shlex.join(argv)}\n")
@@ -206,7 +214,7 @@ class Runner:
     def admit_battery(self, serial):
         for sample in range(3):
             level, current, temperature = self.battery(serial)
-            refusal = battery_refusal(level, current, temperature)
+            refusal = battery_refusal(level, current, temperature, self.charge_override)
             if level > 85 or temperature > 350 or not refusal:
                 return refusal
             if sample != 2:
@@ -256,7 +264,9 @@ class Runner:
         for alias, serial in sorted(self.devices.items()):
             try:
                 level, current, temp = self.battery(serial)
-                rows.append(f"{alias}: battery {level} %, {temp / 10:.1f} C, current {current}; {battery_refusal(level, current, temp) or 'admitted'}")
+                rows.append(
+                    f"{alias}: battery {level} %, {temp / 10:.1f} C, current {current}; {battery_refusal(level, current, temp, self.charge_override) or 'admitted'}"
+                )
             except Exception as error:  # an unreachable device is a status, not a failure
                 rows.append(f"{alias}: unreachable ({type(error).__name__})")
         return "\n".join(rows)

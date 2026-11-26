@@ -50,6 +50,24 @@ foreach(bool oversizedMinimum in new[]{false,true}){
  Near(edge.X,.7);Near(edge.Y,.6);Near(edge.Width,.3);Near(edge.Height,.4);
  Check(edgeEditor.Undo()&&edgeEditor.Document.Export()==edgeDoc.Export());
 }
+// A stationary tap or returning to the origin must preserve authored
+// rectangles below the editor minimum and must not consume undo/redo history.
+foreach(bool resize in new[]{false,true}){
+ var tinyDoc=new TouchLayoutDocument(new[]{new TouchProfile("p",new[]{new TouchControl("tiny",new LayoutRect(.2,.2,.02,.02),1,1)})});
+ var tinyEditor=new TouchLayoutEditor(tinyDoc);var tinyGesture=new TouchEditorGesture(tinyEditor,50,30);
+ Check(tinyGesture.Down(11,264,154,projection,"p",resize));Check(tinyGesture.Up(11,264,154,projection));
+ Check(!tinyGesture.Active&&tinyEditor.Draft==null&&tinyEditor.Document.Export()==tinyDoc.Export()&&!tinyEditor.Undo());
+ Check(tinyGesture.Down(12,264,154,projection,"p",resize));Check(tinyGesture.Up(12,304,184,projection));
+ var moved=tinyEditor.Document.Export();Check(moved!=tinyDoc.Export()&&tinyEditor.Undo());
+ Check(tinyGesture.Down(13,264,154,projection,"p",resize));Check(tinyGesture.Move(13,304,184,projection));
+ Check(tinyGesture.Up(13,264,154,projection));Check(tinyEditor.Document.Export()==tinyDoc.Export());
+ Check(!tinyEditor.Undo()&&tinyEditor.Redo()&&tinyEditor.Document.Export()==moved);
+}
+// A non-stationary gesture that clamps to the same rectangle is also a no-op.
+var fullDoc=new TouchLayoutDocument(new[]{new TouchProfile("p",new[]{new TouchControl("full",new LayoutRect(0,0,1,1),1,1)})});
+var fullEditor=new TouchLayoutEditor(fullDoc);var fullGesture=new TouchEditorGesture(fullEditor,50,30);
+Check(fullGesture.Down(14,300,200,projection,"p",false));Check(fullGesture.Up(14,900,300,projection));
+Check(fullEditor.Document.Export()==fullDoc.Export()&&!fullEditor.Undo());
 Console.WriteLine("touch gesture PASS");}}
 """
 

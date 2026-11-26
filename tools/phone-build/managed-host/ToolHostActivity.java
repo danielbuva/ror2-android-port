@@ -348,7 +348,11 @@ public final class ToolHostActivity extends Activity {
                     JSONObject release = value.getJSONObject("release");
                     detail += "\nRelease " + release.optString("version") + " (" + release.optLong("version_code") + ")";
                 }
-                if (value.has("changed_entries")) detail += "\nChanged outputs: " + value.getJSONArray("changed_entries").length();
+                JSONArray changed = value.optJSONArray("changed_entries");
+                JSONArray removed = value.optJSONArray("removed_entries");
+                if (value.has("changed_entries")) detail += "\n" + OwnerUpdateState.releaseChanges(
+                    value.optBoolean("installed_manifest_known"), changed == null ? -1 : changed.length(),
+                    removed == null ? -1 : removed.length());
                 if (value.has("rebuilt")) detail += "\nRebuilt: " + value.getJSONArray("rebuilt").length() + "; reused: " + value.getJSONArray("reused").length();
                 model.observe(value.getString("state"), detail);
                 if ("import".equals(OwnerBuildService.action(this))) {

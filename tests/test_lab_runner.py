@@ -70,6 +70,9 @@ class BatteryRuleTest(unittest.TestCase):
         self.assertIsNotNone(lab_runner.battery_refusal(86, -100, 260))
         self.assertIsNone(lab_runner.battery_refusal(70, 0, 350))
         self.assertIsNotNone(lab_runner.battery_refusal(70, 0, 351))
+        # the owner charge override admits a full, charging battery but never a warm one
+        self.assertIsNone(lab_runner.battery_refusal(95, 500, 260, charge_override=True))
+        self.assertIsNotNone(lab_runner.battery_refusal(95, 500, 351, charge_override=True))
 
     def test_charging_requires_three_consecutive_observations(self):
         with tempfile.TemporaryDirectory() as repo:
