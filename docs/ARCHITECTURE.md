@@ -6561,8 +6561,9 @@ catalog consumer below stages this generated source; J965 qualifies the isolated
 exact-editor Android bundle fixture. Android appearance remains a separate gate.
 
 `scripts/lab/shader_ramp_fog.py` owns the source-bound single-pass
-`shader-ramp-fog` and `shader-screen-damage` host actions. The first also accepts
-`--target sobel-buffer` or `--target sobel-outline`; no target retains RampFog.
+`shader-ramp-fog` and `shader-screen-damage` host actions. `shader-ramp-fog`
+defaults to RampFog and accepts `--target sobel-buffer`, `--target sobel-outline`
+or `--target vision-limit`.
 Each target uses its fixed public `recipe/shader-<target>-candidate.json`. Each validates the
 accepted installation, exact native object/blob/program topology, measured
 interfaces and tool/helper pins before publishing new ignored evidence.
@@ -6571,13 +6572,15 @@ it retains recovered definitions before their calling wrappers. No game
 expressions or compiled programs are public inputs.
 
 Current output roots are
-`work/generated-shader-candidates/ramp-fog-r5/<input_id>/` and
-`work/generated-shader-candidates/screen-damage-r1/<input_id>/`, plus
-`work/generated-shader-candidates/{sobel-buffer,sobel-outline}-r1/<input_id>/`.
-SobelBuffer retains its separate fragment parameter record; binding slots name
-vertex/fragment stages independently of serialized record indices. Prior RampFog
-outputs remain preserved. Native programs, layouts, independent disassembly,
-byte roundtrips and source-immutability receipts accompany each candidate.
+`work/generated-shader-candidates/ramp-fog-r6/<input_id>/` and
+`work/generated-shader-candidates/screen-damage-r2/<input_id>/`, plus
+`work/generated-shader-candidates/{sobel-buffer,sobel-outline}-r2/<input_id>/` and
+`work/generated-shader-candidates/vision-limit-r1/<input_id>/`.
+SobelBuffer and VisionLimit retain separate fragment parameter records. Binding
+slots name vertex and fragment stages independently of serialized record
+indices. The output root revisions keep prior receipts usable with their source
+revision. Native programs, layouts, independent disassembly, byte roundtrips and
+source-immutability receipts accompany each candidate.
 The producer has no runtime setup or teardown; the original PostProcessLayer
 and effect renderer remain its consumers. Compilation and device appearance
 are separate gates, as in the earlier J965 RampFog bundle fixture.
@@ -6588,11 +6591,11 @@ are separate gates, as in the earlier J965 RampFog bundle fixture.
 inventory, four source shader identities, pass counts, keyword axes and exact
 authored/native tool pins. It imports the repository binder directly and writes
 only new ignored evidence under
-`work/generated-shader-candidates/translucent-camera-r2/<input_id>/`.
+`work/generated-shader-candidates/translucent-camera-r3/<input_id>/`.
 Input/tool drift, symlinked output roots, unknown metadata and colliding output
 paths refuse before publication. The generator retains EfficientBlur's two
 source passes/shared fragment and QuickDumbBlur's measured `FLIP_V` axis.
-R2 refreshes the shared signature-helper receipt while retaining the four
+R3 refreshes the shared signature-helper receipt while retaining the four
 shader identities and pass/keyword contracts. It has no runtime setup or
 teardown. J1009 verifies isolated Android/Vulkan
 compilation and cleanup. J1012 adds catalog consumption; J1017 installs the

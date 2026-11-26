@@ -87,7 +87,7 @@ EXPECTED_SHADER_ROWS = [
 EXPECTED_HELPERS = {
     "shader_deferred.py": "dc1b81f1e012de8dd9da7cedddc2d62b7ac76cb564ac00cf262e55815b3b11c4",
     "shader_metadata.py": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318",
-    "shader_ramp_fog.py": "a81eade20c1771e4511925a64d6c3b66fe7acab6ef3687fc19b08fe3b17dfece",
+    "shader_ramp_fog.py": "631d8c13694327a1e19bca5757463949a7cbbacf80a2dc8d630d1c00ed7c7017",
     "shader_segments.py": "914dbee65a172770325df03b269999bc6100469b91eb7e731f0957ad35383be7",
     "shader_source.py": "3c768c15f29f312347f2e99b0e3ddf8612207db8023f220dcb52c5d51218212a",
 }
@@ -194,7 +194,7 @@ def validate_recipe() -> None:
         raise RuntimeError("Accepted source identity differs from the reviewed translucent recipe")
     if set(OBJECTS) != set(EXPECTED_IDENTITIES) or RECIPE.get("shaders") != EXPECTED_SHADER_ROWS:
         raise RuntimeError("Translucent recipe metadata differs from the exact reviewed identities")
-    if RECIPE.get("stable_output") != "generated-shader-candidates/translucent-camera-r2/{input_id}":
+    if RECIPE.get("stable_output") != "generated-shader-candidates/translucent-camera-r3/{input_id}":
         raise RuntimeError("Translucent stable output root differs from the reviewed path")
     expected_tools = {
         "authored_helpers": EXPECTED_HELPERS,
