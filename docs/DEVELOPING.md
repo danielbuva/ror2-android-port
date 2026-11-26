@@ -36,8 +36,9 @@ menu Start or direct stage entry with `enforce_soc_ceiling: true`. Menu Start
 saves High refresh off in the app. Direct entry uses the saved setting and
 records the entry scene. Both verify the 60 FPS cap in the ready world, pause
 and sleep the OLED between intervals, then verify same-process resume after
-cooldown. The saved choice persists. Use these receipts for mission
-coverage only.
+cooldown to at most 35 C battery, 50 C CPU/GPU/skin and 55 C SoC. The
+terminal receipt records peak SoC at launch and during each active interval.
+The saved choice persists. Use these receipts for mission coverage only.
 For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
 The selector uses the stored loadout and existing integrated stage loader.

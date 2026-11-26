@@ -1149,6 +1149,8 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
         world = wait_for_world_start(device, thermal, pid, output, report_id, start_attempt, coverage)
         if world.get("runClock", {}).get("scene") != coverage["direct_stage_entry"]:
             raise RuntimeError("Ready world differs from the requested direct stage entry")
+    if coverage is not None:
+        thermal.phase = "coverage-play-1"
     began = time.monotonic()
     next_capture = 0
     scheduled = iter(enumerate(request.get("input_schedule", [])))
@@ -1170,21 +1172,34 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
             result.setdefault("scheduled_inputs", []).append(dict(at_seconds=item["at_seconds"], dispatched_seconds=elapsed, result=observed))
             pending = next(scheduled, None)
             elapsed = time.monotonic() - began
-        if elapsed >= next_capture:
-            capture(device, output / ("sample-" + str(int(elapsed))), pid)
-            next_capture += request.get("capture_interval_seconds", 60)
-        if elapsed >= request["duration_seconds"]:
-            break
-        if next_cooldown is not None and elapsed >= next_cooldown:
+        if next_cooldown is not None and next_cooldown <= elapsed < request["duration_seconds"]:
             cooldown = {"at_active_seconds": elapsed}
             coverage["cooldowns"].append(cooldown)
             cooldown_began = time.monotonic()
             cool_coverage_segment(device, thermal, pid, report_id, start_attempt, cooldown)
             began += time.monotonic() - cooldown_began
             next_cooldown += segment_seconds
+            thermal.phase = "coverage-play-" + str(len(coverage["cooldowns"]) + 1)
+        if elapsed >= next_capture:
+            capture(device, output / ("sample-" + str(int(elapsed))), pid)
+            next_capture += request.get("capture_interval_seconds", 60)
+        if elapsed >= request["duration_seconds"]:
+            break
         time.sleep(0.5)
     capture(device, output / "final", pid)
     result["observed_seconds"] = time.monotonic() - began
+
+
+def coverage_soc_peaks(trace):
+    peaks = {}
+    with trace.open() as stream:
+        for line in stream:
+            row = json.loads(line)
+            phase = row["phase"]
+            if (phase == "launch" or phase.startswith("coverage-play-")) and "soc_celsius" in row:
+                reading = row["soc_celsius"]
+                peaks[phase] = max(peaks.get(phase, reading), reading)
+    return peaks
 
 
 def observe_pacing(device, output, pid, snapshot):
@@ -1417,6 +1432,8 @@ def execute(request):
                     time_above80_seconds=thermal.time_above_80_seconds,
                     admission_battery=thermal.admission_battery,
                 )
+                if "coverage_segment_seconds" in request:
+                    result["thermal"]["coverage_peak_soc_celsius"] = clean("coverage thermal peaks", lambda: coverage_soc_peaks(thermal.trace))
             if device and active_hash:
 
                 def stop():

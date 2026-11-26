@@ -398,6 +398,20 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual(result["soc_celsius"], 50)
         self.assertEqual(self.device.display.call_args_list, [mock.call(False), mock.call(True)])
 
+    def test_coverage_cooldown_waits_for_soc_even_after_processors_and_skin_cool(self):
+        self.owner.battery = dict(celsius=34)
+        self.owner.battery_zone_celsius = 35
+        self.owner.cool_start_celsius = 50
+        self.owner.soc_celsius = 56
+
+        def cool(_seconds):
+            self.owner.soc_celsius = 55
+
+        with mock.patch.object(batch.time, "sleep", side_effect=cool) as sleep:
+            result = self.owner.between_sessions(cool_start=True)
+        sleep.assert_called_once()
+        self.assertEqual(result["soc_celsius"], 55)
+
     def test_between_sessions_cancellation_leaves_oled_asleep(self):
         self.owner.battery = dict(celsius=40)
         self.owner.battery_zone_celsius = 40

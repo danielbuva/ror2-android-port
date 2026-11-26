@@ -402,7 +402,7 @@ class _GameThermalOwner:
                     admitted["cpu_gpu_skin_celsius"] = self.cool_start_celsius
                     admitted["soc_celsius"] = self.soc_celsius
                 battery_cool = max(admitted["battery"]["celsius"], admitted["battery_zone_celsius"]) <= 35
-                if battery_cool and (not cool_start or admitted["cpu_gpu_skin_celsius"] <= 50 and admitted["soc_celsius"] < 85):
+                if battery_cool and (not cool_start or admitted["cpu_gpu_skin_celsius"] <= 50 and admitted["soc_celsius"] <= 55):
                     break
                 time.sleep(THERMAL_INTERVAL_SECONDS)
             if not self.device.display(True):

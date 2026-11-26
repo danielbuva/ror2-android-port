@@ -405,6 +405,23 @@ class DeviceSessionTests(unittest.TestCase):
             tap.call_args_list, [mock.call(device, thermal, 1167.5, 30), mock.call(device, thermal, 445, 494), mock.call(device, thermal, 530, 542.5)]
         )
 
+    def test_coverage_reports_peak_for_each_active_phase(self):
+        trace = self.output / "thermal.jsonl"
+        trace.parent.mkdir(parents=True, exist_ok=True)
+        trace.write_text(
+            "".join(
+                json.dumps(dict(phase=phase, soc_celsius=reading)) + "\n"
+                for phase, reading in [
+                    ("launch", 68),
+                    ("coverage-play-1", 75),
+                    ("coverage-play-1", 78),
+                    ("coverage-cooldown", 65),
+                    ("coverage-play-2", 85),
+                ]
+            )
+        )
+        self.assertEqual(runner.coverage_soc_peaks(trace), {"launch": 68, "coverage-play-1": 78, "coverage-play-2": 85})
+
     def test_coverage_cools_after_verified_pause_and_resumes_same_process(self):
         settings = dict(buttonX=1167.5, buttonY=30, paused=False, timeScale=1, runSeconds=21)
         ready = dict(phase="integrated-world-playing", world=dict(ready=True), settings=settings)
