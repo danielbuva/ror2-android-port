@@ -130,6 +130,8 @@ For source-produced native content qualification, set
 Supported exact types are `LightingSettings`, `Mesh`, `Avatar`, `AnimationClip`,
 `Material`, `Shader`, `Texture2D`, `Cubemap`, `Sprite`, `GameObject`, `AvatarMask`,
 `PhysicMaterial`, `SpeedTreeWindAsset` and `AnimatorOverrideController`.
+An optional `subasset` name selects an exact named result of
+`LoadAssetWithSubAssets` at the given address and type.
 The fixture resolves the SDK's internal `SpeedTreeWindAsset` type from the
 Terrain module. The exact SDK has no managed `OcclusionCullingData` type; its
 consumer/native-load check remains open. The
