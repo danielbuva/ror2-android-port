@@ -9,6 +9,10 @@ class ManualMoonBoundaryPatchTests(unittest.TestCase):
         session = (CANDIDATE / "tools/unity/runtime/session/PortSession.cs").read_text()
         self.assertLess(session.index("if (r.attempt != config.attempt)"), session.index("ManualMoonBoundary.AllowsAssistedContinuation"))
         self.assertIn("r.pauseBeforeMoon = config.pauseBeforeMoon && !r.diagnosticMoonContinuation;", session)
+        self.assertIn(
+            "if (r.diagnosticMoonContinuation && r.diagnosticStage == ManualMoonBoundary.DirectEntry)\n                    cfg.integratedTransitionTarget = 1;",
+            session,
+        )
         input_source = (CANDIDATE / "tools/unity/runtime/input/NovaInputBoundary.cs").read_text()
         self.assertNotIn("cfg.pauseBeforeMoon", input_source)
         self.assertEqual(input_source.count("coordinator.r.pauseBeforeMoon"), 4)

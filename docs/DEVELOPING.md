@@ -46,7 +46,9 @@ For an assisted lab run through the Moon finale, set
 `selection.diagnosticMoonContinuation: true` with the APK's attempt and an
 integrated free-play selector. Input and transport share the session's Moon
 gate. The run follows native destination selection, and its results carry
-the existing assisted marker.
+the existing assisted marker. For a shorter coverage run, use direct
+`skymeadow` entry with the same selector. That route still uses the native
+Primordial Teleporter and requires one observed stage transition.
 `capture_golem_attacks: true` (lab launch mode only) saves up to eight
 three-frame bursts under `golem-attacks/` on live Unity Golem clap or laser
 entry logs. Each burst records the triggering line and capture times. Clap

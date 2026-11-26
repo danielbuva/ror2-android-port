@@ -20,11 +20,13 @@ public static class ManualMoonBoundary
     public const int CompletedTransitions = 4;
     public const float ObservationSeconds = 30f;
     public const string MoonDestination = "moon2";
+    public const string DirectEntry = "skymeadow";
 
-    public static bool AllowsAssistedContinuation(string packageName, bool integratedMoonRoute, bool directStage, bool firstStageOnly)
+    public static bool AllowsAssistedContinuation(string packageName, bool integratedMoonRoute, string directStage, bool firstStageOnly)
     {
         return string.Equals(packageName, "dev.ror2lab.arm64", StringComparison.Ordinal) &&
-               integratedMoonRoute && !directStage && !firstStageOnly;
+               integratedMoonRoute && !firstStageOnly &&
+               (string.IsNullOrEmpty(directStage) || string.Equals(directStage, DirectEntry, StringComparison.Ordinal));
     }
 
     public static bool HoldAutomaticProgression(bool enabled, int completedTransitions)

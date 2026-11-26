@@ -875,10 +875,10 @@ public sealed partial class PortSession : MonoBehaviour
         if (r.diagnosticMoonContinuation && !ManualMoonBoundary.AllowsAssistedContinuation(
                 Application.identifier, config.integratedWorld && config.teleporterLoop && config.stageGeometry &&
                                         config.moonMission && r.freePlay && !string.IsNullOrEmpty(r.id) && IsPlayableSpine(),
-                DirectStageDiagnosticRequested, r.nativeFirstStageLifecycleDiagnosticAttempt || r.sirenSourceEntryDiagnosticAttempt))
+                r.diagnosticStage, r.nativeFirstStageLifecycleDiagnosticAttempt || r.sirenSourceEntryDiagnosticAttempt))
         {
             r.phase = "moon-continuation-diagnostic-refused";
-            r.firstFailure = "Moon continuation requires a full integrated lab run";
+            r.firstFailure = "Moon continuation requires an integrated lab run from native Start or direct Sky Meadow";
             r.firstFailurePhase = r.phase;
             Save();
             yield break;
@@ -1986,6 +1986,8 @@ public sealed partial class PortSession : MonoBehaviour
             {
                 // MovementBatchProbe is the unchanged resource/file name.
                 var cfg = JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
+                if (r.diagnosticMoonContinuation && r.diagnosticStage == ManualMoonBoundary.DirectEntry)
+                    cfg.integratedTransitionTarget = 1;
                 if (!artifactBundle)
                     artifactBundle =
                         AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath, "payload", "commando-prefab-lab"));
