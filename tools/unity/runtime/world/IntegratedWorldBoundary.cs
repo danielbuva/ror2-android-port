@@ -2907,6 +2907,10 @@ public sealed partial class PortSession
                 worldElevatedApproachActive = false;
             var routeDestination = worldElevatedApproachActive ? worldElevatedApproachDestination : destination;
             coordinator.r.world.navigationElevatedApproachActive = worldElevatedApproachActive;
+            // A recovery window belongs to the objective that stalled. After a
+            // purchase, give the new native route a chance before sampling terrain.
+            if (worldNavigationHasProgress && Vector3.Distance(destination, worldNavigationProgressDestination) > 2)
+                coordinator.worldTerrainRecoveryUntil = -100;
             // Players may sprint while travelling. Let original input/stat callbacks supply
             // the actual speed used by the next source path request, including earned items.
             if (moon || elapsed < coordinator.worldTerrainRecoveryUntil)
