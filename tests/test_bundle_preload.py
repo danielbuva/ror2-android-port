@@ -126,6 +126,49 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "different native type"):
                 P.expose_local_assets(source, root / "invalid", name, member, groups, codec=None, codec_sha256=None)
 
+    def test_expose_local_assets_rebases_appended_texture_stream(self):
+        W, C = P.module("unity_write"), P.module("catalog_complete")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types = self.streamed_graph(root)
+            name, member = "authored", "CAB-authored"
+            original = P.emit_closed_native(graph, [types], root / "emitted", name, member)
+            source = Path(original["bundle"])
+            bundle = W.B.Bundle(source)
+            resource_name = member + ".resS"
+            with bundle.member(resource_name) as stream:
+                resource_before = stream.read()
+            with bundle.member(member) as stream:
+                layout = W.read_serialized(stream)
+            native = next(typ for typ in layout["types"] if typ["class_id"] == 28)
+            provider = root / "60"
+            row = json.loads((provider / "index.jsonl").read_text())
+            row.update(bundle=name, member=member, path_id=-22, type_id=0)
+            index = root / "append.jsonl"
+            index.write_text(json.dumps(row) + "\n")
+            pack = {
+                "types": [P.O.json_layout(native)],
+                "index.jsonl": index,
+                "objects.bin": provider / "objects.bin",
+                "resources.bin": provider / "resources.bin",
+            }
+            groups = [dict(guid="34" * 16, path="Assets/Added.asset", roots=[dict(path_id=-22, class_id=28)])]
+            result = P.expose_local_assets(source, root / "extended", name, member, groups, codec=None, codec_sha256=None, packs=[pack])
+            self.assertEqual((result["local_objects"], result["added_objects"]), (3, 1))
+            offset = (len(resource_before) + 7) & ~7
+            self.assertEqual(result["resources"], [dict(offset=offset, size=19, path=f"archive:/{member}/{resource_name}")])
+            revised = W.B.Bundle(Path(result["bundle"]))
+            with revised.member(resource_name) as stream:
+                self.assertEqual(stream.read(), resource_before.ljust(offset, b"\x00") + bytes([60]) * 19)
+            with revised.member(member) as stream:
+                after = W.read_serialized(stream)
+                self.assertEqual(after["types"], layout["types"])
+                self.assertEqual({row["path_id"] for row in after["objects"]} - {row["path_id"] for row in layout["objects"]}, {-22})
+                container = next(row for row in after["objects"] if after["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(after["data_offset"] + container["offset"])
+                rows, _ = C.containers(W.B.exact(stream, container["bytes"]))
+                self.assertIn(("assets/added.asset", (0, -22), [(0, -22), (0, 10), (0, 20)]), rows)
+
     def test_component_preloads_extend_shared_extents_and_preserve_other_rows(self):
         C = P.module("catalog_complete")
         root = (0, 30)

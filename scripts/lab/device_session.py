@@ -70,6 +70,7 @@ def load_request(path, serial=None):
         "stage_transition",
         "capture_golem_attacks",
         "capture_titan_indicator",
+        "enforce_soc_ceiling",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -130,7 +131,14 @@ def load_request(path, serial=None):
             "require_high_refresh",
         }:
             raise ValueError("Owner unplugged workload uses physical play and its dedicated recorder")
-    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks", "capture_titan_indicator"):
+    for name in (
+        "require_high_refresh",
+        "pacing_diagnostics",
+        "start_from_menu",
+        "capture_golem_attacks",
+        "capture_titan_indicator",
+        "enforce_soc_ceiling",
+    ):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
@@ -1383,7 +1391,13 @@ def execute(request):
             if json.loads(device.sh("cat", remote)) != payload:
                 raise RuntimeError("Uploaded config differs: " + name)
         # Each invocation starts its own cooldown budget here, never a caller's clock.
-        thermal = _GameThermalOwner(device, active_hash, output / "thermal.jsonl", time.monotonic() + request["cooldown_seconds"])
+        thermal = _GameThermalOwner(
+            device,
+            active_hash,
+            output / "thermal.jsonl",
+            time.monotonic() + request["cooldown_seconds"],
+            enforce_soc_ceiling=request.get("enforce_soc_ceiling", False),
+        )
         thermal.phase = "cooldown"
         thermal.cool()
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600

@@ -43,7 +43,8 @@ For one bounded native stage exit, include
 selector. The runner requires the declared first stage, one completed
 transition in the same session, and ten seconds of live destination play
 within `duration_seconds`. It saves the qualifying report as
-`stage-transition.json`.
+`stage-transition.json`. `enforce_soc_ceiling: true` stops the session on
+the first CPU, GPU or SoC temperature sample at or above 90 C.
 For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
 The selector uses the stored loadout and existing integrated stage loader.

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 
 public sealed class WholeItemBehaviorPreservation : UnityEditor.Build.IPreprocessBuildWithReport
@@ -189,8 +190,104 @@ public static class WholeCatalogBuild
             EditorUtility.SetDirty(clip);
             clips++;
         }
+        int gestureOverrides = RestoreSourceGestureLayers(source["bandit_gesture_layers"]);
+        int weaponOverrides = RestoreSourceBanditWeaponMotions(source["bandit_side_weapon"]);
         AssetDatabase.SaveAssets();
-        return new { clips, curves };
+        return new { clips, curves, gestureOverrides, weaponOverrides };
+    }
+
+    static int RestoreSourceGestureLayers(JToken source)
+    {
+        if (source == null)
+            return 0;
+        string path = (string)source["controller"];
+        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+        var layers = controller.layers;
+        int baseIndex = Array.FindIndex(layers, layer => layer.name == (string)source["base"]);
+        int overrideIndex = Array.FindIndex(layers, layer => layer.name == (string)source["override"]);
+        var overlay = layers[overrideIndex];
+        overlay.syncedLayerIndex = baseIndex;
+        int count = 0;
+        foreach (string name in source["override_only"].Values<string>())
+        {
+            var state = layers[baseIndex].stateMachine.states.Single(child => child.state.name == name).state;
+            var motion = overlay.GetOverrideMotion(state);
+            if (state.motion)
+            {
+                overlay.SetOverrideMotion(state, state.motion);
+                state.motion = null;
+                EditorUtility.SetDirty(state);
+            }
+            else if (!motion)
+                throw new Exception("Original gesture motion absent from imported controller: " + name);
+            count++;
+        }
+        controller.layers = layers;
+        EditorUtility.SetDirty(controller);
+        return count;
+    }
+
+    static int RestoreSourceBanditWeaponMotions(JToken source)
+    {
+        if (source == null)
+            return 0;
+        string path = (string)source["controller"];
+        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+        var layers = controller.layers;
+        int baseIndex = Array.FindIndex(layers, layer => layer.name == "Body");
+        var overlay = layers.Single(layer => layer.name == "Body, SideWeapon");
+        overlay.syncedLayerIndex = baseIndex;
+        var states = ControllerStates(layers[baseIndex].stateMachine).ToArray();
+        foreach (var row in source["motions"])
+        {
+            var state = states.Single(candidate => candidate.name == (string)row["state"]);
+            Motion motion = row["children"] == null ? LoadSourceWeaponClip(row) : RestoreSourceWeaponBlendTree(controller, overlay, state, row);
+            overlay.SetOverrideMotion(state, motion);
+        }
+        controller.layers = layers;
+        EditorUtility.SetDirty(controller);
+        return source["motions"].Count();
+    }
+
+    static IEnumerable<AnimatorState> ControllerStates(AnimatorStateMachine machine) =>
+        machine.states.Select(child => child.state).Concat(machine.stateMachines.SelectMany(child => ControllerStates(child.stateMachine)));
+
+    static AnimationClip LoadSourceWeaponClip(JToken row)
+    {
+        string path = (string)row["clip"];
+        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+        if (!clip)
+            throw new Exception("Original Bandit SideWeapon clip did not import: " + path);
+        return clip;
+    }
+
+    static BlendTree RestoreSourceWeaponBlendTree(AnimatorController controller, AnimatorControllerLayer overlay, AnimatorState state, JToken row)
+    {
+        string name = overlay.name + "/" + state.name;
+        var tree = overlay.GetOverrideMotion(state) as BlendTree;
+        if (!tree)
+        {
+            tree = new BlendTree { name = name, hideFlags = HideFlags.HideInHierarchy };
+            AssetDatabase.AddObjectToAsset(tree, controller);
+        }
+        tree.blendType = (BlendTreeType)(int)row["kind"];
+        tree.blendParameter = (string)row["parameter"];
+        tree.blendParameterY = (string)row["parameter_y"] ?? "";
+        tree.useAutomaticThresholds = false;
+        var children = row["children"].Select(child => new ChildMotion
+        {
+            motion = LoadSourceWeaponClip(child),
+            threshold = (float?)child["threshold"] ?? 0,
+            position = child["position"] is JToken position ? new Vector2((float)position["x"], (float)position["y"]) : Vector2.zero,
+            timeScale = (float)child["time_scale"],
+            cycleOffset = (float)child["cycle_offset"],
+            mirror = (bool)child["mirror"]
+        }).ToArray();
+        tree.children = children;
+        tree.minThreshold = children.Min(child => child.threshold);
+        tree.maxThreshold = tree.blendType == BlendTreeType.Simple1D ? children.Max(child => child.threshold) : 1;
+        EditorUtility.SetDirty(tree);
+        return tree;
     }
 
     // Compare imported settings with the locally generated original-input receipt.

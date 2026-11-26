@@ -24,7 +24,7 @@ public void removeCallbacks(Runnable r){queue.remove(r);} }""",
     "android/content/IntentFilter.java": "package android.content;public class IntentFilter {public IntentFilter(String s){}}",
     "android/content/Intent.java": """package android.content;public class Intent {public static String ACTION_BATTERY_CHANGED="battery";String action;public Intent(){}public Intent(Context c,Class<?> k){}public Intent setAction(String a){action=a;return this;}public String getAction(){return action;}public int getIntExtra(String k,int d){return k.equals("temperature")?250:k.equals("level")?50:k.equals("scale")?100:3;}}""",
     "android/content/SharedPreferences.java": """package android.content;import java.util.*;public class SharedPreferences {public Map<String,Object> data=new HashMap<>();public String getString(String k,String d){return (String)data.getOrDefault(k,d);}public Editor edit(){return new Editor();}public class Editor {public Editor putString(String k,String v){data.put(k,v);return this;}public Editor putBoolean(String k,boolean v){data.put(k,v);return this;}public boolean commit(){return true;}}}""",
-    "android/content/pm/PackageManager.java": "package android.content.pm;public class PackageManager {public boolean canRequestPackageInstalls(){return true;}}",
+    "android/content/pm/PackageManager.java": "package android.content.pm;public class PackageManager {public static boolean permission=true;public boolean canRequestPackageInstalls(){return permission;}}",
     "android/content/Context.java": """package android.content;import java.io.*;import android.app.*;import android.os.*;public class Context {
 public static String NOTIFICATION_SERVICE="notification",POWER_SERVICE="power";public static File root;public static int starts;public static boolean launchFail;
 public static SharedPreferences prefs=new SharedPreferences();public final PowerManager power=new PowerManager();
@@ -69,6 +69,12 @@ OwnerInstaller.busy=true;service.onStartCommand(action("control-cancel"),0,3);ch
 service.onStartCommand(action("control-cancel"),0,4);check(ToolHostActivity.Worker.cancels==1);service.onDestroy();check(!service.power.lock.isHeld());
 ToolHostActivity.Worker.release.countDown();finish();check(!service.foreground);check(Boolean.TRUE.equals(Context.prefs.data.get("interrupted")));
 OwnerBuildService recreated=new OwnerBuildService();recreated.onCreate();recreated.onStartCommand(null,0,5);check(!OwnerBuildService.isRunning()&&ToolHostActivity.Worker.executions==1);
+android.content.pm.PackageManager.permission=false;
+for(String blocked:new String[]{"release-build","release-rollback","install"}) {
+    recreated.onStartCommand(action(blocked),0,6);
+    check(!OwnerBuildService.isRunning()&&ToolHostActivity.Worker.executions==1&&"ERROR".equals(ToolHostActivity.status));
+}
+android.content.pm.PackageManager.permission=true;
 OwnerAlphaInstall.pending=true;recreated.onStartCommand(action("release-build"),0,6);check(!OwnerBuildService.isRunning()&&ToolHostActivity.Worker.executions==1);
 recreated.onStartCommand(action("profile-recover"),0,7);finish();check(OwnerInstaller.verifies==1&&!OwnerAlphaInstall.pending);
 OwnerBuildService failed=new OwnerBuildService();failed.foregroundFail=true;try{failed.onStartCommand(action("release-check"),0,8);}catch(IllegalStateException ok){}check(!OwnerBuildService.isRunning());check(!failed.power.lock.isHeld());
@@ -100,7 +106,12 @@ class OwnerBuildServiceTests(unittest.TestCase):
                 paths.append(str(path))
             harness = root / "Harness.java"
             harness.write_text(HARNESS)
-            compiled = subprocess.run([*compile_command, "-d", str(root), *paths, str(SOURCE), str(harness)], capture_output=True, text=True, timeout=30)
+            compiled = subprocess.run(
+                [*compile_command, "-d", str(root), *paths, str(SOURCE), str(SOURCE.with_name("OwnerUpdateState.java")), str(harness)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             run = subprocess.run([java, "-cp", str(root), "Harness", str(root / "files")], capture_output=True, text=True, timeout=20)
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)

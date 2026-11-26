@@ -19,7 +19,7 @@ class AdmissionPending(RuntimeError):
     """Valid sensors require more idle cooling before producer startup."""
 
 
-SOC_PAUSE_CELSIUS = 85
+SOC_PAUSE_CELSIUS = 90
 SOC_RESUME_BELOW_CELSIUS = 70
 SOC_PAUSE_TIMEOUT_SECONDS = 900
 
@@ -79,7 +79,7 @@ class ThermalDutyCycle:
             if any(value > (35 if kind == "battery" else 50) for kind, value in zones.values() if kind != "soc"):
                 raise AdmissionPending("thermal admission requires CPU/GPU/skin <= 50 C and battery <= 35 C")
             if hottest >= SOC_PAUSE_CELSIUS:
-                raise AdmissionPending("thermal admission requires SoC below 85 C")
+                raise AdmissionPending("thermal admission requires SoC below 90 C")
             return None
 
         if self.ceiling_since is None and hottest >= SOC_PAUSE_CELSIUS:

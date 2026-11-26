@@ -275,6 +275,9 @@ candidate, retaining the previous record identity in the policy's `selection`
 lineage. Original source and destination stay fixed; unresolved candidates remain
 explicit. Selector discovery compiles only the suppliers actually chosen and
 does not admit their bodies, routes or graph.
+The V30 retained-source recipe supplies canonical records through
+`record_produce.py`. Original script selectors and the pinned editor base
+schema provide managed type hashes in the same producer job.
 
 `bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
 destination triples, separate from advertised container roots/subassets. Local
@@ -317,6 +320,12 @@ registers ordered, typed roots already present in a pinned Android bundle.
 It derives the new preload intervals from their local PPtrs and preserves the
 old rows, dependency metadata, object bodies and resource members. Catalog
 production still checks each advertised address against the resulting bundle.
+The request can also supply pinned producer packs for absent Material and
+Texture2D IDs. They must match existing native types. The repacker checks
+texture references and the Shader's pinned external member, extends the
+existing resource stream, and reopens the output to check the new bodies
+and extents before writing a receipt. Temporary repack files are removed
+when the operation ends.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
@@ -1488,7 +1497,7 @@ owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
 and readable SoC zones, checks thermal admission and selects inherited efficiency-core affinity
 with two-worker runtime limits. Its independent supervisor pauses the owned
 process group and nested-session descendants at CPU/GPU 70/55 C. A separate
-ceiling pauses the same family at 85 C on any readable CPU, GPU or SoC zone,
+ceiling pauses the same family at 90 C on any readable CPU, GPU or SoC zone,
 releases below 70 C, and aborts after 15 min at the ceiling. The 250 ms sampler
 also enforces the CPU/GPU 95 C/3 s and battery 43 C limits. Teardown kills owned
 processes. Receipts retain pause time, SoC peak and phase, and failures. The
@@ -1739,7 +1748,11 @@ keeps generated descriptors and caller-owned producer results. The managed-host
 `tools/phone-build/managed-host/ToolHostActivity.java` binds explicit
 check/prepare/import/build/install/resume actions to durable worker/install state.
 `onResume` registers the install-state observer and 500 ms refresh; `onPause`
-removes both. `OwnerUpdateState.java` owns Android-free presentation policy;
+removes both. The Activity opens Android's app-specific install-permission
+screen on an explicit request or attempted build. Returning from Settings never
+launches work; the foreground service independently gates build, rollback and
+installation before starting any worker. `OwnerUpdateState.java` owns
+Android-free presentation policy;
 its fresh `Screen` snapshot binds progress guidance and all Activity actions to
 current worker, consent, recovery and import-receipt facts. A failed import file
 is not build admission, and retained recovery disables Resume and other work.
@@ -1747,9 +1760,12 @@ its `StatusRender` coalesces changing same-phase text to two seconds while
 rendering phase changes immediately. Sampling and durable work remain separate.
 `OwnerInstaller.java` owns PackageInstaller sessions, streamed hashing,
 package/version/signer continuity and persistent asynchronous status. Its
-session-matched `Result` receiver owns Android confirmation intents. Missing or
-unlaunchable confirmation retains `AWAITING_CONFIRMATION` and the existing
-session; retry never creates a duplicate session. Android 12+ same-key updates
+session-matched `Result` receiver opens confirmation immediately only in the
+focused installer Activity. Otherwise its foreground-service notification and
+an in-app button let the owner return and open the system dialog. Unlaunchable
+confirmation can be retried in the foreground and never creates a second session.
+The platform intent is process-local; missing confirmation retains the session
+and does not imply success or authorize recovery. Android 12+ same-key updates
 request `USER_ACTION_NOT_REQUIRED`, with actual Android consent authoritative.
 `reconcile` recovers persisted session state after recreation; installed identity
 and required profile readback gate success and advancement of the installed
@@ -8135,30 +8151,46 @@ and full cancellation through `Neutral`.
 
 Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
 and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
-Commando additive states and blend trees, plus other native AimPitch/AimYaw
-layers, resolves current catalog containers against accepted input hashes, and
-emits private source identities and Transform reference values through StageIO. The latter creates owned
+Commando, Huntress, Captain and Bandit2 additive states and blend trees, plus
+other native AimPitch/AimYaw layers. It resolves current catalog containers
+against accepted input hashes and emits private source identities and Transform
+reference values through StageIO. The latter creates owned
 constant reference clips before bundle production and applies the original
-additive reference settings. Unsupported muscle streams remain unchanged and
-are reported explicitly; unknown Transform bindings refuse restoration.
+additive reference settings. It also restores Bandit2's gesture synchronization
+and override-only motions from the source controller's layer and motion slots.
+The same stage imports Bandit2's SideWeapon clips from the accepted export.
+The editor restores the synchronized weapon motions and owns their blend trees
+in the generated controller.
+The generated controller persists in the composed project. Unsupported muscle
+streams remain unchanged and are reported explicitly; unknown Transform
+bindings refuse restoration.
 Generated clips persist with the composed project and are replaced on rebuild;
 there is no runtime owner. Code-only builds require unchanged source-pose inputs.
-The existing current `commando-animation-host` action also verifies persisted
-reference curves and compares frozen-base muzzle positions and directions against
-the original clips during aim, firing and hit reactions. The comparison overrides
-all Commando controller clips so a shared gesture defect cannot pass both sides.
-Bounded Commando aim/firing device evidence is recorded in the journal; other
-survivors and unassisted hit-reaction presentation remain separate gates.
+The current `commando-animation-host` action also verifies persisted reference
+curves and compares positions and directions on a frozen rig against the original
+clips. It samples Commando's muzzles and Huntress's torso, head and bow during
+aim, firing and hit reactions, and Captain's torso, head, gun and radio during
+aim, firing and call-ins. It samples Bandit2's torso, head and weapon attachment
+poses during aim, firing, reload, smoke bomb and blade gestures. Huntress firing
+and recovery and Captain's selected gestures play both gesture layers. Their
+comparison overrides controller clips with the originals, including Captain's
+shared Commando clips. The Bandit2 fixture drives the source gesture layer and
+compares both synchronized layers against the original controller.
+It also activates each Bandit2 weapon locomotion layer independently and
+compares the six synchronized states against the original controller.
+Device aim, firing and hit-reaction presentation remain separate checks.
 
 `WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor
 `./dev editor --target lab --action enemy-material-audit` inventory. It reads
 native-provider body/projectile candidates and the prepared session's registered
 effect prefabs, including inactive renderer slots, Billboard materials, particle
-meshes and trails. Private receipts retain source keywords, texture bindings and
-recovered-resource coverage. It does not initialize native catalogs, mutate
-materials or establish Android shader support or visual parity. Setup requires
-the prepared lab project and generated catalog; completion retains a private
-editor receipt and adds no runtime state.
+meshes and trails. It also resolves the Titan pre-fist projectile's addressed
+ghost and the Vagrant default skin's addressed body material, and inspects the
+direct Mercenary Expose and Acrid disease impact effects. The audit selects
+recovered resources from saved source keywords, as the runtime owner does.
+Setup requires the prepared lab project and generated catalog. The private
+editor receipt records typed bindings and resource coverage. Android rendering
+and pixel attribution require matched captures.
 
 `WholeCatalogHost.AuditBodyAnimations` owns the current exact-editor
 `./dev editor --target lab --action body-animation-audit` census. It identifies

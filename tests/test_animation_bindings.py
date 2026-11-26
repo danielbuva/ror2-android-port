@@ -43,6 +43,21 @@ AnimatorState:
         with self.assertRaisesRegex(RuntimeError, "Unresolved native additive state"):
             additive_clip_guids(controller.replace("m_Motion: {fileID: 5}", "m_Motion: {fileID: 6}"))
 
+    def test_additive_discovery_preserves_motions_moved_to_the_synced_layer(self):
+        controller = """--- !u!91 &1
+AnimatorController:
+  m_AnimatorLayers:
+  - serializedVersion: 5
+    m_Name: Gesture, Override
+    m_Motions:
+    - serializedVersion: 2
+      m_State: {fileID: 4}
+      m_Motion: {fileID: 7400000, guid: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, type: 2}
+    m_BlendingMode: 0
+"""
+        self.assertEqual(additive_clip_guids(controller), set())
+        self.assertEqual(additive_clip_guids(controller, override_layer="Gesture, Override"), {"a" * 32})
+
     def test_reference_pose_preserves_native_value_order_and_checked_paths(self):
         path = "Rig/Arm"
         bindings = [dict(path=zlib.crc32(path.encode()), attribute=attribute, typeID=4) for attribute in (1, 3, 4)]
