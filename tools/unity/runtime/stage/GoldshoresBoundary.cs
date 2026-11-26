@@ -201,6 +201,8 @@ public sealed partial class PortSession
         {
             r.world.objective = "Earn original Gold shrine cost";
             ObjectiveCombatInput(player, bridge, elapsed, Vector2.zero, false);
+            if (r.world.combatCandidates == r.world.combatBoundsRejected)
+                NavigateWorldInput(player, bridge, shrine.transform.position, 1.2f, shrine.name, elapsed);
         }
         return true;
     }

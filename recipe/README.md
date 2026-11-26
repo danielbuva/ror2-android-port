@@ -7407,3 +7407,8 @@ Original records, SDK and package files, and compiled programs stay private.
 | --- | --- |
 | `owner-v30-camera-compute.json` | `d3f7c48ff6167f2a58381bf0fa45e8169720780c770c11e3e8669f0000979f95` |
 | `owner-v30-camera-shaders.json` | `06570358826e12296b97f43d7b44c53e779aca01f3362dadbe251d2be79b4ebd` |
+
+Audit 2026-11-26. The assisted Gold shrine route refreshes the reviewed
+`IntegratedWorldBoundary.cs` pin in `original-audio-owner-sources.json` and its
+build-hook consumers. The authored change expires a terrain recovery timer
+when the objective changes. The refresh contains only authored source hashes.

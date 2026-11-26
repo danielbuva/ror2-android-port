@@ -349,3 +349,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1514](PORTING_JOURNAL.md#j1514--restore-huntress-additive-gesture-reference-poses) | 2026-11-26 | Restore Huntress additive gesture reference poses | 2026-11-26. |
 | [J1515](PORTING_JOURNAL.md#j1515--restore-captain-additive-gesture-reference-poses) | 2026-11-26 | Restore Captain additive gesture reference poses | 2026-11-26. |
 | [J1516](PORTING_JOURNAL.md#j1516--restore-bandit-additive-gestures-and-sidearm-locomotion) | 2026-11-26 | Restore Bandit additive gestures and sidearm locomotion | 2026-11-26. |
+| [J1517](PORTING_JOURNAL.md#j1517--recover-the-assisted-gold-shrine-to-teleporter-route) | 2026-11-26 | Recover the assisted Gold shrine-to-teleporter route | 2026-11-26. |
