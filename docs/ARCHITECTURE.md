@@ -226,6 +226,10 @@ and native-manifest dependencies. The graph assigns stable artifact names to
 object bundles and built-in player resources when it compiles their producers.
 Follower bundles and catalog production bind the same staged files. The catalog
 also consumes each emitted profile, independently of canonical body-identity proof.
+For SDK resource endpoints, preparation can generate full witnesses from pinned
+original type layouts and the produced resource bodies. The endpoint checker
+verifies native type metadata, body extents and recursively resolved pointers
+against those same staged files during preparation and emission.
 Managed witnesses must name generated artifacts, with registry body, receipt and
 schemas supplied by one final player job. When `--code-request` selects fresh
 conversion, witness production reads the same pinned managed provider manifest

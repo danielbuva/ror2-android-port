@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1512 — Build signed-release IL2CPP and Burst on Android
+
+2026-11-26. The #651 Mono library repair let the signed native graph complete
+from accepted owner input on Thor. It used 332 managed providers and completed
+826 IL2CPP compile tasks. IL2CPP SHA-256
+`88c8bf265e105b31f9e222b3239568a460b34bdfe706ea48dcd4aa577d4ad164`.
+The native receipt also pins global metadata and the Burst library.
+Evidence: `work/coordination/p1-wholegame-1031/signed-native-mono-fix-1126.eCmmEdXH/run/`.
+Production took 9,158 s, peaked at 3.18 GB child RSS and used a net 4.36 GB of
+storage before cleanup. CPU/GPU peaked at 68.4 °C with zero pauses.
+Owned scratch removal, OLED sleep and lease release passed. APK assembly,
+installation, runtime qualification and updates remain open.
+
 ## J1511 — Return to the native menu after End Run in the converted player
 
 2026-11-26. Visible Play and native Start reached Titanic Plains as Commando
