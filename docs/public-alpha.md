@@ -173,8 +173,12 @@ the priority; these gates must pass before any public release.
       without an explicit, documented user decision.
 
 The [Thor bundle replay](PORTING_JOURNAL.md#j1494--overlap-android-bundle-encoding-and-verification)
-measures the strict whole-game bundle producer. End-to-end converter budgets
-still need measurements across import, APK assembly and installation.
+measures the strict whole-game bundle producer. The [paired Thor decoder
+benchmark](PORTING_JOURNAL.md#j1501--speed-up-checked-unityfs-lz4-decoding-on-android)
+halved decoder CPU time on the retained pre-#630 bundle, and a
+27-record current-input pair confirmed identical output after cold emission.
+Full current-input production and end-to-end budgets across import, APK
+assembly and installation still need measurements.
 
 Game baseline and attribution plan: [retained sustained report](performance-game.md),
 qualified as host-only in [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report).

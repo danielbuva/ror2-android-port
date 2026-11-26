@@ -164,7 +164,8 @@ storage is refused without an internal-storage fallback.
 For a paired UnityFS decoder benchmark, set `operation` to `bundle-decode`
 and replace `expected_records` with `expected_blocks` and
 `expected_decoded_sha256`. The latter pins the SHA-256 of the concatenated
-decoded blocks. Set `request` to the staged bundle path and provide the exact
+decoded blocks in bundle order. Both pins include raw blocks. Set `request`
+to the staged bundle path and provide the exact
 `retained_tool_sha256`. The manifest includes `baseline-unity_bundle.py` from
 the baseline revision and the candidate's tracked `bundle_decode_benchmark.py`,
 `unity_bundle.py` and `phone_runner.py` under
