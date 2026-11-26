@@ -230,6 +230,23 @@ capture Android's crash buffer and package exit history. If transfer fails,
 the runner retains its exact handle and scratch for `--resume-emission`.
 After a confirmed result, use a fresh request directory for another attempt.
 
+### Signed native qualification
+
+Use `"operation": "signed-native"` with `expected_managed_providers`. The pinned
+private request selects `bundle`, `envelope`, `public_key`, `key_id` and an
+`output` relative to its private `work/` directory. The public source bundle
+must select the Burst library, IL2CPP library and matching metadata. Generate
+its jobs with the owner code, Burst and native token requests and the staged
+audio roster. Stage the SDK, original, package and GNU tool inputs beside the
+request. Pin the accepted inventory in the transfer manifest and keep mutable
+inventory and configuration files out of `input-hashes.json`.
+
+The runner verifies the envelope and source bundle, then dispatches the
+conversion and native jobs under the same thermal supervisor. The terminal
+receipt records managed provider and compile counts, readback hashes for all
+three native outputs, and resource measurements. The runner captures the
+receipts and cleans the attempt's scratch after a confirmed result.
+
 ## Safety model
 
 - The workflow (`.github/workflows/lab-runner.yml`) triggers only on `issue_comment`, so GitHub always

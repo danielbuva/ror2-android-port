@@ -1,4 +1,4 @@
-"""Synthetic public releases and published RSA verification vectors; no keys created."""
+"""Synthetic public releases, signatures and published RSA verification vectors."""
 
 import base64
 import copy
@@ -160,6 +160,121 @@ class PublicBundleTests(unittest.TestCase):
 
     def build(self, name="public.zip"):
         return PUBLIC.build_bundle(self.root, self.plan, Path(self.temporary.name) / name)
+
+    def test_signed_native_phone_entry_verifies_and_dispatches_one_cohort(self):
+        openssl = shutil.which("openssl")
+        if not openssl:
+            self.skipTest("OpenSSL is required to sign the synthetic rehearsal")
+        stage = self.root.parent / "inputs"
+        stage.mkdir()
+        host = self.root.parent / "native"
+        host.mkdir()
+        runtime = self.root.parent / "runtime"
+        runtime.mkdir()
+        (runtime / "repo").symlink_to(ROOT)
+        (host / "libpythonhost.so").write_text('#!/bin/sh\nshift\nexec "$@"\n')
+        (host / "libpythonhost.so").chmod(0o700)
+        # The runner passes the embedded Python module path; use host Python.
+        (runtime / "python").symlink_to(Path(sys.executable).resolve())
+        library = "apk/lib/arm64-v8a/libil2cpp.so"
+        metadata = "apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"
+        burst = "apk/lib/arm64-v8a/lib_burst_generated.so"
+        code_job, native_job = "recipe/fixture-code.json", "recipe/fixture-native.json"
+        code_script, native_script = ("tools/phone-build/owner-code/" + name for name in ("produce.py", "native.py"))
+
+        def fixture(name, data):
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(data if isinstance(data, str) else json.dumps(data))
+
+        fixture(
+            code_script,
+            """import hashlib, json, pathlib, sys
+out = pathlib.Path(sys.argv[1])
+out.mkdir()
+burst = b"synthetic burst"
+(out / "burst.so").write_bytes(burst)
+(out / "result.json").write_text(json.dumps(dict(
+    success=True, phase="converted-native-planned", upstream_managed_generation_qualified=True,
+    managed_providers=1, backend={"burst": {"success": True, "library_sha256": hashlib.sha256(burst).hexdigest()}},
+)))
+""",
+        )
+        fixture(
+            native_script,
+            """import hashlib, json, pathlib, sys
+assert pathlib.Path(sys.argv[2]).read_bytes() == b"synthetic burst"
+out = pathlib.Path(sys.argv[1])
+out.mkdir()
+lib, metadata = b"synthetic native", b"synthetic metadata"
+(out / "native.so").write_bytes(lib)
+(out / "metadata.dat").write_bytes(metadata)
+(out / "result.json").write_text(json.dumps(dict(
+    success=True, phase="native-built", compile_tasks=1, reused_compile_tasks=1, planned_compile_tasks=2,
+    library_sha256=hashlib.sha256(lib).hexdigest(), metadata_sha256=hashlib.sha256(metadata).hexdigest(),
+)))
+""",
+        )
+        fixture(
+            code_job,
+            dict(schema=1, script=code_script, arguments=["${output}"], outputs={burst: "burst.so"}, artifacts=dict(receipt="result.json", burst="burst.so")),
+        )
+        fixture(
+            native_job,
+            dict(
+                schema=1,
+                script=native_script,
+                needs=[code_job],
+                arguments=["${output}", "${job:" + code_job + ":burst}"],
+                outputs={library: "native.so", metadata: "metadata.dat"},
+                artifacts=dict(receipt="result.json"),
+            ),
+        )
+        self.commit()
+        self.plan["entries"] = {
+            burst: dict(recipe_files=[code_job], producer_files=[code_script], job=code_job),
+            **{name: dict(recipe_files=[code_job, native_job], producer_files=[code_script, native_script], job=native_job) for name in (library, metadata)},
+        }
+        archive = stage / "public.zip"
+        built = PUBLIC.build_bundle(self.root, self.plan, archive)
+        body = dict(release_body(), bundle_sha256=built["bundle_sha256"], entries=built["entries"])
+        key = self.root.parent / "test.key"
+        pub = stage / "test.pem"
+        subprocess.run([openssl, "genpkey", "-algorithm", "RSA", "-pkeyopt", "rsa_keygen_bits:2048", "-out", str(key)], capture_output=True, check=True)
+        subprocess.run([openssl, "pkey", "-in", str(key), "-pubout", "-out", str(pub)], capture_output=True, check=True)
+        envelope = PUBLIC.sign_envelope(body, "test", key, pub.read_bytes())
+        key.unlink()
+        (stage / "release.json").write_text(json.dumps(envelope))
+        (stage / "game").mkdir()
+        original = stage / "game/fixture"
+        original.write_bytes(b"synthetic original")
+        sha = PUBLIC.RELEASE.digest(original)
+        inventory = stage / "work/inventory/files.json"
+        inventory.parent.mkdir(parents=True)
+        inventory.write_text(json.dumps(dict(files=[dict(path="fixture", sha256=sha, size=original.stat().st_size, mtime_ns=0)])))
+        (stage / "input-hashes.json").write_text(json.dumps({"game/fixture": sha}))
+        request = stage / "request.json"
+        request.write_text(json.dumps(dict(bundle=archive.name, envelope="release.json", public_key=pub.name, key_id="test", output="rehearsal")))
+        android = PUBLIC._module("native_phone_fixture", ROOT / "tools/phone-build/owner-code/run_android.py")
+        with patch.dict("os.environ"), patch("builtins.print"):
+            android.run(request, runtime, host)
+            envelope["signature"]["value"] = "AAAA"
+            (stage / "release.json").write_text(json.dumps(envelope))
+            with self.assertRaisesRegex(ValueError, "release signature invalid"):
+                android.run(request, runtime, host)
+        report = json.loads((stage / "work/rehearsal/result.json").read_text())
+        self.assertTrue(report["success"])
+        self.assertEqual(report["managed_providers"], 1)
+        self.assertEqual(report["native"]["planned_compile_tasks"], 2)
+        self.assertEqual(report["bundle_sha256"], built["bundle_sha256"])
+        self.assertEqual(
+            report["output_sha256"],
+            {
+                name: hashlib.sha256(value).hexdigest()
+                for name, value in ((library, b"synthetic native"), (metadata, b"synthetic metadata"), (burst, b"synthetic burst"))
+            },
+        )
+        self.assertEqual(len(list((stage / "work/releases/jobs").glob("*.json"))), 2)
 
     def test_reviewed_unity_source_is_published_and_verified(self):
         def recipe(name):

@@ -40,6 +40,8 @@ TARGET = "apk/assets/bin/Data/"
 RESERVE = 2 * 1024**3
 INPUT_ID = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 UNAVAILABLE_MODULES = {"UnityEngine." + name + "Module.dll" for name in ("ClusterInput", "ClusterRenderer", "NVIDIA", "VirtualTexturing")}
+MCP_ASSEMBLY = "MCPForUnity.Runtime.dll"
+AUTHORED_RUNTIME_ASSEMBLIES = ("GameAudioOriginalBootstrap.dll", "GameAudioOriginalCore.dll", "OriginalOwnerProbeObserver.dll")
 # Authored RuntimeInitializeOnLoadMethod declarations in tools/unity/runtime/
 # session/{PortSession,CharacterDirectionProbe,ControllerAddressProbe,
 # EntityStateTickProbe}.cs and tools/unity/runtime/catalog/WholeCatalogBootstrap.cs.
@@ -73,14 +75,53 @@ def verify_player_outputs(output, expected, files, current_pins):
             files[TARGET + name]["historical_raw_exact"] = pin == row
 
 
-def metadata(scripting, initializers, projects):
+def managed_metadata_inputs(managed_production):
+    managed = Path(managed_production).resolve(strict=True)
+    receipt = managed / "result.json"
+    providers = managed / "providers.json"
+    receipt_pin = (receipt.stat().st_size, sha(receipt))
+    result = json.loads(receipt.read_text())
+    if result.get("success") is not True:
+        raise ValueError("successful managed production required for player metadata")
+    provider_pin = (providers.stat().st_size, result["providers_sha256"])
+    checked(receipt, receipt_pin)
+    checked(providers, provider_pin)
+    return set(json.loads(providers.read_text())), ((receipt, receipt_pin), (providers, provider_pin))
+
+
+def source_metadata(profile, pc, managed_production=None):
+    original = {}
+    pins = []
+    for name in ("ScriptingAssemblies.json", "RuntimeInitializeOnLoads.json"):
+        row = profile["sources"][name]
+        relative = PurePosixPath(row["path"])
+        if relative.is_absolute() or ".." in relative.parts or "\\" in row["path"]:
+            raise ValueError("unsafe player-data original path")
+        source = pc / relative
+        pin = (row["bytes"], row["sha256"])
+        checked(source, pin)
+        original[name] = json.loads(source.read_text())
+        pins.append((source, pin))
+    providers = None
+    if managed_production is not None:
+        providers, managed_pins = managed_metadata_inputs(managed_production)
+        pins.extend(managed_pins)
+    return metadata(original["ScriptingAssemblies.json"], original["RuntimeInitializeOnLoads.json"], profile["project_assemblies"], providers), pins
+
+
+def metadata(scripting, initializers, projects, providers=None):
     """Keep original engine order/initializer records and authored project order."""
     if len(scripting["names"]) != len(scripting["types"]) or len(projects) != len(set(projects)):
         raise ValueError("invalid script assembly identities")
     engines = [name for name, kind in zip(scripting["names"], scripting["types"]) if kind == 2 and name not in UNAVAILABLE_MODULES]
     source_projects = {name for name, kind in zip(scripting["names"], scripting["types"]) if kind == 16}
-    if set(projects) != source_projects | {"MCPForUnity.Runtime.dll", "Newtonsoft.Json.dll"}:
+    if set(projects) != source_projects | {MCP_ASSEMBLY, "Newtonsoft.Json.dll"}:
         raise ValueError("project assembly set differs from original plus authored packages")
+    if providers is not None:
+        projects = [name for name in projects if name != MCP_ASSEMBLY or name in providers]
+        projects.extend(AUTHORED_RUNTIME_ASSEMBLIES)
+        if missing := set(projects) - providers:
+            raise ValueError("managed production is missing player assemblies: " + ", ".join(sorted(missing)))
     names = engines + projects
     runtime = [
         {"assemblyName": "Assembly-CSharp", "nameSpace": "", "className": name, "methodName": method, "loadTypes": 0, "isUnityClass": False}
@@ -1302,19 +1343,8 @@ def produce(
         for name, (size, digest) in RESOURCES.items():
             if converted["files"].get("data/" + name.removeprefix("Managed/")) != {"bytes": size, "sha256": digest}:
                 raise ValueError("converter resource differs from accepted comparison hash: " + name)
-        original = {}
-        pc_sources = {}
-        for name in ("ScriptingAssemblies.json", "RuntimeInitializeOnLoads.json"):
-            row = profile["sources"][name]
-            relative = PurePosixPath(row["path"])
-            if relative.is_absolute() or ".." in relative.parts or "\\" in row["path"]:
-                raise ValueError("unsafe player-data original path")
-            source = pc / relative
-            checked(source, (row["bytes"], row["sha256"]))
-            original[name] = json.loads(source.read_text())
-            pc_sources[name] = source
         current_metadata = code_request is not None and "target" not in json.loads(Path(code_request).read_text())
-        generated = metadata(original["ScriptingAssemblies.json"], original["RuntimeInitializeOnLoads.json"], profile["project_assemblies"])
+        generated, metadata_pins = source_metadata(profile, pc, managed_production if current_metadata else None)
         sources = {}
         for name, pin in expected.items():
             role = "sdk" if name == DEFAULT else "converter"
@@ -1480,9 +1510,8 @@ def produce(
             checked(output / (TARGET + name), pin)
             checked(sources[name], pin)
         verify_player_outputs(output, profile["outputs"], result["files"], current_output_pins)
-        for name, source in pc_sources.items():
-            row = profile["sources"][name]
-            checked(source, (row["bytes"], row["sha256"]))
+        for path, pin in metadata_pins:
+            checked(path, pin)
         if sha(receipt) != converter_receipt_sha256:
             raise ValueError("converter receipt changed during production")
         if "script_properties_sdk" in profile:

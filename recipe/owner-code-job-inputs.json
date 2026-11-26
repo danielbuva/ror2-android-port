@@ -1,0 +1,15 @@
+{
+  "source_inputs": {
+    "packages": "${inputs}/providers/packages",
+    "newtonsoft": "${inputs}/providers/newtonsoft/Newtonsoft.Json.dll",
+    "ilspy_dll": "${inputs}/providers/ilspy_dll/ilspycmd.dll",
+    "wwise_android_source": "${inputs}/providers/wwise_android_source/AkSoundEnginePINVOKE_Android.cs",
+    "wwise_os_string_source": "${inputs}/providers/wwise_os_string_source/AkSoundEngine.cs",
+    "wwise_abi_native": "${inputs}/providers/wwise_abi_native/libAkSoundEngine.so",
+    "wwise_native": "${inputs}/providers/wwise_native/libAkSoundEngine.so",
+    "netstandard_ref": "${inputs}/providers/netstandard_ref"
+  },
+  "output": "${output}",
+  "owner_work": "${inputs}/work",
+  "sdk_install": "${inputs}/sdk"
+}
