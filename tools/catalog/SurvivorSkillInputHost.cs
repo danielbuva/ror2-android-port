@@ -133,11 +133,59 @@ public static class SurvivorSkillInputHost
                           new[] { ("", 0), ("FireMainWeapon", 2), ("FireSideWeapon", 2), ("Reload", 2),
                                   ("ThrowSmokebomb", 2), ("SlashBlade", 2) }, synchronizedDriver: "Gesture, Additive");
 
+    public static object SampleBanditWeaponLocomotion() => new
+    {
+        side = SampleBanditWeaponLocomotion("Body, SideWeapon"),
+        stealth = SampleBanditWeaponLocomotion("Body, StealthWeapon")
+    };
+
+    static object SampleBanditWeaponLocomotion(string layer) =>
+        SampleSourcePoses("Bandit2", "mdlBandit2Avatar",
+                          new[] { "base", "chest", "head", "MuzzleShotgun", "MuzzlePistol" },
+                          null, synchronizedDriver: "Body", weaponLayer: layer);
+
+    static float[] ReadPose(Transform[] transforms) => transforms
+        .SelectMany(t => new[] { t.position.x, t.position.y, t.position.z, t.forward.x, t.forward.y, t.forward.z }).ToArray();
+
+    static IEnumerable<float[]> SampleWeaponLocomotion(Animator animator, string layer, Transform[] transforms)
+    {
+        int body = animator.GetLayerIndex("Body"), weapon = animator.GetLayerIndex(layer);
+        int other = animator.GetLayerIndex(layer == "Body, SideWeapon" ? "Body, StealthWeapon" : "Body, SideWeapon");
+        Require(body >= 0 && weapon >= 0 && other >= 0, "Bandit locomotion layers missing");
+        foreach (var state in new[] { "Jump", "Run", "Idle", "Sprint", "AscendDescend", "IdleIn" })
+        {
+            int hash = Animator.StringToHash(state);
+            var inputs = state == "Run"
+                ? new[] { (0f, -.3f, 0f), (0f, .3f, 0f), (-.3f, 0f, 0f), (.3f, 0f, 0f), (.15f, .15f, 0f) }
+                : state == "AscendDescend"
+                    ? new[] { (0f, 0f, -30f), (0f, 0f, -11f), (0f, 0f, 8f) }
+                    : new[] { (0f, 0f, 0f) };
+            foreach (var (right, forward, up) in inputs)
+                foreach (float time in new[] { 0f, .5f, .999f })
+                {
+                    animator.Rebind();
+                    animator.Update(0);
+                    animator.SetLayerWeight(weapon, 1);
+                    animator.SetLayerWeight(other, 0);
+                    animator.SetFloat("rightSpeed", right);
+                    animator.SetFloat("forwardSpeed", forward);
+                    animator.SetFloat("upSpeed", up);
+                    animator.SetFloat("walkSpeed", 1f);
+                    animator.Play(hash, body, time);
+                    animator.Update(0);
+                    Require(animator.GetCurrentAnimatorStateInfo(body).shortNameHash == hash &&
+                            animator.GetCurrentAnimatorStateInfo(weapon).shortNameHash == hash,
+                            "Bandit locomotion did not reach " + state + " on " + layer);
+                    yield return ReadPose(transforms);
+                }
+        }
+    }
+
     const string SurvivorAssetRoot = "Assets/WholeGame/RoR2/Base/Characters/";
 
     static object SampleSourcePoses(string survivor, string avatarName, string[] poseNames,
                                     (string Name, int Layers)[] gestures, string[] sharedClipSurvivors = null,
-                                    string synchronizedDriver = null)
+                                    string synchronizedDriver = null, string weaponLayer = null)
     {
         string path = SurvivorAssetRoot + survivor + "/";
         string project = System.IO.Path.GetDirectoryName(Application.dataPath);
@@ -212,6 +260,12 @@ public static class SurvivorSkillInputHost
             foreach (bool native in new[] { false, true })
             {
                 animator.runtimeAnimatorController = native ? nativeController : controller;
+                if (weaponLayer != null)
+                {
+                    foreach (var values in SampleWeaponLocomotion(animator, weaponLayer, poseTransforms))
+                        Compare(values, native);
+                    continue;
+                }
                 foreach (var gesture in gestures)
                     foreach (float cycle in new[] { 0f, .5f, .999f })
                         foreach (float time in new[] { 0f, .07f, .15f })
@@ -239,20 +293,26 @@ public static class SurvivorSkillInputHost
                                         "Native gesture did not play: " + gesture.Name);
                             }
                             animator.Update(0);
-                            var values = poseTransforms
-                                .SelectMany(t => new[] { t.position.x, t.position.y, t.position.z, t.forward.x, t.forward.y, t.forward.z }).ToArray();
-                            if (!native) samples.Add(values);
-                            else
-                            {
-                                var imported = samples[sampleIndex++];
-                                for (int i = 0; i < values.Length; i++) maximum = Mathf.Max(maximum, Mathf.Abs(imported[i] - values[i]));
-                                components += values.Length;
-                            }
+                            Compare(ReadPose(poseTransforms), native);
                         }
             }
-            Require(maximum <= .001f, survivor + " imported additive poses differ from native clips: " + maximum);
+            if (weaponLayer == null)
+                Require(maximum <= .001f, survivor + " imported additive poses differ from native clips: " + maximum);
             return new { samples = samples.Count, components, maximumComponentError = maximum,
-                         nativeClipOverrides = pairs.Count, sourceController = synchronizedDriver != null };
+                         nativeClipOverrides = pairs.Count, sourceController = synchronizedDriver != null,
+                         matchesNativePoses = maximum <= .001f };
+
+            void Compare(float[] values, bool native)
+            {
+                if (!native)
+                {
+                    samples.Add(values);
+                    return;
+                }
+                var imported = samples[sampleIndex++];
+                for (int i = 0; i < values.Length; i++) maximum = Mathf.Max(maximum, Mathf.Abs(imported[i] - values[i]));
+                components += values.Length;
+            }
         }
         finally
         {

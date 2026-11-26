@@ -8088,6 +8088,8 @@ and recovery and Captain's selected gestures play both gesture layers. Their
 comparison overrides controller clips with the originals, including Captain's
 shared Commando clips. The Bandit2 fixture drives the source gesture layer and
 compares both synchronized layers against the original controller.
+It also activates each Bandit2 weapon locomotion layer independently and
+compares the six synchronized states against the original controller.
 Device aim, firing and hit-reaction presentation remain separate checks.
 
 `WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor
