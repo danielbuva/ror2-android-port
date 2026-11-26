@@ -232,10 +232,15 @@ class EmissionTests(unittest.TestCase):
             managed / "logs/raw-managed.stderr.log": b"compiler startup\n" * 1024 + b"compiler failure\n",
             managed / "logs/raw-managed.process.json": b'{"returncode":139}',
             managed / "raw/adapter logs/compile.log": b"authored nested log\n",
+            managed / "packages/Fixture.compile.process.json": b'{"exit_code":0,"seconds":1}',
+            managed / "gameplay/gameplay.postprocess.process.json": b'{"exit_code":0,"seconds":2}',
             managed / "raw/tombstone_01": b"authored app tombstone\n",
+            managed / "raw/tombstone_01.pb": b"authored binary tombstone fixture\n",
+            managed / "raw/hs_err_pid123.txt": b"authored process report\n",
         }
+        assembly = managed / "raw/ordinary/original/UnityEngine.CrashReportingModule.dll"
         remote_fixture = self.root / "remote"
-        for path, data in artifacts.items():
+        for path, data in {**artifacts, assembly: b"authored assembly fixture"}.items():
             target = remote_fixture / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
@@ -269,6 +274,7 @@ class EmissionTests(unittest.TestCase):
         def check_evidence():
             for path, data in artifacts.items():
                 self.assertEqual((self.output / "logs/producer" / path).read_bytes(), data)
+            self.assertFalse((self.output / "logs/producer" / assembly).exists())
             self.assertEqual((self.output / "logs/crash/crash.log").read_bytes(), b"authored Android crash report")
             self.assertEqual((self.output / "logs/crash/exit-info.txt").read_bytes(), b"authored exit info")
             self.assertEqual((self.output / "logs/crash/tombstone-access.txt").read_bytes(), b"Permission denied")

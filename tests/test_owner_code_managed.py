@@ -43,6 +43,10 @@ class OwnerCodeManagedTests(unittest.TestCase):
                 compiler = MANAGED.SdkCompiler(sdk, launcher, root)
                 with patch.object(subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as run:
                     compiler.compile(assembly, [source], [reference], ["-target:library"])
+                receipt = assembly.with_suffix(".compile.process.json")
+                timing = json.loads(receipt.read_text())
+                self.assertEqual(timing["exit_code"], 0)
+                self.assertGreaterEqual(timing["seconds"], 0)
                 runtime = json.loads(compiler.runtime_config.read_text())
                 self.assertEqual(runtime["runtimeOptions"]["framework"]["version"], "8.0.32")
                 rsp = assembly.with_suffix(".rsp")
@@ -53,6 +57,12 @@ class OwnerCodeManagedTests(unittest.TestCase):
                 response = rsp.read_text().splitlines()
                 self.assertIn("-r:" + json.dumps(str(reference)), response)
                 self.assertIn(json.dumps(str(source)), response)
+                with patch.object(subprocess, "run", side_effect=subprocess.TimeoutExpired("compiler", 180)):
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        compiler.compile(assembly, [source], [reference], ["-target:library"])
+                timing = json.loads(receipt.read_text())
+                self.assertIsNone(timing["exit_code"])
+                self.assertGreaterEqual(timing["seconds"], 0)
                 compiler_path.write_bytes(b"changed fixture")
                 with self.assertRaisesRegex(ValueError, "Pinned SDK Roslyn"):
                     compiler.verify()
