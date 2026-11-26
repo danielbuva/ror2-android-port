@@ -6,6 +6,7 @@ private Python driver is staged or executed. Receipts contain private paths and
 stay under ignored work/. A terminal producer failure retains its app and cache.
 """
 
+from bisect import bisect_left, bisect_right
 import hashlib
 import json
 import os
@@ -25,6 +26,8 @@ DECODE_OWNER = "repo/tools/phone-build/accepted-output/"
 DECODE_BASELINE = "baseline-unity_bundle.py"
 DECODE_FILES = {DECODE_BASELINE, *(DECODE_OWNER + name for name in ("bundle_decode_benchmark.py", "unity_bundle.py", "phone_runner.py"))}
 RESOURCE_TRACE = "phase-resources.jsonl"
+RESOURCE_SUMMARY = "phase-resources.json"
+THERMAL_KINDS = ("cpu", "gpu", "soc", "battery", "skin")
 NET8_LIBRARIES = (
     "libcoreclr.so",
     "libhostpolicy.so",
@@ -350,6 +353,55 @@ done
             temporary.unlink(missing_ok=True)
 
 
+def summarize_resources(trace, code_output):
+    """Join captured producer-tree samples to subprocess BOOTTIME windows."""
+    with trace.open() as stream:
+        samples = [json.loads(line) for line in stream]
+    ticks = [sample["boottime_seconds"] for sample in samples]
+    if any(left > right for left, right in zip(ticks, ticks[1:])):
+        raise ValueError("resource trace BOOTTIME moved backwards")
+
+    stages, unclocked = [], []
+    for path in sorted(code_output.rglob("*.process.json")):
+        name = path.relative_to(code_output).as_posix()
+        process = json.loads(path.read_bytes())
+        start, end = process.get("started_boottime_seconds"), process.get("ended_boottime_seconds")
+        if start is None or end is None:
+            unclocked.append(name)
+            continue
+        if end < start:
+            raise ValueError("reversed subprocess BOOTTIME window: " + name)
+        left, right = bisect_left(ticks, start), bisect_right(ticks, end)
+        window = samples[left:right]
+        resources = [sample for sample in window if "process_tree_rss_bytes" in sample]
+        volume = [sample["volume_available_bytes"] for sample in resources]
+        boundaries = [start, *ticks[left:right], end]
+        stages.append(
+            dict(
+                process=name,
+                exit_code=process.get("exit_code"),
+                started_boottime_seconds=start,
+                ended_boottime_seconds=end,
+                boottime_elapsed_seconds=end - start,
+                observed_pause_seconds=process.get("paused_seconds"),
+                samples=len(window),
+                paused_samples=sum(sample["paused"] for sample in window),
+                largest_sample_gap_seconds=max(right - left for left, right in zip(boundaries, boundaries[1:])),
+                resource_samples=len(resources),
+                sampled_peak_celsius={
+                    kind: max((sample[kind + "_celsius"] for sample in window if sample.get(kind + "_celsius") is not None), default=None)
+                    for kind in THERMAL_KINDS
+                },
+                sampled_process_tree_rss_peak_bytes=max((sample["process_tree_rss_bytes"] for sample in resources), default=None),
+                sampled_volume_available_bytes=dict(
+                    first=volume[0] if volume else None, minimum=min(volume, default=None), last=volume[-1] if volume else None
+                ),
+            )
+        )
+    stages.sort(key=lambda stage: stage["started_boottime_seconds"])
+    return dict(samples=len(samples), stages=stages, unclocked_process_receipts=unclocked)
+
+
 def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     """Run beneath Runner.execute; its lease spans transfer, wait and cleanup."""
     started = time.monotonic()
@@ -560,6 +612,14 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 result["bundle"] = {key: emission.get(key) for key in ("bundle", "bytes", "sha256")}
         finally:
             collect_evidence(phone, installer.PACKAGE, state, destination, code_output=code_output, failed=not result["success"])
+            if request.get("profile_resources"):
+                evidence = destination / "logs/producer"
+                try:
+                    profile = summarize_resources(evidence / state["attempt"] / RESOURCE_TRACE, evidence / code_output)
+                    write(destination / RESOURCE_SUMMARY, profile)
+                    result["phase_resource_summary"] = RESOURCE_SUMMARY
+                except (OSError, ValueError, KeyError, TypeError) as error:
+                    result["phase_resource_summary_error"] = str(error)
         state["terminal"] = observed.returncode
         write(state_path, state)
         terminal = True
