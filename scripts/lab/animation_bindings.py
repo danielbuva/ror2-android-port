@@ -99,6 +99,82 @@ def bandit_gesture_layers(tree, controller):
     return dict(controller=controller, base=base_name, override=override_name, override_only=motions)
 
 
+def bandit_side_weapon_motions(tree, clip_name):
+    """Read SideWeapon's native motion slots without changing the base or StealthWeapon."""
+    names = dict(tree["m_TOS"])
+    constant = tree["m_Controller"]
+    layers = {names[row["data"]["m_Binding"]]: row["data"] for row in constant["m_LayerArray"]}
+    base, side, stealth = (layers[name] for name in ("Body", "Body, SideWeapon", "Body, StealthWeapon"))
+    machine = base["m_StateMachineIndex"]
+    if any(
+        (layer["m_StateMachineIndex"], layer["m_StateMachineSynchronizedLayerIndex"]) != (machine, index) for index, layer in enumerate((base, side, stealth))
+    ):
+        raise RuntimeError("Original Bandit weapon layers changed their synchronized grouping")
+
+    motions = []
+    for row in constant["m_StateMachineArray"][machine]["data"]["m_StateConstantArray"]:
+        state = row["data"]
+        _, side_slot, _ = state["m_BlendTreeConstantIndexArray"]
+        if side_slot == -1:
+            continue
+        nodes = [row["data"] for row in state["m_BlendTreeConstantArray"][side_slot]["data"]["m_NodeArray"]]
+        root = nodes[0]
+        motion = dict(state=names[state["m_NameID"]])
+        if not root["m_ChildIndices"]:
+            motion["clip"] = clip_name(root["m_ClipID"])
+        else:
+            children = [nodes[index] for index in root["m_ChildIndices"]]
+            kind = root["m_BlendType"]
+            if kind not in (0, 3) or any(node["m_ChildIndices"] for node in children):
+                raise RuntimeError("Unsupported original Bandit SideWeapon blend tree: " + motion["state"])
+            motion.update(kind=kind, parameter=names[root["m_BlendEventID"]])
+            if kind == 0:
+                thresholds = root["m_Blend1dData"]["data"]["m_ChildThresholdArray"]
+                coordinates = [dict(threshold=value) for value in thresholds]
+            else:
+                motion["parameter_y"] = names[root["m_BlendEventYID"]]
+                positions = root["m_Blend2dData"]["data"]["m_ChildPositionArray"]
+                coordinates = [dict(position=value) for value in positions]
+            motion["children"] = [
+                dict(position, clip=clip_name(node["m_ClipID"]), time_scale=1 / node["m_Duration"], cycle_offset=node["m_CycleOffset"], mirror=node["m_Mirror"])
+                for node, position in zip(children, coordinates, strict=True)
+            ]
+        motions.append(motion)
+    return motions
+
+
+def exported_clip_name(text):
+    name = re.search(r"^  m_Name: (.*)$", text, re.M)[1]
+    return json.loads(name) if name.startswith('"') else name
+
+
+def stage_bandit_side_weapon(io, controller, source, tree, *, code_only):
+    from UnityPy.classes.PPtr import PPtr
+
+    root = io.project / "Assets/WholeGame"
+    export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0]) / "Assets"
+    folder = (io.project / controller).relative_to(root).parent
+    clips = {exported_clip_name(io.read_text(path)): path for path in io.glob(export / folder, "**/*.anim")}
+
+    def clip_path(index):
+        pointer = tree["m_AnimationClips"][index]
+        clip = PPtr(assetsfile=source.assets_file, **pointer).deref()
+        if clip.type.name != "AnimationClip":
+            raise RuntimeError("Original Bandit SideWeapon motion does not reference a clip")
+        path = clips[clip.peek_name()]
+        target = root / path.relative_to(export)
+        for suffix in ("", ".meta"):
+            asset = Path(str(target) + suffix)
+            if not io.is_file(asset):
+                if code_only:
+                    raise RuntimeError("Bandit SideWeapon clips changed; a content build is required")
+                io.apply(asset, copy=Path(str(path) + suffix), catalog=True)
+        return str(target.relative_to(io.project))
+
+    motions = bandit_side_weapon_motions(tree, clip_path)
+    return dict(controller=controller, motions=motions)
+
+
 def stage_additive_reference_poses(io, *, code_only=False):
     """Discover current native additive clips, retaining source identity and pose values locally."""
     import UnityPy
@@ -121,8 +197,7 @@ def stage_additive_reference_poses(io, *, code_only=False):
         if guid and guid[1] in requested:
             clip = Path(str(meta)[:-5])
             text = io.read_text(clip)
-            name = re.search(r"^  m_Name: (.*)$", text, re.M)[1]
-            name = json.loads(name) if name.startswith('"') else name
+            name = exported_clip_name(text)
             key = (str(Path("Assets") / clip.relative_to(root).parent).lower(), name)
             if key in clips:
                 raise RuntimeError("Ambiguous exported native additive clip: " + str(key) + ": " + str(clips[key][0]) + ": " + str(clip))
@@ -148,6 +223,7 @@ def stage_additive_reference_poses(io, *, code_only=False):
         file_index[Path(row["path"]).name].append(row)
     found = {}
     gesture = None
+    side_weapon = None
     for identity in sorted(bundle_ids):
         basename = locations[identity]["internalId"].replace("\\", "/").rsplit("/", 1)[-1]
         matches = file_index[basename]
@@ -161,7 +237,9 @@ def stage_additive_reference_poses(io, *, code_only=False):
             if bandit and obj.type.name == "AnimatorController" and obj.peek_name() == "animBandit2":
                 if gesture is not None:
                     raise RuntimeError("Ambiguous original Bandit gesture controller")
-                gesture = bandit_gesture_layers(obj.read_typetree(), bandit)
+                tree = obj.read_typetree()
+                gesture = bandit_gesture_layers(tree, bandit)
+                side_weapon = stage_bandit_side_weapon(io, bandit, obj, tree, code_only=code_only)
             if obj.type.name != "AssetBundle":
                 continue
             for address, info in obj.read().m_Container:
@@ -200,6 +278,7 @@ def stage_additive_reference_poses(io, *, code_only=False):
         if gesture is None:
             raise RuntimeError("Original Bandit gesture controller missing from accepted additive bundles")
         result["bandit_gesture_layers"] = gesture
+        result["bandit_side_weapon"] = side_weapon
     path = io.project / ".rebuild/source-animation-reference-poses.json"
     if code_only:
         if not io.is_file(path) or io.read(path) != result:

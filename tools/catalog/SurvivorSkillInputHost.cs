@@ -296,8 +296,8 @@ public static class SurvivorSkillInputHost
                             Compare(ReadPose(poseTransforms), native);
                         }
             }
-            if (weaponLayer == null)
-                Require(maximum <= .001f, survivor + " imported additive poses differ from native clips: " + maximum);
+            Require(maximum <= .001f,
+                    survivor + " " + (weaponLayer ?? "additive") + " poses differ from native playback: " + maximum);
             return new { samples = samples.Count, components, maximumComponentError = maximum,
                          nativeClipOverrides = pairs.Count, sourceController = synchronizedDriver != null,
                          matchesNativePoses = maximum <= .001f };

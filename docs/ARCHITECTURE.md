@@ -8073,6 +8073,9 @@ reference values through StageIO. The latter creates owned
 constant reference clips before bundle production and applies the original
 additive reference settings. It also restores Bandit2's gesture synchronization
 and override-only motions from the source controller's layer and motion slots.
+The same stage imports Bandit2's SideWeapon clips from the accepted export.
+The editor restores the synchronized weapon motions and owns their blend trees
+in the generated controller.
 The generated controller persists in the composed project. Unsupported muscle
 streams remain unchanged and are reported explicitly; unknown Transform
 bindings refuse restoration.
