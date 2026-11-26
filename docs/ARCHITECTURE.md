@@ -2192,6 +2192,9 @@ cover fixed owner-work admission, exclusive outputs, immutable provider checks,
 retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
+For converted-player audio diagnostics, the source request can opt into
+skill-deferred MainOutput PCM. `managed.py` passes the selection to the existing
+audio request and stage pin generators before compiling the paired player code.
 When a signed conversion declares audio members, its managed, ABI and audio
 stages share the provisioned owner workspace. The signed source index includes
 the shared rebuild recipe tables used at startup. Python imports resolve from

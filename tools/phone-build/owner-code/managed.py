@@ -209,12 +209,13 @@ def stage_source_audio(work, game, output, *, decoder=None):
     return staged, prefab, bank, init_dir
 
 
-def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, managed_paths, manifest, *, owner_work=None, sdk_compiler=None):
+def audio_assemblies(
+    out, sdk, inputs, ordinary, staged, prefab, bank, init, managed_paths, manifest, *, owner_work=None, sdk_compiler=None, pcm_after_skill=False
+):
     destination = out / "audio"
     destination.mkdir()
     generated = destination / "generated"
     generated.mkdir()
-    # This is the existing qualified diagnostic target configuration, not a new runtime selection.
     request_id = native.sha(PROFILE)[:32]
     request, contract = audio.generate_request_contract(
         destination,
@@ -229,9 +230,9 @@ def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, man
         bank,
         init / "Init.bnk",
         init / "receipt.json",
-        True,
-        True,
-        False,
+        passive_pcm_capture_requested=True,
+        passive_pcm_capture_music_output_requested=not pcm_after_skill,
+        passive_pcm_capture_after_authority_skill_requested=pcm_after_skill,
         owner_work=owner_work,
     )
     stage_pin = audio.load_module(audio.TOOLS / "generate_runtime_stage_pin.py", "source_owner_stage_pin")
@@ -524,7 +525,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
         native.write(output / "result.json", result)
 
 
-def run(work, sdk, values, output, *, signed_audio=False, android_tools=None):
+def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pcm_after_skill=False):
     work, sdk = native.canonical(work), native.canonical(sdk)
     output = Path(output)
     if not signed_audio and work != (ROOT / "work").resolve():
@@ -647,6 +648,7 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None):
             manifest,
             owner_work=owner_work,
             sdk_compiler=compiler,
+            pcm_after_skill=pcm_after_skill,
         )
         unchanged(bound)
         result["phase"] = "original-sources-and-maps"
