@@ -103,6 +103,8 @@ public sealed partial class PortSession
               "Original Gold Shores beacon/mission contract differs");
         mission.beaconSpawnCard = (InteractableSpawnCard)WholeInteractableCard(mission.beaconSpawnCard);
         goldshoresMission = mission;
+        if (r.goldshoresRoute)
+            LogGoldshoresRewardAvailability();
         mission.gameObject.SetActive(true);
         yield return null;
         Check(GoldshoresMissionController.instance == mission && mission.entityStateMachine.state is ActivateBeacons &&
@@ -110,6 +112,32 @@ public sealed partial class PortSession
               "Original Gold Shores mission did not start or place enough beacons");
         ObserveGoldshoresMission();
         Save();
+    }
+    static void LogGoldshoresRewardAvailability()
+    {
+        var encounter = GoldshoresBossfight.combatEncounterPrefab.gameObject;
+        var group = encounter ? encounter.GetComponent<BossGroup>() : null;
+        var table = group ? group.dropTable as ExplicitPickupDropTable : null;
+        var run = Run.instance;
+        if (!table || !run)
+        {
+            Debug.Log("[Gold reward] Native explicit table or Run unavailable");
+            return;
+        }
+        Debug.Log($"[Gold reward] Table={table.name} entries={table.pickupEntries.Length}");
+        foreach (var entry in table.pickupEntries)
+        {
+            if (!(entry.pickupDef is ItemDef item) || !item)
+                continue;
+            var catalogIndex = ItemCatalog.FindItemIndex(item.name);
+            var pickup = PickupCatalog.FindPickupIndex(item.itemIndex);
+            var rule = RuleCatalog.FindRuleDef("Items." + item.name);
+            var choice = rule == null ? null : run.ruleBook.GetRuleChoice(rule);
+            var available = PickupCatalog.GetPickupDef(pickup) != null && run.IsPickupAvailable(pickup);
+            Debug.Log($"[Gold reward] Item={item.name} sourceIndex={item.itemIndex} catalogIndex={catalogIndex} " +
+                      $"sameDef={ItemCatalog.GetItemDef(catalogIndex) == item} pickup={pickup} " +
+                      $"available={available} ruleItem={choice?.itemIndex}");
+        }
     }
     void ObserveGoldshoresMission()
     {
