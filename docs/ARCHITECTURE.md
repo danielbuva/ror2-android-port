@@ -686,6 +686,7 @@ Setup requires an explicit input manifest and a new output directory. Inputs
 are rechecked, no child process survives, and output/result receipts persist.
 The `phone-content-check` fixture can load `AssetBundleManifest` and compare
 its bundle names, cache hashes and direct dependencies with the expected cohort.
+The produced manifest retains its public-schema type trees for that load.
 This is an opt-in source alternative; historical admission and complete phone
 production/runtime qualification remain separate.
 `unity_write.py` owns current experimental bounded UnityFS 7/8 and
