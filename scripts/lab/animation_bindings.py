@@ -83,7 +83,7 @@ def stage_additive_reference_poses(io, *, code_only=False):
     requested = set()
     for controller in io.glob(root, "**/*.controller"):
         # The full source gesture streams are qualified for these controllers.
-        aim_only = controller.stem not in {"animCommando", "animHuntress"}
+        aim_only = controller.stem not in {"animCommando", "animHuntress", "animCaptain"}
         requested.update(additive_clip_guids(io.read_text(controller), aim_only=aim_only))
     clips = {}
     for meta in io.glob(root, "**/*.anim.meta"):

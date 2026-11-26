@@ -8066,7 +8066,7 @@ and full cancellation through `Neutral`.
 
 Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
 and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
-Commando and Huntress additive states and blend trees, plus other native AimPitch/AimYaw
+Commando, Huntress and Captain additive states and blend trees, plus other native AimPitch/AimYaw
 layers, resolves current catalog containers against accepted input hashes, and
 emits private source identities and Transform reference values through StageIO. The latter creates owned
 constant reference clips before bundle production and applies the original
@@ -8077,8 +8077,10 @@ there is no runtime owner. Code-only builds require unchanged source-pose inputs
 The current `commando-animation-host` action also verifies persisted reference
 curves and compares positions and directions on a frozen rig against the original
 clips. It samples Commando's muzzles and Huntress's torso, head and bow during
-aim, firing and hit reactions. Huntress firing and recovery play both gesture
-layers. The comparison overrides every controller clip with its original.
+aim, firing and hit reactions, and Captain's torso, head, gun and radio during
+aim, firing and call-ins. Huntress firing and recovery and Captain's selected
+gestures play both gesture layers. The comparison overrides every controller
+clip with its original, including Captain's shared Commando clips.
 Device aim, firing and hit-reaction presentation remain separate checks.
 
 `WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using RoR2;
@@ -114,33 +115,48 @@ public static class SurvivorSkillInputHost
     // clips on the same frozen rig. This does not qualify device presentation.
     public static object SampleCommandoAim() =>
         SampleSourcePoses("Commando", "mdlCommandoDualiesAvatar", new[] { "MuzzleLeft", "MuzzleRight" },
-                          new[] { "", "FirePistol, Left", "FirePistol, Right", "Flinch1" });
+                          new[] { ("", 0), ("FirePistol, Left", 1), ("FirePistol, Right", 1), ("Flinch1", 1) });
 
     public static object SampleHuntressGestures() =>
         SampleSourcePoses("Huntress", "mdlHuntressAvatar", new[] { "base", "chest", "head", "Muzzle", "BowStringIKTarget" },
-                          new[] { "", "FireSeekingShot", "FireSeekingShotToIdle", "Flinch1", "Flinch2", "Flinch3", "FlinchStart" });
+                          new[] { ("", 0), ("FireSeekingShot", 2), ("FireSeekingShotToIdle", 2),
+                                  ("Flinch1", 1), ("Flinch2", 1), ("Flinch3", 1), ("FlinchStart", 1) });
 
-    static object SampleSourcePoses(string survivor, string avatarName, string[] poseNames, string[] gestures)
+    public static object SampleCaptainGestures() =>
+        SampleSourcePoses("Captain", "mdlCaptainAvatar", new[] { "chest", "head", "MuzzleGun", "MuzzleHandRadio" },
+                          new[] { ("", 0), ("ChargeCaptainShotgun", 2), ("FireCaptainShotgun", 2),
+                                  ("FireTazer", 2), ("CallSupplyDrop", 2), ("CallAirstrike1", 2) }, "Commando");
+
+    const string SurvivorAssetRoot = "Assets/WholeGame/RoR2/Base/Characters/";
+
+    static object SampleSourcePoses(string survivor, string avatarName, string[] poseNames,
+                                    (string Name, int Layers)[] gestures, params string[] sharedClipSurvivors)
     {
-        string path = "Assets/WholeGame/RoR2/Base/Characters/" + survivor + "/";
+        string path = SurvivorAssetRoot + survivor + "/";
         string project = System.IO.Path.GetDirectoryName(Application.dataPath);
         var recipe = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(
             System.IO.Path.Combine(project, ".rebuild/source-animation-reference-poses.json")));
-        var row = recipe["clips"].First(x => ((string)x["clip"]).StartsWith(path, StringComparison.Ordinal));
         var config = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(
             System.IO.Path.Combine(System.IO.Directory.GetParent(project).FullName, "config/local.json")));
-        string bundlePath = System.IO.Path.Combine((string)config["game_path"], (string)row["source"]);
-        using (var stream = System.IO.File.OpenRead(bundlePath))
-        using (var digest = System.Security.Cryptography.SHA256.Create())
-            Require(BitConverter.ToString(digest.ComputeHash(stream)).Replace("-", "").ToLowerInvariant() == (string)row["source_sha256"],
-                    "Current native animation bundle changed since composition");
-        var bundle = AssetBundle.LoadFromFile(bundlePath);
-        Require(bundle, "Current native animation bundle could not load");
+        var bundles = new Dictionary<string, AssetBundle>();
         var parent = new GameObject("source-additive-sampling");
         parent.SetActive(false);
         AnimatorOverrideController overrides = null;
         try
         {
+            foreach (string owner in new[] { survivor }.Concat(sharedClipSurvivors))
+            {
+                string ownerPath = SurvivorAssetRoot + owner + "/";
+                var row = recipe["clips"].First(x => ((string)x["clip"]).StartsWith(ownerPath, StringComparison.Ordinal));
+                string bundlePath = System.IO.Path.Combine((string)config["game_path"], (string)row["source"]);
+                using (var stream = System.IO.File.OpenRead(bundlePath))
+                using (var digest = System.Security.Cryptography.SHA256.Create())
+                    Require(BitConverter.ToString(digest.ComputeHash(stream)).Replace("-", "").ToLowerInvariant() == (string)row["source_sha256"],
+                            "Current native animation bundle changed since composition: " + owner);
+                var bundle = AssetBundle.LoadFromFile(bundlePath);
+                Require(bundle, "Current native animation bundle could not load: " + owner);
+                bundles.Add(ownerPath, bundle);
+            }
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + survivor + "Body.prefab");
             Require(prefab, "Current source prefab missing: " + survivor);
             var body = UnityEngine.Object.Instantiate(prefab, parent.transform);
@@ -161,14 +177,15 @@ public static class SurvivorSkillInputHost
                 .Where(t => poseNames.Contains(t.name)).OrderBy(t => t.name).ToArray();
             Require(poseTransforms.Select(t => t.name).SequenceEqual(poseNames.OrderBy(name => name)),
                     "Current source pose transforms missing or ambiguous: " + survivor);
-            var nativeClips = bundle.LoadAllAssets<AnimationClip>();
+            var nativeClips = bundles.ToDictionary(pair => pair.Key, pair => pair.Value.LoadAllAssets<AnimationClip>());
             overrides = new AnimatorOverrideController(controller);
             var pairs = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>>();
             overrides.GetOverrides(pairs);
             for (int i = 0; i < pairs.Count; i++)
             {
                 var original = pairs[i].Key;
-                var native = nativeClips.FirstOrDefault(x => x.name == original.name);
+                var ownerClips = nativeClips.Single(pair => AssetDatabase.GetAssetPath(original).StartsWith(pair.Key, StringComparison.Ordinal)).Value;
+                var native = ownerClips.FirstOrDefault(x => x.name == original.name);
                 Require(native, "Current native comparison clip missing: " + original.name);
                 pairs[i] = new System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>(original, native);
             }
@@ -179,7 +196,7 @@ public static class SurvivorSkillInputHost
             foreach (bool native in new[] { false, true })
             {
                 animator.runtimeAnimatorController = native ? overrides : controller;
-                foreach (string gesture in gestures)
+                foreach (var gesture in gestures)
                     foreach (float cycle in new[] { 0f, .5f, .999f })
                         foreach (float time in new[] { 0f, .07f, .15f })
                         {
@@ -192,17 +209,16 @@ public static class SurvivorSkillInputHost
                             animator.SetFloat("aimYawCycle", cycle);
                             animator.Play("PitchControl", pitch, 0);
                             animator.Play("YawControl", yaw, 0);
-                            if (gesture.Length != 0)
+                            if (gesture.Layers != 0)
                             {
-                                int hash = Animator.StringToHash(gesture);
+                                int hash = Animator.StringToHash(gesture.Name);
                                 var layers = Enumerable.Range(0, animator.layerCount).Where(i => animator.HasState(i, hash)).ToArray();
-                                int expectedLayers = gesture.StartsWith("FireSeekingShot", StringComparison.Ordinal) ? 2 : 1;
-                                Require(layers.Length == expectedLayers, "Native gesture layers changed: " + gesture);
+                                Require(layers.Length == gesture.Layers, "Native gesture layers changed: " + gesture.Name);
                                 foreach (int layer in layers)
                                     animator.PlayInFixedTime(hash, layer, time);
                                 animator.Update(0);
                                 Require(layers.All(layer => animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == hash),
-                                        "Native gesture did not play: " + gesture);
+                                        "Native gesture did not play: " + gesture.Name);
                             }
                             animator.Update(0);
                             var values = poseTransforms
@@ -223,7 +239,7 @@ public static class SurvivorSkillInputHost
         {
             UnityEngine.Object.DestroyImmediate(parent);
             if (overrides) UnityEngine.Object.DestroyImmediate(overrides);
-            bundle.Unload(true);
+            foreach (var bundle in bundles.Values) bundle.Unload(true);
         }
     }
 
