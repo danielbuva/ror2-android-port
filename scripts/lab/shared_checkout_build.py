@@ -1,4 +1,4 @@
-"""Build a committed worktree through the primary checkout's prepared editor.
+"""Build a committed worktree through the primary checkout or an isolated lane.
 
 The canonical Unity mutex covers source checkout, ordinary ./dev build and source
 restoration. No authored file is patched and no Unity project is copied.
@@ -145,6 +145,22 @@ def wait_for_storage(primary, seconds):
         time.sleep(min(30, remaining))
 
 
+def build_isolated_lane(root, lane, facts, request, audio_selection):
+    environment = dict(os.environ, LAB_LANE=lane)
+    if audio_selection is not None:
+        from original_game_audio_build_hook import SELECTION_ENV
+
+        environment[SELECTION_ENV] = audio_selection
+    invoke(root, ["preflight", "--host-only"], env=environment, pass_fds=())
+    action = "whole-catalog-build" if request["full"] else "whole-catalog-code-build"
+    invoke(root, ["prototype", "--action", action], env=environment, pass_fds=())
+    receipt = Path(facts["checkout"]).parent / "latest-build.json"
+    published = json.loads(receipt.read_text())
+    if not published.get("success") or published.get("source", {}).get("commit") != request["source_commit"]:
+        raise RuntimeError("Lane publication does not match the requested build source")
+    return dict(success=True, receipt=str(receipt), apk=published["apk"], apk_sha256=published["apk_sha256"], payload_directory=published["payload_directory"])
+
+
 def run_request(request_path, *, dry_run=False, detach=False):
     """Supervise the existing build, retaining a terminal receipt on failure too."""
     request_path = Path(request_path).resolve(strict=True)
@@ -163,14 +179,25 @@ def run_request(request_path, *, dry_run=False, detach=False):
         if git(root, "rev-parse", "HEAD") != request["source_commit"]:
             raise RuntimeError("Requested build source no longer matches worktree HEAD")
         clean(root)
-        clean(primary)
+        lane = request.get("lane")
+        work = primary / "work"
+        if "lane" in request:
+            from build_lanes import read_lane
+
+            facts = read_lane(lane, root)
+            if not facts.get("complete"):
+                raise RuntimeError("Lane creation did not complete; remove and recreate it")
+            work = Path(facts["checkout"]) / "work"
+            result["lane"] = lane
+        else:
+            clean(primary)
         if type(request["full"]) is not bool:
             raise ValueError("full must be a boolean")
         audio_selection = None
         if "audio_selection" in request:
             from original_game_audio_build_hook import read_selection, work_path
 
-            work = (primary / "work").resolve(strict=True)
+            work = work.resolve(strict=True)
             audio_selection = request["audio_selection"]
             read_selection(work, work_path(work, audio_selection, "audio_selection"))
         storage_wait = request.get("storage_wait_seconds", 0)
@@ -209,7 +236,10 @@ def run_request(request_path, *, dry_run=False, detach=False):
             wait_for_storage(primary, storage_wait)
         if git(root, "rev-parse", "HEAD") != request["source_commit"]:
             raise RuntimeError("Requested build source changed during storage wait")
-        result.update(build_shared_checkout(root=root, code_only=not request["full"], audio_selection=audio_selection))
+        if lane:
+            result.update(build_isolated_lane(root, lane, facts, request, audio_selection))
+        else:
+            result.update(build_shared_checkout(root=root, code_only=not request["full"], audio_selection=audio_selection))
     except BaseException:
         if dry_run or detach:
             raise
@@ -230,7 +260,7 @@ def run_request(request_path, *, dry_run=False, detach=False):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Current: supervise a committed shared build from request JSON (source_commit, full, output).")
+    parser = argparse.ArgumentParser(description="Current: supervise a committed build from request JSON (source_commit, full, output, optional lane).")
     parser.add_argument("--request", type=Path, required=True)
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--dry-run", action="store_true", help="Validate source, paths and storage without editor actions")
