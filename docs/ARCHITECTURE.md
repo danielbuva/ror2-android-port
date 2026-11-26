@@ -6264,8 +6264,27 @@ For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner
 stops after converter output validation and native planning. Confirmed jobs
-return converter, resource-use and thermal receipts. The runner retrieves
-producer logs and available crash evidence before removing owned scratch.
+return converter, resource-use and thermal receipts. The runner writes the
+code receipt to `code-result.json` so the pinned `code.json` request remains
+available for replay. It retrieves producer logs, adjacent process timing
+receipts and available crash evidence before removing owned scratch. Android
+SDK Roslyn writes elapsed time and exit status beside its private compile logs,
+including a timing receipt on timeout.
+With `profile_resources: true` on a signed-code request, the same supervisor
+retains an attempt-local resource trace on the phone. Production temperature
+samples and subprocess start/end receipts share Android's BOOTTIME clock.
+The trace samples summed live descendant RSS and bytes available on the
+staging volume once per second. RSS can include shared pages, volume changes
+can include other activity, and short subprocesses may have no resource sample.
+The runner retrieves this trace beside the private process receipts and joins
+samples inside each subprocess window into the private `phase-resources.json`.
+Each row retains the process outcome, sample counts, longest gap between
+samples or window boundaries, observed temperature maxima, sampled tree RSS
+peak, and first, minimum and last sampled volume availability. Missing
+readings remain null. Parent and
+nested subprocess windows can overlap. Treat their elapsed times and samples
+as separate observations. A summary error is recorded alongside the raw
+evidence and leaves the producer outcome and cleanup intact.
 A signed-code request can pin an earlier retained toolhost by APK
 hash. The runner verifies the installed bytes and uses a same-signer Android
 update when the target differs. It removes only the current job's scratch for

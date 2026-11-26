@@ -388,6 +388,8 @@ class OwnerCodeNativeTests(unittest.TestCase):
             )
             self.assertEqual(json.loads((root / "logs/query.log").read_text()), {"value": 7})
             self.assertEqual((root / "logs/query.stderr.log").read_text().strip(), "diagnostic witness")
+            timing = json.loads((root / "logs/query.process.json").read_text())
+            self.assertGreater(timing["ended_boottime_seconds"], timing["started_boottime_seconds"])
 
     def test_linux_driver_child_is_quoted_and_policy_is_not_rewritten(self):
         with tempfile.TemporaryDirectory() as temporary:
