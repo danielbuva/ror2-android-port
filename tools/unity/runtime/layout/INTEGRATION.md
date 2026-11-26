@@ -10,8 +10,8 @@ this note does not authorize or claim that integration.
    conventions explicitly; refresh when the display or insets change.
 2. Construct authored `TouchLayoutDocument` defaults and `HudLayoutModel` defaults.
    Choose separate private file paths and use `LayoutPreferenceStore.LoadTouch`
-   / `LoadHud`. Only Missing means use defaults. Invalid/Unavailable requires an
-   honest recovery/error decision, not automatic overwrite or fabricated success.
+   / `LoadHud`. Missing means editable defaults. Invalid/Unavailable can use read-only
+   defaults, not automatic overwrite or fabricated success.
 3. For the editor, create `TouchLayoutEditor` and `TouchEditorGesture` with intended
    minimum pixel sizes. Pass editor-only Down/Move/Up events with stable pointer
    IDs. Caller chooses drag versus resize handle. Call CancelPointer on pointer
@@ -35,7 +35,7 @@ this note does not authorize or claim that integration.
 Publishing-host command (must execute actual C# tests, not just skip):
 
 ```
-python3 -m unittest -v tests.test_layout_projection tests.test_touch_layout_document tests.test_hud_layout_model tests.test_layout_preference_store tests.test_touch_editor_gesture tests.test_layout_editor_journey
+python3 -m unittest -v tests.test_layout_projection tests.test_touch_layout_document tests.test_hud_layout_model tests.test_layout_preference_store tests.test_touch_editor_gesture tests.test_layout_editor_journey tests.test_touch_layout_session
 ```
 
 Device acceptance remains open: real safe-area/orientation changes, multitouch and
@@ -47,3 +47,15 @@ The composed authored journey additionally exercises cancel-before-first-save,
 commit/save/restart, interrupted display changes, failed durable save with an
 unchanged prior file and retained retryable memory, independent HUD persistence,
 and corrupt restart refusal. It is model/file evidence, not an Android UI test.
+
+The host-only `TouchLayoutSession` now provides the lifecycle boundary for the
+touch editor. Construct it at startup with the actual feature gate, defaults and
+one private store. Render `Current` outside the editor, and render
+`EditorDocument` plus `Draft` inside it. Route only editor pointers to the
+session; use `CancelGesture` when geometry or focus changes. Use
+`SaveAndClose` for a deliberate save/exit, and keep the editor open on failure
+for retry or discard. Unchanged exits do not touch disk. Use
+`DiscardAndClose` for cancellation or teardown. An invalid or unavailable file
+keeps defaults visible but blocks editing without repairing or overwriting the
+file; report `StartupState` rather than saying the owner's layout loaded.
+The caller still owns feature-flag lookup, Unity staging and device behavior.

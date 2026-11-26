@@ -8262,3 +8262,9 @@ bottom-right-resize transactions over `TouchLayoutEditor`; interruption cancels
 rather than committing stale display coordinates. It neither dispatches gameplay
 input nor writes files. The layout `INTEGRATION.md` lists entry points and remaining
 live wiring/device acceptance for the gameplay owners.
+
+`TouchLayoutSession.cs` composes the authored touch owners at the startup and
+explicit editor-exit boundary. It loads once when enabled, separates editor
+changes from the applied layout until a successful save, and leaves corrupt
+or unavailable stores untouched while returning read-only defaults. This is a
+host-validated controller, not a staged Unity settings or touch HUD entry point.
