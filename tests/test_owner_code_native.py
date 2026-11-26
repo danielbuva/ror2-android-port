@@ -151,6 +151,19 @@ class OwnerCodeNativeTests(unittest.TestCase):
             with patch.object(NATIVE, "paused_seconds", side_effect=samples), self.assertRaisesRegex(ValueError, "reset or exceeds"):
                 NATIVE.wait_active(Mock(), 100, Path("clock"), {})
 
+    def test_invocation_uses_phone_supervisor_pause_clock(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "logs").mkdir()
+            clock = root / "pause.json"
+            clock.write_text(json.dumps({"paused_seconds": 10, "paused_at": None}))
+            with patch.dict(NATIVE.os.environ, ROR2LAB_BUILD_PAUSE_CLOCK=str(clock)):
+                NATIVE.invoke([sys.executable, "-c", "pass"], root, "compile", pause_clock=root / "absent")
+            receipt = json.loads((root / "logs/compile.process.json").read_text())
+            self.assertEqual(receipt["exit_code"], 0)
+            self.assertEqual(receipt["paused_seconds"], 0)
+            self.assertGreaterEqual(receipt["active_seconds"], 0)
+
     def test_resume_reuses_498_receipts_and_only_compiles_missing_jobs(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

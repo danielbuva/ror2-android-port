@@ -193,14 +193,28 @@ extents, indexes and final type tables supply original source, pack output and
 destination identities. Public policy declares candidate bindings, address groups,
 exceptional field routes and canonical pairs. The owner derives reached records,
 staged endpoints, complete types, routes and independent preloads. It writes
-retained PPtr-only relocation packs before invoking the unchanged structural
-emission boundary. Retained suppliers bind their own receipt-pinned type tables;
+retained PPtr-only relocation packs before invoking the structural emission
+boundary. Destinations that share a supplier record keep separate relocation
+packs so each can bind its own checked field routes to the same source lineage.
+Retained suppliers bind their own receipt-pinned type tables;
 an explicit `pointer_namespace` declares their already-relocated member table.
 Setup opens declared original and staged members; teardown closes streams on
 success or failure. Preparation retains pins and emits the existing request,
 including original script properties and canonical body-identity witnesses.
 MonoScripts retain their own source selectors, separate from behaviour hash
-schemas. Null-script witnesses pin the original body, and SDK resource members
+schemas. The release graph can bind an original MonoScript selector to a
+receipt-produced player registry record. Preparation verifies the assembly,
+namespace, class and native type of both records. A pinned, pointer-free
+original layout supplies the type tree when the player registry omits it.
+The emitted body and script properties come from the current registry.
+The whole-game registry pack consumes the final `player_data.py` receipt
+and its `globalgamemanagers.assets` output. Whole-game original record and
+texture selector profiles use `record_produce.py` and `texture_produce.py`.
+Their original path, member and path ID select the source body before the
+release graph binds the resulting typed pack to a preload destination.
+The producers close their source readers and retain the pack and receipt
+for preparation. Full member closure and typed load remain separate gates.
+Null-script witnesses pin the original body, and SDK resource members
 remain external references without becoming AssetBundle dependencies.
 `bundle_preload.py --release REQUEST --output NEW_DIRECTORY` materializes the
 signed policy, prepares fresh suppliers and runs the same checked emitter and
@@ -640,12 +654,14 @@ Lab authoring policy, binds the fresh registry/shared file and writes `level0`.
 `scene_sdk.py` reads paired ARM64 SDK code/symbol files to derive native tag
 registrations; shared `manager_sdk.py` owns constant argument decoding. Source
 schemas, SDK Cube identity, material parameters and every direct reference are
-checked. Setup supplies explicit environment result/request/bundle/image inputs
-and a new output; teardown closes readers/maps, retaining records, schemas and
-provider receipts under `default-scene-source/`. The player-data parent consumes
-its own fresh registry/shared outputs and adds the produced file. Native HDR,
-ambient and default-scene loading compatibility remain open; no raw-exact
-historical closure or game-runtime owner is added.
+checked. The staged release uses the original RenderSettings and its linked
+Cubemap stream. The existing native pixel decoder converts all BC6H face/mip
+chains to inline RGBAHalf. RenderSettings retains its ambient coefficients and
+indirect specular color. The capture path remains available with explicit
+result/request/bundle/image inputs. The player-data parent adds the produced file
+and closes readers, retaining schemas and provider receipts under
+`default-scene-source/`. Exact-editor loading and device visual acceptance of
+the original lighting remain open.
 `stage_contexts.py` owns original-record population and identity context production.
 `recipe/owner-stage-contexts.json` pins original scenes/catalog/pool suppliers and
 selects the existing global-root suppression policy. The shared
@@ -1580,6 +1596,10 @@ graph by their compressed hash and header; the existing record owner streams
 their source groups at execution. Explicit extra argv selects acquired public tools; unresolved
 profiles fail before staging. Generated JSON is overlaid into the release source
 checkout and audited/committed before the existing tracked-only publisher runs.
+`--install-plan` binds the reviewed original-input manifest and workspace budget
+to that graph. It assigns each job to the earliest eligible production stage,
+after its suppliers. Authoring reports missing admitted input bindings across
+the closure before validating the resulting plan with the installer owners.
 The graph's optional `--bundle-manifest` fans every selected payload bundle into
 `bundle_manifest.py` through declared path, digest and integer byte-size artifacts.
 The existing native owner reads actual bundle dependencies and rejects missing
@@ -1590,6 +1610,19 @@ input-file hash tokens bind acquired tools without embedding host paths.
 Fresh conversion bundle and shader jobs use the installer-packaged LZ4 worker.
 The dispatcher pins its installed file and includes that hash in consumer cache
 identity. The installer verifies its packaged native tool inventory on launch.
+The shared Shader template reader accepts a revision-scoped staged AssetRipper
+tree. Fresh conversion jobs select that tree under `acquired/asset-ripper`, pin
+template files and retained license notices for cache reuse, and verify the
+recipe's template hashes again before using the text.
+Fresh shader producers share a `sdk_inputs.py --linux-shader` dependency. It
+verifies the acquired Linux SDK archive and extracts the compiler and three
+plugins into their `Data/Tools` layout. The same shader session owner runs this
+compiler through installed QEMU and the acquired GNU runtime, with the pinned
+Mac SDK supplying metadata and includes. The session stops its compiler child
+and retains diagnostics when the job exits.
+The shader job that uses legacy metadata reads its pinned files from the private
+`acquired/unity-legacy-sdk/Contents` tree. Those files join its cache identity,
+and the producer verifies the separately acquired include set during production.
 Player/shader jobs declare complete serialized outputs; remapping consumes their
 top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the
@@ -1657,6 +1690,8 @@ cache readback. This archive stays separate from the original-game inventory
 and the compiler/editor SDK tree. The existing extractor owns verification,
 private output creation and terminal receipts. SDK packaging can pin its
 separately supplied platform and tool files with request cache witnesses.
+The phone SDK request binds private acquired tools and the installed JVM and
+QEMU. The SDK job hashes those tools and the guest libraries before cache reuse.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host
@@ -1664,6 +1699,9 @@ keeps generated descriptors and caller-owned producer results. The managed-host
 check/prepare/import/build/install/resume actions to durable worker/install state.
 `onResume` registers the install-state observer and 500 ms refresh; `onPause`
 removes both. `OwnerUpdateState.java` owns Android-free presentation policy;
+its fresh `Screen` snapshot binds progress guidance and all Activity actions to
+current worker, consent, recovery and import-receipt facts. A failed import file
+is not build admission, and retained recovery disables Resume and other work.
 its `StatusRender` coalesces changing same-phase text to two seconds while
 rendering phase changes immediately. Sampling and durable work remain separate.
 `OwnerInstaller.java` owns PackageInstaller sessions, streamed hashing,
@@ -2149,7 +2187,10 @@ retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
 When a signed conversion declares audio members, its managed, ABI and audio
-stages share the provisioned owner workspace. The ABI stage pins the export
+stages share the provisioned owner workspace. The signed source index includes
+the shared rebuild recipe tables used at startup. Python imports resolve from
+the staged source tree, and the ABI writer receives the canonical app workspace
+for output admission. The ABI stage pins the export
 set from the ARM64 ELF reader. The managed manifest verifies this export set
 alongside the original declarations and native plugin. The bank stage derives
 the decoder-free index and runs `scripts/lab/wwise_init_platform.py` in the same
@@ -3094,6 +3135,13 @@ resolves owned DLLs before omitting exporter DLLs and supplies WholeGame default
 for remaining source identities. Host contracts feed that mapping to
 `integration_metadata`; the J850 metadata projection comparison passes, while final
 catalog production remains open. The later importer-identities stage is excluded.
+Signed catalog requests can select a projection policy and consume the original
+catalog emitted by managed-code production. `catalog_complete` joins that catalog
+to selected bundle profiles by asset path and explicit relocations, retains the
+original typed key ordering, and applies the pinned exclusions, root roles and
+mesh aliases. The source input identity and catalog hash bind that policy. The
+same invocation verifies actual Android containers and MonoScripts before writing
+the runtime catalog. Retained metadata remains available for historical requests.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Ordinary launcher startup selects
@@ -4088,14 +4136,14 @@ payloads before staging. Requested stages also package the exact bank-cohort
 receipt at `Assets/StreamingAssets/stage-receipt.json`, the URL consumed by
 `GameAudioOriginalPayloadCopy`; the separate `Lab/OriginalGameAudioStageReceipt.json`
 records project ownership. Historical 164/165-output bank-only stages remain
-recognized for exact owned upgrades. Current R2 bank receipts keep 154 bank rows
-and add a separate 120-row streamed-media closure; the artifact/project receipt
-owns canonical `Media/<id>.wem` targets as a distinct role. The shared validator
-binds source metadata, exact paths, IDs, references, hashes and sizes before writes.
-`generators/original_media_plan.py` owns the pure selected-bank media plan,
-checking both bank-index and SoundbanksInfo modes against the full accepted
-inventory. `stage_original_game_banks.py` snapshots original media bytes as well
-as banks into a new ignored stage root; no source game input is modified.
+recognized for exact owned upgrades. The shared bank stager packages the full
+accepted bank index for lab and converted APKs. The generated runtime pin keeps
+the 153 WwiseGlobal startup names. The stage receipt also binds dynamically
+loaded banks, adapted Init and canonical `Media/<id>.wem` targets.
+`generators/original_media_plan.py` checks the bank index and SoundbanksInfo
+against the accepted inventory. A non-streamed OtherBank reference resolves to
+embedded media in a packaged bank. `stage_original_game_banks.py` snapshots
+original banks and loose media into a new ignored stage root.
 `GameAudioOriginalPayloadCopy` validates the request-bound receipt, checks existing
 payloads and available bytes on the actual persistent filesystem, then copies
 through verified temporary siblings before original Wwise initialization.
@@ -6172,11 +6220,19 @@ For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner
 stops after converter output validation and native planning. Confirmed jobs
-return converter, resource-use and thermal receipts and remove the owned test
-install. Uncertain jobs retain the exact handle. Signed release conversion
-descriptors bind the installed Android tools and witness them before cache
-reuse. Nested managed producers use the embedded Python host's argument format
-through `scripts/lab/phone_sdk_compiler.py`.
+return converter, resource-use and thermal receipts. The runner retrieves
+producer logs and available crash evidence before removing owned scratch.
+A signed-code request can pin an earlier retained toolhost by APK
+hash. The runner verifies the installed bytes and uses a same-signer Android
+update when the target differs. It removes only the current job's scratch for
+a retained toolhost. Uncertain jobs retain the exact handle. The signed release graph binds
+installed Android tools and their toolhost data manifest for conversion and native
+compilation. When a Burst request accompanies the signed audio roster, the code
+owner checks its preservation roots before stripping the same managed cohort and
+emits the library as a release entry. Native tool invocations take their timeout
+clock from the phone supervisor, accounting for thermal pauses. Nested managed
+producers use the embedded Python host's argument format through
+`scripts/lab/phone_sdk_compiler.py`.
 
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
@@ -6535,6 +6591,9 @@ prints its absolute done-file for dispatcher wakeup; it adds no device actions.
 Optional `storage_wait_seconds` (0–3600, default 0) admits a bounded wait for
 100 GiB headroom before taking the editor mutex. Dry-run reports storage
 readiness; the full build still enforces its storage gate under the mutex.
+Optional `audio_selection` selects a validated audio configuration path
+relative to `work/` for this build and its source scenes. The shared default
+remains available to other build requests.
 
 Teardown restores the original primary branch/commit after success or failure.
 Unexpected edits or moved refs refuse restoration and preserve those files for
@@ -7800,6 +7859,13 @@ native runtime qualification, Android execution and device loadability remain op
 Release-graph Shader jobs with pinned template inputs receive the explicit public
 AssetRipper Git provider. Existing Shader owners validate its revision and resource
 hashes before compiling; the dispatcher retains the resulting pack and receipt.
+For native player Shader recovery, the signed graph supplies the installed
+`libd3dasm.so` and `libhlsl-decompiler.so` executables and their verified hashes.
+The dispatcher binds both files to the job cache identity. `shader_produce.py`
+checks the actual executables before and after production and keeps their hashes
+in its receipt. The host can still build the fallback core from its pinned Git
+source. The [managed host build](../tools/phone-build/managed-host/README.md)
+packages the Android executables. Phone execution remains open.
 
 The existing `record_produce.py` native owner also preserves source release
 LightingSettings and OcclusionCullingData. It parses the complete pointer-free
@@ -7959,3 +8025,37 @@ the existing five-second report cadence. The latest `NovaReport` sample records
 the display camera, renderer state, projected bounds, mesh and first shared
 material. The sample holds no Unity references and works with native skin
 diagnostics disabled.
+
+
+## Host-only owner layout models
+
+`tools/unity/runtime/layout/LayoutProjection.cs` owns pure C# safe-area geometry
+for future editor models. Its top-left normalized contract, explicit clamp and
+rotation are documented beside the source and exercised by host C# fixtures.
+It has no UnityEngine dependency or live touch/HUD/input integration. Caller-owned
+insets and aspect changes are data, not detected device facts.
+
+`TouchLayoutDocument.cs` beside that projection owns immutable authored touch
+profiles and bounded versioned interchange; `TouchLayoutEditor` owns selected
+control drafts, confirm/cancel/reset and bounded session undo/redo. Caller-owned
+persistence is separate from in-memory commits. Neither owner dispatches input,
+changes live controls or claims rendered geometry; see the layout README contract.
+
+`HudLayoutModel.cs` owns separate immutable HUD defaults, sparse per-profile group
+preferences and anchor-aware safe-area scale projection. `HudLayoutEditor` owns
+preview/confirm/cancel/reset/import transactions. Scene callers select group IDs;
+projection does not mutate stored preferences. The model has no runtime renderer,
+input dependency or persistence side effects and uses only the geometry owner.
+
+`LayoutPreferenceStore.cs` is the optional caller-owned-path persistence adapter
+for both layout formats. It distinguishes missing/default from invalid/unavailable
+loads and uses flushed same-directory temporary files plus atomic replace, never
+delete-then-move. Invalid existing data is preserved for explicit caller recovery.
+The adapter is independent of live settings/UI; cross-process ownership, path
+security and physical durability qualification belong to its eventual integrator.
+
+`TouchEditorGesture.cs` owns editor-only hit selection and single-pointer drag or
+bottom-right-resize transactions over `TouchLayoutEditor`; interruption cancels
+rather than committing stale display coordinates. It neither dispatches gameplay
+input nor writes files. The layout `INTEGRATION.md` lists entry points and remaining
+live wiring/device acceptance for the gameplay owners.

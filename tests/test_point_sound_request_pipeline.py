@@ -308,6 +308,11 @@ class RequestPipelineTests(unittest.TestCase):
                 digest = write(output_dir / f"{name}.bnk", data)
                 plan.append({"output_filename": f"{name}.bnk", "requested_name": name, "source_sha256": digest, "size_bytes": len(data)})
                 outputs.append({"filename": f"{name}.bnk", "requested_name": name, "sha256": digest, "size_bytes": len(data)})
+            startup_names = [row["requested_name"] for row in plan]
+            scene_data = b"scene bank"
+            scene_digest = write(output_dir / "zoneTundra.bnk", scene_data)
+            plan.append({"output_filename": "zoneTundra.bnk", "requested_name": "zoneTundra", "source_sha256": scene_digest, "size_bytes": len(scene_data)})
+            outputs.append({"filename": "zoneTundra.bnk", "requested_name": "zoneTundra", "sha256": scene_digest, "size_bytes": len(scene_data)})
             write(output_dir / "Init.bnk", b"init")
             outputs.append({"filename": "Init.bnk", "sha256": hashlib.sha256(b"init").hexdigest(), "size_bytes": 4})
             media_rows = []
@@ -339,7 +344,7 @@ class RequestPipelineTests(unittest.TestCase):
             }
             receipt_path = work / "stage-receipt.json"
             receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
-            runtime.source_plan = lambda *args, **kwargs: plan
+            runtime.source_plan = lambda *args, **kwargs: (plan, startup_names)
             runtime.streamed_media_rows = lambda value, **kwargs: value["streamed_media"]
             output = work / "generated/StagePin.cs"
             result = runtime.generate(receipt_path, stage_root, output, prefab, bank_index, init_file, init_receipt)
@@ -347,6 +352,7 @@ class RequestPipelineTests(unittest.TestCase):
             self.assertEqual(153, result["bank_count"])
             self.assertEqual(120, result["streamed_media_count"])
             self.assertEqual(153, output.read_text(encoding="utf-8").count('"Bank'))
+            self.assertNotIn("zoneTundra", output.read_text(encoding="utf-8"))
 
             owner_output = work / "generated/OwnerStagePin.cs"
             with self.assertRaisesRegex(ValueError, "source pin mismatch"):

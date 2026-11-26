@@ -11,6 +11,7 @@ import math
 from pathlib import Path
 import re
 import struct
+import subprocess
 import time
 
 HERE = Path(__file__).resolve().parent
@@ -129,7 +130,58 @@ def environment(store, selected, result, request, images, bundle):
         pixels[row["face"], row["mip"]] = raw
     ambient = value["ambient"]
     U.require(len(ambient) == 27 and all(math.isfinite(v) for v in ambient), "invalid source ambient coefficients")
-    return b"".join(pixels[f, m] for f in range(6) for m in range(8)), ambient
+    indirect = dict(r=ambient[0], g=ambient[9], b=ambient[18], a=1)
+    return b"".join(pixels[f, m] for f in range(6) for m in range(8)), ambient, indirect
+
+
+def original_environment(store, selected, settings, cube, decoder):
+    """Decode the original linked probe without regenerating its lighting."""
+    render = M.G.native_fields(settings, U)
+    texture = M.G.native_fields(cube, U)
+    U.require(
+        settings.type.value == 104
+        and cube.type.value == 89
+        and settings.asset is cube.asset
+        and render["m_GeneratedSkyboxReflection"] == pointer(cube.path_id),
+        "original RenderSettings does not link the scene Cubemap",
+    )
+    ambient = [render["m_AmbientProbe"][f"sh[{index:2}]"] for index in range(27)]
+    indirect = render["m_IndirectSpecularColor"]
+    U.require(all(math.isfinite(v) for v in [*ambient, *indirect.values()]), "nonfinite original environment coefficients")
+    width = selected["environment"]["width"]
+    U.require(
+        (texture["m_TextureFormat"], texture["m_ImageCount"], texture["m_TextureDimension"], texture["m_MipCount"], texture["m_MipsStripped"])
+        == (24, 6, 2, 8, 0)
+        and texture["m_Width"] == texture["m_Height"] == width,
+        "unsupported original BC6H Cubemap layout",
+    )
+    mips = [(max(1, width >> mip), ((max(1, width >> mip) + 3) // 4) ** 2 * 16) for mip in range(8)]
+    stride = sum(size for _, size in mips)
+    stream = selected["environment"]["stream"]
+    backing = texture["m_StreamData"]
+    U.require(
+        not texture["image data"]
+        and texture["m_CompleteImageSize"] == stride
+        and backing == dict(offset=0, size=stride * 6, path=Path(stream["path"]).name)
+        and stream["bytes"] == backing["size"],
+        "original BC6H Cubemap stream extent differs",
+    )
+    source = U.P.OBJECTS.M.safe_input(store.pc, stream["path"])
+    store.pin(source, stream)
+    store.pin(decoder[0], dict(sha256=decoder[1]))
+    pixels = []
+    with source.open("rb") as data:
+        for face in range(6):
+            for mip, (edge, size) in enumerate(mips):
+                body = U.W.B.exact(data, size)
+                result = subprocess.run([str(decoder[0]), str(edge), str(edge), "bc6-half"], input=body, capture_output=True, timeout=30)
+                U.require(
+                    result.returncode == 0 and len(result.stdout) == edge * edge * 8,
+                    f"BC6H decoder failed for Cubemap face {face}, mip {mip}: {result.stderr.decode(errors='replace')}",
+                )
+                U.require(all(all(math.isfinite(v) for v in pixel) for pixel in struct.iter_unpack("<4e", result.stdout)), "nonfinite original Cubemap pixels")
+                pixels.append(result.stdout)
+    return b"".join(pixels), ambient, indirect
 
 
 def runtime_script(store, shapes, native, registry):
@@ -153,7 +205,7 @@ def runtime_script(store, shapes, native, registry):
     return sid, typ, U.node_from_tree(tree)
 
 
-def construct(selected, templates, camera, gi, tags, mesh, script, pixels, ambient):
+def construct(selected, templates, camera, gi, tags, mesh, script, pixels, ambient, indirect):
     roles, nodes = [], {}
     for node in selected["nodes"]:
         name = node["name"]
@@ -212,7 +264,7 @@ def construct(selected, templates, camera, gi, tags, mesh, script, pixels, ambie
                 m_SkyboxMaterial=pointer(selected["skybox_id"], 1),
                 m_GeneratedSkyboxReflection=pointer(ids["$/Cubemap"]),
                 m_AmbientProbe=dict(zip(original["m_AmbientProbe"], ambient)),
-                m_IndirectSpecularColor=dict(r=ambient[0], g=ambient[9], b=ambient[18], a=1),
+                m_IndirectSpecularColor=indirect,
             )
         elif cid == 157:
             changes = dict(m_GISettings=M.SET.project(copy.deepcopy(original["m_GISettings"]), gi["m_GISettings"]), m_LightingSettings=pointer())
@@ -282,8 +334,9 @@ def emit(records, sid, output):
     (output / "objects.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
 
-def produce(profile_path, profile_sha256, pc, sdk, editor_resources, registry, shared, captured, output):
+def produce(profile_path, profile_sha256, pc, sdk, editor_resources, registry, shared, captured, output, decoder=None):
     started = time.monotonic()
+    U.require(bool(captured) != bool(decoder), "select either the original Cubemap decoder or a complete source lighting capture")
     output, sdk = Path(output), Path(sdk)
     output.mkdir(exist_ok=False)
     with closing(M.Sources(pc)) as store:
@@ -315,9 +368,9 @@ def produce(profile_path, profile_sha256, pc, sdk, editor_resources, registry, s
         resource = store.asset_file(defaults, "sdk-default")
         meshes = [pid for pid, obj in resource.objects.items() if obj.type.value == 43 and M.G.native_fields(obj, U)["m_Name"] == "Cube"]
         U.require(len(meshes) == 1, "SDK primitive Cube identity is ambiguous")
-        pixels, ambient = environment(store, selected, *captured)
+        lighting = original_environment(store, selected, templates[104], templates[89], decoder) if decoder else environment(store, selected, *captured)
         script = runtime_script(store, assets["shapes"], native, generated_registry)
-        records = construct(selected, templates, *bootstrap(public["bootstrap"]), tags, meshes[0], script, pixels, ambient)
+        records = construct(selected, templates, *bootstrap(public["bootstrap"]), tags, meshes[0], script, *lighting)
         # Check every direct PPtr against the actual selected native/script provider.
         providers = {1: generated_shared, 2: resource, 3: generated_registry}
         local = {r["id"]: r for r in records}
@@ -342,6 +395,7 @@ def produce(profile_path, profile_sha256, pc, sdk, editor_resources, registry, s
             references=len(references),
             builtin_tags=tags,
             provider_pins=store.pins,
+            environment_source="original-level0" if decoder else "native-capture",
             historical_raw_exact=False,
             phone_qualified=False,
             runtime_qualified=False,
@@ -353,11 +407,17 @@ def produce(profile_path, profile_sha256, pc, sdk, editor_resources, registry, s
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("profile", "profile-sha256", "pc-root", "sdk", "editor-resources", "environment-images", "output"):
+    for name in ("profile", "profile-sha256", "pc-root", "sdk", "editor-resources", "output"):
         parser.add_argument("--" + name, required=True)
-    for name in ("registry", "shared-defaults", "environment-result", "environment-request", "environment-bundle"):
+    for name in ("registry", "shared-defaults"):
         parser.add_argument("--" + name, nargs=2, metavar=("PATH", "SHA256"), required=True)
+    for name in ("environment-result", "environment-request", "environment-bundle", "environment-decoder"):
+        parser.add_argument("--" + name, nargs=2, metavar=("PATH", "SHA256"))
+    parser.add_argument("--environment-images", type=Path)
     args = parser.parse_args()
+    captured, decoder = (args.environment_result, args.environment_request, args.environment_images, args.environment_bundle), args.environment_decoder
+    if (bool(decoder) and any(captured)) or (not decoder and not all(captured)):
+        parser.error("supply the original Cubemap decoder or all four environment capture inputs")
     print(
         json.dumps(
             produce(
@@ -368,8 +428,9 @@ def main():
                 args.editor_resources,
                 args.registry,
                 args.shared_defaults,
-                (args.environment_result, args.environment_request, args.environment_images, args.environment_bundle),
+                captured if all(captured) else None,
                 args.output,
+                decoder,
             )
         )
     )

@@ -160,6 +160,26 @@ class SharedCheckoutBuildTests(unittest.TestCase):
         build.assert_not_called()
         self.assertFalse(output.exists())
 
+    def test_request_selects_audio_for_preflight_and_build(self):
+        from original_game_audio_build_hook import SELECTION_ENV, SELECTION_SCHEMA
+
+        request, _ = self.request()
+        selection = self.primary / "work/config/test-audio.json"
+        selection.parent.mkdir(parents=True)
+        selection.write_text(json.dumps(dict(schema=SELECTION_SCHEMA, requested=False)))
+        data = json.loads(request.read_text())
+        data["audio_selection"] = "config/test-audio.json"
+        request.write_text(json.dumps(data))
+
+        def invoke(root, arguments, *, env, pass_fds):
+            self.assertEqual(env[SELECTION_ENV], data["audio_selection"])
+            self.invoke(root, arguments, env=env, pass_fds=pass_fds)
+
+        with patch.object(shared, "ROOT", self.worker), patch.object(shared, "invoke", side_effect=invoke):
+            self.assertTrue(shared.run_request(request, dry_run=True)["smoke"])
+            self.assertTrue(shared.run_request(request)["success"])
+        self.assertEqual(len(self.calls), 2)
+
     def test_request_failure_retains_terminal_after_source_restoration_and_prune(self):
         request, output = self.request()
         # A real failing preflight exercises restoration, then the tracked

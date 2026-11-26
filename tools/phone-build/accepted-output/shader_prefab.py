@@ -10,7 +10,6 @@ from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
-import subprocess
 import sys
 import time
 
@@ -148,7 +147,7 @@ def particle_selections(source, original, material):
     return A.particles_selections(source, [material], None, carrier=original, stripped_keywords=features - enabled)
 
 
-def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, output, comparison="exact"):
+def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, output, comparison="exact", *, compiler_command=None, compiler_data=None):
     if comparison not in ("exact", "diagnostic"):
         raise ValueError("unknown target comparison policy")
     import UnityPy
@@ -183,13 +182,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
     if any(row["kind"] == "dummy" for row in profile["records"]):
         if asset_ripper is None:
             raise ValueError("Prefab dummy requires explicit public template provider")
-        for name, pin in profile["template_inputs"].items():
-            raw = subprocess.check_output(
-                ["git", "-C", str(asset_ripper), "show", profile["exporter_revision"] + ":Source/AssetRipper.Export.UnityProjects/Shaders/Templates/" + name]
-            )
-            if len(raw) != pin["bytes"] or hashlib.sha256(raw).hexdigest() != pin["sha256"]:
-                raise ValueError("Prefab Shader public template differs")
-            templates[name] = raw.decode().replace("\r", "")
+        templates = P.asset_ripper_templates(asset_ripper, profile)
     originals, sdk_objects = {}, {}
 
     def original(selected, class_name="Shader"):
@@ -265,11 +258,9 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
     types, type_ids = [], {}
     try:
         if templates:
-            (output / "AssetRipper-LICENSE.md").write_bytes(
-                subprocess.check_output(["git", "-C", str(asset_ripper), "show", profile["exporter_revision"] + ":LICENSE.md"])
-            )
+            (output / "AssetRipper-LICENSE.md").write_bytes(P.asset_ripper_file(asset_ripper, profile["exporter_revision"], "LICENSE.md"))
         with (
-            compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler", includes=[sdk / "CGIncludes"]) as connection,
+            P.compiler_session(compiler, sdk, output / "compiler", compiler_command=compiler_command, compiler_data=compiler_data) as connection,
             W.codec(codec, codec_pin) as compress,
             (output / "objects.bin").open("wb") as data,
             (output / "index.jsonl").open("w") as index,
@@ -414,6 +405,7 @@ def main():
         default="exact",
         help="Record historical output byte differences while retaining source and structural checks",
     )
+    P.add_compiler_arguments(parser)
     args = parser.parse_args()
     print(
         json.dumps(
@@ -427,6 +419,8 @@ def main():
                 args.codec_sha256,
                 args.output,
                 comparison=args.comparison,
+                compiler_command=args.compiler_command,
+                compiler_data=args.compiler_data,
             )
         )
     )

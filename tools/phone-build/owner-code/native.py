@@ -391,6 +391,9 @@ def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600,
 
     previous = {}
     try:
+        supervisor_clock = os.environ.get("ROR2LAB_BUILD_PAUSE_CLOCK")
+        if supervisor_clock:
+            pause_clock = canonical(supervisor_clock)
         for signum in (signal.SIGTERM, signal.SIGINT):
             previous[signum] = signal.signal(signum, interrupted)
         with ExitStack() as stack:

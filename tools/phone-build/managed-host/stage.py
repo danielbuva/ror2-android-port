@@ -234,9 +234,7 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         bind(SOURCE.parent / name, "repo/tools/phone-build/" + name)
     if owner_backend:
         names = (
-            subprocess.check_output(
-                ["git", "ls-files", "-z", "--", "scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "AGENTS.md", "dev"], cwd=root
-            )
+            subprocess.check_output(["git", "ls-files", "-z", "--", "scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "dev"], cwd=root)
             .decode()
             .split("\0")
         )

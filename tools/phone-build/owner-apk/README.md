@@ -457,6 +457,9 @@ Job schema 1 names an existing producer `script`, argument array, complete
 `outputs` map and optional `request`, prerequisite `needs` and named `artifacts`;
 `release_jobs.py` defines substitutions and checks dependency membership.
 Provision legitimate inputs through the existing owner-input flow, not releases.
+Each supported version's signed inventory must cover every original-file or
+directory binding in the install plan. Release authoring and installer
+preparation reject an incomplete binding before offering the import.
 
 **Install owner-built update** reuses PR #119's `OwnerInstaller` session owner.
 It checks the actual package, increasing version and retained signing certificate,
@@ -760,13 +763,16 @@ the original-input code owner through conversion and native planning. Its
 request selects `"${output}"`. A fixed `target` selects a profile and authored
 source root inside the signed `"${repo}"`. Omitting it signs the current runtime
 and audio producer sources. A signed audio conversion uses the provisioned
-owner workspace and the ARM64 ELF export reader. Its managed compiler requires
-the macOS SDK tools. Schedule `owner-code-conversion.json` in assembly
+owner workspace, the ARM64 ELF export reader and the installed Android .NET
+and Clang tools with the pinned Unity SDK. Schedule `owner-code-conversion.json` in assembly
 before its player consumer and `owner-native-code.json` in native when selected.
 The player uses the conversion receipt, the managed payload and the resource
 files from this job. Its registry request carries the original package and source
-selections. The three native inputs are the conversion receipt, metadata and
-compressed source directory. SDK and package acquisition must supply the request's
+selections. The native job consumes the conversion receipt, metadata and compressed
+sources. With signed audio, it inherits the conversion SDK and installed Android
+tools when its own request leaves the tool selection open. Both jobs witness the
+installed tool binaries and the toolhost data manifest for cache reuse. SDK and
+package acquisition must supply the request's
 canonical local inputs first, including the fixed target's `input-hashes.json`
 next to the packages directory. Include that package inventory as a cache witness
 when composing the player. The request templates may include `cache_witnesses`, a list
@@ -789,19 +795,21 @@ the staged Wwise banks, streamed media, receipt and licensed ARM64 library to
 the signed APK entries. Pair it with the current `--code-request` and its
 `--native-request`. The graph reads only relative member names from the host
 stage for publication. The code producer derives and verifies the actual audio
-cohort from the owner's inputs, and its own receipt supplies the compiled
-runtime pin and APK entry. The current producer still needs its host toolchain.
+cohort from the owner's inputs. Its own receipt supplies the compiled runtime pin
+and APK entry.
 The full audio cohort exceeds the 4 MiB index budget if its dependency closure
 is repeated for every member. The publisher compacts these indexes and requires
 `--minimum-installer-version 4` or later for compact-index releases.
 
-Optional `--burst-request recipe/<request>.json` adds the existing
-`owner-code/produce.py` Burst-only job. The caller's request uses
-`"output": "${output}"` and explicit tool/input bindings, with either `managed`
+Optional `--burst-request recipe/<request>.json` supplies Burst tool bindings.
+Pair it with signed audio to build Burst in the code conversion job and verify
+its preservation XML before stripping the same managed providers. Use
+`"output": "${output}"`, explicit `burst_tools` and `linux_tools`, and
+`cache_witnesses` for the acquired tool files or their verification receipts.
+Without signed audio, the existing Burst-only job accepts either `managed`
 providers (each path plus SHA-256) or the producer's `source_inputs` mapping.
-The latter generates its managed cohort first. The final library and linker
-preservation XML share the signed compiler-policy closure and incremental cache.
-No target APK input is required.
+Both paths produce the final Burst library and preservation XML from the signed
+compiler policy.
 
 Optional `--sdk-request recipe/owner-sdk-job-inputs.json` emits all 15 Android
 SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
@@ -809,6 +817,11 @@ SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
 `sdk_jar_<filename>` to acquired inputs. The authored Java helper is signed with
 the producer closure; all entries share one cached job. SDK packaging does not
 qualify gameplay or complete the remaining source bundle suppliers.
+
+Use `--sdk-request recipe/owner-sdk-android-job-inputs.json --sdk-component`
+for the installed ARM64 toolhost. The phone JVM runs Java tools. QEMU runs
+the acquired Linux AAPT2 under its GNU loader. Platform, guest and Maven inputs
+live under `acquired/android-sdk/` and participate in the SDK job cache key.
 
 Optional `--sdk-component` extracts the verified Unity Android Support archive
 from the private input root at `acquired/unity-android-support.pkg`. Provision
@@ -875,9 +888,10 @@ sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
 not APK or gameplay acceptance. The generated two-job synthetic fixture also
 checks receipt identity and reuse on the second run.
 
-The phase declaration additionally binds `scene_environment_result`,
-`scene_environment_request`, `scene_environment_bundle` and
-`scene_environment_images`. The environment producer runs separately. With a
+The current scene phase binds the installed `libtexture-pixels.so` hash and
+uses the original `level0.resS` stream. Phase declarations using the capture
+mode bind `scene_environment_result`, `scene_environment_request`,
+`scene_environment_bundle` and `scene_environment_images` explicitly. With a
 fresh code request, the separately acquired SDK supplies built-in uGUI
 `Runtime/UI/Core` and the macOS Unity binary read by the manager. Acquired mode
 binds `ugui_source` and `sdk_binary` explicitly. Manager shaders and startup

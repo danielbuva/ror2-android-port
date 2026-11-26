@@ -40,6 +40,55 @@ public final class OwnerUpdateState {
         if ("release-check".equals(action) || "release-build".equals(action) || "install-prepare".equals(action) || "release-rollback".equals(action)) return "repo/tools/phone-build/owner-apk/updates.py";
         throw new IllegalArgumentException("Unsupported installer action");
     }
+    /** A fresh screen snapshot uses observed owners, never remembered button state. */
+    public static final class Screen {
+        public final boolean check, build, install, prepare, selectInputs, importInputs, pause, resume, cancel, retry, recover, rollback;
+        public final String text;
+        private Screen(OwnerUpdateState model, boolean running, boolean installing, boolean pendingRecovery,
+                       boolean inputsAvailable, String importState, boolean rollbackAvailable, boolean resumable) {
+            boolean idle = !running && !installing && !pendingRecovery;
+            check = idle && model.canCheck();
+            build = idle && (model.canBuild() || "IMPORTED".equals(importState));
+            install = idle && model.canInstall();
+            prepare = idle; selectInputs = idle; importInputs = idle && inputsAvailable;
+            pause = running && !installing && !pendingRecovery;
+            cancel = pause;
+            resume = !installing && !pendingRecovery && (running || (resumable &&
+                (model.phase == Phase.PAUSED || model.phase == Phase.INTERRUPTED || model.phase == Phase.CANCELLED)));
+            retry = idle && model.phase == Phase.ERROR && resumable;
+            recover = !running && !installing && pendingRecovery;
+            rollback = idle && rollbackAvailable;
+            String next = recover ? "Recover and verify retained profile/settings before another operation."
+                : installing ? "Finish Android confirmation or verification; no second installation will start."
+                : install ? "Tap Install for the verified build and Android consent."
+                : retry ? "Retry revalidates retained work; it does not certify installation."
+                : resume && !running ? "Resume revalidates retained work; a ready build may continue to Android installation."
+                : build ? "Build locally from admitted inputs; Android installation may follow reconstruction." : "";
+            text = (model.phase == Phase.ERROR ? "FAILED" : model.phase.toString().replace('_', ' ')) + "\n" + model.message + (next.isEmpty() ? "" : "\n" + next);
+        }
+    }
+    public Screen screen(boolean running, boolean installing, boolean pendingRecovery, boolean inputsAvailable,
+                         String importState, boolean rollbackAvailable, boolean resumable) {
+        return new Screen(this, running, installing, pendingRecovery, inputsAvailable, importState, rollbackAvailable, resumable);
+    }
+    public static boolean resumableAction(String action) {
+        return "import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)
+            || "install-prepare".equals(action) || "release-check".equals(action);
+    }
+    /** Shared Activity/notification explanation, never a thermal control policy. */
+    public static String backgroundDetail(boolean running, boolean fresh, String status, boolean manual, boolean thermal, String error) {
+        if ("cancelled".equals(status)) return (!running || !fresh ? "Last recorded thermal state; not live. " : "")
+            + "Conversion cancelled. Retained work is revalidated on explicit retry.";
+        if (!running || !fresh) return "Last recorded thermal state; not live. "
+            + (error != null && !error.isEmpty() ? "Recorded failure: " + error : "Reopen progress for current worker status.");
+        if (error != null && !error.isEmpty()) return "Conversion stopped or unavailable: " + error + ". Retry only after resolving the reported cause.";
+        if ("failed".equals(status)) return "Conversion failed. Review the first failure before retrying.";
+        if ("complete".equals(status)) return "Producer finished; later reconstruction or installation steps may remain.";
+        if (thermal || "cooling".equals(status)) return (manual ? "Paused by you and cooling. " : "Cooling automatically. ")
+            + "Resume clears only a manual pause; it cannot bypass cooling. The 85 C ceiling releases below 70 C; the normal duty gate must also clear. A 15-minute ceiling pause stops work.";
+        if (manual || "paused".equals(status)) return "Paused by you; monitoring remains active. Resume continues when thermal admission permits.";
+        return "Conversion active in the foreground service. You may leave this screen; reopen it to inspect progress or cancel.";
+    }
     public Phase phase() { return phase; }
     public String message() { return message; }
     public boolean busy() {

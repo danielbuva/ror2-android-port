@@ -1260,6 +1260,7 @@ def produce(
     sdk_binary=None,
     scene_profile=None,
     scene_environment=None,
+    scene_environment_decoder=None,
 ):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
@@ -1408,8 +1409,8 @@ def produce(
         elif "shared_defaults" in profile:
             raise ValueError("shared defaults require the source registry")
         if scene_profile is not None:
-            if "registry" not in profile or "shared_defaults" not in profile or scene_environment is None:
-                raise ValueError("source default scene requires registry, shared defaults and native source environment")
+            if "registry" not in profile or "shared_defaults" not in profile:
+                raise ValueError("source default scene requires registry and shared defaults")
             scene = OBJECTS.module("_player_scene", Path(__file__).with_name("player_scene.py"))
             registry_file = output / (TARGET + profile["registry"]["file"])
             shared_file = output / (TARGET + profile["shared_defaults"]["file"])
@@ -1423,6 +1424,7 @@ def produce(
                 (shared_file, sha(shared_file)),
                 scene_environment,
                 output / "default-scene-source",
+                scene_environment_decoder,
             )
             for name, row in produced_scene["files"].items():
                 shutil.copyfile(output / "default-scene-source" / name, output / (TARGET + name))
@@ -1538,6 +1540,7 @@ def main():
     for name in ("scene-environment-result", "scene-environment-request", "scene-environment-bundle"):
         parser.add_argument("--" + name, nargs=2, metavar=("PATH", "SHA256"), help="explicit native source environment phase input")
     parser.add_argument("--scene-environment-images", type=Path, help="source capture face/mip directory")
+    parser.add_argument("--scene-environment-decoder", nargs=2, metavar=("PATH", "SHA256"), help="native pixel decoder for the original scene Cubemap")
     parser.add_argument("--ugui-source", type=Path, help="exact SDK com.unity.ugui Runtime/UI/Core source directory; required for source Menu")
     parser.add_argument(
         "--record-pack",
@@ -1560,8 +1563,10 @@ def main():
     scene_inputs = (args.scene_environment_result, args.scene_environment_request, args.scene_environment_images, args.scene_environment_bundle)
     if any(value is not None for value in scene_inputs) and not all(value is not None for value in scene_inputs):
         parser.error("supply all four source environment inputs together")
-    if bool(args.scene_profile) != all(value is not None for value in scene_inputs):
-        parser.error("source scene profile and complete native environment must be supplied together")
+    if all(scene_inputs) and args.scene_environment_decoder:
+        parser.error("select either the original Cubemap decoder or the complete environment capture")
+    if bool(args.scene_profile) != (all(scene_inputs) or bool(args.scene_environment_decoder)):
+        parser.error("supply the source scene profile with the original Cubemap decoder or the complete environment capture")
     produce(
         args.profile,
         args.profile_sha256,
@@ -1585,7 +1590,8 @@ def main():
         args.manager_startup,
         args.sdk_binary,
         args.scene_profile,
-        scene_inputs if args.scene_profile is not None else None,
+        scene_inputs if all(scene_inputs) else None,
+        args.scene_environment_decoder,
     )
 
 

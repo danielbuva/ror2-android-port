@@ -310,6 +310,39 @@ public class Harness {
         check(OwnerUpdateState.failureDetail("native","write failed").contains("Retry revalidates retained work"));
         OwnerUpdateState retryModel=new OwnerUpdateState();retryModel.observe("READY","ready");check(retryModel.canInstall());
         for(String phase:new String[]{"PAUSED","INTERRUPTED","ERROR"}){retryModel.observe(phase,"retry");check(!retryModel.canInstall()&&!retryModel.canBuild());}
+        for(String phase:new String[]{"INPUTS_REQUIRED","VALIDATING","IMPORTING","IMPORTED","BUILDING","PAUSED","ERROR","READY","AWAITING_CONFIRMATION","RECOVERY_REQUIRED","INSTALLED"}) {
+            OwnerUpdateState fresh=new OwnerUpdateState();fresh.observe(phase,"journey");
+            boolean active=phase.equals("VALIDATING")||phase.equals("IMPORTING")||phase.equals("BUILDING")||phase.equals("PAUSED");
+            boolean consent=phase.equals("AWAITING_CONFIRMATION"),recovery=phase.equals("RECOVERY_REQUIRED");
+            OwnerUpdateState.Screen screen=fresh.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true);
+            check(screen.install==phase.equals("READY"));check(screen.recover==recovery);
+            check(screen.retry==phase.equals("ERROR"));check(screen.build==phase.equals("IMPORTED"));
+            if(phase.equals("ERROR"))check(!screen.resume);
+            if(consent||recovery)check(!screen.resume&&!screen.cancel&&!screen.build&&!screen.install);
+            OwnerUpdateState recreated=new OwnerUpdateState();recreated.observe(phase,"journey");
+            check(recreated.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true).text.equals(screen.text));
+        }
+        retryModel.observe("ERROR","import failed");check(!retryModel.screen(false,false,false,true,"ERROR",false,true).build);
+        check(!retryModel.screen(false,false,true,true,"IMPORTED",true,true).resume);
+        retryModel.observe("INTERRUPTED","stopped");check(retryModel.screen(false,false,false,true,"",false,true).text.contains("may continue to Android installation"));
+        check(!OwnerUpdateState.resumableAction("install"));check(OwnerUpdateState.resumableAction("release-build"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"running",false,false,"").contains("foreground service"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"paused",true,false,"").contains("Paused by you"));
+        String cooling=OwnerUpdateState.backgroundDetail(true,true,"paused",false,true,"");
+        check(cooling.contains("85 C")&&cooling.contains("below 70 C")&&cooling.contains("normal duty gate")&&cooling.contains("cannot bypass"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"cooling",true,true,"").contains("Paused by you and cooling"));
+        check(OwnerUpdateState.backgroundDetail(false,true,"running",false,false,"").contains("not live"));
+        check(OwnerUpdateState.backgroundDetail(true,false,"running",false,false,"").contains("not live"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"failed",false,false,"CPU telemetry unavailable").contains("CPU telemetry unavailable"));
+        check(OwnerUpdateState.backgroundDetail(true,true,"complete",false,false,"").contains("steps may remain"));
+        check(OwnerUpdateState.backgroundDetail(false,true,"failed",false,false,"CPU telemetry unavailable").contains("Recorded failure: CPU telemetry unavailable"));
+        check(OwnerUpdateState.backgroundDetail(true,false,"failed",false,false,"ceiling pause reached 15 min").contains("Recorded failure: ceiling pause reached 15 min"));
+        for(boolean running:new boolean[]{true,false})for(boolean fresh:new boolean[]{true,false}) {
+            String cancelled=OwnerUpdateState.backgroundDetail(running,fresh,"cancelled",false,false,"producer cancelled");
+            check(cancelled.contains("cancelled")&&cancelled.contains("Retained work"));
+            check(!cancelled.contains("failure")&&!cancelled.contains("resolving"));
+            if(!running||!fresh)check(cancelled.contains("not live"));
+        }
         System.out.println("session install/update/hash/key/version/callback contracts PASS");
     }
 }
@@ -334,6 +367,12 @@ class OwnerInstallerTests(unittest.TestCase):
         self.assertEqual(ui.count("statusView.setText("), 1)
         self.assertIn("OwnerInstaller.reconcile(this)", ui)
         self.assertIn("OwnerUpdateState.backendScript(updateAction)", activity)
+        self.assertIn("OwnerUpdateState.Screen screen = model.screen(", activity)
+        self.assertIn("resumeButton.setEnabled(screen.resume)", activity)
+        self.assertIn("OwnerUpdateState.backgroundDetail(", activity)
+        self.assertIn("backgroundProgress(this)", activity)
+        self.assertIn("ToolHostActivity.backgroundProgress(this)", SOURCE.with_name("OwnerBuildService.java").read_text())
+        self.assertIn("buildButton.setEnabled(screen.build)", activity)
         self.assertIn("factory.init((java.security.KeyStore) null)", activity)
         self.assertIn("getAcceptedIssuers()", activity)
         self.assertIn('env.put("SSL_CERT_FILE", systemCa.getCanonicalPath())', activity)

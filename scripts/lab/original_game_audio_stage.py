@@ -42,9 +42,9 @@ BANK_RECEIPT_TARGET = "Assets/StreamingAssets/stage-receipt.json"
 ANDROID_BANK_ROOT = "Assets/StreamingAssets/Audio/GeneratedSoundBanks/Android"
 STREAMED_MEDIA_ROOT = ANDROID_BANK_ROOT + "/Media"
 STREAMED_MEDIA_COUNT = 120
-# Root must bind this to the generated R2 receipt. The exact R23/R1 receipt
-# remains in LINEAGE as historical evidence and is never recomputed from R2.
+# Retain the startup-only receipt for existing explicit selections and upgrades.
 R2_BANK_RECEIPT_SHA256 = "db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978"
+COMPLETE_BANK_RECEIPT_SHA256 = "83f1e0cd4fd5cf6bf7732c2acd0280fcf63aeb109f771b6953d9979e5add5747"
 R2_RECEIPT_PINS = {
     "accepted_inventory_sha256": "1ee17e526eb13d15e0254ca6238a05269e6c62d812834ae210f004d80de87997",
     "current_bank_index_sha256": "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326",
@@ -213,7 +213,7 @@ def validate_streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None
         receipt.get("accepted_input_id") != LINEAGE["accepted_input_id"]
         or receipt.get("requested_banks") != 153
         or not isinstance(outputs, list)
-        or len(outputs) != 154
+        or len(outputs) < 154
         or not isinstance(media, list)
         or len(media) != STREAMED_MEDIA_COUNT
     ):
@@ -240,8 +240,8 @@ def validate_streamed_media_rows(receipt: dict, *, bank_index_sha256: str | None
             if not isinstance(name, str) or not name or Path(name).name != name or name in bank_names:
                 raise ValueError("bank stage receipt requested names must be unique exact names")
             bank_names.add(name)
-    if "Init.bnk" not in bank_filenames or len(bank_names) != 153:
-        raise ValueError("bank receipt must bind Init plus 153 original bank names")
+    if "Init.bnk" not in bank_filenames or len(bank_names) < 153:
+        raise ValueError("bank receipt must bind Init plus at least 153 original bank names")
     media_by_id: dict[int, dict] = {}
     media_paths: set[str] = set()
     known_bank_stems = {PurePosixPath(name).stem for name in bank_names if name != "Init.bnk"}
@@ -282,8 +282,8 @@ def verify_bank_receipt(receipt_path: Path, rows: list[dict]) -> str:
     raw = receipt_path.read_bytes()
     if not HASH.fullmatch(R2_BANK_RECEIPT_SHA256):
         raise ValueError("current R2 bank/media receipt pin is not finalized")
-    if hashlib.sha256(raw).hexdigest() != R2_BANK_RECEIPT_SHA256:
-        raise ValueError("bank stage receipt is not the root-bound accepted R2 bank/media cohort")
+    if hashlib.sha256(raw).hexdigest() not in {R2_BANK_RECEIPT_SHA256, COMPLETE_BANK_RECEIPT_SHA256}:
+        raise ValueError("bank stage receipt is not a root-bound accepted bank/media cohort")
     receipt = json.loads(raw)
     media_rows = validate_streamed_media_rows(receipt)
     outputs = receipt["outputs"]
@@ -375,8 +375,8 @@ def read_artifacts(manifest_path: Path, request_path: Path | None, stage_receipt
     if request["requested"]:
         if not HASH.fullmatch(R2_BANK_RECEIPT_SHA256):
             raise ValueError("current R2 bank/media receipt pin is not finalized")
-        if lineage.get("stage_receipt_sha256") != R2_BANK_RECEIPT_SHA256:
-            raise ValueError("artifact lineage does not bind the current R2 bank/media receipt")
+        if lineage.get("stage_receipt_sha256") not in {R2_BANK_RECEIPT_SHA256, COMPLETE_BANK_RECEIPT_SHA256}:
+            raise ValueError("artifact lineage does not bind an accepted bank/media receipt")
     elif lineage.get("stage_receipt_sha256") not in {LINEAGE["stage_receipt_sha256"], R23_LINEAGE["stage_receipt_sha256"]}:
         raise ValueError("default-off lineage must preserve a recognized exact historical stage receipt pin")
     if request["requested"] and stage_receipt_path is None:
@@ -480,8 +480,6 @@ def read_artifacts(manifest_path: Path, request_path: Path | None, stage_receipt
     if request["requested"]:
         banks = [row for row in rows if row["role"] == "banks"]
         media = [row for row in rows if row["role"] == "streamed_media"]
-        if len(banks) != 154 or len(media) != STREAMED_MEDIA_COUNT:
-            raise ValueError("opt-in artifact set must stage 154 banks and the exact 120 streamed media files")
         receipt_sha = verify_bank_receipt(stage_receipt_path, banks + media)
         bank_receipt = [row for row in rows if row["role"] == "bank_receipt"]
         if (
@@ -613,6 +611,7 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
         not in (
             LINEAGE,
             {**LINEAGE, "stage_receipt_sha256": R2_BANK_RECEIPT_SHA256},
+            {**LINEAGE, "stage_receipt_sha256": COMPLETE_BANK_RECEIPT_SHA256},
             R23_LINEAGE,
             {**R23_LINEAGE, "stage_receipt_sha256": R2_BANK_RECEIPT_SHA256},
             OLD_CURRENT_LINEAGE,
@@ -689,25 +688,25 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
         request_sha = previous.get("request_sha256")
         if not isinstance(request_id, str) or not re.fullmatch(r"[0-9a-f]{32}", request_id) or not HASH.fullmatch(str(request_sha or "")):
             raise ValueError("previous opt-in receipt lacks a valid request identity")
-        previous_is_r2 = previous["lineage"].get("stage_receipt_sha256") == R2_BANK_RECEIPT_SHA256
-        expected_previous_stage_hash = R2_BANK_RECEIPT_SHA256 if previous_is_r2 else LINEAGE["stage_receipt_sha256"]
+        expected_previous_stage_hash = previous["lineage"]["stage_receipt_sha256"]
+        previous_is_r2 = expected_previous_stage_hash in {R2_BANK_RECEIPT_SHA256, COMPLETE_BANK_RECEIPT_SHA256}
         if previous.get("stage_receipt_sha256") != expected_previous_stage_hash:
             raise ValueError("previous opt-in receipt is not bound to its exact accepted bank cohort generation")
         required_optional_targets = {NATIVE_TARGET, NATIVE_META}
         if not required_optional_targets.issubset(targets):
             raise ValueError("previous opt-in receipt does not own its native payload")
         if previous_is_r2:
-            if len(bank_payload_targets) != 154 or len(media_targets) != STREAMED_MEDIA_COUNT:
-                raise ValueError("previous R2 opt-in receipt lacks its exact 154-bank/120-media payload")
             receipt_file = project / BANK_RECEIPT_TARGET
-            if not receipt_file.is_file() or sha256(receipt_file) != R2_BANK_RECEIPT_SHA256:
+            if not receipt_file.is_file() or sha256(receipt_file) != expected_previous_stage_hash:
                 raise ValueError("previous R2 opt-in receipt package is missing or has drifted")
-            media_rows = validate_streamed_media_rows(json.loads(receipt_file.read_text(encoding="utf-8")))
+            cohort = json.loads(receipt_file.read_text(encoding="utf-8"))
+            media_rows = validate_streamed_media_rows(cohort)
+            expected_bank_targets = {f"{ANDROID_BANK_ROOT}/{row['filename']}" for row in cohort["outputs"]}
+            if bank_payload_targets != expected_bank_targets:
+                raise ValueError("previous R2 receipt bank paths differ from the exact bank cohort")
             expected_media_targets = {f"{ANDROID_BANK_ROOT}/{row['relative_path']}" for row in media_rows}
             if media_targets != expected_media_targets:
                 raise ValueError("previous R2 receipt media paths differ from the exact media closure")
-            if previous.get("stage_receipt_sha256") != R2_BANK_RECEIPT_SHA256:
-                raise ValueError("previous R2 stage receipt hash differs from its bank/media pin")
         elif len(bank_payload_targets) != 154 or media_targets:
             raise ValueError("previous R23 opt-in receipt must own 154 banks and no streamed media")
         if BANK_RECEIPT_TARGET in targets and targets[BANK_RECEIPT_TARGET]["sha256"] != previous["stage_receipt_sha256"]:
@@ -722,7 +721,7 @@ def inspect_previous_stage(project: Path, receipt_path: Path) -> tuple[dict | No
         if targets.get(api_target, {}).get("sha256") != composed_api or targets.get(game_target, {}).get("sha256") != composed_game:
             raise ValueError("previous opt-in receipt API/game outputs differ from its exact declared lineage")
         bank_names = {PurePosixPath(target).name for target in bank_payload_targets}
-        if len(bank_names) != 154 or "Init.bnk" not in bank_names or any(not name.endswith(".bnk") for name in bank_names):
+        if "Init.bnk" not in bank_names or any(not name.endswith(".bnk") for name in bank_names):
             raise ValueError("previous opt-in receipt bank names are not the exact unique cohort shape")
         allowed_without_receipt = allowed_targets | {NATIVE_TARGET, NATIVE_META} | bank_payload_targets | media_targets
         allowed_with_receipt = allowed_without_receipt | {BANK_RECEIPT_TARGET}

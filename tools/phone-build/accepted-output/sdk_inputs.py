@@ -28,6 +28,12 @@ LINUX_EDITOR_BYTES = 3263644788
 LINUX_EDITOR_SHA256 = "faaeafc17dd251ae0d3489ef762929f393928ad19b60d1f9b4155bb7d25d76d3"
 LINUX_TEXTURE_MEMBER = "Editor/etccompress.so"
 LINUX_TEXTURE_SHA256 = "4dc31e0bc2591141648b238fa158fe700dd37c13f62fe3f165618ba85c1a2293"
+LINUX_SHADER_FILES = {
+    "Tools/UnityShaderCompiler": "c80dd80426848a1cd83eb7d9a430b66f06b6221d9ef85ed0b41ddcb255dd7dfa",
+    "Tools/libdxcompiler.so": "79f53a5e8c05adbb92af99127bf3889625c7977d1d161f4d898fe5eaade6bfce",
+    "Tools/D3DCompiler_47.dll": "4b074a3976399dc735484f5d43d04b519b7bdee8ac719d9ab8ed6bd4e6be0345",
+    "Tools/glslang.so": "10053c7c2edf3bb87e87ea0f7f0ce3a9d518c092715bbe552d1f7acc89cf90fe",
+}
 PREFIX = "PlaybackEngines/AndroidPlayer/"
 FILES = {
     "Data/unity default resources": (4222168, "fcbf1c513378f79a04c9250fb1efc466f5a7d5ca9d93af961daa3e0b957859f3"),
@@ -262,8 +268,8 @@ def extract(component, output, *, android_package=False):
         (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
 
 
-def extract_linux_texture(component, output):
-    """Stream just the texture codec from the owner's exact Linux SDK archive."""
+def extract_linux(component, output, wanted):
+    """Stream selected regular files from the owner's exact Linux SDK archive."""
     component, output = Path(component).absolute(), Path(output).absolute()
     if component != component.resolve(strict=True) or not component.is_file() or component.stat().st_size != LINUX_EDITOR_BYTES:
         raise ValueError("unsupported or redirected owner Linux SDK archive")
@@ -278,21 +284,29 @@ def extract_linux_texture(component, output):
         started = time.monotonic()
         result = {"schema": 1, "success": False, "component_sha256": LINUX_EDITOR_SHA256}
         try:
+            files = {}
             with tarfile.open(fileobj=source, mode="r|xz", bufsize=1024**2, stream=True) as archive:
                 for member in archive:
-                    if member.name.removeprefix("./") != LINUX_TEXTURE_MEMBER:
+                    name = member.name.removeprefix("./")
+                    if name not in wanted:
                         continue
                     if not member.isreg():
-                        raise ValueError("owner Linux SDK codec is not a regular archive member")
-                    path = output / "etccompress.so"
+                        raise ValueError("owner Linux SDK file is not a regular archive member: " + name)
+                    relative, pin = wanted[name]
+                    path = output / relative
+                    path.parent.mkdir(parents=True, exist_ok=True)
                     with archive.extractfile(member) as reader, path.open("xb") as writer:
                         shutil.copyfileobj(reader, writer)
                     with path.open("rb") as reader:
-                        if hashlib.file_digest(reader, "sha256").hexdigest() != LINUX_TEXTURE_SHA256:
-                            raise ValueError("owner Linux SDK codec hash differs")
-                    break
+                        if hashlib.file_digest(reader, "sha256").hexdigest() != pin:
+                            raise ValueError("owner Linux SDK file hash differs: " + name)
+                    if member.mode & stat.S_IXUSR:
+                        path.chmod(0o700)
+                    files[relative] = {"bytes": path.stat().st_size, "sha256": pin}
+                    if len(files) == len(wanted):
+                        break
                 else:
-                    raise ValueError("owner Linux SDK codec member missing")
+                    raise ValueError("owner Linux SDK member missing")
             after = component.stat()
             if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (
                 after.st_dev,
@@ -302,7 +316,7 @@ def extract_linux_texture(component, output):
                 after.st_ctime_ns,
             ):
                 raise ValueError("owner Linux SDK archive changed")
-            result.update(success=True, files={path.name: {"bytes": path.stat().st_size, "sha256": LINUX_TEXTURE_SHA256}})
+            result.update(success=True, files=files)
             return result
         except Exception as error:
             result.update(error_type=type(error).__name__, error=str(error))
@@ -312,6 +326,14 @@ def extract_linux_texture(component, output):
             (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
 
 
+def extract_linux_texture(component, output):
+    return extract_linux(component, output, {LINUX_TEXTURE_MEMBER: ("etccompress.so", LINUX_TEXTURE_SHA256)})
+
+
+def extract_linux_shader(component, output):
+    return extract_linux(component, output, {"Editor/Data/" + name: ("Data/" + name, pin) for name, pin in LINUX_SHADER_FILES.items()})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--component", required=True, help="owner-downloaded exact Unity SDK archive")
@@ -319,10 +341,14 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--android-package", action="store_true", help="also extract pinned generic SDK Java and Android resource inputs")
     mode.add_argument("--linux-texture", action="store_true", help="extract the pinned texture codec from the Linux Editor tar.xz")
+    mode.add_argument("--linux-shader", action="store_true", help="extract the pinned shader compiler and its plugins from the Linux Editor tar.xz")
     args = parser.parse_args()
-    result = (
-        extract_linux_texture(args.component, args.output) if args.linux_texture else extract(args.component, args.output, android_package=args.android_package)
-    )
+    if args.linux_shader:
+        result = extract_linux_shader(args.component, args.output)
+    elif args.linux_texture:
+        result = extract_linux_texture(args.component, args.output)
+    else:
+        result = extract(args.component, args.output, android_package=args.android_package)
     print(json.dumps(result))
 
 

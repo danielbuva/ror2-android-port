@@ -6,6 +6,21 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1500 — Package the complete accepted Wwise bank roster
+
+2026-11-18. The shared stager packages 247 banks and 120 WEMs, restoring
+93 banks while preserving the 153 original WwiseGlobal startup requests.
+The assisted Commando run completed those requests, dispatched source
+music states in Verdant Falls, Wetland Aspect and Scorched Acres, and
+captured nonzero mixed Wwise output. The launch log had no missing-bank errors.
+APK SHA-256 `56840f9b2c1a4921ae6ee7ac8b594604b587b477435da28fcc7b5cad6d46ac57` (source `0f35c164`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/wwise-complete-multistage/`
+includes `terminal.done.json` and screenshots, logs and reports in samples 60, 240 and 360.
+The runner observed 763.223 s. CPU/GPU peaked at 95.9 °C without a sustained
+limit trip, with 717.251 s above 80 °C. Battery peaked at 34 °C. OLED sleep
+and cleanup passed. Individual bank callbacks, isolated SFX audibility and
+converted APK playback remain open.
+
 ## J1499 — Restore Mercenary's native normal slash material
 
 2026-11-18. The body visual owner prepares Mercenary's shared normal

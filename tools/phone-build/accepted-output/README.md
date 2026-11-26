@@ -1400,6 +1400,9 @@ contain `Tools/UnityShaderCompiler`, `Tools/libdxcompiler.so`,
 IPC owner rejects missing DX compiler dependencies before launch. A flattened
 `shader/` directory fails the compiler's relative `Tools/D3DCompiler_47.dll`
 lookup even after IPC initialization. Keep Mac metadata/includes in `--sdk`.
+The signed graph supplies these flags for each shader producer and uses
+`sdk_inputs.py --linux-shader` to extract the four pinned files from the
+owner's Linux Editor archive into a shared private artifact.
 
 The bounded ColorGrade producer ran on Android without the Editor and persisted
 7,784 B, SHA-256
@@ -1997,14 +2000,18 @@ shared material names, native Cube identity and all direct references. SDK tag
 numbers are derived from the paired permitted Android code/symbol files; symbol
 files with NOBITS text never supply instruction bytes.
 
-The guarded host API emits a complete candidate. All 16 native/script type
-identities match the independent SDK reference. Thirteen records match all fields
-and relationships after reference translation; the diagnostics reference binds
-the actual source registry. Two lighting records retain generated native Android
-half-float reflection data and final ambient values. Historical raw-exactness,
-lighting equivalence and native scene loading remain unqualified.
+The host capture-mode candidate matched all 16 native/script type identities
+against the independent SDK reference. Thirteen records matched all fields and
+relationships after reference translation. The diagnostics reference binds the
+actual source registry. The staged release now takes the original `level0.resS`
+reflection probe, decodes its checked BC6H faces and mips to inline RGBAHalf, and
+keeps the original ambient and indirect specular coefficients. Exact-editor
+loading and device visuals for this input path remain open.
 
-Select `--scene-profile PROFILE SHA256` on `player_data.py`, together with:
+Select `--scene-profile PROFILE SHA256` and
+`--scene-environment-decoder DECODER SHA256` on `player_data.py`. To reproduce a
+native capture-mode candidate, supply these four capture arguments in place of
+the decoder flag.
 
 - `--scene-environment-result RESULT_JSON SHA256`
 - `--scene-environment-request REQUEST_JSON SHA256`
@@ -2014,9 +2021,9 @@ Select `--scene-profile PROFILE SHA256` on `player_data.py`, together with:
 Registry/shared-default phases and the supplied SDK are required. The parent uses
 its fresh registry/shared files, retains the new `default-scene-source/` phase and
 copies/rechecks `level0`. The standalone `player_scene.py --help` exposes the same
-inputs with explicit registry/shared-file hashes. Source bundle uniforms and
-keywords must match the legitimate default sky, with complete finite face/mip
-extents, native HDR decode and request policy checked before construction.
+inputs with explicit registry/shared-file hashes. Capture mode checks the source
+bundle uniforms and keywords against the legitimate default sky and validates
+the face/mip extents and request policy before construction.
 Readers and SDK mappings close at exit; failures retain their new output. Keep
 all generated media, records and receipts private. The host-built diagnostic
 outputs used to qualify this API are never required public converter inputs;

@@ -147,7 +147,7 @@ public final class ToolHostActivity extends Activity {
         if ("import".equals(previous)) startImport();
         else if ("release-build".equals(previous) || "release-rollback".equals(previous)) startUpdate(previous);
         else if ("install-prepare".equals(previous) || "release-check".equals(previous)) startUpdate(previous);
-        // Installation always requires the separate explicit Install button, including after reboot.
+        // This does not restart an install-only action; resumed builds retain the service's normal Android installation handoff.
     }
     @Override public void onResume() {
         super.onResume();
@@ -365,9 +365,19 @@ public final class ToolHostActivity extends Activity {
             }
             if (OwnerAlphaInstall.pending(this) && !OwnerInstaller.busy(this) && !OwnerBuildService.isRunning()) model.observe("RECOVERY_REQUIRED", OwnerInstaller.status(this));
             // A killed worker is not still running. Rechecking safely rediscovers the release/cache.
-            if (!OwnerBuildService.isRunning() && model.busy() && !OwnerInstaller.busy(this)) model.observe("ERROR", "Work is not running. Tap Resume to revalidate retained checkpoints.");
+            if (!OwnerBuildService.isRunning() && model.busy() && !OwnerInstaller.busy(this)) model.observe("ERROR", "Work is not running. Tap Retry to revalidate retained checkpoints.");
         } catch (Exception error) { model.observe("ERROR", error.getMessage()); }
         render();
+    }
+    static String backgroundProgress(Context app) {
+        try {
+            File file = new File(app.getFilesDir(), "owner-input/thermal-state.json");
+            if (!file.isFile()) return "Thermal telemetry not available yet; no cooling or progress claim.";
+            JSONObject reading = readJson(file);
+            double age = System.currentTimeMillis() / 1000.0 - reading.optDouble("updated_at", 0);
+            return OwnerUpdateState.backgroundDetail(OwnerBuildService.isRunning(), age >= 0 && age <= 5,
+                reading.optString("status"), reading.optBoolean("manual_paused"), reading.optBoolean("thermal_paused"), reading.optString("error"));
+        } catch (Exception error) { return "Thermal telemetry unavailable: " + error.getMessage(); }
     }
     private String phoneProgress() throws Exception {
         StringBuilder detail = new StringBuilder();
@@ -432,9 +442,7 @@ public final class ToolHostActivity extends Activity {
             if (!OwnerBuildService.isRunning() || System.currentTimeMillis() / 1000 - reading.optLong("updated_at") > 5) detail.append(" (last recorded reading; not live)");
             for (String zone : new String[]{"cpu", "gpu", "battery", "skin"})
                 detail.append("\n").append(zone).append(": ").append(reading.has(zone + "_celsius") && !reading.isNull(zone + "_celsius") ? reading.optString(zone + "_celsius") + " °C" : "unavailable");
-            if (reading.optBoolean("manual_paused")) detail.append("\nPaused by you; thermal monitoring remains active");
-            if (reading.optBoolean("thermal_paused")) detail.append("\nCooling under the unchanged thermal policy");
-            if (reading.has("error")) detail.append("\n").append(reading.optString("error"));
+            detail.append("\n").append(backgroundProgress(this));
         }
         else detail.append("\n\nThermal / battery: awaiting existing duty runner telemetry");
         Intent battery = registerReceiver(null, new android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -450,20 +458,23 @@ public final class ToolHostActivity extends Activity {
         return detail.toString();
     }
     private void render() {
-        String phase = model.phase() == OwnerUpdateState.Phase.ERROR ? "FAILED" : model.phase().toString().replace('_', ' ');
         try { flowDetail = phoneProgress(); } catch (Exception error) { flowDetail = "\nPrivate progress unavailable: " + error.getMessage(); }
-        String statusText = phase + "\n" + model.message() + flowDetail;
+        String importState = "";
+        try {
+            File receipt = new File(getFilesDir(), "owner-input/import-state.json");
+            if (receipt.isFile()) importState = readJson(receipt).optString("state");
+        } catch (Exception ignored) { /* Invalid import status is not an admitted build. */ }
+        String previous = OwnerBuildService.action(this);
+        if ("ERROR".equals(OwnerInstaller.state(this))) previous = getSharedPreferences(OwnerBuildService.PREFERENCES, 0).getString("last_build_action", "release-build");
+        OwnerUpdateState.Screen screen = model.screen(OwnerBuildService.isRunning(), OwnerInstaller.busy(this), OwnerAlphaInstall.pending(this),
+            new File(getFilesDir(), "owner-input/install-inputs.json").isFile(), importState, OwnerAlphaInstall.canRollback(this), OwnerUpdateState.resumableAction(previous));
+        String statusText = screen.text + flowDetail;
         if (statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())) statusView.setText(statusText);
-        boolean idle = !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && !OwnerAlphaInstall.pending(this);
-        rollbackButton.setEnabled(idle && OwnerAlphaInstall.canRollback(this));
-        recoveryButton.setEnabled(!OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && OwnerAlphaInstall.pending(this));
-        prepareButton.setEnabled(idle); treeButton.setEnabled(idle); zipButton.setEnabled(idle);
-        importButton.setEnabled(idle && new File(getFilesDir(), "owner-input/install-inputs.json").isFile());
-        pauseButton.setEnabled(OwnerBuildService.isRunning() && !OwnerInstaller.busy(this)); cancelButton.setEnabled(OwnerBuildService.isRunning() && !OwnerInstaller.busy(this));
-        resumeButton.setEnabled(!OwnerInstaller.busy(this)); retryButton.setEnabled(idle && model.phase() == OwnerUpdateState.Phase.ERROR);
-        checkButton.setEnabled(idle && model.canCheck());
-        buildButton.setEnabled(idle && (model.canBuild() || new File(getFilesDir(), "owner-input/import-state.json").isFile()));
-        installButton.setEnabled(idle && model.canInstall());
+        rollbackButton.setEnabled(screen.rollback); recoveryButton.setEnabled(screen.recover);
+        prepareButton.setEnabled(screen.prepare); treeButton.setEnabled(screen.selectInputs); zipButton.setEnabled(screen.selectInputs);
+        importButton.setEnabled(screen.importInputs); pauseButton.setEnabled(screen.pause); cancelButton.setEnabled(screen.cancel);
+        resumeButton.setEnabled(screen.resume); retryButton.setEnabled(screen.retry);
+        checkButton.setEnabled(screen.check); buildButton.setEnabled(screen.build); installButton.setEnabled(screen.install);
     }
     private static File readyApk(Context app) throws Exception {
         File report=new File(app.getFilesDir(),"tool-host-report.json");

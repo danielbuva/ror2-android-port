@@ -1,9 +1,11 @@
 """Authored contracts for prefab fallback registration and retention."""
 
 from copy import deepcopy
+import hashlib
 import importlib
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -24,6 +26,25 @@ def snippet(global_axes=(), local_axes=(), builtins=(), runtime=""):
 
 
 class PrefabShaderTests(unittest.TestCase):
+    def test_staged_templates_need_no_git_and_retain_raw_pins(self):
+        data = b"fixture template\r\n"
+        name = "SingleTexture.txt"
+        revision = "1" * 40
+        pin = {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        profile = {"exporter_revision": revision, "template_inputs": {name: pin}}
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary).resolve()
+            path = source / revision / S.P.ASSET_RIPPER_TEMPLATES / name
+            path.parent.mkdir(parents=True)
+            path.write_bytes(data)
+            (source / revision / "LICENSE.md").write_bytes(b"fixture notice")
+            with patch.object(S.P.subprocess, "check_output", side_effect=AssertionError("Git is unavailable")):
+                self.assertEqual(S.P.asset_ripper_templates(source, profile), {name: "fixture template\n"})
+                self.assertEqual(S.P.asset_ripper_file(source, revision, "LICENSE.md"), b"fixture notice")
+                path.write_bytes(data.replace(b"fixture", b"changed"))
+                with self.assertRaisesRegex(ValueError, "template differs"):
+                    S.P.asset_ripper_templates(source, profile)
+
     def test_original_vertex_order_covers_vertex_only_runtime_keywords(self):
         row = {"m_Type": 0, "m_State": {"gpuProgramID": 11, "m_Name": "MAIN", "m_Tags": {"tags": []}}}
         source = {

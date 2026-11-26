@@ -16,6 +16,10 @@ SPEC.loader.exec_module(STAGE)
 
 
 class AudioStageOutputTests(unittest.TestCase):
+    def test_packaged_bank_names_keep_startup_casing_and_include_scene_banks(self):
+        index = [{"path": name} for name in ("Init.bnk", "zoneTundra.bnk", "global.bnk", "Boss.bnk")]
+        self.assertEqual(STAGE.packaged_bank_names(["Global"], index), ["Global", "Boss", "zoneTundra"])
+
     def test_explicit_owner_index_requires_matching_full_inventory(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

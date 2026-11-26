@@ -1,0 +1,45 @@
+{
+  "sdk": "${inputs}/acquired/AndroidPlayer",
+  "android_jar": "${inputs}/acquired/android-sdk/android-30.jar",
+  "aapt": "${inputs}/acquired/android-sdk/aapt2-linux",
+  "java": "${native}/libjavatool.so",
+  "javac": "${native}/libjavactool.so",
+  "jars": {
+    "r8-4.0.52.jar": "${inputs}/acquired/android-sdk/jars/r8-4.0.52.jar",
+    "gradle-7.4.2.jar": "${inputs}/acquired/android-sdk/jars/gradle-7.4.2.jar",
+    "gradle-api-7.4.2.jar": "${inputs}/acquired/android-sdk/jars/gradle-api-7.4.2.jar",
+    "builder-7.4.2.jar": "${inputs}/acquired/android-sdk/jars/builder-7.4.2.jar",
+    "sdk-common-30.4.2.jar": "${inputs}/acquired/android-sdk/jars/sdk-common-30.4.2.jar",
+    "common-30.4.2.jar": "${inputs}/acquired/android-sdk/jars/common-30.4.2.jar",
+    "layoutlib-api-30.4.2.jar": "${inputs}/acquired/android-sdk/jars/layoutlib-api-30.4.2.jar",
+    "guava-31.1-jre.jar": "${inputs}/acquired/android-sdk/jars/guava-31.1-jre.jar",
+    "javawriter-2.5.0.jar": "${inputs}/acquired/android-sdk/jars/javawriter-2.5.0.jar",
+    "kotlin-stdlib-1.7.10.jar": "${inputs}/acquired/android-sdk/jars/kotlin-stdlib-1.7.10.jar",
+    "asm-9.2.jar": "${inputs}/acquired/android-sdk/jars/asm-9.2.jar",
+    "asm-commons-9.2.jar": "${inputs}/acquired/android-sdk/jars/asm-commons-9.2.jar",
+    "zipflinger-7.4.2.jar": "${inputs}/acquired/android-sdk/jars/zipflinger-7.4.2.jar"
+  },
+  "aapt_prefix": [
+    "${native}/libqemu-x86_64.so",
+    "-L",
+    "${inputs}/acquired/android-sdk/linux",
+    "-E",
+    "LD_LIBRARY_PATH=${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu",
+    "-E",
+    "LC_ALL=C"
+  ],
+  "cache_witnesses": [
+    "${installed_runtime}/data-hashes.json",
+    "${native}/libqemu-x86_64.so",
+    "${inputs}/acquired/android-sdk/linux/lib64/ld-linux-x86-64.so.2",
+    "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu/libc.so.6",
+    "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu/libdl.so.2",
+    "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu/libgcc_s.so.1",
+    "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu/libm.so.6",
+    "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu/libpthread.so.0",
+    "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu/librt.so.1",
+    "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu/libstdc++.so.6",
+    "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu/libz.so.1"
+  ],
+  "output": "${output}"
+}

@@ -24,8 +24,8 @@
     },
     "scene_owner": {
       "path": "tools/phone-build/accepted-output/player_scene.py",
-      "bytes": 19181,
-      "sha256": "b6479c45f3377c6e47393baded094b071469396d37a78eb3565ff4f5daf7f943"
+      "bytes": 22611,
+      "sha256": "6f133c8299ec71e867cf3935f8080f4355ab203e27e97beeb7f291fde3c409c4"
     },
     "scene_sdk": {
       "path": "tools/phone-build/accepted-output/scene_sdk.py",
@@ -131,6 +131,11 @@
   ],
   "environment": {
     "width": 128,
+    "stream": {
+      "path": "Risk of Rain 2_Data/level0.resS",
+      "bytes": 131232,
+      "sha256": "ccb4049cf09c76910c4de037d80f69657126d30cdcbf54c25edbd1ef2e3dcc4a"
+    },
     "material": "Assets/SourceSky.mat",
     "light_euler": [
       35,

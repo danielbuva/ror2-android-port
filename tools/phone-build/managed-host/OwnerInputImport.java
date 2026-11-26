@@ -285,11 +285,16 @@ public final class OwnerInputImport {
         remainingBytes = remaining;
         ensureSpace(remaining);
     }
+    public static String storageMessage(long required, long available) {
+        return "Not enough installer-private storage: need " + required + " bytes including reconstruction and safety margin; available " + available
+            + " bytes. Free space using Android settings, then retry to revalidate retained inputs. Original inputs and profiles are not deleted by this refusal; existing generated-output cleanup policy is unchanged. Android installation capacity is separate.";
+    }
     private void ensureSpace(long remaining) throws Exception {
         // Same estimate as game_import.py: remaining + workspace + 2 GiB + ceil(remaining * 5%).
         long margin = Math.addExact(MARGIN, remaining / 20 + (remaining % 20 == 0 ? 0 : 1));
         long needed = Math.addExact(Math.addExact(remaining, workspace), margin);
-        if (root.getUsableSpace() < needed) throw new IOException("Not enough private storage: need " + needed + " bytes including reconstruction and safety margin");
+        long available = root.getUsableSpace();
+        if (available < needed) throw new IOException(storageMessage(needed, available));
     }
     private void copy(Required row, InputStream input) throws Exception {
         observer.checkpoint();

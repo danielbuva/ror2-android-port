@@ -14,15 +14,15 @@ import itertools
 import json
 from pathlib import Path
 import struct
-import subprocess
 import sys
 import time
 
-import shader_produce as P
-import object_produce as O
-import shader_sdk as SDK
-import unity_write as W
-from mesh_produce import INPUT_ID
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import shader_produce as P  # noqa: E402
+import object_produce as O  # noqa: E402
+import shader_sdk as SDK  # noqa: E402
+import unity_write as W  # noqa: E402
+from mesh_produce import INPUT_ID  # noqa: E402
 
 
 def vertexlit_selections(source):
@@ -121,6 +121,9 @@ def produce_postprocessing(
     output,
     codec,
     codec_sha256,
+    *,
+    compiler_command=None,
+    compiler_data=None,
 ):
     """Emit the source dummy cohort using current original forms and SDK context."""
     pc, sdk, asset_ripper = (Path(path).resolve(strict=True) for path in (pc, sdk, asset_ripper))
@@ -142,21 +145,7 @@ def produce_postprocessing(
     include_pin, common = P.includes(sdk / "CGIncludes")
     if include_pin != profile["includes_sha256"]:
         raise ValueError("post-processing SDK include inputs differ")
-    prefix = "Source/AssetRipper.Export.UnityProjects/Shaders/Templates/"
-    templates = {}
-    for name, pin in profile["template_inputs"].items():
-        data = subprocess.check_output(
-            [
-                "git",
-                "-C",
-                str(asset_ripper),
-                "show",
-                profile["exporter_revision"] + ":" + prefix + name,
-            ]
-        )
-        if len(data) != pin["bytes"] or hashlib.sha256(data).hexdigest() != pin["sha256"]:
-            raise ValueError("post-processing shader template input differs")
-        templates[name] = data.decode().replace("\r", "")
+    templates = P.asset_ripper_templates(asset_ripper, profile)
     import UnityPy
     from UnityPy.helpers.TypeTreeHelper import write_typetree
     from UnityPy.streams import EndianBinaryWriter
@@ -179,25 +168,12 @@ def produce_postprocessing(
         "outputs": {},
     }
     try:
-        license_data = subprocess.check_output(
-            [
-                "git",
-                "-C",
-                str(asset_ripper),
-                "show",
-                profile["exporter_revision"] + ":LICENSE.md",
-            ]
-        )
+        license_data = P.asset_ripper_file(asset_ripper, profile["exporter_revision"], "LICENSE.md")
         (output / "AssetRipper-LICENSE.md").write_bytes(license_data)
         rows = []
         types, type_ids = [], {}
         with (
-            compiler.compiler(
-                [sdk / "Tools/UnityShaderCompiler"],
-                sdk,
-                output / "compiler",
-                includes=[sdk / "CGIncludes"],
-            ) as connection,
+            P.compiler_session(compiler, sdk, output / "compiler", compiler_command=compiler_command, compiler_data=compiler_data) as connection,
             W.codec(codec, codec_sha256) as compress,
             (output / "objects.bin").open("wb") as stream,
         ):
@@ -603,7 +579,7 @@ def legacy_particle_selections(original, sdk_source, materials):
     return P.sdk_scene_selections(sdk_source, set())
 
 
-def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256):
+def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256, *, compiler_command=None, compiler_data=None):
     """Produce the bounded Standard source record through the shared SDK owner."""
     import UnityPy
 
@@ -751,12 +727,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         native_output = output / "standard"
         native_output.mkdir()
         with (
-            compiler.compiler(
-                [sdk / "Tools/UnityShaderCompiler"],
-                sdk,
-                output / "compiler",
-                includes=[sdk / "CGIncludes"],
-            ) as connection,
+            P.compiler_session(compiler, sdk, output / "compiler", compiler_command=compiler_command, compiler_data=compiler_data) as connection,
             W.codec(codec, codec_sha256) as compress,
         ):
             # The supported shared API must retain SOURCE keyword_rows native
@@ -819,6 +790,9 @@ def produce(
     output,
     codec,
     codec_sha256,
+    *,
+    compiler_command=None,
+    compiler_data=None,
 ):
     """Read current originals/public SDK inputs and emit the existing record pack."""
     profile_path = Path(profile_path).resolve(strict=True)
@@ -828,7 +802,9 @@ def produce(
     if profile["input_id"] != INPUT_ID:
         raise ValueError("payload shaders require the accepted current original input")
     if "materials" in profile:
-        return produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256)
+        return produce_standard(
+            profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256, compiler_command=compiler_command, compiler_data=compiler_data
+        )
     if asset_ripper is None:
         raise ValueError("Barrier and post-processing require the public template source")
     if "shaders" in profile:
@@ -842,6 +818,8 @@ def produce(
             output,
             codec,
             codec_sha256,
+            compiler_command=compiler_command,
+            compiler_data=compiler_data,
         )
     if legacy_sdk is None:
         raise ValueError("Barrier shaders require the acquired legacy SDK metadata")
@@ -884,21 +862,7 @@ def produce(
     sources = P.module("_payload_shader_source", repo / "scripts/lab/shader_source.py")
     filename = profile["source_filename"]
     P.relative(repo, filename)
-    prefix = "Source/AssetRipper.Export.UnityProjects/Shaders/Templates/"
-    templates = {}
-    for name, pin in profile["template_inputs"].items():
-        data = subprocess.check_output(
-            [
-                "git",
-                "-C",
-                str(asset_ripper),
-                "show",
-                profile["exporter_revision"] + ":" + prefix + name,
-            ]
-        )
-        if len(data) != pin["bytes"] or hashlib.sha256(data).hexdigest() != pin["sha256"]:
-            raise ValueError("shader template input differs")
-        templates[name] = data.decode().replace("\r", "")
+    templates = P.asset_ripper_templates(asset_ripper, profile)
     text, selected_template = sources.dummy_shader_source(original["m_ParsedForm"], templates)
     if selected_template != "SingleTexture":
         raise ValueError("Barrier source shader no longer selects its pinned template")
@@ -933,26 +897,13 @@ def produce(
     started = time.monotonic()
     try:
         (output / "HGCloudRemap.shader").write_text(text)
-        license_data = subprocess.check_output(
-            [
-                "git",
-                "-C",
-                str(asset_ripper),
-                "show",
-                profile["exporter_revision"] + ":LICENSE.md",
-            ]
-        )
+        license_data = P.asset_ripper_file(asset_ripper, profile["exporter_revision"], "LICENSE.md")
         (output / "AssetRipper-LICENSE.md").write_bytes(license_data)
         vertex_output = output / "vertexlit"
         vertex_output.mkdir()
         compiler = P.module("_payload_shader_compiler", repo / "tools/phone-build/owner-code/shader.py")
         with (
-            compiler.compiler(
-                [sdk / "Tools/UnityShaderCompiler"],
-                sdk,
-                output / "compiler",
-                includes=[sdk / "CGIncludes"],
-            ) as connection,
+            P.compiler_session(compiler, sdk, output / "compiler", compiler_command=compiler_command, compiler_data=compiler_data) as connection,
             W.codec(codec, codec_sha256) as compress,
         ):
             vertex_body, vertex_tree, _ = SDK.compile_body(
@@ -1073,14 +1024,14 @@ def main():
         "--sdk",
         type=Path,
         required=True,
-        help="Current pinned Unity 2021.3.45f2 Contents; its compiler executes",
+        help="Current pinned Unity 2021.3.45f2 Contents for metadata, includes and the default compiler",
     )
     parser.add_argument(
         "--legacy-sdk",
         type=Path,
         help="Read-only Unity 2021.3.33f1 Contents for source/hash metadata; never executed",
     )
-    parser.add_argument("--asset-ripper", type=Path, help="Read-only pinned public template Git source")
+    parser.add_argument("--asset-ripper", type=Path, help="Pinned public AssetRipper Git repository or staged revision tree")
     parser.add_argument(
         "--output",
         type=Path,
@@ -1089,6 +1040,7 @@ def main():
     )
     parser.add_argument("--codec", type=Path, required=True)
     parser.add_argument("--codec-sha256", required=True)
+    P.add_compiler_arguments(parser)
     args = parser.parse_args()
     result = produce(
         args.profile,
@@ -1100,6 +1052,8 @@ def main():
         args.output,
         args.codec,
         args.codec_sha256,
+        compiler_command=args.compiler_command,
+        compiler_data=args.compiler_data,
     )
     print(json.dumps(result, indent=2))
 

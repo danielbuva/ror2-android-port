@@ -5,6 +5,7 @@ Only measured PPtr fields are rewritten; the existing emitter remains responsibl
 for final structural, managed and persisted-object qualification.
 """
 
+from collections import Counter
 from contextlib import ExitStack
 import hashlib
 import json
@@ -146,7 +147,7 @@ def extend_selection(owner, member, required, selected, types, routes, extension
 
 
 def original_identities(owner, path, source_files=None, *, destinations=None):
-    """Reverse body-producing profile selectors, never schema-only type_source."""
+    """Reverse original body selectors and identity-bound MonoScript remaps."""
     result = {}
 
     def add(record, source):
@@ -157,6 +158,16 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
         bundles = owner.A.profile_bundles(path)
     else:
         profile = json.loads(path.read_bytes())
+        if "original_sources" in profile:
+            originals = profile["original_sources"]
+            for row in profile["records"]:
+                source = row.get("original", ())
+                if row["class_id"] != 115 or not row.get("script_identity") or len(source) != 3 or source[0] not in originals:
+                    raise ValueError("registry remap requires a pinned original MonoScript identity")
+                if source_files is not None and source_files.setdefault(source[0], originals[source[0]]) != originals[source[0]]:
+                    raise ValueError("original source file pins disagree")
+                add(tuple(row["destination"]), source)
+            return result
         if "bundles" not in profile:
             bundle = profile["bundle"]
             if source_files is not None:
@@ -379,12 +390,26 @@ def prepare(owner, inputs, output):
                 actual, body = producer.record(value)
                 if actual != row:
                     raise ValueError("supplier record changed")
+                original_body, original_type, _ = original(binding["source"])
+                identity = row.get("source_produced", {}).get("script_identity")
+                if identity is not None:
+                    if not original_type.get("tree") or original_type["dependencies"]:
+                        raise ValueError("registry MonoScript requires an original leaf layout and verified identity")
+                    expected_type = (
+                        original_type if "tree" in typ else {key: value for key, value in original_type.items() if key not in {"tree", "dependencies"}}
+                    )
+                    if typ != expected_type:
+                        raise ValueError("registry MonoScript native type differs from original")
+                    owner.O.current_script_identity(original_body, original_type["class_id"], identity)
+                    owner.O.current_script_identity(body, typ["class_id"], identity)
+                    if owner.pointers(original_body, original_type, {}):
+                        raise ValueError("original registry MonoScript layout contains pointers")
+                    typ = original_type
                 value = descriptor(
                     target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, source=binding["source"]
                 )
                 if "resource" in row:
                     value["resource"] = row["resource"]
-                original(binding["source"])
             else:
                 if target in staged_descriptors:
                     value, body, typ = staged.record(target)
@@ -454,22 +479,24 @@ def prepare(owner, inputs, output):
             pins.pin(canonical["bundle"])
             donor = canonical_profile["bundle"]
             externals = sorted(set(externals) | {donor["member"]})
-        # Persist one retained pack per supplier; record keys and lineage remain
-        # unchanged even when unrelated sources share the same numeric path ID.
+        # Keep each supplier key unique within a relocation pack. Aliases may
+        # apply different routes to the same body but keep its lineage key.
         retained = {}
+        occurrences = Counter()
         for target in sorted(selected):
             if target[:2] != member:
                 continue
             value, body, typ = raw_records[target]
             supplier_name = bindings[target]["supplier"]
-            pack = retained.setdefault(supplier_name, dict(blob=bytearray(), rows=[], record_keys=set(), witnesses=[], types=[]))
             targets = {tuple(edge["field"]): tuple(edge["target"]) for edge in routes[target]}
             revised = owner.relocate_pointer_fields(value, body, typ, targets, externals)
-            # ProducerRecords uses the same record key throughout the lineage.
             record_key = tuple(value["record_source"])
-            if record_key in pack["record_keys"]:
-                raise ValueError("one supplier record maps to multiple emitted bodies")
-            pack["record_keys"].add(record_key)
+            occurrence_key = supplier_name, record_key
+            pack_key = supplier_name, occurrences[occurrence_key]
+            occurrences[occurrence_key] += 1
+            if pack_key not in retained:
+                retained[pack_key] = (output / f"retained-{len(retained)}", dict(blob=bytearray(), rows=[], witnesses=[], types=[]))
+            directory, pack = retained[pack_key]
             prior, _ = producer.record(value)
             row = dict(
                 prior,
@@ -487,11 +514,10 @@ def prepare(owner, inputs, output):
             selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record", "source")})
             if "resource" in value:
                 selected[target]["resource"] = value["resource"]
-            selected[target]["provider"] = str(output / ("retained-" + str(list(suppliers).index(supplier_name))))
+            selected[target]["provider"] = str(directory)
             fields = owner.pointers(revised, typ, {})
             routes[target] = [dict(edge, pointer=list(fields[tuple(edge["field"])])) for edge in routes[target]]
-        for name, pack in retained.items():
-            directory = output / ("retained-" + str(list(suppliers).index(name)))
+        for (name, _), (directory, pack) in retained.items():
             directory.mkdir()
             (directory / "objects.bin").write_bytes(pack["blob"])
             for filename, rows in (("index.jsonl", pack["rows"]), ("witnesses.jsonl", pack["witnesses"])):
