@@ -6549,11 +6549,10 @@ prepared inputs, private writable editor/Gradle state, its own MCP port and a
 persistent lock outside the removable tree. Creation snapshots under the
 canonical mutex; later source selection/builds use only the lane lock. Creation
 and every build/editor-open restage authored inputs from the selected checkout
-through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging,
-`project_input_rebuild.stage_editor_inputs` for pinned baseline templates, and
-the ordinary Android/audio owners. The editor cohort includes
-`WholeCatalogHost.cs` in canonical builds and private lanes so its runtime
-contracts follow the selected source. Extra C# is retired only after matching a
+through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging, and
+the ordinary Android/audio owners. Lane restaging applies pinned baseline
+editors outside the current editor cohort. Canonical builds and private lanes
+stage `WholeCatalogHost.cs` from the selected source. Extra C# is retired only after matching a
 predecessor Git blob, with source/metadata hashes and a removal receipt. Unknown
 or edited files refuse. `original_game_audio_build_hook.restage_authored_for_lane`
 uses a small APFS reference clone to unwind camera/music without changing live
