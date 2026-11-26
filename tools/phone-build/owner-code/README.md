@@ -306,6 +306,15 @@ empty data. J1102 qualifies both decoded execution models and an authored
 fragment-only arithmetic change, with raw host/phone payload parity. Original
 shader recovery and serialized content assembly remain separate content gates.
 
+`Connection.preprocess_compute` resolves kernel declarations, keyword axes,
+requirements and dependencies from a `.compute` source. Give both compute
+commands the full source filename so relative includes resolve. Pass the
+preprocessed source, kernel defines and variant requirements to
+`Connection.compile_compute`. It returns diagnostics and the SDK binary for
+one Vulkan kernel variant. The pinned macOS compiler emitted all 35 kernels
+in the 12 camera ComputeShader sources. Native class-72 serialization and
+Android validation remain open.
+
 ## Fixed-target Burst and completed-object relinking
 
 The combined backend optionally accepts `burst_tools: {"command": [EXPLICIT_HOST,
