@@ -53,6 +53,43 @@ class CompilerHosting(unittest.TestCase):
         self.assertEqual(call.kwargs["authored_files"], ["first", "second"])
 
 
+class ComputeRecords(unittest.TestCase):
+    def test_same_buffer_name_can_have_distinct_kernel_layouts(self):
+        compute = N.module("_compute_fixture", Path(N.__file__).with_name("shader_compute.py"))
+        names = {"First": 16, "Second": 32, "Third": 16}
+        declarations = [{"name": name, "defines": []} for name in names]
+
+        def string(value):
+            data = value.encode()
+            return struct.pack("<I", len(data)) + data
+
+        def compile_kernel(source, filename, name, **kwargs):
+            data = struct.pack("<QIQQ", 0, 0, 1, 1)
+            data += string("Constants") + struct.pack("<iQQ", names[name], 0, 1)
+            data += string(name) + struct.pack("<Q", 1)
+            data += string("Constants") + string("Constants") + struct.pack("<iii", 2, -1, 0)
+            data += struct.pack("<QQQQQ", 0, 0, 0, 0, 20)
+            data += bytes.fromhex("03022307") + bytes(16) + struct.pack("<IIIB", 4, 2, 1, 1)
+            return {"success": True, "data": data}
+
+        compiler = SimpleNamespace(
+            preprocess_compute=lambda *args, **kwargs: dict(
+                kernels=declarations, requirements=32, keywords={}, requirement_overrides=[], source="source", flags=0
+            ),
+            compile_compute=compile_kernel,
+        )
+        filename = SimpleNamespace(read_text=lambda **kwargs: "compute")
+        tree = compute.compile_tree(compiler, filename, "Fixture", dict.fromkeys(names, [4, 2, 1]))
+        variant = tree["variants"][0]
+        self.assertEqual([row["byteSize"] for row in variant["constantBuffers"]], [16, 32])
+        kernels = [row["variantMap"][0][1] for row in variant["kernels"]]
+        self.assertEqual([row["cbVariantIndices"] for row in kernels], [[0], [1], [0]])
+        self.assertEqual([row["requirements"] for row in kernels], [32, 32, 32])
+        data = compile_kernel(None, None, "First")["data"]
+        with self.assertRaisesRegex(ValueError, "terminal status"):
+            compute.kernel_binary(data + b"x")
+
+
 class AuthoredSelection(unittest.TestCase):
     def profile(self):
         profile = {key: {"witness": key} for key in ("input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs")}
@@ -93,6 +130,43 @@ class AuthoredSelection(unittest.TestCase):
 
 
 class NativeRecords(unittest.TestCase):
+    def test_inline_sampler_is_written_to_serialized_common_parameters(self):
+        compilation = {"reflection": ["sampler: 85 42"], "data": b"gpu", "gpu_program_type": 25}
+        _, table, programs, parameters = N.variant_records([{"compilation": compilation, "requirements": 1, "keywords": []}], [])
+        self.assertEqual(table["m_CommonParameters"]["m_Samplers"], [{"sampler": 85, "bindPoint": 42}])
+        self.assertEqual(len(programs), 1)
+        self.assertEqual(len(parameters), 1)
+
+    def test_renderer_excluded_pass_keeps_empty_serialized_program_tables(self):
+        response = {"success": True, "snippets": [{"fields": [30, 1 << 19]}], "records": [{"kind": "keywordsEnd", "fields": [30]}]}
+        connection = SimpleNamespace(preprocess=lambda *args, **kwargs: response, capabilities=())
+        with patch.object(N, "editor_hash", return_value=b"hash"):
+            _, passes = N.compile_passes(connection, "", "test.shader", {"caching_preprocessor": True}, b"", b"", [], 0, respect_renderer_mask=True)
+        _, table, programs, parameters = N.variant_records(passes[30]["variants"], [])
+        self.assertEqual(passes[30]["identity"], b"hash")
+        self.assertEqual(table["m_NameIndices"], [])
+        self.assertEqual(programs, [])
+        self.assertEqual(parameters, [])
+
+    def test_camera_single_underscore_is_the_no_keyword_variant(self):
+        response = {
+            "success": True,
+            "snippets": [{"fields": [30, 1 << 18], "source": "pass"}],
+            "records": [
+                {"kind": "keywordsUserGlobal", "fields": [30, 0], "values": ["_ APPLY_FORWARD_FOG"]},
+                {"kind": "keywordsEnd", "fields": [30], "requirements": 1, "overrides": []},
+            ],
+        }
+        connection = SimpleNamespace(
+            preprocess=lambda *args, **kwargs: response,
+            compile=lambda *args, **kwargs: {"success": True, "data": b"gpu"},
+            capabilities=(),
+        )
+        with patch.object(N, "editor_hash", return_value=b"hash"):
+            pre, passes = N.compile_passes(connection, "", "test.shader", {"caching_preprocessor": True}, b"", b"", [], 0, respect_renderer_mask=True)
+        self.assertEqual([row["keywords"] for row in passes[30]["variants"]], [[], ["APPLY_FORWARD_FOG"]])
+        self.assertEqual(N.pass_keywords(pre, ([], []))[0], ["APPLY_FORWARD_FOG"])
+
     def test_reflection_not_fixed_target_names(self):
         r = N.reflection(["input: 2 9", "cb: Fixture 32 1", "const: tint 0 0 0 1 4 0", "cbbind: Fixture 5", "texbind: image 7 8 0 2"])
         self.assertEqual(r["buffers"][0]["constants"][0]["name"], "tint")

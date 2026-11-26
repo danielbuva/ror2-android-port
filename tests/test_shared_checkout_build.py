@@ -180,6 +180,62 @@ class SharedCheckoutBuildTests(unittest.TestCase):
             self.assertTrue(shared.run_request(request)["success"])
         self.assertEqual(len(self.calls), 2)
 
+    def test_lane_request_uses_private_inputs_and_keeps_canonical_source(self):
+        from build_lanes import location
+        from original_game_audio_build_hook import SELECTION_ENV, SELECTION_SCHEMA
+
+        request, output = self.request()
+        data = json.loads(request.read_text())
+        data.update(full=False, lane="fixture", audio_selection="config/lane-audio.json")
+        request.write_text(json.dumps(data))
+        lane = location("fixture", self.worker)
+        checkout = lane / "checkout"
+        selection = checkout / "work" / data["audio_selection"]
+        selection.parent.mkdir(parents=True)
+        selection.write_text(json.dumps(dict(schema=SELECTION_SCHEMA, requested=False)))
+        (lane / "lane.json").write_text(
+            json.dumps(
+                dict(
+                    name="fixture",
+                    checkout=str(checkout),
+                    lock=str(lane.parent / ".locks/fixture.lock"),
+                    canonical_work=str(self.primary / "work"),
+                    complete=True,
+                )
+            )
+        )
+        (self.primary / "owner.txt").write_text("another worker's changes\n")
+
+        def invoke(root, arguments, *, env, pass_fds):
+            self.assertEqual(root, self.worker)
+            self.assertEqual(env["LAB_LANE"], "fixture")
+            self.assertEqual(env[SELECTION_ENV], data["audio_selection"])
+            self.assertEqual(pass_fds, ())
+            self.calls.append(arguments)
+            if arguments[0] == "prototype":
+                (lane / "latest-build.json").write_text(
+                    json.dumps(
+                        dict(
+                            success=True,
+                            source={"commit": self.target},
+                            apk="fixture.apk",
+                            apk_sha256="digest",
+                            payload_directory="payload",
+                        )
+                    )
+                )
+
+        with patch.object(shared, "ROOT", self.worker), patch.object(shared, "invoke", side_effect=invoke):
+            self.assertTrue(shared.run_request(request, dry_run=True)["smoke"])
+            self.assertEqual(self.calls, [])
+            result = shared.run_request(request)
+        self.assertTrue(result["success"])
+        self.assertEqual(result["apk"], "fixture.apk")
+        self.assertEqual(self.calls, [["preflight", "--host-only"], ["prototype", "--action", "whole-catalog-code-build"]])
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.original)
+        self.assertEqual((self.primary / "owner.txt").read_text(), "another worker's changes\n")
+        self.assertEqual(json.loads((output / "terminal.done.json").read_text()), result)
+
     def test_request_failure_retains_terminal_after_source_restoration_and_prune(self):
         request, output = self.request()
         # A real failing preflight exercises restoration, then the tracked

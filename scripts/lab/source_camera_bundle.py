@@ -7,7 +7,7 @@ import shutil
 import subprocess
 
 from common import ROOT, WORK
-from build_lock import HOST_BUILD_LOCK, host_build_lock
+from build_lock import HOST_BUILD_LOCK, host_build_lock, unity_editor_env
 from shader_postprocessing_uber import RECIPE, digest, generate_candidate
 
 
@@ -108,7 +108,7 @@ def build(target):
             str(output / "editor.log"),
         ]
         with host_build_lock(HOST_BUILD_LOCK, operation="Source camera program bundle", timeout=1):
-            subprocess.run(args, env=dict(os.environ, ANDROID_ADB_SERVER_PORT="5038"), check=True, timeout=1200)
+            subprocess.run(args, env=unity_editor_env(), check=True, timeout=1200)
         actual = json.loads((output / "compiled.json").read_text())
         bundle = output / "bundles/source-camera-programs"
         if actual.get("count") != len(manifest["programs"]) or actual.get("unity") != "2021.3.45f2":

@@ -188,6 +188,7 @@ class IntegrationMetadataTests(unittest.TestCase):
         ]
         metadata = dict(locations=rows, keys=[dict(key="alias", locations=[1, 2])], roots=[1])
         builds = [
+            dict(assetBundleName="whole-game-content", assetNames=["Assets/Ordinary.asset", "assets/recovered/GEOMETRY.obj"]),
             dict(assetBundleName="source-scene", assetNames=["Assets/Explicit.unity"]),
             dict(assetBundleName="labgeometry", assetNames=["Assets/Recovered/geometry.obj"]),
         ]

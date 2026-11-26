@@ -9,7 +9,16 @@ namespace UnityEngine
     public class GameObject : Object { }
     public class TextAsset : Object { }
     public static class Resources { public static T Load<T>(string path) where T : Object => null; }
-    public struct Vector2 { public float x, y; public Vector2(float x, float y) { this.x = x; this.y = y; } public static Vector2 zero => new Vector2(); }
+    public struct Vector2
+    {
+        public float x, y;
+        public Vector2(float x, float y) { this.x = x; this.y = y; }
+        public static Vector2 zero => new Vector2();
+        public float sqrMagnitude => x * x + y * y;
+        public float magnitude => (float)Math.Sqrt(sqrMagnitude);
+        public static Vector2 operator /(Vector2 vector, float value) => new Vector2(vector.x / value, vector.y / value);
+        public static Vector2 operator *(Vector2 vector, float value) => new Vector2(vector.x * value, vector.y * value);
+    }
     public struct Vector3 { public Vector3(float x, float y, float z) { } }
     public struct Quaternion { public static Quaternion identity => new Quaternion(); }
     public struct Matrix4x4
@@ -111,7 +120,8 @@ namespace UnityEngine
     public static class Input
     {
         public static HashSet<KeyCode> down = new HashSet<KeyCode>();
-        public static string[] GetJoystickNames() => new[] { "Authored controller" };
+        public static string[] joystickNames = new[] { "Authored controller" };
+        public static string[] GetJoystickNames() => joystickNames;
         public static bool GetKeyDown(KeyCode key) => down.Contains(key);
     }
 }
@@ -132,11 +142,16 @@ namespace RoR2
         public T GetComponent<T>() where T : new() => new T();
     }
 }
-public class NovaInputBridge : UnityEngine.Object
+public partial class NovaInputBridge : UnityEngine.Object
 {
     public static bool ownGuiMouse;
     public bool OwnsTouchGuiMouse => ownGuiMouse;
-    public class Mapping { public int moveX, moveY = 0, aimX = 1, jump; public bool enableInteraction; }
+    public class Mapping
+    {
+        public int moveX, moveY = 2, aimX = 1, aimY = 3, jump;
+        public float moveYSign = 1, aimYSign = 1;
+        public bool enableInteraction;
+    }
     public static string MeasuredControllerName => "Authored controller";
     public class ButtonRebind
     {
@@ -151,9 +166,14 @@ public class NovaInputBridge : UnityEngine.Object
         public static bool TryLoad(string path, string attempt, out Mapping mapping) { mapping = new Mapping(); return true; }
         public static bool TrySave(string path, Mapping draft, string attempt) { saves++; return !refuse; }
     }
-    public struct Raw { public float[] axes; }
-    public static Raw raw = new Raw { axes = new float[2] };
-    public static Raw ReadRaw() => raw;
+    public struct Raw { public float[] axes; public bool[] buttons; }
+    public static Raw raw = new Raw { axes = new float[4], buttons = new bool[20] };
+    public static Raw ReadRaw()
+    {
+        for (int i = 0; i < raw.buttons.Length; i++)
+            raw.buttons[i] = Input.down.Contains((KeyCode)((int)KeyCode.Joystick1Button0 + i));
+        return raw;
+    }
     public static int neutrals;
     public void Neutral() { neutrals++; }
 }
@@ -217,8 +237,7 @@ public sealed partial class PortSession
     void MoveOfflineLoadoutRow(int direction) { offlineLoadoutRow = (offlineLoadoutRow + direction + 5) % 5; }
     void CycleOfflineLoadoutRow(int direction) { loadoutCycles += direction; }
     bool UsesTouchUi() => false;
-    public bool controllerPresent = true;
-    bool OfflineUiControllerPresent() => controllerPresent;
+    bool OfflineUiControllerPresent() => true;
     bool CanAbandonOfflineRun() => true;
     void RequestAbandonOfflineRun() { abandonRequests++; }
     void Save() { saves++; }
@@ -253,6 +272,11 @@ public sealed partial class PortSession
     }
     public void DraftHighRefresh(bool high) { offlineSettings.values.highRefreshRate = high; }
     public void ReapplyDisplay() { applicationInput.ReapplyDisplayPreference(); }
+    public void BackgroundRoundTrip()
+    {
+        applicationInput.OnApplicationPause(true);
+        applicationInput.OnApplicationPause(false);
+    }
     public void FinishGameplayFrameRate(int prior) { applicationInput.RestoreGameplayFrameRate(prior); }
     public void ApplicationController()
     {
@@ -266,7 +290,6 @@ public sealed partial class PortSession
         bool offlineSurvivorStickLatched, offlineDifficultyStickLatched, quitConfirmation;
         int loadoutCycles;
         public OfflineApplicationSession(PortSession coordinator) { this.coordinator = coordinator; }
-        bool OfflineUiControllerPresent() => coordinator.OfflineUiControllerPresent();
         void CycleOfflineDifficulty(int direction) { coordinator.difficultyCycles++; }
         void RequestResultsMenu() { coordinator.resultMenuRequests++; }
     }
@@ -450,9 +473,47 @@ public static class AndroidFeedbackHost
         session.Dispose();
         Check(!session.r.settings.rebindVisible && !session.Paused, "teardown retained modal/pause");
     }
+    static void RebindLifecycle()
+    {
+        var session = new PortSession(); session.Prepare(); session.Show(true);
+        GUI.click = "Rebind controller buttons"; session.Render();
+        GUI.click = "jump"; session.Render();
+        var capture = NovaInputBridge.ButtonRebind.last;
+        capture.ready = true; capture.candidate = capture.draft.jump = 18;
+
+        Application.isFocused = false;
+        GUI.click = "Confirm button and save for next session"; session.Render();
+        Check(NovaInputBridge.MappingStore.saves == 0 && !session.r.settings.rebindReady && session.Paused,
+              "focus loss allowed a stale capture to save");
+
+        Application.isFocused = true;
+        Input.joystickNames = new string[0];
+        GUI.click = "jump"; session.Render();
+        Check(NovaInputBridge.ButtonRebind.last == capture && LabelContains("Reconnect"),
+              "disconnected chooser began a capture or hid the recovery message");
+        session.r.nova.mapping = null;
+        session.Render();
+        Check(session.r.settings.rebindVisible && session.Paused, "missing mapping broke the paused chooser");
+
+        session.r.nova.mapping = new PortSession.Mapping();
+        Input.joystickNames = new[] { "Authored controller" };
+        GUI.click = "jump"; session.Render();
+        Check(NovaInputBridge.ButtonRebind.last != capture && session.r.settings.rebindAction == "jump",
+              "reconnected controller could not start a fresh capture");
+        capture = NovaInputBridge.ButtonRebind.last;
+        capture.ready = true; capture.candidate = capture.draft.jump = 18;
+        session.BackgroundRoundTrip();
+        GUI.click = "Confirm button and save for next session"; session.Render();
+        Check(NovaInputBridge.MappingStore.saves == 0 && !session.r.settings.rebindReady && session.Paused,
+              "background and return allowed a ready capture to save without a new input sample");
+        GUI.click = "Cancel"; session.Render();
+        Check(!session.r.settings.rebindVisible && session.Paused && session.r.nova.mapping.jump == 0 &&
+              NovaInputBridge.MappingStore.saves == 0, "cancel after reconnect changed pause or mapping");
+    }
     static void PlayerScreens()
     {
         var s = new PortSession(); s.Prepare(); s.StartMenu(); s.r.hud = new PortSession.Report();
+        AdmitMenuController(s);
         Action<KeyCode> press = key => { Input.down.Clear(); Input.down.Add(key); s.ApplicationController(); Input.down.Clear(); };
         press(KeyCode.Joystick1Button2);
         Check(s.offlineLoadoutVisible && s.menuObscured && !s.StartSelected, "X did not isolate loadout");
@@ -464,7 +525,7 @@ public static class AndroidFeedbackHost
         Check(s.r.hud.menuQuitConfirmation && s.menuObscured, "Y did not isolate Quit");
         Input.down.Add(KeyCode.Joystick1Button0); Input.down.Add(KeyCode.Joystick1Button1); s.ApplicationController(); Input.down.Clear();
         Check(!s.r.hud.menuQuitConfirmation && Application.quits == 0 && !s.StartSelected, "Quit cancel bled into confirm/Start");
-        s.controllerPresent = false;
+        Input.joystickNames = Array.Empty<string>();
         press(KeyCode.Joystick1Button2); Check(!s.offlineLoadoutVisible, "unadmitted physical button routed");
         press(KeyCode.L); press(KeyCode.Return); press(KeyCode.Escape);
         Check(!s.offlineLoadoutVisible && s.loadoutCycles == 1 && !s.StartSelected, "keyboard alias did not share loadout route");
@@ -478,9 +539,50 @@ public static class AndroidFeedbackHost
         result.r.results.persisted = true; result.ApplicationController(); Input.down.Clear();
         Check(result.resultMenuRequests == 1, "saved defeat did not route to menu");
     }
+    static void AdmitMenuController(PortSession session)
+    {
+        session.ApplicationController();
+        Time.realtimeSinceStartup += .25f;
+        session.ApplicationController();
+    }
+    static void MenuControllerNeutral()
+    {
+        var names = Input.joystickNames;
+        foreach (var horizontal in new[] { 0, 1 })
+        {
+            var session = new PortSession(); session.Prepare(); session.StartMenu();
+            AndroidOfflineSettings.current.deadzone = .2f;
+            AdmitMenuController(session);
+            Input.joystickNames = Array.Empty<string>();
+            session.ApplicationController();
+
+            Input.joystickNames = names;
+            NovaInputBridge.raw.axes[horizontal] = NovaInputBridge.raw.axes[horizontal + 2] = .15f;
+            session.ApplicationController();
+            Time.realtimeSinceStartup += .5f;
+            session.ApplicationController();
+            Input.down.Add(KeyCode.Joystick1Button0);
+            session.ApplicationController();
+            Input.down.Clear();
+            Check(!session.StartSelected, $"held diagonal on axis {horizontal} admitted Start");
+
+            NovaInputBridge.raw.axes[horizontal] = NovaInputBridge.raw.axes[horizontal + 2] = 0;
+            session.ApplicationController();
+            Time.realtimeSinceStartup += .125f;
+            Input.down.Add(KeyCode.Joystick1Button0);
+            session.ApplicationController();
+            Input.down.Clear();
+            Check(!session.StartSelected, "released stick skipped the neutral window");
+            AdmitMenuController(session);
+            Input.down.Add(KeyCode.Joystick1Button0);
+            session.ApplicationController();
+            Input.down.Clear();
+            Check(session.StartSelected, "fresh Start press after neutral window was lost");
+        }
+    }
     static void StartMenuInput()
     {
-        var session = new PortSession(); session.Prepare(); session.StartMenu(); session.Show(true);
+        var session = new PortSession(); session.Prepare(); session.StartMenu(); AdmitMenuController(session); session.Show(true);
         GUI.click = "Send feedback"; session.Render();
         NovaInputBridge.raw.axes[0] = NovaInputBridge.raw.axes[1] = 1;
         Input.down.Add(KeyCode.Joystick1Button0);
@@ -598,8 +700,10 @@ public static class AndroidFeedbackHost
             case "screen-errors": ScreenErrors(); break;
             case "screen-escape": ScreenEscape(); break;
             case "rebind-modal": RebindModal(); break;
+            case "rebind-lifecycle": RebindLifecycle(); break;
             case "settings-lifecycle": SettingsLifecycle(); break;
             case "player-screens": PlayerScreens(); break;
+            case "menu-controller-neutral": MenuControllerNeutral(); break;
             case "software-notices": SoftwareNotices(); break;
             case "start-menu-input": StartMenuInput(); break;
             case "end-run-confirmation": EndRunConfirmation(); break;

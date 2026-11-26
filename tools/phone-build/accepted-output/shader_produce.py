@@ -102,7 +102,7 @@ def string(value):
 
 
 def reflection(rows):
-    result = {"inputs": [], "constants": [], "buffers": [], "textures": [], "bindings": [], "resource_buffers": []}
+    result = {"inputs": [], "constants": [], "buffers": [], "textures": [], "bindings": [], "resource_buffers": [], "samplers": []}
     current = None
     for line in rows:
         kind, fields = line.split(": ", 1)
@@ -150,6 +150,9 @@ def reflection(rows):
             result["textures"].append(
                 {"name": name, "texture": int(texture), "sampler": int(sampler), "multisample": bool(int(multisample)), "dimension": int(dimension)}
             )
+        elif kind == "sampler":
+            sampler, binding = map(int, fields)
+            result["samplers"].append({"sampler": sampler, "bindPoint": binding})
         else:
             raise ValueError("unsupported reflection kind: " + kind)
     for buffer in result["buffers"]:
@@ -186,6 +189,8 @@ def native_parameters(reflect, common=None):
     bindings = [row for row in reflect.get("bindings", []) if row not in common.get("bindings", [])]
     textures = [row for row in reflect.get("textures", []) if row not in common.get("textures", [])]
     resource_buffers = [row for row in reflect.get("resource_buffers", []) if row not in common.get("resource_buffers", [])]
+    if any(row not in common.get("samplers", []) for row in reflect.get("samplers", [])):
+        raise ValueError("Vulkan pass has a variant-specific inline sampler")
     result.append(words(len(textures) + len(bindings) + len(resource_buffers)))
     # SDK SaveParametersToData writes noncommon textures before CB bindings.
     result.extend(
@@ -295,6 +300,7 @@ def common_parameters(reflect):
     # SDK CreateNamesTable visits resource buffers after CB bindings.
     for binding in reflect.get("resource_buffers", []):
         result["m_BufferParams"].append({"m_NameIndex": index(binding["name"]), "m_Index": binding["index"], "m_ArraySize": binding["array"]})
+    result["m_Samplers"] = reflect.get("samplers", [])
     return {"m_NameIndices": sorted([[name, i] for i, name in enumerate(names)]), "m_CommonParameters": result}
 
 
@@ -302,8 +308,8 @@ def variant_records(variants, keyword_names):
     """Factor fresh reflection and emit parameters before linked executables."""
     reflects = [reflection(variant["compilation"]["reflection"]) for variant in variants]
     common = {
-        key: [row for row in reflects[0][key] if all(row in reflect[key] for reflect in reflects[1:])]
-        for key in ("constants", "buffers", "bindings", "textures", "resource_buffers")
+        key: [row for row in reflects[0][key] if all(row in reflect[key] for reflect in reflects[1:])] if reflects else []
+        for key in ("constants", "buffers", "bindings", "textures", "resource_buffers", "samplers")
     }
     records, parameters, programs = [], [], []
 
@@ -657,7 +663,9 @@ def fallback_externals(tree, shader_files):
     return [{"empty": "", "guid": bytes(16), "type": 0, "path": shader_files[fallback]}]
 
 
-def construct(node, shaderlab, preprocessing, compiled_passes, compress, builtin_keywords, original=None, ui=False, intersection=False):
+def construct(
+    node, shaderlab, preprocessing, compiled_passes, compress, builtin_keywords, original=None, ui=False, intersection=False, *, preserve_state=False
+):
     """Construct every pass from source declarations and fresh native programs."""
     tree = default(node)
     form_node = child(node, "m_ParsedForm")
@@ -673,8 +681,9 @@ def construct(node, shaderlab, preprocessing, compiled_passes, compress, builtin
         form["m_PropInfo"]["m_Props"] = properties(prop_node, shaderlab)
     else:
         form["m_PropInfo"]["m_Props"] = deepcopy(original["m_ParsedForm"]["m_PropInfo"]["m_Props"])
-        for prop in form["m_PropInfo"]["m_Props"]:
-            prop["m_Attributes"] = []
+        if not preserve_state:
+            for prop in form["m_PropInfo"]["m_Props"]:
+                prop["m_Attributes"] = []
     sub_node = item(child(form_node, "m_SubShaders"))
     pass_node = item(child(sub_node, "m_Passes"))
     ordered = []
@@ -697,13 +706,17 @@ def construct(node, shaderlab, preprocessing, compiled_passes, compress, builtin
             compiled = compiled_passes[gpu]
             table, programs, parameters = packed[gpu]
             shader_pass = default(pass_node)
-            if original is not None and not intersection:
+            if preserve_state:
+                state = deepcopy(original["m_ParsedForm"]["m_SubShaders"][sub_index]["m_Passes"][pass_index]["m_State"])
+                state["gpuProgramID"] = gpu
+            elif original is not None and not intersection:
                 source_state = original["m_ParsedForm"]["m_SubShaders"][sub_index]["m_Passes"][pass_index + len(grabs)]["m_State"]
                 state = native_state(source_state, gpu, ui)
             else:
                 state = render_state(header + "\n" + text, gpu)
             name = re.search(r'\bName\s+"([^"]+)"', text)
-            state.update({"m_Name": name[1] if name else "", "m_Tags": {"tags": source_tags(header + "\n" + text)}, "m_LOD": sub["m_LOD"]})
+            if not preserve_state:
+                state.update({"m_Name": name[1] if name else "", "m_Tags": {"tags": source_tags(header + "\n" + text)}, "m_LOD": sub["m_LOD"]})
             shader_pass.update(
                 {
                     "m_State": state,
@@ -1341,10 +1354,174 @@ def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connecti
     return name, {"bytes": destination.stat().st_size, "sha256": sha(destination)}
 
 
+def camera_program_sources(profile, selection, root, archive, output, stream, layout, records):
+    """Resolve camera program selectors from the original resource's local PPtrs."""
+    from shader_postprocessing_uber import archive_files, include_closure
+
+    W = records.W
+    camera = profile[selection]
+    compute = selection == "camera_compute"
+    recipe_path = camera["package_recipe"]
+    if recipe_path not in profile["authored_inputs"]:
+        raise ValueError("camera package recipe lacks an authored input pin")
+    package = json.loads(relative(root, recipe_path).read_text())
+    if package["input_id"] != profile["input_id"]:
+        raise ValueError("camera package and original input differ")
+    files = archive_files(archive, package)
+    directory = output / "camera-package"
+    directory.mkdir()
+    objects = {row["path_id"]: row for row in layout["objects"]}
+
+    def read(path_id, class_id):
+        row = objects.get(path_id)
+        if row is None or layout["types"][row["type_id"]]["class_id"] != class_id:
+            raise ValueError("camera program references an absent or mistyped original record")
+        stream.seek(layout["data_offset"] + row["offset"])
+        return W.B.exact(stream, row["bytes"]), layout["types"][row["type_id"]]
+
+    resources, typ = read(camera["resources_path_id"], 114)
+    fields = records.fields(resources, records.SCHEMA.type_tree(io.BytesIO(typ["tree"])))[1]
+    package_rows = {row["field"]: row for row in package["programs"] if bool(row["kernels"]) == compute}
+    selected = {}
+    for entry in profile["typed_records"]:
+        if selection not in entry:
+            continue
+        field = entry[selection]
+        pointer = ("computeShaders" if compute else "shaders", field)
+        start, end = fields[pointer]
+        if end - start != 12 or pointer + ("m_PathID",) not in fields or pointer + ("m_FileID",) not in fields:
+            raise ValueError("camera resource selector is not a PPtr: " + field)
+        file_id, identity = struct.unpack_from("<iq", resources, start)
+        if file_id != 0 or identity != entry["source_path_id"]:
+            raise ValueError("camera resource selector changed: " + field)
+        body, native_type = read(identity, 72 if compute else 48)
+        node = W.shader_node(native_type["tree"])
+        original = W.read_shader_body(node, body)
+        if compute:
+            original = {"m_Name": original["m_Name"]}
+        row = package_rows[field]
+        filename = row["package_path"]
+        if hashlib.sha256(files[filename]).hexdigest() != row["package_sha256"]:
+            raise ValueError("camera package source differs: " + field)
+        for relative_name, data in include_closure(files, filename).items():
+            target = relative(directory, relative_name)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        kernels = dict(zip(row["kernels"], row["kernel_thread_groups"], strict=True))
+        selected[field] = (relative(directory, filename), original, kernels, native_type, node)
+    return directory, selected, package["package_sha256"]
+
+
+def compile_passes(
+    connection, text, filename, settings, image, common, compile_keywords, compile_flags, material_keywords=None, *, respect_renderer_mask=False
+):
+    pre = connection.preprocess(text, filename, platform_keywords=["SHADER_API_MOBILE"], caching_preprocessor=settings["caching_preprocessor"])
+    if not pre["success"] or not pre["snippets"]:
+        raise ValueError(f"shader preprocessing failed for {Path(filename).name}: {pre['diagnostics']}")
+    if respect_renderer_mask:
+        for row in pre["records"]:
+            if row["kind"] in ("keywordsUserGlobal", "keywordsUserLocal"):
+                row["values"] = [" ".join("__" if keyword == "_" else keyword for keyword in axis.split()) for axis in row["values"]]
+    compiled = {}
+    for snippet in pre["snippets"]:
+        gpu = snippet["fields"][0]
+        req = next(row for row in pre["records"] if row["kind"] == "keywordsEnd" and row["fields"] == [gpu])
+        identity = editor_hash(snippet, image, connection.capabilities, settings, common)
+        variants = []
+        keyword_sets = [] if respect_renderer_mask and not snippet["fields"][1] & (1 << 18) else retained_keywords(pre, gpu, material_keywords)
+        for keywords in keyword_sets:
+            requirements = shader_requirements(req, keywords)
+            compilation = connection.compile(
+                snippet["source"],
+                filename,
+                stage="vertex",
+                platform_keywords=compile_keywords,
+                keywords=keywords,
+                flags=compile_flags,
+                requirements=requirements,
+            )
+            if not compilation["success"] or not compilation["data"]:
+                raise ValueError(f"linked Vulkan compilation failed for {Path(filename).name} pass {gpu}, keywords {keywords}: {compilation['diagnostics']}")
+            variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
+        compiled[gpu] = {"identity": identity, "variants": variants}
+    return pre, compiled
+
+
+def camera_shader_tree(connection, filename, original, node, settings, image, common, compress):
+    text = filename.read_text()
+    form = original["m_ParsedForm"]
+    original_passes = [[shader_pass["m_State"]["m_Name"] for shader_pass in sub["m_Passes"]] for sub in form["m_SubShaders"]]
+    source_passes = []
+    for _, sub in source_blocks(re.sub(r"//[^\n]*", "", text), "SubShader"):
+        names = [re.search(r'\bName\s+"([^"]+)"', shader_pass) for _, shader_pass in source_blocks(sub, "Pass")]
+        source_passes.append([name[1] if name else "" for name in names])
+    if original["m_Dependencies"] or source_passes != original_passes:
+        raise ValueError("camera package pass layout or original dependencies differ: " + filename.name)
+    pre, compiled = compile_passes(
+        connection, text, filename, settings, image, common, platform_keywords(image, settings), compilation_flags(image, settings), respect_renderer_mask=True
+    )
+    registry = form["m_KeywordNames"][:4], form["m_KeywordFlags"][:4]
+    tree = construct(node, text, pre, compiled, compress, registry, original, preserve_state=True)
+    if tree["m_ParsedForm"]["m_Name"] != form["m_Name"]:
+        raise ValueError("camera package and original Shader names differ: " + filename.name)
+    return tree
+
+
+def typed_shader_pack(root, sdk, profile, output, connection, compress, image, common, native_type, node, package_bodies, camera_sources):
+    """Write source-compiled Shader and ComputeShader leaves for bundle preparation."""
+    import shader_sdk
+
+    O = module("_typed_shader_objects", Path(__file__).with_name("object_produce.py"))
+    rows, types, type_ids = [], [], {}
+    graphics = profile["authored_inputs"]["smoke/ProjectSettings/GraphicsSettings.asset"]
+    tiers = project_tiers(root, profile["settings"], graphics)
+    sdk_pin = profile["sdk"]["Resources/unity_builtin_extra"]["sha256"]
+    compute = module("_shader_compute", Path(__file__).with_name("shader_compute.py")) if "camera_compute" in profile else None
+    with (output / "objects.bin").open("xb") as stream:
+        for record in profile["typed_records"]:
+            typ = native_type
+            shader_node = node
+            if "camera_compute" in record:
+                filename, original, kernels, typ, compute_node = camera_sources[record["camera_compute"]]
+                tree = compute.compile_tree(connection, filename, original["m_Name"], kernels)
+                body = O.W.write_shader_body(compute_node, tree)
+            elif "camera_shader" in record:
+                filename, original, _, typ, shader_node = camera_sources[record["camera_shader"]]
+                tree = camera_shader_tree(connection, filename, original, shader_node, profile["settings"], image, common, compress)
+                body = O.W.write_shader_body(shader_node, tree)
+            elif "sdk_shader" in record:
+                identity = record["sdk_shader"]
+                source = shader_sdk.sdk_source(sdk, identity, sdk_pin)
+                folder = output / ("sdk-" + str(identity))
+                folder.mkdir()
+                body, _, _ = shader_sdk.compile_body(connection, source, node, sdk_scene_selections(source), tiers, image, common, compress, folder)
+            else:
+                body = package_bodies[record["file"]]
+            if typ["class_id"] == 48:
+                tree = O.W.read_shader_body(shader_node, body)
+                if tree["m_ParsedForm"]["m_Name"] != record["name"] or tree["platforms"] != [18] or tree["m_Dependencies"]:
+                    raise ValueError("produced Shader leaf identity, platform or dependencies differ")
+            rows.append(
+                dict(
+                    record["output"],
+                    offset=stream.tell(),
+                    bytes=len(body),
+                    sha256=hashlib.sha256(body).hexdigest(),
+                    type_id=O.record_type(typ, types, type_ids),
+                )
+            )
+            stream.write(body)
+    (output / "index.jsonl").write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+    (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
+    return {name: {"bytes": (output / name).stat().st_size, "sha256": sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")}
+
+
 def select_authored_files(profile, filenames):
     """Select standalone authored rows without initializing unrelated providers."""
     if filenames is None:
         return profile
+    if "typed_records" in profile:
+        raise ValueError("authored file selection requires a standalone shader profile")
     wanted = set(filenames)
     rows = [row for row in profile["shaders"] if row["file"] in wanted]
     if not wanted or {row["file"] for row in rows} != wanted:
@@ -1379,6 +1556,7 @@ def produce(
     compiler_command=None,
     compiler_data=None,
     authored_files=None,
+    camera_package=None,
 ):
     """Reproduce all selected standalone shaders from original PC/public inputs.
 
@@ -1446,6 +1624,10 @@ def produce(
         pins.append((relative(pc, profile["builtin"]["source"]["path"]), profile["builtin"]["source"]))
         pins.extend((relative(pc, row["path"]), row) for row in profile["builtin"]["sprite_materials"])
         pins.append((relative(pc, profile["shared_shaders"]["source"]["path"]), profile["shared_shaders"]["source"]))
+    typed = profile.get("typed_records", [])
+    for record in typed:
+        if "source" in record:
+            pins.append((relative(pc, record["source"]["path"]), record["source"]))
     for path, pin in pins:
         checked(path, pin)
         if path.is_relative_to(output) or output.is_relative_to(path):
@@ -1475,9 +1657,22 @@ def produce(
     if native_type["class_id"] != 48:
         raise ValueError("original schema provider is not Shader48")
     node = W.shader_node(native_type["tree"])
-    source_member = W.B.Bundle(source_path).member(source["member"])
-    source_member.seek(layout["data_offset"] + selected["offset"])
-    original_form = W.read_shader_body(node, W.B.exact(source_member, selected["bytes"]))["m_ParsedForm"]
+    for record in typed:
+        if "source" not in record:
+            continue
+        selected_source = record["source"]
+        with W.B.Bundle(relative(pc, selected_source["path"])).member(selected_source["member"]) as stream:
+            metadata = W.read_serialized(stream)
+            extent = next(row for row in metadata["objects"] if row["path_id"] == selected_source["path_id"])
+            if metadata["types"][extent["type_id"]] != native_type:
+                raise ValueError("original Shader leaf type differs")
+            stream.seek(metadata["data_offset"] + extent["offset"])
+            tree = W.read_shader_body(node, W.B.exact(stream, extent["bytes"]))
+            if tree["m_ParsedForm"]["m_Name"] != record["name"] or tree["m_Dependencies"]:
+                raise ValueError("original Shader leaf identity or dependencies differ")
+    with W.B.Bundle(source_path).member(source["member"]) as source_member:
+        source_member.seek(layout["data_offset"] + selected["offset"])
+        original_form = W.read_shader_body(node, W.B.exact(source_member, selected["bytes"]))["m_ParsedForm"]
     if "native_intersection" in profile:
         environment = UnityPy.load(str(source_path))
     registry = original_form["m_KeywordNames"][:4], original_form["m_KeywordFlags"][:4]
@@ -1517,6 +1712,18 @@ def produce(
             native_sources.update(native)
             pins.extend(providers)
         include_dirs = [include_dir, root / "tools/unity/runtime/shaders"]
+        camera_sources = {}
+        camera_selection = next((key for key in ("camera_compute", "camera_shader") if key in profile), None)
+        if camera_selection:
+            if camera_package is None:
+                raise ValueError("camera shader production requires the pinned Post Processing archive")
+            R = module("_camera_source_records", Path(__file__).with_name("record_produce.py"))
+            with W.B.Bundle(source_path).member(source["member"]) as stream:
+                directory, camera_sources, package_pin = camera_program_sources(
+                    profile, camera_selection, root, Path(camera_package), output, stream, layout, R
+                )
+            result["inputs"]["camera_package_sha256"] = package_pin
+            include_dirs.append(directory)
         if "tmp_mobile" in profile:
             package = sources.package_mobile_source(sdk, profile["tmp_mobile"]["package"])
             directory = output / "tmp-package"
@@ -1586,41 +1793,22 @@ def produce(
                 else:
                     shader_sources[shader["file"]] = relative(root, shader["source"]).read_text()
             names_to_files = {re.search(r'\bShader\s+"([^\"]+)"', text)[1]: name for name, text in shader_sources.items()}
+            package_bodies = {}
             for shader, name in zip(profile["shaders"], destinations):
                 text = shader_sources[shader["file"]]
-                pre = connection.preprocess(
-                    text, shader["filename"], platform_keywords=["SHADER_API_MOBILE"], caching_preprocessor=profile["settings"]["caching_preprocessor"]
+                context = tmp_material_keywords if "tmp_source" in shader else material_keywords if shader.get("tmp_mobile") else None
+                pre, compiled_passes = compile_passes(
+                    connection, text, shader["filename"], profile["settings"], sdk_image, common_bytes, compile_keywords, compile_flags, context
                 )
-                if not pre["success"] or not pre["snippets"]:
-                    raise ValueError("source shader preprocessing failed")
-                compiled_passes = {}
-                for snippet in pre["snippets"]:
-                    gpu = snippet["fields"][0]
-                    req = next(row for row in pre["records"] if row["kind"] == "keywordsEnd" and row["fields"] == [gpu])
-                    identity = editor_hash(snippet, sdk_image, connection.capabilities, profile["settings"], common_bytes)
-                    variants = []
-                    context = tmp_material_keywords if "tmp_source" in shader else material_keywords if shader.get("tmp_mobile") else None
-                    for keywords in retained_keywords(pre, gpu, context):
-                        requirements = shader_requirements(req, keywords)
-                        compilation = connection.compile(
-                            snippet["source"],
-                            shader["filename"],
-                            stage="vertex",
-                            platform_keywords=compile_keywords,
-                            keywords=keywords,
-                            flags=compile_flags,
-                            requirements=requirements,
-                        )
-                        if not compilation["success"] or not compilation["data"]:
-                            raise ValueError("linked Vulkan shader compilation failed")
-                        variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
-                    compiled_passes[gpu] = {"identity": identity, "variants": variants}
                 original, kind, typ = None, None, native_type
                 if "native_resource" in shader:
                     original, _, kind, typ = native_sources[shader["native_resource"]]
                 tree = construct(node, text, pre, compiled_passes, compress, registry, original, kind == "ui-alpha", kind == "intersection")
                 externals = fallback_externals(tree, names_to_files)
                 body = W.write_shader_body(node, tree)
+                if typed:
+                    package_bodies[shader["file"]] = body
+                    continue
                 destination = output / name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 standalone = {
@@ -1643,6 +1831,10 @@ def produce(
             if "builtin" in profile:
                 name, pin = produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connection, compress, sdk_image, common_bytes)
                 result["files"][name] = pin
+            if typed:
+                result["outputs"] = typed_shader_pack(
+                    root, sdk, profile, output, connection, compress, sdk_image, common_bytes, native_type, node, package_bodies, camera_sources
+                )
         for path, pin in pins:
             checked(path, pin)
         if includes(include_dir)[0] != inventory:
@@ -1675,6 +1867,7 @@ def main():
     parser.add_argument("--hlsl-tool-sha256", help="expected SHA-256 of the HLSLDecompiler executable")
     parser.add_argument("--asset-ripper-source", type=Path, help="pinned public AssetRipper Git repository or staged revision tree")
     add_compiler_arguments(parser)
+    parser.add_argument("--camera-package", type=Path, help="pinned Unity Post Processing archive for camera graphics and compute production")
     parser.add_argument(
         "--authored-file",
         action="append",
@@ -1698,6 +1891,7 @@ def main():
         compiler_command=args.compiler_command,
         compiler_data=args.compiler_data,
         authored_files=args.authored_file,
+        camera_package=args.camera_package,
     )
 
 

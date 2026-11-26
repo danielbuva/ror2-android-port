@@ -1,0 +1,316 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "authored_inputs": {
+    "scripts/lab/project_input_rebuild.py": {
+      "bytes": 6548,
+      "sha256": "ccf35babc8a9f1576e658b0e867f357cbb5c380df44209d8026ed616d0b4e2e8"
+    },
+    "recipe/project-inputs.json": {
+      "bytes": 2948,
+      "sha256": "de1ed235adfbc7b0b1c663289a33d19304b844afac01be1b69196a40914fc246"
+    },
+    "smoke/ProjectSettings/GraphicsSettings.asset": {
+      "bytes": 2445,
+      "sha256": "7e7101091125a933bbbaaed9ba2f9b3c7e69a38222c2554a29af9c9490b8687b"
+    },
+    "scripts/lab/shader_source.py": {
+      "bytes": 29161,
+      "sha256": "3c768c15f29f312347f2e99b0e3ddf8612207db8023f220dcb52c5d51218212a"
+    },
+    "recipe/shader-postprocessing-uber-candidate.json": {
+      "bytes": 32964,
+      "sha256": "948b003b521e440ab6b087093c715624bb0073acb04c8df13056272aa8503805"
+    }
+  },
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-core-camera_assets_all_8d724744706f379928729f6ac72c66d5.bundle",
+    "bytes": 1287825,
+    "sha256": "8a9abf452b6fecde568d4b3ded5b4a829cad99587f48f05a9d13344514a31eef",
+    "member": "CAB-3a453ba52114e52999f4c52b42f920d7",
+    "path_id": 7775293814042685189
+  },
+  "shaders": [],
+  "typed_records": [
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 6358408840628454405
+      },
+      "camera_shader": "multiScaleAO",
+      "source_path_id": 7775293814042685189,
+      "name": "Hidden/PostProcessing/MultiScaleVO"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 935965669150062875
+      },
+      "camera_shader": "lut2DBaker",
+      "source_path_id": -3716451027472744686,
+      "name": "Hidden/PostProcessing/Lut2DBaker"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 4035571379609423091
+      },
+      "camera_shader": "bloom",
+      "source_path_id": 5601534773419640121,
+      "name": "Hidden/PostProcessing/Bloom"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -6491614004776564672
+      },
+      "camera_shader": "copy",
+      "source_path_id": 3080162551958114040,
+      "name": "Hidden/PostProcessing/Copy"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 6070345302488443225
+      },
+      "camera_shader": "copyStd",
+      "source_path_id": 8576719654593448361,
+      "name": "Hidden/PostProcessing/CopyStd"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 2561987980934752092
+      },
+      "camera_shader": "copyStdFromTexArray",
+      "source_path_id": -4989082363557363871,
+      "name": "Hidden/PostProcessing/CopyStdFromTexArray"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 6420239258433539581
+      },
+      "camera_shader": "copyStdFromDoubleWide",
+      "source_path_id": 2295218373585492586,
+      "name": "Hidden/PostProcessing/CopyStdFromDoubleWide"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -2629190234272331003
+      },
+      "camera_shader": "discardAlpha",
+      "source_path_id": 5544457082973396811,
+      "name": "Hidden/PostProcessing/DiscardAlpha"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 2233549739570908792
+      },
+      "camera_shader": "depthOfField",
+      "source_path_id": -4501321358582262403,
+      "name": "Hidden/PostProcessing/DepthOfField"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -4511619927735789083
+      },
+      "camera_shader": "finalPass",
+      "source_path_id": -3017769933243071850,
+      "name": "Hidden/PostProcessing/FinalPass"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -4588892718156357137
+      },
+      "camera_shader": "grainBaker",
+      "source_path_id": 5849721499153497026,
+      "name": "Hidden/PostProcessing/GrainBaker"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -196292780690714362
+      },
+      "camera_shader": "motionBlur",
+      "source_path_id": 2665073696519732781,
+      "name": "Hidden/PostProcessing/MotionBlur"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 7765060455362171504
+      },
+      "camera_shader": "temporalAntialiasing",
+      "source_path_id": -8101612445244113837,
+      "name": "Hidden/PostProcessing/TemporalAntialiasing"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -6231686297992001420
+      },
+      "camera_shader": "subpixelMorphologicalAntialiasing",
+      "source_path_id": -6943107084937021075,
+      "name": "Hidden/PostProcessing/SubpixelMorphologicalAntialiasing"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 1625474446939717065
+      },
+      "camera_shader": "texture2dLerp",
+      "source_path_id": -253959070105081507,
+      "name": "Hidden/PostProcessing/Texture2DLerp"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -145259533411126909
+      },
+      "camera_shader": "uber",
+      "source_path_id": -6110924179263548405,
+      "name": "Hidden/PostProcessing/Uber"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -3221376830700342938
+      },
+      "camera_shader": "lightMeter",
+      "source_path_id": 6252270420987098263,
+      "name": "Hidden/PostProcessing/Debug/LightMeter"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 1685618341318697422
+      },
+      "camera_shader": "gammaHistogram",
+      "source_path_id": -6343373699241933685,
+      "name": "Hidden/PostProcessing/Debug/Histogram"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -3159122197594007522
+      },
+      "camera_shader": "waveform",
+      "source_path_id": 157942018332926665,
+      "name": "Hidden/PostProcessing/Debug/Waveform"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -329035779674754083
+      },
+      "camera_shader": "vectorscope",
+      "source_path_id": 5753600048355806765,
+      "name": "Hidden/PostProcessing/Debug/Vectorscope"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -6507715233978656257
+      },
+      "camera_shader": "debugOverlays",
+      "source_path_id": 5956218890755987309,
+      "name": "Hidden/PostProcessing/Debug/Overlays"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 4521438471356895410
+      },
+      "camera_shader": "deferredFog",
+      "source_path_id": -4765023608376997338,
+      "name": "Hidden/PostProcessing/DeferredFog"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 8104560171894997424
+      },
+      "camera_shader": "scalableAO",
+      "source_path_id": 5118580119207510808,
+      "name": "Hidden/PostProcessing/ScalableAO"
+    },
+    {
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -8973671548419213389
+      },
+      "camera_shader": "screenSpaceReflections",
+      "source_path_id": -4994269625003361109,
+      "name": "Hidden/PostProcessing/ScreenSpaceReflections"
+    }
+  ],
+  "camera_shader": {
+    "resources_path_id": -7567054502164858757,
+    "package_recipe": "recipe/shader-postprocessing-uber-candidate.json"
+  }
+}

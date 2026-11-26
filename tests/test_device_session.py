@@ -11,6 +11,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import alpha_stability_batch as batch
 import device as device_module
+from device_context import DeviceContextError
 import device_session as runner
 
 
@@ -222,6 +223,30 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertFalse(result["lease_released"])
         self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
         self.assertTrue((self.output / "terminal.done.json").is_file())
+
+    def test_discovery_failure_releases_lease_before_writing_failed_terminal(self):
+        lease = runner.Lease(self.request)
+
+        def discover(**_kwargs):
+            self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
+            raise DeviceContextError("Selected device is not attached and authorized")
+
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
+            mock.patch.object(runner.subprocess, "run"),
+            mock.patch.object(device_module, "Device", side_effect=discover),
+            mock.patch.object(runner, "reset_other_lab") as reset,
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(self.request)
+
+        reset.assert_not_called()
+        self.assertFalse(result["success"])
+        self.assertIn("Selected device is not attached and authorized", result["error"])
+        self.assertTrue(result["lease_released"])
+        self.assertFalse(lease.path.exists())
+        self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
 
     def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
         target, thermal = mock.Mock(package=self.request["package"]), mock.Mock(error=None)
@@ -996,8 +1021,6 @@ class DeviceSessionTests(unittest.TestCase):
             target.write_receipt.side_effect = write_receipt
 
         def adb_process(args, **kwargs):
-            if args[-1] == "kill-server":
-                return subprocess.CompletedProcess(args, 0, b"", b"")
             self.assertEqual(args[:3], target.base)
             self.assertTrue(lease_path.is_dir())
             if args[3] == "install":

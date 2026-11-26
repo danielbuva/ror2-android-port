@@ -205,7 +205,7 @@ decompiled source folder, exported asset, captured graph or historical run is
 an input to this mode. The qualified target is the current diagnostic player
 configuration; this is not accepted-APK byte parity or a new runtime selection.
 
-The request has exactly `owner_work`, `sdk_install`, `source_inputs`, and new
+The request requires `owner_work`, `sdk_install`, `source_inputs`, and a new
 private `output`. This mode currently requires this checkout's canonical `work`
 root, because existing strict audio contracts and the archived Init tool use
 that layout. Owner inventory/configuration and original game files must already
@@ -237,6 +237,11 @@ uses unchanged lower-level audio contract/pin generators and compilers; derives
 maps from the actual original catalog/IL and freshly decompiles the selected 14
 support sources; then compiles/post-processes all 145 gameplay sources. The three
 runtime request/stage/project admissions remain intact. No fake project is used.
+
+For current-source diagnostic builds, set
+`passive_pcm_capture_after_authority_skill_requested` to `true` to capture
+MainOutput after the first authority skill. Omit the field or set it to `false`
+for startup capture on the music output.
 
 The signed audio roster selects explicit-workspace bank staging. The current
 Init producer reads the original bank from the admitted inventory and writes
@@ -300,6 +305,15 @@ payload and reflection. A separate fragment-stage request can validly return
 empty data. J1102 qualifies both decoded execution models and an authored
 fragment-only arithmetic change, with raw host/phone payload parity. Original
 shader recovery and serialized content assembly remain separate content gates.
+
+`Connection.preprocess_compute` resolves kernel declarations, keyword axes,
+requirements and dependencies from a `.compute` source. Give both compute
+commands the full source filename so relative includes resolve. Pass the
+preprocessed source, kernel defines and variant requirements to
+`Connection.compile_compute`. It returns diagnostics and the SDK binary for
+one Vulkan kernel variant. The pinned macOS compiler emitted all 35 kernels
+in the 12 camera ComputeShader sources. Native class-72 serialization and
+Android validation remain open.
 
 ## Fixed-target Burst and completed-object relinking
 

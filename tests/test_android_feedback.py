@@ -32,10 +32,29 @@ class AndroidFeedbackTests(unittest.TestCase):
             "        public bool DrawOfflineStart()", 1
         )[0]
         application_caller = directory / "ApplicationInput.cs"
+        admission_and_lifecycle = application.split("        public bool OfflineUiControllerPresent()\n", 1)[1].split(
+            "        public static bool AllowsOfflineSessionMenu", 1
+        )[0]
         application_caller.write_text(
-            "using UnityEngine;\npublic sealed partial class PortSession {\n"
+            "using System.Linq; using UnityEngine;\npublic sealed partial class PortSession {\n"
             "sealed partial class OfflineApplicationSession {\n"
-            "bool MenuKey(KeyCode key, int button, bool controller)\n" + application_method + "\n}\n}\n"
+            "NovaInputBridge.ControllerPresence offlineUiPresence;\n"
+            "public bool OfflineUiControllerPresent()\n"
+            + admission_and_lifecycle
+            + "bool MenuKey(KeyCode key, int button, bool controller)\n"
+            + application_method
+            + "\n}\n}\n"
+        )
+        bridge = (RUNTIME / "NovaInputBridge.cs").read_text()
+        presence = bridge.split("    public sealed class ControllerPresence\n", 1)[1].split("    public InputBankTest bank;", 1)[0]
+        stick_and_neutral = bridge.split("    static Vector2 Stick(", 1)[1].split("    void Update()", 1)[0]
+        presence_caller = directory / "ControllerPresence.cs"
+        presence_caller.write_text(
+            "using System; using UnityEngine;\npublic partial class NovaInputBridge {\npublic sealed class ControllerPresence\n"
+            + presence
+            + "static Vector2 Stick("
+            + stick_and_neutral
+            + "}\n"
         )
         lifetime = application.split("        // Application screen lifetime:", 1)[1].split("        public DifficultyIndex SelectedOfflineDifficulty()", 1)[0]
         lifetime = lifetime.split("        int priorScreenSleepTimeout;", 1)[1]
@@ -67,6 +86,7 @@ class AndroidFeedbackTests(unittest.TestCase):
                 str(RUNTIME / "OfflineSettingsBoundary.cs"),
                 str(caller),
                 str(application_caller),
+                str(presence_caller),
                 str(notices_caller),
                 str(ROOT / "tests/fixtures/android_feedback_host.cs"),
             ],
@@ -100,6 +120,9 @@ class AndroidFeedbackTests(unittest.TestCase):
     def test_rebind_modal_owns_buttons_cancel_failed_save_retry_focus_and_cleanup(self):
         self.run_case("rebind-modal")
 
+    def test_rebind_draw_discards_stale_capture_and_waits_for_the_measured_controller(self):
+        self.run_case("rebind-lifecycle")
+
     def test_settings_pause_input_isolation_and_cleanup(self):
         self.run_case("settings-lifecycle")
 
@@ -108,6 +131,9 @@ class AndroidFeedbackTests(unittest.TestCase):
 
     def test_controller_and_keyboard_loadout_quit_and_defeated_menu_routes(self):
         self.run_case("player-screens")
+
+    def test_menu_reconnect_requires_both_sticks_to_return_to_radial_neutral(self):
+        self.run_case("menu-controller-neutral")
 
     def test_original_software_notices_are_discovered_read_only_and_own_modal_input(self):
         self.run_case("software-notices")

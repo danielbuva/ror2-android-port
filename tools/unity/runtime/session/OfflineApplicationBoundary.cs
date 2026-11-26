@@ -244,23 +244,26 @@ public sealed partial class PortSession
             }
             if (offlineUiPresence == null)
                 offlineUiPresence = new NovaInputBridge.ControllerPresence(names[0]);
-            var raw = NovaInputBridge.ReadRaw();
-            bool neutral = raw.buttons.All(down => !down) &&
-                           new[] { map.moveX, map.moveY, map.aimX, map.aimY }.All(axis => Mathf.Abs(raw.axes[axis]) <=
-                                                                                          AndroidOfflineSettings.current.deadzone);
+            bool neutral = NovaInputBridge.NeutralSample(NovaInputBridge.ReadRaw(), map);
             return offlineUiPresence.Observe(names, neutral, Time.realtimeSinceStartup);
         }
         public void OnApplicationFocus(bool focused)
         {
             if (!focused)
+            {
                 offlineUiPresence?.Suspend();
+                coordinator.offlineSettingsSession?.CancelRebindCapture();
+            }
             else if (ownsDisplayPreference)
                 ReapplyDisplayPreference();
         }
         public void OnApplicationPause(bool paused)
         {
             if (paused)
+            {
                 offlineUiPresence?.Suspend();
+                coordinator.offlineSettingsSession?.CancelRebindCapture();
+            }
             else if (ownsDisplayPreference)
                 ReapplyDisplayPreference();
         }

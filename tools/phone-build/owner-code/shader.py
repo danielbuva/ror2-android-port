@@ -191,6 +191,80 @@ class Connection:
             else:
                 raise ValueError("unknown shader preprocessing response: " + message)
 
+    def preprocess_compute(self, source, filename, *, platform_keywords=(), disabled_keywords=()):
+        """Read compute kernels, variants and include state for Android Vulkan."""
+        self.send_string("c:preprocessCompute")
+        self.send_string(source)
+        self.send_string(str(filename))
+        for value in (0, 13, 1 << 18):  # legacy preprocessing, Android, Vulkan mask
+            self.send_number(value)
+        for group in (platform_keywords, disabled_keywords):
+            self.send_number(len(group))
+            for keyword in group:
+                self.send_string(keyword)
+        kernels, keywords, diagnostics = [], {}, []
+        requirements, overrides = None, {}
+        while True:
+            message = self.string()
+            kind, _, fields = message.partition(":")
+            if kind in ("computeKeywordsUserGlobal", "computeKeywordsUserLocal"):
+                scope = "global" if kind == "computeKeywordsUserGlobal" else "local"
+                keywords[scope] = [self.string().split() for _ in range(int(fields))]
+            elif kind == "kernel":
+                name, count = fields.split()
+                kernels.append({"name": name, "defines": [(self.string(), self.string()) for _ in range(int(count))]})
+            elif kind == "requirements":
+                requirements = self.number(64)
+                overrides = {self.string(): self.number(64) for _ in range(self.number(32))}
+            elif kind == "endKernels":
+                flags, hash0, hash1, hash2, hash3, count = map(int, fields.split())
+                dependencies = [self.string() for _ in range(count)]
+                return {
+                    "source": self.string(),
+                    "kernels": kernels,
+                    "keywords": keywords,
+                    "requirements": requirements,
+                    "requirement_overrides": overrides,
+                    "flags": flags,
+                    "include_hash": [word & 0xFFFFFFFF for word in (hash0, hash1, hash2, hash3)],
+                    "dependencies": dependencies,
+                    "platform_masks": [self.number(32) for _ in range(3)],
+                    "diagnostics": diagnostics,
+                }
+            elif kind == "err":
+                diagnostics.append({"location": message, "file": self.string(), "message": self.string()})
+            else:
+                raise ValueError("unknown compute preprocessing response: " + message)
+
+    def compile_compute(self, source, filename, kernel, *, requirements, defines=(), keywords=(), platform_keywords=(), flags=0):
+        """Compile one Android Vulkan compute variant and preserve the SDK binary."""
+        self.send_string("c:compileComputeKernel")
+        for value in (source, str(filename), kernel):
+            self.send_string(value)
+        for value in (0, 0, 0, 13, len(defines)):
+            self.send_number(value)
+        for name, value in defines:
+            self.send_string(name)
+            self.send_string(value)
+        for group in (keywords, platform_keywords):
+            self.send_number(len(group))
+            for keyword in group:
+                self.send_string(keyword)
+        self.send_number(18)
+        self.send_number(flags)
+        self.send_number(requirements, 64)
+        self.send_number(0)  # force DXC mask
+        self.send_number(0)  # force FXC mask
+        diagnostics = []
+        while True:
+            message = self.string()
+            if message.startswith("computeData: "):
+                return {"success": message == "computeData: 1", "data": self.buffer(), "diagnostics": diagnostics}
+            if message.startswith("err: "):
+                diagnostics.append({"location": message, "file": self.string(), "message": self.string()})
+            else:
+                raise ValueError("unknown compute compilation response: " + message)
+
 
 @contextmanager
 def compiler(command, sdk_data, output, *, includes=(), redirects=None, env=None, timeout=120):
