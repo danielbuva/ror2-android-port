@@ -211,6 +211,34 @@ class EmissionTests(unittest.TestCase):
         self.assertEqual(request.read_bytes(), original)
         self.assertEqual(json.loads((self.output / "code-result.json").read_bytes()), {"success": True})
 
+    def test_signed_native_requires_pinned_bundle_and_completed_native_receipt(self):
+        self.signed_request()
+        manifest_path = Path(self.request["manifest"]["path"])
+        manifest = json.loads(manifest_path.read_bytes())
+        self.request["operation"] = "signed-native"
+        contract = dict(bundle="bundle.zip", envelope="release.json", public_key="publisher.pem", key_id="fixture", output="native")
+        for name, value in (("request.json", json.dumps(contract)), ("release.json", "{}"), ("publisher.pem", "fixture")):
+            source = self.root / ("staged-" + name)
+            source.write_text(value)
+            manifest["files"][name] = dict(source=str(source), bytes=source.stat().st_size, sha256=EMISSION.digest(source))
+
+        def save():
+            manifest_path.write_text(json.dumps(manifest))
+            self.request["manifest"]["sha256"] = EMISSION.digest(manifest_path)
+            self.path.write_text(json.dumps(self.request))
+
+        save()
+        with self.assertRaisesRegex(ValueError, "signed-code-staged-input-contract"):
+            EMISSION.load_request(self.path)
+        bundle = self.root / "bundle.zip"
+        bundle.write_bytes(b"synthetic bundle")
+        manifest["files"]["bundle.zip"] = dict(source=str(bundle), bytes=bundle.stat().st_size, sha256=EMISSION.digest(bundle))
+        save()
+        self.collected = dict(native_release=dict(success=True, phase="native-built", managed_providers=332), thermal={})
+        result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["owned_app_removed"])
+
     def test_signed_code_keeps_unknown_handle_for_exact_reattachment(self):
         self.signed_request()
         self.phone.transport.wait_detached.side_effect = INSTALLER.TRANSPORT.DetachedUncertain(self.job)

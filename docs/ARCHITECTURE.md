@@ -6297,6 +6297,13 @@ clock from the phone supervisor, accounting for thermal pauses. Nested managed
 producers use the embedded Python host's argument format through
 `scripts/lab/phone_sdk_compiler.py`.
 
+`toolhost_emission.py` also accepts signed native qualification requests.
+`owner-code/run_android.py` verifies the release envelope and delegates the
+same-cohort conversion, Burst and IL2CPP jobs to `owner-apk/release_jobs.py`.
+It compares the dispatcher readback hashes with the producer receipts and
+requires the entire compile plan before the runner collects evidence and
+removes owned scratch.
+
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
 caller-declared idempotent operations after a negative local signal status, with
