@@ -8,6 +8,7 @@ from pathlib import Path
 import struct
 import sys
 import tempfile
+from threading import Barrier
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -164,7 +165,7 @@ class OwnerCodeNativeTests(unittest.TestCase):
             self.assertEqual(receipt["paused_seconds"], 0)
             self.assertGreaterEqual(receipt["active_seconds"], 0)
 
-    def test_resume_reuses_498_receipts_and_only_compiles_missing_jobs(self):
+    def test_native_measurement_and_resume_preserve_the_compile_receipts(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             sdk, failed, output = [root / n for n in ("sdk", "failed", "continued")]
@@ -218,6 +219,7 @@ class OwnerCodeNativeTests(unittest.TestCase):
                 "compile_timeout_seconds": 7200,
             }
             invoked = []
+            native_invoke = NATIVE.invoke
 
             def invoke(argv, where, name, **kwargs):
                 invoked.append(name)
@@ -256,6 +258,47 @@ class OwnerCodeNativeTests(unittest.TestCase):
                     self.assertNotEqual((measured_output / "objects/497.o").stat().st_ino, (failed / "objects/497.o").stat().st_ino)
                     with self.assertRaisesRegex(ValueError, "complete original compilation"):
                         NATIVE.compiled_jobs(measured_output, NATIVE.plan(profile, sdk, root / "measurement-relink"), profile, sdk, inputs)
+                    parallel_output = root / "parallel-measurement"
+                    barrier = Barrier(2)
+
+                    def paired_invoke(argv, where, name, **kwargs):
+                        barrier.wait(timeout=5)
+                        command = [
+                            sys.executable,
+                            "-c",
+                            "from pathlib import Path; import sys; Path(sys.argv[1]).write_bytes(b'fresh missing object')",
+                            argv[-1],
+                        ]
+                        native_invoke(command, where, name, **kwargs)
+
+                    with patch.object(NATIVE, "invoke", side_effect=paired_invoke):
+                        parallel = NATIVE.run({**request, "output": str(parallel_output), "measure_jobs": [497, 499], "compile_workers": 2}, profile=profile)
+                    self.assertEqual((parallel["phase"], parallel["compile_workers"], parallel["compile_tasks"]), ("native-measured", 2, 2))
+                    for index in ("497", "499"):
+                        process = json.loads((parallel_output / f"logs/{index}.process.json").read_text())
+                        self.assertEqual(process["exit_code"], 0)
+                        self.assertEqual(
+                            (parallel_output / f"job-results/{index}.json").read_bytes(),
+                            (measured_output / f"job-results/{index}.json").read_bytes(),
+                        )
+
+                    fresh_request = {key: value for key, value in request.items() if key != "resume"}
+                    partial = root / "parallel-failure"
+
+                    def fail_second(argv, where, name, **kwargs):
+                        if name == "1":
+                            raise RuntimeError("fixture compiler failed")
+                        invoke(argv, where, name, **kwargs)
+
+                    with patch.object(NATIVE, "invoke", side_effect=fail_second), self.assertRaisesRegex(RuntimeError, "fixture compiler failed"):
+                        NATIVE.run({**fresh_request, "output": str(partial), "compile_workers": 2}, profile=profile)
+                    prefix = NATIVE.compiled_jobs(partial, NATIVE.plan(profile, sdk, root / "parallel-resume"), profile, sdk, inputs, resume=True)
+                    self.assertEqual(len(prefix), 1)
+
+                    continued = root / "parallel-resumed"
+                    resumed = NATIVE.run({**request, "output": str(continued), "resume": str(partial)}, profile=profile)
+                    self.assertEqual((resumed["phase"], resumed["compile_tasks"], resumed["reused_compile_tasks"]), ("native-built", 499, 1))
+                    self.assertEqual((continued / "global-metadata.dat").read_bytes(), metadata.read_bytes())
                     invoked.clear()
                     result = NATIVE.run(request, profile=profile)
                     self.assertEqual((output / "global-metadata.dat").read_bytes(), metadata.read_bytes())

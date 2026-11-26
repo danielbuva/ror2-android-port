@@ -375,6 +375,15 @@ complete compilation. Use the same Android `resume` request and providers to
 measure representative expensive units before choosing the continuation
 budget. Process receipts retain each selected unit's timings.
 
+The native request defaults to one compiler worker. Set `compile_workers`
+to `2` in a fresh native request, including the native job in a signed
+release graph, to measure two simultaneous compiler jobs with the shared
+runner. The linker uses the same object order. A failed concurrent build
+publishes the contiguous completed prefix for a serial resume. A direct
+native request can also pair the same `measure_jobs` selection in two
+outputs with one and two workers. Compare the per-object hashes and BOOTTIME
+process windows with fixed compiler inputs and CPU affinity.
+
 `compile_timeout_seconds` sets the per-translation-unit budget (default 3,600
 seconds). Choose a generous multiple of the largest unit's measured active phone
 compile time. A caller that externally pauses the tool UID must also supply
