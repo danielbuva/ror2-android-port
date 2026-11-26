@@ -105,13 +105,12 @@ def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=Non
     version = invoke([dotnet, ilspy, "--disable-updatecheck", "--version"], out, "ilspy-version", env=decompiler_env).read_text()
     if profile["ilspy_version"] not in version:
         raise ValueError("qualified source decompiler version differs")
-    for name, assembly in (("support-original", "Assembly-CSharp.dll"), ("maps-original", "RoR2.dll")):
-        invoke(
-            [dotnet, ilspy, "--disable-updatecheck", "-lv", "CSharp9_0", "-p", "-r", managed, "-o", out / name, managed / assembly],
-            out,
-            name,
-            env=decompiler_env,
-        )
+    decompile = [dotnet, ilspy, "--disable-updatecheck", "-lv", "CSharp9_0", "-r", managed]
+    recipes = json.loads((source_root / "recipe/build-entry-inputs.json").read_text())["decompiled"]
+    map_assembly = managed / recipes["assembly"]
+    if native.sha(map_assembly) != recipes["assembly_sha256"]:
+        raise ValueError("map source assembly differs")
+    invoke([*decompile, "-p", "-o", out / "support-original", managed / "Assembly-CSharp.dll"], out, "support-original", env=decompiler_env)
     probe_env = decompiler_env
     if probe_provider_sha256:
         probe_env = dict(probe_env or os.environ, ROR2LAB_CECIL_SHA256=probe_provider_sha256)
@@ -132,13 +131,17 @@ def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=Non
     catalog = catalog_reader.read_shipped(catalog_path, "/_/owner-original-aa", names)
     native.write(out / "original-catalog.json", dict(catalog, input_id=identity, source_catalog_sha256=catalog_sha))
     manifest = {"keys": catalog["keys"]}
-    recipes = json.loads((source_root / "recipe/build-entry-inputs.json").read_text())["decompiled"]
-    if native.sha(managed / recipes["assembly"]) != recipes["assembly_sha256"]:
-        raise ValueError("map source assembly differs")
     generated = out / "maps"
     generated.mkdir()
+    map_sources = out / "maps-original"
+    map_sources.mkdir()
     for name, row in recipes["files"].items():
-        source = out / "maps-original" / native.relative(row["path"])
+        relative = native.relative(row["path"])
+        type_name = ".".join(relative.with_suffix("").parts)
+        invoke([*decompile, "-t", type_name, "-o", map_sources, map_assembly], out, "maps-original-" + type_name, env=decompiler_env)
+        source = map_sources / relative
+        source.parent.mkdir(parents=True, exist_ok=True)
+        (map_sources / (type_name + ".decompiled.cs")).rename(source)
         if native.sha(source) != row["sha256"]:
             raise ValueError("original map source decompilation differs: " + name)
         target = (
@@ -206,12 +209,13 @@ def stage_source_audio(work, game, output, *, decoder=None):
     return staged, prefab, bank, init_dir
 
 
-def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, managed_paths, manifest, *, owner_work=None, sdk_compiler=None):
+def audio_assemblies(
+    out, sdk, inputs, ordinary, staged, prefab, bank, init, managed_paths, manifest, *, owner_work=None, sdk_compiler=None, pcm_after_skill=False
+):
     destination = out / "audio"
     destination.mkdir()
     generated = destination / "generated"
     generated.mkdir()
-    # This is the existing qualified diagnostic target configuration, not a new runtime selection.
     request_id = native.sha(PROFILE)[:32]
     request, contract = audio.generate_request_contract(
         destination,
@@ -226,9 +230,9 @@ def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, man
         bank,
         init / "Init.bnk",
         init / "receipt.json",
-        True,
-        True,
-        False,
+        passive_pcm_capture_requested=True,
+        passive_pcm_capture_music_output_requested=not pcm_after_skill,
+        passive_pcm_capture_after_authority_skill_requested=pcm_after_skill,
         owner_work=owner_work,
     )
     stage_pin = audio.load_module(audio.TOOLS / "generate_runtime_stage_pin.py", "source_owner_stage_pin")
@@ -521,7 +525,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
         native.write(output / "result.json", result)
 
 
-def run(work, sdk, values, output, *, signed_audio=False, android_tools=None):
+def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pcm_after_skill=False):
     work, sdk = native.canonical(work), native.canonical(sdk)
     output = Path(output)
     if not signed_audio and work != (ROOT / "work").resolve():
@@ -644,6 +648,7 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None):
             manifest,
             owner_work=owner_work,
             sdk_compiler=compiler,
+            pcm_after_skill=pcm_after_skill,
         )
         unchanged(bound)
         result["phase"] = "original-sources-and-maps"

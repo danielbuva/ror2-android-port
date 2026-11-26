@@ -2211,6 +2211,7 @@ public sealed partial class PortSession
             // The observer retains its one-second baseline internally; calling
             // the owner each world update only services explicitly armed windows.
             survivorCombatOutputs?.Sample(elapsed);
+            survivorSkills?.SamplePrimarySourcePlayback();
             long performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             if (worldClientUpdate == null)
                 worldClientUpdate = (Action)Delegate.CreateDelegate(

@@ -2194,6 +2194,9 @@ cover fixed owner-work admission, exclusive outputs, immutable provider checks,
 retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
+For converted-player audio diagnostics, the source request can opt into
+skill-deferred MainOutput PCM. `managed.py` passes the selection to the existing
+audio request and stage pin generators before compiling the paired player code.
 When a signed conversion declares audio members, its managed, ABI and audio
 stages share the provisioned owner workspace. The signed source index includes
 the shared rebuild recipe tables used at startup. Python imports resolve from
@@ -5434,8 +5437,11 @@ execution, not targeting, placement, effects or complete ability semantics.
 An explicit skill-triggered PCM observation also permits one native event
 catalog query on the first eligible Huntress primary authority callback.
 The report records the Wwise result, resolved object count and service frame
-for the character-bank event. The query releases its buffer immediately and
-observes event residency independently of audible playback.
+for the character-bank event. The query releases its buffer immediately.
+After a positive residency result, the per-frame integrated world update
+checks the live body's emitter on up to 12 newer Wwise service frames.
+A matching playing ID and event ID establish active playback on that emitter.
+Event-specific output and audible comparison require separate captures.
 The separate `components` report covers every GenericSkill on that body by exact
 component identity, including Toolbot/Captain auxiliary loadout components that
 native `FindSkillSlot` maps to None. It retains current component indices and
@@ -6281,6 +6287,13 @@ available for replay. It retrieves producer logs, adjacent process timing
 receipts and available crash evidence before removing owned scratch. Android
 SDK Roslyn writes elapsed time and exit status beside its private compile logs,
 including a timing receipt on timeout.
+Package compilation and Cecil postprocessing also record start and end times.
+The raw managed audio producer records the same clock beside its ABI adapter
+and Cecil subprocess logs. These timing sidecars stay outside its output
+manifest.
+The managed producer decompiles the map recipe's three types individually
+and checks their source hashes before generating the maps. The support source
+selector still uses the separate Assembly-CSharp decompilation.
 With `profile_resources: true` on a signed-code request, the same supervisor
 retains an attempt-local resource trace on the phone. Production temperature
 samples and subprocess start/end receipts share Android's BOOTTIME clock.
@@ -6619,11 +6632,10 @@ prepared inputs, private writable editor/Gradle state, its own MCP port and a
 persistent lock outside the removable tree. Creation snapshots under the
 canonical mutex; later source selection/builds use only the lane lock. Creation
 and every build/editor-open restage authored inputs from the selected checkout
-through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging,
-`project_input_rebuild.stage_editor_inputs` for pinned baseline templates, and
-the ordinary Android/audio owners. The editor cohort includes
-`WholeCatalogHost.cs` in canonical builds and private lanes so its runtime
-contracts follow the selected source. Extra C# is retired only after matching a
+through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging, and
+the ordinary Android/audio owners. Lane restaging applies pinned baseline
+editors outside the current editor cohort. Canonical builds and private lanes
+stage `WholeCatalogHost.cs` from the selected source. Extra C# is retired only after matching a
 predecessor Git blob, with source/metadata hashes and a removal receipt. Unknown
 or edited files refuse. `original_game_audio_build_hook.restage_authored_for_lane`
 uses a small APFS reference clone to unwind camera/music without changing live

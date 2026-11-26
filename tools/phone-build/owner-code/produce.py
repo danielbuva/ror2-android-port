@@ -266,13 +266,27 @@ def verify_audio_members(managed, expected):
 
 def source_run(request, *, stop_after_conversion=False, burst_only=False):
     """Join original-input managed production to this same backend."""
-    if set(request) - {"target", "android_tools", "linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs", "audio_members"} != {
+    pcm_option = "passive_pcm_capture_after_authority_skill_requested"
+    if set(request) - {
+        "target",
+        "android_tools",
+        "linux_tools",
+        "burst_tools",
+        "compile_timeout_seconds",
+        "pause_clock",
+        "measure_jobs",
+        "audio_members",
+        pcm_option,
+    } != {
         "owner_work",
         "sdk_install",
         "source_inputs",
         "output",
     }:
         raise ValueError("explicit original-input owner request required")
+    pcm_after_skill = request.get(pcm_option, False)
+    if type(pcm_after_skill) is not bool or (pcm_option in request and "target" in request):
+        raise ValueError("skill-deferred PCM requires a boolean on the current source target")
     if burst_only and (stop_after_conversion or "burst_tools" not in request):
         raise ValueError("Burst-only qualification requires its tools and no conversion stop")
     specification = importlib.util.spec_from_file_location("owner_code_managed_producer", HERE / "managed.py")
@@ -317,7 +331,9 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
                 work, sdk, request["source_inputs"], target, source_root, output / "managed-production", android_tools=request.get("android_tools")
             )
         else:
-            providers = managed_owner.run(work, sdk, source_inputs, output / "managed-production", signed_audio=signed_audio, android_tools=android_tools)
+            providers = managed_owner.run(
+                work, sdk, source_inputs, output / "managed-production", signed_audio=signed_audio, android_tools=android_tools, pcm_after_skill=pcm_after_skill
+            )
         if signed_audio:
             verify_audio_members(output / "managed-production", request["audio_members"])
         backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}

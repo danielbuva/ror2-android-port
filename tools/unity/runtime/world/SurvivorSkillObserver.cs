@@ -31,10 +31,10 @@ public sealed class SurvivorSkillObserver : IDisposable
     [Serializable]
     public sealed class SourceBankReport
     {
-        public string eventName, error;
-        public int result;
-        public uint objectCount;
-        public ulong renderFrame;
+        public string eventName, error, playbackError;
+        public int result, playbackResult, playbackQueries;
+        public uint objectCount, playingId, playingEventId;
+        public ulong renderFrame, playbackRenderFrame;
         public bool returned;
     }
     [Serializable]
@@ -283,6 +283,55 @@ public sealed class SurvivorSkillObserver : IDisposable
             observation.error = error.GetType().Name + ": " + error.Message;
         }
     }
+
+    public void SamplePrimarySourcePlayback()
+    {
+        const int maxQueries = 12;
+        var observation = report.sourceBank;
+        if (observation == null || observation.objectCount == 0 ||
+            observation.playingId != AkSoundEngine.AK_INVALID_PLAYING_ID ||
+            observation.playbackQueries >= maxQueries || observation.playbackError != null ||
+            report.cleaned || !body || !GameAudioOriginalOwner.Ready)
+            return;
+
+        ulong renderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
+        if (renderFrame <= Math.Max(observation.renderFrame, observation.playbackRenderFrame))
+            return;
+
+        observation.playbackRenderFrame = renderFrame;
+        observation.playbackQueries++;
+        try
+        {
+            const int capacity = 8;
+            uint count = capacity;
+            var ids = new uint[capacity];
+            ulong emitter = AkSoundEngine.GetAkGameObjectID(body.gameObject);
+            var result = AkSoundEngine.GetPlayingIDsFromGameObject(emitter, ref count, ids);
+            observation.playbackResult = (int)result;
+            if (result != AKRESULT.AK_Success)
+                return;
+
+            uint expected = AkSoundEngine.GetIDFromString(observation.eventName);
+            if (expected == 0)
+                return;
+            for (int index = 0; index < Math.Min(count, (uint)ids.Length); index++)
+            {
+                uint playingId = ids[index];
+                if (playingId == AkSoundEngine.AK_INVALID_PLAYING_ID ||
+                    AkSoundEngine.GetEventIDFromPlayingID(playingId) != expected)
+                    continue;
+
+                observation.playingId = playingId;
+                observation.playingEventId = expected;
+                break;
+            }
+        }
+        catch (Exception error)
+        {
+            observation.playbackError = error.GetType().Name + ": " + error.Message;
+        }
+    }
+
     void ServerActivated(GenericSkill skill)
     {
         Record(skill, false);

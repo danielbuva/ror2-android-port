@@ -54,7 +54,12 @@ class LaneSourceStagingTests(unittest.TestCase):
                         path="Assets/Editor/BaselineHost.cs",
                         template="templates/BaselineHost.cs",
                         sha256=hashlib.sha256(b"// lane baseline host\n").hexdigest(),
-                    )
+                    ),
+                    dict(
+                        path="Assets/Editor/WholeCatalogBuild.cs",
+                        source_path="tools/catalog/WholeCatalogBuild.cs",
+                        sha256=hashlib.sha256(b"// historical builder\n").hexdigest(),
+                    ),
                 ],
                 "settings_templates": [],
             },
