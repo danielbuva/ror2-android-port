@@ -7216,9 +7216,9 @@ The recipe contains tool hashes and assembly/member identifiers. Its generated
 module stays under ignored `work/`. No sound data, original implementation,
 private paths, or identifiers are included.
 
-Audit 2026-11-26. The existing original-audio build hook uses the Commando
-prefab path and Wwise script and object references to restore the locally
-imported base-character bank attachment when the selected cohort stages
-`char_Commando.bnk`. The authored overlay reads the component from the
-accepted export. Review covered provenance, licensing, privacy and sensitive
-content. Git carries the transformation and the identifiers it needs.
+Audit 2026-11-26. The existing original-audio build hook uses the eleven base
+survivor prefab paths and Wwise script and object references to restore each
+locally imported `char_*` bank attachment when the selected cohort stages its
+bank. The overlay reads the components from the accepted export. Review covered
+provenance, licensing, privacy and sensitive content. Git carries the
+transformation and the identifiers it needs.

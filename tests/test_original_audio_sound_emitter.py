@@ -166,31 +166,70 @@ class SoundEmitterRestoreTests(unittest.TestCase):
             self.assertEqual(target.read_bytes(), before)
 
 
-class CommandoBankRestoreTests(unittest.TestCase):
-    def test_round_trip_preserves_migrated_body(self):
-        bank = (
-            "--- !u!114 &3\n"
-            "MonoBehaviour:\n"
-            "  m_GameObject: {fileID: 1}\n"
-            f"  {module.AK_BANK_SCRIPT}\n"
-            "  data:\n"
-            f"    WwiseObjectReference: {{fileID: 11400000, guid: {module.COMMANDO_BANK_GUID}, type: 2}}\n"
-        )
-        attachment = "  - component: {fileID: 3}\n"
-        other_attachment = "  - component: {fileID: 5}\n"
-        other_bank = bank.replace("&3", "&5").replace(module.COMMANDO_BANK_GUID, "c" * 32)
-        source = STRIPPED.replace("  - component: {fileID: 2}\n", "  - component: {fileID: 2}\n" + attachment + other_attachment)
-        source += bank + other_bank
-        migrated = STRIPPED.replace("  m_Name: SoundEmitter", "  m_Name: CommandoBody\n  m_IsActive: 0")
-        restored = module._commando_bank_prefab(source, migrated, requested=True)
-        self.assertEqual(
-            restored,
-            migrated.replace("  - component: {fileID: 2}\n", "  - component: {fileID: 2}\n" + attachment) + bank,
-        )
-        self.assertEqual(module._commando_bank_prefab(source, restored, requested=True), restored)
-        self.assertEqual(module._commando_bank_prefab(source, restored, requested=False), migrated)
-        with self.assertRaisesRegex(ValueError, "staged CommandoBody AkBank attachment changed"):
-            module._commando_bank_prefab(source, restored.replace(attachment, ""), requested=True)
+class SurvivorBankRestoreTests(unittest.TestCase):
+    def test_round_trip_restores_only_admitted_original_character_banks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            work = Path(temp).resolve()
+            export = work / "export"
+            project = work / "lab-project"
+            source_assets = export / "Assets"
+            target_assets = project / "Assets/WholeGame"
+            targets = {}
+            expected = {}
+            migrated = STRIPPED.replace("  m_Name: SoundEmitter", "  m_Name: SurvivorBody\n  m_IsActive: 0")
+
+            def bank(component_id, guid):
+                return (
+                    f"--- !u!114 &{component_id}\n"
+                    "MonoBehaviour:\n"
+                    "  m_GameObject: {fileID: 1}\n"
+                    f"  {module.AK_BANK_SCRIPT}\n"
+                    "  data:\n"
+                    f"    WwiseObjectReference: {{fileID: 11400000, guid: {guid}, type: 2}}\n"
+                )
+
+            for index, name in enumerate(("char_First", "char_Second", "DLC4_First"), start=1):
+                guid = str(index) * 32
+                for assets in (source_assets, target_assets):
+                    asset = assets / module.SOUNDBANK_REFERENCES / f"{name}.asset"
+                    asset.parent.mkdir(parents=True, exist_ok=True)
+                    asset.write_text(f"--- !u!114 &11400000\nMonoBehaviour:\n  {module.WWISE_BANK_REFERENCE_SCRIPT}\n  objectName: {name}\n")
+                    asset.with_suffix(".asset.meta").write_text(f"guid: {guid}\n")
+
+            anchor = "  - component: {fileID: 2}\n"
+            attachment = "  - component: {fileID: 3}\n"
+            for index in (1, 2):
+                body = Path(f"Characters/Body{index}.prefab")
+                targets[body] = target_assets / body
+                component = bank(3, str(index) * 32)
+                expected[body] = migrated.replace(anchor, anchor + attachment) + component
+                original = STRIPPED.replace(anchor, anchor + attachment) + component
+                if index == 1:
+                    original = original.replace(attachment, attachment + "  - component: {fileID: 5}\n") + bank(5, "3" * 32)
+                for assets, prefab in ((source_assets, original), (target_assets, migrated)):
+                    path = assets / body
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(prefab)
+                    path.with_suffix(".prefab.meta").write_text(f"guid: {str(index + 3) * 32}\n")
+
+            with patch.object(module, "_accepted_audio_export", return_value=export), patch.object(module, "SURVIVOR_BODIES", tuple(targets)):
+                first, second = targets
+                cohort = {"char_First.bnk", "DLC4_First.bnk"}
+                receipts = module.synchronize_survivor_banks(project, work, cohort)
+                self.assertEqual([(row["bank"], row["component_restored"]) for row in receipts], [("char_First", True), ("char_Second", False)])
+                self.assertEqual(targets[first].read_text(), expected[first])
+                self.assertEqual(targets[second].read_text(), migrated)
+                cohort.add("char_Second.bnk")
+                module.synchronize_survivor_banks(project, work, cohort)
+                self.assertEqual(targets[first].read_text(), expected[first])
+                self.assertEqual(targets[second].read_text(), expected[second])
+                targets[second].write_text(expected[second].replace(attachment, ""))
+                with self.assertRaisesRegex(ValueError, "staged AkBank attachment changed"):
+                    module.synchronize_survivor_banks(project, work, set())
+                self.assertEqual(targets[first].read_text(), expected[first])
+                targets[second].write_text(expected[second])
+                module.synchronize_survivor_banks(project, work, set())
+                self.assertTrue(all(path.read_text() == migrated for path in targets.values()))
 
 
 if __name__ == "__main__":
