@@ -44,6 +44,7 @@ public sealed class PortSession {
  public void CleanupCombatConfigs() {cleaned++;}
  public sealed class PrimaryFireSession {
   readonly PortSession coordinator;FieldInfo[] spineFields;object[] spinePrior;EntityStateConfiguration spineReload;bool preserveOriginalAudio;
+  FieldInfo postObserverField;Action<uint,object> postObserver;
   public PrimaryFireSession(PortSession owner) {coordinator=owner;}
   static EntityStateConfiguration Instantiate(EntityStateConfiguration source) {return new EntityStateConfiguration {serializedFieldsCollection=source.serializedFieldsCollection};}
   static void Destroy(EntityStateConfiguration value) {value.destroyed=true;}

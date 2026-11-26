@@ -5178,12 +5178,15 @@ The production setup/exclusion/disposal host fixture covers both modes,
 including the initial report-mode flag still being unset during configuration.
 The owner captures the configured mode and native readiness during setup;
 it never treats the later report assignment as startup authority.
-The opt-in PCM diagnostic also reads the Commando body's active Wwise event
-IDs while the original pistol state is live. It samples at most 12 times and
-requires a fresh successful original audio service frame for each follow-up.
-The report keeps an exact source event match and its render-frame ordinal.
-That match establishes active playback on the body. MainOutput PCM still
-measures the mix, and physical audibility requires device observation.
+For opt-in PCM diagnostics, `PrimaryFireSession` observes the playing ID
+returned by the original Commando pistol sound call on the controlled body
+while it has effective authority. The lab R3 camera composition adds a
+static callback at that call site and preserves the original return handling.
+The primary owner attaches it before input dispatch and clears its callback
+during teardown. After a nonzero return it samples the body's active Wwise
+event IDs at most 12 times, with a new successful original audio service frame
+for each follow-up. The report records post acceptance, active event matches
+with their render-frame ordinal, and aggregate MainOutput PCM separately.
 
 Once the original audio owner is ready, existing actor, projectile, pickup,
 effect and model adapters preserve source sound identities and authored Wwise

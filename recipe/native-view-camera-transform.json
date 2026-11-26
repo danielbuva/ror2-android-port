@@ -115,7 +115,7 @@
     "post-audio-native-music-results-lightning-r3-1ced": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
       "input_sha256": "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
-      "output_sha256": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c"
+      "output_sha256": "324fa10f959cdbceed69ebcea5f847a5cdafcfe6891b7805849e80cd72a34ee7"
     },
     "post-audio-native-music-results-r23-1ced": {
       "input_relative_path": "Assets/LabLoadingScene/Plugins/RoR2.dll",
@@ -288,6 +288,7 @@
     "camera_contract": "tools/unity/runtime/input/AndroidNativeSourceCameraRigContract.cs",
     "camera_owner": "tools/unity/runtime/input/AndroidNativeSourceCameraRigOwner.cs",
     "camera_prerequisites": "tools/unity/runtime/input/AndroidNativeSourceCameraPrerequisites.cs",
+    "commando_post_observer_marker": "tools/assembly-transforms/CommandoPostObserverMarker.cs",
     "listener_contract": "tools/unity/runtime/input/OriginalWwiseCameraListenerContract.cs",
     "marker": "tools/unity/runtime/input/AndroidNativeSourceViewOnlyRigMarker.cs",
     "music_controller_owner": "tools/unity/runtime/session/PortSessionOriginalMusicControllerOwner.cs",
@@ -304,10 +305,11 @@
   },
   "source_sha256": {
     "artifact_copy": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55",
-    "build_hook": "9444ea145735670d38c22f63787fcf716066318e17251aefeb41b38d6d145a10",
+    "build_hook": "26c7d66700e4752cb33f39c14b4cd8d6280b186999f733ab5fed25e0a5ffe29b",
     "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
     "camera_owner": "a9c422d7140af1ed076a2a97a642956e4f64fcea9c8f6a53a2e8ce8a3d779f1b",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",
+    "commando_post_observer_marker": "971caade316b7a8d7e1c975185ca82458dcc9b0bc6eff34c02e44151dabb11e5",
     "listener_contract": "e138a103abc56700af610044e833811c8dce4eeb3d205dc3c20fc491bb962a4b",
     "marker": "7d86f674c0f6dde711916fe3105b8a88b2e91c39d1351d83ee77f0e2deea8f9f",
     "music_controller_owner": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
@@ -315,11 +317,11 @@
     "music_observer_stage": "9fcde6ab123e961a9f8514e992ec4d831d857ea35bc63505cb2e0f3b472cff5c",
     "music_observer_transform": "c94e64eda96e1d969087272d0684ce1a809a00b2e18eed30e35a0a5825a77b95",
     "music_observer_transform_project": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
-    "producer": "3c181934e808c74dfebe2212e0c663275c1cee97a9a4d7effc6ea6508483fda0",
+    "producer": "a6998080a883be5293e48a81cb7d3e7b240d38ccfeb76f9e08a631e49b71315c",
     "resolver": "b00dc10599fa62637e5fcd74a7dcbbf4225eddaf81fb1b6bfcddaa8ff57f12d4",
     "skin_lifecycle_audio_camera_merge": "05fcc931f4e05fefcaf7b5aad7102ed54ca850c996abd5b354363be2743ebffb",
-    "transformer": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
-    "verifier": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
+    "transformer": "8e566d3c6cacaf1cf58044ddfc3e952657a860baa81dfb7d1fd3df69daead4c2",
+    "verifier": "9ea24c13453d5753bcb46f4efe09b705d7ab7498c4cd51039046998f9588caaa",
     "whole_catalog": "99e120f799f3f6afefebd04d8c481526b86a04a49954687fc5589663b4e5f37e"
   },
   "stage_receipt_sha256": "21aeba0fa4e20e70346fdcc6e309d056ea385b63be013726f690b930ba33c05b",

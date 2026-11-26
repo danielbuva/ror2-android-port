@@ -47,7 +47,8 @@ HASHES = {
     "native_result_observed_game": "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311",
     "lightning_r3_point_sound_composed_game": "594282cfa617ac58eda6965e0a48e6958438f345cbb98bfb7cb49b9130efad1d",
     "lightning_r3_native_result_observed_game": "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
-    "lightning_r3_native_result_camera_output": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c",
+    "lightning_r3_native_result_camera_output": "324fa10f959cdbceed69ebcea5f847a5cdafcfe6891b7805849e80cd72a34ee7",
+    "lightning_r3_camera_pre_commando_observer": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c",
     "music_camera_output": "4bd3b240ce5a9cb620d14ce4041f493ba013b9700d792dc9c99c8666f3af06f0",
     "native_result_camera_output": "64628a52d443786d7920fc8d6b65215f32886cb3489bf5439c3efaed17e43ccf",
     "camera_default": "494ba9acd8ea34bed17ac56edb9a49eafa8cb5afd2f91466b95ca0d71ce3b8cd",
@@ -348,6 +349,7 @@ def _verify_stage_manifest_rows(stage: dict, manifest: dict, project: Path) -> N
                     HASHES["native_result_observed_game"],
                     HASHES["lightning_r3_native_result_observed_game"],
                     HASHES["lightning_r3_native_result_camera_output"],
+                    HASHES["lightning_r3_camera_pre_commando_observer"],
                 }
             ):
                 audio, receipt_sha = _audio_receipt(project)
@@ -434,6 +436,7 @@ def _music_observer_receipt(project: Path, audio_receipt_sha: str, audio: dict) 
         (HASHES["pcm_composed_api"], HASHES["lightning_r3_native_result_observed_game"]): {
             HASHES["lightning_r3_native_result_observed_game"],
             HASHES["lightning_r3_native_result_camera_output"],
+            HASHES["lightning_r3_camera_pre_commando_observer"],
         },
     }
     if (
@@ -717,7 +720,10 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
     # Exact pre-delegate-bind images are restore-only. Bind the accepted old
     # output to the complete input/API/profile tuple, independently of the
     # current output hash which Root may advance after the new transform.
-    prior_delegate_outputs = {
+    prior_outputs = {
+        (HASHES["lightning_r3_native_result_observed_game"], HASHES["pcm_composed_api"], "post-audio-native-music-results-lightning-r3-1ced"): {
+            HASHES["lightning_r3_camera_pre_commando_observer"]
+        },
         (HASHES["ordinary_game"], HASHES["ordinary_api"], "default-game-3124"): {HASHES["camera_default_delegate_previous_restore_only"]},
         (HASHES["composed_game"], HASHES["composed_api"], "post-audio-r4-1034-api-d540"): {HASHES["camera_after_audio_delegate_previous_restore_only"]},
         (HASHES["point_sound_composed_game"], HASHES["composed_api"], "post-audio-point-sound-6f96-api-d540"): {
@@ -733,13 +739,13 @@ def restore_previous_camera(project: Path, work: Path) -> dict | None:
             HASHES["camera_music_observer_delegate_previous_restore_only"]
         },
     }
-    exact_pre_delegate_output = receipt.get("output_sha256") in prior_delegate_outputs.get((expected_input, expected_api, expected_profile), set())
+    exact_prior_output = receipt.get("output_sha256") in prior_outputs.get((expected_input, expected_api, expected_profile), set())
     is_restore_only_predecessor = (
         (predecessor_profile and receipt.get("output_sha256") == predecessor_output)
         or exact_prior_default
         or exact_prior_1034
         or exact_r14_broken_point_sound
-        or exact_pre_delegate_output
+        or exact_prior_output
     )
     if receipt.get("output_sha256") != expected_output and not is_restore_only_predecessor:
         raise ValueError("camera receipt output is outside the exact current or restore-only profile")

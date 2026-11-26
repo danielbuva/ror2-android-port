@@ -227,6 +227,7 @@ def transform(profile: str, supplied_input: Path, resolution_dir: Path, output_p
                 "-r:" + str(tools["unity_core"]),
                 "-r:" + str(tools["netstandard"]),
                 str(marker),
+                str(SOURCE_ROOT / pins["source_paths"]["commando_post_observer_marker"]),
             ],
             cwd=run_root,
         )

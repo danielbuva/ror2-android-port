@@ -154,7 +154,7 @@ No clear recipe boundary violations or unresolved publication findings remain.
 
 | Recipe | Reviewed change | SHA-256 |
 | --- | --- | --- |
-| `native-view-camera-transform.json` | Authored build/camera source pins | `92c77d4d5b5fbd5072502077cfbcacdb4e567243f3d1d5ccfff2db58190d2fb2` |
+| `native-view-camera-transform.json` | Authored build/camera source pins | `9556b07c4a3a045d3e1e50a1bd85dd4659e8415324b888c40e17f6475999b5db` |
 | `original-audio-owner-sources.json` | Authored runtime/audio source pins | `90a4d356a5af40fadc94724df38823c1b9ae80a1ef111f4f3248776ba97e4e99` |
 | `owner-artifactworld01-native-records.json` | Original component selectors and pointer relocations | `728ac3483b07550d4f46e1cfa50f011a69e0b24284dc62754a23ec61fb0cec80` |
 | `owner-champrush-director-records.json` | Original director selectors and pointer relocations | `a7d60a106ef9b5be7c22010acbb2ea9118f4cbe6ad6e6226f034e047ece16536` |
@@ -7207,3 +7207,9 @@ observer build and verifies the established Wwise and game transform hashes.
 Provenance, privacy, licensing and sensitive-content review found authored
 compiler wiring, reference names and hashes only. SDK files, original game
 and middleware files, compiled outputs and private evidence stay local.
+
+2026-11-26 R3 Commando post witness. The lab camera composition adds an authored
+static callback at a single original sound return and pins its verified output.
+The recipe contains tool hashes and assembly/member identifiers. Its generated
+module stays under ignored `work/`. No sound data, original implementation,
+private paths, or identifiers are included.

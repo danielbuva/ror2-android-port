@@ -49,7 +49,9 @@ public sealed partial class PortSession
     {
         public bool sourceAudioObservationCaptured, sourceAudioGameObjectPresent, sourceAudioGameObjectEnabled,
             sourceAudioManagedRegistered, sourceAudioPlayingQueryReturned, sourceAudioVolumeQueryReturned,
-            sourceAudioVolumeValueFinite, sourceAudioExpectedEventObserved;
+            sourceAudioVolumeValueFinite, sourceAudioExpectedEventObserved, sourceAudioPostObserverAttached;
+        public int sourceAudioPostReturns, sourceAudioPostAcceptedReturns;
+        public uint sourceAudioPostPlayingId;
         public float sourceAudioObservationRealtime, sourceAudioVolumeValue;
         public uint sourceAudioExpectedEventId, sourceAudioPlayingIdCount;
         public int sourceAudioPlayingQueryResult, sourceAudioVolumeQueryResult, sourceAudioVolumeReturnedType,
@@ -96,6 +98,10 @@ public sealed partial class PortSession
     {
         GetPrimaryFireSession().ObserveSpinePrimary(body);
     }
+    void AttachPrimaryPostObserver(CharacterBody body)
+    {
+        GetPrimaryFireSession().AttachPrimaryPostObserver(body);
+    }
     void CleanupSpineConfig()
     {
         GetPrimaryFireSession().Dispose();
@@ -119,6 +125,8 @@ public sealed partial class PortSession
         EntityStateConfiguration spineReload;
         bool preserveOriginalAudio;
         EntityState lastSpineWeaponState;
+        FieldInfo postObserverField;
+        Action<uint, object> postObserver;
         public PrimaryFireSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -166,11 +174,38 @@ public sealed partial class PortSession
                 EntityStates.Commando.DodgeState.jetEffect = null;
             }
         }
+        public void AttachPrimaryPostObserver(CharacterBody body)
+        {
+            if (!preserveOriginalAudio || !PortSessionOriginalAudioOwner.PassivePcmCaptureRequested)
+                return;
+            var report = coordinator.r.primary;
+            var marker = typeof(FirePistol2).Assembly.GetType("RoR2.AndroidCommandoPostObserver", false);
+            var field = marker?.GetField("Returned", BindingFlags.Public | BindingFlags.Static);
+            if (field == null || field.GetValue(null) != null)
+                return;
+            Action<uint, object> callback = (playingId, emitter) =>
+            {
+                if (!body || !ReferenceEquals(emitter, body.gameObject) || !Util.HasEffectiveAuthority(body.networkIdentity))
+                    return;
+                report.sourceAudioPostReturns++;
+                if (playingId == AkSoundEngine.AK_INVALID_PLAYING_ID)
+                    return;
+                report.sourceAudioPostAcceptedReturns++;
+                if (report.sourceAudioPostPlayingId == AkSoundEngine.AK_INVALID_PLAYING_ID)
+                    report.sourceAudioPostPlayingId = playingId;
+            };
+            field.SetValue(null, callback);
+            postObserverField = field;
+            postObserver = callback;
+            report.sourceAudioPostObserverAttached = true;
+        }
+
         // A posted event may become queryable only after Wwise services another frame.
         void ObserveOriginalPrimaryAudio(CharacterBody body, PrimaryFireReport report)
         {
             const int maxPlayingQueries = 12;
-            if (report.sourceAudioExpectedEventObserved || report.sourceAudioPlayingQueryAttempts >= maxPlayingQueries ||
+            if (report.sourceAudioPostAcceptedReturns == 0 || report.sourceAudioExpectedEventObserved ||
+                report.sourceAudioPlayingQueryAttempts >= maxPlayingQueries ||
                 report.sourceAudioObservationError != null || !coordinator.r.integratedWorld ||
                 !PortSessionOriginalAudioOwner.PassivePcmCaptureRequested || !GameAudioOriginalOwner.Ready)
                 return;
@@ -384,6 +419,10 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+            if (postObserverField != null && ReferenceEquals(postObserverField.GetValue(null), postObserver))
+                postObserverField.SetValue(null, null);
+            postObserverField = null;
+            postObserver = null;
             coordinator.CleanupCombatConfigs();
             if (spineFields != null)
             {
