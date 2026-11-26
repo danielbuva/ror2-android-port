@@ -1481,7 +1481,7 @@ owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
 and readable SoC zones, checks thermal admission and selects inherited efficiency-core affinity
 with two-worker runtime limits. Its independent supervisor pauses the owned
 process group and nested-session descendants at CPU/GPU 70/55 C. A separate
-ceiling pauses the same family at 85 C on any readable CPU, GPU or SoC zone,
+ceiling pauses the same family at 90 C on any readable CPU, GPU or SoC zone,
 releases below 70 C, and aborts after 15 min at the ceiling. The 250 ms sampler
 also enforces the CPU/GPU 95 C/3 s and battery 43 C limits. Teardown kills owned
 processes. Receipts retain pause time, SoC peak and phase, and failures. The

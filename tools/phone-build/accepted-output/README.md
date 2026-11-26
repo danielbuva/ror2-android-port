@@ -1602,7 +1602,7 @@ kernel sensors and sustained thermal behaviour remain device gates.
 
 The supervisor pauses the owned process group and independently sessioned
 codec/compiler descendants at CPU/GPU >= 70 C, resuming only when all readable
-CPU/GPU zones are <= 55 C. Any readable CPU, GPU or SoC zone at >= 85 C also
+CPU/GPU zones are <= 55 C. Any readable CPU, GPU or SoC zone at >= 90 C also
 pauses the whole family until the hottest zone falls below 70 C. If this
 ceiling holds for 15 min, the supervisor kills the paused family. PID/start
 identities protect descendant signals. Before startup, taskset restricts the
