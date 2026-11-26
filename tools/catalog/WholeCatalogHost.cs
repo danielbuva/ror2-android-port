@@ -23,7 +23,7 @@ public static class WholeCatalogHost
         RequireIdleEditor();
         var manifest = JObject.Parse(File.ReadAllText(manifestPath));
         var locations = manifest["locations"].ToDictionary(row => (int)row["id"], row => (string)row["path"]);
-        var addresses = new AnimationAddresses(manifest, locations);
+        var addresses = new CatalogAddresses(manifest, locations);
         var errors = new JArray();
         var survivors = new JArray();
         var survivorBodies = new HashSet<GameObject>();
@@ -132,11 +132,11 @@ public static class WholeCatalogHost
     }
 
     // Use the manifest's string keys and typed prepared assets without starting Addressables.
-    sealed class AnimationAddresses
+    sealed class CatalogAddresses
     {
         readonly Dictionary<string, string[]> paths;
 
-        public AnimationAddresses(JObject manifest, Dictionary<int, string> locations)
+        public CatalogAddresses(JObject manifest, Dictionary<int, string> locations)
         {
             paths = manifest["keys"].Where(row => row["keyType"] == null || (string)row["keyType"] == "System.String")
                 .ToDictionary(row => (string)row["key"],
@@ -157,7 +157,7 @@ public static class WholeCatalogHost
             return resolved;
         }
 
-        T Resolve<T>(string key, string subobject) where T : UnityEngine.Object
+        public T Resolve<T>(string key, string subobject = null) where T : UnityEngine.Object
         {
             if (string.IsNullOrEmpty(key))
                 return null;
@@ -173,7 +173,7 @@ public static class WholeCatalogHost
         }
     }
 
-    static void InspectAnimationSkin(RoR2.SkinDef skin, AnimationAddresses addresses, HashSet<RoR2.SkinDef> visited, JArray rows,
+    static void InspectAnimationSkin(RoR2.SkinDef skin, CatalogAddresses addresses, HashSet<RoR2.SkinDef> visited, JArray rows,
                                      JArray issues)
     {
         if (!skin)
@@ -280,6 +280,7 @@ public static class WholeCatalogHost
         RequireIdleEditor();
         var manifest = JObject.Parse(File.ReadAllText(manifestPath));
         var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
+        var addresses = new CatalogAddresses(manifest, locations.ToDictionary(row => row.Key, row => (string)row.Value["path"]));
         var roots = new JArray();
         var rows = new JArray();
         var errors = new JArray();
@@ -303,6 +304,27 @@ public static class WholeCatalogHost
             throw new Exception("Current lab session config missing");
         foreach (var path in JObject.Parse(config.text)["objectiveEffectAssets"].Values<string>().Distinct())
             candidates.Add(new JObject { ["id"] = -1, ["path"] = path, ["category"] = "RegisteredEffect", ["provider"] = -1 });
+
+        JToken Location(string file) => locations.Values.Single(row => ((string)row["path"]).EndsWith("/" + file, StringComparison.Ordinal));
+        void Include(JToken location, string category)
+        {
+            var path = (string)location["path"];
+            if (!candidates.Any(row => (string)row["path"] == path))
+                candidates.Add(new JObject { ["id"] = (int)location["id"], ["path"] = path, ["category"] = category, ["provider"] = -1 });
+        }
+
+        // These source effects are acquired outside the registered effect list.
+        Include(Location("MercExposeEffect.prefab"), "DirectEffect");
+        Include(Location("CrocoDiseaseImpactEffect.prefab"), "DirectEffect");
+        var titan = AssetDatabase.LoadAssetAtPath<GameObject>((string)Location("TitanPreFistProjectile.prefab")["path"]);
+        var projectile = titan ? titan.GetComponent<RoR2.Projectile.ProjectileController>() : null;
+        if (!projectile)
+            throw new Exception("Titan pre-fist projectile controller missing");
+        var ghost = addresses.Inspect(new SerializedObject(projectile), "ghostPrefabAddress", null, projectile.ghostPrefab, out var ghostBinding);
+        if (!ghost || ghost.name != "TitanPreFistGhost" || !ghost.GetComponent<RoR2.Projectile.ProjectileGhostController>())
+            throw new Exception("Titan pre-fist projectile ghost binding missing");
+        Include(locations.Values.Single(row => (string)row["path"] == AssetPath(ghost)), "ProjectileGhost");
+
         foreach (JObject location in candidates)
         {
             string category = (string)location["category"];
@@ -318,10 +340,7 @@ public static class WholeCatalogHost
             }
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
-                var hierarchy = new List<string>();
-                for (var node = renderer.transform; node; node = node.parent)
-                    hierarchy.Add(node.name + "[" + node.GetSiblingIndex() + "]");
-                hierarchy.Reverse();
+                var hierarchy = HierarchyPath(renderer.transform);
                 var particle = renderer as ParticleSystemRenderer;
                 var streams = new List<ParticleSystemVertexStream>();
                 if (particle)
@@ -349,10 +368,31 @@ public static class WholeCatalogHost
                     AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", -1, null);
             }
         }
+        var vagrantSkin = AssetDatabase.LoadAssetAtPath<RoR2.SkinDef>((string)Location("skinVagrantBodyDefault.asset")["path"]);
+        if (!vagrantSkin)
+            throw new Exception("Vagrant default skin missing");
+        var parameters = addresses.Inspect(new SerializedObject(vagrantSkin), "skinDefParamsAddress", null, vagrantSkin.skinDefParams,
+                                           out var skinBinding);
+        if (!parameters)
+            throw new Exception("Vagrant default skin parameters missing");
+        var skinInfo = parameters.rendererInfos.Single(row => row.renderer && row.renderer.name == "VagrantMesh");
+        var reference = skinInfo.defaultMaterialAddress;
+        var material = reference != null && reference.RuntimeKeyIsValid()
+                           ? addresses.Resolve<Material>(Convert.ToString(reference.RuntimeKey))
+                           : skinInfo.defaultMaterial;
+        var vagrant = Location("VagrantBody.prefab");
+        if (!material || AssetPath(skinInfo.renderer) != (string)vagrant["path"])
+            throw new Exception("Vagrant default skin body material binding missing");
+        var skinMaterial = AddCombatMaterial(rows, (int)vagrant["id"], "CharacterBody", (string)vagrant["path"], skinInfo.renderer,
+                                             HierarchyPath(skinInfo.renderer.transform), null, new List<ParticleSystemVertexStream>(),
+                                             "SkinDefParams.defaultMaterial", 0, material);
+        skinMaterial["materialAddress"] = reference == null ? null : Convert.ToString(reference.RuntimeKey);
+
         var result = new JObject {
             ["scope"] =
-                "Native-provider body/projectile candidates before per-provider name deduplication, plus current lab registered effects; resource coverage only; Android rendering and reference comparison remain open",
+                "Native-provider bodies and projectiles, registered effects and targeted source bindings; Android rendering and reference comparison remain open",
             ["roots"] = roots, ["slots"] = rows, ["errors"] = errors,
+            ["titanGhostBinding"] = ghostBinding, ["vagrantSkinBinding"] = skinBinding,
             ["surfaceObservationContract"] = VerifySurfaceMaterialObservation()
         };
         File.WriteAllText(outputPath, result.ToString());
@@ -443,7 +483,7 @@ public static class WholeCatalogHost
             UnityEngine.Object.DestroyImmediate(root);
         }
     }
-    static JObject AddCombatMaterial(JArray rows, int id, string category, string root, Renderer renderer, List<string> hierarchy,
+    static JObject AddCombatMaterial(JArray rows, int id, string category, string root, Renderer renderer, string hierarchy,
                                      ParticleSystemRenderer particle, List<ParticleSystemVertexStream> streams, string binding, int slot,
                                      Material material)
     {
@@ -462,7 +502,7 @@ public static class WholeCatalogHost
             new JObject { ["location"] = id,
                           ["category"] = category,
                           ["root"] = root,
-                          ["renderer"] = string.Join("/", hierarchy),
+                          ["renderer"] = hierarchy,
                           ["kind"] = renderer.GetType().Name,
                           ["component"] = Array.IndexOf(renderer.GetComponents<Renderer>(), renderer),
                           ["binding"] = binding,
@@ -497,7 +537,9 @@ public static class WholeCatalogHost
             family = JObject.Parse(families.text)["families"].OfType<JObject>().SingleOrDefault(row => (string)row["shader"] == shader);
         if (family != null)
         {
-            var keys = family["features"].Values<string>().Where(key => material.IsKeywordEnabled(key)).OrderBy(key => key).ToArray();
+            // The imported stub may omit declarations for saved source keywords.
+            var savedKeywords = material.shaderKeywords;
+            var keys = family["features"].Values<string>().Where(key => savedKeywords.Contains(key)).OrderBy(key => key).ToArray();
             var variant =
                 family["variants"].SingleOrDefault(row => row["keywords"].Values<string>().OrderBy(key => key).SequenceEqual(keys));
             string resource = variant == null ? null : (string)variant["resource"];
