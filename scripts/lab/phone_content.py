@@ -112,14 +112,23 @@ def native_content_request(path):
     if not path.is_absolute():
         raise RuntimeError("Absolute native-content request required")
     request = json.loads(path.read_text())
-    bundle = Path(request["path"])
+    dependencies = request.get("dependencies", [])
+    if not isinstance(dependencies, list):
+        raise RuntimeError("Native-content dependencies must be an ordered list")
+    paths = set()
+    for pin in [request, *dependencies]:
+        bundle = Path(pin["path"])
+        if not bundle.is_absolute() or not bundle.is_file():
+            raise RuntimeError("Native-content bundle needs an existing absolute path")
+        resolved = bundle.resolve()
+        if resolved in paths:
+            raise RuntimeError("Native-content bundle path duplicated")
+        paths.add(resolved)
+        with bundle.open("rb") as stream:
+            actual_hash = hashlib.file_digest(stream, "sha256").hexdigest()
+        if actual_hash != pin["sha256"]:
+            raise RuntimeError("Native-content bundle SHA-256 mismatch")
     assets = request["assets"]
-    if not bundle.is_absolute() or not bundle.is_file():
-        raise RuntimeError("Native-content bundle needs an existing absolute path")
-    with bundle.open("rb") as stream:
-        actual_hash = hashlib.file_digest(stream, "sha256").hexdigest()
-    if actual_hash != request["sha256"]:
-        raise RuntimeError("Native-content bundle SHA-256 mismatch")
     if not isinstance(assets, list) or not assets:
         raise RuntimeError("Native-content request needs typed assets")
     names = set()
@@ -128,7 +137,20 @@ def native_content_request(path):
         if not isinstance(name, str) or not name or name in names or asset.get("type") not in NATIVE_CONTENT_TYPES:
             raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
         names.add(name)
+        if "material" in asset and (asset["type"] != "Material" or not material_references(asset["material"])):
+            raise RuntimeError("Native-content Material needs expected shader and saved texture references")
     return request
+
+
+def material_references(value):
+    if not isinstance(value, dict) or not isinstance(value.get("shader"), str) or not value["shader"]:
+        return None
+    textures = value.get("textures")
+    if not isinstance(textures, list) or any(
+        not isinstance(row, dict) or any(not isinstance(row.get(key), str) or not row[key] for key in ("property", "texture")) for row in textures
+    ):
+        return None
+    return value["shader"], sorted((row["property"], row["texture"]) for row in textures)
 
 
 def validate_native_content(attempt, commit):
@@ -148,6 +170,9 @@ def validate_native_content(attempt, commit):
     }
     if report.get("failure") or any(report.get(key) != value for key, value in expected.items()) or report.get("unloaded") is not True:
         raise RuntimeError("Native-content identity/count/unload contract failed")
+    dependencies = [{"path": str(Path(pin["path"]).resolve()), "sha256": pin["sha256"]} for pin in request.get("dependencies", [])]
+    if report.get("dependencies", []) != dependencies:
+        raise RuntimeError("Native-content loaded dependencies mismatch")
     rows = report.get("assets")
     if not isinstance(rows, list) or len(rows) != len(request["assets"]):
         raise RuntimeError("Native-content typed asset count mismatch")
@@ -159,6 +184,8 @@ def validate_native_content(attempt, commit):
             or not isinstance(row.get("loaded_name"), str)
         ):
             raise RuntimeError("Native-content typed load mismatch")
+        if "material" in asset and material_references(row.get("material")) != material_references(asset["material"]):
+            raise RuntimeError("Native-content Material shader or saved texture mismatch: " + asset["name"])
     return report
 
 

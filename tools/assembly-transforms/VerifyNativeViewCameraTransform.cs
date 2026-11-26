@@ -67,6 +67,32 @@ internal static class VerifyCameraGuardPatch
                 "original update pump catch entry must receive and consume the caught exception");
     }
 
+    static void VerifyCommandoPost(MethodDefinition before, MethodDefinition after)
+    {
+        var instructions = after.Body.Instructions;
+        var post = instructions.Single(i => i.OpCode == OpCodes.Call && i.Operand is MethodReference m &&
+            m.FullName == "System.UInt32 RoR2.Util::PlaySound(System.String,UnityEngine.GameObject)");
+        int index = instructions.IndexOf(post);
+        var emitter = after.Body.Variables.Last();
+        Require(index >= 2 && index + 4 < instructions.Count &&
+            instructions[index - 2].OpCode == OpCodes.Dup && instructions[index - 1].OpCode == OpCodes.Stloc &&
+            ReferenceEquals(instructions[index - 1].Operand, emitter) &&
+            instructions[index + 1].OpCode == OpCodes.Dup && instructions[index + 2].OpCode == OpCodes.Ldloc &&
+            ReferenceEquals(instructions[index + 2].Operand, emitter) &&
+            instructions[index + 3].OpCode == OpCodes.Call && instructions[index + 3].Operand is MethodReference record &&
+            record.FullName == "System.Void RoR2.AndroidCommandoPostObserver::Record(System.UInt32,System.Object)" &&
+            instructions[index + 4].OpCode == OpCodes.Pop, "Commando witness must preserve the original sound call and discard");
+        Require(after.Body.Variables.Count == before.Body.Variables.Count + 1 &&
+            before.Body.Variables.Select(v => v.VariableType.FullName)
+                .SequenceEqual(after.Body.Variables.Take(before.Body.Variables.Count).Select(v => v.VariableType.FullName)) &&
+            emitter.VariableType.FullName == "UnityEngine.GameObject" &&
+            before.Body.ExceptionHandlers.Count == 0 && after.Body.ExceptionHandlers.Count == 0 &&
+            before.Body.InitLocals == after.Body.InitLocals,
+            "Commando witness changed the original local or exception contract");
+        Require(BodyKey(before).SequenceEqual(BodyKey(after, i => i >= index - 2 && i <= index + 3 && i != index)),
+            "original FireBullet instructions changed outside the post witness");
+    }
+
     static int Main(string[] args)
     {
         if (args.Length != 3) return 2;
@@ -79,8 +105,21 @@ internal static class VerifyCameraGuardPatch
                     before.Assembly.Name.Version.ToString() == after.Assembly.Name.Version.ToString(), "assembly identity changed");
             var oldNames = before.Types.Select(x => x.FullName).ToArray();
             var newNames = after.Types.Select(x => x.FullName).ToArray();
-            Require(newNames.Length == oldNames.Length + 1 && oldNames.All(newNames.Contains), "unexpected type addition/removal");
+            const string commandoMarker = "RoR2.AndroidCommandoPostObserver";
+            var witness = after.GetType(commandoMarker);
+            Require(newNames.Length == oldNames.Length + (witness == null ? 1 : 2) && oldNames.All(newNames.Contains),
+                "unexpected type addition/removal");
             Require(newNames.Count(x => x == "RoR2.AndroidNativeSourceViewOnlyRigMarker") == 1, "marker type not unique");
+            if (witness != null)
+            {
+                var source = helper.GetType(commandoMarker);
+                var originalRecord = source.Methods.Single(m => m.Name == "Record");
+                var record = witness.Methods.Single(m => m.Name == "Record");
+                Require(source.Fields.Select(x => x.FullName).SequenceEqual(witness.Fields.Select(x => x.FullName)) &&
+                    BodyKey(originalRecord).SequenceEqual(BodyKey(record)) &&
+                    ExceptionTableKey(originalRecord) == ExceptionTableKey(record),
+                    "Commando callback or exception isolation changed during copying");
+            }
             var targetName = "RoR2.CameraRigController";
             foreach (var oldType in before.Types)
             {
@@ -95,7 +134,11 @@ internal static class VerifyCameraGuardPatch
                     Require(newMethod.HasBody, "body removed " + oldMethod.FullName);
                     bool aimTarget = oldType.FullName == targetName && oldMethod.Name == "ModifyAimRayIfApplicable";
                     bool sceneCameraTarget = oldType.FullName == "RoR2.SceneCamera" && oldMethod.Name == "ConfigureGraphicsSettings";
-                    if (!aimTarget && !sceneCameraTarget)
+                    bool commandoTarget = witness != null &&
+                        oldType.FullName == "EntityStates.Commando.CommandoWeapon.FirePistol2" && oldMethod.Name == "FireBullet";
+                    if (commandoTarget)
+                        VerifyCommandoPost(oldMethod, newMethod);
+                    else if (!aimTarget && !sceneCameraTarget)
                         Require(BodyKey(oldMethod).SequenceEqual(BodyKey(newMethod)), "unrelated body changed " + oldMethod.FullName);
                 }
             }
@@ -173,7 +216,8 @@ internal static class VerifyCameraGuardPatch
             }
             Console.WriteLine("existing_types=" + oldNames.Length + " aim_original_instructions=" + oldTarget.Body.Instructions.Count +
                               " aim_new_instructions=" + newTarget.Body.Instructions.Count + " scene_original_instructions=" + oldScene.Body.Instructions.Count +
-                              " scene_new_instructions=" + newScene.Body.Instructions.Count + " unrelated_bodies_unchanged=true");
+                              " scene_new_instructions=" + newScene.Body.Instructions.Count +
+                              " commando_post_witness=" + (witness != null) + " unrelated_bodies_unchanged=true");
         }
         return 0;
     }

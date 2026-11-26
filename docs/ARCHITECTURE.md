@@ -2238,6 +2238,10 @@ materials, shaders, textures, sprites and supported native asset roots): snapsho
 and hash the explicit request, load every address with its exact engine type, record the
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
+The request may pin dependency bundles in load order. The fixture opens them
+before loading root assets and unloads the full set in reverse order. An
+explicit Material expectation checks the loaded shader name and each saved
+non-null texture property and object name against the receipt.
 This is desktop loadability evidence; device appearance/playability remains open.
 
 `bundle_preload.emit_closed_native` optionally caches transformed records and
@@ -5052,10 +5056,13 @@ and particle trails for owned actor templates and late actor-model descendants,
 including detached models. It preserves unknown/null slots and source material
 values, registers the existing presentation toggle, and retains copies in the
 session's `worldMaterials` list for teardown. `ObserveTeleporterWorld` performs
-the existing periodic handoff for objective and director-actor models; a renderer
-can receive new source slots after its first presentation. The authored
+the existing periodic handoff for objective and director-actor models and live
+purchase locks on tracked equipment barrels. It reads the lock from the native
+purchase interaction after the lock spawns. A renderer can receive new source
+slots after its first presentation. The authored
 `test_recovered_material_handoff.py` contract exercises slots, trails, late
-replacement, toggling and source ownership. Rendering remains a device gate.
+replacement, equipment lock selection, toggling and source ownership.
+Rendering remains a device gate.
 `TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
 effect sources and native projectile ghosts and DamageTrail segment references
 before their pools instantiate them. Source Cloud Intersection Remap slots on
@@ -5188,6 +5195,15 @@ The production setup/exclusion/disposal host fixture covers both modes,
 including the initial report-mode flag still being unset during configuration.
 The owner captures the configured mode and native readiness during setup;
 it never treats the later report assignment as startup authority.
+For opt-in PCM diagnostics, `PrimaryFireSession` observes the playing ID
+returned by the original Commando pistol sound call on the controlled body
+while it has effective authority. The lab R3 camera composition adds a
+static callback at that call site and preserves the original return handling.
+The primary owner attaches it before input dispatch and clears its callback
+during teardown. After a nonzero return it samples the body's active Wwise
+event IDs at most 12 times, with a new successful original audio service frame
+for each follow-up. The report records post acceptance, active event matches
+with their render-frame ordinal, and aggregate MainOutput PCM separately.
 
 Once the original audio owner is ready, existing actor, projectile, pickup,
 effect and model adapters preserve source sound identities and authored Wwise

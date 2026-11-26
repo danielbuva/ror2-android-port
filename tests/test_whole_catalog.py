@@ -322,6 +322,31 @@ class WholePayloadReuseTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
             build.validate_whole_payload_reuse(self.project)
 
+    def test_code_only_reuses_exact_commando_observer_transition(self):
+        from native_view_camera_build_hook import API_RELATIVE, CAMERA_STAGE_RELATIVE, GAME_RELATIVE, HASHES, STAGE_SCHEMA
+
+        for relative in (GAME_RELATIVE, API_RELATIVE):
+            (self.project / relative).parent.mkdir(parents=True, exist_ok=True)
+            (self.project / relative).touch()
+        hashes = {
+            GAME_RELATIVE.name: HASHES["lightning_r3_camera_pre_commando_observer"],
+            API_RELATIVE.name: HASHES["pcm_composed_api"],
+        }
+        with patch.object(build, "sha", side_effect=lambda path: hashes.get(path.name) or sha(path)):
+            baseline = build.whole_payload_inputs(self.project)
+            hashes[GAME_RELATIVE.name] = HASHES["lightning_r3_native_result_camera_output"]
+            stage = dict(
+                schema=STAGE_SCHEMA,
+                profile="post-audio-native-music-results-lightning-r3-1ced",
+                input_sha256=HASHES["lightning_r3_native_result_observed_game"],
+                output_sha256=hashes[GAME_RELATIVE.name],
+                api_sha256=hashes[API_RELATIVE.name],
+            )
+            write(self.project / CAMERA_STAGE_RELATIVE, stage)
+            self.assertEqual(build.whole_payload_inputs(self.project), baseline)
+            write(self.project / CAMERA_STAGE_RELATIVE, dict(stage, input_sha256="unknown"))
+            self.assertNotEqual(build.whole_payload_inputs(self.project), baseline)
+
     def test_retention_marker_is_not_payload_but_other_additions_still_refuse(self):
         payload = self.work / "generated-android-data"
         marker = payload / ".prune-keep"
