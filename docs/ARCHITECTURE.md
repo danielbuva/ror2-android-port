@@ -3327,6 +3327,10 @@ native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage
 selector is separate. Existing shared cleanup stops the process and removes the
 selector. These measurements do not certify physical or ordinary play.
+The optional `stage_transition` route binds the starting scene and the native
+destination to that same attempt, PID and session. The runner stops once the
+transport owner confirms a single transition and the destination has been
+live for ten seconds. It retains the qualifying report and final capture.
 
 The shared runner records the cumulative exception log's byte offset before
 launch. After stopping the owned package, it captures only the appended rows

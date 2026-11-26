@@ -333,6 +333,48 @@ class DeviceSessionTests(unittest.TestCase):
             ],
         )
 
+    def test_converted_stage_transition_uses_the_selected_run_and_stops_in_destination(self):
+        from session_cleanup_check import SPINE_ID
+
+        route = {"from": "golemplains", "to": "goolake"}
+        request = dict(self.request, start_from_menu=True, stage_transition=route, selection={"id": SPINE_ID})
+        device, thermal = mock.Mock(package="dev.ror2lab.converted"), mock.Mock()
+        device.sh.return_value = "7"
+        device.read_receipt.return_value = {"persistentDataPath": "/owned"}
+        thermal.cancelled.is_set.return_value = False
+        world = dict(pid=7, id=SPINE_ID, attempt="converted-attempt", session=1, stage={"scene": "golemplains"}, stageProgress={"transitions": 0})
+        destination = dict(
+            world,
+            phase="integrated-world-playing",
+            stage={"scene": "goolake"},
+            stageProgress={
+                "transitions": 1,
+                "actualScene": "goolake",
+                "actualSceneDef": "goolake",
+                "requested": "goolake",
+                "transporting": False,
+                "activeSceneVerified": True,
+                "enteredAt": 100,
+            },
+            world={"seconds": 110, "ready": True},
+        )
+        result = {}
+        with (
+            mock.patch.object(runner, "start_from_menu", return_value=world) as menu,
+            mock.patch.object(runner, "capture") as capture,
+            mock.patch("session_cleanup_check._read_json", side_effect=[dict(destination, session=2), destination]) as read_report,
+            mock.patch.object(runner.time, "sleep"),
+        ):
+            runner.observe_launch(device, thermal, request, self.output, result, "7", start_attempt="converted-attempt")
+        self.assertEqual(menu.call_args.kwargs["report_id"], SPINE_ID)
+        self.assertEqual(read_report.call_count, 2)
+        self.assertEqual(capture.call_args.args[1], self.output / "final")
+        self.assertEqual(result["stage_transition"], route)
+        self.assertEqual(json.loads((self.output / "stage-transition.json").read_text()), destination)
+        self.assertFalse(runner.stage_transition_ready(dict(destination, world={"seconds": 109, "ready": True}), route))
+        with self.assertRaisesRegex(RuntimeError, "Expected one completed transition"):
+            runner.stage_transition_ready(dict(destination, stageProgress=dict(destination["stageProgress"], transitions=2)), route)
+
     def test_converted_menu_workload_waits_for_visible_bootstrap_play(self):
         package = "dev.ror2lab.converted"
         request = dict(self.request, package=package, start_from_menu=True)

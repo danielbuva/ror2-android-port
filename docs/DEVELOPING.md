@@ -37,6 +37,13 @@ and waits for a ready world before the clock begins. The lab and converted packa
 use their respective gameplay reports. For a lab stage-transition memory
 soak, pair it with an explicit auto-route selector. Physical input
 qualification remains separate.
+For one bounded native stage exit, include
+`"stage_transition": {"from": "golemplains", "to": "goolake"}` with
+`start_from_menu` and the `body-state-spawn-state-auto-nova-spine-bringup`
+selector. The runner requires the declared first stage, one completed
+transition in the same session, and ten seconds of live destination play
+within `duration_seconds`. It saves the qualifying report as
+`stage-transition.json`.
 For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
 The selector uses the stored loadout and existing integrated stage loader.
