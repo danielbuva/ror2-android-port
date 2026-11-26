@@ -2361,7 +2361,7 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
     request = json.loads(inputs.read_bytes())
     required_keys = {"schema", "graph", "schemas", "required", "routes", "endpoints", "staged", "managed_inputs", "game_root", "codec", "bundle", "member"}
     if (
-        set(request) - {"canonical", "null_script_sources", "provider_paths", "extension"} != required_keys
+        set(request) - {"canonical", "null_script_sources", "provider_paths", "extension", "input_paths"} != required_keys
         or request["schema"] != "owner-bundle-preload-inputs-v1"
     ):
         raise ValueError("unsupported bundle preload input contract")
@@ -2369,6 +2369,8 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
     owner = SimpleNamespace(**globals())
     pins = E.InputPins(inputs.parent, owner)
     pins.add(inputs)
+    if "input_paths" in request:
+        pins.relocate(request["input_paths"])
     provider_paths = {}
     if "provider_paths" in request:
         path = pins.pin(request["provider_paths"])
@@ -2528,6 +2530,7 @@ def main():
     action.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
     action.add_argument("--repack", type=Path, help="current: canonical repack of an existing qualified emission with pinned inputs")
     action.add_argument("--prepare", type=Path, help="derive emission inputs from pinned source packs and declarative policy")
+    action.add_argument("--prepare-endpoints", type=Path, help="derive staged descriptors and schemas from pinned emission routes and actual providers")
     action.add_argument("--release", type=Path, help="prepare and emit a signed release-graph policy in one private workspace")
     action.add_argument("--requalify-relocation", type=Path, help="derive fresh retained PPtr witnesses from pinned producer bodies and routes")
     parser.add_argument("--cache", type=Path, help="private incremental emission/preload/repack cache")
@@ -2562,6 +2565,13 @@ def main():
         if any(value is not None for value in (*legacy, args.cache)):
             parser.error("--prepare requires only --output")
         print(json.dumps(prepare_request(args.prepare, args.output), indent=2))
+        return
+    if args.prepare_endpoints is not None:
+        from types import SimpleNamespace
+
+        if any(value is not None for value in (*legacy, args.cache)):
+            parser.error("--prepare-endpoints requires only --output")
+        print(json.dumps(module("bundle_prepare").prepare_endpoints(SimpleNamespace(**globals()), args.prepare_endpoints, args.output), indent=2))
         return
     if args.inputs is not None:
         if any(value is not None for value in legacy):
