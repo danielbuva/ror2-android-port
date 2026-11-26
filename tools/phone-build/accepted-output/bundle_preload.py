@@ -1914,6 +1914,239 @@ def skin_hierarchy_fields(skin_type, fields):
     return {field for field in fields if len(field) == 4 and field[1] == "Array" and members.get(field[0]) == field[3]}
 
 
+def write_repacked_bundle(output, bundle, member, stream, layout, replacements, *, codec, codec_sha256, additions=(), resource_tail=None):
+    from contextlib import contextmanager, nullcontext
+    import copy
+    import tempfile
+    from types import SimpleNamespace
+
+    W = module("unity_write")
+    revised = copy.deepcopy(layout)
+    if additions:
+        revised["objects"] = sorted([*revised["objects"], *additions], key=lambda row: row["path_id"])
+    objects = {obj["path_id"]: obj for obj in layout["objects"]}
+    offset = 0
+    for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
+        offset = (offset + 7) // 8 * 8
+        obj["offset"] = offset
+        if obj["path_id"] in replacements:
+            obj["bytes"] = len(replacements[obj["path_id"]])
+        offset += obj["bytes"]
+    if additions:
+        del revised["data_offset"], revised["bytes"]
+    else:
+        revised["bytes"] = revised["data_offset"] + offset
+
+    def body_for(obj):
+        path_id = obj["path_id"]
+        if path_id in replacements:
+            return io.BytesIO(replacements[path_id])
+        stream.seek(layout["data_offset"] + objects[path_id]["offset"])
+        return stream
+
+    output.parent.mkdir(parents=True, exist_ok=False)
+    with tempfile.TemporaryDirectory(prefix=".serialized-", dir=output.parent) as scratch:
+        serialized = Path(scratch) / "member"
+        with serialized.open("xb") as handle:
+            W.write_serialized(handle, revised, body_for)
+        if additions:
+            with serialized.open("rb") as handle:
+                handle.seek(24)
+                revised["bytes"], revised["data_offset"] = W.B.unpack(handle, ">qq")
+        members = [
+            (m, flags, serialized.stat().st_size if m == member else size, lambda m=m: serialized.open("rb") if m == member else bundle.member(m))
+            for m, (_, size, flags) in bundle.members.items()
+        ]
+        if resource_tail is not None:
+            resource_member, extents = resource_tail
+            tail = Path(scratch) / "resource-tail"
+            tail_size = module("object_stream").resource(tail, extents, 0, W, O.B.LIMIT)
+
+            @contextmanager
+            def open_resource():
+                with bundle.member(resource_member) as prefix, tail.open("rb") as suffix:
+
+                    def read(count):
+                        block = prefix.read(count)
+                        return block + suffix.read(count - len(block))
+
+                    yield SimpleNamespace(read=read)
+
+            members = [(m, flags, size + tail_size, open_resource) if m == resource_member else (m, flags, size, opener) for m, flags, size, opener in members]
+        compression = W.codec(codec, codec_sha256) if codec is not None else nullcontext(lambda block, method: block)
+        with compression as compress, output.open("xb") as handle:
+            result = W.write_bundle(handle, members, compress, engine=layout["engine"], flags=0x243 if codec is not None else 0x40, hash_output=True)
+    return result, revised
+
+
+def expose_local_assets(source, output, name, member, groups, *, codec, codec_sha256, packs=(), external_bundles=()):
+    """Expose typed local objects while preserving the current bundle's other assets."""
+    W, C = module("unity_write"), module("catalog_complete")
+    bundle = W.B.Bundle(source)
+    target = output / (name + ".bundle")
+    with bundle.member(member) as stream:
+        layout = W.read_serialized(stream)
+        objects = {obj["path_id"]: obj for obj in layout["objects"]}
+        schemas = {}
+        replacements, additions, resources = {}, [], []
+        resource_member = member + ".resS"
+        resource_start = bundle.members[resource_member][1] if packs else 0
+        resource_end = resource_start
+        type_ids = {full_type_key(typ): i for i, typ in enumerate(layout["types"])}
+        for pack in packs:
+            for row in json_rows(pack["index.jsonl"]):
+                pid = row["path_id"]
+                if (row["bundle"], row["member"]) != (name, member) or not pid or pid in objects:
+                    raise ValueError(f"Appended asset identity is foreign or occupied: {pid}")
+                typ = pack["types"][row["type_id"]]
+                type_id = type_ids[full_type_key(typ)]
+                typ = layout["types"][type_id]
+                body = O.record_extent(pack["objects.bin"], row)
+                if typ["class_id"] not in (21, 28):
+                    raise ValueError("Appended assets require a native Material or Texture2D")
+                if "resource" in row:
+                    resource = row["resource"]
+                    resource_end = (resource_end + 7) & ~7
+                    body, moved = repack_stream(body, typ, resource, resource_end, f"archive:/{member}/{resource_member}", schemas)
+                    resources.append((resource_end - resource_start, pack["resources.bin"], resource, moved))
+                    resource_end += resource["bytes"]
+                obj = dict(path_id=pid, type_id=type_id, offset=layout["bytes"] + len(additions), bytes=len(body))
+                additions.append(obj)
+                objects[pid] = obj
+                replacements[pid] = body
+
+        def read(path_id):
+            obj = objects[path_id]
+            if path_id in replacements:
+                return replacements[path_id], layout["types"][obj["type_id"]]
+            stream.seek(layout["data_offset"] + obj["offset"])
+            return W.B.exact(stream, obj["bytes"]), layout["types"][obj["type_id"]]
+
+        (container,) = (pid for pid, obj in objects.items() if layout["types"][obj["type_id"]]["class_id"] == 142)
+        original, _ = read(container)
+        previous_rows, scene = C.containers(original)
+        if layout["platform"] != 13 or scene:
+            raise ValueError("Local assets require an Android asset bundle")
+        occupied_paths = {path.lower() for path, _, _ in previous_rows}
+        pending, selected = [], []
+        for group in groups:
+            path = group["path"].lower()
+            if path in occupied_paths:
+                raise ValueError(f"Asset path is already registered: {path}")
+            occupied_paths.add(path)
+            roots = []
+            for root in group["roots"]:
+                pid = root["path_id"]
+                obj = objects.get(pid)
+                if obj is None or layout["types"][obj["type_id"]]["class_id"] != root["class_id"]:
+                    raise ValueError(f"Asset root is absent or has a different native type: {path} {pid}")
+                roots.append(pid)
+            selected.append(dict(guid=group["guid"], path=path, roots=roots))
+            pending.extend(roots)
+
+        graph = {}
+        externals = [row["path"].rsplit("/", 1)[-1] if row["path"].startswith("archive:/") else row["path"] for row in layout["externals"]]
+        external_layouts = {}
+        for path, external in external_bundles:
+            with W.B.Bundle(path).member(external) as stream_external:
+                descriptor = W.read_serialized(stream_external)
+            external_layouts[external] = {obj["path_id"]: descriptor["types"][obj["type_id"]]["class_id"] for obj in descriptor["objects"]}
+        while pending:
+            pid = pending.pop()
+            if pid in graph:
+                continue
+            if pid == container or pid not in objects:
+                raise ValueError(f"Local asset dependency is absent or names the bundle container: {pid}")
+            body, typ = read(pid)
+            fields = pointers(body, typ, schemas)
+            for field, (file_id, other) in fields.items():
+                if (
+                    file_id
+                    and other
+                    and (
+                        typ["class_id"] != 21
+                        or field != ("m_Shader",)
+                        or not 1 <= file_id <= len(externals)
+                        or external_layouts.get(externals[file_id - 1], {}).get(other) != 48
+                    )
+                ):
+                    raise ValueError(f"Local asset depends on an unqualified external Shader: {pid}")
+                if pid in replacements and typ["class_id"] == 21 and other and field[-1] == "m_Texture":
+                    if file_id or other not in objects or layout["types"][objects[other]["type_id"]]["class_id"] != 28:
+                        raise ValueError(f"Appended Material names an unqualified Texture2D: {pid}")
+            graph[pid] = {edge for edge in fields.values() if edge[1]}
+            pending.extend(other for file_id, other in graph[pid] if not file_id)
+        if any(obj["path_id"] not in graph for obj in additions):
+            raise ValueError("Appended asset is outside the checked preload closure")
+
+        added = produce_graph(dict(name=name, member=member, externals=externals, dependencies=[], asset_groups=selected), graph, {})
+
+        def table(body):
+            handle = io.BytesIO(body)
+            C.text(handle)
+            name_end = handle.tell()
+            (count,) = W.B.unpack(handle, "<I")
+            preloads = W.B.exact(handle, count * 12)
+            (row_count,) = W.B.unpack(handle, "<I")
+            rows = [(C.text(handle), W.B.unpack(handle, "<iiiq")) for _ in range(row_count)]
+            return body[:name_end], preloads, rows, handle.read()
+
+        prefix, preloads, rows, trailer = table(original)
+        _, extra, added_rows, _ = table(added)
+        offset = len(preloads) // 12
+        rows.extend((path, (start + offset, size, file_id, pid)) for path, (start, size, file_id, pid) in added_rows)
+        combined = io.BytesIO()
+        combined.write(prefix + struct.pack("<I", (len(preloads) + len(extra)) // 12) + preloads + extra)
+        combined.write(struct.pack("<I", len(rows)))
+        for path, entry in sorted(rows, key=lambda row: row[0]):
+            O.aligned_string(combined, path)
+            combined.write(struct.pack("<iiiq", *entry))
+        combined.write(trailer)
+        replacement = combined.getvalue()
+        replacements[container] = replacement
+        written, revised = write_repacked_bundle(
+            target,
+            bundle,
+            member,
+            stream,
+            layout,
+            replacements,
+            codec=codec,
+            codec_sha256=codec_sha256,
+            additions=additions,
+            resource_tail=(resource_member, [item[:3] for item in resources]) if resources else None,
+        )
+
+    actual = W.B.Bundle(target)
+    with actual.member(member) as persisted:
+        metadata = W.read_serialized(persisted)
+        if metadata != revised:
+            raise ValueError("Persisted local asset registration differs")
+        for entry in metadata["objects"]:
+            pid = entry["path_id"]
+            if pid in replacements:
+                persisted.seek(metadata["data_offset"] + entry["offset"])
+                if W.B.exact(persisted, entry["bytes"]) != replacements[pid]:
+                    raise ValueError(f"Persisted local asset body differs: {pid}")
+        if C.containers(replacement)[0] != sorted(previous_rows + C.containers(added)[0], key=lambda row: row[0]):
+            raise ValueError("Local asset registration changed an existing preload extent")
+    if resources:
+        with actual.member(resource_member) as persisted:
+            for _, _, resource, moved in resources:
+                persisted.seek(moved["offset"])
+                if hashlib.sha256(W.B.exact(persisted, moved["size"])).hexdigest() != resource["sha256"]:
+                    raise ValueError("Persisted local asset resource differs")
+    return dict(
+        bundle=str(target.resolve()),
+        sha256=written["sha256"],
+        bytes=target.stat().st_size,
+        groups=groups,
+        local_objects=len(graph),
+        added_objects=len(additions),
+        resources=[item[3] for item in resources],
+    )
+
+
 def repack_canonical_aliases(
     source,
     output,
@@ -1943,7 +2176,6 @@ def repack_canonical_aliases(
     import json
     import resource
     import sys
-    import tempfile
     import time
 
     W, C = module("unity_write"), module("catalog_complete")
@@ -2200,34 +2432,8 @@ def repack_canonical_aliases(
                 prefab_owners=prefab_owners,
                 prefab_preloads=prefab_preloads,
             )
-            revised = copy.deepcopy(layout)
-            offset = 0
-            for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
-                offset = (offset + 7) // 8 * 8
-                obj["offset"] = offset
-                obj["bytes"] = len(replacements[obj["path_id"]]) if obj["path_id"] in replacements else objects[obj["path_id"]]["bytes"]
-                offset += obj["bytes"]
-            revised["bytes"] = revised["data_offset"] + offset
-            output.mkdir(parents=True, exist_ok=False)
-            with tempfile.TemporaryDirectory(prefix=".canonical-", dir=output) as scratch:
-                temporary = Path(scratch) / "serialized"
-
-                def body_for(obj):
-                    if obj["path_id"] in replacements:
-                        return io.BytesIO(replacements[obj["path_id"]])
-                    stream.seek(layout["data_offset"] + objects[obj["path_id"]]["offset"])
-                    return stream
-
-                with temporary.open("xb") as handle:
-                    W.write_serialized(handle, revised, body_for)
-                target = output / (name + ".bundle")
-                members = [
-                    (m, flags, temporary.stat().st_size if m == member else size, lambda m=m: temporary.open("rb") if m == member else bundle.member(m))
-                    for m, (_, size, flags) in bundle.members.items()
-                ]
-                compression = W.codec(codec, codec_sha256) if codec is not None else nullcontext(lambda block, method: block)
-                with compression as compress, target.open("xb") as handle:
-                    written = W.write_bundle(handle, members, compress, engine=layout["engine"], flags=0x243 if codec is not None else 0x40, hash_output=True)
+            target = output / (name + ".bundle")
+            written, revised = write_repacked_bundle(target, bundle, member, stream, layout, replacements, codec=codec, codec_sha256=codec_sha256)
             actual = W.B.Bundle(target)
             with actual.member(member) as persisted:
                 metadata = W.read_serialized(persisted)
@@ -2334,6 +2540,53 @@ def repack_request(inputs, output, *, cache_directory=None):
         cache_directory=cache_directory,
     )
     pins.check()
+    return result
+
+
+def expose_local_assets_request(inputs, output):
+    from types import SimpleNamespace
+    import json
+
+    inputs = Path(inputs).resolve(strict=True)
+    request = json.loads(inputs.read_bytes())
+    if (
+        request.keys() - {"packs", "external_bundles"} != {"schema", "source", "codec", "name", "member", "groups"}
+        or request["schema"] != "owner-bundle-local-assets-v1"
+    ):
+        raise ValueError("Unsupported local asset registration input contract")
+    if Path(request["name"]).name != request["name"] or request["name"] in ("", ".", ".."):
+        raise ValueError("Local asset registration requires a bundle name")
+    pins = module("bundle_endpoints").InputPins(inputs.parent, SimpleNamespace(**globals()))
+    pins.add(inputs)
+    source = pins.pin(request["source"])
+    codec = pins.pin(request["codec"]) if request["codec"] is not None else None
+    packs = []
+    for pack in request.get("packs", []):
+        receipt = pins.read(pack["receipt"])
+        if not receipt["success"]:
+            raise ValueError("Appended asset pack failed production")
+        files = {}
+        for filename, expected in receipt["outputs"].items():
+            pin = pack[filename]
+            if any(pin[key] != expected[key] for key in ("bytes", "sha256")):
+                raise ValueError(f"Appended asset pack differs from its receipt: {filename}")
+            files[filename] = pins.pin(pin)
+        packs.append(dict(files, types=json.loads(files["types.json"].read_bytes())))
+    externals = [(pins.pin(row["bundle"]), row["member"]) for row in request.get("external_bundles", [])]
+    result = expose_local_assets(
+        source,
+        output,
+        request["name"],
+        request["member"],
+        request["groups"],
+        codec=codec,
+        codec_sha256=request["codec"]["sha256"] if codec else None,
+        packs=packs,
+        external_bundles=externals,
+    )
+    pins.check()
+    result["source_sha256"] = request["source"]["sha256"]
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     return result
 
 
@@ -2529,6 +2782,7 @@ def main():
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
     action.add_argument("--repack", type=Path, help="current: canonical repack of an existing qualified emission with pinned inputs")
+    action.add_argument("--expose-local-assets", type=Path, help="current: register typed local roots in a pinned Android bundle")
     action.add_argument("--prepare", type=Path, help="derive emission inputs from pinned source packs and declarative policy")
     action.add_argument("--prepare-endpoints", type=Path, help="derive staged descriptors and schemas from pinned emission routes and actual providers")
     action.add_argument("--release", type=Path, help="prepare and emit a signed release-graph policy in one private workspace")
@@ -2555,6 +2809,11 @@ def main():
         if any(value is not None for value in legacy):
             parser.error("--repack requires only --output and optional --cache")
         print(json.dumps(repack_request(args.repack, args.output, cache_directory=args.cache), indent=2))
+        return
+    if args.expose_local_assets is not None:
+        if any(value is not None for value in (*legacy, args.cache)):
+            parser.error("--expose-local-assets requires only --output")
+        print(json.dumps(expose_local_assets_request(args.expose_local_assets, args.output), indent=2))
         return
     if args.release is not None:
         if any(value is not None for value in (*legacy, args.cache)):

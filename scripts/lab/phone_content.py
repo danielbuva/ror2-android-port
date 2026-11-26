@@ -109,7 +109,7 @@ def validate_oracle(report):
 
 
 def native_content_request(path):
-    """Validate an explicit bundle request before starting the exact editor."""
+    """Validate a bundle request and use the same file paths in Unity and Python."""
     path = Path(path)
     if not path.is_absolute():
         raise RuntimeError("Absolute native-content request required")
@@ -126,19 +126,23 @@ def native_content_request(path):
         if resolved in paths:
             raise RuntimeError("Native-content bundle path duplicated")
         paths.add(resolved)
-        with bundle.open("rb") as stream:
+        with resolved.open("rb") as stream:
             actual_hash = hashlib.file_digest(stream, "sha256").hexdigest()
         if actual_hash != pin["sha256"]:
             raise RuntimeError("Native-content bundle SHA-256 mismatch")
+        pin["path"] = str(resolved)
     assets = request["assets"]
     if not isinstance(assets, list) or not assets:
         raise RuntimeError("Native-content request needs typed assets")
-    names = set()
+    identities = set()
     for asset in assets:
-        name = asset.get("name")
-        if not isinstance(name, str) or not name or name in names or asset.get("type") not in NATIVE_CONTENT_TYPES:
+        name, asset_type, subasset = asset.get("name"), asset.get("type"), asset.get("subasset", "")
+        if not isinstance(name, str) or not name or asset_type not in NATIVE_CONTENT_TYPES or not isinstance(subasset, str):
             raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
-        names.add(name)
+        identity = (name, asset_type, subasset)
+        if identity in identities:
+            raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
+        identities.add(identity)
         if "material" in asset and (asset["type"] != "Material" or not material_references(asset["material"])):
             raise RuntimeError("Native-content Material needs expected shader and saved texture references")
         if "manifest" in asset and (asset["type"] != "AssetBundleManifest" or not manifest_entries(asset["manifest"])):
@@ -188,14 +192,14 @@ def validate_native_content(attempt, commit):
         "unity": VERSION,
         "source_commit": commit,
         "request_sha256": hashlib.sha256(request_path.read_bytes()).hexdigest(),
-        "path": str(Path(request["path"]).resolve()),
+        "path": request["path"],
         "sha256": request["sha256"],
         "count": len(request["assets"]),
         "unloaded": True,
     }
     if report.get("failure") or any(report.get(key) != value for key, value in expected.items()) or report.get("unloaded") is not True:
         raise RuntimeError("Native-content identity/count/unload contract failed")
-    dependencies = [{"path": str(Path(pin["path"]).resolve()), "sha256": pin["sha256"]} for pin in request.get("dependencies", [])]
+    dependencies = [{"path": pin["path"], "sha256": pin["sha256"]} for pin in request.get("dependencies", [])]
     if report.get("dependencies", []) != dependencies:
         raise RuntimeError("Native-content loaded dependencies mismatch")
     rows = report.get("assets")
@@ -207,6 +211,7 @@ def validate_native_content(attempt, commit):
             or row.get("type") != asset["type"]
             or row.get("loaded_type") != "UnityEngine." + asset["type"]
             or not isinstance(row.get("loaded_name"), str)
+            or (asset.get("subasset") and (row.get("subasset") != asset["subasset"] or row.get("loaded_name") != asset["subasset"]))
         ):
             raise RuntimeError("Native-content typed load mismatch")
         if "material" in asset and material_references(row.get("material")) != material_references(asset["material"]):

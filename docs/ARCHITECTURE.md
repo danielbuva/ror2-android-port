@@ -308,6 +308,18 @@ matches. For a canonical row backed by a record producer, an optional
 row's record digest. The producer must map the canonical output and duplicate
 to the same unique original body.
 
+`bundle_preload.py --expose-local-assets REQUEST --output NEW_DIRECTORY`
+registers ordered, typed roots already present in a pinned Android bundle.
+It derives the new preload intervals from their local PPtrs and preserves the
+old rows, dependency metadata, object bodies and resource members. Catalog
+production still checks each advertised address against the resulting bundle.
+The request can also supply pinned producer packs for absent Material and
+Texture2D IDs. They must match existing native types. The repacker checks
+texture references and the Shader's pinned external member, extends the
+existing resource stream, and reopens the output to check the new bodies
+and extents before writing a receipt. Temporary repack files are removed
+when the operation ends.
+
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
 remaining interaction gates.
@@ -1469,7 +1481,7 @@ owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
 and readable SoC zones, checks thermal admission and selects inherited efficiency-core affinity
 with two-worker runtime limits. Its independent supervisor pauses the owned
 process group and nested-session descendants at CPU/GPU 70/55 C. A separate
-ceiling pauses the same family at 85 C on any readable CPU, GPU or SoC zone,
+ceiling pauses the same family at 90 C on any readable CPU, GPU or SoC zone,
 releases below 70 C, and aborts after 15 min at the ceiling. The 250 ms sampler
 also enforces the CPU/GPU 95 C/3 s and battery 43 C limits. Teardown kills owned
 processes. Receipts retain pause time, SoC peak and phase, and failures. The
@@ -3183,7 +3195,12 @@ mesh aliases. A projection policy can move selected aliases to the end of
 their keys in source order. Keys that also introduce a selected root keep the
 original order. The source input identity and catalog hash bind that policy. The
 same invocation verifies actual Android containers and MonoScripts before writing
-the runtime catalog. Retained metadata remains available for historical requests.
+the runtime catalog. A catalog request can declare `required_routes` by string
+key, exact serialized type and source location ID. `catalog_complete` checks
+each route in the projected catalog after source additions and before reading
+bundle payloads. It rejects missing or ambiguous matches and records the number
+checked alongside the existing endpoint checks. Retained metadata remains
+available for historical requests.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Ordinary launcher startup selects
@@ -5411,10 +5428,16 @@ The Siren encounter draft activates and network-spawns only the original inactiv
 `shipgraveyard` encounter identity. It preserves the source FSM, scripted boss
 card, squad, rewards and separately expansion-gated portal callback. It never
 calls global scene spawning, so the existing source-disabled MapZones retain
-their own boundary. The report distinguishes a selected owner, live eggs, native
-encounter start and the exact native BossGroup defeat event. Native squad-member
+their own boundary. Before activation, the encounter refreshes the source
+BossGroup basic reward table from the ready Run pickup lists. The report
+distinguishes a selected owner, live eggs, native encounter start and the exact
+native BossGroup defeat event. Native squad-member
 and summon callbacks identify the original boss and its probes without scanning
-all masters. Cleanup validates the complete owned actor set before requesting
+all masters. The boss master may retain the authored card's exact body prefab
+while native body creation uses the adapted catalog template at the same body
+index. Capture, death observation and cleanup recognize both references while
+retaining the original squad, server and ownership checks. Cleanup validates
+the complete owned actor set before requesting
 body/master destruction. A terminal original server-death witness permits accounting
 for an exact destroyed/unmapped captured master; any remaining corpse must still
 match the captured identity, dead health and server map before an owned cleanup
@@ -5749,6 +5772,10 @@ cannot reset that clock. Rejected terrain keeps neutral movement and the cliff
 guard, while the unfinished native waypoint still admits the existing stalled-path
 jump/replan request. `test_siren_gameplay_route_ownership.py` executes this
 policy against the retained Siren detour failure and recovery cases.
+On the assisted Gold Shores route, `GoldshoresBoundary` keeps moving toward the
+shrine while it needs gold and combat has no in-bounds target. When the route
+changes objectives, the existing navigator expires the previous terrain
+recovery window so the new objective can request a native graph route.
 The assisted selector retains its approach egg across native detours and combat
 input yields, revalidating membership in the current source cohort each frame.
 An attackable egg still takes priority; a dead or removed target falls back to
@@ -6534,8 +6561,9 @@ catalog consumer below stages this generated source; J965 qualifies the isolated
 exact-editor Android bundle fixture. Android appearance remains a separate gate.
 
 `scripts/lab/shader_ramp_fog.py` owns the source-bound single-pass
-`shader-ramp-fog` and `shader-screen-damage` host actions. The first also accepts
-`--target sobel-buffer` or `--target sobel-outline`; no target retains RampFog.
+`shader-ramp-fog` and `shader-screen-damage` host actions. `shader-ramp-fog`
+defaults to RampFog and accepts `--target sobel-buffer`, `--target sobel-outline`
+or `--target vision-limit`.
 Each target uses its fixed public `recipe/shader-<target>-candidate.json`. Each validates the
 accepted installation, exact native object/blob/program topology, measured
 interfaces and tool/helper pins before publishing new ignored evidence.
@@ -6544,13 +6572,15 @@ it retains recovered definitions before their calling wrappers. No game
 expressions or compiled programs are public inputs.
 
 Current output roots are
-`work/generated-shader-candidates/ramp-fog-r5/<input_id>/` and
-`work/generated-shader-candidates/screen-damage-r1/<input_id>/`, plus
-`work/generated-shader-candidates/{sobel-buffer,sobel-outline}-r1/<input_id>/`.
-SobelBuffer retains its separate fragment parameter record; binding slots name
-vertex/fragment stages independently of serialized record indices. Prior RampFog
-outputs remain preserved. Native programs, layouts, independent disassembly,
-byte roundtrips and source-immutability receipts accompany each candidate.
+`work/generated-shader-candidates/ramp-fog-r6/<input_id>/` and
+`work/generated-shader-candidates/screen-damage-r2/<input_id>/`, plus
+`work/generated-shader-candidates/{sobel-buffer,sobel-outline}-r2/<input_id>/` and
+`work/generated-shader-candidates/vision-limit-r1/<input_id>/`.
+SobelBuffer and VisionLimit retain separate fragment parameter records. Binding
+slots name vertex and fragment stages independently of serialized record
+indices. The output root revisions keep prior receipts usable with their source
+revision. Native programs, layouts, independent disassembly, byte roundtrips and
+source-immutability receipts accompany each candidate.
 The producer has no runtime setup or teardown; the original PostProcessLayer
 and effect renderer remain its consumers. Compilation and device appearance
 are separate gates, as in the earlier J965 RampFog bundle fixture.
@@ -6561,11 +6591,11 @@ are separate gates, as in the earlier J965 RampFog bundle fixture.
 inventory, four source shader identities, pass counts, keyword axes and exact
 authored/native tool pins. It imports the repository binder directly and writes
 only new ignored evidence under
-`work/generated-shader-candidates/translucent-camera-r2/<input_id>/`.
+`work/generated-shader-candidates/translucent-camera-r3/<input_id>/`.
 Input/tool drift, symlinked output roots, unknown metadata and colliding output
 paths refuse before publication. The generator retains EfficientBlur's two
 source passes/shared fragment and QuickDumbBlur's measured `FLIP_V` axis.
-R2 refreshes the shared signature-helper receipt while retaining the four
+R3 refreshes the shared signature-helper receipt while retaining the four
 shader identities and pass/keyword contracts. It has no runtime setup or
 teardown. J1009 verifies isolated Android/Vulkan
 compilation and cleanup. J1012 adds catalog consumption; J1017 installs the

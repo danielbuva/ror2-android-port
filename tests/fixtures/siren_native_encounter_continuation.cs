@@ -25,6 +25,7 @@ public class Object
 public class GameObject : Object
 {
     public Scene scene;
+    public int bodyIndex;
 }
 }
 namespace UnityEngine.SceneManagement
@@ -109,6 +110,8 @@ public static class BodyCatalog
 {
     public static UnityEngine.GameObject CatalogBoss;
     public static UnityEngine.GameObject FindBodyPrefab(string name) => CatalogBoss;
+    public static int FindBodyIndex(string name) => CatalogBoss.bodyIndex;
+    public static int FindBodyIndex(UnityEngine.GameObject body) => body.bodyIndex;
 }
 }
 __PRODUCTION_CONTRACT__
@@ -130,6 +133,7 @@ public sealed class SirenEncounterSessionHarness
     public BossGroup bossGroup;
     public Scene scene;
     public GameObject encounterObject;
+    public GameObject originalBossBodyPrefab;
     public NetworkIdentity identity;
     readonly List<OwnedMaster> ownedBossMasters = new List<OwnedMaster>();
     public void Capture(CharacterMaster master) => ownedBossMasters.Add(new OwnedMaster { master = master, networkId = master.netId });
@@ -148,7 +152,8 @@ public sealed class SirenEncounterSessionHarness
         value.encounter = new ScriptedCombatEncounter { hasSpawnedServer = true };
         var squad = new CombatSquad();
         value.bossGroup = new BossGroup { combatSquad = squad };
-        BodyCatalog.CatalogBoss = new GameObject();
+        BodyCatalog.CatalogBoss = new GameObject { bodyIndex = 3 };
+        value.originalBossBodyPrefab = new GameObject { bodyIndex = 3 };
         var master = new CharacterMaster { netId = new NetworkInstanceId { Value = 21 }, teamIndex = TeamIndex.Monster,
                                            bodyPrefab = BodyCatalog.CatalogBoss, gameObject = new GameObject() };
         squad.readOnlyMembersList.Add(master);
@@ -187,6 +192,11 @@ public static class WitnessFixture
         uint[] ids;
         var good = SirenEncounterSessionHarness.Create();
         Assert(good.TryGetExactNativeBossNetworkIds(out ids) && ids.Length == 1 && ids[0] == 21, "exact captured native boss accepted");
+        good.Member.bodyPrefab = good.originalBossBodyPrefab;
+        Assert(good.TryGetExactNativeBossNetworkIds(out ids) && ids.SequenceEqual(new uint[] { 21 }),
+               "exact authored boss body accepted when the adapted catalog object differs");
+        good.originalBossBodyPrefab.bodyIndex = 4;
+        Assert(!good.TryGetExactNativeBossNetworkIds(out ids), "authored boss body with a mismatched index refused");
         var foreign = SirenEncounterSessionHarness.Create();
         var foreignSameId = new CharacterMaster { netId = foreign.Member.netId, teamIndex = TeamIndex.Monster,
                                                   bodyPrefab = BodyCatalog.CatalogBoss, gameObject = new GameObject() };
@@ -197,8 +207,8 @@ public static class WitnessFixture
         Assert(!mapChanged.TryGetExactNativeBossNetworkIds(out ids), "network map replacement refused");
         NetworkServer.LocalObjects[21] = mapChanged.Member.gameObject;
         var wrongBody = SirenEncounterSessionHarness.Create();
-        wrongBody.Member.bodyPrefab = new GameObject();
-        Assert(!wrongBody.TryGetExactNativeBossNetworkIds(out ids), "body catalog mismatch refused");
+        wrongBody.Member.bodyPrefab = new GameObject { bodyIndex = BodyCatalog.CatalogBoss.bodyIndex };
+        Assert(!wrongBody.TryGetExactNativeBossNetworkIds(out ids), "unowned body with the same catalog index refused");
         var missingCatalog = SirenEncounterSessionHarness.Create();
         BodyCatalog.CatalogBoss = null;
         Assert(!missingCatalog.TryGetExactNativeBossNetworkIds(out ids), "missing native catalog prefab refused");

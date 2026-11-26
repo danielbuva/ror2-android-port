@@ -840,7 +840,8 @@ class Graph:
         """Bind the source catalog to final containers and the embedded bootstrap."""
         request = json.loads((self.repo / request_path).read_text())
         common = {"schema", "input_id", "attempt"}
-        if set(request) - common not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
+        mode = set(request) - common - {"required_routes"}
+        if mode not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
             raise ValueError("unsupported catalog request template")
         profiles, bundles, needs, registries = [], {}, [], []
         resources = {}
