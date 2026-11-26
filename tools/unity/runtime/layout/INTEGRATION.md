@@ -35,10 +35,15 @@ this note does not authorize or claim that integration.
 Publishing-host command (must execute actual C# tests, not just skip):
 
 ```
-python3 -m unittest -v tests.test_layout_projection tests.test_touch_layout_document tests.test_hud_layout_model tests.test_layout_preference_store tests.test_touch_editor_gesture
+python3 -m unittest -v tests.test_layout_projection tests.test_touch_layout_document tests.test_hud_layout_model tests.test_layout_preference_store tests.test_touch_editor_gesture tests.test_layout_editor_journey
 ```
 
 Device acceptance remains open: real safe-area/orientation changes, multitouch and
 lost focus, editor exit/cancel/re-entry, separate gameplay dispatch, control sizes
 and opacity, HUD scene transitions, saved-file restart and physical write/power
 interruption. Do not mark these passed from host fixtures or compilation alone.
+
+The composed authored journey additionally exercises cancel-before-first-save,
+commit/save/restart, interrupted display changes, failed durable save with an
+unchanged prior file and retained retryable memory, independent HUD persistence,
+and corrupt restart refusal. It is model/file evidence, not an Android UI test.
