@@ -32,6 +32,12 @@ CLAUDE_COORDINATION_LOCK = Path(_lane.get("canonical_work", ROOT / "work")) / "c
 INHERITED_FD_ENV = "ROR2LAB_UNITY_BUILD_LOCK_FD"
 
 
+def unity_editor_env(**overrides):
+    """Use the shared ADB server without letting the bundled client start one."""
+    # ADB treats a numeric loopback host as remote for daemon startup.
+    return dict(os.environ, ANDROID_ADB_SERVER_PORT="5037", ADB_SERVER_SOCKET="tcp:127.0.0.1:5037", **overrides)
+
+
 class _LockState:
     def __init__(self) -> None:
         self.guard = threading.RLock()
