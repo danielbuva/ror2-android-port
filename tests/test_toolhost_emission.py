@@ -191,6 +191,7 @@ class EmissionTests(unittest.TestCase):
         self.phone.cleanup.assert_not_called()
         command = self.phone.transport.start_detached.call_args.args[0]
         self.assertTrue(any(part.endswith("/owner-code/run_android.py") for part in command))
+        self.assertNotIn("--samples", command)
         self.assertTrue(any(part.startswith("ROR2LAB_BUILD_HOSTFXR=") and part.endswith("/libhostfxr10.so") for part in command))
         self.assertTrue(any(part.startswith("ROR2LAB_BUILD_DOTNET_ROOT=") and part.endswith("/runtime/dotnet") for part in command))
         self.assertEqual(self.run_request(resume=True)["error"], "signed-code-resume-requires-active-handle")
@@ -209,6 +210,8 @@ class EmissionTests(unittest.TestCase):
 
     def test_signed_code_retains_nested_raw_managed_failure_before_cleanup(self):
         self.signed_request()
+        self.request["profile_resources"] = True
+        self.path.write_text(json.dumps(self.request))
         self.collected = None
         self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
         self.phone.adb, self.phone.serial = "/synthetic/adb", "synthetic-device"
@@ -230,6 +233,7 @@ class EmissionTests(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
         real_run = subprocess.run
+        trace = b'{"boottime_seconds":25,"process_tree_rss_bytes":4096}\n'
 
         def read_remote(*args, **kwargs):
             label = kwargs["label"]
@@ -243,6 +247,9 @@ class EmissionTests(unittest.TestCase):
             command = shlex.split(args[1])
             if label == "emission-evidence-list":
                 self.assertEqual(command[:4], ["run-as", INSTALLER.PACKAGE, "sh", "-c"])
+                attempt = remote_fixture / command[7]
+                attempt.mkdir()
+                (attempt / EMISSION.RESOURCE_TRACE).write_bytes(trace)
                 return real_run(["sh", "-c", command[4], command[5], remote_fixture, *command[7:]], capture_output=True, check=True)
             if command[-1].endswith("/work/conversion/managed-production/result.json"):
                 return subprocess.CompletedProcess([], 0, b'{"phase":"raw-managed","success":false}', b"")
@@ -252,14 +259,16 @@ class EmissionTests(unittest.TestCase):
             self.assertEqual(argv[:-1], ["/synthetic/adb", "-s", "synthetic-device", "shell", "-T"])
             command = shlex.split(argv[-1])
             self.assertEqual(command[:-1], ["run-as", INSTALLER.PACKAGE, "cat"])
-            path = Path(command[-1].split("/work/conversion/", 1)[1])
-            stdout.write((remote_fixture / "work/conversion" / path).read_bytes())
+            path = Path(command[-1].split("/owner-input/", 1)[1])
+            stdout.write((remote_fixture.joinpath(*path.parts[1:])).read_bytes())
             return subprocess.CompletedProcess(argv, 0, None, b"")
 
         def check_evidence():
             for path, data in artifacts.items():
                 self.assertEqual((self.output / "logs/producer" / path).read_bytes(), data)
             self.assertFalse((self.output / "logs/producer" / assembly).exists())
+            state = json.loads((self.output / "device-state.json").read_text())
+            self.assertEqual((self.output / "logs/producer" / state["attempt"] / EMISSION.RESOURCE_TRACE).read_bytes(), trace)
             self.assertEqual((self.output / "logs/crash/crash.log").read_bytes(), b"authored Android crash report")
             self.assertEqual((self.output / "logs/crash/exit-info.txt").read_bytes(), b"authored exit info")
             self.assertEqual((self.output / "logs/crash/tombstone-access.txt").read_bytes(), b"Permission denied")
@@ -271,6 +280,8 @@ class EmissionTests(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["managed"]["phase"], "raw-managed")
         self.assertTrue(result["owned_app_removed"])
+        command = self.phone.transport.start_detached.call_args.args[0]
+        self.assertTrue(command[command.index("--samples") + 1].endswith("/" + EMISSION.RESOURCE_TRACE))
         self.phone.remove_owned_installer.assert_called_once()
 
     def test_signed_code_keeps_scratch_if_evidence_capture_fails(self):

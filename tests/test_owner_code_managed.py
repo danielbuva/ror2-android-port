@@ -47,6 +47,7 @@ class OwnerCodeManagedTests(unittest.TestCase):
                 timing = json.loads(receipt.read_text())
                 self.assertEqual(timing["exit_code"], 0)
                 self.assertGreaterEqual(timing["seconds"], 0)
+                self.assertGreaterEqual(timing["ended_boottime_seconds"], timing["started_boottime_seconds"])
                 runtime = json.loads(compiler.runtime_config.read_text())
                 self.assertEqual(runtime["runtimeOptions"]["framework"]["version"], "8.0.32")
                 rsp = assembly.with_suffix(".rsp")
@@ -63,6 +64,7 @@ class OwnerCodeManagedTests(unittest.TestCase):
                 timing = json.loads(receipt.read_text())
                 self.assertIsNone(timing["exit_code"])
                 self.assertGreaterEqual(timing["seconds"], 0)
+                self.assertGreaterEqual(timing["ended_boottime_seconds"], timing["started_boottime_seconds"])
                 compiler_path.write_bytes(b"changed fixture")
                 with self.assertRaisesRegex(ValueError, "Pinned SDK Roslyn"):
                     compiler.verify()
