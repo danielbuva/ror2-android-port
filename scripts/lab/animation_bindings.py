@@ -82,9 +82,9 @@ def stage_additive_reference_poses(io, *, code_only=False):
     root = io.project / "Assets/WholeGame"
     requested = set()
     for controller in io.glob(root, "**/*.controller"):
-        # Commando's observed firing/hit-reaction defect also involves gesture
-        # layers. Other survivor gestures remain outside this qualification.
-        requested.update(additive_clip_guids(io.read_text(controller), aim_only=controller.stem != "animCommando"))
+        # The full source gesture streams are qualified for these controllers.
+        aim_only = controller.stem not in {"animCommando", "animHuntress"}
+        requested.update(additive_clip_guids(io.read_text(controller), aim_only=aim_only))
     clips = {}
     for meta in io.glob(root, "**/*.anim.meta"):
         guid = re.search(r"^guid: ([a-f0-9]{32})$", io.read_text(meta), re.M)

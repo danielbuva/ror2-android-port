@@ -8066,7 +8066,7 @@ and full cancellation through `Neutral`.
 
 Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
 and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
-Commando additive states and blend trees, plus other native AimPitch/AimYaw
+Commando and Huntress additive states and blend trees, plus other native AimPitch/AimYaw
 layers, resolves current catalog containers against accepted input hashes, and
 emits private source identities and Transform reference values through StageIO. The latter creates owned
 constant reference clips before bundle production and applies the original
@@ -8074,12 +8074,12 @@ additive reference settings. Unsupported muscle streams remain unchanged and
 are reported explicitly; unknown Transform bindings refuse restoration.
 Generated clips persist with the composed project and are replaced on rebuild;
 there is no runtime owner. Code-only builds require unchanged source-pose inputs.
-The existing current `commando-animation-host` action also verifies persisted
-reference curves and compares frozen-base muzzle positions and directions against
-the original clips during aim, firing and hit reactions. The comparison overrides
-all Commando controller clips so a shared gesture defect cannot pass both sides.
-Bounded Commando aim/firing device evidence is recorded in the journal; other
-survivors and unassisted hit-reaction presentation remain separate gates.
+The current `commando-animation-host` action also verifies persisted reference
+curves and compares positions and directions on a frozen rig against the original
+clips. It samples Commando's muzzles and Huntress's torso, head and bow during
+aim, firing and hit reactions. Huntress firing and recovery play both gesture
+layers. The comparison overrides every controller clip with its original.
+Device aim, firing and hit-reaction presentation remain separate checks.
 
 `WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor
 `./dev editor --target lab --action enemy-material-audit` inventory. It reads

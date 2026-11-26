@@ -112,9 +112,17 @@ public static class SurvivorSkillInputHost
 
     // Compare imported aim, firing and hit-reaction poses with current native
     // clips on the same frozen rig. This does not qualify device presentation.
-    public static object SampleCommandoAim()
+    public static object SampleCommandoAim() =>
+        SampleSourcePoses("Commando", "mdlCommandoDualiesAvatar", new[] { "MuzzleLeft", "MuzzleRight" },
+                          new[] { "", "FirePistol, Left", "FirePistol, Right", "Flinch1" });
+
+    public static object SampleHuntressGestures() =>
+        SampleSourcePoses("Huntress", "mdlHuntressAvatar", new[] { "base", "chest", "head", "Muzzle", "BowStringIKTarget" },
+                          new[] { "", "FireSeekingShot", "FireSeekingShotToIdle", "Flinch1", "Flinch2", "Flinch3", "FlinchStart" });
+
+    static object SampleSourcePoses(string survivor, string avatarName, string[] poseNames, string[] gestures)
     {
-        const string path = "Assets/WholeGame/RoR2/Base/Characters/Commando/";
+        string path = "Assets/WholeGame/RoR2/Base/Characters/" + survivor + "/";
         string project = System.IO.Path.GetDirectoryName(Application.dataPath);
         var recipe = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(
             System.IO.Path.Combine(project, ".rebuild/source-animation-reference-poses.json")));
@@ -133,14 +141,14 @@ public static class SurvivorSkillInputHost
         AnimatorOverrideController overrides = null;
         try
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + "CommandoBody.prefab");
-            Require(prefab, "Current source Commando prefab missing");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + survivor + "Body.prefab");
+            Require(prefab, "Current source prefab missing: " + survivor);
             var body = UnityEngine.Object.Instantiate(prefab, parent.transform);
             foreach (var component in body.GetComponentsInChildren<MonoBehaviour>(true)) component.enabled = false;
             foreach (var component in body.GetComponentsInChildren<Collider>(true)) component.enabled = false;
             var animator = body.GetComponentInChildren<Animator>(true);
-            var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path + "animCommando.controller");
-            animator.avatar = AssetDatabase.LoadAssetAtPath<Avatar>(path + "mdlCommandoDualiesAvatar.asset");
+            var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path + "anim" + survivor + ".controller");
+            animator.avatar = AssetDatabase.LoadAssetAtPath<Avatar>(path + avatarName + ".asset");
             animator.enabled = true;
             animator.applyRootMotion = false;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
@@ -149,6 +157,10 @@ public static class SurvivorSkillInputHost
             body.SetActive(true);
             parent.SetActive(true);
             animator.Update(0);
+            var poseTransforms = animator.GetComponentsInChildren<Transform>(true)
+                .Where(t => poseNames.Contains(t.name)).OrderBy(t => t.name).ToArray();
+            Require(poseTransforms.Select(t => t.name).SequenceEqual(poseNames.OrderBy(name => name)),
+                    "Current source pose transforms missing or ambiguous: " + survivor);
             var nativeClips = bundle.LoadAllAssets<AnimationClip>();
             overrides = new AnimatorOverrideController(controller);
             var pairs = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>>();
@@ -167,7 +179,7 @@ public static class SurvivorSkillInputHost
             foreach (bool native in new[] { false, true })
             {
                 animator.runtimeAnimatorController = native ? overrides : controller;
-                foreach (string gesture in new[] { "", "FirePistol, Left", "FirePistol, Right", "Flinch1" })
+                foreach (string gesture in gestures)
                     foreach (float cycle in new[] { 0f, .5f, .999f })
                         foreach (float time in new[] { 0f, .07f, .15f })
                         {
@@ -183,17 +195,18 @@ public static class SurvivorSkillInputHost
                             if (gesture.Length != 0)
                             {
                                 int hash = Animator.StringToHash(gesture);
-                                int layer = Enumerable.Range(0, animator.layerCount).Single(i => animator.HasState(i, hash));
-                                animator.PlayInFixedTime(hash, layer, time);
+                                var layers = Enumerable.Range(0, animator.layerCount).Where(i => animator.HasState(i, hash)).ToArray();
+                                int expectedLayers = gesture.StartsWith("FireSeekingShot", StringComparison.Ordinal) ? 2 : 1;
+                                Require(layers.Length == expectedLayers, "Native gesture layers changed: " + gesture);
+                                foreach (int layer in layers)
+                                    animator.PlayInFixedTime(hash, layer, time);
                                 animator.Update(0);
-                                Require(animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == hash, "Native gesture did not play: " + gesture);
+                                Require(layers.All(layer => animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == hash),
+                                        "Native gesture did not play: " + gesture);
                             }
                             animator.Update(0);
-                            var values = animator.GetComponentsInChildren<Transform>(true)
-                                .Where(t => t.name == "MuzzleLeft" || t.name == "MuzzleRight")
-                                .OrderBy(t => t.name)
+                            var values = poseTransforms
                                 .SelectMany(t => new[] { t.position.x, t.position.y, t.position.z, t.forward.x, t.forward.y, t.forward.z }).ToArray();
-                            Require(values.Length == 12, "Current source muzzle transforms missing");
                             if (!native) samples.Add(values);
                             else
                             {
@@ -203,7 +216,7 @@ public static class SurvivorSkillInputHost
                             }
                         }
             }
-            Require(maximum <= .001f, "Imported additive firing/aim/hit poses differ from native clips: " + maximum);
+            Require(maximum <= .001f, survivor + " imported additive poses differ from native clips: " + maximum);
             return new { samples = samples.Count, components, maximumComponentError = maximum, nativeClipOverrides = pairs.Count };
         }
         finally
