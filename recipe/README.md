@@ -7083,6 +7083,28 @@ bodies, assemblies, SDK material and local receipts stay outside the repository.
 | `owner-whole-game-v30-original-prefab-records.jsonl.gz` | `76f37da3ed9d2ba2c2cbbfbd1dc2286625fcae089c78436ea9111c2d5aa6d8b5` |
 | `owner-whole-game-v30-original-managed-records.json` | `57df68401046e5174ad0a0018ccf0199bbbd3efc0f5467a3e146bd6a57fab69c` |
 
+## V30 remaining original native cohort (2026-11-26)
+
+`owner-whole-game-v30-original-native-tail.jsonl.gz` supplies 1,397 records
+from 207 original PC bundles through `record_produce.py`. It covers 593
+missing suppliers and 804 ambiguous selections. For ambiguous selections,
+the output selector uses the exact historical destination identity so the
+release graph can select the checked record for that destination.
+
+Host readback checked each complete native type and replayed the original
+PPtrs against the V30 canonical bundle. Every field route agreed with the
+original endpoint identity or an existing checked field route. The composed
+bundle still requires Unity typed load and Android verification.
+
+The provenance, licensing, privacy and sensitive-content review covered the
+decompressed recipe. It contains only source selectors, sizes, digests and
+authored output identities. Game bodies, relocation evidence and producer
+receipts stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-original-native-tail.jsonl.gz` | `866bb756bad6a66b3bf3248ceee3dd5dc338ef7a6678f3fc986725c745a60966` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison
