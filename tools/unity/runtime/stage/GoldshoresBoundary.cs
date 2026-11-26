@@ -20,8 +20,10 @@ public sealed partial class PortSession
         public bool diagnosticShrineSpawned, shrinePurchased, entryPortalUsed, sceneEntered, missionActive, bossDefeated, exitBegan,
             exitFinished;
         public int beaconsSpawned, beaconsRequired, beaconsActive, beaconsReadyToFight;
+        public uint nativeRewardDropNetworkId;
     }
     GoldshoresMissionController goldshoresMission;
+    PickupIndex goldshoresRewardPickup;
     void PlaceGoldshoresDiagnosticShrine()
     {
         if (!r.goldshoresRoute || stageGeometryScene.name == "goldshores" || r.goldshores != null && r.goldshores.entryPortalUsed)
@@ -103,8 +105,7 @@ public sealed partial class PortSession
               "Original Gold Shores beacon/mission contract differs");
         mission.beaconSpawnCard = (InteractableSpawnCard)WholeInteractableCard(mission.beaconSpawnCard);
         goldshoresMission = mission;
-        if (r.goldshoresRoute)
-            LogGoldshoresRewardAvailability();
+        RefreshGoldshoresRewardTable();
         mission.gameObject.SetActive(true);
         yield return null;
         Check(GoldshoresMissionController.instance == mission && mission.entityStateMachine.state is ActivateBeacons &&
@@ -113,30 +114,22 @@ public sealed partial class PortSession
         ObserveGoldshoresMission();
         Save();
     }
-    static void LogGoldshoresRewardAvailability()
+    void RefreshGoldshoresRewardTable()
     {
+        goldshoresRewardPickup = PickupIndex.none;
         var encounter = GoldshoresBossfight.combatEncounterPrefab.gameObject;
         var group = encounter ? encounter.GetComponent<BossGroup>() : null;
         var table = group ? group.dropTable as ExplicitPickupDropTable : null;
-        var run = Run.instance;
-        if (!table || !run)
-        {
-            Debug.Log("[Gold reward] Native explicit table or Run unavailable");
+        if (!table)
             return;
-        }
-        Debug.Log($"[Gold reward] Table={table.name} entries={table.pickupEntries.Length}");
-        foreach (var entry in table.pickupEntries)
+        // The encounter prefab can load before the pickup catalog is ready.
+        // Build the native selector before the mission can award its reward.
+        int previousCount = table.GetPickupCount();
+        Call(table, "Regenerate", Run.instance);
+        if (r.goldshoresRoute)
         {
-            if (!(entry.pickupDef is ItemDef item) || !item)
-                continue;
-            var catalogIndex = ItemCatalog.FindItemIndex(item.name);
-            var pickup = PickupCatalog.FindPickupIndex(item.itemIndex);
-            var rule = RuleCatalog.FindRuleDef("Items." + item.name);
-            var choice = rule == null ? null : run.ruleBook.GetRuleChoice(rule);
-            var available = PickupCatalog.GetPickupDef(pickup) != null && run.IsPickupAvailable(pickup);
-            Debug.Log($"[Gold reward] Item={item.name} sourceIndex={item.itemIndex} catalogIndex={catalogIndex} " +
-                      $"sameDef={ItemCatalog.GetItemDef(catalogIndex) == item} pickup={pickup} " +
-                      $"available={available} ruleItem={choice?.itemIndex}");
+            goldshoresRewardPickup = PickupCatalog.FindPickupIndex(ItemCatalog.FindItemIndex("TitanGoldDuringTP"));
+            Debug.Log($"[Gold reward] Selector {table.name}: {previousCount} -> {table.GetPickupCount()} pickups");
         }
     }
     void ObserveGoldshoresMission()
@@ -152,6 +145,20 @@ public sealed partial class PortSession
         report.beaconsActive = goldshoresMission.beaconsActive;
         report.beaconsReadyToFight = goldshoresMission.beaconsToSpawnOnMap;
         report.bossDefeated |= goldshoresMission.entityStateMachine.state is Exit;
+        if (report.bossDefeated && report.nativeRewardDropNetworkId == 0 && goldshoresRewardPickup != PickupIndex.none)
+        {
+            foreach (var identity in NetworkServer.objects.Values)
+            {
+                if (!identity || !identity.isServer || identity.gameObject.scene != stageGeometryScene)
+                    continue;
+                var droplet = identity.GetComponent<PickupDropletController>();
+                if (!droplet || droplet.pickupState.pickupIndex != goldshoresRewardPickup)
+                    continue;
+                report.nativeRewardDropNetworkId = identity.netId.Value;
+                Debug.Log($"[Gold reward] Native drop {goldshoresRewardPickup} spawned");
+                break;
+            }
+        }
     }
     bool GoldshoresRouteStimulus(CharacterBody player, NovaInputBridge bridge, float elapsed)
     {
@@ -191,7 +198,8 @@ public sealed partial class PortSession
                 return true;
             }
             r.world.objective = "Defeat original Gold Shores boss";
-            ObjectiveCombatInput(player, bridge, elapsed, Vector2.zero, false);
+            if (!AimAtGoldshoresBoss(player, bridge, elapsed))
+                ObjectiveCombatInput(player, bridge, elapsed, Vector2.zero, false);
             return true;
         }
         if (r.goldshores != null && r.goldshores.exitFinished)
@@ -234,6 +242,27 @@ public sealed partial class PortSession
             if (r.world.combatCandidates == r.world.combatBoundsRejected)
                 NavigateWorldInput(player, bridge, shrine.transform.position, 1.2f, shrine.name, elapsed);
         }
+        return true;
+    }
+    bool AimAtGoldshoresBoss(CharacterBody player, NovaInputBridge bridge, float elapsed)
+    {
+        // Scripted encounter members are separate from the stage director's actors.
+        var group = InstanceTracker.GetInstancesList<BossGroup>().FirstOrDefault(candidate =>
+            candidate && candidate.dropPosition == goldshoresMission.bossSpawnPosition && candidate.combatSquad);
+        var boss = group ? group.combatSquad.readOnlyMembersList.Select(master => master.GetBody())
+                              .FirstOrDefault(body => body && body.healthComponent.alive) : null;
+        if (!boss)
+            return false;
+        var origin = player.inputBank.aimOrigin;
+        var aim = WorldCombatAimPoint(boss, origin, out bool visible) - origin;
+        if (!visible || aim.sqrMagnitude > 32f * 32f)
+            NavigateWorldInput(player, bridge, DirectorPhysicsPosition(boss), 2, boss.name, elapsed);
+        bridge.diagnosticAim = aim.normalized;
+        bridge.aim = new Vector2(aim.x, aim.z).normalized;
+        bridge.diagnosticPrimary = visible;
+        r.world.combatTarget = boss.name;
+        r.world.combatTargetBoss = true;
+        r.world.combatLineOfSight = visible;
         return true;
     }
     void GoldshoresApproach(CharacterBody player, NovaInputBridge bridge, GameObject target, float elapsed, string purpose)
