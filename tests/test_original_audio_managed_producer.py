@@ -1,9 +1,11 @@
 import importlib.util
+import json
 import os
 from pathlib import Path
 import plistlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -16,6 +18,23 @@ SPEC.loader.exec_module(PRODUCER)
 
 
 class ManagedProducerTests(unittest.TestCase):
+    def test_process_receipt_records_failed_transform_without_changing_log(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            log = root / "logs/composed-game.log"
+            with self.assertRaisesRegex(RuntimeError, r"command failed \(4\)"):
+                PRODUCER.run(
+                    [sys.executable, "-c", "print('authored fixture'); raise SystemExit(4)"],
+                    cwd=root,
+                    env=dict(os.environ),
+                    log=log,
+                )
+            self.assertEqual(log.read_text(), "authored fixture\n")
+            receipt = json.loads(log.with_suffix(".process.json").read_text())
+            self.assertEqual(receipt["exit_code"], 4)
+            self.assertGreater(receipt["seconds"], 0)
+            self.assertEqual(receipt["seconds"], receipt["ended_boottime_seconds"] - receipt["started_boottime_seconds"])
+
     def test_output_guard_accepts_ignored_shared_work_in_isolated_checkout(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder).resolve()
