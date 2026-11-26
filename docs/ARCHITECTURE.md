@@ -193,14 +193,28 @@ extents, indexes and final type tables supply original source, pack output and
 destination identities. Public policy declares candidate bindings, address groups,
 exceptional field routes and canonical pairs. The owner derives reached records,
 staged endpoints, complete types, routes and independent preloads. It writes
-retained PPtr-only relocation packs before invoking the unchanged structural
-emission boundary. Retained suppliers bind their own receipt-pinned type tables;
+retained PPtr-only relocation packs before invoking the structural emission
+boundary. Destinations that share a supplier record keep separate relocation
+packs so each can bind its own checked field routes to the same source lineage.
+Retained suppliers bind their own receipt-pinned type tables;
 an explicit `pointer_namespace` declares their already-relocated member table.
 Setup opens declared original and staged members; teardown closes streams on
 success or failure. Preparation retains pins and emits the existing request,
 including original script properties and canonical body-identity witnesses.
 MonoScripts retain their own source selectors, separate from behaviour hash
-schemas. Null-script witnesses pin the original body, and SDK resource members
+schemas. The release graph can bind an original MonoScript selector to a
+receipt-produced player registry record. Preparation verifies the assembly,
+namespace, class and native type of both records. A pinned, pointer-free
+original layout supplies the type tree when the player registry omits it.
+The emitted body and script properties come from the current registry.
+The whole-game registry pack consumes the final `player_data.py` receipt
+and its `globalgamemanagers.assets` output. Whole-game original record and
+texture selector profiles use `record_produce.py` and `texture_produce.py`.
+Their original path, member and path ID select the source body before the
+release graph binds the resulting typed pack to a preload destination.
+The producers close their source readers and retain the pack and receipt
+for preparation. Full member closure and typed load remain separate gates.
+Null-script witnesses pin the original body, and SDK resource members
 remain external references without becoming AssetBundle dependencies.
 `bundle_preload.py --release REQUEST --output NEW_DIRECTORY` materializes the
 signed policy, prepares fresh suppliers and runs the same checked emitter and

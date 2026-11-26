@@ -562,17 +562,16 @@ class Graph:
             path = self.repo / self.profiles[pin]
             if digest(path) != pin:
                 raise ValueError("source supplier profile drift: " + self.profiles[pin])
-            if not str(path).endswith(".jsonl.gz") and owner(json.loads(path.read_bytes())) not in {
-                "record_produce",
-                "mesh_produce",
-                "avatar_produce",
-                "texture_produce",
-                "sprite_produce",
-            }:
-                raise ValueError("source lookup requires direct typed record selectors: " + pin)
+            compressed = str(path).endswith(".jsonl.gz")
+            if not compressed:
+                profile = json.loads(path.read_bytes())
+                producer = owner(profile)
+                direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce"}
+                if producer not in direct and not (producer == "record_remap" and "original_sources" in profile):
+                    raise ValueError("source lookup requires direct typed record selectors: " + pin)
             # Reuse preparation's body selectors; type_source is never evidence
             # that a profile produces that original object's serialized body.
-            reader = module("record_produce") if str(path).endswith(".jsonl.gz") else None
+            reader = module("record_produce") if compressed else None
             identities = module("bundle_prepare").original_identities(SimpleNamespace(A=reader), path)
             for record, originals in identities.items():
                 for source in originals & sources:

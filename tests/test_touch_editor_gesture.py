@@ -36,6 +36,20 @@ editor.Begin("p","bottom");gesture.Cancel();Check(editor.Draft!=null);
 try{gesture.Down(6,300,200,projection,"p",false);throw new Exception("stole external draft");}catch(InvalidOperationException){}
 editor.Cancel();
 Check(gesture.Down(9,380,250,projection,"p",true));Check(gesture.Up(9,460,300,projection));Near(editor.Document.Find("p").Find("top").Rectangle.Width,.3);Near(editor.Document.Find("p").Find("top").Rectangle.Height,.3);
+// Bottom-right resizing must never move the opposite corner, even when
+// the requested minimum is larger than the remaining safe-area span.
+foreach(bool oversizedMinimum in new[]{false,true}){
+ var edgeDoc=new TouchLayoutDocument(new[]{new TouchProfile("p",new[]{new TouchControl("edge",new LayoutRect(.7,.6,.2,.2),1,1)})});
+ var edgeEditor=new TouchLayoutEditor(edgeDoc);var edgeGesture=new TouchEditorGesture(edgeEditor,oversizedMinimum?10000:50,oversizedMinimum?10000:30);
+ Check(edgeGesture.Down(10,700,375,projection,"p",true));Check(edgeGesture.Move(10,860,525,projection));
+ Near(edgeEditor.Draft.Rectangle.X,.7);Near(edgeEditor.Draft.Rectangle.Y,.6);Near(edgeEditor.Draft.Rectangle.Width,.3);Near(edgeEditor.Draft.Rectangle.Height,.4);
+ Check(edgeEditor.Document.Export()==edgeDoc.Export());
+ Check(edgeGesture.Move(10,-1000,-1000,projection));Near(edgeEditor.Draft.Rectangle.X,.7);Near(edgeEditor.Draft.Rectangle.Y,.6);
+ Near(edgeEditor.Draft.Rectangle.Width,oversizedMinimum?.3:50.0/800);Near(edgeEditor.Draft.Rectangle.Height,oversizedMinimum?.4:30.0/500);
+ Check(edgeGesture.Up(10,860,525,projection));var edge=edgeEditor.Document.Find("p").Find("edge").Rectangle;
+ Near(edge.X,.7);Near(edge.Y,.6);Near(edge.Width,.3);Near(edge.Height,.4);
+ Check(edgeEditor.Undo()&&edgeEditor.Document.Export()==edgeDoc.Export());
+}
 Console.WriteLine("touch gesture PASS");}}
 """
 
