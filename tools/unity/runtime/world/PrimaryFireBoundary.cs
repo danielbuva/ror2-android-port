@@ -49,12 +49,20 @@ public sealed partial class PortSession
     {
         public bool sourceAudioObservationCaptured, sourceAudioGameObjectPresent, sourceAudioGameObjectEnabled,
             sourceAudioManagedRegistered, sourceAudioPlayingQueryReturned, sourceAudioVolumeQueryReturned,
-            sourceAudioVolumeValueFinite;
+            sourceAudioVolumeValueFinite, sourceAudioExpectedEventObserved, sourceAudioPostObserverAttached,
+            sourceAudioNoAudioAtFirstPost, sourceAudioFirstPostRejected, sourceAudioRejectedPostQueryAttempted,
+            sourceAudioEventObjectsQueryReturned, sourceAudioEmitterPositionQueryReturned;
+        public int sourceAudioPostReturns, sourceAudioPostAcceptedReturns;
+        public uint sourceAudioPostPlayingId;
         public float sourceAudioObservationRealtime, sourceAudioVolumeValue;
-        public uint sourceAudioExpectedEventId, sourceAudioPlayingIdCount;
-        public int sourceAudioPlayingQueryResult, sourceAudioVolumeQueryResult, sourceAudioVolumeReturnedType;
+        public uint sourceAudioExpectedEventId, sourceAudioPlayingIdCount, sourceAudioEventObjectCount;
+        public int sourceAudioPlayingQueryResult, sourceAudioVolumeQueryResult, sourceAudioVolumeReturnedType,
+            sourceAudioPlayingQueryAttempts, sourceAudioEventObjectsQueryResult, sourceAudioEmitterPositionQueryResult;
+        public ulong sourceAudioFirstPostRenderFrame, sourceAudioPlayingQueryRenderFrame, sourceAudioFirstPostEmitterId,
+            sourceAudioRejectedPostQueryRenderFrame;
         public uint[] sourceAudioPlayingIds, sourceAudioEventIds;
-        public string sourceAudioSoundName, sourceAudioObservationError;
+        public string sourceAudioSoundName, sourceAudioObservationError, sourceAudioEventObjectsQueryError,
+            sourceAudioEmitterPositionQueryError;
         public int observerTicks;
         public PrimaryFireOperandSnapshot lastOperands, firstFailureOperands;
         public string observerExceptionStage, observerExceptionType, observerExceptionMessage;
@@ -94,6 +102,10 @@ public sealed partial class PortSession
     {
         GetPrimaryFireSession().ObserveSpinePrimary(body);
     }
+    void AttachPrimaryPostObserver(CharacterBody body)
+    {
+        GetPrimaryFireSession().AttachPrimaryPostObserver(body);
+    }
     void CleanupSpineConfig()
     {
         GetPrimaryFireSession().Dispose();
@@ -117,6 +129,8 @@ public sealed partial class PortSession
         EntityStateConfiguration spineReload;
         bool preserveOriginalAudio;
         EntityState lastSpineWeaponState;
+        FieldInfo postObserverField;
+        Action<uint, object> postObserver;
         public PrimaryFireSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -164,23 +178,117 @@ public sealed partial class PortSession
                 EntityStates.Commando.DodgeState.jetEffect = null;
             }
         }
-        // One read-only sample at the first observed pistol state, only for selected PCM diagnostics.
-        void ObserveOriginalPrimaryAudio(CharacterBody body, PrimaryFireReport report)
+        public void AttachPrimaryPostObserver(CharacterBody body)
         {
-            if (report.sourceAudioObservationCaptured || !coordinator.r.integratedWorld ||
+            if (!preserveOriginalAudio || !PortSessionOriginalAudioOwner.PassivePcmCaptureRequested)
+                return;
+            var report = coordinator.r.primary;
+            var marker = typeof(FirePistol2).Assembly.GetType("RoR2.AndroidCommandoPostObserver", false);
+            var field = marker?.GetField("Returned", BindingFlags.Public | BindingFlags.Static);
+            if (field == null || field.GetValue(null) != null)
+                return;
+            Action<uint, object> callback = (playingId, emitter) =>
+            {
+                if (!body || !ReferenceEquals(emitter, body.gameObject) || !Util.HasEffectiveAuthority(body.networkIdentity))
+                    return;
+                report.sourceAudioPostReturns++;
+                if (playingId != AkSoundEngine.AK_INVALID_PLAYING_ID)
+                {
+                    report.sourceAudioPostAcceptedReturns++;
+                    if (report.sourceAudioPostPlayingId == AkSoundEngine.AK_INVALID_PLAYING_ID)
+                        report.sourceAudioPostPlayingId = playingId;
+                }
+                if (report.sourceAudioPostReturns == 1)
+                {
+                    report.sourceAudioObservationCaptured = true;
+                    report.sourceAudioObservationRealtime = Time.realtimeSinceStartup;
+                    report.sourceAudioSoundName = FirePistol2.firePistolSoundString;
+                    report.sourceAudioNoAudioAtFirstPost = WwiseIntegrationManager.noAudio;
+                    report.sourceAudioFirstPostRenderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
+                    var sourceObject = body.GetComponent<AkGameObj>();
+                    report.sourceAudioGameObjectPresent = sourceObject;
+                    report.sourceAudioGameObjectEnabled = sourceObject && sourceObject.enabled;
+                    report.sourceAudioManagedRegistered = AkSoundEngine.IsGameObjectRegistered(body.gameObject);
+                    report.sourceAudioFirstPostEmitterId = AkSoundEngine.GetAkGameObjectID(body.gameObject);
+                    report.sourceAudioFirstPostRejected = playingId == AkSoundEngine.AK_INVALID_PLAYING_ID;
+                }
+            };
+            field.SetValue(null, callback);
+            postObserverField = field;
+            postObserver = callback;
+            report.sourceAudioPostObserverAttached = true;
+        }
+
+        // A rejected post has no playing ID. Query its event and emitter independently.
+        void ObserveRejectedPrimaryAudioPost(PrimaryFireReport report)
+        {
+            if (!report.sourceAudioFirstPostRejected || report.sourceAudioNoAudioAtFirstPost ||
+                report.sourceAudioRejectedPostQueryAttempted || !coordinator.r.integratedWorld ||
                 !PortSessionOriginalAudioOwner.PassivePcmCaptureRequested || !GameAudioOriginalOwner.Ready)
                 return;
-            report.sourceAudioObservationCaptured = true;
-            report.sourceAudioObservationRealtime = Time.realtimeSinceStartup;
-            report.sourceAudioSoundName = FirePistol2.firePistolSoundString;
+            ulong renderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
+            if (renderFrame <= report.sourceAudioFirstPostRenderFrame)
+                return;
+
+            report.sourceAudioRejectedPostQueryAttempted = true;
+            report.sourceAudioRejectedPostQueryRenderFrame = renderFrame;
+            if (!String.IsNullOrEmpty(report.sourceAudioSoundName))
+            {
+                try
+                {
+                    const int capacity = 8;
+                    uint count = capacity;
+                    using (var objects = new AkObjectInfoArray(capacity))
+                        report.sourceAudioEventObjectsQueryResult = (int)AkSoundEngine.QueryAudioObjectIDs(
+                            report.sourceAudioSoundName, ref count, objects);
+                    report.sourceAudioEventObjectCount = count;
+                    report.sourceAudioEventObjectsQueryReturned = true;
+                }
+                catch (Exception error)
+                {
+                    report.sourceAudioEventObjectsQueryError = error.GetType().Name + ": " + error.Message;
+                }
+            }
+            if (report.sourceAudioFirstPostEmitterId == AkSoundEngine.AK_INVALID_GAME_OBJECT)
+                return;
+
             try
             {
-                var sourceObject = body.GetComponent<AkGameObj>();
-                report.sourceAudioGameObjectPresent = sourceObject;
-                report.sourceAudioGameObjectEnabled = sourceObject && sourceObject.enabled;
-                report.sourceAudioManagedRegistered = AkSoundEngine.IsGameObjectRegistered(body.gameObject);
-                if (!String.IsNullOrEmpty(report.sourceAudioSoundName))
-                    report.sourceAudioExpectedEventId = AkSoundEngine.GetIDFromString(report.sourceAudioSoundName);
+                using (var position = new AkWorldTransform())
+                    report.sourceAudioEmitterPositionQueryResult = (int)AkSoundEngine.GetPosition(
+                        report.sourceAudioFirstPostEmitterId, position);
+                report.sourceAudioEmitterPositionQueryReturned = true;
+            }
+            catch (Exception error)
+            {
+                report.sourceAudioEmitterPositionQueryError = error.GetType().Name + ": " + error.Message;
+            }
+        }
+
+        // A posted event may become queryable only after Wwise services another frame.
+        void ObserveOriginalPrimaryAudio(CharacterBody body, PrimaryFireReport report)
+        {
+            const int maxPlayingQueries = 12;
+            if (report.sourceAudioPostAcceptedReturns == 0 || report.sourceAudioExpectedEventObserved ||
+                report.sourceAudioPlayingQueryAttempts >= maxPlayingQueries ||
+                report.sourceAudioObservationError != null || !coordinator.r.integratedWorld ||
+                !PortSessionOriginalAudioOwner.PassivePcmCaptureRequested || !GameAudioOriginalOwner.Ready)
+                return;
+            bool first = report.sourceAudioPlayingQueryAttempts == 0;
+            ulong renderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
+            if (!first && renderFrame <= report.sourceAudioPlayingQueryRenderFrame)
+                return;
+
+            report.sourceAudioPlayingQueryRenderFrame = renderFrame;
+            report.sourceAudioPlayingQueryAttempts++;
+            report.sourceAudioPlayingQueryReturned = false;
+            report.sourceAudioPlayingIdCount = 0;
+            report.sourceAudioPlayingIds = null;
+            report.sourceAudioEventIds = null;
+            try
+            {
+                if (first && !String.IsNullOrEmpty(FirePistol2.firePistolSoundString))
+                    report.sourceAudioExpectedEventId = AkSoundEngine.GetIDFromString(FirePistol2.firePistolSoundString);
                 ulong id = AkSoundEngine.GetAkGameObjectID(body.gameObject);
                 uint count = 8;
                 var ids = new uint[8];
@@ -192,7 +300,11 @@ public sealed partial class PortSession
                 {
                     report.sourceAudioPlayingIds = ids.Take((int)Math.Min(count, 8U)).ToArray();
                     report.sourceAudioEventIds = report.sourceAudioPlayingIds.Select(AkSoundEngine.GetEventIDFromPlayingID).ToArray();
+                    report.sourceAudioExpectedEventObserved = report.sourceAudioExpectedEventId != 0 &&
+                        report.sourceAudioEventIds.Contains(report.sourceAudioExpectedEventId);
                 }
+                if (!first)
+                    return;
                 int valueType = 1;
                 float value;
                 result = AkSoundEngine.GetRTPCValue("Volume_SFX", AkSoundEngine.AK_INVALID_GAME_OBJECT,
@@ -337,12 +449,14 @@ public sealed partial class PortSession
                         report.firingAvailable = true;
                         operandStage = "body.spreadBloomAngle";
                         report.spreadAfter = bodyRef.spreadBloomAngle;
-                        ObserveOriginalPrimaryAudio(bodyRef, report);
                     }
                     if (state is ReloadPistols)
                         report.reloads++;
                     lastSpineWeaponState = state;
                 }
+                ObserveRejectedPrimaryAudioPost(report);
+                if (state is FirePistol2)
+                    ObserveOriginalPrimaryAudio(bodyRef, report);
                 operandStage = "primary.stock";
                 snapshot.stock = primary.stock;
                 snapshot.stockStatus = "read";
@@ -361,6 +475,10 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+            if (postObserverField != null && ReferenceEquals(postObserverField.GetValue(null), postObserver))
+                postObserverField.SetValue(null, null);
+            postObserverField = null;
+            postObserver = null;
             coordinator.CleanupCombatConfigs();
             if (spineFields != null)
             {

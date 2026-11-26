@@ -459,6 +459,8 @@ public sealed partial class PortSession
                     coordinator.worldView = display.thirdPerson;
                     coordinator.r.world.camera = coordinator.worldView.report;
                 }
+                if (commandoPrimaryDiagnostic)
+                    coordinator.AttachPrimaryPostObserver(body);
                 bridge = body.gameObject.AddComponent<NovaInputBridge>();
                 bridge.bank = bank;
                 bridge.mapping = mapping;

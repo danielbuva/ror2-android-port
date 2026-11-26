@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1506 — Restore Commando pistol event playback through the source bank
+
+2026-11-26. The audio build hook restores CommandoBody's original bank component
+when the selected cohort contains `char_Commando.bnk`. The component owns load
+and unload. Assisted native seed-3 Start reached Distant Roost (`blackbeach2`)
+with 96.640 s of effective authority. Wwise accepted all 218 pistol posts.
+The first returned playing ID 13 and the next service frame reported active
+`Play_commando_R`. All 153 startup banks completed. Mixed MainOutput recorded
+675 callbacks and 777,600 finite nonzero samples. Pistol audibility remains open.
+APK SHA-256 `4422cf9dc4131cb9887bf8f8902e6c6b8d9772485f5fc7a3ae0e90b557bd3aa6` (source `565e8f7e`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/roost-seed3-native-commando-bank-main-nova/`
+includes `terminal.done.json` and the PID-bound screenshot, logcat and report
+in `terminal-capture/`. Adopted backing, cleanup, OLED sleep and lease release passed.
+
 ## J1505 — Reach Titanic Plains from the staged converted APK
 
 2026-11-26. The converted startup mounts source definitions and binds original

@@ -116,7 +116,7 @@ class LightningR3MusicCameraPipelineTests(unittest.TestCase):
         final_profile = pins["profiles"]["post-audio-native-music-results-lightning-r3-1ced"]
         resolver_profile = pins["resolver_profiles"]["post-audio-native-music-results-lightning-r3-1ced"]
         self.assertEqual(final_profile["input_sha256"], music.R3_NATIVE_RESULT_OBSERVED_GAME)
-        self.assertEqual(final_profile["output_sha256"], "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c")
+        self.assertEqual(final_profile["output_sha256"], "324fa10f959cdbceed69ebcea5f847a5cdafcfe6891b7805849e80cd72a34ee7")
         self.assertEqual(resolver_profile["api_sha256"], music.R10_API)
         for bad in (
             {**audio, "stage_receipt_sha256": "0" * 64},

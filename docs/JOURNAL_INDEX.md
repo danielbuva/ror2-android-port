@@ -339,3 +339,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1503](PORTING_JOURNAL.md#j1503--restore-live-equipment-barrel-lock-materials) | 2026-11-26 | Restore live equipment-barrel lock materials | 2026-11-26. |
 | [J1504](PORTING_JOURNAL.md#j1504--reuse-required-route-pointer-validation-during-record-emission) | 2026-11-26 | Reuse required-route pointer validation during record emission | 2026-11-26. |
 | [J1505](PORTING_JOURNAL.md#j1505--reach-titanic-plains-from-the-staged-converted-apk) | 2026-11-26 | Reach Titanic Plains from the staged converted APK | 2026-11-26. |
+| [J1506](PORTING_JOURNAL.md#j1506--restore-commando-pistol-event-playback-through-the-source-bank) | 2026-11-26 | Restore Commando pistol event playback through the source bank | 2026-11-26. |

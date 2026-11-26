@@ -391,12 +391,29 @@ def validate_runtime_source_membership(project, *, retire_previous=False):
 
 
 def whole_payload_inputs(project):
-    return {
+    from native_view_camera_build_hook import API_RELATIVE, CAMERA_STAGE_RELATIVE, GAME_RELATIVE, HASHES, STAGE_SCHEMA
+
+    files = {
         str(p.relative_to(project)): sha(p)
         for folder in ["Assets", "Packages", "ProjectSettings"]
         for p in (project / folder).rglob("*")
         if p.is_file() and str(p.relative_to(project)) not in WHOLE_PLAYER_INPUTS and not str(p.relative_to(project)).startswith("Assets/Editor/")
     }
+    # The Cecil verifier proves that this exact transition adds only a static
+    # diagnostic delegate and instructions at one call site. All other game
+    # module changes still invalidate bundle reuse.
+    game = GAME_RELATIVE.as_posix()
+    if files.get(game) == HASHES["lightning_r3_native_result_camera_output"]:
+        stage = read(project / CAMERA_STAGE_RELATIVE)
+        if (
+            stage.get("schema") == STAGE_SCHEMA
+            and stage.get("profile") == "post-audio-native-music-results-lightning-r3-1ced"
+            and stage.get("input_sha256") == HASHES["lightning_r3_native_result_observed_game"]
+            and stage.get("api_sha256") == files.get(API_RELATIVE.as_posix()) == HASHES["pcm_composed_api"]
+            and stage.get("output_sha256") == files[game]
+        ):
+            files[game] = HASHES["lightning_r3_camera_pre_commando_observer"]
+    return files
 
 
 def freeze_whole_payload(project, result, receipt=None):

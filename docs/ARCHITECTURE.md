@@ -4133,8 +4133,12 @@ The same build hook synchronizes the original `SoundEmitter.prefab` before
 project/cache hashing. Requested audio restores its exact accepted `AkGameObj`
 component; default off restores the sanitizer's stripped form. Accepted input,
 source bytes, asset/script GUIDs and the selected project must match before
-writing. The original component owns its runtime lifecycle; no replacement emitter
-is introduced. `source_scene_candidate.prepare` also consumes that existing
+writing. The original component owns its runtime lifecycle. The hook also
+restores the accepted `CommandoBody` `AkBank` component and attachment when
+the selected cohort stages `char_Commando.bnk`. The hook checks the prefab
+and bank reference identities and removes that attachment when the bank is
+unavailable or audio is off. The original component loads the bank at Start
+and unloads it at Destroy. `source_scene_candidate.prepare` also consumes that existing
 validated audio selection: requested scenes preserve original Wwise/RTPC
 components, serialized fields, references and enable states. Default-off scenes
 retain the historical omission. Global-owner roots remain inactive. The current
@@ -5213,6 +5217,20 @@ The production setup/exclusion/disposal host fixture covers both modes,
 including the initial report-mode flag still being unset during configuration.
 The owner captures the configured mode and native readiness during setup;
 it never treats the later report assignment as startup authority.
+For opt-in PCM diagnostics, `PrimaryFireSession` observes the playing ID
+returned by the original Commando pistol sound call on the controlled body
+while it has effective authority. The lab R3 camera composition adds a
+static callback at that call site and preserves the original return handling.
+The primary owner attaches it before input dispatch and clears its callback
+during teardown. It records the first post's configured event name, audio gate,
+managed registration, native emitter ID and service-frame ordinal. If the first
+post returns zero with audio enabled, the owner waits for a later successful
+service frame and queries the saved event and emitter once. The report retains
+the raw event result and object count and the raw emitter position result.
+After a nonzero return it samples the body's active Wwise event IDs at most 12
+times, with a new successful original audio service frame for each follow-up.
+The report records post acceptance, active event matches with their
+render-frame ordinal, and aggregate MainOutput PCM separately.
 
 Once the original audio owner is ready, existing actor, projectile, pickup,
 effect and model adapters preserve source sound identities and authored Wwise
