@@ -248,6 +248,58 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertFalse(lease.path.exists())
         self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
 
+    def test_interrupted_preinstall_hash_can_finish_verified_cleanup(self):
+        lease_path = runner.Lease(self.request).path
+        package_path = "/fixture/base.apk"
+        target = mock.Mock()
+        target.exists.return_value = True
+        target.owned.return_value = dict(package_path="package:" + package_path, apk_sha256=self.digest)
+        target.storage.return_value = dict(mode="adopted")
+        hashes = iter([RuntimeError("adb exited -9"), self.digest, self.digest])
+
+        def shell(*args, **kwargs):
+            self.assertTrue(lease_path.is_dir())
+            if args == ("sha256sum", package_path):
+                digest = next(hashes)
+                if isinstance(digest, RuntimeError):
+                    raise digest
+                return digest + "  " + package_path
+            self.assertEqual(args, ("am", "force-stop", target.package))
+            return ""
+
+        target.sh.side_effect = shell
+
+        def idle(device, expected):
+            self.assertTrue(lease_path.is_dir())
+            self.assertEqual(expected, self.digest)
+            return dict(apk_sha256=expected, process_absent=True)
+
+        def display(awake):
+            self.assertTrue(lease_path.is_dir())
+            self.assertFalse(awake)
+            return True
+
+        target.display.side_effect = display
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
+            mock.patch.object(device_module, "Device", return_value=target) as discover,
+            mock.patch.object(runner, "reset_other_lab"),
+            mock.patch.object(runner, "reset_idle") as reset,
+            mock.patch.object(batch, "_idle_readback", side_effect=idle),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(self.request)
+
+        self.assertFalse(result["success"])
+        self.assertIn("adb exited -9", result["error"])
+        target.install.assert_not_called()
+        reset.assert_called_once()
+        self.assertEqual(discover.call_count, 2)
+        self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertTrue(result["lease_released"])
+        self.assertFalse(lease_path.exists())
+
     def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
         target, thermal = mock.Mock(package=self.request["package"]), mock.Mock(error=None)
         target.sh.return_value = process_snapshot(("12", "03:19:58", target.package))

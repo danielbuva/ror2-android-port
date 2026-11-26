@@ -1308,6 +1308,7 @@ def execute(request):
     exception_log = None
     initial_exception_bytes = None
     active_hash = None
+    initial_hash_pending = False
     started = time.monotonic()
     prior_selectors = command_selectors()
     try:
@@ -1322,7 +1323,9 @@ def execute(request):
         if device.exists():
             if not device.receipt("installed.json").exists() and "prior_receipt" in request:
                 adopt_receipt(device, request["prior_receipt"])
+            initial_hash_pending = True
             active_hash = verify_owned(device)["apk_sha256"]
+            initial_hash_pending = False
         payload = payload_files(request)
         payload_size = sum(path.stat().st_size for path in payload)
         reserve = apk.stat().st_size + payload_size + DEVICE_RESERVE_BYTES
@@ -1471,6 +1474,11 @@ def execute(request):
                     time_above80_seconds=thermal.time_above_80_seconds,
                     admission_battery=thermal.admission_battery,
                 )
+            if initial_hash_pending:
+                # An interrupted preinstall hash can still permit verified cleanup.
+                installed = clean("initial-ownership", lambda: verify_owned(device))
+                if installed:
+                    active_hash = installed["apk_sha256"]
             if device and active_hash:
 
                 def stop():
