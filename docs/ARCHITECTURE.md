@@ -6246,7 +6246,9 @@ For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner
 stops after converter output validation and native planning. Confirmed jobs
-return converter, resource-use and thermal receipts. The runner retrieves
+return converter, resource-use and thermal receipts. The runner writes the
+code receipt to `code-result.json` so the pinned `code.json` request remains
+available for replay. The runner retrieves
 producer logs and available crash evidence before removing owned scratch.
 A signed-code request can pin an earlier retained toolhost by APK
 hash. The runner verifies the installed bytes and uses a same-signer Android

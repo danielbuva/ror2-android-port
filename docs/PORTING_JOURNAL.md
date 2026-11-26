@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1506 — Convert signed-release managed code on Android
+
+2026-11-26. The two audio pin generators validate the exact owner inventory
+used by staging, including when the full inventory is relocated to Android.
+The signed-code run on Thor (`db439c3d`) produced 332 managed providers and
+matched the complete signed roster of 247 banks and 120 WEMs. IL2CPP converted
+93 stripped assemblies and planned 826 native compile tasks.
+Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a859516807c00a4`.
+Production took 1,664 s with 2.73 GB peak child RSS and 1.57 GB net device
+scratch growth. Peak CPU/GPU was 71.2 °C with one duty-cycle pause.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-thor-signed-code-v6-roster-1126/terminal.done.json`.
+Scratch cleanup, OLED sleep and lease release passed. Native compilation,
+APK assembly and in-place update still need phone qualification.
+
 ## J1505 — Reach Titanic Plains from the staged converted APK
 
 2026-11-26. The converted startup mounts source definitions and binds original

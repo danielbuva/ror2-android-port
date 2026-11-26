@@ -195,6 +195,21 @@ class EmissionTests(unittest.TestCase):
         self.assertTrue(any(part.startswith("ROR2LAB_BUILD_DOTNET_ROOT=") and part.endswith("/runtime/dotnet") for part in command))
         self.assertEqual(self.run_request(resume=True)["error"], "signed-code-resume-requires-active-handle")
 
+    def test_signed_code_receipt_preserves_staged_code_request(self):
+        request = self.output / "code.json"
+        original = b'{"audio_members":["Init.bnk"]}\n'
+        request.write_bytes(original)
+        self.phone.execute.side_effect = (
+            lambda *args, label, **kwargs: subprocess.CompletedProcess([], 0, b'{"success":true}', b"")
+            if label == "emission-code"
+            else subprocess.CompletedProcess([], 1, b"", b"")
+        )
+
+        state = {"remote": "/remote", "attempt": "attempt"}
+        self.assertEqual(EMISSION.collect(self.phone, state, self.output, code_output="work/signed-code"), {"code": {"success": True}})
+        self.assertEqual(request.read_bytes(), original)
+        self.assertEqual(json.loads((self.output / "code-result.json").read_bytes()), {"success": True})
+
     def test_signed_code_keeps_unknown_handle_for_exact_reattachment(self):
         self.signed_request()
         self.phone.transport.wait_detached.side_effect = INSTALLER.TRANSPORT.DetachedUncertain(self.job)
