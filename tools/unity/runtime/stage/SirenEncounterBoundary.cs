@@ -168,10 +168,10 @@ public static class SirenNativeEncounterContinuationContract
     }
 
     public static bool IsExactNativeBossWitness(bool capturedFromExactSourceSquad, bool positiveNetworkId, bool resolvesToSameMaster,
-                                                bool monsterTeam, bool notPlayerMaster, bool exactCatalogBody, bool noForeignOwner)
+                                                bool monsterTeam, bool notPlayerMaster, bool exactNativeBody, bool noForeignOwner)
     {
         return capturedFromExactSourceSquad && positiveNetworkId && resolvesToSameMaster && monsterTeam && notPlayerMaster &&
-               exactCatalogBody && noForeignOwner;
+               exactNativeBody && noForeignOwner;
     }
 
     public static bool IsTerminal(bool requested, bool armed, bool nativeEncounterStarted, bool exactNativeBossIdentity)
@@ -234,6 +234,7 @@ public sealed partial class SirenEncounterSession : IDisposable
     EntityStateMachine stateMachine;
     ScriptedCombatEncounter encounter;
     BossGroup bossGroup;
+    GameObject originalBossBodyPrefab;
     readonly bool originalActiveSelf;
     bool ownsNetworkSpawn;
     bool ownsActivatedSceneInstance;
@@ -280,9 +281,6 @@ public sealed partial class SirenEncounterSession : IDisposable
             identity.sceneId.Value != SirenEncounterContract.EncounterSceneId || identity.netId.Value == 0 ||
             NetworkServer.FindLocalObject(identity.netId) != encounterObject)
             return false;
-        var catalogBody = BodyCatalog.FindBodyPrefab(OriginalBossBodyName);
-        if (!catalogBody)
-            return false;
         var members = bossGroup.combatSquad.readOnlyMembersList.Where(member => member).ToArray();
         if (members.Length == 0)
             return false;
@@ -293,7 +291,7 @@ public sealed partial class SirenEncounterSession : IDisposable
             if (!SirenNativeEncounterContinuationContract.IsExactNativeBossWitness(
                     captured != null && bossGroup.combatSquad.readOnlyMembersList.Contains(member), member.netId.Value != 0,
                     NetworkServer.FindLocalObject(member.netId) == member.gameObject, member.teamIndex == TeamIndex.Monster,
-                    !member.playerCharacterMasterController, member.bodyPrefab == catalogBody,
+                    !member.playerCharacterMasterController, HasNativeActorBodyPrefab(member, OriginalBossBodyName),
                     !member.minionOwnership || member.minionOwnership.NetworkownerMasterId == NetworkInstanceId.Invalid))
                 return false;
             ids.Add(member.netId.Value);
@@ -313,6 +311,10 @@ public sealed partial class SirenEncounterSession : IDisposable
         this.stateMachine = stateMachine;
         this.encounter = encounter;
         this.bossGroup = bossGroup;
+        var sourceMaster = encounter.spawns[0].spawnCard.prefab.GetComponent<CharacterMaster>();
+        if (!sourceMaster || !sourceMaster.bodyPrefab)
+            throw new InvalidOperationException("Original Siren boss spawn card has no native body prefab");
+        originalBossBodyPrefab = sourceMaster.bodyPrefab;
         originalActiveSelf = encounterObject.activeSelf;
         Report = new PortSession.SirenEncounterReport
         {
@@ -454,8 +456,18 @@ public sealed partial class SirenEncounterSession : IDisposable
 
         var scripted = encounters[0];
         return !squads[0].propagateMembershipToSummons && !scripted.spawnOnStart &&
-               scripted.teamIndex == TeamIndex.Monster && scripted.spawns != null && scripted.spawns.Length == 1 && scripted.spawns[0].spawnCard &&
-               scripted.spawns[0].spawnCard.name == "cscSuperRoboBallBoss";
+               scripted.teamIndex == TeamIndex.Monster && scripted.spawns != null && scripted.spawns.Length == 1 &&
+               scripted.spawns[0].spawnCard is CharacterSpawnCard card && card && card.prefab && card.name == "cscSuperRoboBallBoss";
+    }
+
+    bool HasNativeActorBodyPrefab(CharacterMaster master, string bodyName)
+    {
+        var catalogBody = BodyCatalog.FindBodyPrefab(bodyName);
+        var prefab = master.bodyPrefab;
+        // The authored card can retain its source body while native SpawnBody uses the catalog template.
+        return prefab && catalogBody &&
+               (prefab == catalogBody || (bodyName == OriginalBossBodyName && prefab == originalBossBodyPrefab &&
+                                           BodyCatalog.FindBodyIndex(prefab) == BodyCatalog.FindBodyIndex(bodyName)));
     }
 
     void OnNativeActorDeath(DamageReport damage)
@@ -476,7 +488,7 @@ public sealed partial class SirenEncounterSession : IDisposable
             !ReferenceEquals(damage.victimMaster, member) || member.netId != entry.networkId ||
             !ReferenceEquals(NetworkServer.FindLocalObject(entry.networkId), member.gameObject) ||
             member.teamIndex != TeamIndex.Monster || member.playerCharacterMasterController ||
-            member.bodyPrefab != BodyCatalog.FindBodyPrefab(expectedBodyName) || !member.IsDeadAndOutOfLivesServer())
+            !HasNativeActorBodyPrefab(member, expectedBodyName) || !member.IsDeadAndOutOfLivesServer())
             return;
         if (entry.ownerNetworkId != NetworkInstanceId.Invalid &&
             (!member.minionOwnership || member.minionOwnership.NetworkownerMasterId != entry.ownerNetworkId))
@@ -547,7 +559,7 @@ public sealed partial class SirenEncounterSession : IDisposable
     void OnEncounterMemberAddedServer(CharacterMaster member)
     {
         if (disposed || cleanupStarted || !NetworkServer.active || !member || member.teamIndex != TeamIndex.Monster ||
-            member.playerCharacterMasterController || member.bodyPrefab != BodyCatalog.FindBodyPrefab(OriginalBossBodyName) ||
+            member.playerCharacterMasterController || !HasNativeActorBodyPrefab(member, OriginalBossBodyName) ||
             member.netId.Value == 0 || ownedBossNetworkIds.Contains(member.netId.Value))
             return;
 
@@ -682,6 +694,7 @@ public sealed partial class SirenEncounterSession : IDisposable
         stateMachine = null;
         encounter = null;
         bossGroup = null;
+        originalBossBodyPrefab = null;
         ownedBossMasters.Clear();
         ownedProbeMasters.Clear();
         ownedBossNetworkIds.Clear();
@@ -778,7 +791,7 @@ public sealed partial class SirenEncounterSession : IDisposable
         if (member.netId != entry.networkId || member.netId.Value == 0 ||
             NetworkServer.FindLocalObject(entry.networkId) != member.gameObject ||
             member.teamIndex != TeamIndex.Monster || member.playerCharacterMasterController ||
-            member.bodyPrefab != BodyCatalog.FindBodyPrefab(expectedBodyName))
+            !HasNativeActorBodyPrefab(member, expectedBodyName))
         {
             Report.retirementRefusedForeignMember = true;
             throw new InvalidOperationException("Refusing to retire a Siren " + label + " whose live identity or native body contract changed");

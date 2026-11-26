@@ -49,8 +49,9 @@ class SirenNativeEncounterContinuationTests(unittest.TestCase):
         owner = OWNER.read_text()
         continuation = extract_declaration(owner, "public static class SirenNativeEncounterContinuationContract")
         witness = extract_declaration(owner, "public bool TryGetExactNativeBossNetworkIds(out uint[] networkIds)")
+        body_contract = extract_declaration(owner, "bool HasNativeActorBodyPrefab(")
         fixture = FIXTURE.read_text()
-        source = fixture.replace("__PRODUCTION_CONTRACT__", continuation).replace("__PRODUCTION_METHOD__", witness)
+        source = fixture.replace("__PRODUCTION_CONTRACT__", continuation).replace("__PRODUCTION_METHOD__", witness + "\n" + body_contract)
         self.assertNotIn("__PRODUCTION_", source)
 
         with tempfile.TemporaryDirectory(prefix="siren-continuation-", dir=HOST_TEMP) as temporary_directory:
