@@ -573,7 +573,11 @@ compiler flags and link ordering through `native.generated_profile`; source hash
 metadata and complete native membership are checked before planning or compilation.
 `player_data.py` binds no-target code requests to the current runtime manifest
 and actual managed compiler source hashes. Historical target requests retain
-their pinned cohort. Existing importer GUIDs survive; first-import owners use
+their pinned cohort. Current scripting assembly metadata also reads the
+successful managed producer's pinned provider manifest. It registers the
+authored audio and observation assemblies for Unity serialization and retains
+the editor integration assembly only when the compiler supplies it.
+Existing importer GUIDs survive; first-import owners use
 stable converter path identities. The registry and all dependent writers share
 the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
 Current package importers use the fresh compiler's source hashes and selection,
