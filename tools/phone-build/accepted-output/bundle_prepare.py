@@ -13,6 +13,100 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
+def record_descriptor(owner, types, target, body, typ, **extra):
+    full = owner.full_type_key(typ)
+    types[full] = owner.O.json_layout(typ)
+    return dict(
+        destination=list(target),
+        bytes=len(body),
+        sha256=hashlib.sha256(body).hexdigest(),
+        class_id=typ["class_id"],
+        native_type_hash=typ["hash"].hex(),
+        schema=hashlib.sha256(typ["tree"]).hexdigest(),
+        full_type=full,
+        edges=[list(edge) for edge in sorted(set(owner.pointers(body, typ, {}).values()))],
+        **extra,
+    )
+
+
+def prepare_endpoints(owner, inputs, output):
+    """Recover the staged half of an emission request from pinned final files."""
+    inputs, output = Path(inputs).resolve(strict=True), Path(output).resolve()
+    E = owner.module("bundle_endpoints")
+    pins = E.InputPins(inputs.parent, owner)
+    request = json.loads(pins.add(inputs).read_bytes())
+    if request["schema"] != "owner-bundle-preload-inputs-v1":
+        raise ValueError("unsupported bundle preload input contract")
+    if "input_paths" in request:
+        pins.relocate(request["input_paths"])
+    member = request["bundle"], request["member"]
+    routes = owner.json_rows(pins.pin(request["routes"]))
+    groups = pins.read(request["required"])["asset_groups"]
+    targets = {tuple(edge["target"]) for row in routes for edge in row["edges"] if tuple(edge["target"][:2]) != member}
+    if "extension" in request:
+        extension = pins.read(request["extension"])
+        groups += extension["asset_groups"]
+        targets.update(tuple(edge["target"]) for edge in extension["field_routes"])
+    targets.update(tuple(target) for group in groups for target in group.get("preload_roots", ()))
+
+    selected, types = {}, {}
+    with ExitStack() as stack:
+        staged = E.FinalMembers(owner, selected, types)
+        stack.callback(staged.close)
+        staged.declare_member(*member)
+        for row in request["staged"]:
+            pin = dict(row["file"], path=str(pins.pin(row["file"])))
+            if row["bundle"] != "sdk":
+                staged.add(row["bundle"], pin)
+                continue
+            leaves = pins.read(row["leaves"]) if "leaves" in row else []
+            full = pins.read(row["full"]) if "full" in row else []
+            for witness in leaves + full:
+                target = tuple(witness["destination"])
+                if selected.setdefault(target, witness) != witness:
+                    raise ValueError("conflicting staged SDK witness")
+                if types.setdefault(witness["full_type"], witness["type_layout"]) != witness["type_layout"]:
+                    raise ValueError("conflicting staged SDK layout")
+            staged.add_sdk(pin, row["member"], leaves)
+            staged.qualify_sdk_full(row["member"], full, provider_paths={witness["provider"]: pin["path"] for witness in full})
+
+        visited = set()
+        pending = [target for target in targets if target[:2] != member]
+        while pending:
+            target = pending.pop()
+            if target in visited:
+                continue
+            visited.add(target)
+            if target in selected:
+                value, _, _ = staged.record(target)
+            else:
+                bundle, name, pid = target
+                if staged.member_bundles.get(name) != bundle:
+                    raise ValueError("staged endpoint owner differs")
+                _, typ, body = staged.members.record(name, (0, pid))
+                typ = owner.qualified_final_type(body, typ, staged.members.members[name][1]["scripts"], typ)
+                value = selected[target] = record_descriptor(owner, types, target, body, typ)
+            for pointer in value["edges"]:
+                if not pointer[1]:
+                    continue
+                endpoint = staged.target(target[1], pointer)
+                if endpoint[:2] != member:
+                    pending.append(endpoint)
+        pins.check()
+
+    output.mkdir(parents=True, exist_ok=False)
+    endpoints, schemas = output / "endpoints.jsonl", output / "schemas.json"
+    with endpoints.open("x") as stream:
+        for target in sorted(selected):
+            stream.write(json.dumps(selected[target], sort_keys=True) + "\n")
+    schemas.write_text(json.dumps(types, sort_keys=True) + "\n")
+    result = dict(success=True, records=len(selected), reachable=len(visited))
+    for key, path in (("endpoints", endpoints), ("schemas", schemas)):
+        result[key] = dict(path=str(path), bytes=path.stat().st_size, sha256=owner.O.B.sha(path))
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
 def requalify_relocation(owner, inputs, output):
     """Issue a fresh witness for retained PPtr patches from their prior producer."""
     inputs, output = Path(inputs).resolve(strict=True), Path(output).resolve()
@@ -301,19 +395,7 @@ def prepare(owner, inputs, output):
         return {key: bytes.fromhex(item) if key in ("tree", "hash", "script_id") else item for key, item in value.items()}
 
     def descriptor(target, body, typ, **extra):
-        full = owner.full_type_key(typ)
-        types[full] = owner.O.json_layout(typ)
-        return dict(
-            destination=list(target),
-            bytes=len(body),
-            sha256=hashlib.sha256(body).hexdigest(),
-            class_id=typ["class_id"],
-            native_type_hash=typ["hash"].hex(),
-            schema=hashlib.sha256(typ["tree"]).hexdigest(),
-            full_type=full,
-            edges=[list(edge) for edge in sorted(set(owner.pointers(body, typ, {}).values()))],
-            **extra,
-        )
+        return record_descriptor(owner, types, target, body, typ, **extra)
 
     with ExitStack() as stack:
         originals = {}

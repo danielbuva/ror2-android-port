@@ -16,8 +16,8 @@ Hardware controls and fresh public-input installation remain unqualified.
 Use the retained Main Nova candidate from the prepared primary checkout.
 Set `PLAYTEST_APK` to
 `work/coordination/gameplay-fidelity-firerock-20261117/owner-signed/lab-vulkan.apk`
-and `PLAYTEST_PAYLOAD` to
-`work/build-cache/9ad711ffdf425367bb4db7846846fb22361670f68b886a462bbc05c2ed5a49f4/payload`.
+and `PLAYTEST_PAYLOAD` to the hash-verified matching copy at
+`work/build-cache/3a73ec304cfbaca670cceca138b4f48d75c9948f10889c17dd8f996af7d12ce2/payload`.
 The APK SHA-256 is
 `3fe278af144ff6b428bd7ed48edd6cdf5a07e60bd531f1f2ba6178b083d146b1`
 from source `f93b1676`. Follow the
@@ -48,18 +48,17 @@ from step 4. Prior assisted runs used this pair.
    confirm with A. Cold launch, repeat cancel and confirm using touch, then
    reopen and check that the saved loadout and setting persisted. Leave the
    app stopped and the display asleep after testing.
-5. In a separate session using a recorder-capable build, unplug the Nova for
-   30 minutes when asked. Use the physical controls and ordinary Start, and
-   reconnect USB when the app reports completion. If the app closes early,
-   reconnect and report what happened. The runner collects the trace and
-   returns the device to idle. Record the stages and settings you used.
 
-Record each case as passed, failed or pending, with the input used, timing and
-first failure. If the ten-minute window ends before a natural defeat, a stage
-transition or either Golem attack, leave that observation pending. Keep captures,
-receipts and profiles local.
+Keep the phone plugged in throughout. Record each case as passed, failed or
+pending, with the input used, timing and first failure. If the ten-minute
+window ends before a natural defeat, a stage transition or either Golem attack,
+leave that observation pending. Keep captures, receipts and profiles local.
 
-### Arm the 30-minute unplugged session
+### Unplugged energy session deferred by owner
+
+The owner deferred the 30-minute unplugged session on 2026-11-18. The
+recorder-capable APK is retained locally for possible future qualification.
+The procedure below applies when the owner reopens the session.
 
 The retained APK above predates this recorder. Use a newly built matching
 APK/payload pair. Set the intended refresh preference in the app before the

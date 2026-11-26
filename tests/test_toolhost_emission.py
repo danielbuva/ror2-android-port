@@ -339,6 +339,39 @@ class EmissionTests(unittest.TestCase):
         producer = command[command.index("--") + 1 :]
         self.assertEqual(producer[producer.index("--workers") + 1], "1")
 
+    def test_cold_bundle_uses_retained_tool_and_cleans_only_its_fresh_stage(self):
+        self.request["retained_tool_sha256"] = self.request["tool_apk"]["sha256"]
+        self.path.write_text(json.dumps(self.request))
+        self.phone.occupied.return_value = True
+        result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["retained_tool_preserved"])
+        state = json.loads((self.output / "device-state.json").read_bytes())
+        self.assertTrue(state["retained_tool"])
+        self.assertEqual(state["native"], "/data/app/synthetic/lib/arm64")
+        command = self.phone.transport.start_detached.call_args.args[0]
+        self.assertEqual(command[command.index("--cache") + 1], state["remote"] + "/cache")
+        self.phone.shell.assert_any_call("run-as", INSTALLER.PACKAGE, "rm", "-rf", state["remote"], label="emission-retained-scratch-cleanup")
+        self.assertEqual(self.run_request(resume=True)["error"], "emission-retained-tool-requires-fresh-request")
+        self.phone.transport.start_detached.assert_called_once()
+        self.phone.transport.install.assert_not_called()
+        self.phone.install.assert_not_called()
+        self.phone.remove_owned_installer.assert_not_called()
+
+    def test_cold_bundle_retained_tool_requires_the_exact_installed_apk(self):
+        self.request["retained_tool_sha256"] = "c" * 64
+        self.path.write_text(json.dumps(self.request))
+        self.assertEqual(self.run_request()["error"], "emission-bundle-retained-tool-must-match-apk")
+        self.request["retained_tool_sha256"] = self.request["tool_apk"]["sha256"]
+        self.path.write_text(json.dumps(self.request))
+        self.assertEqual(self.run_request()["error"], "emission-retained-tool-not-installed")
+        self.phone.occupied.return_value = True
+        self.phone.package_hash.return_value = "c" * 64
+        self.assertEqual(self.run_request()["error"], "emission-preexisting-package")
+        self.phone.transport.start_detached.assert_not_called()
+        self.phone.transport.install.assert_not_called()
+        self.phone.install.assert_not_called()
+
     def test_exact_cli_dry_run_validates_pins_without_device_or_terminal(self):
         observed = subprocess.run(
             [sys.executable, str(ROOT / "scripts/lab/lab_runner.py"), "--emission-request", str(self.path), "--dry-run"], capture_output=True, text=True
@@ -463,6 +496,35 @@ runpy.run_path(sys.argv[0], run_name="__main__")
         self.assertEqual(result["error"], "emission-input-pin")
         self.device.storage.assert_not_called()
         self.assertFalse(json.loads((self.output / "terminal.operation.json").read_bytes())["success"])
+
+    def test_decode_requires_expected_block_count_and_digest_under_retained_tool(self):
+        expected = "b" * 64
+        self.request.pop("expected_records")
+        self.request.update(
+            operation="bundle-decode",
+            expected_blocks=3,
+            expected_decoded_sha256=expected,
+            retained_tool_sha256=self.request["tool_apk"]["sha256"],
+        )
+        manifest = Path(self.request["manifest"]["path"])
+        files = json.loads(manifest.read_bytes())["files"]
+        files.update(dict.fromkeys(EMISSION.DECODE_FILES, files["request.json"]))
+        manifest.write_text(json.dumps(dict(files=files)))
+        self.request["manifest"]["sha256"] = EMISSION.digest(manifest)
+        self.path.write_text(json.dumps(self.request))
+        self.phone.occupied.return_value = True
+        self.collected = dict(decode=dict(blocks=3, decoded_sha256=expected), thermal={})
+        result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["retained_tool_preserved"])
+        self.assertFalse(result["device_accepted"])
+        self.assertIn(
+            str(Path("repo/tools/phone-build/accepted-output/bundle_decode_benchmark.py")), " ".join(self.phone.transport.start_detached.call_args.args[0])
+        )
+        self.phone.install.assert_not_called()
+
+        self.collected["decode"]["decoded_sha256"] = "c" * 64
+        self.assertFalse(self.run_request()["success"])
 
     def test_adopted_staging_refuses_internal_fallback(self):
         self.device.storage.return_value = dict(mode="adopted")

@@ -2479,9 +2479,11 @@ are unchanged. Setup and unsupported modes are documented in
 `tools/phone-build/managed-host/README.md`; the experiment result lives only in
 J1001.
 
-This profile also pins the two public MIT-licensed wheel archives used by the
-player script registry. The private fixture retains their license notices and
-the recipe contains only archive names and checksums.
+The profile pins the public PyPI wheels and source archives used by the
+phone Python producers, including UnityPy for typed asset reads. The private
+fixture retains the wheel notices and the Independent JPEG Group's README for
+Pillow's JPEG support. Its Python import plan lists the staged entry points
+and their dependency modules. Proprietary FMOD providers are excluded.
 The `texture_sdk_guest` map pins the authored Linux texture pipe executable
 and the public GNU loader/runtime from the qualified QEMU setup. It contains
 relative paths and checksums. The private fixture stages the pinned files with

@@ -3,8 +3,10 @@
 import hashlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -99,6 +101,32 @@ class UnityWriteTests(unittest.TestCase):
                         self.assertTrue(any(block[3] == 0 for block in parsed.blocks))
                     self.assertEqual(parsed.read(0, sum(map(len, data))), b"".join(data))
 
+    def test_decode_benchmark_checks_every_block_against_the_baseline(self):
+        data = b"authored repeated bytes " * 32
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            bundle, baseline, receipt = (root / name for name in ("bundle", "baseline.py", "receipt.json"))
+            with bundle.open("wb") as stream:
+                W.write_bundle(stream, [("authored", 0, len(data), lambda: io.BytesIO(data))], compress, block_size=256)
+            baseline.write_text(
+                "import lz4.block\ndef decompress(data, size, flags):\n    return lz4.block.decompress(data, uncompressed_size=size) if flags & 63 else data\n"
+            )
+            command = [sys.executable, "-I", str(Path(SPEC.origin).with_name("bundle_decode_benchmark.py")), bundle, baseline, receipt]
+            subprocess.run(command, check=True)
+            report = json.loads(receipt.read_text())
+            self.assertEqual(report["blocks"], 3)
+            self.assertEqual(report["decoded_bytes"], len(data))
+            self.assertEqual(report["decoded_sha256"], hashlib.sha256(data).hexdigest())
+            self.assertGreater(report["baseline_cpu_seconds"], 0)
+            self.assertGreater(report["candidate_cpu_seconds"], 0)
+
+            baseline.write_text("def decompress(data, size, flags): return bytes(size)\n")
+            receipt.unlink()
+            failed = subprocess.run(command, capture_output=True)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertIn(b"decoder output mismatch at block 0", failed.stderr)
+            self.assertFalse(receipt.exists())
+
     def test_compressed_native_fixture_is_independently_loadable(self):
         with tempfile.TemporaryDirectory() as temporary:
             source = Path(temporary) / "raw"
@@ -109,6 +137,25 @@ class UnityWriteTests(unittest.TestCase):
             result = io.BytesIO()
             W.write_bundle(result, [(name, 4, len(data), lambda: io.BytesIO(data))], compress)
             self.assertEqual(UnityPy.load(result.getvalue()).container[ASSET].read().m_Name, "phone-fixture")
+
+    def test_lz4_short_and_extended_lengths_with_overlapping_and_disjoint_matches(self):
+        cases = (
+            (b"\x80abcdefgh\x08\x00\x80FINSUFFX", b"abcdefghabcdFINSUFFX"),
+            (b"\x15a\x01\x00\x50FINAL", b"a" * 10 + b"FINAL"),
+            (b"\x1fa\x01\x00\xff\x01\x50FINAL", b"a" * 276 + b"FINAL"),
+            (b"\xf0\xff\x00" + b"b" * 270, b"b" * 270),
+        )
+        for packed, expanded in cases:
+            with self.subTest(packed=packed[:12]):
+                self.assertEqual(lz4.block.decompress(packed, uncompressed_size=len(expanded)), expanded)
+                self.assertEqual(W.B.decompress(packed, len(expanded), 3), expanded)
+        for packed, size, error in (
+            (b"\xf0\xff", 270, "truncated LZ4 length"),
+            (b"\xf0\xff", 269, "LZ4 length exceeds output"),
+            (b"\x10a\x02\x00", 5, "invalid LZ4 match extent"),
+        ):
+            with self.subTest(packed=packed, size=size), self.assertRaisesRegex(ValueError, error):
+                W.B.decompress(packed, size, 3)
 
     def test_rejects_duplicate_members_bad_extents_and_destination_overlap(self):
         row = ("CAB-authored", 4, 1, lambda: io.BytesIO(b"x"))

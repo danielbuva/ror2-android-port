@@ -936,8 +936,7 @@ hash-matched original Wisp schema, SDK Material/resource records and the shader
 owner's standard record pack. Its Cube and diagnostics preloads follow the
 authored LabBuild policy. No generated project, private schema cache or Editor
 fixture output is a production input. Registry metadata inspection lazily uses
-the pinned `dnfile`/`pefile` dependencies. The managed app-host builder installs
-those wheels and notices from its explicit backend inputs into the isolated
+the pinned `dnfile`/`pefile` dependencies in the managed app-host's isolated
 CPython dependency directory, with a hash-bound Android `mmap` provider.
 The registry projects only the raw CLR metadata consumed
 by serialization and closes each PE immediately. It releases SDK and original
@@ -2863,8 +2862,12 @@ changes the existing refusal probe or reports security qualification.
 `tools/phone-build/managed-host/` owns the connected experimental app-host
 support. `stage.py` checks the public source/native metadata contract and stages
 owner-supplied SDK inputs and an optional private backend plan into canonical
-ignored work, including shared worktree storage. Its builder checks the plan's
-provider bytes and owns the separate phone-built APK.
+ignored work, including shared worktree storage. `build_python_wheels.py` builds
+the Android wheelhouse on the host from pinned public sources.
+`build_fixture.py` verifies the wheelhouse, stages Python data and notices,
+and installs extensions through the APK's hashed native-library inventory.
+`check_python.py` checks staged entry-point imports against the same manifest,
+including the producers registered by the release dispatcher.
 `NativePythonHost.c` selects the existing interpreter's isolated configuration;
 `NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
 `NativeJavaHost.c` invokes the separately acquired headless JDK through JNI;
@@ -5071,10 +5074,13 @@ and particle trails for owned actor templates and late actor-model descendants,
 including detached models. It preserves unknown/null slots and source material
 values, registers the existing presentation toggle, and retains copies in the
 session's `worldMaterials` list for teardown. `ObserveTeleporterWorld` performs
-the existing periodic handoff for objective and director-actor models; a renderer
-can receive new source slots after its first presentation. The authored
+the existing periodic handoff for objective and director-actor models and live
+purchase locks on tracked equipment barrels. It reads the lock from the native
+purchase interaction after the lock spawns. A renderer can receive new source
+slots after its first presentation. The authored
 `test_recovered_material_handoff.py` contract exercises slots, trails, late
-replacement, toggling and source ownership. Rendering remains a device gate.
+replacement, equipment lock selection, toggling and source ownership.
+Rendering remains a device gate.
 `TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
 effect sources and native projectile ghosts and DamageTrail segment references
 before their pools instantiate them. Source Cloud Intersection Remap slots on
@@ -6229,6 +6235,12 @@ host runner exits. Output and owned app remain for downstream consumers, which
 must dispose of them after use. Runner finalization sleeps the display and prunes
 before publishing the terminal file. Current staging refuses adopted storage;
 host fixtures establish lifecycle contracts, not phone or gameplay acceptance.
+
+The same owner accepts a `bundle-decode` request for a retained UnityFS bundle.
+`bundle_decode_benchmark.py` compares the pinned baseline and candidate
+decoder on each block, tracks CPU time and peak RSS, and returns a decoded hash
+and block count. The runner verifies those against the request and owns thermal
+supervision, receipt collection and scratch cleanup.
 
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
@@ -7854,6 +7866,15 @@ readers, discovery and cache writes stay in the parent. Exit closes workers
 and SQLite after rechecking input pins. Endpoint input epochs share external
 managed checks, then final persisted-file readback starts a fresh epoch.
 Managed schema properties are shared within one immutable checker context.
+Emission requests can use the same pinned `input_paths` mapping as CLR
+witness generation. The emitter resolves staged files before verifying their
+recorded sizes and hashes. Native producer lineages retain their existing
+`provider_paths` mapping.
+`bundle_prepare.py` also rebuilds missing staged descriptors via
+`bundle_preload.py --prepare-endpoints`. It follows the pinned routes and preload
+roots through actual staged member tables and retains the supplied SDK proofs.
+The command closes its staged readers and returns descriptor and schema pins
+for the existing emitter to qualify against actual bytes.
 This host/converter qualification does not admit Unity loadability or play.
 
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts

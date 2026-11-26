@@ -7,6 +7,7 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import shutil
+import struct
 import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
@@ -70,8 +71,30 @@ def validate_update_network(extra):
             raise ValueError("Installer HTTPS native provider drift: " + target)
 
 
-def stage_python_wheels(extra, pins, destination):
-    """Install the exact player-registry packages into the isolated import path."""
+def python_wheel_pins(plan, extra):
+    """Bind public wheels and locally built Android wheels before transfer."""
+    if not extra or "python_wheels" not in extra:
+        return {}
+    pins = dict(plan.get("python_wheels", {}))
+    built = extra.get("python_built_wheels", {})
+    for project, source in plan.get("python_source_wheels", {}).items():
+        prefix = project + "-"
+        suffix = "-py3-none-any.whl" if source.get("pure") else "-android_24_arm64_v8a.whl"
+        matches = [name for name in built if name.startswith(prefix) and name.endswith(suffix)]
+        if len(matches) != 1:
+            raise ValueError("Toolhost Python closure requires one built wheel for " + project)
+        name = matches[0]
+        relative(name)
+        if len(PurePosixPath(name).parts) != 1 or not re.fullmatch(r"[0-9a-f]{64}", built[name]):
+            raise ValueError("Invalid built wheel pin: " + name)
+        pins[name] = built[name]
+    if built.keys() - pins.keys():
+        raise ValueError("Unexpected built wheel in toolhost closure")
+    return pins
+
+
+def stage_python_wheels(extra, pins, destination, *, native_directory=None, native_files=None, links=None):
+    """Install package data and route Android ELF files through PackageManager."""
     if not extra or "python_wheels" not in extra:
         return {}
     if MMAP_MODULE not in extra["natives"] or extra["links"].get(MMAP_LINK) != MMAP_MODULE:
@@ -84,10 +107,41 @@ def stage_python_wheels(extra, pins, destination):
         if hashlib.sha256(data).hexdigest() != expected:
             raise ValueError("Player Python wheel drift: " + name)
         inputs[path] = data
-    for data in inputs.values():
-        # Only the exact public pure-Python wheels are admitted, including their notices.
+    for path, data in inputs.items():
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
-            archive.extractall(destination)
+            for member in archive.infolist():
+                if member.is_dir():
+                    continue
+                name = relative(member.filename)
+                content = archive.read(member)
+                if content.startswith(b"\x7fELF"):
+                    if native_directory is None or not path.name.endswith("-android_24_arm64_v8a.whl"):
+                        raise ValueError("Unexpected native executable in Python wheel: " + str(name))
+                    if len(content) < 20 or content[4:6] != b"\x02\x01" or struct.unpack_from("<HH", content, 16) != (3, 183):
+                        raise ValueError("Python wheel native must be AArch64 ELF shared object: " + str(name))
+                    if not re.search(r"\.so(?:\.[0-9]+)*$", name.name):
+                        raise ValueError("Unsupported native Python wheel path: " + str(name))
+                    provider = (
+                        name.name
+                        if re.fullmatch(r"lib[-+A-Za-z0-9_.]+\.so", name.name)
+                        else ("libpywheel_" + hashlib.sha256(str(name).encode()).hexdigest()[:24] + ".so")
+                    )
+                    target = native_directory / provider
+                    native_directory.mkdir(parents=True, exist_ok=True)
+                    if provider in native_files and target.read_bytes() != content:
+                        raise ValueError("Python wheel native name collision: " + provider)
+                    native_files[provider] = target
+                    links["python/lib/player-packages/" + str(name)] = provider
+                    if name.name.startswith("lib") and provider != name.name:
+                        links["native-links/" + name.name] = provider
+                else:
+                    target = destination / name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                if not target.exists():
+                    with target.open("xb") as stream:
+                        stream.write(content)
+                elif target.read_bytes() != content:
+                    raise ValueError("Python wheel file collision: " + str(name))
     return {str(path): pins[path.name] for path in inputs}
 
 
@@ -245,6 +299,7 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         "NativeDotnetMuxer.c",
         "NativeJavaHost.c",
         "run_profile.py",
+        "check_python.py",
         "stage.py",
         "build_fixture.py",
         "AndroidManifest.xml",
@@ -262,6 +317,8 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
     bind(trust_source, "release-trust.json")
     if backend_tools is not None:
         bind(Path(backend_tools), "backend-tools.json")
+        if owner_backend and not python_wheel_pins(metadata, json.loads(Path(backend_tools).read_bytes())):
+            raise ValueError("Owner backend requires the pinned Python wheelhouse")
     bind(METADATA, "python-native-plan.json")
     for name, path in {
         "android.jar": "platforms/android-33/android.jar",

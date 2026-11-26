@@ -105,6 +105,16 @@ public static class WholeCatalogComposed
 }
 namespace RoR2
 {
+    public class ChestBehavior : UnityEngine.Object
+    {
+        public UnityEngine.Object purchase;
+        public T GetComponent<T>() where T : UnityEngine.Object => purchase as T;
+    }
+    public class PurchaseInteraction : UnityEngine.Object
+    {
+        public GameObject lockRoot;
+        public GameObject GetLockObject() => lockRoot;
+    }
     public class DamageTrail : UnityEngine.Object { public GameObject segmentPrefab; }
     public class TeamAreaIndicator : UnityEngine.Object
     {
@@ -177,6 +187,7 @@ public partial class SourceSession
     public void Prepare(GameObject root) => PresentNativeEffectSource(root);
     public void Stop() => StopPresentingNativeEffectReferences();
     public IEnumerator PrepareSwings(List<string> unavailable) => PrepareNativeSwingEffects(unavailable);
+    public IEnumerable<GameObject> ObserveEquipmentLocks(params ChestBehavior[] barrels) => EquipmentLockRoots(barrels);
 }
 public static partial class AndroidNativeDeferredPresentation
 {
@@ -214,6 +225,34 @@ public static partial class AndroidMaterialPresentation
 static class Fixture
 {
     static void Check(bool value, string message) { if (!value) throw new Exception(message); }
+    static void CheckLateEquipmentLock(Material source)
+    {
+        var purchase = new PurchaseInteraction();
+        var barrel = new ChestBehavior { purchase = purchase };
+        var destroyedBarrel = new ChestBehavior { purchase = purchase };
+        UnityEngine.Object.Destroy(destroyedBarrel);
+        var session = new SourceSession();
+        var roots = session.ObserveEquipmentLocks(null, destroyedBarrel, new ChestBehavior(), barrel);
+        Check(new List<GameObject>(roots).Count == 0, "unlocked barrel presented a renderer root");
+
+        var particles = new ParticleSystemRenderer { sharedMaterials = new[] { source } };
+        var lockRoot = new GameObject { components = new[] { particles } };
+        purchase.lockRoot = lockRoot;
+        var selected = new List<GameObject>(roots);
+        Check(selected.Count == 1 && selected[0] == lockRoot, "late lock scope did not match the live native lock");
+        foreach (var renderer in selected[0].GetComponentsInChildren<Renderer>(true))
+        {
+            Check(AndroidMaterialPresentation.ApplyRecovered(renderer, session.worldMaterials) == 1, "lock material not recovered");
+            Check(AndroidMaterialPresentation.ApplyRecovered(renderer, session.worldMaterials) == 0, "lock material copied twice");
+        }
+        var material = particles.sharedMaterials[0];
+        Check(session.worldMaterials.Count == 1 && material == session.worldMaterials[0] &&
+              material.shader.name.StartsWith("Recovered/") && material.properties == source.properties &&
+              material.srcBlend == 1 && material.dstBlend == 1 && material.renderQueue == 3000,
+              "lock recovery lost source blend, queue or properties");
+        UnityEngine.Object.Destroy(lockRoot);
+        Check(new List<GameObject>(roots).Count == 0 && source, "destroyed lock remained in the recovery pass");
+    }
     static void CheckBakedEffectAdmission(Material original)
     {
         var firstRenderer = new Renderer { sharedMaterials = new[] { original } };
@@ -366,6 +405,7 @@ static class Fixture
             srcBlend = 1, dstBlend = 1, zWrite = 0, renderQueue = 3000 };
         var alpha = new Material("Hopoo Games/FX/Cloud Remap", "alpha mask") {
             srcBlend = 5, dstBlend = 10, zWrite = 0, renderQueue = 3050 };
+        CheckLateEquipmentLock(fire);
         CheckBakedEffectAdmission(alpha);
         CheckSwingAdmission(alpha);
         CheckIntersectionEffectAdmission();
