@@ -7105,6 +7105,30 @@ receipts stay local.
 | --- | --- |
 | `owner-whole-game-v30-original-native-tail.jsonl.gz` | `866bb756bad6a66b3bf3248ceee3dd5dc338ef7a6678f3fc986725c745a60966` |
 
+## V30 remaining directly replayable records (2026-11-26)
+
+`owner-whole-game-v30-original-managed-tail.jsonl.gz` selects 145
+MonoBehaviours from 73 original PC bundles. Each output names the historical
+destination so the release graph can select it among competing suppliers.
+The existing record producer retains the original bodies and complete types.
+Host qualification checked the final script-table binding and all 427
+nonnull PPtr routes, then matched the relocated bodies to V30.
+
+`owner-whole-game-v30-original-retained-tail.jsonl.gz` adds 308 records from
+71 original PC bundles. The same producer replayed each complete type and
+body, and relocation readback matched canonical V30. The remaining textures
+and meshes need their specialized producers. Composed bundle loadability and
+Android verification remain open.
+
+The provenance, licensing, privacy and sensitive-content review covered the
+decompressed recipes. They contain source selectors, sizes, digests and
+authored output identities. Original bodies and producer receipts stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-original-managed-tail.jsonl.gz` | `21d6b5707f63832c13fad07f0c52e38ba2767696c6e7a9ca9045b41c41d342f1` |
+| `owner-whole-game-v30-original-retained-tail.jsonl.gz` | `a0cd71c133ed06e3e0388257676af15bf83d1475a6795a83592f1773d2da907e` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison
