@@ -15,7 +15,16 @@ namespace RoR2 {
 }
 namespace EntityStates.Commando.CommandoWeapon {public sealed class FirePistol2 {public static string firePistolSoundString="native-pistol";}}
 public sealed class AkGameObj {public bool enabled;public static implicit operator bool(AkGameObj value) {return value!=null;}}
-public enum AKRESULT {AK_Success=1,AK_Fail=2}
+public enum AKRESULT {AK_Success=1,AK_Fail=2,AK_IDNotFound=15}
+public sealed class AkObjectInfoArray : IDisposable {
+ public static int disposed;public readonly int capacity;
+ public AkObjectInfoArray(int capacity) {this.capacity=capacity;}
+ public void Dispose() {disposed++;}
+}
+public sealed class AkWorldTransform : IDisposable {
+ public static int disposed;
+ public void Dispose() {disposed++;}
+}
 public static class PortSessionOriginalAudioOwner {public static bool PassivePcmCaptureRequested;}
 public static class GameAudioOriginalOwner {public static bool Ready;public static ulong SuccessfulOriginalRenderFrames;}
 public static class AkSoundEngine {
@@ -23,7 +32,20 @@ public static class AkSoundEngine {
  public static int calls,eventReads,volumeReads;public static AKRESULT returnedResult=AKRESULT.AK_Success;public static bool fail,registered;public static uint count;
  public static bool IsGameObjectRegistered(GameObject body) {calls++;return registered;}
  public static uint GetIDFromString(string name) {calls++;return 77;}
- public static ulong GetAkGameObjectID(GameObject body) {calls++;return 123;}
+ public static ulong emitterId=123;
+ public static int objectReads,positionReads;public static bool failEventQuery;
+ public static ulong GetAkGameObjectID(GameObject body) {calls++;return emitterId;}
+ public static AKRESULT QueryAudioObjectIDs(string name,ref uint count,AkObjectInfoArray objects) {
+  objectReads++;
+  if(name!="native-pistol"||count!=8||objects.capacity!=8)throw new Exception("first event name and query capacity");
+  if(failEventQuery)throw new InvalidOperationException("synthetic event lookup failure");
+  count=3;return AKRESULT.AK_Success;
+ }
+ public static AKRESULT GetPosition(ulong id,AkWorldTransform position) {
+  positionReads++;
+  if(id!=123||position==null)throw new Exception("first native emitter ID");
+  return AKRESULT.AK_IDNotFound;
+ }
  public static AKRESULT GetPlayingIDsFromGameObject(ulong id,ref uint available,uint[] ids) {
   calls++;if(fail)throw new InvalidOperationException("synthetic native query failure");
   if(id!=123||available!=8||ids.Length!=8)throw new Exception("query ownership/capacity");
@@ -46,7 +68,9 @@ public sealed class PortSession {
   readonly PortSession coordinator;public AudioHarness(PortSession owner) {coordinator=owner;}
   public bool preserveOriginalAudio=true;
   FieldInfo postObserverField;Action<uint,object> postObserver;
-  public void Capture(CharacterBody body,PrimaryFireReport report) {ObserveOriginalPrimaryAudio(body,report);}
+  public void Capture(CharacterBody body,PrimaryFireReport report) {
+   ObserveRejectedPrimaryAudioPost(report);ObserveOriginalPrimaryAudio(body,report);
+  }
   __PRODUCTION__
  }
 }
@@ -70,7 +94,7 @@ public static class AudioContract {
   WwiseIntegrationManager.noAudio=true;
   GameAudioOriginalOwner.SuccessfulOriginalRenderFrames=1;
   AndroidCommandoPostObserver.Record(0,body.gameObject);harness.Capture(body,report);
-  Need(report.sourceAudioPostReturns==1&&report.sourceAudioPostAcceptedReturns==0&&report.sourceAudioPlayingQueryAttempts==0&&AkSoundEngine.calls==1,"invalid returns only capture managed post state");
+  Need(report.sourceAudioPostReturns==1&&report.sourceAudioPostAcceptedReturns==0&&report.sourceAudioPlayingQueryAttempts==0&&AkSoundEngine.calls==2,"invalid returns capture managed state and native emitter ID");
   Need(report.sourceAudioObservationCaptured&&report.sourceAudioNoAudioAtFirstPost&&report.sourceAudioFirstPostRenderFrame==1&&report.sourceAudioSoundName=="native-pistol","first zero return records the original managed gate and sound name");
   WwiseIntegrationManager.noAudio=false;
   GameAudioOriginalOwner.SuccessfulOriginalRenderFrames=0;
@@ -104,6 +128,34 @@ public static class AudioContract {
    GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;harness.Capture(body,report);
   }
   Need(!report.sourceAudioExpectedEventObserved&&report.sourceAudioPlayingQueryAttempts==12,"empty voice results have a bounded retry budget");
+  Need(AkSoundEngine.objectReads==0&&AkSoundEngine.positionReads==0,"a no-audio gate rejection does not query native state");
+
+  AndroidCommandoPostObserver.Returned=null;
+  report=new PortSession.PrimaryFireReport();owner.r.primary=report;harness.AttachPrimaryPostObserver(body);
+  ulong firstFrame=GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
+  AndroidCommandoPostObserver.Record(0,body.gameObject);harness.Capture(body,report);
+  Need(report.sourceAudioFirstPostRejected&&report.sourceAudioFirstPostEmitterId==123&&
+       !report.sourceAudioRejectedPostQueryAttempted&&AkSoundEngine.objectReads==0&&AkSoundEngine.positionReads==0,
+       "rejected native post waits for a later service frame");
+  FirePistol2.firePistolSoundString="later-event";AkSoundEngine.emitterId=456;
+  GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;harness.Capture(body,report);
+  Need(report.sourceAudioRejectedPostQueryRenderFrame==firstFrame+1&&report.sourceAudioEventObjectsQueryReturned&&
+       report.sourceAudioEventObjectsQueryResult==1&&report.sourceAudioEventObjectCount==3&&
+       report.sourceAudioEmitterPositionQueryReturned&&report.sourceAudioEmitterPositionQueryResult==15&&
+       report.sourceAudioPlayingQueryAttempts==0,"record raw independent event and emitter results using first post operands");
+  GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;harness.Capture(body,report);
+  Need(AkSoundEngine.objectReads==1&&AkSoundEngine.positionReads==1&&AkObjectInfoArray.disposed==1&&AkWorldTransform.disposed==1,
+       "both native query buffers are disposed after one attempt");
+
+  FirePistol2.firePistolSoundString="native-pistol";AkSoundEngine.emitterId=123;
+  AndroidCommandoPostObserver.Returned=null;
+  report=new PortSession.PrimaryFireReport();owner.r.primary=report;harness.AttachPrimaryPostObserver(body);
+  AndroidCommandoPostObserver.Record(0,body.gameObject);AkSoundEngine.failEventQuery=true;
+  GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;harness.Capture(body,report);
+  GameAudioOriginalOwner.SuccessfulOriginalRenderFrames++;harness.Capture(body,report);
+  Need(!report.sourceAudioEventObjectsQueryReturned&&report.sourceAudioEventObjectsQueryError.Contains("synthetic event lookup failure")&&
+       report.sourceAudioEmitterPositionQueryReturned&&AkSoundEngine.objectReads==2&&AkSoundEngine.positionReads==2&&
+       AkObjectInfoArray.disposed==2&&AkWorldTransform.disposed==2,"event exception still releases the buffer and allows one emitter lookup");
   AndroidCommandoPostObserver.Returned=(_, __)=>throw new Exception("observer failure");
   AndroidCommandoPostObserver.Record(11,body.gameObject);
  }

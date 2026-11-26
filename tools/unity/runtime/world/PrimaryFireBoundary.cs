@@ -50,16 +50,19 @@ public sealed partial class PortSession
         public bool sourceAudioObservationCaptured, sourceAudioGameObjectPresent, sourceAudioGameObjectEnabled,
             sourceAudioManagedRegistered, sourceAudioPlayingQueryReturned, sourceAudioVolumeQueryReturned,
             sourceAudioVolumeValueFinite, sourceAudioExpectedEventObserved, sourceAudioPostObserverAttached,
-            sourceAudioNoAudioAtFirstPost;
+            sourceAudioNoAudioAtFirstPost, sourceAudioFirstPostRejected, sourceAudioRejectedPostQueryAttempted,
+            sourceAudioEventObjectsQueryReturned, sourceAudioEmitterPositionQueryReturned;
         public int sourceAudioPostReturns, sourceAudioPostAcceptedReturns;
         public uint sourceAudioPostPlayingId;
         public float sourceAudioObservationRealtime, sourceAudioVolumeValue;
-        public uint sourceAudioExpectedEventId, sourceAudioPlayingIdCount;
+        public uint sourceAudioExpectedEventId, sourceAudioPlayingIdCount, sourceAudioEventObjectCount;
         public int sourceAudioPlayingQueryResult, sourceAudioVolumeQueryResult, sourceAudioVolumeReturnedType,
-            sourceAudioPlayingQueryAttempts;
-        public ulong sourceAudioFirstPostRenderFrame, sourceAudioPlayingQueryRenderFrame;
+            sourceAudioPlayingQueryAttempts, sourceAudioEventObjectsQueryResult, sourceAudioEmitterPositionQueryResult;
+        public ulong sourceAudioFirstPostRenderFrame, sourceAudioPlayingQueryRenderFrame, sourceAudioFirstPostEmitterId,
+            sourceAudioRejectedPostQueryRenderFrame;
         public uint[] sourceAudioPlayingIds, sourceAudioEventIds;
-        public string sourceAudioSoundName, sourceAudioObservationError;
+        public string sourceAudioSoundName, sourceAudioObservationError, sourceAudioEventObjectsQueryError,
+            sourceAudioEmitterPositionQueryError;
         public int observerTicks;
         public PrimaryFireOperandSnapshot lastOperands, firstFailureOperands;
         public string observerExceptionStage, observerExceptionType, observerExceptionMessage;
@@ -206,12 +209,60 @@ public sealed partial class PortSession
                     report.sourceAudioGameObjectPresent = sourceObject;
                     report.sourceAudioGameObjectEnabled = sourceObject && sourceObject.enabled;
                     report.sourceAudioManagedRegistered = AkSoundEngine.IsGameObjectRegistered(body.gameObject);
+                    report.sourceAudioFirstPostEmitterId = AkSoundEngine.GetAkGameObjectID(body.gameObject);
+                    report.sourceAudioFirstPostRejected = playingId == AkSoundEngine.AK_INVALID_PLAYING_ID;
                 }
             };
             field.SetValue(null, callback);
             postObserverField = field;
             postObserver = callback;
             report.sourceAudioPostObserverAttached = true;
+        }
+
+        // A rejected post has no playing ID. Query its event and emitter independently.
+        void ObserveRejectedPrimaryAudioPost(PrimaryFireReport report)
+        {
+            if (!report.sourceAudioFirstPostRejected || report.sourceAudioNoAudioAtFirstPost ||
+                report.sourceAudioRejectedPostQueryAttempted || !coordinator.r.integratedWorld ||
+                !PortSessionOriginalAudioOwner.PassivePcmCaptureRequested || !GameAudioOriginalOwner.Ready)
+                return;
+            ulong renderFrame = GameAudioOriginalOwner.SuccessfulOriginalRenderFrames;
+            if (renderFrame <= report.sourceAudioFirstPostRenderFrame)
+                return;
+
+            report.sourceAudioRejectedPostQueryAttempted = true;
+            report.sourceAudioRejectedPostQueryRenderFrame = renderFrame;
+            if (!String.IsNullOrEmpty(report.sourceAudioSoundName))
+            {
+                try
+                {
+                    const int capacity = 8;
+                    uint count = capacity;
+                    using (var objects = new AkObjectInfoArray(capacity))
+                        report.sourceAudioEventObjectsQueryResult = (int)AkSoundEngine.QueryAudioObjectIDs(
+                            report.sourceAudioSoundName, ref count, objects);
+                    report.sourceAudioEventObjectCount = count;
+                    report.sourceAudioEventObjectsQueryReturned = true;
+                }
+                catch (Exception error)
+                {
+                    report.sourceAudioEventObjectsQueryError = error.GetType().Name + ": " + error.Message;
+                }
+            }
+            if (report.sourceAudioFirstPostEmitterId == AkSoundEngine.AK_INVALID_GAME_OBJECT)
+                return;
+
+            try
+            {
+                using (var position = new AkWorldTransform())
+                    report.sourceAudioEmitterPositionQueryResult = (int)AkSoundEngine.GetPosition(
+                        report.sourceAudioFirstPostEmitterId, position);
+                report.sourceAudioEmitterPositionQueryReturned = true;
+            }
+            catch (Exception error)
+            {
+                report.sourceAudioEmitterPositionQueryError = error.GetType().Name + ": " + error.Message;
+            }
         }
 
         // A posted event may become queryable only after Wwise services another frame.
@@ -403,6 +454,7 @@ public sealed partial class PortSession
                         report.reloads++;
                     lastSpineWeaponState = state;
                 }
+                ObserveRejectedPrimaryAudioPost(report);
                 if (state is FirePistol2)
                     ObserveOriginalPrimaryAudio(bodyRef, report);
                 operandStage = "primary.stock";

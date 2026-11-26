@@ -5197,7 +5197,10 @@ while it has effective authority. The lab R3 camera composition adds a
 static callback at that call site and preserves the original return handling.
 The primary owner attaches it before input dispatch and clears its callback
 during teardown. It records the first post's configured event name, audio gate,
-emitter registration and service-frame ordinal even when the call returns zero.
+managed registration, native emitter ID and service-frame ordinal. If the first
+post returns zero with audio enabled, the owner waits for a later successful
+service frame and queries the saved event and emitter once. The report retains
+the raw event result and object count and the raw emitter position result.
 After a nonzero return it samples the body's active Wwise event IDs at most 12
 times, with a new successful original audio service frame for each follow-up.
 The report records post acceptance, active event matches with their
