@@ -158,7 +158,7 @@ def main():
             os.environ.get("UNITY_EDITOR", "/Applications/Unity/Hub/Editor/" + pin["unity_version"] + "/Unity.app/Contents/MacOS/Unity")
         )
         sys.path.insert(0, str(ROOT / "scripts/lab"))
-        from build_lock import host_build_lock
+        from build_lock import host_build_lock, unity_editor_env
         from phone_registry import BINARY_SHA256
 
         if not editor.is_file() or sha(editor) != BINARY_SHA256:
@@ -185,7 +185,7 @@ def main():
         gradle = project.parent / "gradle-user"
         gradle.mkdir()
         (gradle / "gradle.properties").write_text("org.gradle.daemon=false\n")
-        env = dict(os.environ, ROR2_GRAPHICS_PRELOAD_COMMIT=commit, GRADLE_USER_HOME=str(gradle))
+        env = unity_editor_env(ROR2_GRAPHICS_PRELOAD_COMMIT=commit, GRADLE_USER_HOME=str(gradle))
         native, player = commands(ROOT, editor, project)
         phase = "unity-mutex-unavailable"
         with host_build_lock(common.parent / "work/coordination/unity-build.lock", operation="isolated graphics preload fixture", timeout=1):
