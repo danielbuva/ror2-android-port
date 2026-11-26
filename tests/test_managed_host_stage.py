@@ -1,9 +1,11 @@
 """Source drift and destination fences for experimental app-host staging."""
 
 import hashlib
+import importlib.metadata
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -222,6 +224,72 @@ class ManagedHostStageTests(unittest.TestCase):
 
 
 class ManagedHostMetadataTests(unittest.TestCase):
+    def test_phone_entry_points_import_from_an_isolated_staged_runtime(self):
+        plan = stage.load_metadata()
+        with tempfile.TemporaryDirectory() as temporary:
+            runtime = Path(temporary).resolve()
+            sources = subprocess.check_output(["git", "ls-files", "-z", "--", "scripts", "tools", "recipe"], cwd=ROOT).decode().split("\0")
+            for name in filter(None, sources):
+                if Path(name).suffix in {".py", ".json"}:
+                    target = runtime / "repo" / name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(ROOT / name, target)
+            for name in ("run_profile.py", "check_python.py"):
+                shutil.copyfile(stage.SOURCE / name, runtime / name)
+            manifest = runtime / "python-import-plan.json"
+            manifest.write_text(json.dumps(plan))
+            packages = runtime / "python/lib/player-packages"
+            projects = set(plan["python_source_wheels"]) | {name.removesuffix("-py3-none-any.whl") for name in plan["python_wheels"]}
+            for project in sorted(projects):
+                name, version = project.rsplit("-", 1)
+                distribution = importlib.metadata.distribution(name)
+                self.assertEqual(distribution.version, version)
+                for item in distribution.files:
+                    if ".." in item.parts or item.suffix == ".pyc":
+                        continue
+                    target = packages / item
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(item.locate(), target)
+            process = subprocess.run(
+                [sys.executable, "-I", "-S", "-B", str(runtime / "check_python.py"), str(runtime), str(manifest)],
+                cwd=runtime,
+                env={},
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(process.returncode, 0, process.stderr)
+            report = json.loads(process.stdout)
+            self.assertGreaterEqual(report["entry_points"], len(plan["python_imports"]["entries"]))
+            self.assertEqual(report["modules"], len(plan["python_imports"]["modules"]))
+
+    def test_android_wheel_routes_extensions_into_native_apk_members(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            wheel = root / "unitypy-1-cp314-cp314-android_24_arm64_v8a.whl"
+            elf = bytes.fromhex("7f454c460201010000000000000000000300b700")
+            module = "UnityPy/UnityPyBoost.cpython-314-aarch64-linux-android.so"
+            with zipfile.ZipFile(wheel, "w") as archive:
+                archive.writestr(module, elf)
+                archive.writestr("UnityPy/__init__.py", "")
+            extra = {
+                "python_wheels": str(root),
+                "python_built_wheels": {wheel.name: stage.digest(wheel)},
+                "natives": {stage.MMAP_MODULE: {}},
+                "links": {stage.MMAP_LINK: stage.MMAP_MODULE},
+            }
+            plan = {"python_wheels": {}, "python_source_wheels": {"unitypy-1": {}}}
+            with self.assertRaisesRegex(ValueError, "requires one built wheel for unitypy"):
+                stage.python_wheel_pins(plan, dict(extra, python_built_wheels={}))
+            native_files, links = {}, {}
+            packages = root / "assets/python/lib/player-packages"
+            stage.stage_python_wheels(
+                extra, stage.python_wheel_pins(plan, extra), packages, native_directory=root / "apk-native", native_files=native_files, links=links
+            )
+            provider = links["python/lib/player-packages/" + module]
+            self.assertEqual(native_files[provider].read_bytes(), elf)
+            self.assertFalse((packages / module).exists())
+            self.assertTrue((packages / "UnityPy/__init__.py").is_file())
+
     def test_player_python_wheels_verify_before_extraction_and_import_in_isolation(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

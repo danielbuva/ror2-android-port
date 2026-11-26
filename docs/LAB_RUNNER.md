@@ -128,6 +128,7 @@ The ignored JSON config has exactly these fields:
 | --- | --- |
 | `runner` | `repo` canonical checkout path, `ref` fetchable branch/commit, `device` configured alias |
 | `tool_apk`, `manifest` | Each has an absolute `path` and `sha256` |
+| `retained_tool_sha256` | Optional exact hash of the already-installed bundle toolhost, matching `tool_apk.sha256` |
 | `request` | Relative staged request path for `bundle_preload.py --inputs` |
 | `done_file` | New absolute terminal JSON path under canonical `work/` |
 | `expected_records` | Positive expected native record count |
@@ -147,6 +148,11 @@ checkpoints are the same in both modes.
 
 The operation streams the pinned APK's Python runtime and pinned inputs without
 host archive copies.
+With the retained toolhost pin, each fresh request discovers the installed
+runtime path and creates a fresh staging root and cache. After collecting
+terminal evidence it removes that root and preserves the installed toolhost.
+Use a separate terminal directory for each cold run. Resume applies only to an
+unconfirmed handle in this mode.
 Dry-run validates pins without device access. Live execution with `--workstream`
 verifies the named grant, takes the lease and stops Unity's ADB server before
 device admission. Use the same workstream to reattach to a retained lease.
@@ -154,6 +160,19 @@ Execution uses the standard fresh checkout, cooldown, package-identity,
 storage and display owners.
 The current runtime staging supports configured internal-only devices; adopted
 storage is refused without an internal-storage fallback.
+
+For a paired UnityFS decoder benchmark, set `operation` to `bundle-decode`
+and replace `expected_records` with `expected_blocks` and
+`expected_decoded_sha256`. The latter pins the SHA-256 of the concatenated
+decoded blocks in bundle order. Both pins include raw blocks. Set `request`
+to the staged bundle path and provide the exact
+`retained_tool_sha256`. The manifest includes `baseline-unity_bundle.py` from
+the baseline revision and the candidate's tracked `bundle_decode_benchmark.py`,
+`unity_bundle.py` and `phone_runner.py` under
+`repo/tools/phone-build/accepted-output/`. The supervised child decodes each
+block with both versions in alternating order and requires equal bytes. Only
+the receipt is written. It records per-decoder CPU time, elapsed time and peak
+RSS. The runner retains the thermal trace and removes the staged inputs.
 
 Before a new producer qualification, repin the existing manifest explicitly:
 

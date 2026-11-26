@@ -684,6 +684,9 @@ Sorted local indices and SHA-256 prefixes provide independent build identities
 and cache versions; original asset identities and dependency edges are retained.
 Setup requires an explicit input manifest and a new output directory. Inputs
 are rechecked, no child process survives, and output/result receipts persist.
+The `phone-content-check` fixture can load `AssetBundleManifest` and compare
+its bundle names, cache hashes and direct dependencies with the expected cohort.
+The produced manifest retains its public-schema type trees for that load.
 This is an opt-in source alternative; historical admission and complete phone
 production/runtime qualification remain separate.
 `unity_write.py` owns current experimental bounded UnityFS 7/8 and
@@ -924,8 +927,7 @@ hash-matched original Wisp schema, SDK Material/resource records and the shader
 owner's standard record pack. Its Cube and diagnostics preloads follow the
 authored LabBuild policy. No generated project, private schema cache or Editor
 fixture output is a production input. Registry metadata inspection lazily uses
-the pinned `dnfile`/`pefile` dependencies. The managed app-host builder installs
-those wheels and notices from its explicit backend inputs into the isolated
+the pinned `dnfile`/`pefile` dependencies in the managed app-host's isolated
 CPython dependency directory, with a hash-bound Android `mmap` provider.
 The registry projects only the raw CLR metadata consumed
 by serialization and closes each PE immediately. It releases SDK and original
@@ -2850,8 +2852,12 @@ changes the existing refusal probe or reports security qualification.
 `tools/phone-build/managed-host/` owns the connected experimental app-host
 support. `stage.py` checks the public source/native metadata contract and stages
 owner-supplied SDK inputs and an optional private backend plan into canonical
-ignored work, including shared worktree storage. Its builder checks the plan's
-provider bytes and owns the separate phone-built APK.
+ignored work, including shared worktree storage. `build_python_wheels.py` builds
+the Android wheelhouse on the host from pinned public sources.
+`build_fixture.py` verifies the wheelhouse, stages Python data and notices,
+and installs extensions through the APK's hashed native-library inventory.
+`check_python.py` checks staged entry-point imports against the same manifest,
+including the producers registered by the release dispatcher.
 `NativePythonHost.c` selects the existing interpreter's isolated configuration;
 `NativeDotnetMuxer.c` forwards actual framework queries/application invocations.
 `NativeJavaHost.c` invokes the separately acquired headless JDK through JNI;
@@ -6218,6 +6224,12 @@ host runner exits. Output and owned app remain for downstream consumers, which
 must dispose of them after use. Runner finalization sleeps the display and prunes
 before publishing the terminal file. Current staging refuses adopted storage;
 host fixtures establish lifecycle contracts, not phone or gameplay acceptance.
+
+The same owner accepts a `bundle-decode` request for a retained UnityFS bundle.
+`bundle_decode_benchmark.py` compares the pinned baseline and candidate
+decoder on each block, tracks CPU time and peak RSS, and returns a decoded hash
+and block count. The runner verifies those against the request and owns thermal
+supervision, receipt collection and scratch cleanup.
 
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the

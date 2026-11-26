@@ -6,6 +6,44 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1503 — Restore live equipment-barrel lock materials
+
+2026-11-26. The teleporter world owner follows tracked equipment barrels to
+their native purchase locks as they spawn and recovers their particle materials.
+The assisted native seed-3 Start reached Distant Roost (`blackbeach2`) with
+107.1 s of native authority. Three live lock renderers had 10 particles each,
+Android family 0 variant 105, queue 3000 and One/One blending.
+APK SHA-256 `f9cfbafd21a627934da1062fa62eea2381d3259f545dcf03b2b9ebceba1f7a6d` (source `1a1bfd8d`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/roost-seed3-first-operands-main-native-start/`
+includes `final/` renderer reports, screenshot and logcat, plus `terminal.done.json`.
+Peak CPU/GPU was 88.8 °C with 25.9 s above 80 °C. Adopted placement, scratch
+cleanup, OLED sleep and lease release passed. Matched PC pixels remain open.
+
+## J1502 — Stage the phone toolhost Python dependencies
+
+2026-11-26. The shared toolhost stages a pinned Python import plan, 14 wheels
+including UnityPy, and Android extensions. An isolated host interpreter imports
+the staged entry points and registered release producers.
+Thor built APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a859516807c00a4`
+from `d4dd34af` in 255.7 s. Peak CPU/GPU temperature was 56.1 °C with zero pauses.
+The runner verified the retained signer, packaged import plan and 126 ARM64 library hashes.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/python-closure-1126/admission-fixed.done.json`.
+Android runtime imports, signed-code conversion and installer qualification remain open.
+
+## J1501 — Speed up checked UnityFS LZ4 decoding on Android
+
+2026-11-26. The UnityFS decoder streamlines common LZ4 lengths and disjoint
+matches. Thor compared both decoders on all 13,212 blocks of the retained
+pre-#630 bundle. All 1,731,684,936 decoded bytes matched an independent host digest.
+Decoder CPU time fell from 905.0 to 451.5 s (50.1%), with 32.6 MB peak RSS,
+62.9 °C peak CPU/GPU at admission and zero thermal pauses. Sleep and cleanup passed.
+The current-input 27-record cold pair emitted identical structurally checked bundles
+(`5df987cd43526a18e9e415cdebfbd5e9e1103c27a6a7d029f9561cf1bdf3d8f5`).
+Toolhost APK SHA-256 `2f19c4e52b01112f3569461e5bd696039ca302137fe0086d3905b0b83f9cb6cd`.
+Evidence: `work/coordination/alpha-converter-lz4-thor-v5-20261126/`,
+`paired-smoke.md` and `pre630-full-decode-isolated/reconciliation.md`.
+Full current-input emission and end-to-end converter performance remain open.
+
 ## J1500 — Package the complete accepted Wwise bank roster
 
 2026-11-18. The shared stager packages 247 banks and 120 WEMs, restoring

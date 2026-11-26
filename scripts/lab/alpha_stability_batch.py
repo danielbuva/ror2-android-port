@@ -140,8 +140,9 @@ class _GameThermalOwner:
     cooldown before a new stage requires at most 50 C, battery at most 35 C.
     """
 
-    def __init__(self, device, expected, trace, deadline):
+    def __init__(self, device, expected, trace, deadline, *, charge_override=CHARGE_OVERRIDE):
         self.device, self.expected, self.trace, self.deadline = device, expected, trace, deadline
+        self.charge_override = charge_override
         self.stop = threading.Event()
         self.sample_stop = threading.Event()
         self.thread = None
@@ -264,7 +265,7 @@ class _GameThermalOwner:
         if at >= self.deadline:
             raise RuntimeError("Device run thermal deadline reached")
         if all_zones:
-            if self.battery["level"] > 85 and not CHARGE_OVERRIDE:
+            if self.battery["level"] > 85 and not self.charge_override:
                 raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
             self.hot_core_zones.clear()
         else:
@@ -322,7 +323,7 @@ class _GameThermalOwner:
         charging_since = None
         while True:
             maximum = self.sample(all_zones=True)
-            if self.battery["level"] >= 80 and self.battery_current_now > 0 and not CHARGE_OVERRIDE:
+            if self.battery["level"] >= 80 and self.battery_current_now > 0 and not self.charge_override:
                 now = time.monotonic()
                 if charging_since is None:
                     charging_since = now
