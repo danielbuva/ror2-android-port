@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1517 — Recover the assisted Gold shrine-to-teleporter route
+
+2026-11-26. The assisted route keeps moving while earning the shrine cost
+and resets the old terrain recovery window at the next objective.
+APK SHA-256 `f9f9dc63f97b800924fb8019f8926f7c2b221a7d697805b05a30db266ba34571` (source `46d0ba4f`).
+Evidence: `work/coordination/gameplay-coverage-20261126/gold-teleporter-recovery-nova-b-current/`.
+Paired screenshots and logs show the purchase, native charge, Gold Shores
+entry, four beacons, native boss defeat and grounded return to the next stage.
+The old 85 °C ceiling stopped observation after return at 85.2 °C, with
+9.595 s above 80 °C and a 31 °C start battery. Scratch and display cleanup passed.
+Native boss reward availability and matched PC rendering remain open.
+
 ## J1516 — Restore Bandit additive gestures and sidearm locomotion
 
 2026-11-26. The catalog build restores additive reference poses, synchronized
