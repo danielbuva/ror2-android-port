@@ -6274,7 +6274,15 @@ samples and subprocess start/end receipts share Android's BOOTTIME clock.
 The trace samples summed live descendant RSS and bytes available on the
 staging volume once per second. RSS can include shared pages, volume changes
 can include other activity, and short subprocesses may have no resource sample.
-The runner retrieves this trace beside the private process receipts.
+The runner retrieves this trace beside the private process receipts and joins
+samples inside each subprocess window into the private `phase-resources.json`.
+Each row retains the process outcome, sample counts, longest gap between
+samples or window boundaries, observed temperature maxima, sampled tree RSS
+peak, and first, minimum and last sampled volume availability. Missing
+readings remain null. Parent and
+nested subprocess windows can overlap. Treat their elapsed times and samples
+as separate observations. A summary error is recorded alongside the raw
+evidence and leaves the producer outcome and cleanup intact.
 A signed-code request can pin an earlier retained toolhost by APK
 hash. The runner verifies the installed bytes and uses a same-signer Android
 update when the target differs. It removes only the current job's scratch for

@@ -218,9 +218,11 @@ class EmissionTests(unittest.TestCase):
         managed = Path("work/conversion/managed-production")
         artifacts = {
             managed / "logs/raw-managed.stderr.log": b"compiler startup\n" * 1024 + b"compiler failure\n",
-            managed / "logs/raw-managed.process.json": b'{"returncode":139}',
+            managed / "logs/raw-managed.process.json": (
+                b'{"exit_code":139,"started_boottime_seconds":24.9,"ended_boottime_seconds":26.1,"paused_seconds":0.5}'
+            ),
             managed / "raw/adapter logs/compile.log": b"authored nested log\n",
-            managed / "packages/Fixture.compile.process.json": b'{"exit_code":0,"seconds":1}',
+            managed / "packages/Fixture.compile.process.json": b'{"exit_code":0,"started_boottime_seconds":25.1,"ended_boottime_seconds":25.9}',
             managed / "gameplay/gameplay.postprocess.process.json": b'{"exit_code":0,"seconds":2}',
             managed / "raw/tombstone_01": b"authored app tombstone\n",
             managed / "raw/tombstone_01.pb": b"authored binary tombstone fixture\n",
@@ -233,7 +235,12 @@ class EmissionTests(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
         real_run = subprocess.run
-        trace = b'{"boottime_seconds":25,"process_tree_rss_bytes":4096}\n'
+        trace = (
+            b'{"boottime_seconds":25,"paused":false,"cpu_celsius":64,"process_tree_rss_bytes":4096,"volume_available_bytes":1000}\n'
+            b'{"boottime_seconds":25.5,"paused":true,"cpu_celsius":72,"gpu_celsius":68}\n'
+            b'{"boottime_seconds":26,"paused":false,"cpu_celsius":65,"process_tree_rss_bytes":9000,"volume_available_bytes":800}\n'
+            b'{"boottime_seconds":26.25,"paused":false,"cpu_celsius":75}\n'
+        )
 
         def read_remote(*args, **kwargs):
             label = kwargs["label"]
@@ -280,6 +287,21 @@ class EmissionTests(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["managed"]["phase"], "raw-managed")
         self.assertTrue(result["owned_app_removed"])
+        profile = json.loads((self.output / result["phase_resource_summary"]).read_bytes())
+        self.assertEqual(profile["samples"], 4)
+        self.assertEqual(profile["unclocked_process_receipts"], ["managed-production/gameplay/gameplay.postprocess.process.json"])
+        parent, compiler = profile["stages"]
+        self.assertEqual(parent["exit_code"], 139)
+        self.assertAlmostEqual(parent["boottime_elapsed_seconds"], 1.2)
+        self.assertEqual(parent["observed_pause_seconds"], 0.5)
+        self.assertEqual((parent["samples"], parent["paused_samples"], parent["resource_samples"]), (3, 1, 2))
+        self.assertEqual(parent["sampled_peak_celsius"], dict(cpu=72, gpu=68, soc=None, battery=None, skin=None))
+        self.assertEqual(parent["sampled_process_tree_rss_peak_bytes"], 9000)
+        self.assertEqual(parent["sampled_volume_available_bytes"], dict(first=1000, minimum=800, last=800))
+        self.assertEqual((compiler["samples"], compiler["paused_samples"], compiler["resource_samples"]), (1, 1, 0))
+        self.assertAlmostEqual(compiler["largest_sample_gap_seconds"], 0.4)
+        self.assertIsNone(compiler["sampled_process_tree_rss_peak_bytes"])
+        self.assertEqual(compiler["sampled_volume_available_bytes"], dict(first=None, minimum=None, last=None))
         command = self.phone.transport.start_detached.call_args.args[0]
         self.assertTrue(command[command.index("--samples") + 1].endswith("/" + EMISSION.RESOURCE_TRACE))
         self.phone.remove_owned_installer.assert_called_once()
