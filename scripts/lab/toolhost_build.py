@@ -1,6 +1,7 @@
 """Build the pinned managed installer fixture through the shared lab runner."""
 
 import hashlib
+import importlib.util
 import io
 import json
 import os
@@ -60,10 +61,21 @@ def read_plan(request, checkout):
             transfers[target] = path
             row["path"] = "@run/" + target
     python_plan = json.loads((stage / "python-native-plan.json").read_bytes())
+    spec = importlib.util.spec_from_file_location("toolhost_stage", Path(__file__).resolve().parents[2] / "tools/phone-build/managed-host/stage.py")
+    staging = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(staging)
+    plans = {
+        "python_wheels": (
+            staging.python_wheel_pins(python_plan, backend)
+            | python_plan.get("python_notices", {})
+            | python_plan.get("python_android_distribution", {}).get("extensions", {})
+        ),
+        "texture_sdk_guest": python_plan.get("texture_sdk_guest", {}),
+    }
     for field in ("python_wheels", "texture_sdk_guest"):
         if field not in backend:
             continue
-        for name, expected in python_plan[field].items():
+        for name, expected in plans[field].items():
             transfers[f"{field}/{name}"] = pin(Path(backend[field]) / name, expected)
         backend[field] = "@run/" + field
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=checkout, text=True).strip()
@@ -124,8 +136,13 @@ def verify_apk(apk, stage, files, build, request, package):
         raise ValueError("toolhost APK receipt mismatch")
     with ZipFile(apk) as archive:
         for name, expected in files.items():
-            if (name.startswith("repo/") or name == "release-trust.json") and hashlib.sha256(archive.read("assets/" + name)).hexdigest() != expected:
-                raise ValueError("toolhost packaged source drift: " + name)
+            if name.startswith("repo/") or name in {"release-trust.json", "run_profile.py", "check_python.py"}:
+                if hashlib.sha256(archive.read("assets/" + name)).hexdigest() != expected:
+                    raise ValueError("toolhost packaged source drift: " + name)
+        if "check_python.py" in files:
+            plan = json.loads((stage / "python-native-plan.json").read_bytes())
+            if json.loads(archive.read("assets/python-import-plan.json")) != {"python_imports": plan["python_imports"]}:
+                raise ValueError("toolhost packaged Python import plan drift")
         for name, expected in build["native_hashes"].items():
             if hashlib.sha256(archive.read("lib/arm64-v8a/" + name)).hexdigest() != expected:
                 raise ValueError("toolhost packaged native drift: " + name)
