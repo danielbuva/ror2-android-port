@@ -7060,6 +7060,29 @@ and authored record identities. Original bodies and generated packs stay local.
 | --- | --- |
 | `owner-whole-game-v30-original-native-records.jsonl.gz` | `12fc40399cece246488f785ad2202f38588cb1ab127336b56f63ddeba44f2893` |
 
+## V30 original prefab and managed records (2026-11-26)
+
+Two more original-input profiles supply 608 native prefab records and 4,458
+managed records through `record_produce.py`. Of the managed records, 2,772
+retain their original complete serialized types and 1,469 use the pinned SDK
+properties hash for the original MonoScript. The other 217 use the existing
+field projection against the original CLR assemblies.
+
+Both profiles replayed from the admitted PC inputs. The release graph bound
+all 5,066 destinations to the replayed packs. Host readback checked relocated
+PPtrs and complete serialized types against V30, including the managed script
+bindings. Final bundle loadability and Android playback remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered both
+recipes, including the decompressed native rows. The recipes contain only
+source selectors, sizes, digests and authored transformation settings. Game
+bodies, assemblies, SDK material and local receipts stay outside the repository.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-v30-original-prefab-records.jsonl.gz` | `76f37da3ed9d2ba2c2cbbfbd1dc2286625fcae089c78436ea9111c2d5aa6d8b5` |
+| `owner-whole-game-v30-original-managed-records.json` | `57df68401046e5174ad0a0018ccf0199bbbd3efc0f5467a3e146bd6a57fab69c` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison
