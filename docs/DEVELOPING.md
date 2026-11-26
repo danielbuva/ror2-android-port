@@ -32,10 +32,11 @@ use their respective gameplay reports. For a lab stage-transition memory
 soak, pair it with an explicit auto-route selector. Physical input
 qualification remains separate.
 `coverage_segment_seconds` selects an active-play interval for native lab
-menu Start with `enforce_soc_ceiling: true`. The runner saves High refresh off
-in the app and verifies the 60 FPS cap in the ready world. It pauses the run
-and sleeps the OLED between intervals, then verifies same-process resume
-after cooldown. The saved choice persists. Use these receipts for mission
+menu Start or direct stage entry with `enforce_soc_ceiling: true`. Menu Start
+saves High refresh off in the app. Direct entry uses the saved setting and
+records the entry scene. Both verify the 60 FPS cap in the ready world, pause
+and sleep the OLED between intervals, then verify same-process resume after
+cooldown. The saved choice persists. Use these receipts for mission
 coverage only.
 For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.

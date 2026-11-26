@@ -144,13 +144,18 @@ def load_request(path, serial=None):
         seconds = value["coverage_segment_seconds"]
         if type(seconds) is not int or not 0 < seconds <= value["duration_seconds"]:
             raise ValueError("coverage_segment_seconds must be within the observation duration")
+        selection = value.get("selection")
+        diagnostic_stage = selection.get("diagnosticStage") if isinstance(selection, dict) else None
+        direct_entry = isinstance(diagnostic_stage, str) and bool(diagnostic_stage.strip())
+        menu_start = value.get("start_from_menu", False)
         if (
             value["package"] != "dev.ror2lab.arm64"
-            or not value.get("start_from_menu")
+            or value["mode"] != "launch"
+            or menu_start == direct_entry
             or not value.get("enforce_soc_ceiling")
             or value.get("require_high_refresh")
         ):
-            raise ValueError("Segmented coverage requires native lab menu Start with the SoC ceiling and no high-refresh requirement")
+            raise ValueError("Segmented coverage requires lab menu Start or direct stage entry, the SoC ceiling and no high-refresh requirement")
     for name in ("capture_golem_attacks", "capture_titan_indicator"):
         if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
             raise ValueError(name + " requires the native lab launch workload")
@@ -197,7 +202,7 @@ def load_request(path, serial=None):
     if "prior_receipt" in value:
         read_ownership_receipt(value["prior_receipt"], value["serial"], value["package"])
     mapping = checked_mapping(value) if "input_mapping" in value else None
-    if value.get("start_from_menu"):
+    if value.get("start_from_menu") or "coverage_segment_seconds" in value:
         from device import PACKAGE, validate_apk_identity
         from device_context import receipt_directory, validate_receipt_directory
         from installed_attempt import attempt_from_installed
@@ -213,7 +218,7 @@ def load_request(path, serial=None):
             read_ownership_receipt(receipt, value["serial"], value["package"])
         attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(value)
         if "selection" in value and value["selection"].get("attempt") != attempt:
-            raise ValueError("Menu Start selector attempt must match the APK's embedded attempt: " + attempt)
+            raise ValueError("Launch selector attempt must match the APK's embedded attempt: " + attempt)
     return value
 
 
@@ -873,7 +878,8 @@ def cool_coverage_segment(device, thermal, pid, report_id, attempt, receipt):
     settings = world["settings"]
     tap_settings(device, thermal, settings["buttonX"], settings["buttonY"])
     paused = wait(lambda report: report["settings"]["paused"] and report["settings"]["timeScale"] == 0)
-    receipt.update(scene=paused.get("stageProgress", {}).get("actualScene"), paused_run_seconds=paused["settings"]["runSeconds"])
+    scene = paused.get("stageProgress", {}).get("actualScene") or paused.get("runClock", {}).get("scene")
+    receipt.update(scene=scene, paused_run_seconds=paused["settings"]["runSeconds"])
     receipt["admission"] = thermal.between_sessions(cool_start=True)
     prepare_launch(device, receipt.setdefault("wake", {}))
     resumed_menu = wait(lambda report: report["settings"]["paused"] and report["settings"]["timeScale"] == 0)["settings"]
@@ -905,6 +911,10 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
         device.sh("input", "-d", "0", "tap", str(x), str(y), timeout=5)
     else:
         device.sh("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+    return wait_for_world_start(device, thermal, pid, output, report_id, menu["attempt"], coverage)
+
+
+def wait_for_world_start(device, thermal, pid, output, report_id, attempt, coverage):
     world = wait_for_settings_report(
         device,
         thermal,
@@ -912,7 +922,7 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
         lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True,
         timeout=240,
         report_id=report_id,
-        attempt=menu["attempt"],
+        attempt=attempt,
     )
     save(output / "world-start.json", world)
     if coverage is not None:
@@ -1116,10 +1126,11 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
         inputs = dict(json.loads(Path(request["input_script"]).read_text()), pid=pid)
         save(output / "input.json", inputs)
         result["input"] = touch_gesture.run(output / "input.json", request["apk_sha256"], device=device)
-    if request.get("start_from_menu"):
+    if request.get("start_from_menu") or coverage is not None:
         from session_cleanup_check import SPINE_ID
 
         report_id = SPINE_ID.removesuffix("-bringup") if device.package == "dev.ror2lab.converted" else SPINE_ID
+    if request.get("start_from_menu"):
         world = start_from_menu(
             device,
             thermal,
@@ -1133,6 +1144,11 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
         )
         if coverage is not None:
             start_attempt = world["attempt"]
+    elif coverage is not None:
+        coverage["direct_stage_entry"] = request["selection"]["diagnosticStage"]
+        world = wait_for_world_start(device, thermal, pid, output, report_id, start_attempt, coverage)
+        if world.get("runClock", {}).get("scene") != coverage["direct_stage_entry"]:
+            raise RuntimeError("Ready world differs from the requested direct stage entry")
     began = time.monotonic()
     next_capture = 0
     scheduled = iter(enumerate(request.get("input_schedule", [])))
@@ -1302,7 +1318,7 @@ def execute(request):
         initial_scratch = diagnostic_scratch(device, runtime)
         mapping = checked_mapping(request) if "input_mapping" in request else None
         start_attempt = None
-        if request.get("start_from_menu"):
+        if request.get("start_from_menu") or "coverage_segment_seconds" in request:
             # APK inspection can starve the in-process thermal sampler. A checked
             # mapping already binds its attempt to the installed APK hash.
             start_attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(device.owned())

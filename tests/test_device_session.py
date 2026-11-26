@@ -332,7 +332,7 @@ class DeviceSessionTests(unittest.TestCase):
             ],
         )
 
-    def test_segmented_coverage_requires_native_start_and_soc_limit(self):
+    def test_segmented_coverage_requires_one_entry_and_soc_limit(self):
         request = dict(self.request, start_from_menu=True, enforce_soc_ceiling=True, coverage_segment_seconds=1)
         with mock.patch.object(device_module, "validate_apk_identity"), mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"):
             runner.save(self.request_file, request)
@@ -341,6 +341,7 @@ class DeviceSessionTests(unittest.TestCase):
                 dict(coverage_segment_seconds=True),
                 dict(coverage_segment_seconds=request["duration_seconds"] + 1),
                 dict(start_from_menu=False),
+                dict(selection=dict(attempt="embedded", diagnosticStage="goolake")),
                 dict(enforce_soc_ceiling=False),
                 dict(require_high_refresh=True),
                 dict(package="dev.ror2lab.converted"),
@@ -348,6 +349,39 @@ class DeviceSessionTests(unittest.TestCase):
                 runner.save(self.request_file, dict(request, **change))
                 with self.assertRaisesRegex(ValueError, "coverage"):
                     runner.load_request(self.request_file)
+
+            selection = dict(attempt="embedded", diagnosticStage="goolake")
+            runner.save(self.request_file, dict(request, start_from_menu=False, selection=selection))
+            self.assertEqual(runner.load_request(self.request_file)["selection"], selection)
+
+    def test_segmented_direct_entry_requires_matching_world_and_cap(self):
+        request = dict(self.request, selection=dict(diagnosticStage="goolake"), coverage_segment_seconds=1, duration_seconds=0)
+        device, thermal = mock.Mock(package=request["package"]), mock.Mock()
+        device.sh.return_value = "7"
+        thermal.cancelled.is_set.return_value = False
+        world = dict(
+            phase="integrated-world-playing",
+            world=dict(ready=True),
+            runClock=dict(scene="goolake"),
+            settings=dict(highRefreshRate=False),
+            performance=dict(requestedFrameRate=60),
+        )
+        with (
+            mock.patch.object(runner, "capture"),
+            mock.patch.object(runner, "wait_for_settings_report", return_value=world) as observed,
+        ):
+            result = {}
+            runner.observe_launch(device, thermal, request, self.output, result, "7", start_attempt="embedded")
+            self.assertEqual(result["coverage"]["direct_stage_entry"], "goolake")
+            self.assertEqual(result["coverage"]["requested_frame_rate"], 60)
+            self.assertEqual(observed.call_args.args[2], "7")
+            self.assertEqual(observed.call_args.kwargs["attempt"], "embedded")
+            world["runClock"]["scene"] = "lakes"
+            with self.assertRaisesRegex(RuntimeError, "differs from the requested direct stage"):
+                runner.observe_launch(device, thermal, request, self.output, {}, "7", start_attempt="embedded")
+            world["performance"]["requestedFrameRate"] = 120
+            with self.assertRaisesRegex(RuntimeError, "60 FPS cap"):
+                runner.observe_launch(device, thermal, request, self.output, {}, "7", start_attempt="embedded")
 
     def test_coverage_saves_low_refresh_through_native_menu(self):
         settings = dict(highRefreshRate=True, buttonX=1167.5, buttonY=30, screenWidth=1280, screenHeight=960)
