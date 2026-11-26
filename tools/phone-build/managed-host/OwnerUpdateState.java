@@ -32,6 +32,11 @@ public final class OwnerUpdateState {
         if (total <= 0 || completed < 0 || completed > total) return "progress unavailable";
         return completed + "/" + total;
     }
+    /** Never imply a comparison against an installed release without its matching receipt. */
+    public static String releaseChanges(boolean installedKnown, int changed, int removed) {
+        if (!installedKnown || changed < 0 || removed < 0) return "Installed release comparison unavailable.";
+        return "Changed outputs: " + changed + "; removed: " + removed;
+    }
     public static String failureDetail(String stage, String reason) {
         return "First failure: " + stage + " — " + reason + ". Retry revalidates retained work; this is not installation success.";
     }
