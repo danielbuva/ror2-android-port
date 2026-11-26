@@ -65,6 +65,9 @@ JSON pins `source_commit`, boolean `full` and absolute `output` under primary
 and pruning on success or failure. This command performs no device actions.
 Optional `storage_wait_seconds` (0–3600) waits for full-build headroom before
 taking the editor mutex; timeout writes a failure receipt.
+Set `lane` to an existing isolated build lane to run preflight and build in
+its private checkout. The terminal receipt records the published APK hash and
+payload path from that lane's build receipt.
 
 Generated-output cleanup retains only pinned APKs, current build/base, the
 latest installed APK per device and each worker's newest handoff-referenced
