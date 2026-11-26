@@ -6282,6 +6282,10 @@ available for replay. It retrieves producer logs, adjacent process timing
 receipts and available crash evidence before removing owned scratch. Android
 SDK Roslyn writes elapsed time and exit status beside its private compile logs,
 including a timing receipt on timeout.
+Package compilation and Cecil postprocessing also record start and end times.
+The managed producer decompiles the map recipe's three types individually
+and checks their source hashes before generating the maps. The support source
+selector still uses the separate Assembly-CSharp decompilation.
 With `profile_resources: true` on a signed-code request, the same supervisor
 retains an attempt-local resource trace on the phone. Production temperature
 samples and subprocess start/end receipts share Android's BOOTTIME clock.

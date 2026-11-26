@@ -18,6 +18,41 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def test_burst_launchers_include_mono_native_dependency_directory(self):
+        recipe = json.loads((BACKEND.native.ROOT / "recipe/owner-burst-job-inputs.json").read_text())
+        signed_command = recipe["burst_tools"]["command"]
+        specification = importlib.util.spec_from_file_location("android_burst_route_test", PATH.parent / "run_android.py")
+        runner = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(runner.os.environ):
+            inputs = Path(temporary).resolve()
+            mono = inputs / "acquired/burst/mono"
+            library_dir = mono / "lib/x86_64-linux-gnu"
+            for name in ("work/inventory", "runtime", "installed"):
+                (inputs / name).mkdir(parents=True)
+            (inputs / "input-hashes.json").write_text("{}")
+            (inputs / "work/inventory/files.json").write_text('{"files": []}')
+            request = inputs / "request.json"
+            linux_tools = dict(clang="clang", linker="linker", objcopy="objcopy", loader_root="gnu", library_dirs=["gnu/lib"])
+            burst_tools = dict(mono=str(mono.relative_to(inputs)), runtime="compiler")
+            request.write_text(json.dumps(dict(managed={}, output="attempt", burst_only=True, linux_tools=linux_tools, burst_tools=burst_tools)))
+
+            def verify(production, *, burst_only):
+                self.assertTrue(burst_only)
+                direct_command = production["burst_tools"]["command"]
+                for command in (direct_command, signed_command):
+                    search_path = next(arg for arg in command if arg.startswith("LD_LIBRARY_PATH=")).split("=", 1)[1]
+                    self.assertIn(str(library_dir), search_path.replace("${inputs}", str(inputs)).split(":"))
+                return dict(success=True)
+
+            backend = SimpleNamespace(native=BACKEND.native, run=verify)
+            loader = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: None))
+            with (
+                patch.object(runner.importlib.util, "spec_from_file_location", return_value=loader),
+                patch.object(runner.importlib.util, "module_from_spec", return_value=backend),
+            ):
+                runner.run(request, inputs / "runtime", inputs / "installed")
+
     def test_android_signed_source_runs_through_conversion_and_native_plan(self):
         specification = importlib.util.spec_from_file_location("android_signed_route_test", PATH.parent / "run_android.py")
         runner = importlib.util.module_from_spec(specification)
