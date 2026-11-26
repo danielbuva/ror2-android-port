@@ -1440,7 +1440,7 @@ public sealed partial class PortSession
             TracePreparation("pickup-catalog-ready");
             // Native profiles size discovery storage from this complete pickup catalog.
             // Load earned state before native rules and the first stage choose loot.
-            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+            if (coordinator.UsesNativeFirstStageEnemyContext)
                 coordinator.PrepareNativeFirstStagePlayerContext(player, cfg);
             coordinator.PrepareIntegratedResults(player, cfg);
             if (cfg.moonMission)
@@ -1642,7 +1642,7 @@ public sealed partial class PortSession
             if (cfg.teleporterLoop)
             {
                 TracePreparation("teleporter");
-                if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+                if (coordinator.UsesNativeFirstStageEnemyContext)
                 {
                     var nativeDirector = coordinator.PrepareNativeFirstStageDirectorContext(player, cfg);
                     while (nativeDirector.MoveNext())
@@ -1689,6 +1689,12 @@ public sealed partial class PortSession
             TracePreparation("commerce");
             coordinator.PrepareWorldCommerce(cfg, origin);
             TracePreparation("stage-population");
+            if (coordinator.DirectSirenCoverageRequested)
+            {
+                coordinator.PrepareDirectSirenEntry();
+                coordinator.r.world.ready = coordinator.r.world.authority && coordinator.r.world.lootReady &&
+                                            coordinator.r.world.interactionReady && coordinator.rewardDirector.enabled;
+            }
             var population = coordinator.PopulateWholeStage();
             while (population.MoveNext())
                 yield return population.Current;
@@ -2447,6 +2453,8 @@ public sealed partial class PortSession
             public float StageElapsed
             {
                 get {
+                    if (coordinator.DirectSirenCoverageRequested)
+                        return coordinator.DirectSirenInputSeconds;
                     float stageElapsed;
                     return SirenNativeEncounterContinuationContract.TryGetWorldStageElapsedSeconds(
                                coordinator.r.world == null ? float.NaN : coordinator.r.world.seconds, coordinator.stageEnteredAt,
@@ -2530,6 +2538,38 @@ public sealed partial class PortSession
             }
             return false;
         }
+        bool ApplyDirectSirenMissionInput(CharacterBody player, NovaInputBridge bridge, float elapsed)
+        {
+            if (coordinator.r.sirenNativeEncounterContinuationCompleted)
+            {
+                coordinator.r.world.objective = "Original Siren boss defeated and reward observed";
+                bridge.movement = Vector2.zero;
+                return true;
+            }
+            var boss = coordinator.FindDirectSirenCoverageBoss();
+            if (!boss)
+                return false;
+            var position = coordinator.DirectorPhysicsPosition(boss);
+            var origin = player.inputBank.aimOrigin;
+            var aim = coordinator.WorldCombatAimPoint(boss, origin, out bool visible) - origin;
+            coordinator.r.world.objective = "Defeat the original Siren boss";
+            coordinator.r.world.combatTarget = boss.name;
+            coordinator.r.world.combatLineOfSight = visible;
+            coordinator.r.world.combatTargetDistance = aim.magnitude;
+            bridge.movement = Vector2.zero;
+            if (!visible || aim.magnitude > 30f)
+                NavigateWorldInput(player, bridge, position, 12f, boss.name, elapsed);
+            if (visible)
+            {
+                bridge.aim = new Vector2(aim.x, aim.z).normalized;
+                bridge.diagnosticAim = aim.normalized;
+                bridge.diagnosticPrimary = true;
+                bridge.diagnosticSecondary = elapsed % 4f < .2f;
+                bridge.diagnosticSpecial = elapsed % 10f < .2f;
+            }
+            return true;
+        }
+
         public void IntegratedWorldStimulus(CharacterBody player, NovaInputBridge bridge, float elapsed)
         {
             // Explicit automation for integrated validation only; direct app launches use physical controls.
@@ -2606,6 +2646,14 @@ public sealed partial class PortSession
             if (coordinator.r.moon != null && coordinator.r.moon.loaded && coordinator.MoonWorldStimulus(player, bridge, elapsed))
                 return;
             if (coordinator.GoldshoresRouteStimulus(player, bridge, elapsed))
+                return;
+            if (coordinator.DirectSirenCoverageRequested && ApplyDirectSirenMissionInput(player, bridge, elapsed))
+                return;
+            // Keep the assisted Moon route at the active lunar teleporter.
+            // The shared objective driver handles native combat, charge and exit.
+            if (coordinator.r.diagnosticMoonContinuation && coordinator.r.stageProgress?.current == ManualMoonBoundary.DirectEntry &&
+                coordinator.r.teleporterLoop && coordinator.worldTeleporter && !coordinator.worldTeleporter.isIdle &&
+                coordinator.ObjectiveWorldStimulus(player, bridge, elapsed))
                 return;
             // Assisted dependency scan of the source repairable ally types in one
             // composed stage. Only the existing player input/earned Money path purchases;

@@ -192,6 +192,7 @@ public sealed partial class PortSession
         public bool nativeEggRegistrationMatchesSourceEntry;
         public bool nativeBossIdentityObserved;
         public uint[] nativeBossMasterNetworkIds;
+        public uint[] nativeRewardDropNetworkIds;
         public int diagnosticSourceEggCandidatesObserved, nativeEggSlotsRegistered;
         public int observedEggBodyCount, nativeBossMembers, observationSamples, encounterSquadMembersAtCleanup,
             retiredBossBodiesRequested, retiredBossMastersRequested, retiredProbeBodiesRequested,
@@ -246,6 +247,7 @@ public sealed partial class SirenEncounterSession : IDisposable
     int cleanupStep;
     Exception cleanupFirstFailure;
     NetworkIdentity[] expectedSourceEggs;
+    bool observeNativeReward;
     float nextObservationAt;
     readonly List<OwnedMaster> ownedBossMasters = new List<OwnedMaster>();
     readonly List<OwnedMaster> ownedProbeMasters = new List<OwnedMaster>();
@@ -255,6 +257,19 @@ public sealed partial class SirenEncounterSession : IDisposable
     public bool HasExactNativeBossIdentity => Report != null && Report.nativeBossIdentityObserved;
     public uint[] ExactNativeBossNetworkIds =>
         Report != null && Report.nativeBossMasterNetworkIds != null ? Report.nativeBossMasterNetworkIds : Array.Empty<uint>();
+    public CharacterBody FindLiveCoverageBoss(uint[] capturedIds)
+    {
+        foreach (var entry in ownedBossMasters)
+        {
+            if (!capturedIds.Contains(entry.networkId.Value) || !entry.master ||
+                NetworkServer.FindLocalObject(entry.networkId) != entry.master.gameObject)
+                continue;
+            var body = entry.master.GetBody();
+            if (body && body.gameObject.scene == scene && body.healthComponent && body.healthComponent.alive)
+                return body;
+        }
+        return null;
+    }
 
     public bool TryGetExactNativeBossNetworkIds(out uint[] networkIds)
     {
@@ -330,7 +345,7 @@ public sealed partial class SirenEncounterSession : IDisposable
     public static SirenEncounterSession Attach(Scene scene, Action<PortSession.SirenEncounterReport> onReportSelected = null,
                                                 Action<SirenEncounterSession> retainOwner = null,
                                                 Action<Exception> onCleanupFailure = null,
-                                                NetworkIdentity[] expectedSourceEggs = null)
+                                                NetworkIdentity[] expectedSourceEggs = null, bool observeNativeReward = false)
     {
         if (!NetworkServer.active)
             throw new InvalidOperationException("Siren encounter source identity requires the active local server");
@@ -338,6 +353,7 @@ public sealed partial class SirenEncounterSession : IDisposable
         var owner = new SirenEncounterSession(scene, selected, selected.GetComponent<NetworkIdentity>(),
             selected.GetComponent<EntityStateMachine>(), selected.GetComponent<ScriptedCombatEncounter>(),
             selected.GetComponent<BossGroup>());
+        owner.observeNativeReward = observeNativeReward;
         owner.PrepareDiagnosticEggSourceContract();
         if (expectedSourceEggs != null)
         {
@@ -511,6 +527,20 @@ public sealed partial class SirenEncounterSession : IDisposable
         {
             Report.nativeEncounterCompleted = true;
             Report.observation = "original-native-encounter-started-and-exact-boss-group-defeat-event-observed";
+            if (observeNativeReward && bossGroup.dropPosition)
+            {
+                var position = bossGroup.dropPosition.position;
+                Report.nativeRewardDropNetworkIds = NetworkServer.objects.Values
+                    .Where(identity => identity && identity.isServer && identity.netId.Value != 0 &&
+                                       identity.gameObject.scene == scene && identity.transform.position == position)
+                    .Where(identity =>
+                    {
+                        var droplet = identity.GetComponent<PickupDropletController>();
+                        var motion = droplet ? droplet.GetComponent<Rigidbody>() : null;
+                        return motion && motion.velocity.y > 0 && PickupCatalog.GetPickupDef(droplet.pickupState.pickupIndex) != null;
+                    })
+                    .Select(identity => identity.netId.Value).ToArray();
+            }
         }
     }
 

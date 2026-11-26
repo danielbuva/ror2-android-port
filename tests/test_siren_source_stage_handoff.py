@@ -22,40 +22,53 @@ def declaration(source: str, marker: str) -> str:
     raise AssertionError("unclosed declaration")
 
 
+WORLD = ROOT / "tools/unity/runtime/world/IntegratedWorldBoundary.cs"
+
+
 class SirenPreflightOrderTests(unittest.TestCase):
     def test_preflight_and_controller_activation_run_with_temporary_stage_current(self):
         boundary = BOUNDARY.read_text()
         transport = declaration(boundary, "public IEnumerator TransportIntegratedStage(")
         source = declaration(boundary, "public IEnumerator BeginOriginalStage()")
         objective = transport.index("coordinator.SpawnStageObjective(integratedStageConfig)")
-        prepare = transport.index("SirenSourceEntrySession.Prepare(")
-        retain = transport.index("coordinator.RetainNativeLifecycleObject(sirenSourceEntry)")
-        director = transport.index("coordinator.automaticDirectorHost.SetActive(true);", retain)
-        record = transport.index("sirenSourceEntry.RecordOwnedDirectorActivation(", director)
-        population = transport.index("coordinator.PopulateWholeStage()", record)
+        handoff = declaration(boundary, "public void ActivateSirenSourceDirector()")
+        handoff_call = transport.index("ActivateSirenSourceDirector();")
+        prepare = handoff.index("SirenSourceEntrySession.Prepare(")
+        retain = handoff.index("coordinator.RetainNativeLifecycleObject(sirenSourceEntry)")
+        director = handoff.index("coordinator.automaticDirectorHost.SetActive(true);", retain)
+        record = handoff.index("sirenSourceEntry.RecordOwnedDirectorActivation(", director)
+        population = transport.index("coordinator.PopulateWholeStage()", handoff_call)
         activate = source.index("sirenSourceEntry.ActivateAndSpawnController()")
         release = source.index('PortSession.Call(coordinator.objectiveStage, "OnDisable")')
         singletonCheck = source.index('coordinator.Check(!Stage.instance, "Temporary Stage singleton survived original handoff")')
         nativeCallback = source.index("Run.instance.OnServerSceneChanged(coordinator.stageGeometryScene.name)")
         dispatch = source.index("sirenSourceEntry.DispatchAfterNativeRunCallback(coordinator.objectiveStage)")
-        self.assertEqual(transport.count("SirenSourceEntrySession.Prepare("), 1)
+        self.assertEqual(boundary.count("SirenSourceEntrySession.Prepare("), 1)
         self.assertNotIn("SirenSourceEntrySession.Prepare(", source)
         self.assertEqual(source.count("sirenSourceEntry.ActivateAndSpawnController()"), 1)
         self.assertEqual(source.count("Run.instance.OnServerSceneChanged(coordinator.stageGeometryScene.name)"), 1)
         self.assertEqual(source.count("ReferenceEquals(Stage.instance, coordinator.objectiveStage)"), 1)
-        self.assertLess(objective, prepare)
+        self.assertLess(objective, handoff_call)
         self.assertLess(prepare, retain)
         self.assertLess(retain, director)
         self.assertLess(director, record)
-        self.assertLess(record, population)
+        self.assertLess(handoff_call, population)
         self.assertIn('"Siren source entry requires its preflighted owner and exact temporary Stage"', source)
         self.assertLess(activate, release)
         self.assertLess(release, singletonCheck)
         self.assertLess(singletonCheck, nativeCallback)
         self.assertLess(nativeCallback, dispatch)
 
+    def test_direct_entry_reuses_exact_stage_handoff_before_population(self):
+        direct = declaration(BOUNDARY.read_text(), "void PrepareDirectSirenEntry()")
+        self.assertLess(direct.index("BindStageDirector()"), direct.index("ActivateSirenSourceDirector()"))
+        world = declaration(WORLD.read_text(), "public IEnumerator PrepareIntegratedWorld(")
+        self.assertLess(world.index("coordinator.PrepareTeleporterWorld(cfg)"), world.index("coordinator.PrepareDirectSirenEntry()"))
+        self.assertLess(world.index("coordinator.PrepareDirectSirenEntry()"), world.index("coordinator.PopulateWholeStage()"))
+        self.assertLess(world.index("coordinator.PopulateWholeStage()"), world.index("coordinator.BeginOriginalStage()"))
+
     def test_fresh_owner_and_egg_input_off_guard_precedes_preflight_and_mutation(self):
-        source = declaration(BOUNDARY.read_text(), "public IEnumerator TransportIntegratedStage(")
+        source = declaration(BOUNDARY.read_text(), "public void ActivateSirenSourceDirector()")
         guard = source.index('"Siren source preflight must precede the owned Director activation"')
         prepare = source.index("SirenSourceEntrySession.Prepare(")
         retain = source.index("coordinator.RetainNativeLifecycleObject(sirenSourceEntry)")

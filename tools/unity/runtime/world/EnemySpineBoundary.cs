@@ -347,7 +347,7 @@ public sealed partial class PortSession
             }
             coordinator.enemyTemplates = new GameObject("Owned inactive enemy templates");
             coordinator.enemyTemplates.SetActive(false);
-            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+            if (coordinator.UsesNativeFirstStageEnemyContext)
                 SubscribeEnemyActorEvents();
         }
         // Optional diagnostic fixture: source-body adaptation, directed spawn, and its

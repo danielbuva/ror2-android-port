@@ -42,6 +42,8 @@ public sealed partial class PortSession
     bool firstStagePolicyConsumed;
     float firstStageSelectionValue;
     bool DirectStageDiagnosticRequested => !string.IsNullOrEmpty(r.diagnosticStage);
+    bool DirectSirenCoverageRequested => r.diagnosticStage == SirenEncounterContract.SceneName;
+    bool UsesNativeFirstStageEnemyContext => r.nativeFirstStageLifecycleDiagnosticAttempt || DirectSirenCoverageRequested;
     StageGeometrySession stageGeometrySession;
     StageGeometrySession GetStageGeometrySession()
     {
@@ -216,8 +218,9 @@ public sealed partial class PortSession
             if (coordinator.DirectStageDiagnosticRequested)
             {
                 coordinator.firstStageName = coordinator.r.diagnosticStage;
-                coordinator.Check(coordinator.firstStageName != SirenEncounterContract.SceneName,
-                                  "Siren's Call requires its native transition entry owner");
+                coordinator.Check(!coordinator.DirectSirenCoverageRequested ||
+                                      coordinator.r.sirenSourceEntryDiagnosticAttempt && coordinator.r.sirenNativeEncounterContinuationRequested,
+                                  "Direct Siren coverage requires its native source entry and encounter input owners");
             }
             else if (cfg.integratedWorld && cfg.teleporterLoop && coordinator.r.freePlay)
             {

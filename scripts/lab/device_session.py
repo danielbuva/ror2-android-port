@@ -68,6 +68,7 @@ def load_request(path, serial=None):
         "capture_titan_indicator",
         "enforce_soc_ceiling",
         "coverage_segment_seconds",
+        "coverage_initial_cooldown",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -135,11 +136,14 @@ def load_request(path, serial=None):
         "capture_golem_attacks",
         "capture_titan_indicator",
         "enforce_soc_ceiling",
+        "coverage_initial_cooldown",
     ):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
         raise ValueError("start_from_menu requires the launch workload")
+    if value.get("coverage_initial_cooldown") and "coverage_segment_seconds" not in value:
+        raise ValueError("Initial coverage cooldown requires segmented play")
     selection = value.get("selection")
     low_load = selection.get("diagnosticLowLoadCoverage", False) if isinstance(selection, dict) else False
     if type(low_load) is not bool or (
@@ -1168,6 +1172,9 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
         if world.get("runClock", {}).get("scene") != coverage["direct_stage_entry"]:
             raise RuntimeError("Ready world differs from the requested direct stage entry")
     if coverage is not None:
+        if request.get("coverage_initial_cooldown"):
+            cooldown = coverage["initial_cooldown"] = {"at_active_seconds": 0}
+            cool_coverage_segment(device, thermal, pid, report_id, start_attempt, cooldown)
         thermal.phase = "coverage-play-1"
     began = time.monotonic()
     next_capture = 0

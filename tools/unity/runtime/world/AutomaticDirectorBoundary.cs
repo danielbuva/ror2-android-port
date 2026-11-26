@@ -446,9 +446,10 @@ public sealed partial class PortSession
         {
             var master = player ? player.master : null;
             coordinator.Check(
-                coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && cfg.integratedWorld && cfg.teleporterLoop &&
+                coordinator.UsesNativeFirstStageEnemyContext && cfg.integratedWorld && cfg.teleporterLoop &&
                     coordinator.stageSourceObjects && coordinator.stageGeometryScene.IsValid() &&
-                    (coordinator.stageGeometryScene.name == "golemplains" || coordinator.stageGeometryScene.name == "lakes") &&
+                    (coordinator.stageGeometryScene.name == "golemplains" || coordinator.stageGeometryScene.name == "lakes" ||
+                     coordinator.DirectSirenCoverageRequested && coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName) &&
                     NetworkServer.active && Run.instance && player && master && player.isServer && master.isServer &&
                     player.netId.Value != 0 && master.netId.Value != 0 && master.hasBody && master.GetBody() == player &&
                     ReferenceEquals(NetworkServer.FindLocalObject(player.netId), player.gameObject) &&
@@ -512,9 +513,10 @@ public sealed partial class PortSession
         public IEnumerator PrepareNativeFirstStageDirectorContext(CharacterBody player, SessionConfig cfg)
         {
             coordinator.Check(
-                coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && cfg.integratedWorld && cfg.teleporterLoop &&
+                coordinator.UsesNativeFirstStageEnemyContext && cfg.integratedWorld && cfg.teleporterLoop &&
                     coordinator.stageSourceObjects && coordinator.stageGeometryScene.IsValid() &&
-                    (coordinator.stageGeometryScene.name == "golemplains" || coordinator.stageGeometryScene.name == "lakes") &&
+                    (coordinator.stageGeometryScene.name == "golemplains" || coordinator.stageGeometryScene.name == "lakes" ||
+                     coordinator.DirectSirenCoverageRequested && coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName) &&
                     !coordinator.automaticDirectorHost && !coordinator.rewardDirectorHost && !coordinator.rewardCard,
                 "Native first-stage director context requires a clean supported source attempt");
             // Suspend this exact source SceneDirector before objective setup can

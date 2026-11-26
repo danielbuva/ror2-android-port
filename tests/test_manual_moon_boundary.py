@@ -37,6 +37,17 @@ class ManualMoonBoundaryPatchTests(unittest.TestCase):
         self.assertLess(refusal, resolve)
         self.assertIn("coordinator.pendingStage", source[refusal:resolve])
 
+    def test_assisted_moon_route_prioritizes_the_active_sky_meadow_teleporter(self):
+        source = (CANDIDATE / "tools/unity/runtime/world/IntegratedWorldBoundary.cs").read_text()
+        start = source.index("if (coordinator.r.diagnosticMoonContinuation")
+        end = source.index("return;", start)
+        route = source[start:end]
+        self.assertIn("coordinator.r.stageProgress?.current == ManualMoonBoundary.DirectEntry", route)
+        self.assertIn("coordinator.r.teleporterLoop && coordinator.worldTeleporter && !coordinator.worldTeleporter.isIdle", route)
+        self.assertIn("coordinator.ObjectiveWorldStimulus(player, bridge, elapsed)", route)
+        self.assertLess(source.index("if (coordinator.worldManualTakeover)", source.index("public void IntegratedWorldStimulus")), start)
+        self.assertLess(end, source.index("coordinator.NextAutomaticWorldChest(player)", start))
+
     def test_fixed_update_hold_masks_stale_automatic_requests_and_keeps_touch(self):
         bridge = (CANDIDATE / "tools/unity/runtime/input/NovaInputBridge.cs").read_text()
         fixture = (CANDIDATE / "tools/catalog/SurvivorSkillInputHost.cs").read_text()

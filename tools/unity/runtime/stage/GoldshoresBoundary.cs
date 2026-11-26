@@ -157,6 +157,8 @@ public sealed partial class PortSession
                 {
                     r.world.objective = "Earn original beacon cost";
                     ObjectiveCombatInput(player, bridge, elapsed, Vector2.zero, false);
+                    if (r.world.combatCandidates == r.world.combatBoundsRejected)
+                        NavigateWorldInput(player, bridge, beacon.transform.position, 1.2f, beacon.name, elapsed);
                 }
                 return true;
             }

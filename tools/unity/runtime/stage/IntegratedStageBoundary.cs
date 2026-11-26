@@ -155,6 +155,12 @@ public sealed partial class PortSession
     {
         return GetIntegratedStageSession().BeginOriginalStage();
     }
+    void PrepareDirectSirenEntry()
+    {
+        var owner = GetIntegratedStageSession();
+        owner.BindStageDirector();
+        owner.ActivateSirenSourceDirector();
+    }
     void ReleaseObjectiveStage()
     {
         GetIntegratedStageSession().ReleaseObjectiveStage();
@@ -202,6 +208,10 @@ public sealed partial class PortSession
     public bool SirenNativeEncounterStarted => GetIntegratedStageSession().SirenNativeEncounterStarted;
     public bool SirenNativeEncounterBossIdentityObserved => GetIntegratedStageSession().SirenNativeEncounterBossIdentityObserved;
     public uint[] SirenNativeEncounterBossNetworkIds => GetIntegratedStageSession().SirenNativeEncounterBossNetworkIds;
+    CharacterBody FindDirectSirenCoverageBoss() => GetIntegratedStageSession().FindDirectSirenCoverageBoss();
+    bool DirectSirenMissionObserved => GetIntegratedStageSession().DirectSirenMissionObserved;
+    float directSirenInputBegan;
+    float DirectSirenInputSeconds => Time.time - directSirenInputBegan;
     public bool SirenDiagnosticStageTransporting => GetIntegratedStageSession().SirenDiagnosticStageTransporting;
     public bool RevalidatedSirenDiagnosticEggs(Vector3 position, List<CharacterBody> destination) =>
         GetIntegratedStageSession().RevalidatedSirenDiagnosticEggs(position, destination);
@@ -250,6 +260,13 @@ public sealed partial class PortSession
         public bool SirenNativeEncounterBossIdentityObserved => sirenEncounter != null && sirenEncounter.HasExactNativeBossIdentity;
         public uint[] SirenNativeEncounterBossNetworkIds =>
             sirenEncounter != null ? sirenEncounter.ExactNativeBossNetworkIds : Array.Empty<uint>();
+        public CharacterBody FindDirectSirenCoverageBoss() =>
+            coordinator.r.sirenNativeBossMasterNetworkIds != null
+                ? sirenEncounter?.FindLiveCoverageBoss(coordinator.r.sirenNativeBossMasterNetworkIds)
+                : null;
+        public bool DirectSirenMissionObserved =>
+            sirenEncounter != null && sirenEncounter.Report.nativeEncounterCompleted &&
+            (sirenEncounter.Report.nativeRewardDropNetworkIds?.Length ?? 0) > 0;
         public bool SirenDiagnosticStageTransporting =>
             transportingStage || coordinator.r.stageProgress != null && coordinator.r.stageProgress.transporting;
         public bool RevalidatedSirenDiagnosticEggs(Vector3 position, List<CharacterBody> destination)
@@ -1029,29 +1046,7 @@ public sealed partial class PortSession
             yield return null;
             coordinator.sourceSlowDirector = null;
             coordinator.SelectStageCombatDeck(integratedStageConfig, next.name);
-            coordinator.automaticDirectorHost =
-                coordinator.stageSourceObjects
-                    ? coordinator.SourceStageDirectorRoot(false)
-                    : PortSession.Instantiate(coordinator.artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));
-            coordinator.rewardDirector = coordinator.automaticDirectorHost.GetComponent<CombatDirector>();
-            coordinator.rewardDirector.monsterCards = coordinator.automaticDeck;
-            if (coordinator.stageSourceObjects)
-            {
-                coordinator.sourceSlowDirector.monsterCards = coordinator.automaticDeck;
-                coordinator.ObserveSourceSlowDirector(coordinator.worldPlayer);
-            }
-            else
-                coordinator.automaticDirectorHost.AddComponent<DirectorCore>();
-            var spawningDirector = coordinator.rewardDirector;
-            spawningDirector.onSpawnedServer.AddListener(obj =>
-                                                         {
-                                                             coordinator.RecordRewardSpawn(obj);
-                                                             if (coordinator.currentStageCombatDeck != null)
-                                                                 coordinator.RecordStageCombatSpawn(obj, coordinator.worldPlayer,
-                                                                                                    spawningDirector);
-                                                             else
-                                                                 coordinator.RecordDirectorActor(obj, coordinator.worldPlayer);
-                                                         });
+            BindStageDirector();
             if (!sirenSourceEntryRequired)
             {
                 coordinator.automaticDirectorHost.SetActive(true);
@@ -1117,22 +1112,7 @@ public sealed partial class PortSession
                 }
                 bool observeSirenTransport = sirenSourceEntryRequired && coordinator.r.sirenSourceEntryDiagnosticAttempt;
                 if (sirenSourceEntryRequired)
-                {
-                    coordinator.Check(coordinator.stageSourceObjects && ReferenceEquals(Stage.instance, coordinator.objectiveStage) &&
-                                          coordinator.automaticDirectorHost && !coordinator.automaticDirectorHost.activeSelf &&
-                                          sirenSourceEntry == null && sirenEncounter == null && !coordinator.r.diagnosticSirenEggInput,
-                                      "Siren source preflight must precede the owned Director activation");
-                    sirenSourceEntry = SirenSourceEntrySession.Prepare(
-                        coordinator.stageGeometryScene, selected => coordinator.r.stageProgress.sirenSourceEntries.Add(selected));
-                    coordinator.RetainNativeLifecycleObject(sirenSourceEntry);
-                    coordinator.automaticDirectorHost.SetActive(true);
-                    coordinator.Check(DirectorCore.instance == coordinator.automaticDirectorHost.GetComponent<DirectorCore>() &&
-                                          coordinator.rewardDirector.enabled &&
-                                          CombatDirector.instancesList.Contains(coordinator.rewardDirector) &&
-                                          CombatDirector.instancesList.Contains(coordinator.sourceSlowDirector),
-                                      "Siren source Director activation did not complete under its retained owner");
-                    sirenSourceEntry.RecordOwnedDirectorActivation(coordinator.automaticDirectorHost);
-                }
+                    ActivateSirenSourceDirector();
                 var population = coordinator.PopulateWholeStage();
                 if (observeSirenTransport)
                     population = ObserveSirenTransportRoutine("PopulateWholeStage", population);
@@ -1286,6 +1266,50 @@ public sealed partial class PortSession
             }
             CompleteIntegratedStageEffectReturns(batch);
         }
+        public void BindStageDirector()
+        {
+            coordinator.automaticDirectorHost =
+                coordinator.stageSourceObjects
+                    ? coordinator.SourceStageDirectorRoot(false)
+                    : PortSession.Instantiate(coordinator.artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));
+            coordinator.rewardDirector = coordinator.automaticDirectorHost.GetComponent<CombatDirector>();
+            coordinator.rewardDirector.monsterCards = coordinator.automaticDeck;
+            if (coordinator.stageSourceObjects)
+            {
+                coordinator.sourceSlowDirector.monsterCards = coordinator.automaticDeck;
+                coordinator.ObserveSourceSlowDirector(coordinator.worldPlayer);
+            }
+            else
+                coordinator.automaticDirectorHost.AddComponent<DirectorCore>();
+            var spawningDirector = coordinator.rewardDirector;
+            spawningDirector.onSpawnedServer.AddListener(obj =>
+            {
+                coordinator.RecordRewardSpawn(obj);
+                if (coordinator.currentStageCombatDeck != null)
+                    coordinator.RecordStageCombatSpawn(obj, coordinator.worldPlayer, spawningDirector);
+                else
+                    coordinator.RecordDirectorActor(obj, coordinator.worldPlayer);
+            });
+        }
+
+        public void ActivateSirenSourceDirector()
+        {
+            coordinator.Check(coordinator.stageSourceObjects && ReferenceEquals(Stage.instance, coordinator.objectiveStage) &&
+                                  coordinator.automaticDirectorHost && !coordinator.automaticDirectorHost.activeSelf &&
+                                  sirenSourceEntry == null && sirenEncounter == null && !coordinator.r.diagnosticSirenEggInput,
+                              "Siren source preflight must precede the owned Director activation");
+            sirenSourceEntry = SirenSourceEntrySession.Prepare(
+                coordinator.stageGeometryScene, selected => coordinator.r.stageProgress.sirenSourceEntries.Add(selected));
+            coordinator.RetainNativeLifecycleObject(sirenSourceEntry);
+            coordinator.automaticDirectorHost.SetActive(true);
+            coordinator.Check(DirectorCore.instance == coordinator.automaticDirectorHost.GetComponent<DirectorCore>() &&
+                                  coordinator.rewardDirector.enabled &&
+                                  CombatDirector.instancesList.Contains(coordinator.rewardDirector) &&
+                                  CombatDirector.instancesList.Contains(coordinator.sourceSlowDirector),
+                              "Siren source Director activation did not complete under its retained owner");
+            sirenSourceEntry.RecordOwnedDirectorActivation(coordinator.automaticDirectorHost);
+        }
+
         IEnumerator ObserveSirenTransportRoutine(string operation, IEnumerator routine)
         {
             return new SirenSourceEntryObservedRoutine(
@@ -1336,7 +1360,8 @@ public sealed partial class PortSession
                                                           {
                                                               MarkSirenCleanupRecoveryRequired();
                                                           },
-                                                          sirenSourceEntry.CapturedEggIdentities.ToArray());
+                                                          sirenSourceEntry.CapturedEggIdentities.ToArray(),
+                                                          observeNativeReward: coordinator.DirectSirenCoverageRequested);
         }
         void CleanupSirenEncounter()
         {

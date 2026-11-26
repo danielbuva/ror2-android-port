@@ -449,10 +449,10 @@ public sealed partial class PortSession
                         hurt.enabled = true;
                         hurt.GetComponent<Collider>().enabled = true;
                     }
-                    // The opt-in keeps Run/reward/navigation/source-context preparation but
-                    // does not execute the historical early Beetle/CombatDirector fixture.
+                    // Native first entry and direct Siren keep the source Director
+                    // inactive until their stage owners are ready.
                     var enemyRoutine =
-                        nativeFirstStageAttempt ? coordinator.PrepareEnemyContext(body, cfg) : coordinator.PrepareEnemy(body, cfg);
+                        coordinator.UsesNativeFirstStageEnemyContext ? coordinator.PrepareEnemyContext(body, cfg) : coordinator.PrepareEnemy(body, cfg);
                     while (enemyRoutine.MoveNext())
                         yield return enemyRoutine.Current;
                     TraceStartup("nova-enemy-preparation-ready");
@@ -585,7 +585,10 @@ public sealed partial class PortSession
                         {
                             coordinator.r.sirenNativeEncounterContinuationArmed = true;
                             coordinator.r.sirenNativeEncounterContinuationWasArmed = true;
-                            coordinator.r.phase = "siren-native-encounter-continuation-armed";
+                            if (coordinator.DirectSirenCoverageRequested)
+                                coordinator.directSirenInputBegan = Time.time;
+                            else
+                                coordinator.r.phase = "siren-native-encounter-continuation-armed";
                             coordinator.Save();
                         }
                     }
@@ -611,8 +614,30 @@ public sealed partial class PortSession
                     float continuationStageElapsed;
                     bool continuationStageClockValid = SirenNativeEncounterContinuationContract.TryGetStageElapsedSeconds(
                         Time.realtimeSinceStartup, began, coordinator.stageEnteredAt, out continuationStageElapsed);
+                    bool directSiren = coordinator.DirectSirenCoverageRequested;
+                    if (directSiren && coordinator.r.sirenNativeEncounterContinuationArmed)
+                    {
+                        coordinator.r.sirenNativeEncounterStartedObserved |= coordinator.SirenNativeEncounterStarted;
+                        if (coordinator.SirenNativeEncounterBossIdentityObserved && !coordinator.r.sirenNativeBossIdentityObserved)
+                        {
+                            coordinator.r.sirenNativeBossIdentityObserved = true;
+                            coordinator.r.sirenNativeBossMasterNetworkIds = coordinator.SirenNativeEncounterBossNetworkIds;
+                        }
+                        if (!coordinator.r.sirenNativeEncounterContinuationCompleted &&
+                            coordinator.r.sirenNativeEncounterStartedObserved && coordinator.r.sirenNativeBossIdentityObserved &&
+                            coordinator.DirectSirenMissionObserved)
+                        {
+                            coordinator.r.sirenNativeEncounterContinuationCompleted = true;
+                            coordinator.Save();
+                        }
+                    }
+                    bool continuationTimedOut = directSiren
+                                                     ? !coordinator.r.sirenNativeBossIdentityObserved &&
+                                                           coordinator.DirectSirenInputSeconds >= SirenEggDiagnosticInput.MaximumStageSeconds
+                                                     : !continuationStageClockValid ||
+                                                           continuationStageElapsed >= SirenEggDiagnosticInput.MaximumStageSeconds;
                     if (coordinator.r.sirenNativeEncounterContinuationRequested && coordinator.r.sirenNativeEncounterContinuationArmed &&
-                        (!continuationStageClockValid || continuationStageElapsed >= SirenEggDiagnosticInput.MaximumStageSeconds))
+                        continuationTimedOut)
                     {
                         SirenSourceEntryFailureClassification.PreserveFirstFailure(
                             ref coordinator.r.firstFailure, ref coordinator.r.firstFailurePhase,
@@ -623,7 +648,7 @@ public sealed partial class PortSession
                         coordinator.Save();
                         break;
                     }
-                    if (coordinator.r.sirenNativeEncounterContinuationRequested &&
+                    if (!directSiren && coordinator.r.sirenNativeEncounterContinuationRequested &&
                         SirenNativeEncounterContinuationContract.IsTerminal(
                             coordinator.r.sirenNativeEncounterContinuationRequested, coordinator.r.sirenNativeEncounterContinuationArmed,
                             coordinator.SirenNativeEncounterStarted, coordinator.SirenNativeEncounterBossIdentityObserved))
@@ -915,10 +940,11 @@ public sealed partial class PortSession
                     {
                         coordinator.Check(
                             coordinator.r.sirenNativeEncounterContinuationCompleted &&
+                                (coordinator.DirectSirenCoverageRequested ||
                                 SirenNativeEncounterContinuationContract.IsTerminal(coordinator.r.sirenNativeEncounterContinuationRequested,
                                                                                     coordinator.r.sirenNativeEncounterContinuationArmed,
                                                                                     coordinator.SirenNativeEncounterStarted,
-                                                                                    coordinator.SirenNativeEncounterBossIdentityObserved),
+                                                                                    coordinator.SirenNativeEncounterBossIdentityObserved)),
                             "Native Siren encounter start and exact captured boss identity were not both observed");
                     }
                     else

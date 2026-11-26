@@ -353,6 +353,9 @@ class DeviceSessionTests(unittest.TestCase):
             selection = dict(attempt="embedded", diagnosticStage="goolake")
             runner.save(self.request_file, dict(request, start_from_menu=False, selection=selection))
             self.assertEqual(runner.load_request(self.request_file)["selection"], selection)
+            runner.save(self.request_file, dict(self.request, coverage_initial_cooldown=True))
+            with self.assertRaisesRegex(ValueError, "Initial coverage cooldown"):
+                runner.load_request(self.request_file)
 
     def test_low_load_coverage_requires_segmented_play(self):
         selection = dict(attempt="embedded", diagnosticStage="goolake", diagnosticLowLoadCoverage=True)
@@ -413,6 +416,27 @@ class DeviceSessionTests(unittest.TestCase):
             world["performance"]["requestedFrameRate"] = 120
             with self.assertRaisesRegex(RuntimeError, "60 FPS cap"):
                 runner.observe_launch(device, thermal, request, self.output, {}, "7", start_attempt="embedded")
+
+    def test_initial_coverage_cooldown_precedes_active_capture(self):
+        request = dict(
+            self.request, selection=dict(diagnosticStage="shipgraveyard"), coverage_segment_seconds=12, coverage_initial_cooldown=True, duration_seconds=0
+        )
+        device, thermal = mock.Mock(package=request["package"]), mock.Mock()
+        device.sh.return_value = "7"
+        thermal.cancelled.is_set.return_value = False
+        calls = mock.Mock()
+        calls.world.return_value = dict(runClock=dict(scene="shipgraveyard"))
+        with (
+            mock.patch.object(runner, "wait_for_world_start", calls.world),
+            mock.patch.object(runner, "cool_coverage_segment", calls.cool),
+            mock.patch.object(runner, "capture", calls.capture),
+        ):
+            result = {}
+            runner.observe_launch(device, thermal, request, self.output, result, "7", start_attempt="embedded")
+        self.assertEqual([call[0] for call in calls.mock_calls], ["world", "cool", "capture", "capture"])
+        self.assertEqual(calls.cool.call_args.args[2:5:2], ("7", "embedded"))
+        self.assertEqual(result["coverage"]["initial_cooldown"], {"at_active_seconds": 0})
+        self.assertEqual(thermal.phase, "coverage-play-1")
 
     def test_coverage_saves_low_refresh_through_native_menu(self):
         settings = dict(highRefreshRate=True, buttonX=1167.5, buttonY=30, screenWidth=1280, screenHeight=960)
