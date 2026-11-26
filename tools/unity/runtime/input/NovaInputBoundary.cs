@@ -289,8 +289,7 @@ public sealed partial class PortSession
             if (nativeSourceSkinRequested)
                 coordinator.Check(spine && cfg.integratedWorld && sourceSurvivor != null,
                                   "Native source skin lifecycle request requires an integrated run and an actual source-selected player model");
-            // These source models leave their body meshes unbound until ModelSkinController.Start.
-            bool bindSelectedSkin = nativeSourceSkinRequested || (spine && (sourceSurvivor == "Huntress" || sourceSurvivor == "Croco"));
+            bool bindSelectedSkin = coordinator.UsesNativeSelectedSkin(sourceSurvivor);
             if (bindSelectedSkin)
                 coordinator.r.nova.nativeSourceSkinLifecycle = new AndroidNativeSourceSkinLifecycle.Report { requested = true };
             NovaInputBridge.Mapping mapping = null;
@@ -374,6 +373,7 @@ public sealed partial class PortSession
                                                     sourceSurvivor,
                                                     nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle,
                                                     coordinator.stageGeometryScene);
+                coordinator.RevealPreparedSourceModel();
                 if (bindSelectedSkin)
                 {
                     float assetDeadline = Time.realtimeSinceStartup + 15f;
