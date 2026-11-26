@@ -323,6 +323,20 @@ def canonical_record_sources(owner, canonical, paths, destinations):
     return sources
 
 
+def policy_rows(pins, table):
+    """Read inline rows or concatenate individually pinned selection shards."""
+    if isinstance(table, list):
+        yield from table
+        return
+    if not isinstance(table, dict) or set(table) != {"shards"} or not isinstance(table["shards"], list) or not table["shards"]:
+        raise ValueError("bundle policy table requires inline rows or pinned shards")
+    for pin in table["shards"]:
+        rows = pins.read(pin)
+        if not isinstance(rows, list):
+            raise ValueError("bundle policy shard must contain a row list")
+        yield from rows
+
+
 def prepare(owner, inputs, output):
     """Derive graph, schemas, current field routes and retained relocation packs."""
     E = owner.module("bundle_endpoints")
@@ -374,7 +388,7 @@ def prepare(owner, inputs, output):
         suppliers[name] = SimpleNamespace(paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]))
     producer = owner.ProducerRecords(providers)
     bindings, sources = {}, {}
-    for row in policy["bindings"]:
+    for row in policy_rows(pins, policy["bindings"]):
         destination = tuple(row["destination"])
         if destination[:2] != member or destination in bindings or not destination[2]:
             raise ValueError("duplicate or foreign emitted destination")
@@ -386,7 +400,7 @@ def prepare(owner, inputs, output):
             raise ValueError("original body source absent or ambiguous")
         bindings[destination] = dict(row, source=list(source))
         sources.setdefault(source, set()).add(destination)
-    for row in policy.get("staged_bindings", []):
+    for row in policy_rows(pins, policy.get("staged_bindings", [])):
         sources.setdefault(tuple(row["source"]), set()).add(tuple(row["destination"]))
     external_sources, source_files_by_member = {}, {}
     for (path, source_member, pid), destinations in sources.items():
@@ -395,7 +409,7 @@ def prepare(owner, inputs, output):
         external_sources[key] = destinations if existing is None else existing | destinations
         source_files_by_member.setdefault(source_member, set()).add(path)
     overrides = {}
-    for row in policy.get("field_routes", []):
+    for row in policy_rows(pins, policy.get("field_routes", [])):
         key = tuple(row["owner"]), tuple(row["field"])
         if key in overrides:
             raise ValueError("duplicate exceptional field route")
@@ -550,7 +564,8 @@ def prepare(owner, inputs, output):
             return value, body, typ
 
         pending = []
-        for group in policy["asset_groups"]:
+        asset_groups = list(policy_rows(pins, policy["asset_groups"]))
+        for group in asset_groups:
             pending.extend((*member, pid) for pid in group["roots"])
             pending.extend(tuple(target) for target in group.get("preload_roots", []))
         while pending:
@@ -715,8 +730,8 @@ def prepare(owner, inputs, output):
             path_ids=sorted(key[2] for key in selected if key[:2] == member),
             externals=externals,
             dependencies=sorted({key[0] for key in selected if key[:2] != member and key[0] != "sdk"} | ({donor["name"]} if canonical else set())),
-            asset_groups=policy["asset_groups"],
-            assets=policy["assets"],
+            asset_groups=asset_groups,
+            assets=list(policy_rows(pins, policy["assets"])),
         )
         managed = dict(request["managed_inputs"])
         for key, pin in managed.items():
