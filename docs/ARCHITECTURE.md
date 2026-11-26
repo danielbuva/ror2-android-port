@@ -4976,6 +4976,13 @@ pending coroutines before stage transport clears projectiles or `NovaInputSessio
 retires the run and combat services. Geometry cleanup stops any remaining
 spawner coroutines before unloading the scene.
 
+`IntegratedStageBoundary` verifies that the active `SceneInfo` belongs to
+the destination Moon2 scene before preparing its mission. Native runs keep
+their existing loot tables. The legacy layout continues to own its test
+chests and barrels. `MoonMissionBoundary` rebinds resolved director cards
+to the owned templates from the Moon encounter or whole-catalog population
+and releases its scene-owned state at stage teardown.
+
 ## Ownership
 
 `IntegratedResultsSession` keeps synchronous setup markers in the log and current

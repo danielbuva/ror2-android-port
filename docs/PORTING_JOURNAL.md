@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1513 — Activate the native Commencement mission on entry
+
+2026-11-26. The lab verifies the 730-component Moon2 scene contract,
+binds director cards to owned templates and keeps native loot setup on entry.
+Assisted Sky Meadow transport on Nova B grounded the player on Moon2 geometry
+and activated the destination SceneInfo. In the same process, native authority
+held with population ready, four batteries, 77 scene network objects and timers.
+APK `f9f9dc63f97b800924fb8019f8926f7c2b221a7d697805b05a30db266ba34571` (source `46d0ba4f`).
+Evidence under `work/coordination/gameplay-coverage-20261126/moon-native-entry-nova-b/`
+includes the `sample-36/` screenshot, log and report (46.69 FPS, 21.42 ms).
+The next segment hit 86.4 °C after 2.88 s above 80 °C. Admission battery
+was 30 °C. `terminal.done.json` confirms scratch cleanup, OLED sleep and lease
+release. Owner traversal, Mithrix, escape and matched PC rendering remain open.
+
 ## J1512 — Build signed-release IL2CPP and Burst on Android
 
 2026-11-26. The #651 Mono library repair let the signed native graph complete
