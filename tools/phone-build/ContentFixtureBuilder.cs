@@ -30,6 +30,13 @@ public static class ContentFixtureBuilder
         public string loaded_name;
         public string loaded_type;
         public NativeMaterialReferences material;
+        public NativeManifestEntry[] manifest;
+    }
+    [Serializable] public sealed class NativeManifestEntry
+    {
+        public string name;
+        public string hash;
+        public string[] dependencies;
     }
     [Serializable] public sealed class NativeContentRequest
     {
@@ -77,6 +84,7 @@ public static class ContentFixtureBuilder
             case "PhysicMaterial": return typeof(PhysicMaterial);
             case "SpeedTreeWindAsset": return typeof(Terrain).Assembly.GetType("UnityEngine.SpeedTreeWindAsset", throwOnError: true);
             case "AnimatorOverrideController": return typeof(AnimatorOverrideController);
+            case "AssetBundleManifest": return typeof(AssetBundleManifest);
             default: throw new Exception("Unsupported native-content type: " + name);
         }
     }
@@ -100,6 +108,15 @@ public static class ContentFixtureBuilder
             }
         }
         return references;
+    }
+
+    static NativeManifestEntry[] ObserveManifest(AssetBundleManifest manifest)
+    {
+        return Array.ConvertAll(manifest.GetAllAssetBundles(), name => new NativeManifestEntry {
+            name = name,
+            hash = manifest.GetAssetBundleHash(name).ToString(),
+            dependencies = manifest.GetDirectDependencies(name)
+        });
     }
 
     static void CheckNativeContent(string oracle)
@@ -151,7 +168,8 @@ public static class ContentFixtureBuilder
                 loaded.Add(value);
                 receipt.assets.Add(new NativeContentAsset {
                     name = asset.name, type = asset.type, loaded_name = value.name, loaded_type = value.GetType().FullName,
-                    material = asset.material != null && value is Material material ? ObserveMaterial(material) : null
+                    material = asset.material != null && value is Material material ? ObserveMaterial(material) : null,
+                    manifest = asset.manifest != null && value is AssetBundleManifest manifest ? ObserveManifest(manifest) : null
                 });
                 receipt.count = loaded.Count;
             }

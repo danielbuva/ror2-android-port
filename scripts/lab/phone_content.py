@@ -5,6 +5,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import subprocess
 import struct
 import uuid
@@ -27,6 +28,7 @@ NATIVE_CONTENT_TYPES = frozenset(
         "PhysicMaterial",
         "SpeedTreeWindAsset",
         "AnimatorOverrideController",
+        "AssetBundleManifest",
     )
 )
 
@@ -139,6 +141,8 @@ def native_content_request(path):
         names.add(name)
         if "material" in asset and (asset["type"] != "Material" or not material_references(asset["material"])):
             raise RuntimeError("Native-content Material needs expected shader and saved texture references")
+        if "manifest" in asset and (asset["type"] != "AssetBundleManifest" or not manifest_entries(asset["manifest"])):
+            raise RuntimeError("Native-content AssetBundleManifest needs expected bundle hashes and dependencies")
     return request
 
 
@@ -151,6 +155,27 @@ def material_references(value):
     ):
         return None
     return value["shader"], sorted((row["property"], row["texture"]) for row in textures)
+
+
+def manifest_entries(rows):
+    if not isinstance(rows, list):
+        return None
+    entries = []
+    for row in rows:
+        if not isinstance(row, dict):
+            return None
+        name, digest, dependencies = row.get("name"), row.get("hash"), row.get("dependencies")
+        if (
+            not isinstance(name, str)
+            or not name
+            or not isinstance(digest, str)
+            or not re.fullmatch(r"[0-9a-f]{32}", digest)
+            or not isinstance(dependencies, list)
+            or any(not isinstance(dep, str) or not dep for dep in dependencies)
+        ):
+            return None
+        entries.append((name, digest, sorted(dependencies)))
+    return sorted(entries)
 
 
 def validate_native_content(attempt, commit):
@@ -186,6 +211,8 @@ def validate_native_content(attempt, commit):
             raise RuntimeError("Native-content typed load mismatch")
         if "material" in asset and material_references(row.get("material")) != material_references(asset["material"]):
             raise RuntimeError("Native-content Material shader or saved texture mismatch: " + asset["name"])
+        if "manifest" in asset and manifest_entries(row.get("manifest")) != manifest_entries(asset["manifest"]):
+            raise RuntimeError("Native-content AssetBundleManifest bundles, hashes or dependencies mismatch: " + asset["name"])
     return report
 
 
