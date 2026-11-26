@@ -7227,9 +7227,10 @@ Audit 2026-11-26. `owner-code-job-inputs.json` and
 `owner-burst-job-inputs.json` describe dispatcher-relative paths to the
 original-input compiler providers, SDK, and GNU tools. The provenance,
 privacy, licensing and sensitive-content review covered tool arguments and
-path tokens. SDK, middleware, original files and outputs stay local.
+path tokens, including Mono's two multiarch library directories. SDK,
+middleware, original files and outputs stay local.
 
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-code-job-inputs.json` | `6a9db9c77118f96c2d064c4696a95160092e47303dca2e8d4217aef4ac389714` |
-| `owner-burst-job-inputs.json` | `840735f1945efe8ad687078d00b7fa66d903acb2071ae55770f47b668291ecda` |
+| `owner-burst-job-inputs.json` | `3a4d0dbbdfbc8dcd7d170322c58e95333cc941e9d8155a92db980bfec9adcac8` |

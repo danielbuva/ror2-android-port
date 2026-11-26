@@ -367,7 +367,13 @@ def run(request_file, runtime, installed):
             raise ValueError("explicit GNU Mono/Burst providers and Linux tools required")
         mono, compiler = [inputs / backend.native.relative(supplied[name]) for name in ("mono", "runtime")]
         linux = production["linux_tools"]
-        libraries = [str(compiler), str(mono / "usr/lib"), str(mono / "usr/lib/x86_64-linux-gnu"), *linux["library_dirs"]]
+        libraries = [
+            str(compiler),
+            str(mono / "usr/lib"),
+            str(mono / "usr/lib/x86_64-linux-gnu"),
+            str(mono / "lib/x86_64-linux-gnu"),
+            *linux["library_dirs"],
+        ]
         command = [linux["qemu"], "-L", linux["loader_root"]]
         for value in [
             "LD_LIBRARY_PATH=" + ":".join(libraries),
