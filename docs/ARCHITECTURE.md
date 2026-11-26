@@ -517,6 +517,15 @@ loads each declared type, checks provider and runtime root membership, and compa
 original native provider groups. Item relationship pointers must resolve to the
 typed catalog objects. The catalog differential ties the fixture to the candidate
 catalog and bundles, and the signed script audit covers ownerless records.
+For each typed body, the fixture follows its `CharacterModel` display rule set,
+checks item and equipment keys against the typed definitions, and resolves
+follower prefabs and model attachments. The differential reports these checks
+and compares serialized display pointers, address keys and attachment names.
+Its host-only `--discover-display-roots` action binds the fixture to the
+candidate APK and matches missing follower keys against the accepted original
+Addressables catalog. It reads the owning bundle's typed container to report
+the source GameObject triple for each location. Bundle preparation still
+checks supplier records and their transitive references before emission.
 The optional `projectile_config` file pin supplies `recipe/runtime-config.json`.
 After the skin checks, the fixture loads the objective state configs from
 `commando-prefab-lab`. It follows projectile and trail references from those
@@ -1936,9 +1945,10 @@ compilation. Fixed targets continue to select their own policy.
 `GnuToolAdapter.c` supplies only the GNU build-tool low-address mappings and
 explicit emulated child execution required by Mono/LLVM under QEMU. It is foreign
 tool data, never linked into the ARM64 game. `native.py::compiled_jobs` validates
-a completed object's source/command/input/hash receipts for an explicit relink,
-or the contiguous successful prefix of a failed compilation for explicit
-continuation in a new output. Reused lump receipts retain their actual original
+a completed object's source, command, input and hash receipts for an explicit
+relink. Resume validates the compiled prefix after a compilation failure or the
+full object set after a stripping-phase failure, then links in a new output.
+Reused lump receipts retain their actual original
 SDK wrapper root after relocation. An optional independently written pause
 clock lets its process wait count active time while the entire tool UID is
 stopped; malformed/reset clocks fail closed. Selected-job measurement compiles
@@ -3295,9 +3305,16 @@ on the configured volume, recreates the runtime directory, syncs the payload and
 records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
 route observations in either package. The runner resolves the installed APK's
-attempt before thermal sampling begins. After any bootstrap input, it waits for the
-attempt/PID-bound native menu, requires owned display-zero
-focus, taps the reported Start button and waits for a ready world before the
+attempt before thermal sampling begins. When the converted owner bootstrap is
+the resolved Activity and no startup script is supplied, the runner waits for
+its enabled Play button and taps its observed bounds on display zero. The
+default reads the accessibility hierarchy and removes the temporary device
+file on exit. A private Play reference screenshot can instead match the visible
+label and viewport when the WebView hierarchy is unavailable. The runner
+retains the matching frame and records the observation method and tap bounds
+in the private receipt. After bootstrap input, it waits for the
+attempt/PID-bound native menu, requires owned display-zero focus, captures the
+menu and taps the reported Start button. It waits for a ready world before the
 observation clock begins. Existing periodic captures retain PSS,
 native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage
@@ -5004,6 +5021,11 @@ end on return and add no retained state.
 Provider order, typed loads, identity checks, missing/duplicate-owner failures
 and existing family-cache teardown remain owned by the same loader. `SpawnStateBoundary` forwards the sparse family callback;
 its child markers retain no state.
+For converted catalogs that declare `source-definition-families`, the body
+catalog setup asks `WholeCatalogComposed` to mount it after its dependencies
+are loaded and before catalog registration. Direct typed family loads and
+Addressables borrow the same bundle instance. Session release detaches the
+borrowed operations and unloads the bundle.
 Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
 and family cache instead of broad bundle loading. Typed root selection, unique
 name/selected-identity checks and `Release` cache teardown keep their existing
@@ -7941,6 +7963,10 @@ payload. Its private report groups differences in component slots, referenced
 objects, script bindings, fields and container preloads by bundle, member and
 object ID. Reused IDs with different classes carry the available candidate
 source witness. A shared ID alone does not establish object identity.
+The exact-editor item display check captures typed keys and rules by body and
+array slot, with separate failures for key registration, follower loading and
+ChildLocator attachment resolution. The bundle differential also reports
+serialized rule type, limb mask, and local transform values for matched records.
 
 The physics comparison in `accepted-output/catalog_physics.py` follows named
 prefabs and scene GameObject hierarchies to compare layers, colliders, rigidbodies

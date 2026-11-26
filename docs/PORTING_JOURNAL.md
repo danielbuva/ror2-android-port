@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1505 — Reach Titanic Plains from the staged converted APK
+
+2026-11-26. The converted startup mounts source definitions and binds original
+item and equipment unlocks. The staged payload includes the source-derived TMP
+Settings and its dependencies. Visible Play and native Start reached the
+Commando run in Titanic Plains on adopted storage. The same session recorded
+20.019 s of native simulation, player displacement, and a saved loss report.
+APK SHA-256 `fe6da3ac0a7bed93af96c591b9d0566c10173dd68c3f6e06253e5a9822ac632d` (native source `33ea8c2d`).
+Evidence: `work/coordination/p1-scenes-w/objective-ui-closure-v27/v27-ordinary-start/`.
+Peak CPU/GPU was 94.3 °C with 61.1 s above 80 °C. Scratch cleanup, OLED
+sleep and lease release passed. End Run, audio, matched rendering and pacing,
+and the complete phone-only installer remain open.
+
 ## J1504 — Reuse required-route pointer validation during record emission
 
 2026-11-26. Required native record routes reuse their measured pointer

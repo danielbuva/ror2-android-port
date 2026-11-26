@@ -77,6 +77,8 @@ public sealed class AndroidProgressionBoundary : IDisposable
     readonly Dictionary<FieldInfo, object> priorFields = new Dictionary<FieldInfo, object>();
     readonly Dictionary<IDictionary, Dictionary<object, object>> priorMaps = new Dictionary<IDictionary, Dictionary<object, object>>();
     readonly List<DefinitionState> priorDefinitions = new List<DefinitionState>();
+    readonly Dictionary<ItemDef, UnlockableDef> priorItemUnlocks = new Dictionary<ItemDef, UnlockableDef>();
+    readonly Dictionary<EquipmentDef, UnlockableDef> priorEquipmentUnlocks = new Dictionary<EquipmentDef, UnlockableDef>();
     readonly Dictionary<Run, HashSet<UnlockableDef>[]> priorRunUnlocks = new Dictionary<Run, HashSet<UnlockableDef>[]>();
     IList identifiers;
     object[] priorIdentifiers;
@@ -190,6 +192,7 @@ public sealed class AndroidProgressionBoundary : IDisposable
                                    .ToArray();
         foreach (var group in ownedDefinitions.GroupBy(def => def.cachedName))
             Check(UnlockableCatalog.GetUnlockableDef(group.Key) == group.Last(), "Native duplicate-name lookup differs");
+        BindDropUnlocks();
         // Collect metadata without DoInit's user-login/update subscriptions. Collection
         // still uses the original attributes, sorting, reward lookup and icon references.
         var collection = AchievementManager.CollectAchievementDefs(map);
@@ -281,6 +284,40 @@ public sealed class AndroidProgressionBoundary : IDisposable
         achievements = map.Count;
         AchievementManager.availability.MakeAvailable();
         ready = true;
+    }
+
+    void BindDropUnlocks()
+    {
+        foreach (var item in ItemCatalog.allItemDefs)
+        {
+            var registered = RegisteredDropUnlock(item.unlockableDef);
+            if (registered == item.unlockableDef)
+                continue;
+            priorItemUnlocks.Add(item, item.unlockableDef);
+            item.unlockableDef = registered;
+        }
+        foreach (var index in EquipmentCatalog.allEquipment)
+        {
+            var equipment = EquipmentCatalog.GetEquipmentDef(index);
+            var registered = RegisteredDropUnlock(equipment.unlockableDef);
+            if (registered == equipment.unlockableDef)
+                continue;
+            priorEquipmentUnlocks.Add(equipment, equipment.unlockableDef);
+            equipment.unlockableDef = registered;
+        }
+    }
+
+    UnlockableDef RegisteredDropUnlock(UnlockableDef definition)
+    {
+        if (!definition || (definition.index != UnlockableIndex.None && UnlockableCatalog.GetUnlockableDef(definition.index) == definition))
+            return definition;
+        // Converted bundles can contain source copies of the same requirement.
+        // The native profile check treats an unindexed requirement as unlocked.
+        var registered = UnlockableCatalog.GetUnlockableDef(definition.cachedName);
+        Check(registered && !duplicateUnlockNames.Contains(definition.cachedName) && registered.requiredExpansion == definition.requiredExpansion,
+              "Original drop unlock has no unambiguous catalog definition: " + definition.cachedName);
+        RequireDefinition(registered);
+        return registered;
     }
 
     public static void RequireDefinition(UnlockableDef definition)
@@ -758,6 +795,12 @@ public sealed class AndroidProgressionBoundary : IDisposable
         priorRunUnlocks.Clear();
         if (!acquired)
             return;
+        foreach (var entry in priorItemUnlocks)
+            entry.Key.unlockableDef = entry.Value;
+        foreach (var entry in priorEquipmentUnlocks)
+            entry.Key.unlockableDef = entry.Value;
+        priorItemUnlocks.Clear();
+        priorEquipmentUnlocks.Clear();
         foreach (var state in priorDefinitions)
         {
             state.definition.index = state.index;

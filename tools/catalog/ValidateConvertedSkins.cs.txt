@@ -38,6 +38,12 @@ var definitionFamilies = new System.Collections.Generic.List<object>();
 var definitionPublication = new System.Collections.Generic.List<object>();
 string definitionSourceHash = null;
 bool definitionsComplete = false;
+var displayFailures = new System.Collections.Generic.List<object>();
+System.Action<object> failDisplay = row => { displayFailures.Add(row); failures.Add(row); };
+var bodyDisplays = new System.Collections.Generic.List<object>();
+var displaySlots = new System.Collections.Generic.List<object>();
+var displayPrefabs = new System.Collections.Generic.HashSet<UnityEngine.GameObject>();
+bool displaysComplete = false;
 
 System.Func<string, UnityEngine.AssetBundle> openBundle = owner =>
 {
@@ -138,6 +144,8 @@ System.Func<string,string,UnityEngine.GameObject> loadBody=(owner,path)=>{
 };
 try{
  foreach(var owner in startupOwners)openBundle(owner);
+ if (pins["source-definition-families"] != null)
+     openBundle("source-definition-families");
  // Earlier startup orders are retained as controls for first-load failures.
  var wardPath=(string)fixture?["ward_path"];
  var commandoPath=(string)fixture?["commando_path"];
@@ -497,6 +505,110 @@ try{
                  pairs = relationships?.Length, badPairs, error = "Item relationship points outside the typed definition families" });
      }
      definitionsComplete = true;
+
+     var sourceBodyIds = WholeCatalogComposed.FamilyLocationGroups(source, "CharacterBody").SelectMany(group => group).Distinct().ToArray();
+     var missingBodyIds = sourceBodyIds.Except(groups.SelectMany(group => group)).ToArray();
+     if (missingBodyIds.Length != 0)
+         failDisplay(new { missingBodyIds, error = "Body display inspection omits source CharacterBody locations" });
+     var equipmentDefs = new System.Collections.Generic.HashSet<RoR2.EquipmentDef>(typedDefinitions.Values.OfType<RoR2.EquipmentDef>());
+     var keyItemDefs = new System.Collections.Generic.HashSet<RoR2.KeyItemDef>(typedDefinitions.Values.OfType<RoR2.KeyItemDef>());
+     System.Func<object, System.Type, UnityEngine.Object> loadDisplayAddress = (address, type) =>
+     {
+         if (!(address is string key) || !stringKeys.TryGetValue(key, out var candidates))
+             return null;
+         var assets = new System.Collections.Generic.HashSet<UnityEngine.Object>();
+         foreach (var candidate in candidates)
+         {
+             var declaredType = System.Type.GetType((string)candidate["type"], false);
+             if (declaredType == null || !type.IsAssignableFrom(declaredType))
+                 continue;
+             string owner = (string)candidate["bundle"];
+             foreach (var dependency in manifest["bundles"][owner]["dependencies"])
+                 openBundle((string)dependency);
+             var asset = openBundle(owner).LoadAsset((string)candidate["path"], declaredType);
+             if (asset)
+                 assets.Add(asset);
+         }
+         return assets.Count == 1 ? assets.Single() : null;
+     };
+     foreach (var entry in typedBodies)
+     {
+         string path = entry.Key;
+         var locator = entry.Value.GetComponent<RoR2.ModelLocator>();
+         var target = locator ? locator.modelTransform : null;
+         var model = target ? target.GetComponent<RoR2.CharacterModel>() : null;
+         var ruleSet = model ? model.itemDisplayRuleSet : null;
+         if (!ruleSet)
+         {
+             bodyDisplays.Add(new { path, ruleSet = (string)null, groups = 0, rules = 0 });
+             continue;
+         }
+         var children = target.GetComponent<ChildLocator>();
+         var displayGroups = ruleSet.keyAssetRuleGroups;
+         if (displayGroups == null)
+         {
+             failDisplay(new { path, ruleSet = ruleSet.name, error = "Typed display rule groups are missing" });
+             continue;
+         }
+         int rules = 0;
+         var groupSlots = new System.Collections.Generic.List<object>();
+         for (int i = 0; i < displayGroups.Length; i++)
+         {
+             var group = displayGroups[i];
+             var key = group.keyAsset;
+             var keyAddress = group.keyAssetAddress?.RuntimeKey;
+             if (!key && (group.keyAssetAddress?.RuntimeKeyIsValid() ?? false))
+                 key = loadDisplayAddress(keyAddress, typeof(UnityEngine.ScriptableObject));
+             var registered = (key is RoR2.ItemDef item && itemDefs.Contains(item)) ||
+                 (key is RoR2.EquipmentDef equipment && equipmentDefs.Contains(equipment)) ||
+                 (key is RoR2.KeyItemDef keyItem && keyItemDefs.Contains(keyItem));
+             var keyName = key ? key.name : null;
+             var keyType = key ? key.GetType().FullName : null;
+             if (!registered)
+                 failDisplay(new { path, ruleSet = ruleSet.name, group = i, key = key ? key.name : null,
+                     keyType, address = keyAddress, check = "key",
+                     error = "Display key is outside the typed item, equipment and key item families" });
+             var groupRules = group.displayRuleGroup.rules;
+             if (groupRules == null)
+             {
+                 failDisplay(new { path, ruleSet = ruleSet.name, group = i, error = "Typed display rules are missing" });
+                 continue;
+             }
+             rules += groupRules.Length;
+             var ruleSlots = new System.Collections.Generic.List<object>();
+             for (int j = 0; j < groupRules.Length; j++)
+             {
+                 var rule = groupRules[j];
+                 var ruleType = rule.ruleType.ToString();
+                 if (rule.ruleType != RoR2.ItemDisplayRuleType.ParentedPrefab)
+                 {
+                     ruleSlots.Add(new { rule = j, ruleType });
+                     continue;
+                 }
+                 var follower = rule.followerPrefab;
+                 var address = rule.followerPrefabAddress?.RuntimeKey;
+                 if (!follower && (rule.followerPrefabAddress?.RuntimeKeyIsValid() ?? false))
+                     follower = loadDisplayAddress(address, typeof(UnityEngine.GameObject)) as UnityEngine.GameObject;
+                 var child = rule.childName;
+                 var attachment = children ? children.FindChild(child) : null;
+                 var followerName = follower ? follower.name : null;
+                 ruleSlots.Add(new { rule = j, ruleType, follower = followerName, address, child,
+                     attachment = describeTransform(attachment) });
+                 if (follower)
+                     displayPrefabs.Add(follower);
+                 else
+                     failDisplay(new { path, ruleSet = ruleSet.name, group = i, rule = j, key = keyName,
+                         follower = followerName, address, child, check = "follower", error = "Typed display follower is missing" });
+                 if (!attachment)
+                     failDisplay(new { path, ruleSet = ruleSet.name, group = i, rule = j, key = keyName,
+                         follower = followerName, address, child, check = "child", error = "Typed display attachment is missing" });
+             }
+             groupSlots.Add(new { group = i, key = keyName, keyType, keyAddress, registered, rules = ruleSlots });
+         }
+         bodyDisplays.Add(new { path, ruleSet = ruleSet.name, groups = displayGroups.Length, rules });
+         displaySlots.Add(new { path, ruleSet = ruleSet.name, model = describeTransform(target), groups = groupSlots });
+     }
+     displaysComplete = bodyDisplays.Count == typedBodies.Count;
  }
 }catch(System.Exception error){failures.Add(new{error=error.ToString()});}
 finally{foreach(var bundle in bundles.Values.Reverse())bundle.Unload(true);}
@@ -506,5 +618,7 @@ var masterBodyIdentity = new { complete = identityComplete, bodies = typedBodies
     bundles = bundles.Keys.ToDictionary(owner => owner, owner => (string)pins[owner]["sha256"]), failures = identityFailures };
 var definitionIdentity = definitionSourceHash == null ? null : new { complete = definitionsComplete, families = definitionFamilies,
     publication = definitionPublication, sourceMetadataSha256 = definitionSourceHash, failures = definitionFailures };
-var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures,masterBodyIdentity,definitionIdentity};
+var displayIdentity = definitionSourceHash == null ? null : new { complete = displaysComplete, bodies = bodyDisplays,
+    prefabs = displayPrefabs.Count, slots = displaySlots, failures = displayFailures };
+var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures,masterBodyIdentity,definitionIdentity,displayIdentity};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;
