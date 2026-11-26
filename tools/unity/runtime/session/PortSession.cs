@@ -231,6 +231,7 @@ public sealed partial class PortSession : MonoBehaviour
         public float sirenNativeEncounterContinuationRegistrationObservedAt;
         public string diagnosticSkillIsolationSlot;
         public bool developerSkillIsolationAssisted;
+        public bool diagnosticMoonContinuation;
         public bool diagnosticSirenEggInput;
         public SirenEggInputReport sirenEggInput;
         public SurvivorSkillInputCoverage.Report skillInputCoverage;
@@ -871,6 +872,17 @@ public sealed partial class PortSession : MonoBehaviour
             Save();
             yield break;
         }
+        if (r.diagnosticMoonContinuation && !ManualMoonBoundary.AllowsAssistedContinuation(
+                Application.identifier, config.integratedWorld && config.teleporterLoop && config.stageGeometry &&
+                                        config.moonMission && r.freePlay && !string.IsNullOrEmpty(r.id) && IsPlayableSpine(),
+                DirectStageDiagnosticRequested, r.nativeFirstStageLifecycleDiagnosticAttempt || r.sirenSourceEntryDiagnosticAttempt))
+        {
+            r.phase = "moon-continuation-diagnostic-refused";
+            r.firstFailure = "Moon continuation requires a full integrated lab run";
+            r.firstFailurePhase = r.phase;
+            Save();
+            yield break;
+        }
         if (r.nativeSourceSkinLifecycleDiagnosticRequested &&
             (!config.integratedWorld || (r.id != "body-state-spawn-state-auto-nova-spine" &&
                                          r.id != "body-state-spawn-state-auto-nova-spine-bringup") ||
@@ -915,7 +927,7 @@ public sealed partial class PortSession : MonoBehaviour
         ObserveSessionResources("before-presentation");
         AndroidMaterialPresentation.Begin(config.enhancedPresentation);
         r.enhancedPresentation = config.enhancedPresentation;
-        r.pauseBeforeMoon = config.pauseBeforeMoon;
+        r.pauseBeforeMoon = config.pauseBeforeMoon && !r.diagnosticMoonContinuation;
         r.presentation = AndroidMaterialPresentation.report;
         r.session = sessionIndex;
         r.phase = "started";

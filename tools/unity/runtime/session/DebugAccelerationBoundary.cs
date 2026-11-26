@@ -92,7 +92,8 @@ public sealed partial class PortSession
         }
         Save();
     }
-    bool DeveloperRunAssisted => r.developerSkillVariantAssisted || r.developerSkillIsolationAssisted || DirectStageDiagnosticRequested;
+    bool DeveloperRunAssisted => r.developerSkillVariantAssisted || r.developerSkillIsolationAssisted ||
+                                 r.diagnosticMoonContinuation || DirectStageDiagnosticRequested;
 
     bool IsRunAssisted()
     {

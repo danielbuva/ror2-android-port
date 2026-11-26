@@ -5,6 +5,18 @@ CANDIDATE = Path(__file__).resolve().parents[1]
 
 
 class ManualMoonBoundaryPatchTests(unittest.TestCase):
+    def test_input_and_transport_use_the_effective_session_gate(self):
+        session = (CANDIDATE / "tools/unity/runtime/session/PortSession.cs").read_text()
+        self.assertLess(session.index("if (r.attempt != config.attempt)"), session.index("ManualMoonBoundary.AllowsAssistedContinuation"))
+        self.assertIn("r.pauseBeforeMoon = config.pauseBeforeMoon && !r.diagnosticMoonContinuation;", session)
+        input_source = (CANDIDATE / "tools/unity/runtime/input/NovaInputBoundary.cs").read_text()
+        self.assertNotIn("cfg.pauseBeforeMoon", input_source)
+        self.assertEqual(input_source.count("coordinator.r.pauseBeforeMoon"), 4)
+        transport = (CANDIDATE / "tools/unity/runtime/stage/IntegratedStageBoundary.cs").read_text()
+        self.assertIn("ManualMoonBoundary.RefuseTransport(coordinator.r.pauseBeforeMoon,", transport)
+        assistance = (CANDIDATE / "tools/unity/runtime/session/DebugAccelerationBoundary.cs").read_text()
+        self.assertIn("r.diagnosticMoonContinuation || DirectStageDiagnosticRequested", assistance)
+
     def test_input_gate_precedes_pending_transport_and_producers(self):
         source = (CANDIDATE / "tools/unity/runtime/input/NovaInputBoundary.cs").read_text()
         first_gate = source.index("ManualMoonBoundary.HoldAutomaticProgression")

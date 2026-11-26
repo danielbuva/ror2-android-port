@@ -10,6 +10,17 @@ internal static class ManualMoonBoundaryPolicyHost
 
     static int Main()
     {
+        Require(ManualMoonBoundary.AllowsAssistedContinuation("dev.ror2lab.arm64", true, false, false),
+                "Full integrated lab route must allow assisted continuation");
+        Require(!ManualMoonBoundary.AllowsAssistedContinuation("dev.ror2lab.converted", true, false, false),
+                "Converted package must refuse assisted continuation");
+        Require(!ManualMoonBoundary.AllowsAssistedContinuation("dev.ror2lab.arm64", false, false, false),
+                "Non-Moon or non-integrated route must refuse assisted continuation");
+        Require(!ManualMoonBoundary.AllowsAssistedContinuation("dev.ror2lab.arm64", true, true, false),
+                "Direct stage route must refuse assisted continuation");
+        Require(!ManualMoonBoundary.AllowsAssistedContinuation("dev.ror2lab.arm64", true, false, true),
+                "First-stage-only route must refuse assisted continuation");
+
         Require(!ManualMoonBoundary.HoldAutomaticProgression(false, -1), "Disabled gate must remain open");
         Require(!ManualMoonBoundary.HoldAutomaticProgression(false, int.MaxValue), "Disabled gate must remain open at large counts");
         Require(!ManualMoonBoundary.HoldAutomaticProgression(true, -1), "Negative count must not hold");

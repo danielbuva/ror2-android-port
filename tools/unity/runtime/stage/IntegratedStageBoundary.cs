@@ -21,6 +21,12 @@ public static class ManualMoonBoundary
     public const float ObservationSeconds = 30f;
     public const string MoonDestination = "moon2";
 
+    public static bool AllowsAssistedContinuation(string packageName, bool integratedMoonRoute, bool directStage, bool firstStageOnly)
+    {
+        return string.Equals(packageName, "dev.ror2lab.arm64", StringComparison.Ordinal) &&
+               integratedMoonRoute && !directStage && !firstStageOnly;
+    }
+
     public static bool HoldAutomaticProgression(bool enabled, int completedTransitions)
     {
         return enabled && completedTransitions >= CompletedTransitions;

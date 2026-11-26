@@ -35,6 +35,11 @@ For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
 The selector uses the stored loadout and existing integrated stage loader.
 Siren's Call still enters through its native transition owner.
+For an assisted lab run through the Moon finale, set
+`selection.diagnosticMoonContinuation: true` with the APK's attempt and an
+integrated free-play selector. Input and transport share the session's Moon
+gate. The run follows native destination selection, and its results carry
+the existing assisted marker.
 `capture_golem_attacks: true` (lab launch mode only) saves up to eight
 three-frame bursts under `golem-attacks/` on live Unity Golem clap or laser
 entry logs. Each burst records the triggering line and capture times. Clap
@@ -50,6 +55,8 @@ write failure and one rename failure in the lab settings writer, checking
 visible retry, retained generations and cold recovery without filling storage.
 It requires the lab package and does not accept a custom `selection`.
 The device free-space reservation includes the requested payload size.
+`enforce_soc_ceiling: true` requires CPU, GPU and readable SoC zones below
+85 C at admission and stops gameplay when a measured zone reaches 85 C.
 Requests and results stay private.
 
 Shared editor builds use current `./dev shared-build --request REQUEST.json`.

@@ -532,10 +532,10 @@ public sealed partial class PortSession
                         yield break;
                     if (bridge.ConsumeTouchPauseRequest())
                         coordinator.ShowOfflineSettings(true);
-                    bool pauseBeforeMoonBoundary = cfg.pauseBeforeMoon && cfg.teleporterLoop &&
+                    bool pauseBeforeMoonBoundary = cfg.teleporterLoop &&
                                                    coordinator.r.stageProgress != null &&
                                                    ManualMoonBoundary.HoldAutomaticProgression(
-                                                       cfg.pauseBeforeMoon, coordinator.r.stageProgress.transitions);
+                                                       coordinator.r.pauseBeforeMoon, coordinator.r.stageProgress.transitions);
                     bridge.SetManualMoonAutomaticHold(pauseBeforeMoonBoundary);
                     ObserveManualMoonHold(bridge);
                     if ((coordinator.r.freePlay || cfg.integratedWorld) && body && !body.healthComponent.alive)
@@ -635,9 +635,9 @@ public sealed partial class PortSession
                             previous = solver.TransientPosition;
                             // The fourth transport completes inside this coroutine. Recheck before
                             // any later producer in this same frame, not only on the next frame.
-                            pauseBeforeMoonBoundary = cfg.pauseBeforeMoon && cfg.teleporterLoop &&
+                            pauseBeforeMoonBoundary = cfg.teleporterLoop &&
                                                       ManualMoonBoundary.HoldAutomaticProgression(
-                                                          cfg.pauseBeforeMoon, coordinator.r.stageProgress.transitions);
+                                                          coordinator.r.pauseBeforeMoon, coordinator.r.stageProgress.transitions);
                             bridge.SetManualMoonAutomaticHold(pauseBeforeMoonBoundary);
                             ObserveManualMoonHold(bridge);
                         }
@@ -944,12 +944,12 @@ public sealed partial class PortSession
                         coordinator.Check(coordinator.r.stageProgress.transitions >= Mathf.Max(1, cfg.integratedTransitionTarget) &&
                                               coordinator.r.stageProgress.stageClearCount >= Mathf.Max(1, cfg.integratedTransitionTarget),
                                           "Integrated original teleporter/boss/charge loop incomplete");
-                    if (cfg.moonMission && !cfg.pauseBeforeMoon)
+                    if (cfg.moonMission && !coordinator.r.pauseBeforeMoon)
                         coordinator.Check(
                             coordinator.r.moon != null && coordinator.r.moon.gameOver &&
                                 coordinator.moonEscape.mainStateMachine.state is EscapeSequenceController.EscapeSequenceSuccessState,
                             "Original Moon mission/escape/ending remains incomplete");
-                    if (cfg.integratedResults && !cfg.pauseBeforeMoon)
+                    if (cfg.integratedResults && !coordinator.r.pauseBeforeMoon)
                         coordinator.Check(coordinator.r.results != null && coordinator.r.results.reportGenerated &&
                                               coordinator.r.results.clientEnding && coordinator.r.results.reportReloaded &&
                                               coordinator.r.results.persisted,
