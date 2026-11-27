@@ -96,19 +96,21 @@ remains the desktop fallback.
 | Final package identity | Inspect assembled/installed `dev.ror2lab.alpha`; require an occupied installation's ownership receipt, actual APK hash/version and same signer. No adoption/uninstall fallback. | Host-qualified: alpha publisher, manifest, issued-receipt and session guards. Phone-qualified with a synthetic alpha package. Production Unity alpha placement and cold game start remain open. |
 | Issued versions | Durable codes 1–2,100,000,000 bind source/input/toolchain/APK/payload/certificate. Failed/cancelled attempts burn codes; reject reuse, downgrade, missing ledger and exhaustion. | Host-qualified: locked issuance and independent publisher/install ordering, including repeated source and rollback. Phone-qualified synthetic issuance and cold installer readback. Recovery across an interrupted issue/install remains open. |
 | Signing and recovery | Keep one private owner certificate; verify signatures/alignment and reject lost, redirected or exposed custody. | Existing signer plus new ledger/certificate checks pass synthetic contracts. J1095 remains authored-phone signing only. Real alpha key backup/recovery and signature continuity still need phone evidence. |
-| Legitimate local input | Hash complete supported inventories; clearly name known-unsupported/unknown/ambiguous inputs, supported versions and next action. No output admission from labels or partial copies. | Android fixture verified folder/ZIP imports and visible unknown and known-unsupported refusals with legitimate current and older cohorts. External SAF provider selection and persisted URI reopen across UIDs remain open. |
+| Legitimate local input | Hash complete supported inventories; clearly name known-unsupported/unknown/ambiguous inputs, supported versions and next action. No output admission from labels or partial copies. | Android's external storage provider passed supported folder and ZIP imports with full hash readback after reopening their persisted grants across processes. Legitimate older input was refused as unknown or named unsupported according to the signed catalog. An incomplete folder and a case-aliased ZIP were also refused. |
 | Retained rollback | Retain current/previous manifests and signed-APK references; require compatible schema, same key and a newly issued higher code. Never uninstall or force downgrade. | Host-qualified: real binary-manifest forward reversion, unchanged retained content, signing/refusal boundaries and safe reference pruning. Phone-qualified synthetic Android session rollback. Production alpha cold-start compatibility remains open. |
 | Profile/settings retention | Preserve the bounded local file set below; snapshot before mutation, verify/restore before releasing the launch gate. | Host-qualified: executing Java store/installer tests, corruption/interruption/space refusal and released-token crash recovery without overwriting newer play. Phone-qualified Binder provider and matching synthetic files across update/rollback. Native files and durability across production alpha update/rollback remain open. |
-| Cancellation and updates | Cancel acquisition/build/install without modifying originals, accepting partial output or losing current/previous recovery references. | Host-qualified: importer/checkpoint/session/backup recovery contracts. Phone-qualified system picker Back, fixture cancellation during validation and ordinary Android consent for the synthetic alpha. Cancellation after copying begins, build/install cancellation and production alpha progress across cold starts remain open. |
+| Cancellation and updates | Cancel acquisition/build/install without modifying originals, accepting partial output or losing current/previous recovery references. | Android picker Back, validation cancellation and mid-copy cancellation passed. The latter removed partials, retained hash-verified files and resumed without reselection. Staged sources stayed unchanged. Build/install cancellation and production alpha progress across cold starts remain open. |
 
 The [issued-version device check](PORTING_JOURNAL.md#j1482--verify-issued-alpha-versions-and-forward-rollback-on-android)
 binds the synthetic v1/v2/v3 receipts and v3 rollback to their actual installed
 hashes. [J1480](PORTING_JOURNAL.md#j1480--recover-an-interrupted-native-profile-commit)
 verifies native profile interruption and cold-start recovery on the lab build.
-The [acquisition device check](PORTING_JOURNAL.md#j1488--verify-android-folder-and-zip-acquisition-through-the-installer)
-uses Android activity results and persisted read grants from a provider in the
-disposable installer APK. Its test controls invoke the normal Import and Cancel
-buttons. Hash readback verifies the staged sources and successful private imports.
+The acquisition check uses Android DocumentsUI and the platform external storage
+provider to grant read access to staged copies of legitimate game files. Its
+test controls invoke the normal Import and Cancel buttons in the disposable
+installer. The forced restart exercises persisted URI access, and hash readback
+covers both staged sources and successful private imports.
+[Device evidence](PORTING_JOURNAL.md#j1529--qualify-external-saf-validation-and-import-resume).
 
 Run the existing host contracts without private input or an editor:
 
