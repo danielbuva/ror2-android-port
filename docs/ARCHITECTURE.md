@@ -1088,6 +1088,12 @@ before graph preparation. The release graph exposes these type tables and the
 object producer's existing final `layout.json` as cached artifacts. Readers close
 on exit; receipts and metadata persist with their packs. Current whole-content
 preparation and phone qualification remain open.
+`recipe/owner-whole-game-original-animation-clips.json` supplies `death_fly`
+and `AcoHang_HeadRise` at their whole-game member PathIDs. Source and native type
+hashes pin the original clips, and the record owner preserves both bodies. The
+`bundle_preload.py` owner generates the AssetBundle container and preload pointers
+from the requested groups. The exact-editor fixture typed-loads both clips
+through a scoped container. Complete-catalog assembly remains open.
 `recipe/owner-whole-game-source-records.json` selects original managed/native
 records through this owner; all 198 are host raw-exact. Setup takes pinned
 original/SDK inputs and a fresh pack; persisted receipts remain after exit.
@@ -1811,7 +1817,9 @@ normal GitHub acquisition. Signature, archive, issuance and install checks are
 unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
-Its runner-provided toolhost and generated binaries/keys never leave the lab.
+The fixture checks that one changed output rebuilds, the unchanged producer is
+reused, the profile and settings survive, and the next check reports the installed
+release is current. Its toolhost and generated binaries/keys stay in the lab.
 `scripts/lab-alpha-packaging.py` extends that owner with synthetic package issuance,
 installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending
@@ -2035,7 +2043,11 @@ SDK wrapper root after relocation. An optional independently written pause
 clock lets its process wait count active time while the entire tool UID is
 stopped; malformed/reset clocks fail closed. Selected-job measurement compiles
 only requested units, records timings and skips linking, with a distinct
-`native-measured` terminal phase. Setup and controller clock ordering are in the
+`native-measured` terminal phase. The Android Clang plan maps its job directory
+out of DWARF so equivalent builds can share a linker build ID across output
+paths. Explicit worker comparisons and selected measurements collect the
+existing object digests in one private log before linking or teardown.
+Setup and controller clock ordering are in the
 [native owner contract](../tools/phone-build/owner-code/README.md).
 The normal linker/stripper then use the selected profile order. Neither owner
 reads an accepted ELF as a supplier.
@@ -3129,6 +3141,23 @@ Planning checks eligibility once per marked run, not per descendant directory.
 Marking never deletes; normal dry-run/apply owns pruning and rechecks eligibility
 before the first deletion of each marked run. No symlinked runs are eligible.
 
+`--aggressive` applies a 48-hour minimum to stand-alone APKs and evidence
+and covers APK copies in device and lab-build output roots. It also retires
+receipted R9 Unity bundle copies and isolated Gradle caches from old unpinned
+attempts. The manifests, logs and receipts stay. Active projects, immutable
+history and `.prune-keep` trees are protected. Cache ownership and age rules
+remain as described above, with explicit keeps also honored in aggressive mode.
+Older thermal, exception, input and resource traces and heap snapshots can be
+stored losslessly as `.zst`. The pruner skips evidence with shared APFS
+allocation and publishes an archive only after checksum testing and a reduction
+in allocated bytes. Converter indexes and protocol JSONL retain their original
+paths. `scripts/lab/evidence_files.py` opens raw or compressed trace bytes for
+retained reports and heap analysis. The heap export owner materializes one
+snapshot at a time in its existing temporary directory and preserves capture
+identity. Apply is serialized and writes its ledger under `work/cleanup-analysis`.
+The ledger distinguishes logical candidate bytes from the signed change in
+volume-available bytes measured by `df`, which includes concurrent host activity.
+
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
 renumbers only branch additions and regenerates `docs/JOURNAL_INDEX.md`. Setup
@@ -3462,9 +3491,11 @@ After stopping the app, the runner copies new or updated lab reports and frame
 traces to the host, verifies their hashes, then removes those device copies.
 Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots.
-Timed menu Start requests can set `capture_video` to retain a display-zero MP4
-from world admission for up to 180 seconds. The shared runner binds the file to
-the owned PID, verifies its hash and removes the device copy before going idle.
+Timed menu Start and direct lab survivor requests can set `capture_video` to
+retain a display-zero MP4 from world admission for up to 180 seconds. The
+runner waits for the same PID and APK attempt's live world before starting the
+recorder and dispatching any scheduled input. It verifies the recording hash
+and removes the device copy before going idle.
 Sustained mode delegates to the existing sustained-session owner, using
 `capture_interval_seconds` for observations (default five seconds). Observations
 follow elapsed-time boundaries and retain available CPU/GPU clocks and limits,
@@ -5230,7 +5261,7 @@ callback; successful refusal and post-transaction reporting failures retain it.
 Session disposal clears the set. The extracted production-method fixture in
 `tests/test_offline_achievement_event_retry.py` checks this host contract (J1039).
 
-Ordinary Huntress and Acrid runs attach `AndroidNativeSourceSkinLifecycle`
+Ordinary Huntress, Acrid and Artificer runs attach `AndroidNativeSourceSkinLifecycle`
 before the detached source model activates. Their original
 `ModelSkinController` applies the selected SkinDef and supplies the meshes,
 renderer records, controller and avatar. The adapter publishes translated
@@ -8110,6 +8141,11 @@ Vulkan program platforms and leaf dependencies. The signed release graph binds
 the resulting bodies and types to their PC or SDK identities. Compilation closes
 the standalone compiler and codec and retains a receipt for preparation.
 
+Release-graph discovery also accepts typed packs from `shader_prefab.py`.
+Preparation uses each recipe's pinned original Shader identity and reads the
+produced Android body through the pack receipt and type table. Shader
+dependencies use the produced member namespace or explicit field routes.
+
 The same owner produces the camera Shader and ComputeShader leaf packs.
 `shader_compute.py` decodes the pinned SDK compiler's Vulkan kernel payloads
 and projects the executable, workgroup and reflected resources into the
@@ -8206,13 +8242,14 @@ initializing the Animator. The boundary verifies locomotion parameters during
 `SpawnTeleporterState`, before native `BaseCharacterMain` snapshots them. It keeps
 direct-binding source renderers out of the loading view until the display has
 prepared their materials. The display retains the binding, enables native aim
-and reports the movement cache and Animator state. Native selected-skin loads
-retain their asynchronous controller and avatar owner. The existing display
-and detached-model disposal own teardown.
+and reports the movement cache and Animator state. Artificer attaches the native
+skin owner before detachment to load the selected mesh and materials. The
+display retains the pre-bound, running Animator and the native owner's material
+copies. The existing display and detached-model disposal own teardown.
 `./dev editor --target lab --action commando-animation-host` is a current exact-editor
 contract check reproducing unavailable parameters under an inactive model base
 and parameter discovery after native detachment, before the main state, including
-the imported Bandit and Captain controllers
+the imported Bandit, Captain and Artificer controllers
 (`SurvivorSkillInputHost.VerifyAnimatorBeforeMainState`); gameplay remains a
 device gate.
 `NovaInputBridge` neutralizes unavailable physical input without suspending idle
@@ -8222,11 +8259,12 @@ and full cancellation through `Neutral`.
 
 Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
 and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
-Commando, Huntress, Captain and Bandit2 additive states and blend trees, plus
-other native AimPitch/AimYaw layers. It resolves current catalog containers
-against accepted input hashes and emits private source identities and Transform
-reference values through StageIO. The latter creates owned
-constant reference clips before bundle production and applies the original
+Commando, Huntress, Captain, Bandit2 and Artificer additive states and blend
+trees, plus other native AimPitch/AimYaw layers. It resolves current catalog containers
+against accepted input hashes and emits private source identities and reference
+values through StageIO. These retain Transform channels and root Animator
+parameters matched by hash to a named curve in the imported clip. The latter
+creates owned constant reference clips before bundle production and applies the original
 additive reference settings. It also restores Bandit2's gesture synchronization
 and override-only motions from the source controller's layer and motion slots.
 The same stage imports Bandit2's SideWeapon clips from the accepted export.
@@ -8242,8 +8280,11 @@ curves and compares positions and directions on a frozen rig against the origina
 clips. It samples Commando's muzzles and Huntress's torso, head and bow during
 aim, firing and hit reactions, and Captain's torso, head, gun and radio during
 aim, firing and call-ins. It samples Bandit2's torso, head and weapon attachment
-poses during aim, firing, reload, smoke bomb and blade gestures. Huntress firing
-and recovery and Captain's selected gestures play both gesture layers. Their
+poses during aim, firing, reload, smoke bomb and blade gestures. It samples
+Artificer's torso, head, hands and muzzles during aim, alternating casts, bomb
+and Flamethrower phases, including the gauntlet and hand gestures playing
+together. Huntress firing and recovery and Captain's selected gestures play
+both gesture layers. Their
 comparison overrides controller clips with the originals, including Captain's
 shared Commando clips. The Bandit2 fixture drives the source gesture layer and
 compares both synchronized layers against the original controller.

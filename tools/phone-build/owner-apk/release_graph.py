@@ -581,7 +581,7 @@ class Graph:
             if not compressed:
                 profile = json.loads(path.read_bytes())
                 producer = owner(profile)
-                direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce"}
+                direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce", "shader_prefab"}
                 typed_shaders = producer == "shader_produce" and "typed_records" in profile
                 registry_remap = producer == "record_remap" and "original_sources" in profile
                 if producer not in direct and not typed_shaders and not registry_remap:

@@ -336,7 +336,7 @@ class Runner:
                         shutil.rmtree(lease, ignore_errors=True)
             if local_checkout is None:
                 self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
-            self.run([sys.executable, "scripts/prune-generated.py", "--apply"], self.repo, timeout=1800)
+            self.run([sys.executable, "scripts/prune-generated.py", "--apply", "--aggressive"], self.repo, timeout=1800)
 
 
 def toolhost_summary(out):
@@ -421,6 +421,11 @@ def local_packaging(path, *, dry_run=False, detach=False):
             command["args"].extend(["--acquisition-request", str(Path(path).resolve())])
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
+            if operation == "packaging" and "toolhost_source_commit" in request:
+                source_commit = request["toolhost_source_commit"]
+                if not isinstance(source_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", source_commit):
+                    raise CommandError("packaging fixture requires a full cached source commit")
+                command["args"].extend(["--toolhost-source-commit", source_commit])
         toolhosts = repo / "work/coordination/lab-runner/toolhost"
         inputs = request.get("toolhost_inputs") if build_toolhost else None
         if inputs is not None:

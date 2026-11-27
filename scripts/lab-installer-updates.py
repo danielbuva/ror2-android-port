@@ -33,10 +33,13 @@ ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = "dev.ror2lab.installertest"
 GAME = "dev.ror2lab.alpha"
 ACTIVITY = PACKAGE + "/dev.ror2lab.phonebuildhostfixture.ToolHostActivity"
-CASES = ("check-for-updates", "update-N-to-N+1", "same-key-rollback", "tampered-manifest-refused", "wrong-key-release-refused")
+UPDATE_CASES = ("check-for-updates", "update-N-to-N+1", "check-up-to-date")
+CASES = (*UPDATE_CASES, "same-key-rollback", "tampered-manifest-refused", "wrong-key-release-refused")
 PROMPT_CASES = ("install-unknown-apps-visible", "pending-user-action-visible")
 PRODUCER = "tools/phone-build/accepted-output/record_produce.py"
 JOB = "recipe/synthetic-installer-update-job.json"
+STABLE_JOB = "recipe/synthetic-installer-stable-job.json"
+UPDATE_ENTRY = "payload/synthetic-update.txt"
 INPUTS = "recipe/synthetic-installer-update-inputs.json"
 KEY_ID = "dots-synthetic-extra-test"
 DIAGNOSTICS = None
@@ -70,6 +73,7 @@ class FlowMetrics:
         "check-for-updates",
         "in-place-update",
         "verify-profile-settings",
+        "check-up-to-date",
     )
 
     def __init__(self, phone):
@@ -760,7 +764,7 @@ def synthetic_inputs(tools, temporary):
     for name in result:
         if name.startswith("apk/res/"):
             result[name] = b"synthetic unreferenced resource\n"
-    result["payload/synthetic-update.txt"] = b"synthetic payload N\n"
+    result[UPDATE_ENTRY] = b"synthetic payload N\n"
     return result
 
 
@@ -774,26 +778,44 @@ def release_fixture(public, inputs, version, directory, private_key, public_key,
     contents[INPUTS] = encoded(required if required_catalog is None else required_catalog)
     # The fixture producer replaces only the signed TEST bundle's producer source,
     # never repository or production assets. It uses admitted synthetic inputs.
-    contents[PRODUCER] = (
-        "from pathlib import Path\nimport shutil,sys\nsource,out=map(Path,sys.argv[1:3]);out.mkdir()\nfor path in source.rglob('*'):\n if path.is_file():\n  target=out/path.relative_to(source);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,target)\n(out/'payload/synthetic-update.txt').write_text("
-        + repr("synthetic payload N" + ("+1" if version == 2 else "") + "\n")
-        + ")\n"
-    ).encode()
-    contents[JOB] = encoded({"schema": 1, "script": PRODUCER, "arguments": ["${input:synthetic}", "${output}"], "outputs": {name: name for name in inputs}})
+    contents[PRODUCER] = b"""from pathlib import Path
+import shutil
+import sys
+
+source, output = map(Path, sys.argv[1:3])
+suffix = sys.argv[3]
+for name in sys.argv[4:]:
+    target = output / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if suffix:
+        target.write_bytes((source / name).read_bytes().removesuffix(b"\\n") + suffix.encode() + b"\\n")
+    else:
+        shutil.copyfile(source / name, target)
+"""
+    jobs = {STABLE_JOB: sorted(inputs.keys() - {UPDATE_ENTRY}), JOB: [UPDATE_ENTRY]}
+    for job, names in jobs.items():
+        contents[job] = encoded(
+            {
+                "schema": 1,
+                "script": PRODUCER,
+                "arguments": ["${input:synthetic}", "${output}", "+1" if job == JOB and version == 2 else "", *names],
+                "outputs": {name: name for name in names},
+            }
+        )
     plan = {
         "schema": 1,
         "required_inputs": INPUTS,
         "workspace_bytes": 64 * 1024**2,
         "configuration": {"bindings": {"synthetic": "."}},
         "stages": [
-            {"id": stage, "title": "Synthetic " + stage, "jobs": [JOB] if stage == "assembly" else []}
+            {"id": stage, "title": "Synthetic " + stage, "jobs": list(jobs) if stage == "assembly" else []}
             for stage in ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install")
         ],
     }
     index = {
         "schema": 1,
         "files": {name: sha(data) for name, data in contents.items()},
-        "entries": {name: {"recipe_files": [JOB, INPUTS], "producer_files": [PRODUCER], "job": JOB} for name in inputs},
+        "entries": {name: {"recipe_files": [job, INPUTS], "producer_files": [PRODUCER], "job": job} for job, names in jobs.items() for name in names},
         "install_plan": plan,
     }
     directory.mkdir()
@@ -1356,7 +1378,7 @@ class Phone:
         state = row.get("state") if isinstance(row, dict) else None
         if state == "ERROR":
             raise Failure("installer-update-error")
-        if state not in ("TEST_WAIT", "CHECKING", "UPDATE_AVAILABLE"):
+        if state not in ("TEST_WAIT", "CHECKING", "UPDATE_AVAILABLE", "UP_TO_DATE"):
             raise Failure("release-check-state-unavailable")
         return row
 
@@ -1398,7 +1420,7 @@ class Phone:
         print("INFO release-check-retry actor=harness reason=unacknowledged-visible-action", flush=True)
         return self.check_acknowledgement()
 
-    def check(self, version):
+    def check(self, version, expected="UPDATE_AVAILABLE"):
         self.put("update-state.json", encoded({"state": "TEST_WAIT"}))
         self.tap("Check for updates")
         row = self.check_acknowledgement()
@@ -1407,9 +1429,26 @@ class Phone:
         if row is None:
             raise Failure("check-action-not-acknowledged")
         if row["state"] == "CHECKING":
-            row = self.wait_state({"UPDATE_AVAILABLE"})
+            row = self.wait_state({"UPDATE_AVAILABLE", "UP_TO_DATE"})
+        if row["state"] != expected:
+            raise Failure("unexpected-release-check-result")
         if row.get("release", {}).get("version_code") != version:
             raise Failure("release-version-not-observed")
+        return row
+
+    def producer_attempt_count(self):
+        output = self.shell(
+            "run-as",
+            PACKAGE,
+            "find",
+            "files/owner-input/work/releases/jobs",
+            "-name",
+            "producer.log",
+            "-type",
+            "f",
+            label="device-producer-attempt-count",
+        )
+        return len(output.splitlines())
 
     def installed(self, publisher, previous=None, *, require_pending_prompt=False):
         deadline = time.monotonic() + self.timeout
@@ -1835,8 +1874,8 @@ def prepare_artifacts(config, temporary):
     return apk, inputs, key, releases, wrong
 
 
-def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=False, phone_flow=False):
-    metrics = phone.flow_metrics = FlowMetrics(phone) if phone_flow else None
+def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=False, phone_flow=False, record_metrics=False):
+    metrics = phone.flow_metrics = FlowMetrics(phone) if phone_flow or record_metrics else None
 
     def stage(name):
         return metrics.stage(name) if metrics is not None else nullcontext()
@@ -1898,14 +1937,19 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
                 first = phone.installed(1, require_pending_prompt=True)
                 passed("pending-user-action-visible")
         else:
-            phone.tap("Reconstruct and install verified game")
-            first = phone.installed(1)
+            with stage("baseline-reconstruct-and-install"):
+                phone.tap("Reconstruct and install verified game")
+                first = phone.installed(1)
         with stage("seed-retention-witness"):
             phone.retention_witness("seed")
+        if phone.producer_attempt_count() != 2:
+            raise Failure("baseline-producer-attempt-count")
         set_phase("check-for-updates")
         with stage("check-for-updates"):
             publish(service, releases[2], 2)
-            phone.check(2)
+            changes = phone.check(2)
+            if (changes.get("installed_manifest_known"), changes.get("changed_entries"), changes.get("removed_entries")) != (True, [UPDATE_ENTRY], []):
+                raise Failure("update-manifest-diff-mismatch")
             if "/public-tools.zip" in service.requests:
                 raise Failure("check-downloaded-bundle-before-consent")
             passed("check-for-updates")
@@ -1915,9 +1959,23 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
         with stage("in-place-update"):
             phone.tap("Reconstruct and install verified game")
             second = phone.installed(2, first)
+            built = phone.read("update-state.json")
+            if built.get("rebuilt") != [UPDATE_ENTRY] or built.get("reused") != sorted(inputs.keys() - {UPDATE_ENTRY}):
+                raise Failure("update-rebuilt-entry-mismatch")
+            if phone.producer_attempt_count() != 3:
+                raise Failure("update-reran-unchanged-producer")
         with stage("verify-profile-settings"):
             phone.retention_witness("verify", second)
         passed("update-N-to-N+1")
+        set_phase("check-up-to-date")
+        with stage("check-up-to-date"):
+            publish(service, releases[2], 2)
+            phone.check(2, "UP_TO_DATE")
+            if "/public-tools.zip" in service.requests or phone.read("installed-release.json") != second:
+                raise Failure("up-to-date-check-mutated-installation")
+            if not any("The installed game is up to date." in node.get("text", "") for node in phone.ui().iter("node")):
+                raise Failure("up-to-date-result-not-visible")
+        passed("check-up-to-date")
         if phone_flow:
             passed("synthetic-phone-flow")
             return
@@ -2608,7 +2666,7 @@ def main(argv=None):
     parser.add_argument(
         "--qualify-phone-flow",
         action="store_true",
-        help="Synthetic visible-permission phone reconstruction/install/update with sampled stage metrics; stops after profile/settings verification",
+        help="Synthetic visible-permission phone reconstruction/install/update with sampled stage metrics and final up-to-date check",
     )
     parser.add_argument(
         "--qualify-install-prompts",
@@ -2752,7 +2810,7 @@ def main(argv=None):
         failure_phase = CURRENT_PHASE
     finally:
         try:
-            if phone is not None and reason and failure_phase in ("baseline-N-check", "check-for-updates"):
+            if phone is not None and reason and failure_phase in ("baseline-N-check", "check-for-updates", "check-up-to-date"):
                 try:
                     observed = phone.capture_check_diagnostic()
                 except Exception:
@@ -2788,7 +2846,7 @@ def main(argv=None):
         if args.host_only:
             print("FAIL host-fixture-build phase=" + failure_phase + " reason=" + reason, flush=True)
         else:
-            cases = (*PROMPT_CASES, *CASES[:2], "synthetic-phone-flow") if args.qualify_phone_flow else (*PROMPT_CASES, *CASES) if qualify_prompts else CASES
+            cases = (*PROMPT_CASES, *UPDATE_CASES, "synthetic-phone-flow") if args.qualify_phone_flow else (*PROMPT_CASES, *CASES) if qualify_prompts else CASES
             for case in cases:
                 if case not in completed:
                     print("FAIL " + case + " phase=" + failure_phase + " reason=" + reason, flush=True)

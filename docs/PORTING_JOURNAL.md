@@ -6,6 +6,33 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1526 — Restore Artificer additive gestures and default skin
+
+2026-11-27. The build restores the source gauntlet and hand reference
+bindings. The direct survivor path loads the selected skin before native
+model detachment and retains all three movement caches. The exact editor
+matches all 132 sampled poses across 4,752 components. Assisted Distant Roost
+video shows the body and cape, alternating casts, bomb release and recovery.
+Native callbacks count four Fire Bolts, one Nano-Bomb and one Flamethrower.
+Artificer moved 22.30 m, and the weapon states returned to Idle.
+APK SHA-256 `855502045ddbbdf2d2c66031ea959bd411e5d9a7f527b4f6b7b008a5b13b05ca` (source `b283e7d5`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/artificer-native-skin-main-nova/`.
+Launch trace peaked at 89.6 °C, with 4.185 s above 80 °C and battery at
+27 °C. Adopted placement, scratch cleanup and OLED sleep passed.
+Existing attack effect artifacts obscure parts of the Flamethrower loop.
+
+## J1525 — Measure two-worker native compilation on Android
+
+2026-11-27. The opt-in native compiler uses two workers and keeps serial as
+the default. On Thor both widths compiled all 826 units from one conversion.
+Compile wall time fell from 7,050.364 to 3,559.947 s. Stripped IL2CPP matched,
+SHA-256 `0b6bfe34196b2d584deea75566029844479505d2235e5d04b8575762e708f027`.
+Global metadata matched and both used the same Burst output. 825 intermediate
+objects matched. Peak CPU/GPU rose from 66.1 to 69.2 °C during compilation.
+The overall run completed with no thermal pauses. Device cleanup passed.
+Evidence under `work/coordination/alpha-record-pass-thor-20261126/paired-native-662/debug-path-control/run/`.
+APK assembly, installation and play remain open.
+
 ## J1524 — Restore converted Goolake's native Mesh references
 
 2026-11-27. Pack five source Mesh records into Goolake's dependency donor and
