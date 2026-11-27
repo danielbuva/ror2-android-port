@@ -8447,3 +8447,12 @@ gameplay input bank. The action rectangles and opacity go through the normal
 touch HUD projection, while movement, look and pause keep their authored layout.
 The separately modeled recovered HUD editor is not staged as a live feature.
 Host fixtures do not establish Unity or device acceptance.
+
+### Whole-game content scoreboard
+
+`tools/phone-build/accepted-output/whole_game_scoreboard.py` inventories serialized
+Unity objects in the player APK and its full runtime bundle payload. The lab
+wrapper exposes `./dev prototype --action whole-game-scoreboard --target REQUEST.json`.
+The result is evidence for converter builds and device sessions. The release
+assembler and runtime do not consume it. See the request and counting contract
+in [the accepted-output guide](../tools/phone-build/accepted-output/README.md#whole-game-scoreboard).
