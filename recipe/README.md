@@ -7612,6 +7612,10 @@ found no copied vendor implementation in those files. The compiler lists
 the licensed archive and translation-unit inputs. Licensed sources, composed
 files, libraries and private compiler evidence stay local.
 
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-wwise-native.json` | `28507d75b01e22aed72df58c269225e769febb2bd95fd8a3badec0ab0eac7892` |
+
 Audit 2026-11-26. `owner-v30-bundle-shader-leaves.json` uses original game
 bundle selectors and the acquired Unity SDK to compile three Shader leaves.
 The provenance, licensing, privacy and sensitive-content review covered the
