@@ -6,6 +6,71 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1524 — Restore converted Goolake's native Mesh references
+
+2026-11-27. Pack five source Mesh records into Goolake's dependency donor and
+bind the pack to the consuming scene in the signed release graph.
+APK SHA-256 `c9ba5d61f96daee12aca90a59624aee7966fab827091398287b5d72222e52fc6` (runtime `0ffee31b`, producer `05031afa`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v41-catalog-spelling/v41-native-goolake-transition/`.
+The assisted native Plains exit activated Goolake with 2,048 renderers and
+320 mesh colliders. The strict geometry gate reported zero missing Mesh
+references. SoC peaked at 89.6 °C with 7.50 s above 80 °C and a 35 °C start
+battery. Adopted placement, scratch removal and OLED sleep passed.
+Native destination population, sustained play and Razorwire pickup remain open.
+## J1523 — Capture Commando's natural-hit flinch and recovery
+
+2026-11-27. Shared device sessions can retain a bounded gameplay MP4 after
+menu Start. The Distant Roost video and same-process reports show a living
+110/110 baseline, native incoming damage and recovery with assists off.
+At 23.58 s the HUD drops from 29 to 5. Commando raises both pistols and
+returns to his resting pose by 24.92 s, alive before the later defeat.
+APK SHA-256 `5cf5902ecfbed68952f0adff986f666206617af2accfa6e1b8ae4aa3bd7967d9` (source `1b9b993e`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/commando-real-hit-main-nova-video/`
+contains the video, `real-hit-pose-health.png`, PID-bound Unity logs and terminal receipt.
+Adopted placement, scratch removal, OLED sleep and lease release passed.
+One 1.007 s gap invalidated the thermal trace for qualification.
+Other survivors' additive aim and gesture audit remains open.
+
+## J1522 — Retire the native Siren boss at End Run
+
+2026-11-27. Capture the source boss with HLAPI's invalid minion-owner ID so
+the native death event authorizes retirement of its exact server identity.
+APK SHA-256 `8d61bcc60d70820310373a83dcb12a8bb1c8745cbff452de26850da95346836a` (source `250ef2af`).
+Evidence: `work/coordination/gameplay-coverage-20261126/siren-native-retirement-fix-nova-b/`.
+Sample 168 records native defeat and reward droplet 148 at 59.96 FPS (16.68 ms).
+The same session's completed report records boss 146 naturally retired,
+both owners disposed, 12 eggs retired and 42 toggle targets restored.
+The runner stopped after cleanup at 90.4 °C SoC, with 11.13 s above 80 °C
+and a 35 °C battery. Scratch removal, OLED sleep and lease release passed.
+Ordinary player input and matched PC rendering remain open.
+
+## J1521 — Complete the assisted converted Titanic Plains teleporter exit
+
+2026-11-27. The assisted driver chooses the charged native teleporter for exit.
+The converted Commando run defeated the boss, collected the reward and
+completed native transport with one counted clear. Nine of ten repaired
+pickup and enemy skin preload roots completed typed Android loads.
+APK SHA-256 `16b243d8ccf7747d7b3d70444510fe558fcb381c486b91e44fabb8e44b8173d8` (source `0ffee31b`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v39-preload-exit/v39-native-goolake-transition/`.
+Plains ran 56.39 s at 57.62 FPS by frame count. SoC peaked at 85.6 °C
+with 9.62 s above 80 °C and a 31 °C start battery. Adopted placement,
+scratch removal and OLED sleep passed. Live Goolake entry and the unrequested
+Red Whip GameObject preload remain open.
+
+## J1520 — Restore the native Gold Shores boss reward
+
+2026-11-27. Gold Shores regenerates the native reward selector before mission
+activation. Assisted input targets the scripted boss through its native squad.
+APK SHA-256 `2b26289f0b5697b7a7b1e40ad59118c41cf667ae6c667e9799b75b603208205d` (source `72199696`).
+Evidence under `work/coordination/gameplay-coverage-20261126/gold-native-reward-selector-nova-b-shared-adb/`.
+Sample 260 shows the selector recover from zero to one pickup. Sample 400
+shows all seven beacons active, native boss defeat and `TitanGoldDuringTP`
+droplet 303. Sample 410 shows the grounded native return to `foggyswamp`.
+Screenshots and Unity logs are retained. The low-load snapshots were 57.95 FPS
+at defeat and 58.95 FPS on return. SoC peaked at 88.0 °C with 71.25 s above
+80 °C. Battery was 30–35 °C. Scratch removal, OLED sleep and lease release
+passed. Ordinary player input and matched PC rendering remain open.
+
 ## J1519 — Bind direct-selected survivor Animators before native locomotion
 
 2026-11-26. Bind source controllers and avatars before native main-state entry.

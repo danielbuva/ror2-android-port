@@ -398,6 +398,17 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.device.cmd.assert_called_once_with("shell", "cat /thermal_zone0/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=5)
         self.assertEqual(json.loads(self.owner.trace.read_text())["error"], "Thermal sample gap exceeded five seconds")
 
+    def test_optional_soc_ceiling_stops_at_the_first_hot_runtime_sample(self):
+        self.owner.enforce_soc_ceiling = True
+        self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp"), ("soc-0", "/thermal_zone1/temp")]
+        self.device.cmd.return_value = self.runtime_reply("85200\n89999")
+        self.owner.sample()
+        for raw in ("90000\n80000", "80000\n90000"):
+            self.device.cmd.return_value = self.runtime_reply(raw)
+            with self.assertRaisesRegex(RuntimeError, "SoC thermal ceiling reached 90 C"):
+                self.owner.sample()
+        self.assertEqual(json.loads(self.owner.trace.read_text().splitlines()[-1])["soc_celsius"], 90)
+
     def test_slow_admission_discovers_paths_then_runtime_uses_one_cat(self):
         self.device.display.return_value = True
         self.device.cmd.return_value = (

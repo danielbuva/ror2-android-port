@@ -352,3 +352,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1517](PORTING_JOURNAL.md#j1517--recover-the-assisted-gold-shrine-to-teleporter-route) | 2026-11-26 | Recover the assisted Gold shrine-to-teleporter route | 2026-11-26. |
 | [J1518](PORTING_JOURNAL.md#j1518--observe-the-native-siren-boss-and-restore-its-reward-drop) | 2026-11-26 | Observe the native Siren boss and restore its reward drop | 2026-11-26. |
 | [J1519](PORTING_JOURNAL.md#j1519--bind-direct-selected-survivor-animators-before-native-locomotion) | 2026-11-26 | Bind direct-selected survivor Animators before native locomotion | 2026-11-26. |
+| [J1520](PORTING_JOURNAL.md#j1520--restore-the-native-gold-shores-boss-reward) | 2026-11-26 | Restore the native Gold Shores boss reward | 2026-11-27. |
+| [J1521](PORTING_JOURNAL.md#j1521--complete-the-assisted-converted-titanic-plains-teleporter-exit) | 2026-11-26 | Complete the assisted converted Titanic Plains teleporter exit | 2026-11-27. |
+| [J1522](PORTING_JOURNAL.md#j1522--retire-the-native-siren-boss-at-end-run) | 2026-11-26 | Retire the native Siren boss at End Run | 2026-11-27. |
+| [J1523](PORTING_JOURNAL.md#j1523--capture-commandos-natural-hit-flinch-and-recovery) | 2026-11-26 | Capture Commando's natural-hit flinch and recovery | 2026-11-27. |
+| [J1524](PORTING_JOURNAL.md#j1524--restore-converted-goolakes-native-mesh-references) | 2026-11-26 | Restore converted Goolake's native Mesh references | 2026-11-27. |

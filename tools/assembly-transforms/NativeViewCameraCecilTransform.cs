@@ -387,6 +387,26 @@ internal static class NativeViewCameraCecilTransform
     }
     public static int Main(string[] args)
     {
+        if (args.Length == 5 && args[0] == "commando-post-only")
+        {
+            var input = args[1];
+            var helper = args[2];
+            var output = args[3];
+            if (File.Exists(output) || Sha256(input) != CommandoObserverInput)
+                throw new InvalidOperationException("Commando observer requires the exact music-observed input and a new output");
+            using (var resolver = new DefaultAssemblyResolver())
+            {
+                resolver.AddSearchDirectory(Path.GetFullPath(args[4]));
+                var readers = new ReaderParameters { AssemblyResolver = resolver };
+                using (var target = ModuleDefinition.ReadModule(input, readers))
+                using (var marker = ModuleDefinition.ReadModule(helper, readers))
+                {
+                    AddCommandoPostObserver(target, CopyMarkerType(target, FindType(marker, "RoR2.AndroidCommandoPostObserver")));
+                    target.Write(output);
+                }
+            }
+            return 0;
+        }
         if (args.Length < 5) return 2;
         Transform(args[0], args[1], args[2], args[3], args[4], args.Skip(5).ToArray());
         return 0;

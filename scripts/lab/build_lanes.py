@@ -388,17 +388,20 @@ def dispatch(name, arguments, root=ROOT):
         raise RuntimeError("LAB_LANE is for host build/editor/preflight actions only; unset it for canonical device operations")
     if arguments[0] == "preflight" and "--host-only" not in arguments:
         raise RuntimeError("Lane preflight requires --host-only; device checks stay canonical")
+    full_build = arguments[0] == "build"
     if arguments[0] == "prototype":
         allowed = {"whole-catalog-build", "whole-catalog-code-build", "whole-catalog-fast-build", "whole-catalog-scripts-build"}
         if "--action" not in arguments or arguments[-1] == "--action" or arguments[arguments.index("--action") + 1] not in allowed:
             raise RuntimeError("LAB_LANE prototype supports only the four current whole-catalog build actions")
+        full_build = arguments[arguments.index("--action") + 1] == "whole-catalog-build"
     clean(root)
     source = git(root, "rev-parse", "HEAD")
     with host_build_lock(lock_path(name, root), operation="lane " + name):
         facts = read_lane(name, root)
         if not facts.get("complete"):
             raise RuntimeError("Lane creation did not complete; remove and recreate it")
-        check_space(primary(root))
+        if full_build:
+            check_space(primary(root))
         checkout = Path(facts["checkout"])
         clean(checkout)
         git(checkout, "switch", "--detach", source)

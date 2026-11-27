@@ -6,6 +6,7 @@ Causal throttling onset remains unavailable.
 """
 
 import argparse
+from collections import defaultdict
 from datetime import datetime
 import hashlib
 import json
@@ -384,20 +385,24 @@ def analyze(session, thermal, raw_trace=None, completed=None):
         gap = b["utc_seconds"] - a["utc_seconds"]
         if gap <= 1 and max(a["cpu_c"] or 0, a["gpu_c"] or 0) > 80:
             above80 += gap
-    bins = []
-    for begin in range(0, math.floor(last["host_seconds"] / 300) * 300 + 1, 300):
-        rows = [r for r in samples if begin <= r["host_seconds"] < begin + 300]
-        temperatures = [r for r in heat if begin <= r["utc_seconds"] - start < begin + 300]
-        if rows:
-            bins.append(
-                dict(
-                    start_seconds=begin,
-                    samples=len(rows),
-                    live_enemies=median(rows, "live_enemies", allow_zero=True),
-                    **{key: median(rows, key) for key in ("fps", "cpu_frame_ms", "gpu_frame_ms")},
-                    **{key: median(temperatures, key) for key in ("cpu_c", "gpu_c", "battery_c")},
-                )
-            )
+    # Host elapsed time is recorded before reading the runtime snapshot. Use
+    # snapshot UTC, not host elapsed, to pair FPS observations with thermal UTC.
+    runtime_bins = defaultdict(list)
+    thermal_bins = defaultdict(list)
+    for row in samples:
+        runtime_bins[math.floor((stamp(row["snapshot_utc"]) - start) / 300) * 300].append(row)
+    for row in heat:
+        thermal_bins[math.floor((row["utc_seconds"] - start) / 300) * 300].append(row)
+    bins = [
+        dict(
+            start_seconds=begin,
+            samples=len(rows),
+            live_enemies=median(rows, "live_enemies", allow_zero=True),
+            **{key: median(rows, key) for key in ("fps", "cpu_frame_ms", "gpu_frame_ms")},
+            **{key: median(thermal_bins.get(begin, ()), key) for key in ("cpu_c", "gpu_c", "battery_c")},
+        )
+        for begin, rows in sorted(runtime_bins.items())
+    ]
     statuses = [r for r in samples if type(r.get("thermal_status")) is int and r["thermal_status"] > 0]
     report = dict(
         scope=session.get("scope"),
@@ -434,7 +439,7 @@ def analyze(session, thermal, raw_trace=None, completed=None):
             "Raw durations are Unity unscaled active-frame intervals, not compositor presentation or synchronized CPU/GPU samples.",
             "Hitches are frame counts, not distinct hitch episodes; >50 ms is a subset of >33.334 ms. Startup counters are subtracted.",
             "CPU/GPU timings are latest FrameTimingManager observations, not a synchronized per-frame critical-path trace.",
-            "Five-minute thermal bins align snapshot UTC with thermal UTC; runtime counter window uses first/last host observations.",
+            "Five-minute bins use elapsed UTC from the first runtime snapshot for both runtime and thermal rows; counter windows still use host observations.",
             "Final ten-minute counters use the first retained observation inside the last 600 host seconds; uncovered boundary time is reported, never interpolated.",
             "Thermal exposure uses left-sample hold only across gaps <=1 s; uncovered boundaries and longer gaps are unmeasured.",
             "This report does not attribute clock changes to thermal limits. Battery-terminal observations do not qualify an unplugged energy budget.",

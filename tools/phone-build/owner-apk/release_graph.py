@@ -676,7 +676,7 @@ class Graph:
 
     def bundle_preload(self, path, profile, active):
         """Bind fresh suppliers and actual final containers to a signed policy."""
-        if set(profile) != {"schema", "profiles", "request"}:
+        if set(profile) - {"mesh_append"} != {"schema", "profiles", "request"}:
             raise ValueError("unsupported bundle release contract")
         name = "recipe/jobs/" + Path(path).stem + ".json"
         needs = [self.build(digest(self.repo / dependency), active) for dependency in profile["profiles"]]
@@ -726,6 +726,24 @@ class Graph:
                         raise ValueError("bundle artifact requires a declared source producer")
 
         visit(request)
+        if "mesh_append" in profile:
+            append = profile["mesh_append"]
+            if set(append) != {"packs", "mesh_consumers"} or not all(append.values()):
+                raise ValueError("bundle Mesh append requires source packs and consuming scenes")
+            pack_artifacts = {"receipt": "receipt", "objects.bin": "objects", "resources.bin": "resources", "index.jsonl": "index", "types.json": "types"}
+            generated_packs = [
+                {filename: self.artifact_pin(job, artifact) for filename, artifact in pack_artifacts.items()}
+                for job in needs
+                if Path(self.jobs[job]["script"]).stem == "mesh_produce"
+            ]
+            for pack in append["packs"]:
+                if pack not in generated_packs:
+                    raise ValueError("bundle Mesh append requires one generated producer per pack")
+            generated_bundles = [self.artifact_pin(job, "catalog_bundle") for job in needs if "catalog_bundle" in self.jobs[job]["artifacts"]]
+            for consumer in append["mesh_consumers"]:
+                if consumer["bundle"] not in generated_bundles:
+                    raise ValueError("bundle Mesh append requires a generated scene bundle")
+            visit(append)
         # Indirect managed witnesses must come from generators whose source and
         # input closure the dispatcher can invalidate, rather than retained JSON.
         managed = request["managed_inputs"]
@@ -741,7 +759,10 @@ class Graph:
                 registry_jobs.add(match.group(1))
             if len(registry_jobs) != 1 or owner(self.job_profiles[next(iter(registry_jobs))]) != "player_data":
                 raise ValueError("bundle registry must come from one final player producer")
-        final = ("canonical/" if "canonical" in policy else "emitted/") + policy["bundle"] + ".bundle"
+        directory = "canonical" if "canonical" in policy else "emitted"
+        if "mesh_append" in profile:
+            directory = "mesh-complete"
+        final = directory + "/" + policy["bundle"] + ".bundle"
         self.jobs[name] = dict(
             schema=1,
             script=PREFIX + "bundle_preload.py",

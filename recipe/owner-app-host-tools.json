@@ -180,7 +180,7 @@
     }
   ],
   "public_profile_source_hashes": {
-    "recipe/assembly-transforms.json": "39edfb5559c472388eeda60abed0c8d7b94577a76ae92cd9895f6b6e47b468ed",
+    "recipe/assembly-transforms.json": "c6b53d9d38bc42c36c261915f5e28beee346d3bb0bb7bc4747d3cc3d6ad900ac",
     "recipe/owner-public-tools.json": "1f4b333652fbb38174f8e2f7c54366369171b543789a4fbfe54fd8db4cc2fec1",
     "scripts/lab/assembly_transforms.py": "9e30fa8771789a6b5a47cb81231aba38219cb13ce1ed74d7a8c88700f3843ec4",
     "scripts/lab/common.py": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55",
@@ -193,7 +193,8 @@
     "tools/assembly-transforms/MigrationSurface.cs": "771f9ecb44b76328b135eecb3539a611ffc3f8ab3fff7213494865e84d7a56af",
     "tools/assembly-transforms/MusicOutputObserverCecilTransform.cs": "c94e64eda96e1d969087272d0684ce1a809a00b2e18eed30e35a0a5825a77b95",
     "tools/assembly-transforms/MusicOutputObserverCecilTransform.csproj": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
-    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "8e566d3c6cacaf1cf58044ddfc3e952657a860baa81dfb7d1fd3df69daead4c2",
+    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "737672b281b3872b32fe171c7264e62096866a41538c33355682bf37463d72ce",
+    "tools/assembly-transforms/NativeViewCameraCecilTransform.csproj": "1b36ba11f2a6783bcb2990c59f470448b5f34547a4fc09a48ba47bf10f5e4de6",
     "tools/assembly-transforms/OptionalPresentationGuard.cs": "a78d5d453bfe7d78a2df3b2040ff3ca09f22ef6ef9dd9047be751b5ed6e962f0",
     "tools/assembly-transforms/Program.cs": "f4fd626746cd6a2a970e3a543a62ce1f487587c5ce10bf356a3611e4c5d6bf28",
     "tools/assembly-transforms/RewiredContract.cs": "ed300e3f88ed25823d05ef9ab22e732d9d37d6dee0e5968e837c50ec63c8b8f3",

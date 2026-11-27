@@ -26,6 +26,13 @@ and reads back every object, member flag, resource and serialized table before
 publishing the output bundle. Fresh prefab production uses the same fieldless
 component recipe through `object_produce.py`.
 
+For staged converted prefabs, `accepted-output/bundle_preload.py` restores
+source AkBank component slots and their local MonoScript from pinned original
+records. It verifies the existing external bank references against their
+original records, extends every container extent that reaches the changed
+prefab, and reads back the serialized member and resource bytes. The original
+AkBank component retains its native load and unload callbacks.
+
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
 `OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns
@@ -230,6 +237,20 @@ and native-manifest dependencies. The graph assigns stable artifact names to
 object bundles and built-in player resources when it compiles their producers.
 Follower bundles and catalog production bind the same staged files. The catalog
 also consumes each emitted profile, independently of canonical body-identity proof.
+An optional `mesh_append` in a preload release binds source Mesh pack jobs and
+the scene bundle jobs that reference those Meshes. The existing local asset
+repacker checks those references and full native types after emission or
+canonical repack. Only the final bundle is published as payload and consumed
+by the catalog and native manifest. The catalog projection keeps original or
+authored relocation path spelling while matching Unity's case-folded inventory.
+The local asset repacker also accepts a pinned native source closure with
+scene consumer fields and original prefab registrations. It reads the selected
+typed record extents, checks actual external endpoints and signed script bodies,
+and appends only needed native type and script slots. Retained objects and their
+registrations keep their original slots and preload ranges. The writer rereads
+the persisted metadata, appended bodies and their script-slot relationships.
+The editor fixture checks registered prefab roots as Unity GameObjects. The
+converted device run owns stage population qualification.
 For SDK resource endpoints, preparation can generate full witnesses from pinned
 original type layouts and the produced resource bodies. The endpoint checker
 verifies native type metadata, body extents and recursively resolved pointers
@@ -318,8 +339,12 @@ Texture2D and Sprite IDs. They must match existing native types. A Sprite
 must resolve its render texture to a local Texture2D. The repacker checks
 texture references and the Shader's pinned external member, extends the
 existing resource stream, and reopens the output to check the new bodies
-and extents before writing a receipt. Temporary repack files are removed
-when the operation ends.
+and extents before writing a receipt. A pinned `mesh_consumers` list also
+allows absent Mesh IDs named by an Android scene's MeshFilter or MeshCollider
+PPtrs to be supplied at their existing external identity. The repacker checks
+the exact native Mesh type and consumer member and can supply these endpoints
+without adding catalog roots. It reads back the unchanged container in that
+case. Temporary repack files are removed when the operation ends.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
@@ -542,6 +567,9 @@ then resolves the typed SkinDefParams and checks each bake transform with the
 native prefab path function, including base skins. It checks that each catalog
 CharacterMaster's assigned body resolves to the same Unity object as a typed
 CharacterBody family member. All opened bundles are released in `finally`.
+Optional `prefab_clones` rows name a pinned bundle and prefab path. The fixture
+clones each prefab under inactive staging, records serialization errors and
+missing components, and destroys it before unloading the bundles.
 Its local receipt records failures before the Android gameplay gate.
 The fixture's optional `definition_source` pins the original integration metadata
 and provider contract. It discovers ScriptableObject roots by managed inheritance,
@@ -609,6 +637,15 @@ their pinned cohort. Current scripting assembly metadata also reads the
 successful managed producer's pinned provider manifest. It registers the
 authored audio and observation assemblies for Unity serialization and retains
 the editor integration assembly only when the compiler supplies it.
+The current `owner-code/managed.py` path composes the original music lifecycle
+and Commando post observers on the source-derived `RoR2.dll`. The music owner
+uses the original AddOutput result before enabling the intro trigger. The
+Commando observer records the playing ID returned by the original sound call
+when passive PCM qualification is requested. The converter shares the lab's
+Cecil transforms and compiles against the same provider it passes to IL2CPP.
+The converted-body editor fixture can verify both source Commando AkBank
+components, their typed references and their load and unload triggers before
+releasing the loaded bundles.
 Existing importer GUIDs survive; first-import owners use
 stable converter path identities. The registry and all dependent writers share
 the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
@@ -3382,11 +3419,18 @@ native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage
 selector is separate. Existing shared cleanup stops the process and removes the
 selector. These measurements do not certify physical or ordinary play.
+The optional `stage_transition` route binds the starting scene and the native
+destination to that same attempt, PID and session. The runner stops once the
+transport owner confirms a single transition and the destination has been
+live for ten seconds. It retains the qualifying report and final capture.
 
 The shared runner records the cumulative exception log's byte offset before
 launch. After stopping the owned package, it captures only the appended rows
 in the session root's `exceptions.jsonl`, including on workload failure.
 Periodic captures retain their PID-filtered logs and performance evidence.
+If the thermal observer's final stop fails after both observer threads exit,
+the run fails. The runner can release the lease after its separately verified
+package stop, scratch cleanup and independent idle and OLED readback succeed.
 Opt-in `capture_golem_attacks` watches the live Unity stream for the owned
 process's native clap and laser entries and captures a bounded screenshot burst
 when display zero is focused. The observer stops with the launch workload and
@@ -3421,8 +3465,11 @@ still match the previous sync receipt. Failed transfers remove their partial fil
 After stopping the app, the runner copies new or updated lab reports and frame
 traces to the host, verifies their hashes, then removes those device copies.
 Launch mode retains screenshots (default 60 seconds, configurable with
-`capture_interval_seconds`), logs, runtime reports and performance snapshots;
-sustained mode delegates to the existing sustained-session owner, using
+`capture_interval_seconds`), logs, runtime reports and performance snapshots.
+Timed menu Start requests can set `capture_video` to retain a display-zero MP4
+from world admission for up to 180 seconds. The shared runner binds the file to
+the owned PID, verifies its hash and removes the device copy before going idle.
+Sustained mode delegates to the existing sustained-session owner, using
 `capture_interval_seconds` for observations (default five seconds). Observations
 follow elapsed-time boundaries and retain available CPU/GPU clocks and limits,
 thermal cooling-device states, skin temperatures and opt-in diagnostic
@@ -5446,9 +5493,10 @@ and summon callbacks identify the original boss and its probes without scanning
 all masters. The boss master may retain the authored card's exact body prefab
 while native body creation uses the adapted catalog template at the same body
 index. Capture, death observation and cleanup recognize both references while
-retaining the original squad, server and ownership checks. Cleanup validates
-the complete owned actor set before requesting
-body/master destruction. A terminal original server-death witness permits accounting
+retaining the original squad, server and ownership checks. Boss master capture
+starts with the native invalid minion-owner ID, and probe capture records the
+observed summoner ID. Cleanup validates the complete owned actor set before
+requesting body/master destruction. A terminal original server-death witness permits accounting
 for an exact destroyed/unmapped captured master; any remaining corpse must still
 match the captured identity, dead health and server map before an owned cleanup
 request. Natural master retirement and requested destruction have separate
@@ -5458,9 +5506,9 @@ state and synchronously destroys only that owned scene instance while the server
 is active. This runs the native squad's `OnDestroy` unsubscribe before the existing
 session shutdown, which precedes deferred geometry unload. Actor destruction
 requests are recorded as requests; `cleanupDisposed` must be read alongside
-`cleanupError` and the individual cleanup flags. Egg placement, native spawn/unspawn,
-rewards and teardown still need device acceptance. No separate probe switch case
-implements this behavior.
+`cleanupError` and the individual cleanup flags. The assisted device replay
+observed native defeat, reward and both owners' cleanup. Ordinary player input
+through the encounter remains a device gate.
 
 Native teleporter retirement (`TeleporterWorldSession`, current source draft,
 J600): this owner captures the exact instantiated host and network identity,
@@ -5783,9 +5831,14 @@ guard, while the unfinished native waypoint still admits the existing stalled-pa
 jump/replan request. `test_siren_gameplay_route_ownership.py` executes this
 policy against the retained Siren detour failure and recovery cases.
 On the assisted Gold Shores route, `GoldshoresBoundary` keeps moving toward the
-shrine while it needs gold and combat has no in-bounds target. When the route
-changes objectives, the existing navigator expires the previous terrain
-recovery window so the new objective can request a native graph route.
+shrine or beacon while it needs gold and combat has no in-bounds target. When
+the route changes objectives, the existing navigator expires the previous
+terrain recovery window so the new objective can request a native graph route.
+Before activating the original mission, the boundary regenerates the encounter's
+explicit reward selector against the live Run and pickup catalog. During the
+assisted fight it aims through normal player input at the scripted squad's boss
+and records the native reward droplet's network ID after defeat. The original
+mission and BossGroup own vulnerability, damage, reward spawn and return.
 The assisted selector retains its approach egg across native detours and combat
 input yields, revalidating membership in the current source cohort each frame.
 An attackable egg still takes priority; a dead or removed target falls back to
@@ -8097,6 +8150,8 @@ final object bundles and the player's actual runtime script registry through
 `catalog_complete.py`. The canonical whole-game profile contributes paths to
 source projection. Catalog ownership gives explicit builds precedence over
 canonical copies, with the whole-game bundle owning remaining ordinary assets.
+Source and explicitly remapped paths retain their spelling for runtime metadata
+checks. The produced container lookup matches those paths case-insensitively.
 Supplier packs, Windows shader passthrough and derived manifest/catalog outputs
 are excluded from native catalog ownership. The signed
 closure retains the metadata pin, final profiles and embedded bootstrap recipe;
@@ -8107,6 +8162,13 @@ resources also supply external preload endpoints; the release graph binds these
 from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
+
+The V38 pickup and skin preload scope uses the existing record and texture
+producers. `owner-preload-droplet-records.json` pins the original droplet
+components and their MonoScript witnesses. `owner-preload-snow-texture.json`
+pins the source object and stream used by the Android RGBA mip conversion.
+The release graph binds both alongside the existing root and media
+suppliers. The scoped preparation owns endpoint and script validation.
 
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It

@@ -2645,6 +2645,10 @@ public sealed partial class PortSession
                 }
                 return;
             }
+            // A charged native teleporter takes priority over further diagnostic shopping.
+            if (coordinator.r.teleporterLoop && coordinator.worldTeleporter && coordinator.worldTeleporter.isCharged &&
+                coordinator.ObjectiveWorldStimulus(player, bridge, elapsed))
+                return;
             // Native placement spreads barrels across the map. Diagnostic input can shop
             // as soon as earned money permits; clearing every barrel is not a game rule.
             if (coordinator.r.liveCatalogs != null && coordinator.worldObjective == 0)
