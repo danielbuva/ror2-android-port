@@ -9,7 +9,7 @@ relationships and hashes. Serialized bodies, SDK files and receipts stay local.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-generated-objects.json` | `17b749a42b9dd50d322eaac5708ed45cdfbd09a94c463e52c21633ebeb3c1eaf` |
+| `owner-whole-game-generated-objects.json` | `fcdab708a86db5188f77e8d8ad6ea13a6522b0518a791ac66880fd7692eee788` |
 
 The objective-support recipe follows the staged canonical bundle for five
 references to camera parameters, materials, a pickup effect and a physics
@@ -188,7 +188,7 @@ No clear recipe boundary violations or unresolved publication findings remain.
 | `owner-objective-support-objects.json` | SDK EventSystem policy, script identity and supplier pins | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
 | `owner-outro-whole-objects.json` | Existing source-produced supplier hash references | `0b3707206ccb85b269b4ffb7fdbc2281e29996f6102b823b1a5f3a8e4939f5b7` |
 | `owner-player-menu.json` | 591 path/type/object IDs and 20 external provider identities | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
-| `owner-player-phases.json` | Five source profiles, original scene environment selection and complete output filename sets | `51cdf7d29ffff7c47293318244c6007e3f8468ee638301492d7e3f5c5a0cf004` |
+| `owner-player-phases.json` | Five source profiles, original scene environment selection and complete output filename sets | `dc92a036baebbc2a5ee73f05bfb6462407fa8dab63dd6f58845ef94600740b4c` |
 | `owner-promorailgunner-whole-objects.json` | Existing source-produced supplier hash references | `465ee55dcb13fd58aaeacb0aec4e620756444822c43e4eaaccb8547e08dd3509` |
 | `owner-promovoidsurvivor-source-lighting-objects.json` | Existing source-produced supplier hash references | `3a3f55032bc988f25fca554416d433ee2c9d1860a2649f79c475ea30a161013a` |
 | `owner-satellitescene-whole-objects.json` | Existing source-produced supplier hash references | `80531ba46512543942b88c586f2c31700e39ae5cda3cb4d43dc292603123e676` |
@@ -208,7 +208,7 @@ No clear recipe boundary violations or unresolved publication findings remain.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-sdk-job-inputs.json` | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
-| `owner-player-phases.json` | `51cdf7d29ffff7c47293318244c6007e3f8468ee638301492d7e3f5c5a0cf004` |
+| `owner-player-phases.json` | `dc92a036baebbc2a5ee73f05bfb6462407fa8dab63dd6f58845ef94600740b4c` |
 
 `owner-player-phases.json` declares the five existing source phase recipe hashes
 and their complete output filename sets (including UUID5 Sprite/texture names).
@@ -2708,6 +2708,14 @@ program response. No recipe target hashes, SDK implementation, decoded shader
 bytes, original expression or protected content is published. Public smol-v
 source is acquired privately for validation only, at its cited revision.
 Provenance/privacy/licensing and sensitive-content audit: 2026-10-24.
+
+The Animate Alpha translation diagnostic uses an authored binding adapter for
+Wine vkd3d-shader 2.0 and a stream encoder for public SMOL-V revision
+`55000efe742f56d8b51223b9ea7775a8f0501881`. The original bundle supplies all
+program code, pass state, keywords and constant layouts. Both open dependencies,
+tool binaries, translated modules, packed outputs and device evidence remain
+local. The tracked diagnostic contains format metadata and authored glue.
+Provenance/privacy/licensing and sensitive-content audit: 2026-11-27.
 
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
@@ -5299,6 +5307,24 @@ regenerate baked lighting. The operation consumes no codec or private fixture;
 all generated packs, APKs and raw observations stay ignored. Native BC6H support
 must be established before selecting this profile on another device.
 
+### Staged scene baked reflection suppliers (2026-11-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-scene-baked-reflection-textures.json` | `e7f5ca028d247a41079ce5218e8bbd24cd062ae6b991fe74f54b7e558a6a3596` |
+
+`owner-scene-baked-reflection-textures.json` selects 75 BC6H Cubemaps from
+35 pinned PC bundles for scene probes. The existing `cube-preserve` producer
+checks every face and mip extent and copies the original compressed stream.
+Six source texture pointers per record are null, and the platform blobs are
+empty. Scene integration assigns the emitted pointers. One additional BC1
+scene Cubemap is already selectable through `owner-cubemap-textures.json`.
+
+The profile contains only source selectors, hashes, field and stream extents
+and destination metadata. Output hashes bind transformations of the user's
+input. It contains no game assets, serialized templates, SDK material, private
+configuration, or credentials. Generated packs and receipts stay ignored.
+
 ## Complete original-lighting scene alternatives audit (2026-10-29)
 
 | Recipe | Scope | Tracked information | Boundaries | Owner and evidence |
@@ -5387,7 +5413,7 @@ graph differences remain explicit; full phone/runtime acceptance remains open.
 | --- | --- | --- | --- |
 | `owner-default-scene.json` | Original native record selectors, probe stream pin, public Lab scene policy and exact SDK/source pins. | Identifiers, hashes and authored configuration only; audit below, 2026-11-18. | `player_scene.py`; native lighting/load qualification remains open. |
 
-Profile SHA-256: `7d87265081ba77ee17d468ec378c5efa43594506160bac3cee62162f23cc31bf`.
+Profile SHA-256: `2d1fcf5bc35553cf9d0cd59772ec99594d502bcd6a41f45e16b6075db0ca023e`.
 This profile names the minimum original native suppliers and the public camera,
 light and primitive policy. Built-in tag numbers and Cube identity are read from
 the supplied SDK; local object IDs follow independent construction order. Native
@@ -7039,7 +7065,7 @@ serialized bodies, account data or private paths in the recipe.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-source-registry.json` | `5f1da97a716aba762d8c855c17d2603f44eb2b66f6b38c257bee9d4b20004c2a` |
+| `owner-whole-game-source-registry.json` | `a61fc8ababe8fd7a6934cc7378a70f8514e7b0cd8b64e56f8bd35c34736409e2` |
 
 ## Whole-game original record and texture selectors (2026-11-18)
 
@@ -7262,7 +7288,25 @@ local.
 | `owner-whole-game-v30-platform-textures.json` | `1a5d2211dfc0241073c67cba051d678b9c708284c4ae9f57e67353d4785800a3` |
 | `owner-whole-game-v30-platform-meshes.json` | `2efcf8ea3c576f56583d1e0cc7beada333a1010d3a044dbbac95185833072d24` |
 | `owner-whole-game-v30-platform-materials.json` | `6f0d6d5e48e5c6652d3ef0655ac9132f00c878279f1b3ece8132555422b1cd0b` |
-| `owner-whole-game-v30-platform-registry.json` | `c09d3bb84e6c0418114ee8173ae7722ccb0dcfa7349f259e55b1c4ca97fc8e66` |
+| `owner-whole-game-v30-platform-registry.json` | `ada74f495702d32651f4b09e73e4b39f3f19b50361bb485e2d3e7f4defb07003` |
+
+## Commando Animate Alpha Shader (2026-11-27)
+
+`owner-commando-ui-animate-alpha.json` selects one original Shader and its
+staged destination. The standalone Unity compiler and the pinned, open DXBC
+disassembler use the owner's acquired inputs to build the Vulkan programs.
+The compiler keeps the original name, serialized render state and keyword
+registry. All eight linked program and binding records matched the previously
+accepted Vulkan wrappers in a host comparison.
+
+Manual provenance, licensing, privacy and sensitive-content review covered
+source and destination selectors, hashes, SDK and tool pins, and the authored
+compile request. Original shader bytes, recovered code, compiler output and
+test captures stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-ui-animate-alpha.json` | `33acddd1c461921fc51aa63542cc54b98b5d10d37ede90ed1d80fe5803173de9` |
 
 ## Current-script bundle comparison (2026-11-04)
 
@@ -7486,6 +7530,11 @@ Audit 2026-11-26. The assisted Gold shrine route refreshes the reviewed
 build-hook consumers. The authored change expires a terrain recovery timer
 when the objective changes. The refresh contains only authored source hashes.
 
+Audit 2026-11-27. The optional lab presentation capture adds two selector fields
+to `PortSession.cs` and refreshes its audio-owner source pin and build-hook
+bindings. These recipe changes contain authored source hashes only. Captured
+images and session evidence remain private.
+
 Audit 2026-11-27. `owner-goolake-scene-mesh-endpoints.json` selects five
 existing `owner-meshes.json` transforms for MeshFilter and MeshCollider
 references in Goolake. The provenance, privacy, licensing and sensitive-content
@@ -7533,3 +7582,13 @@ bundle identities used by existing scenes. The 2026-11-27 audit matched
 each destination to one PC source body and checked the class schema, byte
 extent and absence of PPtrs. The same provenance, privacy, license and
 sensitive-content review applies to this profile.
+
+Audit 2026-11-27. `owner-whole-game-mesh-frontier.json` selects two original
+inline Meshes for the canonical graph. The provenance, privacy, licensing and
+sensitive-content review covered original and destination identities, body
+lengths and hashes. The existing Mesh producer reads the original installation
+locally. Geometry, collision data and Unity evidence stay under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-mesh-frontier.json` | `82f6cf1f4166edee7095a990829180de4be75dbe223524f395cad9e674fdad2d` |

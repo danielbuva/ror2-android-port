@@ -17,6 +17,61 @@ P = importlib.import_module("bundle_preload")
 
 
 class BundlePreparationTests(unittest.TestCase):
+    def test_sprite_relocations_follow_typed_field_after_layout_change(self):
+        manifest = P.module("bundle_manifest")
+        node = manifest.S._node
+        typ = dict(
+            class_id=213,
+            tree=manifest.S._tree(
+                [
+                    node("Sprite", "Base", -1, level=0),
+                    node("string", "m_Name", -1, level=1, meta=0x4000),
+                    node("Array", "Array", -1, level=2, flags=1),
+                    node("int", "size", 4, level=3),
+                    node("char", "data", 1, level=3),
+                    node("PPtr<Texture2D>", "texture", 12, level=1),
+                    node("int", "m_FileID", 4, level=2),
+                    node("SInt64", "m_PathID", 8, level=2),
+                ]
+            ),
+        )
+        source_body = struct.pack("<iiq", 0, 0, 10)
+        output_body = struct.pack("<i4siq", 4, b"Icon", 0, 20)
+        reference = dict(offset=4, **{"from": [0, 10], "to": [0, 20]})
+        schemas = {}
+        fields = list(P.pointer_fields(output_body, typ, schemas))
+        qualify = P.module("bundle_prepare").qualify_sprite_relocations
+        self.assertEqual(qualify(P, (source_body, typ, None), fields, [reference], schemas), {8: reference})
+        with self.assertRaisesRegex(ValueError, "source PPtr differs"):
+            qualify(P, (source_body, typ, None), fields, [dict(reference, offset=8)], schemas)
+        with self.assertRaisesRegex(ValueError, "output PPtr differs"):
+            qualify(P, (source_body, typ, None), fields, [dict(reference, to=[0, 21])], schemas)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "sprite.json"
+            output = dict(bundle="content", member="CAB-content", path_id=9, references=[reference])
+            sprite = dict(path_id=7, texture=dict(path_id=10), importer_guid="a" * 32, outputs=[output])
+            member = dict(name="CAB-source", objects=[sprite])
+            path.write_text(json.dumps(dict(bundles=[dict(path="original.bundle", sha256="b" * 64, members=[member])])))
+            relocations = {}
+            P.module("bundle_prepare").original_identities(P, path, sprite_relocations=relocations)
+            self.assertEqual(relocations, {(("content", "CAB-content", 9), ("original.bundle", "CAB-source", 7)): [reference]})
+
+    def test_mesh_duplicate_requires_inline_data_and_identical_typed_bodies(self):
+        sample = [("Mesh", "Base", -1, 0), ("StreamingInfo", "m_StreamData", -1, 1)]
+        sample.extend((kind, name, 4, 2) for kind, name in (("int", "offsetLow"), ("int", "offsetHigh"), ("int", "size"), ("int", "path")))
+        sample.extend((("PPtr<Object>", "dependency", 12, 1), ("int", "m_FileID", 4, 2), ("SInt64", "m_PathID", 8, 2)))
+        nodes = [dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1) for kind, name, size, level in sample]
+        schema = P.module("bundle_manifest").S._tree(nodes)
+        typ = dict(class_id=43, tree=schema)
+        mesh = bytes(28), typ, None
+        aliases = P.module("bundle_prepare").identical_inline_mesh
+        self.assertTrue(aliases(P, mesh, mesh, {}))
+        for body in (struct.pack("<QIIiq", 0, 1, 0, 0, 0), struct.pack("<QIIiq", 0, 0, 0, 0, 7)):
+            nonlocal_mesh = body, typ, None
+            self.assertFalse(aliases(P, nonlocal_mesh, nonlocal_mesh, {}))
+            self.assertFalse(aliases(P, mesh, nonlocal_mesh, {}))
+        self.assertFalse(aliases(P, mesh, (mesh[0], dict(typ, class_id=134), None), {}))
+
     def test_original_identities_cover_texture_avatar_and_shared_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "profile.json"
@@ -887,6 +942,30 @@ class BundlePreparationTests(unittest.TestCase):
                 inputs.write_text(json.dumps(request))
                 with self.assertRaises((ValueError, EOFError)):
                     P.prepare_request(inputs, root / "prepared")
+
+    def test_failed_preparation_reports_all_reachable_source_pointer_gaps(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root)
+            policy["bindings"] = [row for row in policy["bindings"] if row["destination"][2] != 400]
+            source = next(row for row in policy["bindings"] if row["destination"][2] == 200)
+            policy["bindings"].append(dict(source, destination=["content", "CAB-content", 999]))
+            policy_path = root / "policy.json"
+            policy_path.write_text(json.dumps(policy))
+            request["policy"] = pin(policy_path)
+            inputs.write_text(json.dumps(request))
+            output = root / "prepared"
+
+            with self.assertRaisesRegex(ValueError, "2 unresolved original PPtrs"):
+                P.prepare_request(inputs, output)
+
+            gaps = {tuple(row["field"]): row for row in json.loads((output / "unresolved-source-endpoints.json").read_bytes())}
+            self.assertEqual(gaps[("duplicate",)]["pointer"], [0, 40])
+            self.assertEqual(gaps[("duplicate",)]["target_member"], "CAB-a")
+            self.assertEqual(gaps[("duplicate",)]["candidates"], [])
+            self.assertEqual(gaps[("next",)]["candidates"], [["content", "CAB-content", 200], ["content", "CAB-content", 999]])
+            self.assertEqual(gaps[("next",)]["target_member"], "CAB-b")
+            self.assertFalse((output / "inputs.json").exists())
 
     def test_extend_prepared_selection_with_measured_external_routes(self):
         with tempfile.TemporaryDirectory() as tmp:

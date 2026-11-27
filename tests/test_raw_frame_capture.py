@@ -23,7 +23,8 @@ class RawFrameCaptureTests(unittest.TestCase):
             self.skipTest("pinned Unity Mono/Roslyn host compiler is unavailable")
         with tempfile.TemporaryDirectory(prefix="raw-frame-capture-") as folder:
             executable = Path(folder) / "capture.exe"
-            references = ["-r:" + str(MANAGED / name) for name in ("UnityEngine.CoreModule.dll", "UnityEngine.ProfilerModule.dll")]
+            modules = ("CoreModule", "ImageConversionModule", "PhysicsModule", "ProfilerModule", "ScreenCaptureModule")
+            references = ["-r:" + str(MANAGED / f"UnityEngine.{module}.dll") for module in modules]
             compiled = subprocess.run(
                 [
                     str(MONO),

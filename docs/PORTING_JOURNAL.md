@@ -6,6 +6,44 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1538 — Draw a translated source Shader on Android Vulkan
+
+2026-11-27. Wine vkd3d-shader translated all eight Animate Alpha DXBC
+variant pairs. The record producer kept source state, keywords and bindings
+under the original Shader name. Unity typed-loaded the resulting leaf.
+The Android Vulkan fixture sampled opaque red and green, matching the SDK
+compiler control at both ramp endpoints. SoC peaked at 70.8 °C with no time
+above 80 °C. Fixture removal, OLED sleep and lease release passed.
+APK SHA-256 `267913901faf8778caafbdf33f4b45c409e38e699bced633e9d655c0981fd4dd`.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`vulkan-wine-device-01/terminal.done.json` and the `vulkan-control-device-02/` receipt.
+Other shader passes, ComputeShader dispatch and normal gameplay remain open.
+
+## J1537 — Activate the native Commencement mission on entry
+
+2026-11-26. The lab verifies the 730-component Moon2 scene contract,
+binds director cards to owned templates and keeps native loot setup on entry.
+Assisted Sky Meadow transport on Nova B grounded the player on Moon2 geometry
+and activated the destination SceneInfo. In the same process, native authority
+held with population ready, four batteries, 77 scene network objects and timers.
+APK `f9f9dc63f97b800924fb8019f8926f7c2b221a7d697805b05a30db266ba34571` (source `46d0ba4f`).
+Evidence under `work/coordination/gameplay-coverage-20261126/moon-native-entry-nova-b/`
+includes the `sample-36/` screenshot, log and report (46.69 FPS, 21.42 ms).
+The next segment hit 86.4 °C after 2.88 s above 80 °C. Admission battery
+was 30 °C. `terminal.done.json` confirms scratch cleanup, OLED sleep and lease
+release. Owner traversal, Mithrix, escape and matched PC rendering remain open.
+## J1534 — Recover Artificer Nano-Bomb release materials
+
+2026-11-27. The existing effect owner prepares the native projectile's
+detached ghost and the materials assigned by `OmniEffect` during native Start.
+Paired assisted Distant Roost video shows the black release square, radial
+cards and opaque ring backing clear while blue lightning remains visible.
+The same-PID report recorded one paired native secondary activation and
+all skill machines back at Idle. All 266 payload hashes matched J1532.
+APK SHA-256 `5af412ac93b310c221879305194cb68d3f81868252c048a573ef2c99db2d236e` (source `53b5781a`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-bomb-release-recovery-main-nova/`.
+SoC peaked at 92.3 °C with 20.727 s above 80 °C. Cleanup and OLED sleep passed.
+Impact brightness still needs a matched PC capture. Fire Bolt strips remain open.
 ## J1533 — Admit shipped first stages on converted ordinary Start
 
 2026-11-27. The staged converter qualifies material texture and shader preloads.
@@ -4764,3 +4802,15 @@ Native authority held 96.536 s with all four skill callbacks paired. Terminal
 snapshot was 33.79 FPS / 29.60 ms. SoC peaked at 88.4 °C with 19.907 s above
 80 °C. Battery held 26 °C. Scratch removal, OLED sleep and lease release passed.
 Black quads in the terminal screenshot and matched finisher pixels remain open.
+
+## J1535 — Replay a pinned converter stage on Android
+
+2026-11-27. The shared runner executes the committed bundle preload producer
+against an already staged 27-record request. The seed and the detached replay
+emitted the same 10,258-byte bundle, SHA-256
+`5df987cd43526a18e9e415cdebfbd5e9e1103c27a6a7d029f9561cf1bdf3d8f5`.
+The stage ran in 4.82 s with 47.7 MiB peak child RSS. The supervisor recorded
+59.3 °C peak CPU/GPU and 0 s above 80 °C. Admission battery was 28 °C at 80%.
+Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
+The runner removed its attempt scratch, preserved staged inputs, slept the
+display and released the lease. Typed load and gameplay remain open.

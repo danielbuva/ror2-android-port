@@ -206,6 +206,15 @@ class TransportTests(unittest.TestCase):
         self.adb.cleanup_detached(job)
         self.assertFalse((self.root / "remote" / Path(job.directory).name).exists())
 
+    def test_detached_status_only_does_not_pull_logs(self):
+        job = self.adb.start_detached(["sh", "-c", "printf synthetic-output; exit 7"])
+        logs = self.root / "logs"
+        result = self.adb.wait_detached(job, logs, timeout=3, poll_interval=0.01, transfer_logs=False)
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (7, b"", b""))
+        self.assertFalse(logs.exists())
+        self.assertFalse(any(call[0] == "pull" for call in self.calls()))
+        self.adb.cleanup_detached(job)
+
     def test_detached_timeout_preserves_handle_and_cannot_cleanup_running_job(self):
         job = self.adb.start_detached(["sh", "-c", "sleep 0.5; printf synthetic-done"])
         with self.assertRaises(ADB.DetachedUncertain) as error:

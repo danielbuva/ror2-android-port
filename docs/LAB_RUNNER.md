@@ -34,6 +34,26 @@ Jobs run one at a time in comment order. Every job also gets `LAB_TOOLHOST_ROOT`
 `<commit>/signed.apk`, `result.json` and `test-publisher.json` (the local path of the test publisher key the
 build trusts) there, so a later `script` job can install that build and sign synthetic test releases.
 
+## Tour an already-installed alpha release
+
+Run the current `./dev device-session --request <private JSON> --dry-run` with
+`serial` in the request. After the device grant, run the same action with
+`--device SERIAL --detach` in place of `--dry-run`. Choose
+`mode: "installed-alpha"` and `package: "dev.ror2lab.alpha"`. Supply
+`canonical_root` for the main checkout, private `output` under its `work/`,
+`workstream` and `duration_seconds`. Use `installer_apk`, `installer_package`
+and `installer_sha256` to select the authorized, debuggable production installer with
+provisioned publisher keys. Use the selected publisher release's fingerprint
+as `source_sha256` and its published `public-tools.zip` as `public_tools`.
+The signed recipe supplies the runtime attempt. The installer receipt and
+on-device readback supply the installed APK hash. Use a device with working
+controls for that release. Nova requires the game's matching Nova input map.
+
+The runner records bootstrap Play, Unity activity focus, character select,
+one ordinary first stage, and return to character select via End Run. It
+writes JSON receipts and the first failure, then stops the game and sleeps
+the display. A separate native title screen is currently unobserved.
+
 ## Current local packaging request
 
 Use the installer APK and receipt cached for the checkout's commit. A packaging
@@ -165,6 +185,18 @@ after the terminal result. Staged inputs and the installed toolhost are preserve
 If the device disconnects during production, use the generated
 `*.request.json` with a fresh terminal filename in the same directory and
 resume its retained handle through `--emission-request ... --resume-emission`.
+
+Use `whole-game-scoreboard` to census APKs already readable by the retained
+toolhost. Its descriptor selects
+`tools/phone-build/accepted-output/whole_game_scoreboard.py` and uses arguments
+`[{"inputs":"scoreboard-request.json"}, "--output", {"output":"scoreboard.json"}]`.
+Pin the request under `input_pins` and set
+`"artifacts": {"scoreboard": "scoreboard.json"}` and
+`"scoreboard": "scoreboard.json"`. Paths inside the scoreboard request resolve
+from the descriptor's retained input root. The request pins the candidate,
+optional reference, and any external payload receipts with the same format as
+the [host census](../tools/phone-build/accepted-output/README.md#whole-game-scoreboard).
+The lab runner stages its two Unity readers automatically.
 
 ## Current local emission request
 

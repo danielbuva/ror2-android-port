@@ -1070,6 +1070,13 @@ every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
 game builds; two mesh cases are excluded from that immutable cohort profile.
+`recipe/owner-whole-game-mesh-frontier.json` supplies two original inline
+Meshes that the canonical graph's Fungal and Solus Wing component references
+need. The profile preserves the original bodies, including the collision data.
+The existing preload preparer binds each supplier record through its original
+member and path ID. The exact-editor fixture loads both as Meshes at scoped
+test addresses. Their original FBX preload groups and signed release integration
+remain open.
 The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
 excluded MercSwordSwipe record through the same setup/teardown. The optional
 `unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
@@ -1457,6 +1464,11 @@ no codec or SDK is consumed. Existing input/profile/body/resource hash gates,
 checkpoint ownership and teardown apply. Native BC6H support is a device gate;
 this profile is not automatically selected by accepted-file admission. Complete
 scene relationships and functional file admission remain open.
+The same owner reads `recipe/owner-scene-baked-reflection-textures.json` to
+supply 75 original BC6H Cubemaps for staged scene probes. The texture pack
+retains each complete chain and exposes its typed body and stream for bundle
+assembly. The scene owner binds original probe pointers to the emitted
+records and qualifies in-game rendering.
 Complete original-lighting alternatives for Promo and Snowy Forest use
 `owner-<stage>-source-lighting-objects.json` and the corresponding texture,
 shader and (Promo only) Timeline recipes. The existing object owner emits
@@ -1844,10 +1856,11 @@ separate publisher trust, private input setup and device acceptance.
 `owner-apk/release_source.py` owns the explicit debug-only loopback publisher
 override. The Android worker supplies its actual `FLAG_DEBUGGABLE` state; a
 release build rejects override configuration before network access. Debug setup
-adds one test public key without replacing production trust and confines HTTP
-assets to the selected loopback base. Removing the private override file restores
-normal GitHub acquisition. Signature, archive, issuance and install checks are
-unchanged, and the installer visibly labels the active test source.
+confines HTTP assets to the selected loopback base and uses provisioned publisher
+keys. Synthetic fixtures may add one public key under an unused ID. Removing the
+private override file restores normal GitHub acquisition. The installer applies
+the normal signature, archive, issuance and install checks and visibly labels
+the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 The fixture checks that one changed output rebuilds, the unchanged producer is
@@ -2169,6 +2182,13 @@ object-pack placement. The API returns the typed tree, raw record stream and
 serialized body and retains private diagnostics. Complete-file and phone gates
 remain independent of partial SDK-record qualification.
 
+The experimental `tools/phone-build/accepted-output/shader_dxbc.cpp` host
+tool translates one PC DXBC stage to Vulkan SPIR-V using Wine vkd3d-shader.
+The caller supplies a descriptor map for the linked stages. The tool owns
+the input and output streams and frees the compiler result before exit.
+Unity parameter metadata and player packaging remain with the shader record
+producer.
+
 The existing object writer can retain an original MonoScript's editor property
 hash for an unchanged MonoBehaviour schema (`preserve_original_script_hash`).
 The original MonoScript class, runtime script identity and exact schema must
@@ -2384,6 +2404,17 @@ The request may pin dependency bundles in load order. The fixture opens them
 before loading root assets and unloads the full set in reverse order. An
 explicit Material expectation checks the loaded shader name and each saved
 non-null texture property and object name against the receipt.
+For the Animate Alpha Vulkan diagnostic, set `ROR2_PHONE_SHADER_DRAW=1` on
+`phone-content-build` with a native-content request for its standalone Shader
+address. The builder embeds the checked bundle in the disposable fixture APK.
+`ContentFixture.cs` draws two ramp inputs offscreen and reports the center
+pixels, graphics backend and result through `PHONE_SHADER_DRAW`.
+`ROR2_PHONE_SHADER_COMPUTE=1` uses the same fixture for one standalone
+ComputeShader address. The Vulkan player seeds 256 histogram counters,
+dispatches the source clear and gather kernels on a flat red input, then
+reports the thread dimensions and readback through `PHONE_SHADER_COMPUTE`.
+The shared device runner's `shader-compute` mode captures that report and
+removes the disposable fixture.
 For a streamed scene, the same request pins the bundle and dependencies and
 specifies the exact path in `scene`.
 `ContentFixtureSceneCheck.cs` enters Play Mode in the isolated project, loads
@@ -3463,6 +3494,23 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+The `shader-draw` workload runs only the disposable phone content fixture. It
+retains the launched PID's Vulkan pixel report, then removes its own verified
+installation before the terminal idle and OLED checks.
+
+
+The same runner's `installed-alpha` mode observes an existing
+`dev.ror2lab.alpha` installation. `installed_alpha.py` pins publisher trust to
+the authorized installer APK, verifies the installer-private completion receipt
+against the selected signed release, then binds the live alpha version, APK hash
+and storage placement. The signed member's recipe closure in `public-tools.zip`
+binds the runtime attempt. After bootstrap Play and Unity activity focus on
+display 0, the runner uses PID- and attempt-bound native reports for character
+select, first-stage readiness, End Run cleanup and return to character select.
+Cleanup stops the verified game, checks the installed hash and sleeps the
+display. The tour transfers JSON evidence and leaves package installation,
+payload and saves to the installer.
+
 For `owner-unplugged`, the same runner arms a one-shot request on adopted
 app storage and verifies that the launched PID can read the admitted thermal
 sensors before prompting the owner. `LabDiagnostics` reports foreground
@@ -5151,6 +5199,13 @@ pending coroutines before stage transport clears projectiles or `NovaInputSessio
 retires the run and combat services. Geometry cleanup stops any remaining
 spawner coroutines before unloading the scene.
 
+`IntegratedStageBoundary` verifies that the active `SceneInfo` belongs to
+the destination Moon2 scene before preparing its mission. Native runs keep
+their existing loot tables. The legacy layout continues to own its test
+chests and barrels. `MoonMissionBoundary` rebinds resolved director cards
+to the owned templates from the Moon encounter or whole-catalog population
+and releases its scene-owned state at stage teardown.
+
 ## Ownership
 
 `IntegratedResultsSession` keeps synchronous setup markers in the log and current
@@ -5297,11 +5352,16 @@ For native team area indicators on these roots, the session prepares the
 intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
 startup selects a team entry. The original table is restored with the effect
 callbacks before world cleanup destroys the owned copies.
+The same owner prepares `OmniEffect` particle overrides before native Start
+selects a radius group and assigns its material. It restores the original
+override references with the renderer and trail sources.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
 for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, which
-instantiate their prefabs directly. It holds the Acrid
+instantiate their prefabs directly. Artificer's configured Nano-Bomb projectile
+also enters this owner so the projectile controller's detached ghost takes the
+same material recovery path. It holds the Acrid
 finisher's typed provider lease through the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
@@ -6494,6 +6554,9 @@ existing owner-input tree. The host stages the current committed producer
 closure and a small descriptor. The phone checks the input pins, hashes the
 declared artifacts, and returns the stage and thermal receipts with an optional
 scoreboard. The runner removes attempt scratch and preserves the input tree.
+The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
+accessible to the retained toolhost. The same scoreboard owner runs on the
+host and phone with the same request pins and JSON schema.
 
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
@@ -8223,6 +8286,30 @@ Vulkan program platforms and leaf dependencies. The signed release graph binds
 the resulting bodies and types to their PC or SDK identities. Compilation closes
 the standalone compiler and codec and retains a receipt for preparation.
 
+The Animate Alpha profile uses the existing native UI program recovery to
+compile one Shader leaf under the original name. It keeps the original render
+state and keyword registry, with all eight keyword combinations in the Vulkan
+pass. The typed pack binds the replacement to its existing Commando prefab
+bundle member and path ID so that Material references keep their target.
+
+The bounded `shader_translate.py` host diagnostic takes a single record or a
+pinned `typed_records` profile of original Shader and ComputeShader records. It reads
+each source member once and validates the selected object bodies. It translates
+both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform with
+SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
+linked envelope. It feeds source layouts through the existing
+`shader_produce.py` parameter writer and emits a typed replacement pack.
+The profile run closes the body stream and pins its index, type table and
+object stream in `result.json` for the named bundle preparation supplier.
+The exact Android player typed-loaded the staged Animate Alpha leaf and
+matched the two ramp endpoint pixels from the SDK control. The fixture
+owns the temporary draw resources and the shared runner owns package removal
+and display sleep. The ComputeShader path preserves the source kernel and
+workgroup tables, remaps storage, constants and sampler-free 2D image bindings,
+and writes bare Vulkan SPIR-V into the native kernel. The original histogram
+clear and gather modules pass Vulkan 1.0 validation. ComputeShader player
+dispatch and whole-game coverage remain open.
+
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
 produced Android body through the pack receipt and type table. Shader fallback
@@ -8405,6 +8492,13 @@ texture state; particle renderers also report all meshes. The existing screen
 coverage ordering and 128-view limit remain: this is a sampled attribution tool,
 not proof that every prefab rendered. Session teardown discards the report with
 the other objective observations; it never changes materials or simulation.
+`IntegratedWorldSession` also owns the opt-in `diagnosticMageBombRelease`
+trace. It samples the first native Nano-Bomb charge-to-throw transition at
+end of frame and follows the configured projectile, its detached ghost and the
+configured muzzle and impact effects by catalog identity. It retains camera
+projected screen bounds and material slots for up to 1.25 seconds or 120 frames.
+The report belongs to the current world and holds only observations. Projected
+bounds and effect identity identify candidates for comparison with the video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
@@ -8422,6 +8516,18 @@ the existing five-second report cadence. The latest `NovaReport` sample records
 the display camera, renderer state, projected bounds, mesh and first shared
 material. The sample holds no Unity references and works with native skin
 diagnostics disabled.
+
+The integrated lab route can request a same-frame presentation capture with
+`frameCaptureScene` and `frameCaptureRunSeconds` in its session selector.
+`NovaInputBoundary` arms `AndroidPresentationCamera` on the lab view. It samples
+the camera source and the composited screen in the same Unity frame within
+12 s of the requested native run stopwatch, at most 48 times. The existing
+private camera report retains the first pair of 160 × 90 PNGs, camera and target
+state, and the collider from the view's own obstruction cast. The first sample
+with at least 5% flat mid-gray replaces that pair and ends sampling. The camera
+releases capture textures at teardown. The collider describes camera placement,
+and the PNGs can localize a presentation stage. Identifying a draw requires
+pixel-event evidence.
 
 
 ## Host-only owner layout models

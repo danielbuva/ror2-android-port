@@ -102,6 +102,20 @@ namespace EntityStates.Mage.Weapon
         public static GameObject configuredEffect;
         public GameObject chargeEffectPrefab = configuredEffect;
     }
+    public class ThrowNovabomb
+    {
+        public static GameObject configuredProjectile;
+        public GameObject projectilePrefab = configuredProjectile;
+    }
+}
+namespace RoR2
+{
+    public class OmniEffect : UnityEngine.Object
+    {
+        public class OmniEffectElement { public Material particleSystemOverrideMaterial; }
+        public class OmniEffectGroup { public OmniEffectElement[] omniEffectElements; }
+        public OmniEffectGroup[] omniEffectGroups;
+    }
 }
 public static class WholeCatalogComposed
 {
@@ -186,6 +200,8 @@ public partial class SourceSession
     readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences = new HashSet<AssetOrDirectReference<GameObject>>();
     readonly Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]> nativeTeamAreaMaterials =
         new Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]>();
+    readonly Dictionary<OmniEffect.OmniEffectElement, Material> nativeOmniEffectMaterials =
+        new Dictionary<OmniEffect.OmniEffectElement, Material>();
     public readonly List<AsyncOperationHandle<GameObject>> ownedOriginalVisualHandles = new List<AsyncOperationHandle<GameObject>>();
     public SourceSession coordinator => this;
     public SourceSession GetTeleporterWorldSession() => this;
@@ -297,6 +313,7 @@ static class Fixture
     {
         var flame = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
         var charge = new Renderer { sharedMaterials = new[] { original } };
+        var bombGhost = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
         var mercNormal = new Renderer { sharedMaterials = new[] { original } };
         var mercFinisher = new Renderer { sharedMaterials = new[] { original } };
         var normal = new Renderer { sharedMaterials = new[] { original } };
@@ -304,6 +321,9 @@ static class Fixture
         var fallback = new Renderer { sharedMaterials = new[] { original } };
         EntityStates.Mage.Weapon.Flamethrower.configuredEffect = new GameObject { components = new[] { flame } };
         EntityStates.Mage.Weapon.ChargeNovabomb.configuredEffect = new GameObject { components = new[] { charge } };
+        EntityStates.Mage.Weapon.ThrowNovabomb.configuredProjectile = new GameObject { components = new[] {
+            new RoR2.Projectile.ProjectileController { ghostPrefab = new GameObject { components = new[] { bombGhost } } }
+        } };
         WholeCatalogComposed.mercNormal = new GameObject { components = new[] { mercNormal } };
         WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { mercFinisher } };
         EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
@@ -321,9 +341,12 @@ static class Fixture
         Check(flame.trailMaterial.shader.name == "Recovered/" + original.shader.name &&
               session.worldLootSourceTrails[flame] == original,
               "Mage Flamethrower trail should be prepared and its original retained");
+        Check(bombGhost.trailMaterial.shader.name == "Recovered/" + original.shader.name &&
+              session.worldLootSourceTrails[bombGhost] == original,
+              "Mage Nano-Bomb ghost trail should be prepared and its original retained");
         Check(!EntityStates.Merc.GroundLight.comboSwingEffectPrefab && !EntityStates.Merc.GroundLight.comboFinisherSwingEffectPrefab,
               "Merc presentation must leave native state configuration to the game");
-        foreach (var renderer in new[] { flame, charge, mercNormal, mercFinisher })
+        foreach (var renderer in new Renderer[] { flame, charge, bombGhost, mercNormal, mercFinisher })
         {
             var material = renderer.sharedMaterials[0];
             Check(material.shader.name == "Recovered/" + original.shader.name &&
@@ -336,7 +359,7 @@ static class Fixture
         Check(!prepare.MoveNext() && unavailable.Count == 0 && finisher.sharedMaterials[0] != original,
               "native finisher source should be prepared after loading");
         Check((string)Addressables.requestedKey == "native-finisher" && session.ownedOriginalVisualHandles[0] == operation &&
-              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 6,
+              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 7,
               "native address and source ownership must be preserved");
     }
     static void CheckIntersectionEffectAdmission()
@@ -358,6 +381,23 @@ static class Fixture
         Check(session.worldMaterials.Count == 2 && session.worldLootSourceMaterials[renderer][0] == source &&
               session.worldLootSourceTrails[renderer] == source && source.shader.name == "Hopoo Games/FX/Cloud Intersection Remap",
               "intersection selection did not retain source slots and trail");
+    }
+    static void CheckOmniEffectOverrides(Material original)
+    {
+        var element = new OmniEffect.OmniEffectElement { particleSystemOverrideMaterial = original };
+        var group = new OmniEffect.OmniEffectGroup { omniEffectElements = new[] { element } };
+        var effect = new OmniEffect { omniEffectGroups = new[] { group } };
+        var session = new SourceSession();
+        var root = new GameObject { components = new[] { effect } };
+        session.Prepare(root);
+        session.Prepare(root);
+        var selectedMaterial = group.omniEffectElements[0].particleSystemOverrideMaterial;
+        Check(selectedMaterial.shader.name == "Recovered/" + original.shader.name &&
+              selectedMaterial.srcBlend == original.srcBlend && selectedMaterial.dstBlend == original.dstBlend &&
+              session.worldMaterials.Count == 1, "native radius selection needs the recovered override and source blend");
+        session.Stop();
+        session.Stop();
+        Check(element.particleSystemOverrideMaterial == original, "Omni effect override must be restored at teardown");
     }
     static void CheckTeamAreaAdmission(Material unrelated)
     {
@@ -429,6 +469,7 @@ static class Fixture
         CheckBakedEffectAdmission(alpha);
         CheckDirectEffectAdmission(alpha);
         CheckIntersectionEffectAdmission();
+        CheckOmniEffectOverrides(alpha);
         CheckTeamAreaAdmission(unknown);
         var segmentRenderer = new ParticleSystemRenderer { sharedMaterials = new[] { fire }, trailMaterial = alpha };
         var segment = new GameObject { components = new UnityEngine.Object[] { segmentRenderer } };

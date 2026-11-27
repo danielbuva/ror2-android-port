@@ -98,7 +98,7 @@ public sealed partial class PortSession
     {
         GetStageGeometrySession().StopStageMapZoneObservations();
     }
-    static string StageObjectPath(Transform target)
+    internal static string StageObjectPath(Transform target)
     {
         return StageGeometrySession.StageObjectPath(target);
     }

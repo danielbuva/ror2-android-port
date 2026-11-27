@@ -62,7 +62,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "c57f9ff0f9fd877ff86448fab4001e7216e8ad65a87bef5ed13ef6b3eeb5e154"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "33955ec4528d71552d217e32ed1db5058fc502331e49a085995766f3c73a7a19"
 STAGE_PIN_TOOL_SHA256 = "e58420236cadec75e47b959e2ed0dd36dace0d55638b462f552422af9d236b28"
 REQUEST_PIN_TOOL_SHA256 = "b4c8abdc7e98be1db34c1b20f35abcc154487caa36aaafafd5b48fc70fb47a5e"
 MANAGED_PRODUCER_SHA256 = "1d71425de0cc4f4dc2cf7b7e96c3554253514ec05b1ef2e2a655866aca548892"
@@ -79,10 +79,10 @@ OWNER_SOURCE_HASHES = {
     "../../runtime/session/MusicPcmJoinObserver.cs": "3c8ceaf8a8ce9ce07c76282adb70f63f8f9487f0682d33056ea6aeaa2139cef9",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ef0ca25f48aa39cdbdf33fceb960472bfd6a3e85b86a80db71cf9ec89781154a",
-    "../../runtime/session/PortSession.cs": "364d1e567f19792581f50ac81ca3aef2ae2e3e7060ad01241272e8ee30351a29",
+    "../../runtime/session/PortSession.cs": "cfb2a26b19084c23988a5e99782e1ae7dd8051eb6648106e8fd150e0aa9f4a82",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "0c08a4e06977e68ec5bc1acc20014f6cdabb7d3f71dd2874caaa6455f3f9b059",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
-    "../../runtime/world/IntegratedWorldBoundary.cs": "24786ad5da14b5ea87cb308c089d93cd7095f6c0c0c267c638c0a90097823573",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "9f1fbd51e102e6eb66c4bf8c5d6a02a375704084fe21fda1281f06e9393c7142",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "d1d197dc12526614f37b9c3c3699be3bf16a96315abd3ac698c15b4270bfe8b6",
     "../../runtime/world/SurvivorSkillObserver.cs": "00f496749c33bdb1c2fcc7ec8fa87c3abb8abb7e0048b7e1404aa9505d061e6b",
     "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "31cceff4ae1ea0df0b94fc6a63fc07c1e687f38bde9e12fd9c1330118997aa7d",

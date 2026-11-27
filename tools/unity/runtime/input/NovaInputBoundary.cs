@@ -461,6 +461,10 @@ public sealed partial class PortSession
                     display.ConfigureThirdPerson(body);
                     coordinator.worldView = display.thirdPerson;
                     coordinator.r.world.camera = coordinator.worldView.report;
+                    if (display.presentationCamera && !string.IsNullOrEmpty(coordinator.r.frameCaptureScene) &&
+                        coordinator.r.frameCaptureRunSeconds > 0)
+                        display.presentationCamera.BeginFrameCapture(coordinator.r.frameCaptureScene,
+                            coordinator.r.frameCaptureRunSeconds, display.thirdPerson);
                 }
                 if (commandoPrimaryDiagnostic)
                     coordinator.AttachPrimaryPostObserver(body);
