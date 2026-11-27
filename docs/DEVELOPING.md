@@ -9,11 +9,13 @@ Current independent prepared builds use [build lanes](build-lanes.md):
 `./dev lane --action create --name NAME`, then `LAB_LANE=NAME ./dev …`.
 
 Shared device runs use the current `./dev device-session --request <JSON>`
-entry point. Validate with `--dry-run`, then use `--detach` after the dispatcher
-grants the device. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
+entry point. Validate with `--device SERIAL --queue --dry-run`, then submit
+with `--device SERIAL --queue --detach`. The detached job takes its turn in
+the device FIFO and prints the absolute terminal receipt path. Existing grants
+continue to work with `--device SERIAL --detach`. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
 evidence rules. For disposable APKs, supply `canonical_root`, `output` (under
 its `work/`), `workstream`, `package`, `apk`, `apk_sha256` and `duration_seconds`.
-Select the granted serial with `--device` or the request's `serial` field.
+Select the device serial with `--device` or the request's `serial` field.
 Set `adopted_install: true` for adopted-only placement. Omit it when using the
 second Nova's internal storage profile. Other optional fields include
 `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
