@@ -20,6 +20,43 @@ SPEC.loader.exec_module(NATIVE)
 
 
 class OwnerCodeNativeTests(unittest.TestCase):
+    def test_android_ccache_pins_installed_executable_and_isolates_configuration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            installed = root / "installed"
+            runtime = root / "runtime"
+            resources = runtime / "clang/21"
+            links = runtime / "native-links"
+            for directory in (installed, resources, links):
+                directory.mkdir(parents=True)
+            compiler = str(installed / "libclang.so")
+            executable = installed / "libccache.so"
+            executable.write_bytes(b"fixture APK native provider")
+            alias = links / "ccache"
+            alias.symlink_to(executable)
+            tools = {"resource_dir": str(resources)}
+            tool_state = {compiler: "compiler-hash", str(resources / "header.h"): "resource-hash"}
+            env = {"CCACHE_SLOPPINESS": "time_macros", "LD_LIBRARY_PATH": str(installed)}
+            cache_dir = root / "private-cache"
+            with patch.dict(NATIVE.os.environ, ROR2LAB_NATIVE_CACHE_DIR=str(cache_dir)):
+                command, provider, identity, config = NATIVE.compile_cache({"header": "sdk-hash"}, tool_state, compiler, tools, root / "out", (runtime,), env)
+                self.assertEqual((command, provider), (alias, NATIVE.sha(executable)))
+                self.assertEqual(config["CCACHE_COMPILERCHECK"], "string:compiler-hash")
+                self.assertEqual(config["CCACHE_DIR"], str(cache_dir))
+                self.assertEqual(config["CCACHE_MAXSIZE"], "3GiB")
+                self.assertEqual(config["CCACHE_CONFIGPATH"], NATIVE.os.devnull)
+                self.assertEqual(config["LD_LIBRARY_PATH"], str(installed))
+                self.assertNotIn("CCACHE_SLOPPINESS", config)
+                self.assertNotEqual(
+                    identity,
+                    NATIVE.compile_cache({"header": "changed-sdk"}, tool_state, compiler, tools, root / "out", (runtime,), env)[2],
+                )
+                alias.unlink()
+                alias.symlink_to(installed / "unrelated.so")
+                alias.resolve().touch()
+                with self.assertRaisesRegex(ValueError, "installed native provider"):
+                    NATIVE.compile_cache({}, tool_state, compiler, tools, root / "out", (runtime,), env)
+
     def compiled_fixture(self, root, android_tools=None):
         old_sdk, sdk, folder, output = [root / name for name in ("old-sdk", "sdk", "compiled", "relink")]
         for directory in (old_sdk, sdk, folder / "objects", folder / "job-results"):
