@@ -7263,6 +7263,21 @@ local.
 | `owner-whole-game-v30-platform-materials.json` | `e7f6769d02ccc78a8a2b634d0f2d5a9785ace8abca4ebe02fa0d8ec05218982a` |
 | `owner-whole-game-v30-platform-registry.json` | `c09d3bb84e6c0418114ee8173ae7722ccb0dcfa7349f259e55b1c4ca97fc8e66` |
 
+## Commando Animate Alpha Shader (2026-11-27)
+
+`owner-commando-ui-animate-alpha.json` selects one original Shader and its
+staged destination. The standalone Unity compiler and the pinned, open DXBC
+disassembler use the owner's acquired inputs to build the Vulkan programs.
+The compiler keeps the original name, serialized render state and keyword
+registry. All eight linked program and binding records matched the previously
+accepted Vulkan wrappers in a host comparison.
+
+Manual provenance, licensing, privacy and sensitive-content review covered
+source and destination selectors, hashes, SDK and tool pins, and the authored
+compile request. Original shader bytes, recovered code, compiler output and
+test captures stay local. The recipe SHA-256 is
+`33acddd1c461921fc51aa63542cc54b98b5d10d37ede90ed1d80fe5803173de9`.
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison

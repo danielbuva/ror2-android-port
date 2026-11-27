@@ -8173,6 +8173,12 @@ Vulkan program platforms and leaf dependencies. The signed release graph binds
 the resulting bodies and types to their PC or SDK identities. Compilation closes
 the standalone compiler and codec and retains a receipt for preparation.
 
+The Animate Alpha profile uses the existing native UI program recovery to
+compile one Shader leaf under the original name. It keeps the original render
+state and keyword registry, with all eight keyword combinations in the Vulkan
+pass. The typed pack binds the replacement to its existing Commando prefab
+bundle member and path ID so that Material references keep their target.
+
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
 produced Android body through the pack receipt and type table. Shader

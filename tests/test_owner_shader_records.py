@@ -3,6 +3,7 @@
 import struct
 import unittest
 import importlib.util
+from itertools import combinations
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -51,6 +52,36 @@ class CompilerHosting(unittest.TestCase):
     def test_authored_selection_is_forwarded(self):
         call = self.invoke("--authored-file", "first", "--authored-file", "second")
         self.assertEqual(call.kwargs["authored_files"], ["first", "second"])
+
+
+class NativeUI(unittest.TestCase):
+    def test_original_shader_recovers_every_keyword_combination_from_pass_zero(self):
+        axes = ["DOUBLESAMPLE", "UNITY_UI_CLIP_RECT", "UNITY_UI_ALPHACLIP"]
+        tags = {"tags": []}
+        state = {"m_Name": "Default", "m_Tags": tags}
+        form = {
+            "m_Name": "Fixture/UI",
+            "m_KeywordNames": [f"Stereo{i}" for i in range(4)] + axes,
+            "m_SubShaders": [{"m_Tags": tags, "m_LOD": 5, "m_Passes": [{"m_State": state}]}],
+        }
+        recovered = []
+
+        def pair(context, index, keywords):
+            self.assertEqual((context, index), ("fixture", 0))
+            recovered.append(frozenset(keywords))
+            return "vertex", "fragment"
+
+        def block(context, pairs, directives):
+            self.assertEqual(len({condition for condition, _, _ in pairs}), 8)
+            return directives
+
+        source = N.ui_original_source(form, "fixture", SimpleNamespace(pair=pair, block=block), lambda _: "")
+        expected = {frozenset(keys) for length in range(4) for keys in combinations(axes, length)}
+        self.assertEqual(set(recovered), expected)
+        self.assertIn('Shader "Fixture/UI"', source)
+        self.assertIn('Name "Default"', source)
+        for axis in axes:
+            self.assertIn(f"#pragma multi_compile __ {axis}", source)
 
 
 class ComputeRecords(unittest.TestCase):
