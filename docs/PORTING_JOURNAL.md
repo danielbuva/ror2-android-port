@@ -5201,6 +5201,17 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `signed-cloud-remap-device-04/signed_artifact.json`. Whole-game scoring and
 linked Material rendering remain open.
 
+## J1576 — Batch SDK ETC2 colour encoding per mip on Android
+
+2026-11-27. The pinned SDK adapter reuses one process per ETC2 colour mip.
+On Nova B, 12 original BC3 textures with 72 mips produced all four matching
+pack sizes and SHA-256 hashes. SDK launches fell from 108 to 38. Producer time
+fell from 275.372 to 233.598 s, peak child RSS from 36.99 to 36.47 MiB and
+net stage storage from 6.72 to 2.78 MiB. Battery was 31 °C at admission.
+CPU/GPU peaked at 64.1 °C with zero pauses or time above 80 °C.
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+Evidence `work/coordination/p1-textures/phone-bc3-sdk-bands-1127/device/terminal.done.operation.json`.
+The signed production SDK descriptor and play verification remain open.
 ## J1575 — Draw Terrain Detail vertex lighting on Android Vulkan
 
 2026-11-27. The signed Shader producer preserved 324 source program keys
