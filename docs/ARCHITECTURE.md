@@ -1856,10 +1856,11 @@ separate publisher trust, private input setup and device acceptance.
 `owner-apk/release_source.py` owns the explicit debug-only loopback publisher
 override. The Android worker supplies its actual `FLAG_DEBUGGABLE` state; a
 release build rejects override configuration before network access. Debug setup
-adds one test public key without replacing production trust and confines HTTP
-assets to the selected loopback base. Removing the private override file restores
-normal GitHub acquisition. Signature, archive, issuance and install checks are
-unchanged, and the installer visibly labels the active test source.
+confines HTTP assets to the selected loopback base and uses provisioned publisher
+keys. Synthetic fixtures may add one public key under an unused ID. Removing the
+private override file restores normal GitHub acquisition. The installer applies
+the normal signature, archive, issuance and install checks and visibly labels
+the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 The fixture checks that one changed output rebuilds, the unchanged producer is
