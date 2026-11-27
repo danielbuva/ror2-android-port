@@ -567,6 +567,9 @@ then resolves the typed SkinDefParams and checks each bake transform with the
 native prefab path function, including base skins. It checks that each catalog
 CharacterMaster's assigned body resolves to the same Unity object as a typed
 CharacterBody family member. All opened bundles are released in `finally`.
+Optional `prefab_clones` rows name a pinned bundle and prefab path. The fixture
+clones each prefab under inactive staging, records serialization errors and
+missing components, and destroys it before unloading the bundles.
 Its local receipt records failures before the Android gameplay gate.
 The fixture's optional `definition_source` pins the original integration metadata
 and provider contract. It discovers ScriptableObject roots by managed inheritance,
@@ -3421,6 +3424,9 @@ The shared runner records the cumulative exception log's byte offset before
 launch. After stopping the owned package, it captures only the appended rows
 in the session root's `exceptions.jsonl`, including on workload failure.
 Periodic captures retain their PID-filtered logs and performance evidence.
+If the thermal observer's final stop fails after both observer threads exit,
+the run fails. The runner can release the lease after its separately verified
+package stop, scratch cleanup and independent idle and OLED readback succeed.
 Opt-in `capture_golem_attacks` watches the live Unity stream for the owned
 process's native clap and laser entries and captures a bounded screenshot burst
 when display zero is focused. The observer stops with the launch workload and
