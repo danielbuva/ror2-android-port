@@ -2181,6 +2181,13 @@ object-pack placement. The API returns the typed tree, raw record stream and
 serialized body and retains private diagnostics. Complete-file and phone gates
 remain independent of partial SDK-record qualification.
 
+The experimental `tools/phone-build/accepted-output/shader_dxbc.cpp` host
+tool translates one PC DXBC stage to Vulkan SPIR-V using Wine vkd3d-shader.
+The caller supplies a descriptor map for the linked stages. The tool owns
+the input and output streams and frees the compiler result before exit.
+Unity parameter metadata and player packaging remain with the shader record
+producer.
+
 The existing object writer can retain an original MonoScript's editor property
 hash for an unchanged MonoBehaviour schema (`preserve_original_script_hash`).
 The original MonoScript class, runtime script identity and exact schema must
@@ -2396,6 +2403,17 @@ The request may pin dependency bundles in load order. The fixture opens them
 before loading root assets and unloads the full set in reverse order. An
 explicit Material expectation checks the loaded shader name and each saved
 non-null texture property and object name against the receipt.
+For the Animate Alpha Vulkan diagnostic, set `ROR2_PHONE_SHADER_DRAW=1` on
+`phone-content-build` with a native-content request for its standalone Shader
+address. The builder embeds the checked bundle in the disposable fixture APK.
+`ContentFixture.cs` draws two ramp inputs offscreen and reports the center
+pixels, graphics backend and result through `PHONE_SHADER_DRAW`.
+`ROR2_PHONE_SHADER_COMPUTE=1` uses the same fixture for one standalone
+ComputeShader address. The Vulkan player seeds 256 histogram counters,
+dispatches the source clear and gather kernels on a flat red input, then
+reports the thread dimensions and readback through `PHONE_SHADER_COMPUTE`.
+The shared device runner's `shader-compute` mode captures that report and
+removes the disposable fixture.
 For a streamed scene, the same request pins the bundle and dependencies and
 specifies the exact path in `scene`.
 `ContentFixtureSceneCheck.cs` enters Play Mode in the isolated project, loads
@@ -3469,6 +3487,10 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+The `shader-draw` workload runs only the disposable phone content fixture. It
+retains the launched PID's Vulkan pixel report, then removes its own verified
+installation before the terminal idle and OLED checks.
+
 
 The same runner's `installed-alpha` mode observes an existing
 `dev.ror2lab.alpha` installation. `installed_alpha.py` pins publisher trust to
@@ -8256,6 +8278,30 @@ layout is used for serialization. The producer checks names, source layouts,
 Vulkan program platforms and leaf dependencies. The signed release graph binds
 the resulting bodies and types to their PC or SDK identities. Compilation closes
 the standalone compiler and codec and retains a receipt for preparation.
+
+The Animate Alpha profile uses the existing native UI program recovery to
+compile one Shader leaf under the original name. It keeps the original render
+state and keyword registry, with all eight keyword combinations in the Vulkan
+pass. The typed pack binds the replacement to its existing Commando prefab
+bundle member and path ID so that Material references keep their target.
+
+The bounded `shader_translate.py` host diagnostic takes a single record or a
+pinned `typed_records` profile of original Shader and ComputeShader records. It reads
+each source member once and validates the selected object bodies. It translates
+both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform with
+SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
+linked envelope. It feeds source layouts through the existing
+`shader_produce.py` parameter writer and emits a typed replacement pack.
+The profile run closes the body stream and pins its index, type table and
+object stream in `result.json` for the named bundle preparation supplier.
+The exact Android player typed-loaded the staged Animate Alpha leaf and
+matched the two ramp endpoint pixels from the SDK control. The fixture
+owns the temporary draw resources and the shared runner owns package removal
+and display sleep. The ComputeShader path preserves the source kernel and
+workgroup tables, remaps storage, constants and sampler-free 2D image bindings,
+and writes bare Vulkan SPIR-V into the native kernel. The original histogram
+clear and gather modules pass Vulkan 1.0 validation. ComputeShader player
+dispatch and whole-game coverage remain open.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
