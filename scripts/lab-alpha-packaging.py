@@ -42,6 +42,8 @@ SAF_CASES = (
     "saf-picker-cancelled",
     "saf-unknown-refused",
     "saf-unsupported-refused",
+    "saf-incomplete-folder-refused",
+    "saf-invalid-zip-refused",
     "saf-import-cancelled",
     "saf-folder-validated",
     "saf-zip-validated",

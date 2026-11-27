@@ -19,6 +19,7 @@ KEY_FILES = ("owner.p12", "password")
 MANAGED = Path("tools/phone-build/managed-host")
 SIGNER = Path("tools/phone-build/owner-apk/build_owner_apk.py")
 REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "dev")
+APP_HOST_RECIPE = "recipe/owner-app-host-tools.json"
 RUNTIME_INPUTS = (
     MANAGED / "stage.py",
     MANAGED / "build_fixture.py",
@@ -30,10 +31,8 @@ RUNTIME_INPUTS = (
     MANAGED.parent / "native-host/NativeToolHost.c",
     MANAGED.parent / "native-host/Hello.cs",
     "tools/phone-build/owner-code/GnuToolAdapter.c",
-    "recipe/owner-app-host-tools.json",
     "recipe/owner-public-tools.json",
     "environment/toolchain.json",
-    "scripts/env.sh",
 )
 
 
@@ -97,6 +96,21 @@ def backup_signing_key(keys, java, expected, fetch):
 
 def git(checkout, *args):
     return subprocess.check_output(["git", "-C", checkout, *args]).decode().strip()
+
+
+def verify_runtime_inputs(checkout, base, version):
+    git(checkout, "diff", "--quiet", base, version, "--", *RUNTIME_INPUTS)
+    old_recipe = json.loads(git(checkout, "show", f"{base}:{APP_HOST_RECIPE}"))
+    recipe = json.loads(git(checkout, "show", f"{version}:{APP_HOST_RECIPE}"))
+    old_recipe.pop("public_profile_source_hashes")
+    pins = recipe.pop("public_profile_source_hashes")
+    if recipe != old_recipe:
+        raise ValueError("retained Android runtime recipe differs")
+    # The source pins describe files rebuilt under assets/repo/ below.
+    tracked = set(git(checkout, "ls-tree", "-rz", "--name-only", version, "--", *REPO_ASSETS).split("\0"))
+    for name, expected in pins.items():
+        if name not in tracked or digest(checkout / name) != expected:
+            raise ValueError("public transform source differs: " + name)
 
 
 def base_receipt(base):
@@ -173,7 +187,7 @@ def build(checkout, base, zipalign, check=False):
     base = base.resolve()
     receipt, native_hashes = base_receipt(base)
     git(checkout, "diff", "--quiet", "HEAD", "--", *REPO_ASSETS)
-    git(checkout, "diff", "--quiet", receipt["source_commit"], version, "--", *RUNTIME_INPUTS)
+    verify_runtime_inputs(checkout, receipt["source_commit"], version)
     java = Path(os.environ["JAVA_HOME"]) / "bin/java"
     sdk = Path(os.environ["ANDROID_HOME"])
     tools = sdk / "build-tools/34.0.0"

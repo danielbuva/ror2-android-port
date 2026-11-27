@@ -1819,15 +1819,15 @@ consent checks, refusing pregrant; setup and cleanup remain with the installer
 owner. `AlphaPackagingHarness.java` uses generated input only.
 `scripts/lab/alpha_acquisition.py` signs test plans for two local inventories
 and observes the import service through the visible UI and durable receipts.
-It checks Android picker cancellation with Back. For deterministic selection,
-`AcquisitionFixture.java` returns read-only tree and ZIP grants through the
-installer's normal activity-result handler. Only the disposable test APK
-registers the fixture, and a one-use private request selects its document.
-The debuggable fixture consumes separate one-use control requests while the
-installer is resumed and invokes the same enabled buttons used by the owner.
-The runner owns its temporary archive and an external-files subtree on the
-phone. It hashes staged sources and successful private imports, then removes
-staging and disposes of the fresh installer through the existing cleanup owner.
+It uses Android's system picker and verifies grants from its external storage
+provider, including reopening the supported folder and ZIP after an installer
+restart. It checks picker Back and cancellation after copy progress. The
+debuggable fixture consumes one-use control requests while the installer is
+resumed and invokes the same enabled buttons used by the owner. The runner
+owns temporary archives and a scoped Downloads directory. It hashes staged
+sources before and after import and verifies the private imported files, then
+removes staging and disposes of the fresh installer through the existing
+cleanup owner.
 The [local packaging request](LAB_RUNNER.md#current-local-packaging-request)
 uses the shared lab runner for a granted device and records the installed version
 and hashes before the fixture is removed. The toolhost request pins the cached

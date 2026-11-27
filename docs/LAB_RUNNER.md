@@ -74,9 +74,10 @@ source scripts/env.sh
 ```
 
 This compiles the current Java and manifest, packages the tracked installer
-sources, and verifies every retained runtime asset and Android library.
-The build refuses changed native/runtime inputs and records the base commit
-and hash next to the new APK. The rebuilt APK is cached by the checkout commit.
+sources against the current source pins, and verifies every retained runtime
+asset and Android library. The build requires the same native/runtime inputs
+and records the base commit and hash next to the new APK. The rebuilt APK is
+cached by the checkout commit.
 An explicitly staged Android build can also seed this rebuild. Use its
 request-keyed cache directory. For an older receipt without source and signer
 fields, replay its original packaging request against the original checkout with
@@ -91,11 +92,13 @@ current inventory. The second also recognizes the older inventory for refusal.
 An optional `toolhost_source_commit` selects a previously built cache entry.
 The acquisition runner checks its stage/build receipts and requires matching
 installer runtime sources and the disposable APK's document fixture. The dry-run
-checks the catalogs and source shape. The detached run stages a temporary ZIP and
-two folders under the fresh installer's external files. A private one-use command
-invokes the normal buttons in the debuggable installer-test package. The run sends
-Back to the system picker and uses the fixture's Android document grants to qualify
-folder and ZIP imports. It then removes its owned files and installer.
+checks the catalogs and source shape. The detached run stages the cohorts and
+invalid controls in a scoped Downloads directory. A private one-use command
+invokes the normal buttons in the debuggable installer-test package. Android's
+system picker grants read access through the external storage provider. The run
+restarts the installer before importing the supported selections, verifies a
+mid-copy cancellation and resumed import, and hashes staged files before and
+after acquisition. It then removes its owned files and installer.
 
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
