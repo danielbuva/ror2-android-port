@@ -1149,6 +1149,7 @@ class DeviceSessionTests(unittest.TestCase):
         exception_rows="",
         signature_failure=False,
         start_from_menu=False,
+        launch_snapshot_pid=None,
     ):
         events = []
         transient_paths = {"/owned/" + suffix for suffix in runner.TRANSIENTS}
@@ -1218,8 +1219,13 @@ class DeviceSessionTests(unittest.TestCase):
 
         def shell(*args, **kwargs):
             if args[:2] == ("sh", "-c") and "ps -A" in args[2]:
+                launching = events[-1:] == ["launching"]
                 events.append("process-checkpoint")
+                if launching:
+                    return process_snapshot((launch_snapshot_pid, "03:19:58", target.package))
                 return process_snapshot()
+            if args[0] == "pidof":
+                return ""  # The launched process has exited by terminal capture.
             if args[0] == "sha256sum":
                 return target.owned()["apk_sha256"] + "  /fixture/base.apk"
             if args[:2] == ("pm", "uninstall"):
@@ -1254,6 +1260,8 @@ class DeviceSessionTests(unittest.TestCase):
         finish_error = thermal.error or thermal_finish_error
         thermal.finish.side_effect = RuntimeError(finish_error) if finish_error else lambda: events.append("thermal-finish")
         thermal.start.side_effect = lambda: events.append("thermal-start")
+        thermal.launch.side_effect = lambda _: events.append("launching") or {"pid": "73"}
+        target.cmd.return_value = "Unity fatal tail"
 
         if start_from_menu:
             self.request["start_from_menu"] = True
@@ -1263,14 +1271,16 @@ class DeviceSessionTests(unittest.TestCase):
             events.append("read-attempt")
             return "owned-attempt"
 
-        def workload(*args, **kwargs):
+        def workload(current, owner, request, output, result, **kwargs):
             self.assertTrue(lease_path.is_dir())
             self.assertIsNotNone(kwargs["_reset_idle"])
             self.assertEqual(kwargs["start_attempt"], "owned-attempt" if start_from_menu else None)
-            if self.request["mode"] == "sustained":
+            if request["mode"] == "sustained":
                 self.assertFalse(any(call.args[0] == "push" and call.args[-1].endswith("movement-batch-selection.json") for call in target.cmd.call_args_list))
             events.append("workload")
             live_transients.update(transient_paths)
+            if launch_snapshot_pid is not None:
+                runner.launch(current, owner, process_checks=result["process_checkpoints"])
             if workload_error:
                 raise RuntimeError("observed workload failure")
 
@@ -1312,7 +1322,10 @@ class DeviceSessionTests(unittest.TestCase):
             result = runner.execute(self.request)
         self.assertEqual(placement.call_args_list[0].args[1], self.apk.stat().st_size + payload_size + 20 * 1024**3)
         self.assertIn("prelaunch", result, result.get("error"))
-        self.assertEqual([checkpoint["phase"] for checkpoint in result["process_checkpoints"]], ["before-install", "install"])
+        phases = ["before-install", "install"]
+        if launch_snapshot_pid is not None:
+            phases += ["before-launch", "launch"]
+        self.assertEqual([checkpoint["phase"] for checkpoint in result["process_checkpoints"]], phases)
         prepare.assert_called_once_with(target, result["prelaunch"])
         if payload:
             target.sync.assert_called_once_with(self.root / "payload", replace_previous=True, cleanup=result["device_cleanup"])
@@ -1404,6 +1417,20 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertTrue(result["lease_released"])
         self.assertIn("observed workload failure", result["error"])
+
+    def test_terminal_capture_retains_logcat_after_verified_process_exits(self):
+        result = self.run_case(workload_error=True, launch_snapshot_pid="73")
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertEqual(result["process_checkpoints"][-1]["verified_launch_pid"], "73")
+        self.assertEqual((self.output / "terminal-capture/unity.log").read_text(), "Unity fatal tail")
+
+    def test_terminal_capture_ignores_unverified_launch_snapshot(self):
+        result = self.run_case(launch_snapshot_pid="72")
+        self.assertIn("Unexpected owned lab process at launch", result["error"])
+        self.assertTrue(result["lease_released"])
+        self.assertNotIn("verified_launch_pid", result["process_checkpoints"][-1])
+        self.assertFalse((self.output / "terminal-capture").exists())
 
     def test_safety_stop_does_not_strand_clean_device_lease(self):
         result = self.run_case(thermal_error=True)
