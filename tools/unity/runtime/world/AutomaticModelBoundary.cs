@@ -1,6 +1,7 @@
 // Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
 // Session phases: setup PrepareAutomaticModel, ObserveAutomaticModelFollow; teardown —.
 using System.Collections;
+using System.Linq;
 using System.Reflection;
 using RoR2;
 using UnityEngine;
@@ -9,6 +10,12 @@ using UnityEngine;
 public sealed partial class PortSession
 {
     GameObject ownedDetachedModel;
+    Renderer[] deferredSourceModelRenderers;
+    bool UsesNativeSelectedSkin(string survivor)
+    {
+        // These models leave their body meshes unbound until ModelSkinController.Start.
+        return r.nativeSourceSkinLifecycleDiagnosticRequested || (IsPlayableSpine() && (survivor == "Huntress" || survivor == "Croco"));
+    }
     bool IsAutomaticModel()
     {
         return IsNovaInput() || IsAutomaticSkill() || r.id.StartsWith("body-state-spawn-state-auto-model-");
@@ -26,16 +33,30 @@ public sealed partial class PortSession
               "Recovered model lifecycle settings changed");
         ownedDetachedModel = model.gameObject;
         model.gameObject.SetActive(false); // Detachment must not activate the unproven child callbacks.
-        if (IsPlayableSpine() && !SelectedSourceSurvivor())
+        string survivor = SelectedSourceSurvivor() ? r.selectedSurvivor : null;
+        if (IsPlayableSpine() && !UsesNativeSelectedSkin(survivor))
         {
             // BaseCharacterMain snapshots available Animator parameters on entry.
-            // Bind the artifact-backed Commando assets before enabling the body state
-            // machine; waiting for the display leaves locomotion disabled until a roll.
-            var animator = model.GetComponent<Animator>();
-            var controller = artifactBundle.LoadAsset<RuntimeAnimatorController>(cfg.displayAssets[0]);
-            var avatar = artifactBundle.LoadAsset<Avatar>(cfg.displayAssets[1]);
-            Check(animator && controller && avatar, "Original Commando animation assets unavailable before spawn");
-            NovaDiagnosticDisplay.PrepareCommandoAnimationBeforeSpawn(model, controller, avatar);
+            RuntimeAnimatorController controller;
+            Avatar avatar;
+            if (survivor == null)
+            {
+                controller = artifactBundle.LoadAsset<RuntimeAnimatorController>(cfg.displayAssets[0]);
+                avatar = artifactBundle.LoadAsset<Avatar>(cfg.displayAssets[1]);
+            }
+            else
+            {
+                var root = "Assets/WholeGame/RoR2/Base/Characters/" + survivor + "/";
+                controller = WholeCatalogComposed.LoadOwnedContent<RuntimeAnimatorController>(root + "anim" + survivor + ".controller");
+                avatar = WholeCatalogComposed.LoadOwnedContent<Avatar>(root + "mdl" + survivor + "Avatar.asset");
+                // Preserve the existing presentation boundary while the Animator starts.
+                deferredSourceModelRenderers = model.GetComponentsInChildren<Renderer>(true)
+                    .Where(renderer => !renderer.forceRenderingOff).ToArray();
+                foreach (var renderer in deferredSourceModelRenderers)
+                    renderer.forceRenderingOff = true;
+            }
+            Check(model.GetComponent<Animator>() && controller && avatar, "Original survivor animation assets unavailable before spawn");
+            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, survivor != null);
         }
         r.modelTarget = model.name;
         r.modelParent = locator.modelBaseTransform.name;
@@ -43,12 +64,21 @@ public sealed partial class PortSession
     }
     void VerifyAutomaticAnimatorBeforeMainState(CharacterBody body)
     {
-        if (!IsPlayableSpine() || SelectedSourceSurvivor()) return;
+        string survivor = SelectedSourceSurvivor() ? r.selectedSurvivor : null;
+        if (!IsPlayableSpine() || UsesNativeSelectedSkin(survivor)) return;
         var animator = body.modelLocator.modelTransform.GetComponent<Animator>();
         animator.Update(0);
         var parameters = CharacterAnimParamAvailability.FromAnimator(animator);
         Check(parameters.isMoving && parameters.forwardSpeed && parameters.rightSpeed,
-              "Original Commando locomotion parameters unavailable after native model Start before main state");
+              "Original survivor locomotion parameters unavailable after native model Start before main state");
+    }
+    void RevealPreparedSourceModel()
+    {
+        if (deferredSourceModelRenderers == null) return;
+        foreach (var renderer in deferredSourceModelRenderers)
+            if (renderer)
+                renderer.forceRenderingOff = false;
+        deferredSourceModelRenderers = null;
     }
     void ObserveAutomaticModelFollow(CharacterBody body)
     {

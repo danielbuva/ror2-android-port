@@ -351,7 +351,10 @@ promotional graphics and their sources; they are not part of the runtime pipelin
 Unity editor and batch launchers share the lab's Homebrew ADB server on port
 5037. `scripts/lab/build_lock.py::unity_editor_env` configures the child to
 connect to the numeric loopback address so the bundled ADB client cannot start
-its own daemon. Device tooling starts the shared server when needed. Android
+its own daemon. Unity's Android module also kills any running adb server that
+was not started from its own SDK; `scripts/env.sh` keeps that editor preference
+(`AndroidADBKillExternalInstance`) off and `./dev doctor` checks it.
+Device tooling starts the shared server when needed. Android
 user and Gradle homes remain isolated where configured.
 `scripts/lab/build.py::editor` owns `./dev editor`.
 `scripts/build-smoke.sh`, `scripts/lab/unity_rebuild.py`, `phone_content.py`,
@@ -8149,18 +8152,21 @@ when installing the disposable converted package. Setup uses the verified SDK
 resource table; output hashes record the transformed entry. No runtime state or
 new lifecycle owner is added.
 
-Commando animation preparation stays in `AutomaticModelBoundary`: the artifact
-controller/avatar bind while the body is inactive. `NovaDiagnosticDisplay`
-isolates the existing model callbacks and enables the Animator/model before body
-activation. Native `ModelLocator.Start` detaches the model from its inactive
-model base, initializing the Animator. The boundary then verifies its locomotion
-parameters during `SpawnTeleporterState`, before native
-`BaseCharacterMain` snapshots them on its first entry. The display preserves the
-binding and reports the native movement cache and Animator state; its existing
-disposal owns teardown.
+`AutomaticModelBoundary` binds the Commando artifact Animator and direct-binding
+source survivor Animators while the body is inactive. `NovaDiagnosticDisplay`
+isolates model callbacks and enables the Animator and model before body activation.
+Native `ModelLocator.Start` detaches the model from its inactive model base,
+initializing the Animator. The boundary verifies locomotion parameters during
+`SpawnTeleporterState`, before native `BaseCharacterMain` snapshots them. It keeps
+direct-binding source renderers out of the loading view until the display has
+prepared their materials. The display retains the binding, enables native aim
+and reports the movement cache and Animator state. Native selected-skin loads
+retain their asynchronous controller and avatar owner. The existing display
+and detached-model disposal own teardown.
 `./dev editor --target lab --action commando-animation-host` is a current exact-editor
 contract check reproducing unavailable parameters under an inactive model base
-and parameter discovery after native detachment, before the main state
+and parameter discovery after native detachment, before the main state, including
+the imported Bandit and Captain controllers
 (`SurvivorSkillInputHost.VerifyAnimatorBeforeMainState`); gameplay remains a
 device gate.
 `NovaInputBridge` neutralizes unavailable physical input without suspending idle

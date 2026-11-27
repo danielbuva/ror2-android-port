@@ -86,11 +86,11 @@ public sealed class NovaDiagnosticDisplay : IDisposable
                 UnityEngine.Object.DestroyImmediate(component);
         }
     }
-    public static void PrepareCommandoAnimationBeforeSpawn(Transform model, RuntimeAnimatorController controller, Avatar avatar)
+    public static void PrepareAnimationBeforeSpawn(Transform model, RuntimeAnimatorController controller, Avatar avatar, bool sourceSelected)
     {
         // The body is still inactive. Isolate the same callbacks as the display
         // before allowing Unity to initialize the model on body activation.
-        IsolateModelCallbacks(model, false, null);
+        IsolateModelCallbacks(model, sourceSelected, null);
         foreach (var collider in model.GetComponentsInChildren<Collider>(true))
             collider.enabled = false;
         var animator = model.GetComponent<Animator>();
@@ -280,10 +280,8 @@ public sealed class NovaDiagnosticDisplay : IDisposable
             nativeAnimator = animator;
             if (sourceSelected && !nativeSourceSkinLifecycle)
             {
-                var rootPath = "Assets/WholeGame/RoR2/Base/Characters/" + sourceSurvivor + "/";
-                animator.runtimeAnimatorController =
-                    WholeCatalogComposed.LoadOwnedContent<RuntimeAnimatorController>(rootPath + "anim" + sourceSurvivor + ".controller");
-                animator.avatar = WholeCatalogComposed.LoadOwnedContent<Avatar>(rootPath + "mdl" + sourceSurvivor + "Avatar.asset");
+                if (!animator.runtimeAnimatorController || !animator.avatar || !animator.isInitialized)
+                    throw new Exception("Original survivor animation binding unavailable after spawn");
             }
             else if (!sourceSelected)
             {

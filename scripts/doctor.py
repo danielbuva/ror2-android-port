@@ -82,6 +82,10 @@ for name, cmd in [("ilspycmd", [str(root / "scripts/ilspycmd"), "--version"]), (
 check("SteamCMD", (root / ".local/tools/steamcmd/steamcmd.sh").exists(), "Run .local/tools/steamcmd/steamcmd.sh +quit to reverify")
 ok, _ = run(["gh", "auth", "status"])
 check("GitHub authentication", ok, "Authenticated" if ok else "Run gh auth login")
+if sys.platform == "darwin":
+    # scripts/env.sh turns this off; when on, every editor launch kills the shared adb server.
+    ok, out = run(["defaults", "read", "com.unity3d.UnityEditor5.x", "AndroidADBKillExternalInstance"])
+    check("Unity keeps shared ADB", ok and out.strip() == "0", out.strip() or "unset (Unity default kills external adb)")
 ok, out = run(["/opt/homebrew/bin/adb", "devices"])
 target = None
 try:
