@@ -13,6 +13,7 @@ the game before starting a capture.
 ./dev pc-reference tools/pc-reference/plans/gameplay.json
 ./dev pc-reference tools/pc-reference/plans/loader-roost.json
 ./dev pc-reference tools/pc-reference/plans/artificer-fire-bolt.json
+./dev pc-reference tools/pc-reference/plans/rex-disperse.json
 ```
 
 Preparation uses an APFS clone inside the same bottle. Stock Steam performs
@@ -52,6 +53,11 @@ setting is a target. `projectile-trace.json` records cast pose and aim, owned
 projectile identity and positions, and native damage against the planned
 Beetle or another victim. Compare observed contact and crit with the Android
 trace when qualifying a match.
+
+The REX plan enters Titanic Plains directly with seed 3. It uses the Android
+sample's post-cast camera pose for both a clear-ground Disperse and a cast at
+an assisted Beetle spawn. Review the timestamped HUD frames for the release
+and the Beetle's before and after positions for displacement.
 
 The command prints its private run directory. The manifest records the Steam
 build, managed assembly digest and scenario results. Steps carry lossless
