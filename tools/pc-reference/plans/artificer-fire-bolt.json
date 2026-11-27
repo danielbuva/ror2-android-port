@@ -1,0 +1,43 @@
+{
+  "settings": {
+    "width": 1280,
+    "height": 960,
+    "fps": 60,
+    "fov": 60,
+    "disablePostProcessing": true
+  },
+  "scenarios": [
+    {
+      "id": "artificer-roost",
+      "scene": "blackbeach2",
+      "seed": "3",
+      "body": "MageBody",
+      "naturalFirstStage": true,
+      "steps": [
+        {
+          "id": "fire-bolt-beetle",
+          "action": "spawn",
+          "subject": "beetle",
+          "value": "BeetleMaster",
+          "freezeAi": true,
+          "player": [67.770424, 12.529447, 112.455635],
+          "position": [67.695908, 10.968232, 114.451553],
+          "settleSeconds": 0.6,
+          "view": {
+            "position": [63.421680, 19.292896, 108.106895],
+            "yaw": 45,
+            "pitch": 41.25
+          }
+        },
+        {
+          "id": "fire-bolt-primary",
+          "action": "skill",
+          "value": "primary",
+          "aimDirection": [0.552287, -0.624809, 0.551899],
+          "observeProjectileHitOn": "beetle",
+          "recordSeconds": 1.2
+        }
+      ]
+    }
+  ]
+}
