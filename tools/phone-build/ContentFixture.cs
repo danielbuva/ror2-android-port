@@ -954,8 +954,10 @@ public sealed class ContentFixture : MonoBehaviour
             if (material.passCount != 3) throw new Exception("Terrain Layer Utils did not expose three passes");
             report.low = DrawPassSample(material, pixels, source, 0);
             report.high = DrawPassSample(material, pixels, source, 2);
-            var masked = new Color32(texel.g, texel.g, texel.g, texel.g);
-            report.passed = report.graphics == "Vulkan" && report.low.Equals(masked) && report.high.Equals(texel);
+            // Pass 0 replicates the masked channel and uses Max blending over the blue clear.
+            var maskedOverBlue = new Color32(texel.g, texel.g, byte.MaxValue, byte.MaxValue);
+            report.passed = report.graphics == "Vulkan" &&
+                report.low.Equals(maskedOverBlue) && report.high.Equals(texel);
         }
         finally
         {
