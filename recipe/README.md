@@ -7295,6 +7295,22 @@ Signed release dispatch and Android acceptance remain open.
 | `owner-preload-droplet-records.json` | `b3d56c2cf8a2dcea1810cecd2441677e2e853eb2fe6acf5e15cfe47499175684` |
 | `owner-preload-snow-texture.json` | `a3f9a7267348740632a684302f2291dd7921222f141093fe85cc563ecd2da0aa` |
 
+## Startup pickup component supplier (2026-11-27)
+
+`owner-startup-pickup-component-records.json` selects eight original native
+records from the soda and syringe pickup dependency chains. The source
+serialized file disambiguates two Material records that share a PathID.
+`record_produce.py` emits their original bodies and native types without an
+SDK input. Bundle preparation owns reference relocation.
+
+The provenance, licensing, privacy and sensitive-content review covered the
+original selectors, expected sizes and hashes, and native type hashes.
+Serialized bodies, type trees and generated packs remain local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-startup-pickup-component-records.json` | `c29e48819be15b23d8d8e3768ef0df6b1333a30528c11ead626a0c69b95a7fe1` |
+
 ## V30 specialized record suppliers (2026-11-26)
 
 The texture and mesh profiles select 47 Texture2D and 22 Mesh records for
