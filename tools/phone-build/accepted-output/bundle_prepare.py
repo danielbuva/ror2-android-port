@@ -264,6 +264,7 @@ def original_identities(
     sprite_relocations=None,
     clip_binding_orders=None,
     shader_dependencies=None,
+    missing_script_bases=None,
 ):
     """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
@@ -366,6 +367,8 @@ def original_identities(
                         record = target["bundle"], target["member"], target["path_id"]
                         source = bundle["path"], member["name"], row["path_id"]
                         add(record, source)
+                        if missing_script_bases is not None and "missing_script_base" in row:
+                            missing_script_bases[record, source] = row["missing_script_base"]
                         if relocations is not None and (references := target.get("transform", {}).get("references")):
                             relocations[record, source] = {reference["offset"]: reference for reference in references}
                             if clip_binding_orders is not None and row.get("class_id") == 74 and "layout" in target["transform"]:
@@ -482,7 +485,7 @@ def prepare(owner, inputs, output):
         if logical in providers and providers[logical] != directory:
             raise ValueError("ambiguous supplier provider")
         providers[logical] = directory
-        generated, relocations, sprite_relocations, clip_binding_orders, shader_dependencies = {}, {}, {}, {}, {}
+        generated, relocations, sprite_relocations, clip_binding_orders, shader_dependencies, missing_script_bases = {}, {}, {}, {}, {}, {}
         profiles[name] = original_identities(
             owner,
             paths["profile"],
@@ -492,6 +495,7 @@ def prepare(owner, inputs, output):
             sprite_relocations=sprite_relocations,
             clip_binding_orders=clip_binding_orders,
             shader_dependencies=shader_dependencies,
+            missing_script_bases=missing_script_bases,
         )
         suppliers[name] = SimpleNamespace(
             paths=paths,
@@ -503,6 +507,7 @@ def prepare(owner, inputs, output):
             sprite_relocations=sprite_relocations,
             clip_binding_orders=clip_binding_orders,
             shader_dependencies=shader_dependencies,
+            missing_script_bases=missing_script_bases,
         )
     producer = owner.ProducerRecords(providers)
     bindings, sources = {}, {}
@@ -687,6 +692,9 @@ def prepare(owner, inputs, output):
                         raise ValueError("SDK supplier requires a typed Shader without pointers")
                 else:
                     original_body, original_type, _ = original(binding["source"])
+                    base = supplier.missing_script_bases.get((tuple(binding["record_source"]), tuple(binding["source"])))
+                    if base is not None:
+                        provenance["policies"] = {"missing_script_base": base}
                 if "source" in provenance and identity is not None:
                     if not original_type.get("tree") or original_type["dependencies"]:
                         raise ValueError("registry MonoScript requires an original leaf layout and verified identity")
@@ -857,7 +865,7 @@ def prepare(owner, inputs, output):
             pack["blob"].extend(revised)
             pack["rows"].append(row)
             pack["types"].append(owner.O.json_layout(typ))
-            provenance = {key: value[key] for key in ("source", "generated", "pointer_namespace", "current_registry_identity") if key in value}
+            provenance = {key: value[key] for key in ("source", "generated", "pointer_namespace", "current_registry_identity", "policies") if key in value}
             pack["witnesses"].append(dict(destination=list(target), fields=routes[target], **provenance))
             selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record")}, **provenance)
             if "resource" in value:
@@ -894,6 +902,9 @@ def prepare(owner, inputs, output):
         original_properties, null_sources = {}, []
         for target, value in selected.items():
             if target[:2] != member or value["class_id"] != 114 or "generated" in value:
+                continue
+            if base := value.get("policies", {}).get("missing_script_base"):
+                null_sources.append(dict(destination=list(target), type_source=base["type_source"]))
                 continue
             source = value["source"]
             body, original_type, metadata = original(source)
