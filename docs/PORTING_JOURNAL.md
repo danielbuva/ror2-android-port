@@ -5130,6 +5130,32 @@ Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
 The runner removed the fixture, slept the OLED and released the lease.
 Linked native Materials and depth-fade rendering remain open.
 
+## J1569 — Run signed Cloud Intersection Remap translation on Android
+
+2026-11-27. The signed Android graphics producer emitted the original-derived
+Cloud Intersection Remap pack used in the J1565 Vulkan draw. Object SHA-256
+`25a6fd529a61b5ea840ee30e104d70f6069ce82a4c6e3ba472b35a0c2e931869`.
+Toolhost APK SHA-256 `334c8bcdd1de1c1c24a57165747e3a9885c350c868c982c0a719dbbeb2d6a662`.
+The producer took 29.1 s with 88 MiB peak child RSS and 9.7 MiB net stage
+storage. Peak CPU/GPU was 63.7 °C with 0 s above 80 °C.
+The runner removed the disposable toolhost and released the lease.
+Evidence `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/signed-cloud-device-02/terminal.done.json`.
+Linked gameplay and depth-fade rendering remain open.
+
+## J1570 — Translate and draw original multipass terrain shaders on Vulkan
+
+2026-11-27. The signed DXBC translator retained 12 passes across PaintHeight,
+Cutout/VertexLit and TerrainLayerUtils. Unity 2021.3.45f2 typed-loaded all three.
+APK `14020d89a4d262550e531219116eefe6135ff0a71ef0df15d8e389ea06ba2d13`
+confirmed Vulkan TerrainLayerUtils pass 0 Max blend over blue
+`(109,109,255,255)` and pass 2 layer copy `(17,109,223,255)`.
+Signed Android emission matched host object pack
+`5f9ac89f10ea8c33703e2fbee817a1233fb486419c0316cf2327a2a4277d65e5`
+in 28.2 s, with 88 MiB peak child RSS and 9.0 MiB net stage storage.
+Evidence: `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+`multipass-terrain-draw-device-02/terminal.done.json` and
+`signed-multipass-device-01/terminal.done.operation.json`. Linked Terrain draws
+and whole-game scoring remain open.
 ## J1568 — Verify signed native BC3 texture production on Android
 
 2026-11-27. Three original BC3 Texture2Ds (20 mips) covered colour, UI alpha
