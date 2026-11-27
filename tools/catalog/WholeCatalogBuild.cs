@@ -156,13 +156,18 @@ public static class WholeCatalogBuild
                 continue;
             var bindings = AnimationUtility.GetCurveBindings(clip);
             var reference = new AnimationClip { name = clip.name + " source reference pose", frameRate = clip.frameRate };
+            var expected = new List<(EditorCurveBinding Binding, float Value)>();
             foreach (var curve in row["curves"])
             {
-                string transform = (string)curve["path"], property = (string)curve["property"];
-                if (!bindings.Any(binding => binding.type == typeof(Transform) && binding.path == transform && binding.propertyName == property))
-                    throw new Exception("Source additive reference binding absent from imported clip: " + path + ":" + transform + ":" + property);
-                AnimationUtility.SetEditorCurve(reference, EditorCurveBinding.FloatCurve(transform, typeof(Transform), property),
-                                                new AnimationCurve(new Keyframe(0, (float)curve["value"])));
+                string curvePath = (string)curve["path"], property = (string)curve["property"];
+                Type type = (bool?)curve["animator"] == true ? typeof(Animator) : typeof(Transform);
+                var binding = Array.Find(bindings, candidate =>
+                    candidate.type == type && candidate.path == curvePath && candidate.propertyName == property);
+                if (binding.type == null)
+                    throw new Exception("Source additive reference binding absent from imported clip: " + path + ":" + curvePath + ":" + property);
+                float value = (float)curve["value"];
+                AnimationUtility.SetEditorCurve(reference, binding, new AnimationCurve(new Keyframe(0, value)));
+                expected.Add((binding, value));
                 curves++;
             }
             string referencePath = directory + "/" + AssetDatabase.AssetPathToGUID(path) + ".anim";
@@ -180,11 +185,10 @@ public static class WholeCatalogBuild
             settings.additiveReferencePoseTime = 0;
             settings.hasAdditiveReferencePose = true;
             AnimationUtility.SetAnimationClipSettings(clip, settings);
-            foreach (var curve in row["curves"])
+            foreach (var (binding, value) in expected)
             {
-                var binding = EditorCurveBinding.FloatCurve((string)curve["path"], typeof(Transform), (string)curve["property"]);
                 var restored = AnimationUtility.GetEditorCurve(reference, binding);
-                if (restored == null || restored.Evaluate(0) != (float)curve["value"])
+                if (restored == null || restored.Evaluate(0) != value)
                     throw new Exception("Source additive reference curve did not persist: " + path);
             }
             EditorUtility.SetDirty(clip);

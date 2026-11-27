@@ -8216,11 +8216,12 @@ and full cancellation through `Neutral`.
 
 Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
 and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
-Commando, Huntress, Captain and Bandit2 additive states and blend trees, plus
-other native AimPitch/AimYaw layers. It resolves current catalog containers
-against accepted input hashes and emits private source identities and Transform
-reference values through StageIO. The latter creates owned
-constant reference clips before bundle production and applies the original
+Commando, Huntress, Captain, Bandit2 and Artificer additive states and blend
+trees, plus other native AimPitch/AimYaw layers. It resolves current catalog containers
+against accepted input hashes and emits private source identities and reference
+values through StageIO. These retain Transform channels and root Animator
+parameters matched by hash to a named curve in the imported clip. The latter
+creates owned constant reference clips before bundle production and applies the original
 additive reference settings. It also restores Bandit2's gesture synchronization
 and override-only motions from the source controller's layer and motion slots.
 The same stage imports Bandit2's SideWeapon clips from the accepted export.
@@ -8236,8 +8237,11 @@ curves and compares positions and directions on a frozen rig against the origina
 clips. It samples Commando's muzzles and Huntress's torso, head and bow during
 aim, firing and hit reactions, and Captain's torso, head, gun and radio during
 aim, firing and call-ins. It samples Bandit2's torso, head and weapon attachment
-poses during aim, firing, reload, smoke bomb and blade gestures. Huntress firing
-and recovery and Captain's selected gestures play both gesture layers. Their
+poses during aim, firing, reload, smoke bomb and blade gestures. It samples
+Artificer's torso, head, hands and muzzles during aim, alternating casts, bomb
+and Flamethrower phases, including the gauntlet and hand gestures playing
+together. Huntress firing and recovery and Captain's selected gestures play
+both gesture layers. Their
 comparison overrides controller clips with the originals, including Captain's
 shared Commando clips. The Bandit2 fixture drives the source gesture layer and
 compares both synchronized layers against the original controller.
