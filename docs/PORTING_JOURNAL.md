@@ -4970,7 +4970,7 @@ Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a85951680
 Evidence: `work/coordination/p1-phonepipe/2026-11-27/bc1-staged/terminal.done.json`.
 Unity typed load and gameplay remain open.
 
-## J1554 — Dispatch original camera scopes on Android Vulkan
+## J1555 — Dispatch original camera scopes on Android Vulkan
 
 2026-11-27. The exact Unity Android fixture loaded the translated Waveform
 and Vectorscope from one bundle. All four original kernels dispatched. Each
@@ -4982,7 +4982,7 @@ in `whole-game-scopes-device-01/terminal.done.json`.
 Peak SoC was 48.9 °C with 0 s above 80 °C. Fixture removal, OLED sleep and
 lease release passed. Camera integration and whole-game coverage remain open.
 
-## J1555 — Dispatch original 3D texture lerps on Android Vulkan
+## J1556 — Dispatch original 3D texture lerps on Android Vulkan
 
 2026-11-27. The source DXBC converter remaps writable 2D, 3D and 2D-array
 images into Unity Vulkan descriptors. On Secondary Nova, both translated
@@ -4994,7 +4994,7 @@ in `whole-game-storage-image/comparison-device-01/terminal.done.json`.
 SoC peaked at 48.1 °C with 0 s above 80 °C. The fixture was removed, the
 OLED slept and the lease was released. AO dispatch and game integration remain open.
 
-## J1556 — Dispatch original weighted exposure histogram on Android Vulkan
+## J1557 — Dispatch original weighted exposure histogram on Android Vulkan
 
 2026-11-27. The original ExposureHistogram compute clear removed sentinels
 from all 128 bins. Its sampled weighted gather matched bins 12 = 52 and
@@ -5006,7 +5006,7 @@ in `whole-game-compute-samplers/exposure-device-03/terminal.done.json`.
 Peak SoC was 55.7 °C, with 0 s above 80 °C. Battery was 27 °C at admission.
 Fixture removal, OLED sleep and lease release passed. Camera integration remains open.
 
-## J1557 — Dispatch original fixed and progressive AutoExposure on Android Vulkan
+## J1558 — Dispatch original fixed and progressive AutoExposure on Android Vulkan
 
 2026-11-27. The native AutoExposure kernels consume the original read-only
 structured histogram through a Vulkan storage buffer. The exact Android

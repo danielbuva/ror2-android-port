@@ -10,10 +10,10 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1557](PORTING_JOURNAL.md#j1557--dispatch-original-fixed-and-progressive-autoexposure-on-android-vulkan) | 2026-11-27 | Dispatch original fixed and progressive AutoExposure on Android Vulkan | 2026-11-27. |
-| [J1556](PORTING_JOURNAL.md#j1556--dispatch-original-weighted-exposure-histogram-on-android-vulkan) | 2026-11-27 | Dispatch original weighted exposure histogram on Android Vulkan | 2026-11-27. |
-| [J1555](PORTING_JOURNAL.md#j1555--dispatch-original-3d-texture-lerps-on-android-vulkan) | 2026-11-27 | Dispatch original 3D texture lerps on Android Vulkan | 2026-11-27. |
-| [J1554](PORTING_JOURNAL.md#j1554--dispatch-original-camera-scopes-on-android-vulkan) | 2026-11-27 | Dispatch original camera scopes on Android Vulkan | 2026-11-27. |
+| [J1558](PORTING_JOURNAL.md#j1558--dispatch-original-fixed-and-progressive-autoexposure-on-android-vulkan) | 2026-11-27 | Dispatch original fixed and progressive AutoExposure on Android Vulkan | 2026-11-27. |
+| [J1557](PORTING_JOURNAL.md#j1557--dispatch-original-weighted-exposure-histogram-on-android-vulkan) | 2026-11-27 | Dispatch original weighted exposure histogram on Android Vulkan | 2026-11-27. |
+| [J1556](PORTING_JOURNAL.md#j1556--dispatch-original-3d-texture-lerps-on-android-vulkan) | 2026-11-27 | Dispatch original 3D texture lerps on Android Vulkan | 2026-11-27. |
+| [J1555](PORTING_JOURNAL.md#j1555--dispatch-original-camera-scopes-on-android-vulkan) | 2026-11-27 | Dispatch original camera scopes on Android Vulkan | 2026-11-27. |
 | [J1547](PORTING_JOURNAL.md#j1547--stage-pinned-converter-inputs-in-owned-android-scratch) | 2026-11-27 | Stage pinned converter inputs in owned Android scratch | 2026-11-27. |
 | [J1543](PORTING_JOURNAL.md#j1543--record-sustained-assisted-combat-on-secondary-nova) | 2026-11-27 | Record sustained assisted combat on Secondary Nova | 2026-11-27. |
 | [J1542](PORTING_JOURNAL.md#j1542--recover-a-native-profile-save-after-injected-enospc) | 2026-11-27 | Recover a native profile save after injected ENOSPC | 2026-11-27. |
