@@ -696,11 +696,12 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
   --jpeg-codec PUBLIC_JPEG_TOOL --jpeg-codec-sha256 TOOL_SHA256
 ```
 
-For native Alpha8, RGB24 and RGBA32 Texture2D originals and BC6H/RGBAHalf Cubemaps, use
+For native Alpha8, RGB24, RGBA32 and ARGB32 Texture2D originals and BC6H/RGBAHalf Cubemaps, use
 `texture_native_profile.py` with the PC coverage ledger from `texture_catalog.py`.
 The resulting local profile selects previously missing bundle identities that
 have complete mip chains, empty platform data and no external references. It
-pins original bodies and pixels and keeps their names and metadata intact.
+pins original bodies and pixels and keeps their names and metadata intact,
+including original Alpha8 and RGBA32 zero-pixel placeholders.
 
 ```sh
 python3 -B tools/phone-build/accepted-output/texture_native_profile.py \
@@ -712,6 +713,12 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
 
 Feed the profile and pack receipt back into the texture readback request.
 Android GPU support and canonical package integration remain separate checks.
+
+Add `--schema-witnesses FILE` to include standalone player records. The JSON
+array contains `source` triples (PC-relative bundle path, member, PathID),
+`class_id` and original bundle `sha256` for embedded type trees. The producer
+checks the witness against the standalone type identity and pins any sibling
+`.resS` streams read by the profile.
 
 Use `--source-bc3` or `--source-bc1` on the same discovery command to
 select missing BC3 or BC1 Texture2Ds. BC1 colour uses ETC1 RGB and requires
