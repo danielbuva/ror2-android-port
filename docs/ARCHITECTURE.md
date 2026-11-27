@@ -1262,8 +1262,12 @@ renderer/program preconditions and native type hashes remain checked. Compute
 shells retain declarations and keywords; they contain no executable Android
 compute programs. `recipe/owner-whole-game-material-compute-records.json`
 selects these policies through the same record owner, pinned-input setup and
-scoped teardown. Persisted records are host raw-exact; complete-bundle and
-phone/runtime gates remain open. This adds no runtime behavior.
+scoped teardown. Its Cloud Intersection Remap Material cohort and the
+corresponding records in `recipe/owner-whole-game-source-records-10.json`
+relocate the original Shader pointer to the canonical Shader record and retain
+both source keyword arrays. The isolated exact-editor fixture loads and unloads
+these 17 Materials with the Shader and texture catalog dependencies. The
+complete-bundle and phone/runtime gates remain open.
 Its `controller_clear_skeleton_masks` policy follows the pinned
 exporter's omitted layer masks: it removes original skeleton mask entries and
 subtracts their native allocation sizes. Exact-editor `BuildAsset` applies the
