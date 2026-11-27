@@ -1,4 +1,4 @@
-"""Discover original texture bodies for native copy or BC3 transcoding."""
+"""Discover original texture bodies for native copy or BC transcoding."""
 
 import argparse
 from collections import defaultdict
@@ -15,7 +15,7 @@ import texture_produce as texture
 NATIVE_2D_PIXEL_BYTES = {1: 1, 3: 3, 4: 4}
 
 
-def texture_record(bundle, body, typ, position, identity, relative, member, trees, source_bc3):
+def texture_record(bundle, body, typ, position, identity, relative, member, trees, source_operation):
     tree = typ["tree"]
     if tree not in trees:
         trees[tree] = preload.A.SCHEMA.type_tree(io.BytesIO(tree))
@@ -29,9 +29,11 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
 
     fmt = integer("m_TextureFormat")
     cube = typ["class_id"] == 89
-    if source_bc3 and (cube or fmt != 12):
-        return None
-    if not source_bc3 and fmt not in ((17, 24) if cube else NATIVE_2D_PIXEL_BYTES):
+    usage = integer("m_LightmapFormat")
+    if source_operation:
+        if cube or fmt != texture.SOURCE_BC_ETC_FORMATS[source_operation] or (fmt == 10 and usage not in (0, 6)):
+            return None
+    elif fmt not in ((17, 24) if cube else NATIVE_2D_PIXEL_BYTES):
         return None
     width, height, mips = map(integer, ("m_Width", "m_Height", "m_MipCount"))
     if min(width, height) < 1 or not 1 <= mips <= max(width, height).bit_length():
@@ -50,7 +52,7 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     if (size and (image_size or not path)) or (not size and (offset or path)):
         return None
     stride = integer("m_CompleteImageSize")
-    if source_bc3:
+    if source_operation:
         try:
             texture.source_bc_extents(stride, width, height, fmt, mips)
         except ValueError:
@@ -76,9 +78,9 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     digest = sha256(body).hexdigest()
     pixel_digest = sha256(pixels).hexdigest()
     fields = {}
-    operation = "source-bc3-etc" if source_bc3 else "cube-preserve" if cube else "copy"
+    operation = source_operation or ("cube-preserve" if cube else "copy")
     names = ["m_Name", "m_CompleteImageSize", "m_TextureFormat", "m_IsAlphaChannelOptional", "m_LightmapFormat", "image data", "m_StreamData"]
-    if cube or source_bc3:
+    if cube or source_operation:
         names.extend(("m_MipCount", "m_ColorSpace"))
     for name in names:
         start, end = spans[(image_key if name == "image data" else name,)]
@@ -96,12 +98,12 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
         inline=not size,
         stream=dict(offset=offset, size=size, path=path),
         alpha_optional=bool(field("m_IsAlphaChannelOptional")[0]),
-        usage=integer("m_LightmapFormat"),
+        usage=usage,
     )
-    if cube or source_bc3:
+    if cube or source_operation:
         target.update(mips=mips, colour_space=integer("m_ColorSpace"))
-    if source_bc3:
-        normal = target["usage"] == 3
+    if source_operation:
+        normal = fmt == 12 and usage == 3
         target_bytes = expected // 2 if normal else expected
         target.update(sha256=None, pixel_sha256=None, pixel_bytes=target_bytes)
         if normal:
@@ -126,7 +128,7 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     )
 
 
-def discover(pc, coverage, source_bc3=False):
+def discover(pc, coverage, source_operation=None):
     candidates = defaultdict(lambda: defaultdict(set))
     for row in preload.json_rows(coverage):
         relative, member, identity = row["source"]
@@ -150,7 +152,7 @@ def discover(pc, coverage, source_bc3=False):
                 position = metadata["data_offset"] + obj["offset"]
                 stream.seek(position)
                 body = texture.BUNDLE.exact(stream, obj["bytes"])
-                record = texture_record(bundle, body, typ, position, identity, relative, member, trees, source_bc3)
+                record = texture_record(bundle, body, typ, position, identity, relative, member, trees, source_operation)
                 if record is not None:
                     selected.append(record)
             if selected:
@@ -165,12 +167,14 @@ if __name__ == "__main__":
     parser.add_argument("pc", type=Path)
     parser.add_argument("coverage", type=Path)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--source-bc3", action="store_true", help="select BC3 originals for Android ETC production")
+    compression = parser.add_mutually_exclusive_group()
+    compression.add_argument("--source-bc1", action="store_const", dest="source_operation", const="source-bc1-etc", help="select BC1 colour originals for ETC1")
+    compression.add_argument("--source-bc3", action="store_const", dest="source_operation", const="source-bc3-etc", help="select BC3 originals for Android ETC")
     args = parser.parse_args()
     pc = args.pc.resolve(strict=True)
     if args.output.resolve().is_relative_to(pc):
         raise ValueError("Texture profile output overlaps original input")
-    profile = discover(pc, args.coverage, args.source_bc3)
+    profile = discover(pc, args.coverage, args.source_operation)
     with args.output.open("x") as output:
         json.dump(profile, output)
         output.write("\n")

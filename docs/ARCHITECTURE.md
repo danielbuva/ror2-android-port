@@ -1077,6 +1077,11 @@ The existing preload preparer binds each supplier record through its original
 member and path ID. The exact-editor fixture loads both as Meshes at scoped
 test addresses. Their original FBX preload groups and signed release integration
 remain open.
+`recipe/owner-whole-game-solus-mesh-preloads.json` supplies eleven more
+original inline Meshes from the ConstructionArm FBX and prefab preload tables
+through the same producer. The exact-editor fixture loads those eleven and the
+two previously supplied Meshes at scoped addresses. Complete original preload
+groups and their signed catalog routes still depend on non-Mesh records.
 The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
 excluded MercSwordSwipe record through the same setup/teardown. The optional
 `unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
@@ -1413,11 +1418,12 @@ ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
 normal maps. It uses the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
 use the same codec pins and output checks. `texture_native_profile.py` selects
-original Alpha8, RGB24, RGBA32, HDR Cubemap and BC3 records from the PC texture
-coverage ledger.
+original Alpha8, RGB24, RGBA32, HDR Cubemap, BC1 and BC3 records from the PC
+texture coverage ledger.
 It checks native schemas, platform data, references and complete mip extents,
-then writes a private profile. Source-derived BC3 profiles pin the original
-bytes and expected output extents and leave reference output hashes empty.
+then writes a private profile. Source-derived BC profiles pin original bytes and
+expected output extents and leave reference output hashes empty. BC1 colour
+retains usage and encodes each original mip as ETC1 RGB after checking opacity.
 The producer's setup, stream checks and output ownership apply to these packs.
 `build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and

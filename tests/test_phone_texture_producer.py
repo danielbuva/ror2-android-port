@@ -140,17 +140,35 @@ class TextureProducerTests(unittest.TestCase):
         source = red * 4 + green
         sdk, etc = {}, "authored-etc"
         with patch.object(T, "sdk_encode_rgba", side_effect=[b"R" * 64, b"G" * 16]) as encode:
-            self.assertEqual(T.source_bc3_etc(source, 7, 5, 2, False, None, etc), b"R" * 64 + b"G" * 16)
+            self.assertEqual(T.source_bc_etc(source, 7, 5, 12, 2, False, None, etc), b"R" * 64 + b"G" * 16)
         self.assertEqual(
             encode.call_args_list,
             [call(bytes([255, 0, 0, 173]) * 64, 8, 8, None, etc), call(bytes([0, 255, 0, 211]) * 16, 4, 4, None, etc)],
         )
         with patch.object(T.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, b"N" * 8)) as encode:
-            self.assertEqual(T.source_bc3_etc(green, 3, 2, 1, True, None, etc), b"N" * 8)
+            self.assertEqual(T.source_bc_etc(green, 3, 2, 12, 1, True, None, etc), b"N" * 8)
         self.assertEqual(encode.call_args.args[0], [etc, "4", "4", "normal"])
         self.assertEqual(encode.call_args.kwargs["input"], T.normal_rgb(bytes([0, 255, 0, 211]) * 16))
         with self.assertRaisesRegex(ValueError, "source BC mip chain extent"):
-            T.source_bc3_etc(source[:-1], 7, 5, 2, False, sdk, etc)
+            T.source_bc_etc(source[:-1], 7, 5, 12, 2, False, sdk, etc)
+
+    def test_source_bc1_etc_encodes_original_mips_and_rejects_transparent_padding(self):
+        red = struct.pack("<HHI", 0xF800, 0, 0)
+        green = struct.pack("<HHI", 0x07E0, 0, 0)
+        transparent_padding = struct.pack("<HHI", 0, 0x07E0, 3 << 30)
+        etc = "authored-etc"
+        encoded = [subprocess.CompletedProcess([], 0, b"R" * 32), subprocess.CompletedProcess([], 0, b"G" * 8)]
+        with patch.object(T.subprocess, "run", side_effect=encoded) as encode:
+            self.assertEqual(T.source_bc_etc(red * 4 + green, 7, 5, 10, 2, False, None, etc), b"R" * 32 + b"G" * 8)
+        self.assertEqual(
+            encode.call_args_list,
+            [
+                call([etc, "8", "8", "rgb"], input=bytes([255, 0, 0]) * 64, capture_output=True, timeout=120),
+                call([etc, "4", "4", "rgb"], input=bytes([0, 255, 0]) * 16, capture_output=True, timeout=120),
+            ],
+        )
+        with self.assertRaisesRegex(ValueError, "source BC1 mip has transparency"):
+            T.source_bc_etc(transparent_padding, 3, 2, 10, 1, False, None, etc)
 
     def test_public_alpha_source_provider_drift_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -52,6 +52,9 @@ class TextureNativeProfileTests(unittest.TestCase):
             source_pixels = bytes(range(10 * channels))
             native_header = vector(b"Native", 6) + struct.pack("<8i", fmt, 4, 2, 2, 1, 2, len(source_pixels), 6) + bytes(12)
             native_colours[fmt] = (native_header + vector(source_pixels, len(source_pixels)) + bytes(16), source_pixels)
+        bc1_pixels = struct.pack("<HHI", 0x07E0, 0, 0) * 2
+        colour = vector(b"Colour", 6) + struct.pack("<8i", 10, 4, 2, 2, 1, 2, len(bc1_pixels), 6) + struct.pack("<3i", 1, 0, 0)
+        colour += vector(bc1_pixels, len(bc1_pixels)) + bytes(16)
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -64,6 +67,7 @@ class TextureNativeProfileTests(unittest.TestCase):
                         ("CAB-test", serialized(clean, schema, path_id=6, class_id=28), 4),
                         ("CAB-blob", serialized(custom, schema, path_id=7, class_id=28), 4),
                         ("CAB-normal", serialized(normal, schema, path_id=8, class_id=28), 4),
+                        ("CAB-colour", serialized(colour, schema, path_id=9, class_id=28), 4),
                         *((f"CAB-native-{fmt}", serialized(body, schema, path_id=fmt, class_id=28), 4) for fmt, (body, _) in native_colours.items()),
                     ]
                 )
@@ -72,7 +76,14 @@ class TextureNativeProfileTests(unittest.TestCase):
             coverage.write_text(
                 "".join(
                     json.dumps(dict(source=[source.name, member, identity], status="missing")) + "\n"
-                    for member, identity in (("CAB-test", 6), ("CAB-blob", 7), ("CAB-normal", 8), ("CAB-native-3", 3), ("CAB-native-4", 4))
+                    for member, identity in (
+                        ("CAB-test", 6),
+                        ("CAB-blob", 7),
+                        ("CAB-normal", 8),
+                        ("CAB-colour", 9),
+                        ("CAB-native-3", 3),
+                        ("CAB-native-4", 4),
+                    )
                 )
             )
             output = root / "profile.json"
@@ -104,3 +115,15 @@ class TextureNativeProfileTests(unittest.TestCase):
             target = record["outputs"][0]
             self.assertEqual((target["sha256"], target["pixel_sha256"]), (None, None))
             self.assertEqual((target["bytes"], target["pixel_bytes"], target["usage"], target["alpha_optional"]), (len(normal) - 16, 16, 4, True))
+            output = root / "bc1.json"
+            result = subprocess.run(
+                [sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--source-bc1", "--output", str(output)], capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            members = json.loads(output.read_text())["bundles"][0]["members"]
+            self.assertEqual([member["name"] for member in members], ["CAB-colour"])
+            record = members[0]["textures"][0]
+            self.assertEqual((record["operation"], record["path_id"]), ("source-bc1-etc", 9))
+            self.assertEqual(record["pixels"]["sha256"], sha256(bc1_pixels).hexdigest())
+            target = record["outputs"][0]
+            self.assertEqual((target["bytes"], target["pixel_bytes"], target["usage"], target["alpha_optional"]), (len(colour), 16, 6, True))
