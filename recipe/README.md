@@ -5301,6 +5301,10 @@ must be established before selecting this profile on another device.
 
 ### Staged scene baked reflection suppliers (2026-11-27)
 
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-scene-baked-reflection-textures.json` | `e7f5ca028d247a41079ce5218e8bbd24cd062ae6b991fe74f54b7e558a6a3596` |
+
 `owner-scene-baked-reflection-textures.json` selects 75 BC6H Cubemaps from
 35 pinned PC bundles for scene probes. The existing `cube-preserve` producer
 checks every face and mip extent and copies the original compressed stream.
