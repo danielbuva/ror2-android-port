@@ -88,7 +88,7 @@ EXPECTED_HELPERS = {
     "shader_deferred.py": "dc1b81f1e012de8dd9da7cedddc2d62b7ac76cb564ac00cf262e55815b3b11c4",
     "shader_metadata.py": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318",
     "shader_ramp_fog.py": "631d8c13694327a1e19bca5757463949a7cbbacf80a2dc8d630d1c00ed7c7017",
-    "shader_segments.py": "fa11fe49ac585c4976584e467a44e336dad98169d1d5f370d30a0355619832bc",
+    "shader_segments.py": "8b9d68dbd081210215c4472c33ea71ecd514250e54c76594197ce5e90baf20a8",
     "shader_source.py": "3c768c15f29f312347f2e99b0e3ddf8612207db8023f220dcb52c5d51218212a",
 }
 

@@ -40,7 +40,7 @@ class CatalogRebuildTests(unittest.TestCase):
                 "scripts/lab/shader_ramp_fog.py",
                 "recipe/shader-ramp-fog-candidate.json",
                 "631d8c13694327a1e19bca5757463949a7cbbacf80a2dc8d630d1c00ed7c7017",
-                "e5179754ee2c59706f678d693ab08590df2117f1609f1422333bd540e8d3f4ac",
+                "c45668bb383b7b7f26be5ac836180dc29d9bf86835e127c1c92b80f43a74f52d",
                 "generated-shader-candidates/ramp-fog-r6/{input_id}",
             ),
         }
