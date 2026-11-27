@@ -136,6 +136,8 @@ def native_content_request(path):
         scene = request["scene"]
         if "assets" in request or not isinstance(scene, str) or not scene.endswith(".unity"):
             raise RuntimeError("Native scene requires an exact scene path")
+        if request.get("loadMode", "Additive") not in ("Additive", "Single"):
+            raise RuntimeError("Native scene loadMode must be Additive or Single")
         return request
     assets = request["assets"]
     if not isinstance(assets, list) or not assets:
@@ -162,6 +164,7 @@ def validate_native_scene(report, request, commit):
         or report.get("sourceCommit") != commit
         or report.get("bundleSha256") != request["sha256"]
         or report.get("scenePath") != request["scene"]
+        or report.get("loadMode", "Additive") != request.get("loadMode", "Additive")
         or not report.get("occlusionDataResolved")
         or not report.get("unloaded")
         or report.get("failure")

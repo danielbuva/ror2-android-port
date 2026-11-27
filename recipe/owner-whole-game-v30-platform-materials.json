@@ -14,9 +14,8 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c",
                   "path_id": 6318899270172032715,
-                  "sha256": "18bbac18ce51c9fc9a50d4cc105f2a1ead4f9c0a2915380457aefff108c56ebd",
+                  "sha256": "231af950df0c0ef1038e40b13318e3aaf3bb420f9ea43b04866c9c9f5e493f30",
                   "transform": {
-                    "keyword_policy": "dummy-shader-demote-valid",
                     "references": [
                       {
                         "from": [
@@ -67,9 +66,8 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c",
                   "path_id": 2923943101246926152,
-                  "sha256": "8b261d880cfa411bb03f6188809e8027cdbda92963c0f13e8c7bf3885a385179",
+                  "sha256": "15ee3b24d3f36fc04a290ba6894a8536be71ceaec300304f8513841e4eb5f555",
                   "transform": {
-                    "keyword_policy": "dummy-shader-demote-valid",
                     "references": [
                       {
                         "from": [
@@ -120,9 +118,8 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c",
                   "path_id": -7404960306065003850,
-                  "sha256": "12a8ab2eb7064366202c2f6a1fd09810c8e0ace55b67e66d2986420f17d8995a",
+                  "sha256": "d1f69a15c78110f5054d4faea05369f929f5da393ad2218d3dffd0646b4f2341",
                   "transform": {
-                    "keyword_policy": "dummy-shader-demote-valid",
                     "references": [
                       {
                         "from": [
@@ -173,9 +170,8 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c",
                   "path_id": -1933017425557721735,
-                  "sha256": "54c612aa120a3d2140f723a4c47abfeb0d6fd8537d4e794c6257da62812b7d1d",
+                  "sha256": "c0f5098ee7bb3a49cc385b88d10c6618324a192bba6a2bebe29cddca4aade2bf",
                   "transform": {
-                    "keyword_policy": "dummy-shader-demote-valid",
                     "references": [
                       {
                         "from": [
@@ -226,9 +222,8 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c",
                   "path_id": -6849556818080055272,
-                  "sha256": "0b85c6f8ea00fd80a140a11b75f41569d7fc05e4f9653bbd53cf4227ddff9b95",
+                  "sha256": "0d77f19b78555dba14bc793ef646ae34f88fda1fd980436ee4ec6a2d8419a04e",
                   "transform": {
-                    "keyword_policy": "dummy-shader-demote-valid",
                     "references": [
                       {
                         "from": [
@@ -279,9 +274,8 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c",
                   "path_id": 5850909727425381752,
-                  "sha256": "30e91846a3479092263fd86d16fdfedf5c0e7c82e9717a0a84810a5fc0311806",
+                  "sha256": "039b8616004a127b6bcd47f1087d07779cf59a1aef996a59558c200b590ed2bd",
                   "transform": {
-                    "keyword_policy": "dummy-shader-demote-valid",
                     "references": [
                       {
                         "from": [
@@ -332,9 +326,8 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c",
                   "path_id": 7042115907059079017,
-                  "sha256": "ad5f3ecbc221998e78055344092ca390b6dbb0092c4e289661f5cc6d51c2814e",
+                  "sha256": "1945ceeb989e0c49f165b636418f42f773259c0f3e6cba5c47312c68b4aa5e2b",
                   "transform": {
-                    "keyword_policy": "dummy-shader-demote-valid",
                     "references": [
                       {
                         "from": [
