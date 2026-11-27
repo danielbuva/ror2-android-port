@@ -1656,6 +1656,8 @@ after its suppliers. Authoring reports missing admitted input bindings across
 the closure before validating the resulting plan with the installer owners.
 The graph's optional `--bundle-manifest` fans every selected payload bundle into
 `bundle_manifest.py` through declared path, digest and integer byte-size artifacts.
+It reads each producer's existing bundle artifact. Adding a bundle changes the
+manifest job while preserving the cache identity of unchanged bundle producers.
 The existing native owner reads actual bundle dependencies and rejects missing
 providers; it never substitutes a historical manifest. Its generated file shares
 the signed supplier closure and private incremental cache with those bundles.
@@ -7718,9 +7720,11 @@ bundle through the existing object owner. The native alias, reused-record and
 Legacy particle Shader recipes supply independently qualified records. Setup
 requires explicit original PC/SDK roots, pinned record-pack receipts and a fresh
 output directory; process exit releases source handles and receipts persist.
-All 1,623 objects, every member and the compressed bundle are host
-raw-exact to J850. This adds no runtime owner; phone production, installation and
-original game behavior remain open.
+The staged recipe resolves five external references through `whole-game-content`.
+All 1,623 serialized records, their native types, external slots and container
+preloads match the V39 staged Objective bundle. Unity 2021.3.45f2 loaded the
+Fireball Vehicle, Ammo Pack and Razorwire Orb Effect as GameObjects. Phone
+production and use of this source-built bundle in a signed release remain open.
 
 `recipe/owner-presentation-objects.json` completes `android-presentation-lab`
 through the existing object owner and `owner-presentation-reused-records.json`.
@@ -8275,11 +8279,24 @@ input dependency or persistence side effects and uses only the geometry owner.
 for both layout formats. It distinguishes missing/default from invalid/unavailable
 loads and uses flushed same-directory temporary files plus atomic replace, never
 delete-then-move. Invalid existing data is preserved for explicit caller recovery.
-The adapter is independent of live settings/UI; cross-process ownership, path
-security and physical durability qualification belong to its eventual integrator.
+The adapter is independent of live settings/UI; the live owner serializes its
+calls and supplies a private path. Physical durability remains unqualified.
 
 `TouchEditorGesture.cs` owns editor-only hit selection and single-pointer drag or
 bottom-right-resize transactions over `TouchLayoutEditor`; interruption cancels
 rather than committing stale display coordinates. It neither dispatches gameplay
 input nor writes files. The layout `INTEGRATION.md` lists entry points and remaining
-live wiring/device acceptance for the gameplay owners.
+device acceptance for the gameplay owners.
+
+`TouchLayoutSession.cs` composes the authored touch owners at the startup and
+explicit editor-exit boundary. It loads once when enabled, separates editor
+changes from the applied layout until a successful save, and leaves corrupt
+or unavailable stores untouched while returning read-only defaults. The staged
+`TouchLayoutHudBoundary.cs` connects it to the touch-only, default-off offline
+settings request. Saving the layout resets the request without discarding the
+saved action geometry; a failed settings reset can retry without rewriting it.
+The existing settings pause owns the editor; its gestures do not reach the
+gameplay input bank. The action rectangles and opacity go through the normal
+touch HUD projection, while movement, look and pause keep their authored layout.
+The separately modeled recovered HUD editor is not staged as a live feature.
+Host fixtures do not establish Unity or device acceptance.

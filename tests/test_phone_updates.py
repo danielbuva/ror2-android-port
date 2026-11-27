@@ -100,6 +100,7 @@ class FakeGitHub:
         }
         self.paths["/latest"] = encoded(self.metadata)
         self.requests = []
+        self.declared_length = {}
         owner = self
 
         class Handler(http.server.BaseHTTPRequestHandler):
@@ -107,7 +108,7 @@ class FakeGitHub:
                 owner.requests.append(self.path)
                 data = owner.paths[self.path]
                 self.send_response(200)
-                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Content-Length", str(owner.declared_length.get(self.path, len(data))))
                 self.end_headers()
                 self.wfile.write(data)
 
@@ -301,6 +302,38 @@ class UpdateTests(unittest.TestCase):
                 with self.assertRaisesRegex(OSError, "interrupted"):
                     U.acquire(candidate, self.root / "downloads", server.transport, lambda *args: None)
             self.assertEqual(list((self.root / "downloads").iterdir()), [])
+
+    def test_build_transport_failures_preserve_installed_receipt_and_never_prepare_install(self):
+        installed = self.inputs / "installed-release.json"
+        prior = dict(self.release, version_code=1, version="owner-v1")
+        U.write_json(installed, {"application_id": prior["application_id"], "version_code": 1, "release": prior})
+        snapshot = installed.read_bytes()
+        with FakeGitHub(self.release, self.bundle) as server:
+            self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+            self.request["action"] = "release-build"
+            U.write_json(self.inputs / "update-request.json", self.request)
+            for failure, message in (("hash", "size/hash"), ("interrupted", "download interrupted"), ("offline", "offline")):
+                with self.subTest(failure=failure):
+                    if failure == "hash":
+                        server.paths["/public-tools.zip"] = b"x" * len(self.bundle)
+                        with self.assertRaisesRegex(ValueError, message):
+                            self.run_check(server)
+                    elif failure == "interrupted":
+                        server.paths["/public-tools.zip"] = self.bundle[: len(self.bundle) // 2]
+                        server.declared_length["/public-tools.zip"] = len(self.bundle)
+                        with self.assertRaisesRegex(OSError, message):
+                            self.run_check(server)
+                    else:
+                        with patch.object(server.transport, "open", side_effect=OSError("private network exception")), self.assertRaisesRegex(OSError, message):
+                            self.run_check(server)
+                    state = P.load_json((self.inputs / "update-state.json").read_bytes())
+                    self.assertEqual(state["state"], "ERROR")
+                    self.assertIn(message, state["message"])
+                    self.assertIn("The installed version was not changed.", state["message"])
+                    self.assertNotIn("private network exception", state["message"])
+                    self.assertEqual(installed.read_bytes(), snapshot)
+                    self.assertFalse((self.inputs / "owner-apk-ready.json").exists())
+                    self.assertEqual(list((self.inputs / "work/releases/downloads").iterdir()), [])
 
     def test_url_policy_rejects_offsite_credentials_downgrade_and_foreign_repo(self):
         transport = U.GitHubTransport("example/owner")

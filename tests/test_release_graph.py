@@ -512,10 +512,10 @@ class ReleaseGraphTests(unittest.TestCase):
 
             for name, job in graph.jobs.items():
                 index["files"][name] = hashlib.sha256(wire(job)).hexdigest()
-            # Descriptor fixture includes final bundles, object layouts, and record
-            # type tables, retaining exact closure ordering and index serialization.
+            # Pin the index wire format, including the manifest's stable artifact
+            # reference and the bundle and record pack descriptors.
             self.assertEqual(
-                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "1e04a58911f605a1d9991cea5a2e1d553491a5a83050dcf5a5e04ff3a9edadb6"
+                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "3cefee8605995bb3791c20861244c2f9984095ab12828ca92916c56b73cfc208"
             )
 
     def test_scene_record_suppliers_close_published_consumers(self):
@@ -1707,6 +1707,7 @@ android.mkdir(parents=True)
             manifest = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(manifest)
             bundle = manifest.F.make_bundle()
+            sidecar = manifest.F.make_bundle("additional authored content")
             # Each owner checks receipt substitution before producing its output.
             script = """import argparse,gzip,hashlib,json,pathlib
 p=argparse.ArgumentParser();p.add_argument('--output');p.add_argument('--profile');p.add_argument('--profile-sha256');p.add_argument('--record-pack',nargs=2,action='append',default=[])
@@ -1718,21 +1719,31 @@ for path,pin in a.record_pack:
  assert hashlib.sha256((pathlib.Path(path)/'result.json').read_bytes()).hexdigest()==pin
 out=pathlib.Path(a.output);out.mkdir()
 for name in ('objects.bin','index.jsonl','types.json','layout.json','result.json'):(out/name).write_text('authored')
-(out/'payload').mkdir();(out/'payload/authored').write_text('source output')
 """
             for producer in ("record_produce", "object_produce"):
                 (repo / G.PREFIX / (producer + ".py")).write_text(script)
-            script += "\n(out/'payload/authored').write_bytes(" + repr(bundle) + ")\n"
+            script += f"""
+name = json.loads(pathlib.Path(a.profile).read_text())['bundle']['name']
+payload = out / 'payload'
+payload.mkdir()
+fixtures = {{'authored': {bundle!r}, 'sidecar': {sidecar!r}}}
+(payload / name).write_bytes(fixtures[name])
+"""
             (repo / G.PREFIX / "object_produce.py").write_text(script)
-            graph = G.Graph(repo, {})
-            index = graph.compile(["recipe/owner-final.json"], bundle_manifest=True)
-            for name, job in graph.jobs.items():
-                path = repo / name
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(json.dumps(job))
-                index["files"][name] = G.digest(path)
-            release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
-            J.UPDATES.public().validate_bundle_index(index, release)
+
+            def compile_release(*profiles):
+                graph = G.Graph(repo, {})
+                index = graph.compile(profiles, bundle_manifest=True)
+                for name, job in graph.jobs.items():
+                    path = repo / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(json.dumps(job, sort_keys=True))
+                    index["files"][name] = G.digest(path)
+                release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
+                J.UPDATES.public().validate_bundle_index(index, release)
+                return index, release
+
+            index, release = compile_release("recipe/owner-final.json")
             progress = []
             dispatcher = J.Dispatcher(
                 repo,
@@ -1783,6 +1794,37 @@ for name in ('objects.bin','index.jsonl','types.json','layout.json','result.json
             self.assertEqual(expanded["bytes"], len(bundle))
             with self.assertRaisesRegex(ValueError, "declared job dependency"):
                 dispatcher.expand(row, {"needs": []}, output, root / "request.json")
+
+            addition = "recipe/owner-addition.json"
+            (repo / addition).write_text(json.dumps({"sources": [], "bundle": {"name": "sidecar"}}))
+            updated_index, updated_release = compile_release("recipe/owner-final.json", addition)
+            upgrade_progress = {}
+            updated = J.Dispatcher(
+                repo,
+                updated_index,
+                updated_release,
+                inputs,
+                runtime,
+                native,
+                dispatcher.config,
+                "a" * 64,
+                python=[sys.executable],
+                progress=lambda name, reused: upgrade_progress.update({name: reused}),
+            )
+            updated.produce(manifest_target, updated_release["entries"][manifest_target], root / "manifest-updated")
+            self.assertEqual(
+                upgrade_progress,
+                {
+                    "recipe/jobs/owner-addition.json": False,
+                    "recipe/jobs/owner-supplier.json": True,
+                    "recipe/jobs/owner-final.json": True,
+                    "recipe/jobs/owner-bundle-manifest.json": False,
+                },
+            )
+            objects = UnityPy.load(str(root / "manifest-updated")).objects
+            native_manifest = next(obj.read_typetree() for obj in objects if obj.type.value == 290)
+            self.assertEqual(dict(native_manifest["AssetBundleNames"]), {0: "authored", 1: "sidecar"})
+
             final.write_text(json.dumps({"sources": [], "bundle": {"name": "authored"}, "objects": [{"record": "f" * 64}]}))
             with self.assertRaisesRegex(ValueError, "missing source supplier"):
                 G.Graph(repo, {}).compile(["recipe/owner-final.json"])

@@ -183,7 +183,7 @@ public static class AndroidTouchInput
 }
 public class AndroidOfflineSettings
 {
-    public class Values { public float deadzone = .1f, lookSensitivity = 1; public bool invertY; public bool highRefreshRate = true; public int offlineDifficulty; }
+    public class Values { public float deadzone = .1f, lookSensitivity = 1; public bool touchLayoutEditor; public bool invertY; public bool highRefreshRate = true; public int offlineDifficulty; }
     public static Values current;
     public Values values = new Values();
     public string recovery = "none";
@@ -236,6 +236,8 @@ public sealed partial class PortSession
     public int offlineLoadoutRow, loadoutCycles;
     void MoveOfflineLoadoutRow(int direction) { offlineLoadoutRow = (offlineLoadoutRow + direction + 5) % 5; }
     void CycleOfflineLoadoutRow(int direction) { loadoutCycles += direction; }
+    void CloseTouchLayoutEditor() {}
+    bool DrawTouchLayoutEditor() => false;
     bool UsesTouchUi() => false;
     bool OfflineUiControllerPresent() => true;
     bool CanAbandonOfflineRun() => true;
