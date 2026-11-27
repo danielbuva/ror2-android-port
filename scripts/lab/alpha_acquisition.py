@@ -30,15 +30,18 @@ def cohort(inventory, source, importer):
             "files": [{"path": row["path"], "bytes": row["size"], "sha256": row["sha256"]} for row in raw["files"]],
         }
     )
-    root = Path(source).resolve(strict=True)
     expected = {row["path"]: row["sha256"] for row in manifest["files"]}
+    sizes = {row["path"]: row["bytes"] for row in manifest["files"]}
+    if source is None:
+        return None, manifest, expected, sum(sizes.values())
+    root = Path(source).resolve(strict=True)
     actual = {}
     for path in root.rglob("*"):
         if path.is_symlink() or not (path.is_file() or path.is_dir()):
             raise ValueError("nonregular-acquisition-source-entry")
         if path.is_file():
             actual[path.relative_to(root).as_posix()] = path.stat().st_size
-    if actual != {row["path"]: row["bytes"] for row in manifest["files"]}:
+    if actual != sizes:
         raise ValueError("acquisition-source-inventory-mismatch")
     return root, manifest, expected, sum(actual.values())
 

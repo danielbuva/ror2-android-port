@@ -214,7 +214,7 @@ class Runner:
     def admit_battery(self, serial, *, heavy=False):
         for sample in range(3):
             level, current, temperature = self.battery(serial)
-            if heavy and level < 30:
+            if heavy and level < 30 and not self.charge_override:
                 return f"battery at {level} % (< 30 % for phone producers)"
             refusal = battery_refusal(level, current, temperature, self.charge_override)
             if level > 85 or temperature > 350 or not refusal:
@@ -406,7 +406,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
     try:
         device = request["device"]
         operation = request.get("operation", "packaging")
-        if operation not in ("packaging", "acquisition", "staged-update", "toolhost"):
+        if operation not in ("packaging", "acquisition", "staged-update", "nightly", "toolhost"):
             raise CommandError("unknown local packaging operation")
         build_toolhost = operation == "toolhost"
         retain_signer = request.get("backup_installer_key", False)
@@ -417,16 +417,18 @@ def local_packaging(path, *, dry_run=False, detach=False):
             raise CommandError("installer-test signing backup requires a full cached source commit")
         if not re.fullmatch(r"[a-z0-9-]+", workstream) or device not in runner.devices or (build_toolhost and device != "thor"):
             raise CommandError("invalid local packaging workstream or configured device")
+        if operation == "nightly" and device != "nova-b":
+            raise CommandError("the signed nightly gameplay tour uses the secondary Nova")
         common_dir = subprocess.check_output(["git", "-C", checkout, "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()
         if Path(common_dir).resolve() != (repo / ".git").resolve():
             raise CommandError("packaging checkout must belong to the canonical repository")
         command = parse_command("/lab script device=" + device + " -- scripts/lab-alpha-packaging.py")
         if operation == "acquisition":
             command["args"].extend(["--acquisition-request", str(Path(path).resolve())])
-        elif operation == "staged-update":
+        elif operation in ("staged-update", "nightly"):
             # The signed native producer alone took 9,158 seconds in J1512.
-            command["args"].extend(["--staged-update-request", str(Path(path).resolve()), "--timeout", str(STAGED_UPDATE_STEP_TIMEOUT)])
-            command["timeout_seconds"] = 3 * STAGED_UPDATE_STEP_TIMEOUT + 1800
+            command["args"].extend([f"--{operation}-request", str(Path(path).resolve()), "--timeout", str(STAGED_UPDATE_STEP_TIMEOUT)])
+            command["timeout_seconds"] = 2 * STAGED_UPDATE_STEP_TIMEOUT + 3000 if operation == "nightly" else 3 * STAGED_UPDATE_STEP_TIMEOUT + 1800
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
             if operation == "packaging" and "toolhost_source_commit" in request:

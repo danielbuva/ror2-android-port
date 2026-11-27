@@ -137,6 +137,17 @@ class BatteryRuleTest(unittest.TestCase):
             with mock.patch.object(runner, "battery", return_value=(30, 0, 260)):
                 self.assertIsNone(runner.admit_battery("synthetic", heavy=True))
 
+    def test_charge_override_admits_phone_producers_at_any_charge(self):
+        with tempfile.TemporaryDirectory() as repo:
+            config = Path(repo) / "work/config/lab-runner.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(json.dumps({"battery_charge_override": True}))
+            runner = lab_runner.Runner(repo, {})
+            with mock.patch.object(runner, "battery", return_value=(29, 0, 260)):
+                self.assertIsNone(runner.admit_battery("synthetic", heavy=True))
+            with mock.patch.object(runner, "battery", return_value=(29, 0, 351)):
+                self.assertIsNotNone(runner.admit_battery("synthetic", heavy=True))
+
     def test_uncertain_emission_preserves_lease_through_runner_cleanup(self):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {})
@@ -207,33 +218,35 @@ class RefusedLeaseTest(unittest.TestCase):
             self.assertEqual(execute.call_args.args[0]["args"][-2:], ["--toolhost-source-commit", source_commit])
             self.assertEqual(json.loads(done.read_bytes())["error"], "fixture failure")
 
-    def test_staged_update_budgets_import_and_two_native_builds(self):
+    def test_signed_packaging_budgets_import_and_each_native_build(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory).resolve()
             request_path = repo / "request.json"
             config = repo / "work/config/lab-runner.json"
             config.parent.mkdir(parents=True)
-            config.write_text(json.dumps({"devices": {"thor": "fixture"}}))
-            request_path.write_text(
-                json.dumps(
-                    dict(
-                        repo=str(repo),
-                        checkout=str(repo),
-                        workstream="fixture-worker",
-                        device="thor",
-                        done_file=str(repo / "work/terminal.json"),
-                        operation="staged-update",
+            config.write_text(json.dumps({"devices": {"thor": "fixture-thor", "nova-b": "fixture-nova"}}))
+            for operation, device, budget in (("staged-update", "thor", 3 * 14400 + 1800), ("nightly", "nova-b", 2 * 14400 + 3000)):
+                with self.subTest(operation=operation):
+                    request_path.write_text(
+                        json.dumps(
+                            dict(
+                                repo=str(repo),
+                                checkout=str(repo),
+                                workstream="fixture-worker",
+                                device=device,
+                                done_file=str(repo / f"work/{operation}.json"),
+                                operation=operation,
+                            )
+                        )
                     )
-                )
-            )
-            with (
-                mock.patch.object(lab_runner.subprocess, "check_output", return_value=str(repo / ".git")),
-                mock.patch.object(lab_runner.Runner, "execute", return_value=(0, None)) as execute,
-            ):
-                self.assertEqual(lab_runner.local_packaging(request_path), 0)
-            command = execute.call_args.args[0]
-            self.assertEqual(command["args"][-4:], ["--staged-update-request", str(request_path), "--timeout", "14400"])
-            self.assertGreater(command["timeout_seconds"], 3 * 14400 + 1200)
+                    with (
+                        mock.patch.object(lab_runner.subprocess, "check_output", return_value=str(repo / ".git")),
+                        mock.patch.object(lab_runner.Runner, "execute", return_value=(0, None)) as execute,
+                    ):
+                        self.assertEqual(lab_runner.local_packaging(request_path), 0)
+                    command = execute.call_args.args[0]
+                    self.assertEqual(command["args"][-4:], [f"--{operation}-request", str(request_path), "--timeout", "14400"])
+                    self.assertEqual(command["timeout_seconds"], budget)
 
     def test_explicit_toolhost_plan_is_validated_and_cached_by_input_pin(self):
         with tempfile.TemporaryDirectory() as directory:

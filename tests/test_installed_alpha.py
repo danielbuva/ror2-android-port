@@ -1,6 +1,8 @@
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
+import shlex
 import sys
 import tempfile
 import unittest
@@ -166,6 +168,22 @@ class InstalledAlphaTests(unittest.TestCase):
             stages.append(stage)
         return apk, hashlib.sha256(apk.read_bytes()).hexdigest(), 4, *stages
 
+    def test_local_nightly_preflight_accepts_one_signed_release(self):
+        apk, digest, version, baseline, _ = self.stage_update_pair()
+        public = self.owner.public()
+        with (
+            patch.object(installed_alpha, "release_tools", return_value=self.owner),
+            patch.object(public, "verify_signature") as signature,
+            patch.object(public, "validate_publication") as validate,
+        ):
+            plan = installed_alpha.preflight_releases(apk, digest, version, baseline)
+        self.assertEqual(set(plan), {"baseline"})
+        self.assertEqual(plan["baseline"]["publisher_version_code"], 2)
+        self.assertEqual(plan["baseline"]["attempt"], "baseline")
+        signature.assert_called_once()
+        self.assertEqual(validate.call_args.args[0], baseline / "public-tools.zip")
+        validate.assert_called_once()
+
     def test_local_update_preflight_uses_numeric_versions_and_signed_output_dependencies(self):
         args = self.stage_update_pair()
         public = self.owner.public()
@@ -219,6 +237,7 @@ class InstalledAlphaTests(unittest.TestCase):
         phone.package_hash.return_value = self.game_sha
         for failure in (None, RuntimeError("first stage timed out")):
             with self.subTest(failure=failure):
+                staged.nightly = failure is not None
                 directory = Path(tempfile.mkdtemp(dir=self.root))
                 staged.installer = Mock(GAME=installed_alpha.PACKAGE)
                 staged.installer.DIAGNOSTICS.directory = directory
@@ -238,6 +257,7 @@ class InstalledAlphaTests(unittest.TestCase):
                 self.assertEqual(receipt["mode"], "installed-alpha")
                 self.assertEqual(receipt["success"], failure is None)
                 self.assertEqual(receipt.get("first_failure"), str(failure) if failure else None)
+                self.assertEqual(run.call_args.args[2]["retain_native_loss"], not staged.nightly)
 
     def test_staged_update_binds_entry_coverage_and_producer_execution(self):
         receipt = {
@@ -261,3 +281,49 @@ class InstalledAlphaTests(unittest.TestCase):
         receipt["incremental"]["reused"].remove("unchanged")
         with self.assertRaisesRegex(ValueError, "staged-rebuild-entry-coverage"):
             staged_alpha_update.verify_incremental(receipt, source, changed, unchanged, 1, require)
+
+    def test_nightly_census_joins_play_failure_without_pulling_the_apk(self):
+        module_path = Path(installed_alpha.__file__).with_name("whole_game_scoreboard.py")
+        spec = importlib.util.spec_from_file_location("lab_scoreboard_fixture", module_path)
+        lab_scoreboard = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(lab_scoreboard)
+        home = "/private/installer"
+        retained = home + "/files/owner-input/work/releases/build-fixture/signed.apk"
+        fixture = {
+            "success": True,
+            "dataDirectory": home + "/files/fixture-123",
+            "nativeDirectory": "/packages/installer/lib/arm64",
+            "ownerApk": {"sha256": self.game_sha},
+        }
+        census = dict(schema="whole-game-scoreboard-v1", apk_sha256=self.game_sha, files={}, totals={"unverified": 1})
+
+        def command(_kind, line, **_kwargs):
+            operation, *args = shlex.split(line)[2:]
+            if operation == "readlink":
+                return (home if args[-1] == "." else args[-1]).encode()
+            if args == ["files/tool-host-report.json"]:
+                return json.dumps(fixture).encode()
+            self.assertTrue(args[0].endswith("resources.jsonl"))
+            return b"{}\n"
+
+        phone = Mock()
+        phone.command.side_effect = command
+        phone.package_paths.return_value = ["package:/packages/installer/base.apk"]
+        phone.read.side_effect = [{"success": True}, census]
+        phone.transport.wait_detached.return_value.returncode = 0
+        diagnostics = Mock(directory=self.root)
+        diagnostics.write.side_effect = lambda name, data: (self.root / name).write_bytes(data)
+        installer = Mock(PACKAGE=self.installer, DIAGNOSTICS=diagnostics, encoded=lambda data: json.dumps(data).encode())
+        self.device.installed = {"apk_sha256": self.game_sha}
+        tour = self.root / "terminal.done.json"
+        tour.write_text(json.dumps(dict(mode="installed-alpha", apk_sha256=self.game_sha, first_failure="first stage timed out")))
+
+        lab_scoreboard.installed_census(phone, installer, {"apk": retained}, self.device, tour)
+
+        phone.transport.cleanup_detached.assert_called_once()
+        self.assertIs(phone.transport.wait_detached.call_args.kwargs["transfer_logs"], False)
+        phone_request = json.loads(phone.put.call_args.args[1])
+        self.assertEqual(phone_request["candidate"]["apk"], {"path": retained, "sha256": self.game_sha})
+        scoreboard = json.loads((self.root / "scoreboard.json").read_bytes())
+        self.assertEqual(scoreboard["device"]["first_stage"], "unobserved")
+        self.assertEqual(scoreboard["device"]["alpha_tours"][0]["first_failure"], "first stage timed out")
