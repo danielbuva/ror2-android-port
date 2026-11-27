@@ -105,9 +105,9 @@ public sealed partial class PortSession
                               "Original HealthComponent visual-reference closure failed: " + string.Join(",", healthUnavailable.ToArray()));
             PresentNativeVisualSource(typeof(CharacterBody), "mercExposeEffectPrefab");
             PresentNativeVisualSource(typeof(HealthComponent), "mercExposeConsumeEffectPrefab");
-            var swings = PrepareNativeSwingEffects(bodyUnavailable);
-            while (swings.MoveNext())
-                yield return swings.Current;
+            var directEffects = PrepareDirectNativeEffects(bodyUnavailable);
+            while (directEffects.MoveNext())
+                yield return directEffects.Current;
             coordinator.r.world.bodyVisualSlots =
                 priorOriginalVisualSlots.Keys.Count(field => field.DeclaringType.DeclaringType == typeof(CharacterBody));
             coordinator.r.world.healthVisualSlots =
@@ -116,20 +116,22 @@ public sealed partial class PortSession
             coordinator.r.world.healthVisualUnavailable = healthUnavailable.ToArray();
             coordinator.Save();
         }
-        IEnumerator PrepareNativeSwingEffects(List<string> unavailable)
+        IEnumerator PrepareDirectNativeEffects(List<string> unavailable)
         {
             var presentation = coordinator.GetTeleporterWorldSession();
+            // These states instantiate their configured prefabs outside EffectCatalog.
+            PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.Flamethrower().flamethrowerEffectPrefab,
+                                          "Mage Flamethrower", unavailable);
+            PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.ChargeNovabomb().chargeEffectPrefab,
+                                          "Mage Nano-Bomb charge", unavailable);
+
             // The native GroundLight static configuration is populated after this setup.
             var mercNormal = WholeCatalogComposed.LoadOwnedContent<GameObject>(MercNormalSwingVisualPath);
             presentation.PresentNativeEffectSource(mercNormal);
             var mercFinisher = WholeCatalogComposed.LoadOwnedContent<GameObject>(MercFinisherVisualPath);
             presentation.PresentNativeEffectSource(mercFinisher);
 
-            var normal = new EntityStates.Croco.Slash().swingEffectPrefab;
-            if (normal)
-                presentation.PresentNativeEffectSource(normal);
-            else
-                unavailable.Add("Croco normal swing: native prefab missing");
+            PresentConfiguredNativeEffect(new EntityStates.Croco.Slash().swingEffectPrefab, "Croco normal swing", unavailable);
 
             // The normal swing is a configured PPtr. The finisher uses a native
             // address whose prefab must remain resident across stage transitions.
@@ -151,6 +153,13 @@ public sealed partial class PortSession
                 presentation.PresentNativeEffectSource(finisher.directReference);
             else
                 unavailable.Add("Croco combo finisher swing: native prefab reference missing");
+        }
+        void PresentConfiguredNativeEffect(GameObject source, string effect, List<string> unavailable)
+        {
+            if (source)
+                coordinator.GetTeleporterWorldSession().PresentNativeEffectSource(source);
+            else
+                unavailable.Add(effect + ": native prefab missing");
         }
         void PresentNativeVisualSource(Type ownerType, string fieldName)
         {
