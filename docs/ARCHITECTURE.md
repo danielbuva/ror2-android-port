@@ -8431,7 +8431,11 @@ and display sleep. The graphics path maps independent and shared sampler
 registers for 2D and cube images. It preserves per-variant structured
 constant arrays, member offsets and strides through the same native parameter
 writer. Unity typed-loaded the additional texture and instancing variants.
-Their device draw and whole-game coverage remain open.
+The graphics linker assigns distinct vertex and fragment uniform bindings and
+preserves the native Unity instancing buffer names. When both stages consume
+`UnityDrawCallInfo`, they share its binding with both stage flags. The Android
+Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
+instances. Cloud material draws and whole-game coverage remain open.
 The ComputeShader path preserves the source kernel and workgroup tables and
 writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
 then read-only textures and structured buffers, then writable buffers and 2D,
