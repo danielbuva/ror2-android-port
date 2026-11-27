@@ -37,6 +37,7 @@ public static partial class ContentFixtureBuilder
         public string loaded_type;
         public NativeMaterialReferences material;
         public NativeManifestEntry[] manifest;
+        public NativeTextureMip texture_mip;
     }
     [Serializable] public sealed class NativeManifestEntry
     {
@@ -184,7 +185,8 @@ public static partial class ContentFixtureBuilder
                 receipt.assets.Add(new NativeContentAsset {
                     name = asset.name, type = asset.type, subasset = asset.subasset, loaded_name = value.name, loaded_type = loadedType,
                     material = asset.material != null && value is Material material ? ObserveMaterial(material) : null,
-                    manifest = asset.manifest != null && value is AssetBundleManifest manifest ? ObserveManifest(manifest) : null
+                    manifest = asset.manifest != null && value is AssetBundleManifest manifest ? ObserveManifest(manifest) : null,
+                    texture_mip = asset.texture_mip == null ? null : ObserveTextureMip((Texture)value, asset.texture_mip, oracle, receipt.count)
                 });
                 receipt.count = loaded.Count;
             }

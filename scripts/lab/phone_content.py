@@ -38,9 +38,11 @@ NATIVE_CONTENT_TYPES = frozenset(
 SOURCES = {
     "ContentFixture.cs": "Assets",
     "NativeScriptSchemaFixture.cs": "Assets",
+    "TextureMipFixture.shader": "Assets",
     "ContentFixtureBuilder.cs": "Assets/Editor",
     "ContentFixtureLinkerCapture.cs": "Assets/Editor",
     "ContentFixtureSceneCheck.cs": "Assets/Editor",
+    "ContentFixtureTextureMip.cs": "Assets/Editor",
 }
 
 
@@ -160,6 +162,17 @@ def native_content_request(path):
             raise RuntimeError("Native-content Material needs expected shader and saved texture references")
         if "manifest" in asset and (asset["type"] != "AssetBundleManifest" or not manifest_entries(asset["manifest"])):
             raise RuntimeError("Native-content AssetBundleManifest needs expected bundle hashes and dependencies")
+        if "texture_mip" in asset:
+            sample = asset["texture_mip"]
+            face_count = {"Texture2D": 1, "Cubemap": 6}.get(asset_type, 0)
+            if (
+                not isinstance(sample, dict)
+                or type(sample.get("mip")) is not int
+                or sample["mip"] < 0
+                or type(sample.get("face")) is not int
+                or not 0 <= sample["face"] < face_count
+            ):
+                raise RuntimeError("Texture mip selection requires a nonnegative mip and a valid face for its type")
     return request
 
 
@@ -260,7 +273,7 @@ def validate_native_content(attempt, commit):
         "AnimatorController": "UnityEditor.Animations.AnimatorController",
         "OcclusionCullingData": "OcclusionCullingData",
     }
-    for asset, row in zip(request["assets"], rows, strict=True):
+    for index, (asset, row) in enumerate(zip(request["assets"], rows, strict=True)):
         expected_type = native_type_names.get(asset["type"], "UnityEngine." + asset["type"])
         if (
             row.get("name") != asset["name"]
@@ -277,7 +290,26 @@ def validate_native_content(attempt, commit):
                 raise RuntimeError("Native-content Material shader or saved texture mismatch: " + asset["name"])
         if "manifest" in asset and manifest_entries(row.get("manifest")) != manifest_entries(asset["manifest"]):
             raise RuntimeError("Native-content AssetBundleManifest bundles, hashes or dependencies mismatch: " + asset["name"])
+        if "texture_mip" in asset:
+            validate_texture_mip(attempt / f"texture-{index}.rgba", asset["texture_mip"], row.get("texture_mip"))
     return report
+
+
+def validate_texture_mip(path, selection, report):
+    if (
+        not isinstance(report, dict)
+        or any(report.get(key) != selection[key] for key in ("mip", "face"))
+        or any(type(report.get(key)) is not int or report[key] <= 0 for key in ("width", "height"))
+        or not report.get("graphics")
+        or report["graphics"] == "Null"
+        or report.get("color_space") not in ("Gamma", "Linear")
+        or not report.get("format")
+        or path.stat().st_size != report["width"] * report["height"] * 4
+    ):
+        raise RuntimeError("Exact-editor texture mip readback contract failed")
+    with path.open("rb") as stream:
+        if hashlib.file_digest(stream, "sha256").hexdigest() != report.get("sha256"):
+            raise RuntimeError("Exact-editor texture mip readback hash mismatch")
 
 
 def validate_ambient_oracle(report):
@@ -372,6 +404,7 @@ def run_editor(project, *, build=False, ambient=False):
     env = unity_editor_env()
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
     scene_check = False
+    texture_check = False
     shader_bundle = None
     probes = [(key, kind) for key, kind in (("ROR2_PHONE_SHADER_DRAW", "Shader"), ("ROR2_PHONE_SHADER_COMPUTE", "ComputeShader")) if env.get(key)]
     if len(probes) > 1 or (probes and (not build or not env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"))):
@@ -384,6 +417,9 @@ def run_editor(project, *, build=False, ambient=False):
         request_path.write_text(json.dumps(request, indent=2) + "\n")
         env["ROR2_PHONE_NATIVE_CONTENT_CHECK"] = str(request_path)
         scene_check = "scene" in request
+        texture_check = any("texture_mip" in asset for asset in request.get("assets", []))
+        if texture_check and build:
+            raise RuntimeError("Texture mip readback uses the exact-editor check")
         if probes:
             ((probe, kind),) = probes
             assets = request.get("assets", [])
@@ -407,7 +443,7 @@ def run_editor(project, *, build=False, ambient=False):
     args = [
         env["UNITY_EDITOR"],
         "-batchmode",
-        *([] if ambient or scene_check else ["-nographics", "-quit"]),
+        *([] if ambient or scene_check else ["-quit"] if texture_check else ["-nographics", "-quit"]),
         "-projectPath",
         str(project),
         "-buildTarget",
