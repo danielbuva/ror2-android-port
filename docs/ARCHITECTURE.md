@@ -1077,6 +1077,11 @@ The existing preload preparer binds each supplier record through its original
 member and path ID. The exact-editor fixture loads both as Meshes at scoped
 test addresses. Their original FBX preload groups and signed release integration
 remain open.
+`recipe/owner-whole-game-solus-mesh-preloads.json` supplies eleven more
+original inline Meshes from the ConstructionArm FBX and prefab preload tables
+through the same producer. The exact-editor fixture loads those eleven and the
+two previously supplied Meshes at scoped addresses. Complete original preload
+groups and their signed catalog routes still depend on non-Mesh records.
 The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
 excluded MercSwordSwipe record through the same setup/teardown. The optional
 `unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
