@@ -8633,6 +8633,13 @@ feeds the original Transform, MeshFilter, MeshRenderer and Material bodies to
 the original serialized file and PathID, including the two same-PathID
 Materials from distinct files.
 
+The Nest FBX roster feeds original GameObject, Transform, MeshFilter,
+MeshRenderer and Material records to `record_produce.py`. The scoped
+bundle graph joins them to the existing Mesh and built-in shader suppliers.
+The exact-editor fixture loads each advertised GameObject and Mesh and
+unloads the bundle. The source preload sequence remains a release graph
+admission requirement for this cohort.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,

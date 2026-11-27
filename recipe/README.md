@@ -7764,3 +7764,20 @@ pack data or private paths are included. Producer output stays under ignored
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-canonical-native-roster-records.jsonl.gz` | `f20a75d8b362e4f3e39c6da4963c7260de0a8232057af23d524808e649863994` |
+
+## Nest FBX native records (2026-11-27)
+
+`owner-nest-fbx-native-records.json` supplies 253 original native records
+for 42 Nest FBX groups through `record_produce.py`. The existing Mesh and
+shader recipes supply their remaining native records. Unity 2021.3.45f2
+loaded and unloaded 84 typed GameObject and Mesh requests for the scoped
+bundle. Release admission still requires preserving source preload order.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative original bundle selectors, source and destination object IDs,
+class IDs, sizes and hashes. The producer reads original serialized bodies
+from the user's installation and writes the pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-nest-fbx-native-records.json` | `00330558b4b1fad6131bd4d34dfb3d1dba7699f835ea963457d97e005b7c8545` |
