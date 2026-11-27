@@ -7245,8 +7245,9 @@ select the established Android encoding and streaming operations. The mesh
 profile retains source geometry and applies the existing mesh usage and
 collision-cache transformations where specified.
 
-Seven Materials use the established keyword policy and two checked PPtr
-routes each, to the canonical Shader and each Material's texture. Two
+Seven Materials preserve the source active keywords and use two checked PPtr
+routes each, to the canonical Vulkan Shader and each Material's texture. The
+Shader supplies the `_ALPHABLEND_ON` variant selected by these Materials. Two
 MonoScripts resolve from the generated player registry by assembly, namespace
 and class, with their original source identities declared for bundle binding.
 Whole-bundle Unity loadability and Android checks remain open.
@@ -7260,7 +7261,7 @@ local.
 | --- | --- |
 | `owner-whole-game-v30-platform-textures.json` | `1a5d2211dfc0241073c67cba051d678b9c708284c4ae9f57e67353d4785800a3` |
 | `owner-whole-game-v30-platform-meshes.json` | `2efcf8ea3c576f56583d1e0cc7beada333a1010d3a044dbbac95185833072d24` |
-| `owner-whole-game-v30-platform-materials.json` | `e7f6769d02ccc78a8a2b634d0f2d5a9785ace8abca4ebe02fa0d8ec05218982a` |
+| `owner-whole-game-v30-platform-materials.json` | `6f0d6d5e48e5c6652d3ef0655ac9132f00c878279f1b3ece8132555422b1cd0b` |
 | `owner-whole-game-v30-platform-registry.json` | `c09d3bb84e6c0418114ee8173ae7722ccb0dcfa7349f259e55b1c4ca97fc8e66` |
 
 ## Current-script bundle comparison (2026-11-04)
@@ -7525,3 +7526,8 @@ and sensitive-content review found only the necessary asset selectors, native
 identity, output extent and hash pins. The producer reads the visibility data
 from the owner’s PC installation. The recipe contains no bake data, type tree,
 program bytes, private paths or identifiers.
+
+Audit 2026-11-27. The optional lab presentation capture adds two selector fields
+to `PortSession.cs` and refreshes its audio-owner source pin and build-hook
+bindings. These recipe changes contain authored source hashes only. Captured
+images and session evidence remain private.

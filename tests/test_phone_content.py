@@ -62,6 +62,15 @@ class PhoneContentTests(unittest.TestCase):
                 unloaded=True,
             )
             validate_native_scene(report, request, "c" * 40)
+            single = request | {"loadMode": "Single"}
+            request_path.write_text(json.dumps(single))
+            self.assertEqual(native_content_request(request_path), single)
+            validate_native_scene(report | {"loadMode": "Single"}, single, "c" * 40)
+            with self.assertRaisesRegex(RuntimeError, "native scene contract"):
+                validate_native_scene(report, single, "c" * 40)
+            request_path.write_text(json.dumps(request | {"loadMode": "Unknown"}))
+            with self.assertRaisesRegex(RuntimeError, "loadMode"):
+                native_content_request(request_path)
             for change in (dict(roots=0), dict(occlusionDataResolved=False), dict(scenePath="Assets/Other.unity"), dict(unloaded=False)):
                 with self.assertRaisesRegex(RuntimeError, "native scene contract"):
                     validate_native_scene(report | change, request, "c" * 40)

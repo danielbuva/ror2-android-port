@@ -64,6 +64,19 @@ class SanitizeTest(unittest.TestCase):
 
 
 class BatteryRuleTest(unittest.TestCase):
+    def test_strict_battery_applies_to_runner_and_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            config = repo / "work/config/lab-runner.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(json.dumps({"battery_charge_override": True}))
+            runner = lab_runner.Runner(repo, {}, strict_battery=True)
+            with mock.patch.object(runner, "battery", return_value=(86, 0, 300)):
+                self.assertIn("> 85 %", runner.admit_battery("synthetic"))
+            with mock.patch.dict(os.environ, {"LAB_BATTERY_CHARGE_OVERRIDE": "1"}), mock.patch.object(lab_runner.subprocess, "run") as child:
+                runner.run(["probe"], repo)
+                self.assertNotIn("LAB_BATTERY_CHARGE_OVERRIDE", child.call_args.kwargs["env"])
+
     def test_explicit_toolhost_cooldown_honors_owner_override(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)

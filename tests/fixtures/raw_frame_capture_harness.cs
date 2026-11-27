@@ -16,6 +16,29 @@ public static class AndroidNativeDeferredPresentation
 {
     public static void Configure(Camera camera) { }
 }
+public static class AndroidNativeSourceSkinLifecycle
+{
+    public sealed class VisualCameraSnapshot { }
+    public static VisualCameraSnapshot CaptureCamera(Camera camera, bool ownedSourceCamera) { return null; }
+}
+public sealed class NovaThirdPersonView
+{
+    public sealed class Report { public float distance; }
+    public readonly Report report = new Report();
+    public RaycastHit LastObstruction { get; private set; }
+}
+public static class PortSession
+{
+    public static string StageObjectPath(Transform transform) { return null; }
+}
+namespace RoR2
+{
+    public sealed class Run : MonoBehaviour
+    {
+        public static Run instance;
+        public float GetRunStopwatch() { return 0; }
+    }
+}
 public static class RawFrameCaptureHarness
 {
     static void Check(bool condition, string message)
