@@ -2493,6 +2493,11 @@ For the Animate Alpha Vulkan diagnostic, set `ROR2_PHONE_SHADER_DRAW=1` on
 address. The builder embeds the checked bundle in the disposable fixture APK.
 `ContentFixture.cs` draws two ramp inputs offscreen and reports the center
 pixels, graphics backend and result through `PHONE_SHADER_DRAW`.
+The same draw fixture takes the original-derived Cloud Intersection Remap
+shader as a standalone input. It checks the directional pass with transparent
+and opaque masks through a point-sampled ramp, two translated instances and
+an untouched gap. The fixture restores the camera and keyword globals and
+releases its temporary render resources.
 `ROR2_PHONE_SHADER_COMPUTE=1` uses the same fixture with a standalone bundle
 containing Histogram or the Waveform and Vectorscope pair. The Vulkan player
 seeds the diagnostic buffers, dispatches each source clear and gather kernel
@@ -3236,6 +3241,8 @@ The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
 | --- | --- | --- |
+| pins | `check` | current |
+| pins | `refresh` | current |
 | build-hook-pins | `check` (default) | current |
 | build-hook-pins | `refresh` | current |
 | editor | `open` | current |
@@ -3274,6 +3281,18 @@ registry labels and the editor/perf/lane selectors without starting an editor or
 querying a device. Labels live with existing CLI owners; dispatch is unchanged.
 
 ## Build pipeline
+
+`scripts/lab/source_pins.py` owns `./dev pins check` and `./dev pins refresh`.
+It resolves public recipe and profile hashes from tracked files, following
+dependencies through producer sources, embedded build-hook bindings and other
+profiles. Digest-only supplier selectors use tracked recipe identities from
+the current tree or the applicable Git base. `--show-external` lists recipes
+with SHA fields that still need their original input or produced-byte witness.
+Historical manifests and signed or retained receipts keep their recorded identities.
+The pre-push hook checks the outgoing commit before launching local CI. It
+refreshes eligible files on the checked-out outgoing branch and stops the push
+so the author can review and commit the changes. Staged or unstaged edits to
+the affected files take precedence and require an explicit refresh.
 
 Historical `input-update-check` uses `scripts/lab/historical_receipts.py` to
 resolve an explicitly registered, hash-pinned optional-guard receipt against the
@@ -3338,6 +3357,16 @@ requires that merged baseline and resolved conflict markers; `--dry-run` writes
 nothing. It retains no process state, closes Git/file readers at exit and leaves
 journal/index edits for manual reference review and staging. It neither fetches
 nor commits. `tests/test_journal_renumber.py` covers ownership and refusal cases.
+
+For a clean checked-out topic containing fetched `origin/main`,
+`scripts/journal-pre-push.py` (support) uses the same renumber and index owners.
+It reads the outgoing commit, computes heading dates against its history,
+and creates a forward-only local commit limited to the two journal paths if
+they need repair. The hook stops that push because Git captured the old tip;
+the next push validates the exact new tip. No temporary file or state survives
+the check. Dirty worktrees and ambiguous journal content are not repaired.
+`tests/test_journal_pre_push.py` exercises the real hook and remote ref update
+against a disposable local Git remote.
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh exact-commit checkout. The hook uses
@@ -8451,7 +8480,9 @@ The graphics linker assigns distinct vertex and fragment uniform bindings and
 preserves the native Unity instancing buffer names. When both stages consume
 `UnityDrawCallInfo`, they share its binding with both stage flags. The Android
 Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
-instances. Cloud material draws and whole-game coverage remain open.
+instances. It also draws Cloud Intersection Remap with the directional plain
+and instanced variants and depth fade disabled. Cloud native Material draws
+and whole-game coverage remain open.
 The ComputeShader path preserves the source kernel and workgroup tables and
 writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
 then read-only textures and structured buffers, then writable buffers and 2D,
@@ -8486,8 +8517,9 @@ provider plan stages the executables. The shared
 runner verified the signed Histogram producer on Android. Its output hash
 matched the object dispatched in the Vulkan fixture.
 
-The signed `owner-graphics-shader-translation-v1` profile routes the original
-Outline record to its canonical bundle identity. It binds SMOL-V encoding,
+The signed `owner-graphics-shader-translation-v1` profiles route the original
+Outline and Cloud Intersection Remap records to their canonical bundle identities.
+The translator binds SMOL-V encoding,
 SPIRV-Cross and glslang alongside DXBC translation and SPIR-V validation.
 The managed-host builder builds five Android executables and retains their
 public source and notices. The producer checks their hashes before and after

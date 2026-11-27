@@ -1,5 +1,12 @@
 # Build recipes
 
+2026-11-27 source-pin refresh audit. The changes bind current tracked shader
+helpers, project layout and supplier profiles by SHA-256 and update the sizes of
+two authored inputs. Provenance, privacy, licensing and sensitive-content review
+covered these public file bindings. Original input and produced record hashes
+retain their recorded identities. Audit tables below describe the revisions
+reviewed in their respective entries.
+
 `owner-whole-game-generated-objects.json` supplies four typed records for
 canonical bundle preparation. It selects the permitted SDK default material,
 the current authored projectile adapter script, and the original fieldless
@@ -2751,6 +2758,16 @@ source packages, patch and notices. Dependent recipes refresh the authored
 segment-reader hash and its downstream recipe pins. Game programs, translated
 bodies and device records stay local. Provenance, privacy, licensing and
 sensitive-content audit completed 2026-11-27.
+
+The Cloud Intersection Remap profile selects the original Shader leaf and
+its canonical destination. It reuses the signed graphics translator and its
+pinned public tools. The recipe contains source selectors, hashes and output
+routing. Source programs, translated bodies and raw device records stay local.
+Provenance, privacy, licensing and sensitive-content review completed 2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-cloud-intersection-graphics-translation.json` | `28da3f8dfb441d3f621bdccfe5b15622f34f5b83c4e7bed345ef731afed0fa80` |
 
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK

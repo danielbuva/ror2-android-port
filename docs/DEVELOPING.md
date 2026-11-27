@@ -199,6 +199,7 @@ authentication is needed to inspect the supplied installation.
 | --- | --- |
 | `./dev test` | Host tests in the lab venv. |
 | `./dev doctor [--json]` | Toolchain, inventory and dependency-pin health. |
+| `./dev pins check` / `./dev pins refresh` | Current host checks and refreshes for tracked producer and recipe hashes. `--show-external` lists recipes with pins that need their original input or output witness. |
 | `./dev preflight [--device SERIAL] [--host-only]` | Current: host/input gates plus selected-device storage; `--host-only` omits device access. |
 | `./dev build-hook-pins [--action check\|refresh]` | Current: check reviewed camera and audio-owner source pins and manifest bindings without local inputs (default); after reviewing source changes, refresh source hashes and bindings. Format Python before refreshing: the hook pins itself. Host preflight checks these pins before reading local configuration. |
 | `./dev check-baseline` | The standard device check on the installed APK: 35 s of assisted Lakes play, no report error, profile run count unchanged ([docs/BASELINE.md](BASELINE.md)). |
@@ -373,6 +374,16 @@ workers have separate temporary directories. Existing shared-project compiler
 fixtures run in one serial group, not concurrently against their shared outputs.
 Reports contain local diagnostics: review them before sharing. Neither runner
 mode replaces toolchain or device acceptance.
+
+With `git config core.hooksPath scripts/git-hooks` installed, the pre-push
+hook also reconciles a clean checked-out topic's journal against its merged
+`origin/main`. It keeps main's entries intact and, when needed, creates a new
+local commit containing only the renumbered journal and regenerated index. Git
+already captured the old commit for that push, so run `git push` again if the
+hook says it repaired the journal. It never rewrites commits or pushes on its
+own. Resolve ambiguous journal content or commit/stash tracked edits first if
+the hook refuses. It does not guess whether old journal IDs in prose refer to
+an upstream or topic entry.
 
 The pre-push hook runs Ruff, the public audit, journal-index and README checks
 on the exact pushed commit, then runs the affected host-test modules and smoke
