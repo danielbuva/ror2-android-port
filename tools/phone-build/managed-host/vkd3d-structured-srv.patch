@@ -1,0 +1,89 @@
+--- a/include/vkd3d_shader.h
++++ b/include/vkd3d_shader.h
+@@ -421,6 +421,9 @@
+      * \since 2.0
+      */
+     VKD3D_SHADER_COMPILE_OPTION_DENORMAL_MODE_F64 = 0x00000010,
++
++    /** Emit structured SRVs as read-only storage buffers for Vulkan. */
++    VKD3D_SHADER_COMPILE_OPTION_VULKAN_STRUCTURED_SRV = 0x00000011,
+
+     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_NAME),
+ };
+--- a/libs/vkd3d-shader/spirv.c
++++ b/libs/vkd3d-shader/spirv.c
+@@ -2946,6 +2946,7 @@
+
+     bool strip_debug;
+     bool ssbo_uavs;
++    bool ssbo_structured_srvs;
+     bool uav_read_without_format;
+     SpvExecutionMode fragment_coordinate_origin;
+
+@@ -3118,6 +3119,10 @@
+                     compiler->ssbo_uavs = true;
+                 else
+                     WARN("Ignoring unrecognised value %#x for option %#x.\n", option->value, option->name);
++                break;
++
++            case VKD3D_SHADER_COMPILE_OPTION_VULKAN_STRUCTURED_SRV:
++                compiler->ssbo_structured_srvs = !!option->value;
+                 break;
+
+             case VKD3D_SHADER_COMPILE_OPTION_FORMATTING:
+@@ -6802,7 +6807,15 @@
+         return;
+     }
+
+-    if (compiler->ssbo_uavs && is_uav && resource_type == VKD3D_SHADER_RESOURCE_BUFFER)
++    if (compiler->ssbo_structured_srvs && !is_uav
++            && resource_type == VKD3D_SHADER_RESOURCE_BUFFER && !structure_stride)
++    {
++        spirv_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_UNSUPPORTED_FEATURE,
++                "Read-only storage binding requires a structured buffer.");
++    }
++
++    if (resource_type == VKD3D_SHADER_RESOURCE_BUFFER && (is_uav
++            ? compiler->ssbo_uavs : compiler->ssbo_structured_srvs && structure_stride))
+     {
+         uint32_t array_type_id, struct_id;
+
+@@ -6814,6 +6827,9 @@
+         struct_id = vkd3d_spirv_build_op_type_struct(builder, &array_type_id, 1);
+         vkd3d_spirv_build_op_decorate(builder, struct_id, SpvDecorationBufferBlock, NULL, 0);
+         vkd3d_spirv_build_op_member_decorate1(builder, struct_id, 0, SpvDecorationOffset, 0);
++
++        if (!is_uav)
++            vkd3d_spirv_build_op_member_decorate(builder, struct_id, 0, SpvDecorationNonWritable, NULL, 0);
+
+         type_id = struct_id;
+         storage_class = SpvStorageClassUniform;
+@@ -8952,7 +8968,7 @@
+     const struct vsir_src_operand *resource;
+     uint32_t constituents[VKD3D_VEC4_SIZE];
+     struct vkd3d_shader_image image;
+-    bool storage_buffer_uav = false;
++    bool storage_buffer = false;
+     uint32_t indices[2];
+     unsigned int i, j;
+     SpvOp op;
+@@ -8962,10 +8978,15 @@
+     if (resource->reg.type == VKD3DSPR_UAV)
+     {
+         resource_symbol = spirv_compiler_find_resource(compiler, &resource->reg);
+-        storage_buffer_uav = spirv_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource);
+-    }
+-
+-    if (storage_buffer_uav)
++        storage_buffer = spirv_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource);
++    }
++    else if (compiler->ssbo_structured_srvs && resource->reg.type == VKD3DSPR_RESOURCE)
++    {
++        resource_symbol = spirv_compiler_find_resource(compiler, &resource->reg);
++        storage_buffer = resource_symbol->info.resource.structure_stride != 0;
++    }
++
++    if (storage_buffer)
+     {
+         texel_type_id = spirv_get_type_id(compiler, resource_symbol->info.resource.sampled_type, 1);
+         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassUniform, texel_type_id);

@@ -230,6 +230,10 @@ contain local paths and stay with the private build. The current direct recipe
 selects the original Histogram ComputeShader. Its output is a typed record
 pack for bundle assembly.
 
+The builder applies `vkd3d-structured-srv.patch` to the pinned vkd3d source
+and includes it in `public-sources`. Apply the same patch at the archive root
+before rebuilding the vkd3d libraries for relinking.
+
 The muxer keeps CoreLib in the selected framework's verified data directory via
 the public hostfxr runtime-property API. For .NET 10 it uses the public
 [CoreCLR hosting ABI](https://github.com/dotnet/runtime/blob/v10.0.0/src/coreclr/hosts/inc/coreclrhost.h)

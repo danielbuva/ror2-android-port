@@ -4994,6 +4994,53 @@ Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a85951680
 Evidence: `work/coordination/p1-phonepipe/2026-11-27/bc1-staged/terminal.done.json`.
 Unity typed load and gameplay remain open.
 
+## J1555 — Dispatch original camera scopes on Android Vulkan
+
+2026-11-27. The exact Unity Android fixture loaded the translated Waveform
+and Vectorscope from one bundle. All four original kernels dispatched. Each
+clear removed every sentinel. The flat-red gather matched all Waveform
+components and placed all 256 Vectorscope samples in bin 198.
+APK SHA-256 `34f8908c75e493d6b683af45ae18d55bd3b990033243c298376ff99b622e2003`
+(source `d3e827b4`). Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-scopes-device-01/terminal.done.json`.
+Peak SoC was 48.9 °C with 0 s above 80 °C. Fixture removal, OLED sleep and
+lease release passed. Camera integration and whole-game coverage remain open.
+
+## J1556 — Dispatch original 3D texture lerps on Android Vulkan
+
+2026-11-27. The source DXBC converter remaps writable 2D, 3D and 2D-array
+images into Unity Vulkan descriptors. On Secondary Nova, both translated
+Texture3DLerp kernels and both SDK controls matched all 256 ARGBHalf
+components per dispatch. The two MultiScaleVO downsample objects typed-loaded.
+APK SHA-256 `0a43b46fcd1795c99781419f1fdf17894cf300719b32530130d765b1af82e60f`
+(source `043f801d`). Evidence is under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-storage-image/comparison-device-01/terminal.done.json`.
+SoC peaked at 48.1 °C with 0 s above 80 °C. The fixture was removed, the
+OLED slept and the lease was released. AO dispatch and game integration remain open.
+
+## J1557 — Dispatch original weighted exposure histogram on Android Vulkan
+
+2026-11-27. The original ExposureHistogram compute clear removed sentinels
+from all 128 bins. Its sampled weighted gather matched bins 12 = 52 and
+46 = 100. The source supplier preserves native sampler bindings and validates
+21 programs across five typed-loaded ComputeShader objects.
+APK SHA-256 `8a479b01f67732e6c2306cf63c0f4b6e3cbf254b0f1ad7802a9f090e23e61319`
+(source `57e4987a`). Evidence is under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-compute-samplers/exposure-device-03/terminal.done.json`.
+Peak SoC was 55.7 °C, with 0 s above 80 °C. Battery was 27 °C at admission.
+Fixture removal, OLED sleep and lease release passed. Camera integration remains open.
+
+## J1558 — Dispatch original fixed and progressive AutoExposure on Android Vulkan
+
+2026-11-27. The native AutoExposure kernels consume the original read-only
+structured histogram through a Vulkan storage buffer. The exact Android
+fixture matched fixed, rising and falling RFloat results of 1.5, 0.875 and
+1.625 within 0.000001. The window follows pinned Post Processing 2.3.0.
+APK SHA-256 `a08d72b5d564b86b84458ce094cf6e7a0781bfc21d66884c51f9f0673f68a4c7`
+(source `4b446831`). Evidence is under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-structured-srv/auto-exposure-device-02/terminal.done.json`.
+Peak SoC was 58.1 °C, with 0 s above 80 °C. Battery was 28 °C at admission.
+Fixture removal, OLED sleep and lease release passed. Camera integration remains open.
 ## J1554 — Verify signed Crunch and BC7 texture conversion on Android
 
 2026-11-27. The staged toolhost uses the packaged QEMU adapter to run the
@@ -5006,3 +5053,16 @@ Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665
 The runner removed its disposable package and released the lease.
 Evidence `work/coordination/p1-textures/phone-crunch-bc7-1127/signed-device/terminal.done.json`.
 Canonical conversion integration and in-game visuals remain open.
+
+## J1561 — Dispatch original ambient occlusion downsampling on Android Vulkan
+
+2026-11-27. The exact Unity fixture loaded original-derived
+MultiScaleVODownsample2 and dispatched its regular and MSAA kernels.
+The binary ramp matched 160 regular and 320 MSAA components across the
+depth planes and tiled atlases. APK SHA-256
+`e6a10a0f7b12c322017df20f7f7a5fe70c7228d173734401aea71b8a3df3f0bb`
+(source `9d6d94e9`). Evidence is under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-storage-image/ao-downsample2-device-01/terminal.done.json`.
+Peak SoC was 56.1 °C, with 0 s above 80 °C and a 29 °C admission battery.
+Fixture removal, OLED sleep and lease release passed. Camera integration
+and in-game ambient occlusion remain open.
