@@ -1474,6 +1474,12 @@ supply 75 original BC6H Cubemaps for staged scene probes. The texture pack
 retains each complete chain and exposes its typed body and stream for bundle
 assembly. The scene owner binds original probe pointers to the emitted
 records and qualifies in-game rendering.
+`texture_catalog.py` owns the host coverage fixture for original Texture2D and
+Cubemap identities. It joins the current PC census to receipt-pinned texture
+packs and writes the record graph and coverage ledger. The native bundle
+emitter materializes the graph for exact-editor typed load and unload. The
+fixture's addresses and PathIDs are local to that bundle. The canonical graph
+owner supplies the gameplay endpoints.
 Complete original-lighting alternatives for Promo and Snowy Forest use
 `owner-<stage>-source-lighting-objects.json` and the corresponding texture,
 shader and (Promo only) Timeline recipes. The existing object owner emits
@@ -7836,6 +7842,14 @@ slots with checked local MeshRenderer remaps. `record_produce.py` and
 `recipe/owner-goolake-occlusion-record.json` select the original native
 visibility record at the scene's existing whole-game data alias. A typed scene
 load needs that record in the canonical supplier bundle.
+
+The staged Blackbeach and Golemplains object profiles take a record pack from
+the existing `texture_produce.py` owner using
+`recipe/owner-start-scene-baked-reflections.json`. The texture owner preserves
+original BC6H mip data in the scene bundle resource member, and the object owner
+restores each original baked ReflectionProbe link to its local Cubemap. The
+same Android-target editor fixture loads and unloads the scenes and checks the
+resolved Cubemap widths, mip counts and native formats.
 
 Voidraid complete scene selections extend the existing object/Shader owners
 through `recipe/owner-voidraid-whole-objects.json` and matching post-processing

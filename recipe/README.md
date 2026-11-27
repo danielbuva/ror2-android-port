@@ -4024,6 +4024,9 @@ Phone production, installation and runtime qualification remain open.
 
 ## Four complete source-scene selections (2026-10-26)
 
+The Blackbeach selector below is historical. See the staged baked reflection
+selection for the current Blackbeach and Golemplains profiles.
+
 Golemplains2, Ancientloft, Habitat and Blackbeach extend the existing object
 and Shader owners. Their source-only CLI output persists before independent
 comparison: all 60,493 objects, eight serialized members and four compressed
@@ -7592,3 +7595,20 @@ locally. Geometry, collision data and Unity evidence stay under ignored `work/`.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-game-mesh-frontier.json` | `82f6cf1f4166edee7095a990829180de4be75dbe223524f395cad9e674fdad2d` |
+
+## Staged Blackbeach and Golemplains baked reflections (2026-11-27)
+
+Produce `owner-start-scene-baked-reflections.json` with `texture_produce.py`
+and pass its receipt-pinned pack to `object_produce.py` along with the usual
+suppliers for each scene. The scene profiles select the original three streamed
+BC6H Cubemaps and restore the local baked ReflectionProbe links.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-start-scene-baked-reflections.json` | `1c23a3e1b782e569debfe87417d9c0d0380c90cc15ef42cb6e068f195ebf229c` |
+| `owner-blackbeach-source-objects.json` | `be89f2e4ce535b371d8d61ca7ea831a3196879d728a7cadb5fa3e1ef9aacabc5` |
+| `owner-golemplains-source-objects.json` | `a4e622931400a83ea149cbeb4da0fe7bc11ed8b65335b8a5fc090c93260472ad` |
+
+The provenance, privacy and licensing review found source selectors, extent and
+layout metadata, and hashes. Game bytes derive from locally supplied legitimate
+PC files and stay in ignored output directories.
