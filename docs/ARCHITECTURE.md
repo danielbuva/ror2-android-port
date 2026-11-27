@@ -3010,7 +3010,7 @@ no build consumer normalizes away that evidence.
 `phone_unity_compile.py` owns a separate current experimental compilation of
 the public `ContentFixture.cs` Unity API fixture. It stages pinned SDK compiler,
 target managed modules, standard-library references, builtin package metadata
-and the authored four-package manifest. It reuses `phone_module_policy.py` to
+and the authored five-package manifest. It reuses `phone_module_policy.py` to
 derive references on the selected host, excluding package-disabled modules;
 captured Bee response files and editor reports are comparison evidence only.
 The standalone runner verifies its authored sibling helpers before importing
@@ -8507,6 +8507,10 @@ both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform wi
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
 linked envelope. It feeds source layouts through the existing
 `shader_produce.py` parameter writer and emits a typed replacement pack.
+For shaders with ordinary vertex and fragment passes, the translator retains
+subshader and pass order and render state. The shared record writer merges
+the per-pass Vulkan tables and relocates their program and parameter indices
+into the Shader's compressed blob.
 The profile run closes the body stream and pins its index, type table and
 object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
@@ -8558,7 +8562,8 @@ runner verified the signed Histogram producer on Android. Its output hash
 matched the object dispatched in the Vulkan fixture.
 
 The signed `owner-graphics-shader-translation-v1` profiles route the original
-Outline and Cloud Intersection Remap records to their canonical bundle identities.
+Outline, Cloud Intersection Remap, PaintHeight, Cutout/VertexLit and
+TerrainLayerUtils records to their canonical bundle identities.
 The translator binds SMOL-V encoding,
 SPIRV-Cross and glslang alongside DXBC translation and SPIR-V validation.
 The managed-host builder builds five Android executables and retains their
