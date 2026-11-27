@@ -3088,6 +3088,10 @@ in `scripts/lab/actions.py` owns each prototype action's current/historical labe
 shown by `./dev prototype --action list`, including the historical `inspect`
 default and unknown-name fallback. The listing action itself is current.
 `./dev lane --help` labels its explicit create/list/remove actions as current.
+`./dev pc-reference` is the current host recorder for stock Steam PC captures.
+`scripts/lab/pc_reference.py` owns the separate CrossOver clone, launch and
+capture manifest. `tools/pc-reference/Recorder.cs` owns its isolated profile,
+local run, camera and capture lifecycle. See the [PC reference recorder](../tools/pc-reference/README.md).
 The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |

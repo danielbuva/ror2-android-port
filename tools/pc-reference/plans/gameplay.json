@@ -1,0 +1,109 @@
+{
+  "settings": {
+    "width": 1280,
+    "height": 960,
+    "fps": 60,
+    "fov": 60,
+    "disablePostProcessing": true
+  },
+  "scenarios": [
+    {
+      "id": "roost",
+      "scene": "blackbeach2",
+      "seed": "3",
+      "body": "CommandoBody",
+      "naturalFirstStage": true,
+      "steps": [
+        {"id": "roost-teleporter", "action": "capture", "settleSeconds": 1,
+         "player": [67.28, 12.37, 112.95], "view": {"position": [67.28, 15.85, 105.05], "yaw": 0, "pitch": 15}}
+      ]
+    },
+    {
+      "id": "siren",
+      "scene": "shipgraveyard",
+      "seed": "6271",
+      "body": "HuntressBody",
+      "steps": [
+        {"id": "siren-before-eggs", "action": "capture", "settleSeconds": 1,
+         "player": [105.99, 92.04, 106.41], "view": {"position": [102.65, 98.68, 111.63], "yaw": 147.98, "pitch": 40.18}}
+      ]
+    },
+    {
+      "id": "gold",
+      "scene": "goldshores",
+      "seed": "2",
+      "body": "CommandoBody",
+      "steps": [
+        {"id": "gold-ring", "action": "capture", "settleSeconds": 1,
+         "player": [-29.18, -6.32, 30.69], "view": {"position": [-23.28, -5, 24.97], "yaw": -45.94, "pitch": -0.29}},
+        {"id": "gold-beacon-area", "action": "capture", "settleSeconds": 1,
+         "player": [-151.36, -10.63, 79.99], "view": {"position": [-144.62, -6.67, 76.15], "yaw": -60.33, "pitch": 18.45}}
+      ]
+    },
+    {
+      "id": "aqueduct",
+      "scene": "goolake",
+      "seed": "2",
+      "body": "CommandoBody",
+      "steps": [
+        {"id": "aqueduct-lighting", "action": "capture", "settleSeconds": 1,
+         "player": [119.5385, -82.1365, -124.6514], "view": {"position": [111.5044, -81.7303, -123.5065], "yaw": 98.3116, "pitch": -6.666}}
+      ]
+    },
+    {
+      "id": "depths",
+      "scene": "dampcavesimple",
+      "seed": "1",
+      "body": "CommandoBody",
+      "steps": [
+        {"id": "depths-lighting", "action": "capture", "settleSeconds": 1,
+         "player": [-128.476, -156.2407, -41.8348], "view": {"position": [-129.3, -154.3247, -39.06495], "yaw": 162.923, "pitch": 9.0797}}
+      ]
+    },
+    {
+      "id": "huntress",
+      "scene": "lakes",
+      "seed": "2",
+      "body": "HuntressBody",
+      "naturalFirstStage": true,
+      "captureAudio": true,
+      "steps": [
+        {"id": "huntress-target", "action": "spawn", "subject": "target", "value": "GolemMaster", "freezeAi": true,
+         "relativeToPlayer": true, "position": [0, 0, 12], "settleSeconds": 1,
+         "view": {"relativeToPlayer": true, "position": [-3, 3, -6], "yaw": 9, "pitch": 7}},
+        {"id": "huntress-control", "action": "capture", "aimAt": "target", "recordSeconds": 4},
+        {"id": "huntress-shot-one", "action": "skill", "value": "primary", "aimAt": "target", "recordSeconds": 4},
+        {"id": "huntress-shot-two", "action": "skill", "value": "primary", "aimAt": "target", "recordSeconds": 4},
+        {"id": "huntress-shot-three", "action": "skill", "value": "primary", "aimAt": "target", "recordSeconds": 4}
+      ]
+    },
+    {
+      "id": "combat",
+      "scene": "blackbeach2",
+      "seed": "3",
+      "body": "CommandoBody",
+      "naturalFirstStage": true,
+      "steps": [
+        {"id": "golem-spawn", "action": "spawn", "subject": "golem", "value": "GolemMaster", "freezeAi": true,
+         "player": [67.28, 12.37, 112.95], "relativeToPlayer": true, "position": [0, 0, 9], "settleSeconds": 1,
+         "view": {"position": [64, 16, 105.05], "yaw": 10, "pitch": 9}},
+        {"id": "golem-nameplate-position", "action": "ping", "subject": "golem", "settleSeconds": 0.2, "recordSeconds": 0.8},
+        {"id": "golem-clap", "action": "state", "subject": "golem", "machine": "Weapon",
+         "value": "EntityStates.GolemMonster.ClapState", "aimAt": "player", "recordSeconds": 2},
+        {"id": "golem-laser", "action": "state", "subject": "golem", "machine": "Weapon",
+         "value": "EntityStates.GolemMonster.ChargeLaser", "aimAt": "player", "recordSeconds": 5},
+        {"id": "lemurian-spawn", "action": "spawn", "subject": "lemurian", "value": "LemurianMaster", "freezeAi": true,
+         "relativeToPlayer": true, "position": [4, 0, 9], "settleSeconds": 0.4},
+        {"id": "lemurian-projectile", "action": "state", "subject": "lemurian", "machine": "Weapon",
+         "value": "EntityStates.LemurianMonster.FireFireball", "aimAt": "player", "recordSeconds": 2},
+        {"id": "blazing-start", "action": "fire-trail", "subject": "lemurian", "settleSeconds": 0.25},
+        {"id": "blazing-trail", "action": "move", "subject": "lemurian", "relativeToPlayer": true,
+         "position": [0, 0, -6], "settleSeconds": 1.5, "recordSeconds": 1},
+        {"id": "titan-spawn", "action": "spawn", "subject": "titan", "value": "TitanMaster", "freezeAi": true,
+         "relativeToPlayer": true, "position": [-5, 0, 14], "settleSeconds": 0.6},
+        {"id": "titan-fist-dust", "action": "state", "subject": "titan", "machine": "Weapon",
+         "value": "EntityStates.TitanMonster.FireFist", "aimAt": "player", "recordSeconds": 3}
+      ]
+    }
+  ]
+}
