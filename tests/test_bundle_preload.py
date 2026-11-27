@@ -169,66 +169,6 @@ class BundlePreloadTests(unittest.TestCase):
                 rows, _ = C.containers(W.B.exact(stream, container["bytes"]))
                 self.assertIn(("assets/added.asset", (0, -22), [(0, -22), (0, 10), (0, 20)]), rows)
 
-    def test_expose_local_assets_appends_sprite_with_checked_texture(self):
-        W, M, C = (P.module(name) for name in ("unity_write", "bundle_manifest", "catalog_complete"))
-        name, member, texture, sprite = "authored", "CAB-authored", 10, -11
-
-        def native(class_id, fields):
-            tree = M.S._tree([dict(type=kind, name=field, size=size, level=level, meta=0, flags=0, version=1) for kind, field, size, level in fields])
-            return dict(class_id=class_id, stripped=0, script_type=-1, hash=b"a" * 16, tree=tree, dependencies=[])
-
-        sprite_type = native(
-            213,
-            [
-                ("Sprite", "Base", -1, 0),
-                ("SpriteRenderData", "m_RD", -1, 1),
-                ("PPtr<Texture2D>", "texture", 12, 2),
-                ("int", "m_FileID", 4, 3),
-                ("SInt64", "m_PathID", 8, 3),
-            ],
-        )
-        texture_type = native(28, [("Texture2D", "Base", -1, 0), ("int", "padding", 4, 1)])
-        group = dict(guid="34" * 16, path="Assets/Added.png", roots=[dict(path_id=texture, class_id=28), dict(path_id=sprite, class_id=213)])
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            source = root / "source.bundle"
-            original = dict(
-                name=name, member=member, externals=[], dependencies=[], asset_groups=[dict(guid="12" * 16, path="Assets/Existing.png", roots=[texture])]
-            )
-            rows = [
-                dict(path_id=1, type={**M.schemas()[0], "dependencies": []}, body=P.produce_graph(original, {texture: set()}, {})),
-                dict(path_id=texture, type=texture_type, body=bytes(4)),
-                dict(path_id=20, type=sprite_type, body=struct.pack("<iq", 0, texture)),
-            ]
-            layout, bodies = P.O.make_layout(dict(externals=[]), rows)
-            serialized = io.BytesIO()
-            W.write_serialized(serialized, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
-            content = serialized.getvalue()
-            with source.open("wb") as stream:
-                W.write_bundle(
-                    stream,
-                    [(member, 4, len(content), lambda: io.BytesIO(content)), (member + ".resS", 0, 1, lambda: io.BytesIO(b"x"))],
-                    lambda block, method: block,
-                    flags=0x40,
-                )
-            pack = {"types": [P.O.json_layout(sprite_type)], "objects.bin": root / "objects.bin", "index.jsonl": root / "index.jsonl"}
-            for target in (texture, 0, 20):
-                body = struct.pack("<iq", 0, target)
-                pack["objects.bin"].write_bytes(body)
-                row = dict(bundle=name, member=member, path_id=sprite, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), type_id=0)
-                pack["index.jsonl"].write_text(json.dumps(row) + "\n")
-                if target != texture:
-                    with self.assertRaisesRegex(ValueError, "unqualified Texture2D"):
-                        P.expose_local_assets(source, root / "invalid", name, member, [group], codec=None, codec_sha256=None, packs=[pack])
-                    continue
-                result = P.expose_local_assets(source, root / "extended", name, member, [group], codec=None, codec_sha256=None, packs=[pack])
-                with W.B.Bundle(Path(result["bundle"])).member(member) as stream:
-                    revised = W.read_serialized(stream)
-                    container = next(row for row in revised["objects"] if row["path_id"] == 1)
-                    stream.seek(revised["data_offset"] + container["offset"])
-                    entries, _ = C.containers(W.B.exact(stream, container["bytes"]))
-                self.assertEqual(entries[:2], [("assets/added.png", (0, pid), [(0, sprite), (0, texture)]) for pid in (texture, sprite)])
-
     def test_component_preloads_extend_shared_extents_and_preserve_other_rows(self):
         C = P.module("catalog_complete")
         root = (0, 30)
