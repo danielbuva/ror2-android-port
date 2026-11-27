@@ -449,8 +449,34 @@ class PerfReportTests(unittest.TestCase):
         result = perf.analyze(session, thermal)
         self.assertEqual(result["thermal"]["gaps_over_one_second"], 1)
         self.assertEqual(result["thermal"]["time_above80_observed_seconds"], 1)
+        self.assertEqual(result["thermal"]["threshold_observed_seconds"], 1)
+        self.assertEqual(result["thermal"]["threshold_unobserved_seconds"], 2)
         self.assertEqual(result["thermal"]["peak_gpu_c"], 60)
         self.assertEqual(result["thermal"]["peak_cpu_c"], 81)
+
+    def test_processor_exposure_does_not_treat_a_missing_channel_as_cool(self):
+        session, thermal = fixture()
+        thermal[0]["all_zones_raw"] = "CPU-0\t80000\nGPU-0\t79999"
+        thermal[1]["all_zones_raw"] = "cpu-0\t79000\ngpu-0\tUNREADABLE"
+        thermal[2]["all_zones_raw"] = "cpu-0\t81000\ngpu-0\t-30000"
+        thermal[3]["all_zones_raw"] = "cpu-0\tmalformed\ngpu-0\tUNREADABLE"
+        report = perf.analyze(session, thermal)
+        result = report["thermal"]
+        self.assertEqual(result["samples"], 4)
+        self.assertEqual(result["threshold_observed_seconds"], 2)
+        self.assertEqual(result["threshold_unobserved_seconds"], 1)
+        self.assertEqual(result["time_above80_observed_seconds"], 1)
+        self.assertEqual(result["peak_gpu_c"], 79.999)
+        self.assertIn("1.000 s above 80 C; 2.000 s classified; 1.000 s unclassified", perf.markdown(report))
+
+    def test_fully_observed_cool_period_reports_zero_not_unavailable(self):
+        session, thermal = fixture()
+        for row in thermal:
+            row["all_zones_raw"] = "cpu-0\t80000\ngpu-0\t79000"
+        result = perf.analyze(session, thermal)["thermal"]
+        self.assertEqual(result["time_above80_observed_seconds"], 0)
+        self.assertEqual(result["threshold_observed_seconds"], 3)
+        self.assertEqual(result["threshold_unobserved_seconds"], 0)
 
     def test_hal_status_is_not_causal_throttling_onset(self):
         session, thermal = fixture()
@@ -473,6 +499,10 @@ class PerfReportTests(unittest.TestCase):
         self.assertEqual(result["thermal"]["samples"], 0)
         self.assertIsNone(result["thermal"]["peak_cpu_c"])
         self.assertEqual(result["thermal"]["boundary_uncovered_seconds"], 3)
+        self.assertIsNone(result["thermal"]["time_above80_observed_seconds"])
+        self.assertEqual(result["thermal"]["threshold_observed_seconds"], 0)
+        self.assertEqual(result["thermal"]["threshold_unobserved_seconds"], 3)
+        self.assertIn("time above 80 C unavailable; 3.000 s unclassified", perf.markdown(result))
 
 
 if __name__ == "__main__":
