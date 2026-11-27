@@ -4839,6 +4839,19 @@ Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
 The runner removed its attempt scratch, preserved staged inputs, slept the
 display and released the lease. Typed load and gameplay remain open.
 
+## J1545 — Return to the menu after End Run in converted Distant Roost
+
+2026-11-27. V46 ordinary Start gave Commando native authority in Distant Roost.
+Touch input moved him 37.60 m and fired 31 primary shots. With Commando alive,
+the End Run confirmation cleaned up the active offline session. The start menu
+reopened in the same process and attempt, with no result report for the abandoned run.
+APK SHA-256 `548f0ea61455fea60575294529c073b2717b361772bf10a3cd470560f2b121a4` (runtime `917db0b6`).
+Evidence under `work/coordination/p1-scenes-w/staged-start-v46/v46-ordinary-early-end-run/`
+includes the terminal receipt, session state, camera frame trace and screenshots.
+Across 7,105 frames including startup and transitions, median was 8.333 ms and
+p95 was 10.864 ms. SoC peaked at 84.8 °C, with 2.171 s above 80 °C.
+Adopted placement, scratch removal, OLED sleep and lease release passed.
+Two GameObject Addressables errors, matched render parity and physical audibility remain open.
 ## J1542 — Recover a native profile save after injected ENOSPC
 
 2026-11-27. The shared lab runner injected ENOSPC before the live profile
