@@ -153,13 +153,16 @@ class RefusedLeaseTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory).resolve()
             runner = lab_runner.Runner(repo, {})
+            checkout = repo / "local-checkout"
+            checkout.mkdir()
             runner.devices = {"nova-b": "fixture"}
             command = lab_runner.parse_command("/lab script device=nova-b -- scripts/lab-alpha-packaging.py --package-only")
             with mock.patch.object(runner, "run", return_value=0) as run, mock.patch.object(runner, "battery") as battery:
                 with self.assertRaisesRegex(lab_runner.CommandError, "grant required"):
-                    runner.execute(command, local_checkout=repo, workstream="fixture-worker")
+                    runner.execute(command, local_checkout=checkout, workstream="fixture-worker")
             battery.assert_not_called()
-            self.assertEqual(run.call_args.args[0][1:], ["scripts/prune-generated.py", "--apply", "--aggressive"])
+            self.assertEqual(run.call_args.args[0][1:], ["scripts/prune-generated.py", "--apply", "--aggressive", "--work-dir", str(repo / "work")])
+            self.assertEqual(run.call_args.args[1], checkout)
 
     def test_local_packaging_publishes_terminal_after_shared_runner_failure(self):
         with tempfile.TemporaryDirectory() as directory:

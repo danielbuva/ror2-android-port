@@ -11,6 +11,7 @@ public final class OwnerBuildService extends Service {
     public static final String PREFERENCES = "owner-phone-flow";
     private static final int NOTIFICATION = 119;
     private static final String CHANNEL = "owner-local-build";
+    private static final String IMPORT_CANCELLED = "Import cancelled. Verified files retained; resume when ready.";
     private static volatile boolean running;
     private static volatile boolean pending;
     private static volatile boolean liveControls;
@@ -136,7 +137,13 @@ public final class OwnerBuildService extends Service {
                     }
                 } catch (Exception error) {
                     if ("import".equals(action)) {
-                        try { ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", (error instanceof InterruptedIOException || destroyed || "cancel".equals(importControl)) ? "CANCELLED" : "ERROR").put("message", error.getMessage())); }
+                        boolean stopped = destroyed || "cancel".equals(importControl);
+                        boolean cancelled = stopped || error instanceof InterruptedIOException;
+                        String message = stopped ? IMPORT_CANCELLED : error.getMessage();
+                        try {
+                            ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"),
+                                new JSONObject().put("state", cancelled ? "CANCELLED" : "ERROR").put("message", message));
+                        }
                         catch (Exception ignored) { }
                     } else ToolHostActivity.updateStatus(OwnerBuildService.this, "ERROR", error.getMessage());
                 } finally {
@@ -187,7 +194,7 @@ public final class OwnerBuildService extends Service {
                     if (!"PAUSED".equals(current.optString("state"))) ToolHostActivity.writeJson(OwnerBuildService.this, state, current.put("state", "PAUSED").put("message", "Import paused. Verified files are retained."));
                     Thread.sleep(250);
                 }
-                if (destroyed || "cancel".equals(importControl)) throw new InterruptedIOException("Import cancelled. Verified files retained; resume when ready.");
+                if (destroyed || "cancel".equals(importControl)) throw new InterruptedIOException(IMPORT_CANCELLED);
             }
             public void progress(String path, long complete, long total) throws Exception {
                 long now = SystemClock.elapsedRealtime();
