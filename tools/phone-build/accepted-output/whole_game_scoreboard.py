@@ -263,9 +263,14 @@ def write(path, value):
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
 
-    request = json.loads(Path(sys.argv[1]).read_bytes())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("request", type=Path)
+    parser.add_argument("--output", type=Path, help="Override the request's report path")
+    args = parser.parse_args()
+    request = json.loads(args.request.read_bytes())
+    output = args.output if args.output is not None else Path(request["output"])
     scoreboard = build(request)
-    write(request["output"], scoreboard)
-    print(json.dumps(dict(output=request["output"], totals=scoreboard["totals"], files=scoreboard["files"])))
+    write(output, scoreboard)
+    print(json.dumps(dict(output=str(output), totals=scoreboard["totals"], files=scoreboard["files"])))

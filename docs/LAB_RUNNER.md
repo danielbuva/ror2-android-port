@@ -166,6 +166,18 @@ If the device disconnects during production, use the generated
 `*.request.json` with a fresh terminal filename in the same directory and
 resume its retained handle through `--emission-request ... --resume-emission`.
 
+Use `whole-game-scoreboard` to census APKs already readable by the retained
+toolhost. Its descriptor selects
+`tools/phone-build/accepted-output/whole_game_scoreboard.py` and uses arguments
+`[{"inputs":"scoreboard-request.json"}, "--output", {"output":"scoreboard.json"}]`.
+Pin the request under `input_pins` and set
+`"artifacts": {"scoreboard": "scoreboard.json"}` and
+`"scoreboard": "scoreboard.json"`. Paths inside the scoreboard request resolve
+from the descriptor's retained input root. The request pins the candidate,
+optional reference, and any external payload receipts with the same format as
+the [host census](../tools/phone-build/accepted-output/README.md#whole-game-scoreboard).
+The lab runner stages its two Unity readers automatically.
+
 ## Current local emission request
 
 After obtaining the orchestrator's device grant, use the same runner locally:
