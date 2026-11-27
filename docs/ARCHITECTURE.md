@@ -3235,6 +3235,8 @@ The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
 | --- | --- | --- |
+| pins | `check` | current |
+| pins | `refresh` | current |
 | build-hook-pins | `check` (default) | current |
 | build-hook-pins | `refresh` | current |
 | editor | `open` | current |
@@ -3273,6 +3275,18 @@ registry labels and the editor/perf/lane selectors without starting an editor or
 querying a device. Labels live with existing CLI owners; dispatch is unchanged.
 
 ## Build pipeline
+
+`scripts/lab/source_pins.py` owns `./dev pins check` and `./dev pins refresh`.
+It resolves public recipe and profile hashes from tracked files, following
+dependencies through producer sources, embedded build-hook bindings and other
+profiles. Digest-only supplier selectors use tracked recipe identities from
+the current tree or the applicable Git base. `--show-external` lists recipes
+with SHA fields that still need their original input or produced-byte witness.
+Historical manifests and signed or retained receipts keep their recorded identities.
+The pre-push hook checks the outgoing commit before launching local CI. It
+refreshes eligible files on the checked-out outgoing branch and stops the push
+so the author can review and commit the changes. Staged or unstaged edits to
+the affected files take precedence and require an explicit refresh.
 
 Historical `input-update-check` uses `scripts/lab/historical_receipts.py` to
 resolve an explicitly registered, hash-pinned optional-guard receipt against the

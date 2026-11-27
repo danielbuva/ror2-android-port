@@ -47,7 +47,7 @@
       "sha256": "15a39afd3922cfa7c8279afcdff7252b895349fe8713d67f2bb6831719e22002"
     },
     "scripts/lab/shader_segments.py": {
-      "bytes": 12742,
+      "bytes": 14300,
       "sha256": "8b9d68dbd081210215c4472c33ea71ecd514250e54c76594197ce5e90baf20a8"
     },
     "scripts/lab/shader_source.py": {

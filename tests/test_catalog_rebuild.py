@@ -32,15 +32,15 @@ class CatalogRebuildTests(unittest.TestCase):
             16022: (
                 "scripts/lab/shader_outline.py",
                 "recipe/shader-outline-candidate.json",
-                "7cd674a8f0081a5e47669810c65e69c86349e91d280c1e4129c73111ec3ad608",
-                "49d9890b97bb96531c7a83a07f2086a8b46235f41775929d985272747a6c8a64",
+                sha(REPO_ROOT / "scripts/lab/shader_outline.py"),
+                sha(REPO_ROOT / "recipe/shader-outline-candidate.json"),
                 "generated-shader-candidates/outline-highlight-r4/{input_id}",
             ),
             15950: (
                 "scripts/lab/shader_ramp_fog.py",
                 "recipe/shader-ramp-fog-candidate.json",
-                "631d8c13694327a1e19bca5757463949a7cbbacf80a2dc8d630d1c00ed7c7017",
-                "c45668bb383b7b7f26be5ac836180dc29d9bf86835e127c1c92b80f43a74f52d",
+                sha(REPO_ROOT / "scripts/lab/shader_ramp_fog.py"),
+                sha(REPO_ROOT / "recipe/shader-ramp-fog-candidate.json"),
                 "generated-shader-candidates/ramp-fog-r6/{input_id}",
             ),
         }
