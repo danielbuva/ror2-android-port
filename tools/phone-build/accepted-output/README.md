@@ -632,6 +632,56 @@ and the existing workspace/interpreter receipts. [J1075](../../../docs/history/j
 qualifies all 228 records on host and phone. Packs require later complete bundle
 assembly; no current build or runtime consumes them.
 
+## Compare texture encoders on the host
+
+`texture_compare.py` joins the six texture recipes below with a private
+passthrough audit (`objects.jsonl` and `target-hashes.json`). It verifies the
+reference APK and audited bundles, then reads a deterministic sample from
+matching PC and Android objects up to 256 pixels per axis. It checks the full
+inline or streamed image, including mips and cubemap faces, independently of
+the reconstructed serialized body. A new private JSON receipt records hashes,
+tool identities and results. Use the lab Python environment for UnityPy and
+LZ4, and the host builds of the existing ETC, JPEG and SDK texture tools.
+
+Build the comparison bridge from the pinned [etcpak checkout](https://github.com/wolfpld/etcpak/tree/3d716e1550023dc5ff8b602636af8b76584e0b66).
+The macOS ARM64 command uses the public ETC1 RGB and ETC2 RGBA block APIs:
+
+```sh
+clang++ -std=c++20 -O3 -DNDEBUG -dynamiclib -I"$etcpak_source" \
+  tools/phone-build/accepted-output/texture_etcpak_block.cpp \
+  "$etcpak_source/ProcessRGB.cpp" "$etcpak_source/Dither.cpp" \
+  "$etcpak_source/Tables.cpp" -o "$private_output/etcpak-block.dylib"
+
+.local/lab-venv/bin/python tools/phone-build/accepted-output/texture_compare.py \
+  --pc "$pc_root" --apk "$reference_apk" --apk-sha256 "$reference_sha256" \
+  --payload "$reference_payload" --audit "$private_audit" \
+  --etc "$host_etc" --jpeg "$host_jpeg" --pixel-tool "$host_pixels" \
+  --sdk-adapter "$host_sdk_adapter" --sdk-library "$owner_etccompress" \
+  --etcpak "$private_output/etcpak-block.dylib" \
+  --recipes recipe/owner-{rgb-textures,rgb-mip-textures,rgba-textures,rgba-mip-textures,cubemap-textures,uncompressed-textures}.json \
+  --output "$private_output/encoder-sample-50.json"
+```
+
+The 50-object baseline against `9f904392` uses PC source data and the
+producer's existing mip and import policy. The alternate codec receives the same
+preprocessed inputs. Counts are complete image byte matches.
+
+| Android format | Existing producer | etcpak |
+| --- | ---: | ---: |
+| ETC1 RGB, including two Cubemaps | 23/23 | 0/23 |
+| ETC2 RGBA8 | 17/17 | 0/17 |
+| RGBA32 | 10/10 | N/A |
+
+All 50 serialized bodies from the existing producer matched too. ETC1 uses
+public ETCPACK 2.74 with fast perceptual colour or numeric normal-map encoding.
+ETC2 RGBA8 uses Unity 2021.3.45f2's `etccompress` for colour (backend 1,
+quality 1, metric 0) and public ETCPACK for EAC alpha. RGBA32 copies or
+extends RGB under transparent texels without compressing it. The broader
+9,612-record Android inventory also contains RGB24, ARGB32, Alpha8 and
+RGBA4444. It has no ASTC or Crunch targets. Unity's bundled ARM64 ASTC library
+and the public Unity Crunch source decoder are available for further comparison
+when an Android output uses those formats. This measurement covers host bytes.
+
 ## Produce uncompressed textures directly from original PC bundles
 
 `texture_produce.py` owns a current experimental PC-input-only producer for
@@ -2132,12 +2182,18 @@ For a retained supplier with already-relocated PPtrs, a binding's explicit
 `pointer_namespace` lists `[bundle, member]` pairs, starting with the local
 member and then each external slot. Ordinary suppliers resolve through their
 original member tables. A checked local producer patch can choose an emitted
-alias when that alias is bound to the same original endpoint. Preparation
-preserves supplier record identities through
+alias when that alias is bound to the same original endpoint. An unbound
+`m_Mesh` target can use the producer's checked alias if both originals have
+identical native types and bodies with no external data or nonzero PPtrs.
+Preparation preserves supplier record identities through
 retained lineage while relocating only qualified PPtr fields. It refuses missing
 bodies, conflicting source destinations, stale type tables and mismatching or
 unused overrides. Preparation is host qualification support; signed dispatch and
 the phone conversion experience remain unqualified.
+
+Standalone Sprite recipes declare PPtr relocations by source offset.
+Preparation matches them to the assembled record's typed fields and checks
+the original and produced pointer values before resolving their endpoints.
 
 SDK staged rows declare `bundle: "sdk"`, the canonical `member`, the serialized
 `file` pin and optional `leaves`/`full` witness pins. Preparation retains moved
@@ -2145,3 +2201,31 @@ file aliases and checks actual bodies/native metadata. SDK members enter the
 serialized external table, not AssetBundle dependencies. Managed preparation
 derives original script properties and null-script body witnesses; emission
 still requires the existing pinned current registry, CLR providers and SDK.
+
+## Whole-game scoreboard
+
+Run `./dev prototype --action whole-game-scoreboard --target REQUEST.json` after
+assembly and again when the shared runner has device evidence for the same APK.
+The request uses `schema: whole-game-scoreboard-request-v1`, `output` (an ignored
+JSON path), and `candidate` with an `apk` `{path, sha256}` pin. Owner APKs
+discover their payload from the embedded index. A lab APK with an external
+payload also supplies `external_payload` with `directory` and a `receipt`
+`{path, sha256}` pin from its build. The receipt binds the complete payload
+inventory to the APK. `reference` accepts the same shape as `candidate`.
+`original_audit` optionally pins the 11 November copy-and-renumber audit
+summary, which is reported with its original scope and owner counts.
+`device_receipts` optionally pins a list of shared-runner `terminal.done.json`
+files. The command reads the accompanying phase markers and matches their
+process IDs against the APK-bound launch record.
+
+The output `whole-game-scoreboard-v1` lists numeric Unity class IDs and owners.
+For a comparison, keys are runtime artifact, serialized member, object path ID
+and class ID. `exact` counts equal serialized bodies and type and reference
+metadata. `approximate` counts shared identities with observed serialized
+differences. `missing` counts reference identities absent from the candidate.
+`unverified` counts candidate identities without a reference match, including
+all records in a census without a reference. The comparison covers serialized
+objects. Streamed bytes and runtime fidelity have their own checks. The
+original-source audit is a separate table with its original C/R/D/U buckets.
+Device phase results remain `unobserved` until an exact-APK receipt provides
+evidence.

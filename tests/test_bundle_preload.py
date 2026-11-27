@@ -381,7 +381,64 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Sprite names an unqualified Texture2D"):
                 append(70, "invalid")
 
-    def canonical_fixture(self, root, broken=None, *, extra_records=()):
+    def test_appended_material_can_preload_typed_texture_endpoints(self):
+        M = P.module("bundle_manifest")
+
+        def native(class_id, nodes):
+            tree = M.S._tree([dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1) for kind, name, size, level in nodes])
+            return dict(class_id=class_id, stripped=0, script_type=-1, hash=b"m" * 16, tree=tree, dependencies=[])
+
+        material = native(
+            21,
+            [
+                ("Material", "Base", -1, 0),
+                ("PPtr<Texture>", "m_Texture", 12, 1),
+                ("int", "m_FileID", 4, 2),
+                ("SInt64", "m_PathID", 8, 2),
+            ],
+        )
+        cubemap = native(89, [("Cubemap", "Base", -1, 0), ("int", "fixture", 4, 1)])
+        texture = native(28, [("Texture2D", "Base", -1, 0), ("int", "fixture", 4, 1)])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            body = struct.pack("<iq", 0, 60)
+            inputs, _ = self.canonical_fixture(
+                root, extra_records=[(60, cubemap, bytes(4)), (70, material, body)], canonical_extra_records=[(300, texture, bytes(4))]
+            )
+            name, member = inputs["required"]["name"], inputs["required"]["member"]
+            groups = [dict(guid="34" * 16, path="Assets/Sky.mat", roots=[dict(path_id=71, class_id=21)])]
+            index, objects = root / "append.jsonl", root / "append.bin"
+            pack = dict(types=[P.O.json_layout(material)], **{"index.jsonl": index, "objects.bin": objects})
+            row = dict(bundle=name, member=member, path_id=71, type_id=0, offset=0, bytes=len(body))
+
+            def append(file_id, texture_id, destination):
+                body = struct.pack("<iq", file_id, texture_id)
+                objects.write_bytes(body)
+                index.write_text(json.dumps(dict(row, sha256=hashlib.sha256(body).hexdigest())) + "\n")
+                return P.expose_local_assets(
+                    inputs["source"],
+                    root / destination,
+                    name,
+                    member,
+                    groups,
+                    codec=None,
+                    codec_sha256=None,
+                    packs=[pack],
+                    external_bundles=[(inputs["canonical_bundle"], "CAB-canonical")],
+                )
+
+            result = append(0, 60, "local-cubemap")
+            self.assertEqual((result["local_objects"], result["added_objects"]), (2, 1))
+            result = append(1, 300, "external-texture")
+            self.assertEqual((result["local_objects"], result["added_objects"]), (1, 1))
+            with self.assertRaisesRegex(ValueError, "Material names an unqualified Texture2D or Cubemap"):
+                append(0, 70, "incorrect-local-type")
+            with self.assertRaisesRegex(ValueError, "unqualified external object"):
+                append(1, 100, "incorrect-external-type")
+            with self.assertRaisesRegex(ValueError, "unqualified external object"):
+                append(2, 300, "unqualified-external-provider")
+
+    def canonical_fixture(self, root, broken=None, *, extra_records=(), canonical_extra_records=()):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 
         def typ(cid, field):
@@ -417,6 +474,9 @@ class BundlePreloadTests(unittest.TestCase):
             for pid, target in [(100, 200), (200, 100), (101, 201), (201, 101)]
         }
         ctypes = {100: go, 101: go, 200: component, 201: component}
+        for pid, native, body in canonical_extra_records:
+            cbodies[pid] = body
+            ctypes[pid] = native
 
         def write(path, member, data, types, externals, request=None):
             data = dict(data)

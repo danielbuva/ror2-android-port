@@ -25,6 +25,7 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
             source_method(presentation, declaration)
             for declaration in (
                 "static bool ApplyNative(",
+                "public static Material RecoverMaterial(",
                 "public static int ApplyRecovered(",
                 "public static Material RecoverIntersectionMaterial(",
                 "public static void SetEnabled(",
@@ -41,6 +42,7 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
                 "public void PresentRegisteredNativeEffects(",
                 "void StopPresentingNativeEffectReferences(",
                 "void PrepareNativeTeamAreaMaterials(",
+                "void PrepareNativeOmniEffectMaterials(",
                 "void PresentNativeEffectSource(",
             )
         )

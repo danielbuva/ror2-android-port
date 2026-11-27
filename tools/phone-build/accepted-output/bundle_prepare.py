@@ -13,6 +13,19 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
+def identical_inline_mesh(owner, first, second, schemas):
+    """Check source duplicates without borrowing either member's other data."""
+    body, typ, _ = first
+    other_body, other_type, _ = second
+    if typ["class_id"] != 43 or typ != other_type or body != other_body:
+        return False
+    if any(pointer[1] for _, _, pointer in owner.pointer_fields(body, typ, schemas)):
+        return False
+    _, spans = owner.A.fields(body, schemas[typ["tree"]])
+    start, end = spans.get(("m_StreamData",), (0, 0))
+    return body[start:end] == bytes(16)
+
+
 def record_descriptor(owner, types, target, body, typ, **extra):
     full = owner.full_type_key(typ)
     types[full] = owner.O.json_layout(typ)
@@ -240,7 +253,9 @@ def extend_selection(owner, member, required, selected, types, routes, extension
     required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
 
 
-def original_identities(owner, path, source_files=None, *, destinations=None, generated=None, relocations=None, shader_dependencies=None):
+def original_identities(
+    owner, path, source_files=None, *, destinations=None, generated=None, relocations=None, sprite_relocations=None, shader_dependencies=None
+):
     """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
 
@@ -344,6 +359,27 @@ def original_identities(owner, path, source_files=None, *, destinations=None, ge
                         add(record, source)
                         if relocations is not None and (references := target.get("transform", {}).get("references")):
                             relocations[record, source] = {reference["offset"]: reference for reference in references}
+                        if sprite_relocations is not None and kind == "objects" and "importer_guid" in row and "texture" in row:
+                            sprite_relocations[record, source] = target["references"]
+    return result
+
+
+def qualify_sprite_relocations(owner, original_record, fields, references, schemas):
+    """Match the Sprite producer's source offsets through the final field layout."""
+    body, typ, _ = original_record
+    if typ["class_id"] != 213:
+        raise ValueError("Sprite relocation requires an original Sprite")
+    source_fields = {offset: (field, pointer) for field, offset, pointer in owner.pointer_fields(body, typ, schemas)}
+    output_fields = {field: (offset, pointer) for field, offset, pointer in fields}
+    result = {}
+    for reference in references:
+        field, pointer = source_fields.get(reference["offset"], (None, None))
+        if pointer != tuple(reference["from"]) or field not in output_fields:
+            raise ValueError("Sprite relocation source PPtr differs")
+        offset, pointer = output_fields[field]
+        if pointer != tuple(reference["to"]) or offset in result:
+            raise ValueError("Sprite relocation output PPtr differs")
+        result[offset] = reference
     return result
 
 
@@ -427,9 +463,15 @@ def prepare(owner, inputs, output):
         if logical in providers and providers[logical] != directory:
             raise ValueError("ambiguous supplier provider")
         providers[logical] = directory
-        generated, relocations, shader_dependencies = {}, {}, {}
+        generated, relocations, sprite_relocations, shader_dependencies = {}, {}, {}, {}
         profiles[name] = original_identities(
-            owner, paths["profile"], source_files, generated=generated, relocations=relocations, shader_dependencies=shader_dependencies
+            owner,
+            paths["profile"],
+            source_files,
+            generated=generated,
+            relocations=relocations,
+            sprite_relocations=sprite_relocations,
+            shader_dependencies=shader_dependencies,
         )
         suppliers[name] = SimpleNamespace(
             paths=paths,
@@ -438,6 +480,7 @@ def prepare(owner, inputs, output):
             profile_sha=owner.O.B.sha(paths["profile"]),
             generated=generated,
             relocations=relocations,
+            sprite_relocations=sprite_relocations,
             shader_dependencies=shader_dependencies,
         )
     producer = owner.ProducerRecords(providers)
@@ -570,6 +613,17 @@ def prepare(owner, inputs, output):
             candidates = external_sources.get((target_member, pid), ()) if fid else sources.get((source[0], target_member, pid), ())
             if checked_destination in candidates:
                 return checked_destination
+            if not candidates and owner_field[1] == ("m_Mesh",):
+                bound_source = bindings.get(checked_destination, {}).get("source")
+                original_files = source_files_by_member.get(target_member, ()) if fid else (source[0],)
+                if bound_source is not None and len(original_files) == 1:
+                    unbound_source = (next(iter(original_files)), target_member, pid)
+                    try:
+                        unbound = original(unbound_source)
+                    except KeyError:
+                        unbound = None
+                    if unbound is not None and identical_inline_mesh(owner, unbound, original(bound_source), parsed):
+                        return checked_destination
             if len(candidates) != 1:
                 raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer, owner_field)))
             return next(iter(candidates))
@@ -657,6 +711,8 @@ def prepare(owner, inputs, output):
                 supplier = suppliers[binding["supplier"]]
                 selector = tuple(binding["record_source"]), tuple(source)
                 references = supplier.relocations.get(selector, {})
+                if sprite_references := supplier.sprite_relocations.get(selector):
+                    references = qualify_sprite_relocations(owner, original(source), fields, sprite_references, parsed)
                 shader_dependencies = supplier.shader_dependencies.get(selector)
             edges = []
             for field, offset, pointer in fields:

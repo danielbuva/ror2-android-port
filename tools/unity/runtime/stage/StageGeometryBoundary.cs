@@ -3,7 +3,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using RoR2;
 using UnityEngine;
@@ -99,7 +98,7 @@ public sealed partial class PortSession
     {
         GetStageGeometrySession().StopStageMapZoneObservations();
     }
-    static string StageObjectPath(Transform target)
+    internal static string StageObjectPath(Transform target)
     {
         return StageGeometrySession.StageObjectPath(target);
     }
@@ -231,6 +230,8 @@ public sealed partial class PortSession
                 coordinator.Check(names.SequenceEqual(new[] { "blackbeach", "blackbeach2", "golemplains", "golemplains2", "lakes" }) &&
                                       Mathf.Abs(choices.GetTotalWeight() - 3f) < .001f,
                                   "Original eligible starting scenes or weights changed");
+                if (Application.identifier == "dev.ror2lab.converted")
+                    RestrictStartingScenesToManifest(choices);
                 var runRng = new Xoroshiro128Plus(coordinator.SelectOwnedRunSeed(cfg));
                 var stageRng = new Xoroshiro128Plus(runRng.nextUlong);
                 coordinator.firstStageSelectionValue = stageRng.nextNormalizedFloat;
@@ -258,6 +259,35 @@ public sealed partial class PortSession
             coordinator.Check(coordinator.stageGeometryScene.name == coordinator.firstStageName,
                               "Selected original starting scene differs from loaded Android geometry");
         }
+        void RestrictStartingScenesToManifest(WeightedSelection<SceneDef> choices)
+        {
+            var path = System.IO.Path.Combine(Application.persistentDataPath, "payload", "generated-android-data");
+            var bundle = AssetBundle.LoadFromFile(path);
+            coordinator.Check(bundle, "Converted stage release bundle manifest missing");
+            try
+            {
+                var manifest = bundle.LoadAsset<AssetBundleManifest>("assetbundlemanifest");
+                coordinator.Check(manifest, "Converted stage release bundle manifest invalid");
+                var shippedBundles = new HashSet<string>(manifest.GetAllAssetBundles(), StringComparer.Ordinal);
+                // Apply the release scope after native eligibility and fallback resolution.
+                for (int i = choices.Count - 1; i >= 0; --i)
+                {
+                    var stage = choices.choices[i].value.cachedName;
+                    if (!shippedBundles.Contains(StageGeometryBundleName(stage)))
+                        choices.RemoveChoice(i);
+                }
+                coordinator.Check(choices.Count > 0 && choices.GetTotalWeight() > 0f,
+                                  "Converted release declares no eligible starting scene bundles");
+            }
+            finally
+            {
+                bundle.Unload(true);
+            }
+        }
+        string StageGeometryBundleName(string stageName)
+        {
+            return stageName + (stageSourceNames.Contains(stageName) ? "-source-lab" : "-spine-lab");
+        }
         public IEnumerator LoadStageGeometry(string bundleName, int previewCount, IntegratedStageSpec spec, int initialMapZones = 0,
                                              string[] initialActiveNames = null, string[] initialPreviewNames = null)
         {
@@ -269,14 +299,14 @@ public sealed partial class PortSession
             if (coordinator.stageSourceObjects)
             {
                 coordinator.Check(bundleName == stageName + "-spine-lab", "Unreviewed original stage-scene switch");
-                bundleName = stageName + "-source-lab";
+                bundleName = StageGeometryBundleName(stageName);
             }
             coordinator.r.stage.originalStageObjects = coordinator.stageSourceObjects;
             TraceStartup("stage-bundle-begin");
             coordinator.stageGeometryBundle =
                 AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath, "payload", bundleName));
             TraceStartup("stage-bundle-ready");
-            coordinator.Check(coordinator.stageGeometryBundle, "Recovered stage geometry bundle missing");
+            coordinator.Check(coordinator.stageGeometryBundle, "Recovered stage geometry bundle missing: " + bundleName);
             var scenes = coordinator.stageGeometryBundle.GetAllScenePaths();
             coordinator.Check(scenes.Length == 1, "Expected one recovered stage geometry scene");
             TraceStartup("stage-scene-begin");

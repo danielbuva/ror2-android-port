@@ -38,6 +38,9 @@ and waits for a ready world before the clock begins. The lab and converted packa
 use their respective gameplay reports. For a lab stage-transition memory
 soak, pair it with an explicit auto-route selector. Physical input
 qualification remains separate.
+Set `dismiss_usb_chooser: true` after a Nova USB reconnect if the “Use USB
+for” dialog blocks app focus. The runner matches the visible chooser after
+unlock, cancels it with Back, and verifies dismissal before launching.
 `capture_video: true` records up to 180 seconds after the owned world is
 ready. For a direct lab survivor launch, use an explicit spine report ID in
 `selection` and `developerSurvivorOverride: true` without `start_from_menu`.
@@ -227,6 +230,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action whole-game-scoreboard` | Current host census: scan all serialized members of a pinned APK and its payload. --target REQUEST.json writes the stable class and device scoreboard. |
 | `./dev prototype --action source-camera-program-bundle` | Current host supplier: compile the input-qualified source-camera graphics/compute candidate into an isolated Android/Vulkan bundle; --target REQUEST.json names a fresh ignored output. Phone production and device loadability remain separate gates. |
 | `./dev prototype --action phone-texture-fixture` | Experimental desktop oracle: stage a fresh SDK-only project for nine authored texture imports. No game inputs, player build or device action. |
 | `./dev prototype --action phone-texture-check` | Experimental desktop oracle: check explicit --target PROJECT with the exact editor under the primary mutex; retain all raw authored mip levels. Never a phone-production input. |

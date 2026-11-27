@@ -97,6 +97,14 @@ Existing stage and run cleanup own teardown. On a return to the offline menu,
 `IntegratedWorldSession` starts the next session without the direct-stage launch
 selector or its assistance. The device runner still owns removing the selector.
 
+On ordinary Start, the converted player reads `generated-android-data` from
+the verified payload as its release bundle manifest. `StageGeometrySession`
+retains the native `sgStage1` choices whose geometry bundles are declared there,
+preserving their order and relative weights. It unloads the manifest after
+filtering and consumes the existing single stage RNG draw. An unreadable
+manifest, an empty eligible scope or a failed selected bundle load stops Start.
+The lab package continues to use the full eligible native selection.
+
 `ActiveClientSession` checks each native SkillLocator cache against that
 identity's ordered GenericSkill components and cached NetworkIdentity before
 initial serialization. The minimum skill count applies to the controlled body.
@@ -1420,6 +1428,12 @@ row; recovery checks the ordered persisted prefix before truncating uncommitted
 tails and continuing. Initial/final receipts are replaced atomically. Host
 SIGKILL recovery qualifies this contract; Android crash recovery remains open
 after J1123. SDK colour bands run sequentially.
+`texture_compare.py` provides the host comparison for this owner. It verifies
+the reference APK, payload and source selectors, compares complete texture
+chains and bodies, and writes a new private receipt. The public etcpak bridge
+supplies test encodings through the same source preprocessing path. The
+[comparison setup](../tools/phone-build/accepted-output/README.md#compare-texture-encoders-on-the-host)
+uses the lab Python environment and explicit native tool paths.
 The same owner derives full-chain RGBA through `sdk-rgba-mips` and audited
 `recipe/owner-rgba-mip-textures.json`; source top-level decode, transparency
 extension, continuous float mip filtering and per-level SDK/public encoding
@@ -3090,6 +3104,10 @@ in `scripts/lab/actions.py` owns each prototype action's current/historical labe
 shown by `./dev prototype --action list`, including the historical `inspect`
 default and unknown-name fallback. The listing action itself is current.
 `./dev lane --help` labels its explicit create/list/remove actions as current.
+`./dev pc-reference` is the current host recorder for stock Steam PC captures.
+`scripts/lab/pc_reference.py` owns the separate CrossOver clone, launch and
+capture manifest. `tools/pc-reference/Recorder.cs` owns its isolated profile,
+local run, camera and capture lifecycle. See the [PC reference recorder](../tools/pc-reference/README.md).
 The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
@@ -3515,6 +3533,9 @@ unsecured keyguard (with one swipe fallback) and verifies the window-policy
 lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
 a credential lock or unknown lock state aborts before launch. Cleanup still
 stops the owned packages, sleeps the display and releases the lease.
+On request the same owner checks the active USB chooser after unlock,
+verifies that Back closes it, and removes its temporary accessibility dumps
+from the verified runtime volume. The terminal records chooser visibility.
 After keyguard dismissal a converted session records any resumed lab process.
 If only the separate lab package resumed, the runner retains matching Android
 process-start events and uses its existing receipt-verified idle reset. The
@@ -5276,11 +5297,16 @@ For native team area indicators on these roots, the session prepares the
 intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
 startup selects a team entry. The original table is restored with the effect
 callbacks before world cleanup destroys the owned copies.
+The same owner prepares `OmniEffect` particle overrides before native Start
+selects a radius group and assigns its material. It restores the original
+override references with the renderer and trail sources.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
 for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, which
-instantiate their prefabs directly. It holds the Acrid
+instantiate their prefabs directly. Artificer's configured Nano-Bomb projectile
+also enters this owner so the projectile controller's detached ghost takes the
+same material recovery path. It holds the Acrid
 finisher's typed provider lease through the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
@@ -6473,6 +6499,9 @@ existing owner-input tree. The host stages the current committed producer
 closure and a small descriptor. The phone checks the input pins, hashes the
 declared artifacts, and returns the stage and thermal receipts with an optional
 scoreboard. The runner removes attempt scratch and preserves the input tree.
+The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
+accessible to the retained toolhost. The same scoreboard owner runs on the
+host and phone with the same request pins and JSON schema.
 
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
@@ -8178,13 +8207,15 @@ packages the Android executables. Phone execution remains open.
 
 The existing `record_produce.py` native owner also preserves source release
 LightingSettings and OcclusionCullingData. It parses the complete pointer-free
-source schema, checks native type identity and persists unchanged record bodies;
-it does not synthesize editor-only bake settings or renderer/portal tables.
+source schema, checks native type identity and persists unchanged record bodies.
+`recipe/owner-whole-game-occlusion-records.json` supplies 19 shared bundle aliases
+used by the scene consumers. The Goolake alias has a separate source profile.
 Setup requires pinned source bundles and a fresh record pack; scoped readers
 close on exit and receipts persist. Authored host fixtures cover both native
 shapes. A source-derived 22-asset LightingSettings bundle passed typed exact-editor
-load and unload. Occlusion native-load, complete bundle and device acceptance
-remain open.
+load and unload. The exact-editor fixture checks the native class name for
+OcclusionCullingData because the SDK exposes it as a Unity object. Complete
+bundle and device acceptance remain open.
 
 Release-graph Texture jobs bind the public JPEG/ETC codecs and native SDK texture
 toolchain required by their source operations. Dynamic file hashes enter the
@@ -8382,6 +8413,13 @@ texture state; particle renderers also report all meshes. The existing screen
 coverage ordering and 128-view limit remain: this is a sampled attribution tool,
 not proof that every prefab rendered. Session teardown discards the report with
 the other objective observations; it never changes materials or simulation.
+`IntegratedWorldSession` also owns the opt-in `diagnosticMageBombRelease`
+trace. It samples the first native Nano-Bomb charge-to-throw transition at
+end of frame and follows the configured projectile, its detached ghost and the
+configured muzzle and impact effects by catalog identity. It retains camera
+projected screen bounds and material slots for up to 1.25 seconds or 120 frames.
+The report belongs to the current world and holds only observations. Projected
+bounds and effect identity identify candidates for comparison with the video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
@@ -8399,6 +8437,18 @@ the existing five-second report cadence. The latest `NovaReport` sample records
 the display camera, renderer state, projected bounds, mesh and first shared
 material. The sample holds no Unity references and works with native skin
 diagnostics disabled.
+
+The integrated lab route can request a same-frame presentation capture with
+`frameCaptureScene` and `frameCaptureRunSeconds` in its session selector.
+`NovaInputBoundary` arms `AndroidPresentationCamera` on the lab view. It samples
+the camera source and the composited screen in the same Unity frame within
+12 s of the requested native run stopwatch, at most 48 times. The existing
+private camera report retains the first pair of 160 × 90 PNGs, camera and target
+state, and the collider from the view's own obstruction cast. The first sample
+with at least 5% flat mid-gray replaces that pair and ends sampling. The camera
+releases capture textures at teardown. The collider describes camera placement,
+and the PNGs can localize a presentation stage. Identifying a draw requires
+pixel-event evidence.
 
 
 ## Host-only owner layout models
@@ -8446,3 +8496,12 @@ gameplay input bank. The action rectangles and opacity go through the normal
 touch HUD projection, while movement, look and pause keep their authored layout.
 The separately modeled recovered HUD editor is not staged as a live feature.
 Host fixtures do not establish Unity or device acceptance.
+
+### Whole-game content scoreboard
+
+`tools/phone-build/accepted-output/whole_game_scoreboard.py` inventories serialized
+Unity objects in the player APK and its full runtime bundle payload. The lab
+wrapper exposes `./dev prototype --action whole-game-scoreboard --target REQUEST.json`.
+The result is evidence for converter builds and device sessions. The release
+assembler and runtime do not consume it. See the request and counting contract
+in [the accepted-output guide](../tools/phone-build/accepted-output/README.md#whole-game-scoreboard).

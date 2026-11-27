@@ -6,6 +6,32 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1534 — Recover Artificer Nano-Bomb release materials
+
+2026-11-27. The existing effect owner prepares the native projectile's
+detached ghost and the materials assigned by `OmniEffect` during native Start.
+Paired assisted Distant Roost video shows the black release square, radial
+cards and opaque ring backing clear while blue lightning remains visible.
+The same-PID report recorded one paired native secondary activation and
+all skill machines back at Idle. All 266 payload hashes matched J1532.
+APK SHA-256 `5af412ac93b310c221879305194cb68d3f81868252c048a573ef2c99db2d236e` (source `53b5781a`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-bomb-release-recovery-main-nova/`.
+SoC peaked at 92.3 °C with 20.727 s above 80 °C. Cleanup and OLED sleep passed.
+Impact brightness still needs a matched PC capture. Fire Bolt strips remain open.
+## J1533 — Admit shipped first stages on converted ordinary Start
+
+2026-11-27. The staged converter qualifies material texture and shader preloads.
+The converted player filters the native starting group by its release manifest
+before the single stage draw. Ordinary Start gave Commando authority in Titanic
+Plains. Touch input moved him 37.23 m and fired 31 primary shots. The native loss
+report persisted and reloaded. The gameplay camera context admitted Wwise output,
+with 487,296 nonzero finite PCM samples captured after authority skill use.
+APK SHA-256 `548f0ea61455fea60575294529c073b2717b361772bf10a3cd470560f2b121a4` (runtime `917db0b6`).
+Evidence: `work/coordination/p1-scenes-w/staged-start-v46/v46-ordinary-play-end-run/`.
+SoC peaked at 88.8 °C with 2.364 s above 80 °C. Battery held 31 °C.
+Adopted placement, scratch removal, OLED sleep and lease release passed.
+Death preempted End Run. Render parity, physical audibility and raw frame pacing remain open.
+
 ## J1532 — Exclude detached player HurtBoxes from touch aim
 
 2026-11-27. The camera ray skips native HurtBoxes owned by the playable
@@ -4750,3 +4776,15 @@ Native authority held 96.536 s with all four skill callbacks paired. Terminal
 snapshot was 33.79 FPS / 29.60 ms. SoC peaked at 88.4 °C with 19.907 s above
 80 °C. Battery held 26 °C. Scratch removal, OLED sleep and lease release passed.
 Black quads in the terminal screenshot and matched finisher pixels remain open.
+
+## J1535 — Replay a pinned converter stage on Android
+
+2026-11-27. The shared runner executes the committed bundle preload producer
+against an already staged 27-record request. The seed and the detached replay
+emitted the same 10,258-byte bundle, SHA-256
+`5df987cd43526a18e9e415cdebfbd5e9e1103c27a6a7d029f9561cf1bdf3d8f5`.
+The stage ran in 4.82 s with 47.7 MiB peak child RSS. The supervisor recorded
+59.3 °C peak CPU/GPU and 0 s above 80 °C. Admission battery was 28 °C at 80%.
+Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
+The runner removed its attempt scratch, preserved staged inputs, slept the
+display and released the lease. Typed load and gameplay remain open.
