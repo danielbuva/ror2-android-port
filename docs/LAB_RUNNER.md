@@ -121,6 +121,51 @@ The terminal receipt identifies a verified APK cached by commit and request
 pins. A missing terminal device status retains the lease and the private
 detached handle for reconciliation.
 
+## Run a converter stage on the phone
+
+`./dev converter-stage <producer> --request <config.json> --workstream <name>`
+runs a registered content producer against files already staged in the retained
+toolhost. Use the producer's filename stem with hyphens, for example
+`bundle-preload`, `mesh-produce`, or `texture-produce`. Run with `--dry-run`
+before queuing the phone. Run the live command detached once the dispatcher
+grants the phone. The shared runner checks the installed toolhost hash, grant,
+battery and storage, and owns thermal supervision and cleanup.
+
+Use the emission config below with `"operation": "converter-stage"`,
+`"request": "stage.json"`, and the required `retained_tool_sha256`. Omit
+`expected_records`. Its manifest maps `stage.json` to the host descriptor
+pin and lists any additional producer dependencies as `repo/<tracked path>`
+keys. The action pins all producer paths to the calling checkout's clean
+commit, adds the selected script and the runner's support files, and writes a
+new manifest beside the terminal receipt. The retained toolhost supplies the
+Python runtime. The current runner accepts internal-only toolhost staging.
+
+An example descriptor for a prepared bundle request is:
+
+```json
+{
+  "producer": "tools/phone-build/accepted-output/bundle_preload.py",
+  "input_root": "prepared-input",
+  "input_pins": {"inputs.json": "<sha256 of the staged request>"},
+  "arguments": ["--inputs", {"inputs": "inputs.json"}, "--output", {"output": "."}],
+  "artifacts": {"bundle": "<produced bundle name>"}
+}
+```
+
+`input_root` is relative to the retained toolhost's `files/owner-input`.
+Pass the stage's read-only input files under `inputs` and its generated files
+under `output`. Path arguments also accept `repo`, `native`, and `runtime`.
+Use `.` for the root itself. Artifact paths and the optional `scoreboard`
+path are relative to the output root. A producer's own structural checks still
+run. Bundle preload runs with one record worker on Android.
+
+The terminal directory receives JSON receipts, artifact hashes, and the
+optional scoreboard. Every attempt gets fresh device scratch, which is removed
+after the terminal result. Staged inputs and the installed toolhost are preserved.
+If the device disconnects during production, use the generated
+`*.request.json` with a fresh terminal filename in the same directory and
+resume its retained handle through `--emission-request ... --resume-emission`.
+
 ## Current local emission request
 
 After obtaining the orchestrator's device grant, use the same runner locally:
@@ -163,8 +208,9 @@ terminal evidence it removes that root and preserves the installed toolhost.
 Use a separate terminal directory for each cold run. Resume applies only to an
 unconfirmed handle in this mode.
 Dry-run validates pins without device access. Live execution with `--workstream`
-verifies the named grant, takes the lease and stops Unity's ADB server before
-device admission. Use the same workstream to reattach to a retained lease.
+verifies the named grant and takes the lease before device admission. Use the
+same workstream to reattach to a retained lease. Pass `--strict-battery` when
+seeding inputs for a converter stage to apply the same charge limits as replay.
 Execution uses the standard fresh checkout, cooldown, package-identity,
 storage and display owners.
 The current runtime staging supports configured internal-only devices; adopted

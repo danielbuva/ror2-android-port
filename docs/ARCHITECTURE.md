@@ -2384,6 +2384,8 @@ specifies the exact path in `scene`.
 the bundle additively, selects the scene and reads native occlusion settings.
 It records loaded roots, MeshRenderer counts, the resolved data reference
 and Umbra sizes around activation, then unloads the scene and its bundles.
+The optional `loadMode: "Single"` control loads the same inputs alone and
+creates a blank scene for teardown. The receipt records which mode ran.
 The editor exposes the data reference. Serialized scene checks cover the
 release renderer table. Android culling, appearance and gameplay require
 device evidence.
@@ -6465,6 +6467,14 @@ The same owner accepts a `bundle-decode` request for a retained UnityFS bundle.
 decoder on each block, tracks CPU time and peak RSS, and returns a decoded hash
 and block count. The runner verifies those against the request and owns thermal
 supervision, receipt collection and scratch cleanup.
+
+The current `./dev converter-stage` action uses the same emission runner and
+the installed toolhost's Python runtime. `owner-apk/lab_stage.py` runs one
+registered content producer against a pinned request under the toolhost's
+existing owner-input tree. The host stages the current committed producer
+closure and a small descriptor. The phone checks the input pins, hashes the
+declared artifacts, and returns the stage and thermal receipts with an optional
+scoreboard. The runner removes attempt scratch and preserves the input tree.
 
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
