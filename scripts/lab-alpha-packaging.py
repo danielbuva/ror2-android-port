@@ -109,6 +109,12 @@ class Phone(INSTALLER.Phone):
             raise INSTALLER.Failure("alpha-packaging-thermal-cancellation")
         return super().execute(*args, **kwargs)
 
+    def start(self, *, repeat_notification_denial=False):
+        device = self.thermal.device
+        if not device.display_awakened:
+            require(device.display(True), "alpha-packaging-idle-display-policy-required")
+        return super().start(repeat_notification_denial=repeat_notification_denial)
+
     @contextmanager
     def observe_thermal(self):
         sys.path.insert(0, str(ROOT / "scripts/lab"))
@@ -147,7 +153,11 @@ class Phone(INSTALLER.Phone):
             try:
                 yield
             finally:
-                thermal.finish()
+                try:
+                    if thermal.device.display_awakened:
+                        require(thermal.device.display(False), "alpha-packaging-display-cleanup-not-verified")
+                finally:
+                    thermal.finish()
         except RuntimeError as error:
             diagnostics.write("thermal-error.json", INSTALLER.encoded({"error": str(error)}))
             raise INSTALLER.Failure("alpha-packaging-thermal-evidence-failed") from error
@@ -234,13 +244,20 @@ def main(argv=None):
     parser.add_argument("--allow-test-notifications", action="store_true")
     parser.add_argument("--package-only", action="store_true", help="Qualify signed packages without running the direct importer harness")
     parser.add_argument("--acquisition-request", type=Path, help="Qualify actual SAF acquisition with local input inventories")
+    parser.add_argument("--toolhost-source-commit", help="Reuse an unmodified signed packaging fixture from this commit")
     parser.add_argument("--dry-run", action="store_true", help="Verify pinned toolhost and compile the acceptance inputs on the host")
     parser.add_argument("--timeout", type=int, default=1200)
     args = parser.parse_args(argv)
     if args.qualify_install_prompts and args.allow_test_installs:
         print("FAIL install-prompt-mode-conflict", flush=True)
         return 1
-    if args.acquisition_request and (args.package_only or args.qualify_install_prompts or args.allow_test_installs or args.allow_test_notifications):
+    if args.acquisition_request and (
+        args.package_only
+        or args.qualify_install_prompts
+        or args.allow_test_installs
+        or args.allow_test_notifications
+        or args.toolhost_source_commit is not None
+    ):
         parser.error("acquisition uses a fresh installer with ordinary picker permissions")
     phone = None
     acquisition = None
@@ -267,7 +284,8 @@ def main(argv=None):
             kwargs["allow_test_notifications"] = True
         INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(ROOT / "work/coordination/alpha-packaging-acceptance")
         request = json.loads(args.acquisition_request.read_bytes()) if args.acquisition_request else {}
-        config = INSTALLER.read_context(request.get("toolhost_source_commit")) if request else INSTALLER.read_context()
+        source_commit = request.get("toolhost_source_commit") if args.acquisition_request else args.toolhost_source_commit
+        config = INSTALLER.read_context(source_commit) if source_commit is not None else INSTALLER.read_context()
         with tempfile.TemporaryDirectory(prefix="ror2-synthetic-alpha-", dir="/tmp") as name:
             temporary = Path(name).resolve()
             require(not temporary.is_relative_to(ROOT.resolve()), "throwaway-root-must-be-outside-repository")
@@ -299,7 +317,12 @@ def main(argv=None):
                 INSTALLER.set_phase(phase)
                 with phone.observe_thermal():
                     phase = "installer-acceptance"
-                    INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts)
+                    try:
+                        INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts, record_metrics=True)
+                    finally:
+                        metrics, phone.flow_metrics = phone.flow_metrics, None
+                        if metrics is not None:
+                            INSTALLER.DIAGNOSTICS.write("phone-flow-metrics.json", INSTALLER.encoded(metrics.report(include_samples=True)))
                     phase = "alpha-receipt-acceptance"
                     INSTALLER.set_phase(phase)
                     check_packaging_history(phone, passed)

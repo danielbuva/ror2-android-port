@@ -170,11 +170,20 @@ def load_request(path, serial=None):
     for name in ("capture_golem_attacks", "capture_titan_indicator"):
         if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
             raise ValueError(name + " requires the native lab launch workload")
-    if value.get("capture_video") and (not value.get("start_from_menu") or "stage_transition" in value or value["duration_seconds"] > 180):
-        raise ValueError("capture_video requires a timed menu Start observation of at most 180 seconds")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
+    if value.get("capture_video"):
+        from session_cleanup_check import SPINE_ID
+
+        selection = value.get("selection", {})
+        direct_survivor = (
+            value["package"] == "dev.ror2lab.arm64"
+            and selection.get("developerSurvivorOverride") is True
+            and selection.get("id") in (SPINE_ID, SPINE_ID.removesuffix("-bringup"))
+        )
+        if value["mode"] != "launch" or not (value.get("start_from_menu") or direct_survivor) or "stage_transition" in value or value["duration_seconds"] > 180:
+            raise ValueError("capture_video requires menu Start or a direct lab survivor observation of at most 180 seconds")
     if value["mode"] == "sustained":
         selection = value.get("selection", {})
         if selection.keys() - {"detailedVisualDiagnostics"} or type(selection.get("detailedVisualDiagnostics", False)) is not bool:
@@ -215,7 +224,7 @@ def load_request(path, serial=None):
     if "prior_receipt" in value:
         read_ownership_receipt(value["prior_receipt"], value["serial"], value["package"])
     mapping = checked_mapping(value) if "input_mapping" in value else None
-    if value.get("start_from_menu"):
+    if value.get("start_from_menu") or value.get("capture_video"):
         from device import PACKAGE, validate_apk_identity
         from device_context import receipt_directory, validate_receipt_directory
         from installed_attempt import attempt_from_installed
@@ -231,7 +240,7 @@ def load_request(path, serial=None):
             read_ownership_receipt(receipt, value["serial"], value["package"])
         attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(value)
         if "selection" in value and value["selection"].get("attempt") != attempt:
-            raise ValueError("Menu Start selector attempt must match the APK's embedded attempt: " + attempt)
+            raise ValueError("Gameplay observation selector attempt must match the APK's embedded attempt: " + attempt)
     return value
 
 
@@ -991,6 +1000,10 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
         device.sh("input", "-d", "0", "tap", str(x), str(y), timeout=5)
     else:
         device.sh("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+    return wait_for_world_start(device, thermal, pid, output, report_id=report_id, attempt=menu["attempt"])
+
+
+def wait_for_world_start(device, thermal, pid, output, *, report_id, attempt):
     world = wait_for_settings_report(
         device,
         thermal,
@@ -998,7 +1011,7 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
         lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True,
         timeout=240,
         report_id=report_id,
-        attempt=menu["attempt"],
+        attempt=attempt,
     )
     save(output / "world-start.json", world)
     return world
@@ -1200,12 +1213,13 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
         inputs = dict(json.loads(Path(request["input_script"]).read_text()), pid=pid)
         save(output / "input.json", inputs)
         result["input"] = touch_gesture.run(output / "input.json", request["apk_sha256"], device=device)
-    if request.get("start_from_menu"):
+    if request.get("start_from_menu") or request.get("capture_video"):
         from session_cleanup_check import SPINE_ID
 
         plain_id = SPINE_ID.removesuffix("-bringup")
         selected_id = request.get("selection", {}).get("id")
         report_id = selected_id if selected_id in (SPINE_ID, plain_id) else plain_id if device.package == "dev.ror2lab.converted" else SPINE_ID
+    if request.get("start_from_menu"):
         world = start_from_menu(
             device,
             thermal,
@@ -1216,6 +1230,8 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
             tap_start=True,
             attempt=start_attempt,
         )
+    elif request.get("capture_video"):
+        wait_for_world_start(device, thermal, pid, output, report_id=report_id, attempt=start_attempt)
     if route:
         from session_cleanup_check import _read_json, matches_run
 
@@ -1425,7 +1441,7 @@ def execute(request):
         initial_scratch = diagnostic_scratch(device, runtime)
         mapping = checked_mapping(request) if "input_mapping" in request else None
         start_attempt = None
-        if request.get("start_from_menu"):
+        if request.get("start_from_menu") or request.get("capture_video"):
             # APK inspection can starve the in-process thermal sampler. A checked
             # mapping already binds its attempt to the installed APK hash.
             start_attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(device.owned())

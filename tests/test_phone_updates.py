@@ -85,15 +85,16 @@ class FakeGitHub:
     def __init__(self, release, bundle):
         signature = {"algorithm": "SHA256withRSA", "key_id": "authored", "value": base64.b64encode(b"mocked-crypto-boundary").decode()}
         self.paths = {"/release.json": encoded(release), "/release.sig": encoded(signature), "/public-tools.zip": bundle}
+        tag = "owner-v" + str(release["version_code"])
         self.metadata = {
             "draft": False,
             "prerelease": False,
-            "tag_name": "owner-v2",
+            "tag_name": tag,
             "assets": [
                 {
                     "name": name,
                     "size": len(self.paths["/" + name]),
-                    "browser_download_url": "https://github.com/example/owner/releases/download/owner-v2/" + name,
+                    "browser_download_url": "https://github.com/example/owner/releases/download/" + tag + "/" + name,
                 }
                 for name in ("release.json", "release.sig", "public-tools.zip")
             ],
@@ -183,6 +184,28 @@ class UpdateTests(unittest.TestCase):
             self.request["installed_release_version"] = 2
             U.write_json(self.inputs / "update-request.json", self.request)
             self.assertEqual(self.run_check(server)["state"], "UP_TO_DATE")
+
+    def test_signed_publisher_order_uses_integer_code_separate_from_installed_apk(self):
+        release = dict(self.release, version_code=10, version="authored display label")
+        self.request.update(installed_version=40, installed_release_version=9)
+        request = self.inputs / "update-request.json"
+        U.write_json(request, self.request)
+        with FakeGitHub(release, self.bundle) as server, patch.object(P, "verify_signature") as verifier:
+            self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+            verifier.assert_called_with(U.RELEASE.signed_bytes(release), b"mocked-crypto-boundary", "public key mocked only at RSA boundary")
+            for tag in ("owner-v010", "owner-v9", "v10.0.0"):
+                server.paths["/latest"] = encoded(dict(server.metadata, tag_name=tag))
+                with self.subTest(tag=tag), self.assertRaisesRegex(ValueError, "tag differs from signed version"):
+                    self.run_check(server)
+            server.paths["/latest"] = encoded(server.metadata)
+            self.request["installed_release_version"] = 10
+            U.write_json(request, self.request)
+            self.assertEqual(self.run_check(server)["state"], "UP_TO_DATE")
+            self.request["installed_release_version"] = 11
+            U.write_json(request, self.request)
+            with self.assertRaisesRegex(ValueError, "publisher release rollback refused"):
+                self.run_check(server)
+            self.assertNotIn("/public-tools.zip", server.requests)
 
     def test_signature_failure_never_downloads_or_executes_tools(self):
         with FakeGitHub(self.release, self.bundle) as server:
@@ -680,9 +703,31 @@ u.run({str(self.inputs / "update-request.json")!r},{str(self.runtime)!r},{str(se
             archive.write_bytes(bundle)
             repo = self.root / ("revision" + str(revision))
             U.extract_bundle(archive, repo, release)
-            dispatcher = J.Dispatcher(repo, index, release, self.inputs, self.runtime, self.native, {}, "c" * 64, python=[sys.executable])
+            jobs = {}
+            dispatcher = J.Dispatcher(
+                repo,
+                index,
+                release,
+                self.inputs,
+                self.runtime,
+                self.native,
+                {},
+                "c" * 64,
+                python=[sys.executable],
+                progress=lambda name, reused: jobs.__setitem__(name, reused),
+            )
+            for name in entries:
+                dispatcher.execute(entries[name]["job"])
             result = U.RELEASE.rebuild(release, produce=dispatcher.produce, **options)
             self.assertEqual(result["rebuilt"], [["payload/one", "payload/two"], ["payload/two"], []][revision])
+            self.assertEqual(
+                jobs,
+                [
+                    {"recipe/one.json": False, "recipe/two.json": False},
+                    {"recipe/one.json": True, "recipe/two.json": False},
+                    {"recipe/two.json": True},
+                ][revision],
+            )
         self.assertEqual(set(result["outputs"]), {"payload/two"})
         self.assertTrue((self.inputs / "cache/payload/one").exists())  # Retained, never selected by directory scan.
         self.assertEqual((self.inputs / "cache/payload/two").read_text(), "two updated")

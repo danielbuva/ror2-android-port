@@ -1,4 +1,5 @@
 import hashlib
+from contextlib import nullcontext
 from io import BytesIO
 import json
 from pathlib import Path
@@ -550,13 +551,19 @@ class DeviceSessionTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         runner.load_request(self.request_file)
 
-    def test_video_requires_a_bounded_menu_start_observation(self):
+    def test_video_requires_a_bounded_menu_or_direct_survivor_observation(self):
+        from session_cleanup_check import SPINE_ID
+
         with (
             mock.patch.object(device_module, "validate_apk_identity"),
             mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"),
         ):
             request = dict(self.request, start_from_menu=True, capture_video=True)
             runner.save(self.request_file, request)
+            self.assertTrue(runner.load_request(self.request_file)["capture_video"])
+            selection = dict(attempt="embedded", id=SPINE_ID.removesuffix("-bringup"), developerSurvivorOverride=True)
+            direct = dict(request, start_from_menu=False, selection=selection)
+            runner.save(self.request_file, direct)
             self.assertTrue(runner.load_request(self.request_file)["capture_video"])
             for changes in (
                 dict(start_from_menu=False),
@@ -567,6 +574,53 @@ class DeviceSessionTests(unittest.TestCase):
                     runner.save(self.request_file, dict(request, **changes))
                     with self.assertRaisesRegex(ValueError, "capture_video requires"):
                         runner.load_request(self.request_file)
+            for changes in (
+                dict(package="dev.ror2lab.converted"),
+                dict(mode="sustained"),
+                dict(selection=dict(selection, id="unrelated-route")),
+                dict(selection=dict(selection, developerSurvivorOverride=False)),
+            ):
+                with self.subTest(changes=changes):
+                    runner.save(self.request_file, dict(direct, **changes))
+                    with self.assertRaisesRegex(ValueError, "capture_video requires"):
+                        runner.load_request(self.request_file)
+            runner.save(self.request_file, dict(direct, selection=dict(selection, attempt="stale")))
+            with self.assertRaisesRegex(ValueError, "selector attempt must match.*embedded"):
+                runner.load_request(self.request_file)
+
+    def test_direct_survivor_video_waits_for_its_world_before_scheduled_input(self):
+        from session_cleanup_check import SPINE_ID
+
+        gesture = self.root / "gesture.json"
+        runner.save(gesture, dict(width=1280, height=960, steps=[dict(action="wait", ms=100)]))
+        report_id = SPINE_ID.removesuffix("-bringup")
+        request = dict(
+            self.request, selection={"id": report_id}, capture_video=True, duration_seconds=0, input_schedule=[dict(at_seconds=0, script=str(gesture))]
+        )
+        device = mock.Mock(package=request["package"])
+        device.sh.return_value = "7"
+        thermal = mock.Mock()
+        thermal.cancelled.is_set.return_value = False
+        result = {}
+        calls = mock.Mock()
+        calls.video.return_value = nullcontext()
+        calls.input.return_value = {"success": True}
+        with (
+            mock.patch.object(runner, "wait_for_world_start", calls.world),
+            mock.patch.object(runner, "start_from_menu", calls.menu),
+            mock.patch.object(runner, "capture_launch_video", calls.video),
+            mock.patch("touch_gesture.run", calls.input),
+            mock.patch.object(runner, "capture"),
+        ):
+            runner.observe_launch(device, thermal, request, self.output, result, "7", start_attempt="embedded")
+        self.assertEqual(
+            calls.mock_calls,
+            [
+                mock.call.world(device, thermal, "7", self.output, report_id=report_id, attempt="embedded"),
+                mock.call.video(device, thermal, "7", self.output, 0, result),
+                mock.call.input(self.output / "scheduled-input-0.json", self.digest, device=device),
+            ],
+        )
 
     def test_video_retains_its_recording_and_stops_only_its_recorder_on_abort(self):
         for abort in (False, True):

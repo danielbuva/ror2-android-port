@@ -11,10 +11,18 @@ public sealed partial class PortSession
 {
     GameObject ownedDetachedModel;
     Renderer[] deferredSourceModelRenderers;
+    (AndroidNativeSourceSkinLifecycle owner, AndroidNativeSourceSkinLifecycle.Report report) preSpawnSkin;
     bool UsesNativeSelectedSkin(string survivor)
     {
         // These models leave their body meshes unbound until ModelSkinController.Start.
-        return r.nativeSourceSkinLifecycleDiagnosticRequested || (IsPlayableSpine() && (survivor == "Huntress" || survivor == "Croco"));
+        return r.nativeSourceSkinLifecycleDiagnosticRequested ||
+               (IsPlayableSpine() && (survivor == "Huntress" || survivor == "Croco" || survivor == "Mage"));
+    }
+    bool BindsAnimatorBeforeSpawn(string survivor)
+    {
+        // Artificer needs both native skin application and the pre-main-state Animator binding.
+        return IsPlayableSpine() && (!UsesNativeSelectedSkin(survivor) ||
+                                    survivor == "Mage" && !r.nativeSourceSkinLifecycleDiagnosticRequested);
     }
     bool IsAutomaticModel()
     {
@@ -32,9 +40,10 @@ public sealed partial class PortSession
         Check(locator.autoUpdateModelTransform && !locator.dontDetatchFromParent && !locator.preserveModel,
               "Recovered model lifecycle settings changed");
         ownedDetachedModel = model.gameObject;
+        preSpawnSkin = default;
         model.gameObject.SetActive(false); // Detachment must not activate the unproven child callbacks.
         string survivor = SelectedSourceSurvivor() ? r.selectedSurvivor : null;
-        if (IsPlayableSpine() && !UsesNativeSelectedSkin(survivor))
+        if (BindsAnimatorBeforeSpawn(survivor))
         {
             // BaseCharacterMain snapshots available Animator parameters on entry.
             RuntimeAnimatorController controller;
@@ -56,7 +65,13 @@ public sealed partial class PortSession
                     renderer.forceRenderingOff = true;
             }
             Check(model.GetComponent<Animator>() && controller && avatar, "Original survivor animation assets unavailable before spawn");
-            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, survivor != null);
+            if (UsesNativeSelectedSkin(survivor))
+            {
+                var report = new AndroidNativeSourceSkinLifecycle.Report();
+                var owner = AndroidNativeSourceSkinLifecycle.PrepareInactive(model.gameObject, body, report, useCharacterModelCallbacks: false);
+                preSpawnSkin = (owner, report);
+            }
+            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, survivor != null, preSpawnSkin.owner);
         }
         r.modelTarget = model.name;
         r.modelParent = locator.modelBaseTransform.name;
@@ -65,7 +80,7 @@ public sealed partial class PortSession
     void VerifyAutomaticAnimatorBeforeMainState(CharacterBody body)
     {
         string survivor = SelectedSourceSurvivor() ? r.selectedSurvivor : null;
-        if (!IsPlayableSpine() || UsesNativeSelectedSkin(survivor)) return;
+        if (!BindsAnimatorBeforeSpawn(survivor)) return;
         var animator = body.modelLocator.modelTransform.GetComponent<Animator>();
         animator.Update(0);
         var parameters = CharacterAnimParamAvailability.FromAnimator(animator);
