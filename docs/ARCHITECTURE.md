@@ -318,8 +318,12 @@ Texture2D and Sprite IDs. They must match existing native types. A Sprite
 must resolve its render texture to a local Texture2D. The repacker checks
 texture references and the Shader's pinned external member, extends the
 existing resource stream, and reopens the output to check the new bodies
-and extents before writing a receipt. Temporary repack files are removed
-when the operation ends.
+and extents before writing a receipt. A pinned `mesh_consumers` list also
+allows absent Mesh IDs named by an Android scene's MeshFilter or MeshCollider
+PPtrs to be supplied at their existing external identity. The repacker checks
+the exact native Mesh type and consumer member and can supply these endpoints
+without adding catalog roots. It reads back the unchanged container in that
+case. Temporary repack files are removed when the operation ends.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their

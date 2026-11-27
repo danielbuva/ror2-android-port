@@ -126,6 +126,58 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "different native type"):
                 P.expose_local_assets(source, root / "invalid", name, member, groups, codec=None, codec_sha256=None)
 
+    def test_expose_local_assets_supplies_an_external_mesh_without_a_catalog_root(self):
+        M, W = P.module("bundle_manifest"), P.module("unity_write")
+
+        def native(cid, fields):
+            tree = M.S._tree([dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1) for kind, name, size, level in fields])
+            return dict(class_id=cid, stripped=0, script_type=-1, hash=b"m" * 16, tree=tree, dependencies=[])
+
+        mesh = native(43, [("Mesh", "Base", -1, 0), ("int", "authored", 4, 1)])
+        mesh_filter = native(
+            33,
+            [("MeshFilter", "Base", -1, 0), ("PPtr<Mesh>", "m_Mesh", 12, 1), ("int", "m_FileID", 4, 2), ("SInt64", "m_PathID", 8, 2)],
+        )
+        body = struct.pack("<i", 91)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root, extra_records=[(60, mesh, body)])
+            source = inputs["source"]
+            name, member = inputs["required"]["name"], inputs["required"]["member"]
+            consumer, consumer_member = root / "scene.bundle", "BuildPlayer-authored"
+            layout, bodies = P.O.make_layout(
+                dict(externals=[member]),
+                [dict(path_id=1, type=mesh_filter, body=struct.pack("<iq", 1, -22))],
+            )
+            serialized = io.BytesIO()
+            W.write_serialized(serialized, layout, lambda obj: io.BytesIO(bodies[obj["path_id"]]))
+            data = serialized.getvalue()
+            with consumer.open("wb") as stream:
+                W.write_bundle(stream, [(consumer_member, 4, len(data), lambda: io.BytesIO(data))], lambda block, method: block, flags=0x40)
+            objects = root / "mesh.bin"
+            objects.write_bytes(body)
+            index = root / "mesh.jsonl"
+            row = dict(bundle=name, member=member, path_id=-22, type_id=0, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+            index.write_text(json.dumps(row) + "\n")
+            pack = {"types": [P.O.json_layout(mesh)], "index.jsonl": index, "objects.bin": objects}
+
+            def expose(destination, consumers):
+                return P.expose_local_assets(
+                    source, root / destination, name, member, [], codec=None, codec_sha256=None, packs=[pack], mesh_consumers=consumers
+                )
+
+            result = expose("extended", [(consumer, consumer_member)])
+            self.assertEqual((result["added_objects"], result["external_mesh_endpoints"]), (1, [-22]))
+            with W.B.Bundle(Path(result["bundle"])).member(member) as stream:
+                final = W.read_serialized(stream)
+                obj = next(row for row in final["objects"] if row["path_id"] == -22)
+                stream.seek(final["data_offset"] + obj["offset"])
+                self.assertEqual((final["types"][obj["type_id"]], stream.read(obj["bytes"])), (mesh, body))
+            row["path_id"] = -23
+            index.write_text(json.dumps(row) + "\n")
+            with self.assertRaisesRegex(ValueError, "outside the checked preload closure"):
+                expose("unreferenced", [(consumer, consumer_member)])
+
     def test_expose_local_assets_rebases_appended_texture_stream(self):
         W, C = P.module("unity_write"), P.module("catalog_complete")
         with tempfile.TemporaryDirectory() as tmp:

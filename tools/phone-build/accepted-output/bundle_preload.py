@@ -1979,7 +1979,28 @@ def write_repacked_bundle(output, bundle, member, stream, layout, replacements, 
     return result, revised
 
 
-def expose_local_assets(source, output, name, member, groups, *, codec, codec_sha256, packs=(), external_bundles=()):
+def referenced_meshes(consumers, member, schemas):
+    """Find Mesh endpoints named by external MeshFilter and MeshCollider fields."""
+    W = module("unity_write")
+    meshes = set()
+    for path, consumer in consumers:
+        with W.B.Bundle(path).member(consumer) as stream:
+            layout = W.read_serialized(stream)
+            file_ids = {index for index, row in enumerate(layout["externals"], 1) if row["path"] == f"archive:/{member}/{member}"}
+            if layout["platform"] != 13 or not file_ids:
+                raise ValueError(f"Mesh consumer does not reference the Android donor: {consumer}")
+            for obj in layout["objects"]:
+                typ = layout["types"][obj["type_id"]]
+                if typ["class_id"] not in (33, 64):
+                    continue
+                stream.seek(layout["data_offset"] + obj["offset"])
+                mesh = pointers(W.B.exact(stream, obj["bytes"]), typ, schemas).get(("m_Mesh",))
+                if mesh and mesh[0] in file_ids and mesh[1]:
+                    meshes.add(mesh[1])
+    return meshes
+
+
+def expose_local_assets(source, output, name, member, groups, *, codec, codec_sha256, packs=(), external_bundles=(), mesh_consumers=()):
     """Expose typed local objects while preserving the current bundle's other assets."""
     W, C = module("unity_write"), module("catalog_complete")
     bundle = W.B.Bundle(source)
@@ -2002,8 +2023,8 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
                 type_id = type_ids[full_type_key(typ)]
                 typ = layout["types"][type_id]
                 body = O.record_extent(pack["objects.bin"], row)
-                if typ["class_id"] not in (21, 28, 213):
-                    raise ValueError("Appended assets require a native Material, Texture2D or Sprite")
+                if typ["class_id"] not in (21, 28, 43, 213):
+                    raise ValueError("Appended assets require a native Material, Texture2D, Mesh or Sprite")
                 if "resource" in row:
                     resource = row["resource"]
                     resource_end = (resource_end + 7) & ~7
@@ -2028,7 +2049,9 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
         if layout["platform"] != 13 or scene:
             raise ValueError("Local assets require an Android asset bundle")
         occupied_paths = {path.lower() for path, _, _ in previous_rows}
-        pending, selected = [], []
+        appended_meshes = {obj["path_id"] for obj in additions if layout["types"][obj["type_id"]]["class_id"] == 43}
+        mesh_endpoints = appended_meshes & referenced_meshes(mesh_consumers, member, schemas)
+        pending, selected = list(mesh_endpoints), []
         for group in groups:
             path = group["path"].lower()
             if path in occupied_paths:
@@ -2082,8 +2105,8 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
             pending.extend(other for file_id, other in graph[pid] if not file_id)
         if any(obj["path_id"] not in graph for obj in additions):
             raise ValueError("Appended asset is outside the checked preload closure")
-
-        added = produce_graph(dict(name=name, member=member, externals=externals, dependencies=[], asset_groups=selected), graph, {})
+        if not selected and not mesh_endpoints:
+            raise ValueError("Local assets require registered groups or checked Mesh consumers")
 
         def table(body):
             handle = io.BytesIO(body)
@@ -2095,19 +2118,22 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
             rows = [(C.text(handle), W.B.unpack(handle, "<iiiq")) for _ in range(row_count)]
             return body[:name_end], preloads, rows, handle.read()
 
-        prefix, preloads, rows, trailer = table(original)
-        _, extra, added_rows, _ = table(added)
-        offset = len(preloads) // 12
-        rows.extend((path, (start + offset, size, file_id, pid)) for path, (start, size, file_id, pid) in added_rows)
-        combined = io.BytesIO()
-        combined.write(prefix + struct.pack("<I", (len(preloads) + len(extra)) // 12) + preloads + extra)
-        combined.write(struct.pack("<I", len(rows)))
-        for path, entry in sorted(rows, key=lambda row: row[0]):
-            O.aligned_string(combined, path)
-            combined.write(struct.pack("<iiiq", *entry))
-        combined.write(trailer)
-        replacement = combined.getvalue()
-        replacements[container] = replacement
+        added_containers = []
+        if selected:
+            added = produce_graph(dict(name=name, member=member, externals=externals, dependencies=[], asset_groups=selected), graph, {})
+            prefix, preloads, rows, trailer = table(original)
+            _, extra, added_rows, _ = table(added)
+            offset = len(preloads) // 12
+            rows.extend((path, (start + offset, size, file_id, pid)) for path, (start, size, file_id, pid) in added_rows)
+            combined = io.BytesIO()
+            combined.write(prefix + struct.pack("<I", (len(preloads) + len(extra)) // 12) + preloads + extra)
+            combined.write(struct.pack("<I", len(rows)))
+            for path, entry in sorted(rows, key=lambda row: row[0]):
+                O.aligned_string(combined, path)
+                combined.write(struct.pack("<iiiq", *entry))
+            combined.write(trailer)
+            replacements[container] = combined.getvalue()
+            added_containers = C.containers(added)[0]
         written, revised = write_repacked_bundle(
             target,
             bundle,
@@ -2132,8 +2158,13 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
                 persisted.seek(metadata["data_offset"] + entry["offset"])
                 if W.B.exact(persisted, entry["bytes"]) != replacements[pid]:
                     raise ValueError(f"Persisted local asset body differs: {pid}")
-        if C.containers(replacement)[0] != sorted(previous_rows + C.containers(added)[0], key=lambda row: row[0]):
+        entry = next(row for row in metadata["objects"] if row["path_id"] == container)
+        persisted.seek(metadata["data_offset"] + entry["offset"])
+        container_body = W.B.exact(persisted, entry["bytes"])
+        if selected and C.containers(container_body)[0] != sorted(previous_rows + added_containers, key=lambda row: row[0]):
             raise ValueError("Local asset registration changed an existing preload extent")
+        if not selected and container_body != original:
+            raise ValueError("Mesh endpoint admission changed existing asset registration")
     if resources:
         with actual.member(resource_member) as persisted:
             for _, _, resource, moved in resources:
@@ -2147,6 +2178,7 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
         groups=groups,
         local_objects=len(graph),
         added_objects=len(additions),
+        external_mesh_endpoints=sorted(mesh_endpoints),
         resources=[item[3] for item in resources],
     )
 
@@ -2554,7 +2586,7 @@ def expose_local_assets_request(inputs, output):
     inputs = Path(inputs).resolve(strict=True)
     request = json.loads(inputs.read_bytes())
     if (
-        request.keys() - {"packs", "external_bundles"} != {"schema", "source", "codec", "name", "member", "groups"}
+        request.keys() - {"packs", "external_bundles", "mesh_consumers"} != {"schema", "source", "codec", "name", "member", "groups"}
         or request["schema"] != "owner-bundle-local-assets-v1"
     ):
         raise ValueError("Unsupported local asset registration input contract")
@@ -2577,6 +2609,7 @@ def expose_local_assets_request(inputs, output):
             files[filename] = pins.pin(pin)
         packs.append(dict(files, types=json.loads(files["types.json"].read_bytes())))
     externals = [(pins.pin(row["bundle"]), row["member"]) for row in request.get("external_bundles", [])]
+    mesh_consumers = [(pins.pin(row["bundle"]), row["member"]) for row in request.get("mesh_consumers", [])]
     result = expose_local_assets(
         source,
         output,
@@ -2587,6 +2620,7 @@ def expose_local_assets_request(inputs, output):
         codec_sha256=request["codec"]["sha256"] if codec else None,
         packs=packs,
         external_bundles=externals,
+        mesh_consumers=mesh_consumers,
     )
     pins.check()
     result["source_sha256"] = request["source"]["sha256"]
