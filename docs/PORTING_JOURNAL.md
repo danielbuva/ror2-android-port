@@ -5104,3 +5104,14 @@ stage storage. Peak CPU/GPU was 65.3 °C with 0 s above 80 °C.
 The runner removed the toolhost and put the display to sleep.
 Evidence `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/signed-outline-device-02/terminal.done.json`.
 Canonical converted gameplay and the remaining graphics shader families stay open.
+
+## J1566 — Verify all signed Crunch and BC7 producer artifacts on Android
+
+2026-11-27. The Android toolhost matched the expected byte counts and SHA-256
+hashes for the index, types, objects and resources of the signed four-record
+Crunch and BC7 fixture. Producer time was 684.75 s with 47.7 MiB peak child RSS
+and 17.28 MiB net stage use. Peak CPU/GPU was 60.5 °C at admission, with
+0 s above 80 °C. The runner removed the toolhost and verified OLED sleep.
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+Evidence `work/coordination/p1-phonepipe/2026-11-27/signed-texture-pins/terminal.done.json`.
+Unity typed load and gameplay for this fixture remain open.

@@ -229,6 +229,7 @@ class RefusedLeaseTest(unittest.TestCase):
                 ("staged-update", "thor", False, 3 * 14400 + 1800),
                 ("staged-update", "thor", True, 4 * 14400 + 1800),
                 ("nightly", "nova-b", False, 2 * 14400 + 3000),
+                ("nightly", "nova-b", True, 3 * 14400 + 3000),
             ):
                 with self.subTest(operation=operation, acquire_on_phone=tools):
                     request_path.write_text(

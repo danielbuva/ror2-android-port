@@ -1941,8 +1941,10 @@ records APK entry reuse and producer cache hits separately. The device tour
 creates native save data, verifies its hashes while the game is stopped before
 and after PackageInstaller replacement, and checks it loads in the updated game.
 The nightly uses the same owner with one signed release and a verified game
-folder already on the phone. Its End Run tour and the JSON-only APK census
-finish under the installer lease. `scripts/lab/whole_game_scoreboard.py` runs
+folder already on the phone. Phone acquisition uses the adjacent Downloads
+tool folder and signed HTTPS URLs through the installer's existing acquisition
+service. Its End Run tour and the JSON-only APK census finish under the
+installer lease. `scripts/lab/whole_game_scoreboard.py` runs
 the existing census producer inside the installer toolhost and joins the
 retained reports before the installer tears down its scratch.
 The [local packaging request](LAB_RUNNER.md#current-local-packaging-request)
