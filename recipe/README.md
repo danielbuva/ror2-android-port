@@ -7610,6 +7610,17 @@ locally. Geometry, collision data and Unity evidence stay under ignored `work/`.
 | --- | --- |
 | `owner-whole-game-mesh-frontier.json` | `82f6cf1f4166edee7095a990829180de4be75dbe223524f395cad9e674fdad2d` |
 
+Audit 2026-11-27. `owner-whole-game-solus-mesh-preloads.json` selects eleven
+original inline Meshes shared by the ConstructionArm FBX and prefab preload
+tables. The provenance, privacy, licensing and sensitive-content review
+covered the source and destination identities, body lengths and hash pins.
+The Mesh producer reads the original bodies from the local installation.
+Mesh bodies and exact-editor evidence stay under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-solus-mesh-preloads.json` | `5485f24984d03c9ba08e52520048efefcacfe818199ea8d5ff3d6705ef8f78c6` |
+
 ## Staged Blackbeach and Golemplains baked reflections (2026-11-27)
 
 Produce `owner-start-scene-baked-reflections.json` with `texture_produce.py`
