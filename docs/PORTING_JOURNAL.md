@@ -5116,3 +5116,18 @@ in `intersection-vulkan-draw-device-01/terminal.done.json`.
 Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
 The runner removed the fixture, slept the OLED and released the lease.
 Linked native Materials and depth-fade rendering remain open.
+
+## J1572 — Run detached device jobs through the shared FIFO
+
+2026-11-27. Detached sessions waited for the shared lease and completed
+without a worker taking a manual grant. The main Nova queued for 1082.18 s
+before it took the lease and passed the same Vulkan draw as Secondary Nova.
+Both used fixture APK SHA-256
+`0d5854c11e55776236430b5f76520c20693ca821ef0e9072328d72267f154b5d`.
+Admission battery was 35 °C and 29 °C, with SoC peaks of 72.9 °C and 56.1 °C.
+Thor completed headless signed-artifact emission in 12.40 s at 87.68 MiB peak
+child RSS. Its CPU/GPU peaked at 64.1 °C, and both panels stayed asleep.
+All three jobs removed their fixtures, verified OLED sleep and released their leases.
+Evidence is under `work/coordination/gameplay-coverage-20261126/` in
+`queue-nova/`, `queue-nova-b/` and `queue-thor/` terminal receipts.
+Interactive Thor qualification is still blocked on Screen-2 control.
