@@ -395,8 +395,9 @@ platform identity key the dependency environment; warm reuse validates installed
 package metadata. No test result, working tree, `work/`, generated lab output or
 game material is cached. Cache setup locks are released before tests so independent
 pushes do not share a running workspace. Darwin keeps the Unity-read sandbox and
-case-sensitive temporary-volume setup/cleanup. Linux removes scratch before exit;
-macOS retains asynchronous volume cleanup. `HOST_TEST_WORKERS` controls local
+case-sensitive temporary-volume setup. Local CI cleans scratch synchronously
+on exit. CI startup and aggressive pruning sweep recorded inactive scratch
+older than 30 minutes. `HOST_TEST_WORKERS` controls local
 concurrency (default 2); GitHub uses 4. Set 1 to diagnose serial behavior, not to
 skip a check.
 

@@ -3388,21 +3388,19 @@ create/attach CLI, killing and reaping only its own timed-out caller. Ordinary
 setup failure uses the existing temporary-directory fallback.
 `scripts/ci-scratch.py` supervises each CI shell in a separate process group,
 records its owner PID and child group, and performs synchronous cleanup after
-ordinary completion (exit 0–127). This relies on CI's synchronous child contract:
-check/cache helpers and test fixtures must join their work before returning.
-PID/group checks are additional removal vetoes, not proof that arbitrary detached
-descendants are gone. INT/TERM/HUP terminate the owned group but preserve uncertain
-descendant state. Startup recovery considers only same-user, recorded, ordinarily
-completed dead-owner `ci-local.*` directories older than 30 minutes. Live groups,
-missing ownership records, aliases and concurrent cleanup locks refuse removal.
-SIGKILL and other abnormal exits leave durable uncertainty: age alone never
-clears it. These runs require owner reconciliation; automatic SIGKILL recovery
-is not claimed.
+success, failure or a catchable signal. INT, TERM and HUP stop the owned
+group. The host runner reaps its separate test worker sessions on TERM.
+CI startup and `prune-generated.py --apply --aggressive` use the same sweep
+for same-user, recorded dead-owner `ci-local.*` directories under `TMPDIR`
+older than 30 minutes. The sweep skips active owners or groups, open files,
+missing records, aliases and concurrent cleanup locks. Linux without
+`lsof` limits the sweep to ordinarily completed runs.
 On macOS, current `hdiutil info -plist` must identify the exact owned image before
-device-based detach (with a forced fallback). An interrupted attachment retains
-an explicit pending marker: empty inventory does not prove the service cannot
-attach later. Pending attachments, uncertain mappings, remaining mounts or failed
-detach preserve scratch. Linux checks mountinfo, including same-device bind mounts,
+device-based detach. `lsof` checks the scratch paths and each owned mount.
+The immediate owner can use a forced-detach fallback for its own idle volume.
+An interrupted attach with no observed mount retains its pending marker for
+reconciliation. An uncertain mapping, remaining mount or failed detach reports
+the preserved scratch directory. Linux checks mountinfo, including same-device bind mounts,
 and removes only scratch without an image. Original verification exit status is
 retained. Cleanup never opens an editor or uses a lab device.
 

@@ -123,6 +123,10 @@ def volume_available(work):
     return int(row.split()[3]) * 1024
 
 
+def sweep_ci_scratch():
+    subprocess.run([sys.executable, str(Path(__file__).with_name("ci-scratch.py")), "--sweep"], check=True)
+
+
 def file_identity(info):
     return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns]
 
@@ -921,6 +925,8 @@ def apply(plan, work, ledger_path, *, aggressive=False, dedupe=False, extra_hash
         paths |= authoritative_paths
     if aggressive or dedupe:
         before = volume_available(work)
+    if aggressive:
+        sweep_ci_scratch()
     for item in plan:
         path = item["path"]
         if not path.exists() and not path.is_symlink():
