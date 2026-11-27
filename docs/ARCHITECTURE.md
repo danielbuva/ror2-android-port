@@ -1457,6 +1457,11 @@ no codec or SDK is consumed. Existing input/profile/body/resource hash gates,
 checkpoint ownership and teardown apply. Native BC6H support is a device gate;
 this profile is not automatically selected by accepted-file admission. Complete
 scene relationships and functional file admission remain open.
+The same owner reads `recipe/owner-scene-baked-reflection-textures.json` to
+supply 75 original BC6H Cubemaps for staged scene probes. The texture pack
+retains each complete chain and exposes its typed body and stream for bundle
+assembly. The scene owner binds original probe pointers to the emitted
+records and qualifies in-game rendering.
 Complete original-lighting alternatives for Promo and Snowy Forest use
 `owner-<stage>-source-lighting-objects.json` and the corresponding texture,
 shader and (Promo only) Timeline recipes. The existing object owner emits
