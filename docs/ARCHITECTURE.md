@@ -1412,7 +1412,12 @@ original mip, including the texels stored in its boundary blocks. It writes
 ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
 normal maps. It uses the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
-use the same codec pins and output checks. `build_texture_jpeg.py` owns
+use the same codec pins and output checks. `texture_native_profile.py` selects
+original Alpha8 and HDR Cubemap records from the PC texture coverage ledger.
+It checks native schemas, platform data, references and complete mip extents,
+then writes a private profile for the producer's existing copy operations.
+The producer's setup, stream checks and output ownership apply to these packs.
+`build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
 an explicit compiler; `texture_jpeg.c` owns bounded stdin/stdout processing.
 New private output, source/tool admission, bounded compiler/codec children,
