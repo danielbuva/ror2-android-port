@@ -29,6 +29,7 @@ NATIVE_CONTENT_TYPES = frozenset(
         "AvatarMask",
         "PhysicMaterial",
         "SpeedTreeWindAsset",
+        "AnimatorController",
         "AnimatorOverrideController",
         "AssetBundleManifest",
     )
@@ -251,10 +252,12 @@ def validate_native_content(attempt, commit):
     rows = report.get("assets")
     if not isinstance(rows, list) or len(rows) != len(request["assets"]):
         raise RuntimeError("Native-content typed asset count mismatch")
+    native_type_names = {
+        "AnimatorController": "UnityEditor.Animations.AnimatorController",
+        "OcclusionCullingData": "OcclusionCullingData",
+    }
     for asset, row in zip(request["assets"], rows, strict=True):
-        expected_type = asset["type"]
-        if expected_type != "OcclusionCullingData":
-            expected_type = "UnityEngine." + expected_type
+        expected_type = native_type_names.get(asset["type"], "UnityEngine." + asset["type"])
         if (
             row.get("name") != asset["name"]
             or row.get("type") != asset["type"]
