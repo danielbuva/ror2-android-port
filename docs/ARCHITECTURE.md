@@ -2544,8 +2544,13 @@ device evidence.
 ordered preload groups in a private SQLite file. Record keys bind source bodies,
 complete types, qualified routes, external allocation, resource placement and
 producer code. Every changed emission still runs endpoint, managed and persisted
-body checks. Group keys bind roots, reachable edge/owner identities and file
-ordering. Cached reachable-member lists witness invalidation: changed pointers rebuild
+body checks. Source-ordered groups retain the exact resolved preload sequence
+once its membership matches the complete graph and external owner closure.
+Canonical repack requires retained skin, alias and donor dependencies to occupy
+their source slots in those groups. Other groups keep the existing file order.
+Group keys bind roots, reachable edge/owner identities, the order policy and
+the resolved sequence for source-ordered groups. Cached reachable-member lists
+witness invalidation: changed pointers rebuild
 only groups that reach them; disjoint groups and scalar body changes reuse
 their pointer bytes. The current graph and original external ownership are
 validated before any group lookup. Complete output reuse hashes provider
