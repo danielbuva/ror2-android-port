@@ -221,6 +221,34 @@ class BundlePreloadTests(unittest.TestCase):
                 rows, _ = C.containers(W.B.exact(stream, container["bytes"]))
                 self.assertIn(("assets/added.asset", (0, -22), [(0, -22), (0, 10), (0, 20)]), rows)
 
+    def test_component_preloads_extend_shared_extents_and_preserve_other_rows(self):
+        C = P.module("catalog_complete")
+        root = (0, 30)
+        local_script = (0, 60)
+        bank = (1, 70)
+        body = io.BytesIO()
+        P.O.aligned_string(body, "authored")
+        body.write(struct.pack("<IiqiqiqI", 3, *root, *local_script, 0, 80, 3))
+        for name, start, size, path_id in [("body", 0, 2, 30), ("skin", 0, 2, 40), ("other", 1, 2, 80)]:
+            P.O.aligned_string(body, name)
+            body.write(struct.pack("<iiiq", start, size, 0, path_id))
+        body.write(bytes(33))
+
+        revised, groups = P.extend_component_preloads(body.getvalue(), root, {local_script, bank})
+        self.assertEqual(groups, ["body", "skin"])
+        self.assertEqual(struct.unpack_from("<I", revised, 12)[0], 6)
+        self.assertEqual(
+            C.containers(revised),
+            (
+                [
+                    ("body", root, [root, local_script, bank]),
+                    ("skin", (0, 40), [root, local_script, bank]),
+                    ("other", (0, 80), [local_script, (0, 80)]),
+                ],
+                False,
+            ),
+        )
+
     def test_expose_local_assets_appends_sprite_with_local_texture(self):
         M, W, C = P.module("bundle_manifest"), P.module("unity_write"), P.module("catalog_complete")
 

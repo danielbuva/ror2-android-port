@@ -312,7 +312,7 @@
   },
   "source_sha256": {
     "artifact_copy": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55",
-    "build_hook": "e117d2ddf5ffcdee92c0deb600dcde73edd1ae6b6987b1568ab076ebc0e0c3a3",
+    "build_hook": "17f6e2aea76642a1eb27d188d026606bbd114b187f95359c1111b4debd899959",
     "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
     "camera_owner": "a9c422d7140af1ed076a2a97a642956e4f64fcea9c8f6a53a2e8ce8a3d779f1b",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",
@@ -327,7 +327,7 @@
     "producer": "a6998080a883be5293e48a81cb7d3e7b240d38ccfeb76f9e08a631e49b71315c",
     "resolver": "b00dc10599fa62637e5fcd74a7dcbbf4225eddaf81fb1b6bfcddaa8ff57f12d4",
     "skin_lifecycle_audio_camera_merge": "05fcc931f4e05fefcaf7b5aad7102ed54ca850c996abd5b354363be2743ebffb",
-    "transformer": "8e566d3c6cacaf1cf58044ddfc3e952657a860baa81dfb7d1fd3df69daead4c2",
+    "transformer": "737672b281b3872b32fe171c7264e62096866a41538c33355682bf37463d72ce",
     "verifier": "9ea24c13453d5753bcb46f4efe09b705d7ab7498c4cd51039046998f9588caaa",
     "whole_catalog": "13ea38e50d5806757dae1ee56c9f8d046b1d2917abcd382c3ca21f10e77ecd5d"
   },

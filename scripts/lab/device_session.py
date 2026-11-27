@@ -67,8 +67,10 @@ def load_request(path, serial=None):
         "capture_interval_seconds",
         "pacing_diagnostics",
         "start_from_menu",
+        "stage_transition",
         "capture_golem_attacks",
         "capture_titan_indicator",
+        "enforce_soc_ceiling",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -129,11 +131,28 @@ def load_request(path, serial=None):
             "require_high_refresh",
         }:
             raise ValueError("Owner unplugged workload uses physical play and its dedicated recorder")
-    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks", "capture_titan_indicator"):
+    for name in (
+        "require_high_refresh",
+        "pacing_diagnostics",
+        "start_from_menu",
+        "capture_golem_attacks",
+        "capture_titan_indicator",
+        "enforce_soc_ceiling",
+    ):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
         raise ValueError("start_from_menu requires the launch workload")
+    if "stage_transition" in value:
+        route = value["stage_transition"]
+        if (
+            not value.get("start_from_menu")
+            or not isinstance(route, dict)
+            or set(route) != {"from", "to"}
+            or any(not isinstance(scene, str) or not re.fullmatch(r"[a-z][a-z0-9_-]*", scene) for scene in route.values())
+            or route["from"] == route["to"]
+        ):
+            raise ValueError("stage_transition requires menu Start and two distinct catalog scene names, from and to")
     if "bootstrap_play_reference" in value:
         if value["package"] != "dev.ror2lab.converted" or not value.get("start_from_menu") or "input_script" in value:
             raise ValueError("bootstrap_play_reference requires converted menu Start without a startup script")
@@ -517,6 +536,9 @@ def play_from_bootstrap(device, thermal, pid, output, reference=None):
         from PIL import Image
 
         size, pixels = load_bootstrap_play_image(reference)
+        # The retained Ready screen was uniformly dimmed to 70% intensity.
+        # A one-level allowance covers framebuffer rounding on that dimmed path.
+        dimmed_pixels = pixels.translate(bytes((7 * value + 5) // 10 for value in range(256)))
         x1, y1, x2, y2 = reference["bounds"]
     deadline = time.monotonic() + 240
     try:
@@ -529,9 +551,11 @@ def play_from_bootstrap(device, thermal, pid, output, reference=None):
                 if owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), device.package):
                     frame = subprocess.run(device.base + ["exec-out", "screencap", "-p"], capture_output=True, check=True, timeout=5).stdout
                     with Image.open(BytesIO(frame), formats=["PNG"]) as screen:
-                        if screen.size == size and screen.crop(reference["bounds"]).convert("RGB").tobytes() == pixels:
-                            (output / "bootstrap-play.png").write_bytes(frame)
-                            break
+                        if screen.size == size:
+                            observed = screen.crop(reference["bounds"]).convert("RGB").tobytes()
+                            if observed == pixels or all(abs(actual - expected) <= 1 for actual, expected in zip(observed, dimmed_pixels, strict=True)):
+                                (output / "bootstrap-play.png").write_bytes(frame)
+                                break
                 time.sleep(2)
                 continue
             dump = device.sh("uiautomator", "dump", path, check=False, timeout=20)
@@ -1126,6 +1150,7 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
 
 
 def observe_launch(device, thermal, request, output, result, pid, *, start_attempt=None):
+    route = request.get("stage_transition")
     if "input_script" in request:
         import touch_gesture
 
@@ -1135,8 +1160,10 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
     if request.get("start_from_menu"):
         from session_cleanup_check import SPINE_ID
 
-        report_id = SPINE_ID.removesuffix("-bringup") if device.package == "dev.ror2lab.converted" else SPINE_ID
-        start_from_menu(
+        plain_id = SPINE_ID.removesuffix("-bringup")
+        selected_id = request.get("selection", {}).get("id")
+        report_id = selected_id if selected_id in (SPINE_ID, plain_id) else plain_id if device.package == "dev.ror2lab.converted" else SPINE_ID
+        world = start_from_menu(
             device,
             thermal,
             pid,
@@ -1146,6 +1173,13 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
             tap_start=True,
             attempt=start_attempt,
         )
+    if route:
+        from session_cleanup_check import _read_json, matches_run
+
+        if world.get("stage", {}).get("scene") != route["from"] or world.get("stageProgress", {}).get("transitions") != 0:
+            raise RuntimeError("Stage transition check did not start in " + route["from"])
+        runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+        report_path = runtime + "/movement-batch-" + report_id + ".json"
     began = time.monotonic()
     next_capture = 0
     scheduled = iter(enumerate(request.get("input_schedule", [])))
@@ -1170,11 +1204,49 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
         if elapsed >= next_capture:
             capture(device, output / ("sample-" + str(int(elapsed))), pid)
             next_capture += request.get("capture_interval_seconds", 60)
+        if route:
+            report = _read_json(device, report_path)
+            elapsed = time.monotonic() - began
+            if (
+                elapsed <= request["duration_seconds"]
+                and matches_run(report, pid, world["attempt"], world["session"], report_id=report_id)
+                and stage_transition_ready(report, route)
+            ):
+                save(output / "stage-transition.json", report)
+                result["stage_transition"] = dict(route)
+                break
         if elapsed >= request["duration_seconds"]:
+            if route:
+                raise RuntimeError("Stage transition deadline for " + route["to"])
             break
         time.sleep(0.5)
     capture(device, output / "final", pid)
     result["observed_seconds"] = time.monotonic() - began
+
+
+def stage_transition_ready(report, route):
+    from baseline import STAGE_WORLD_SECONDS, stage_world_seconds
+
+    progress = report.get("stageProgress") or {}
+    failure = report.get("firstFailure") or report.get("error") or progress.get("error")
+    if failure:
+        raise RuntimeError("Native stage transition failed: " + str(failure))
+    transitions = progress.get("transitions")
+    if transitions == 0:
+        return False
+    if transitions != 1 or progress.get("transporting") or progress.get("requested") != route["to"]:
+        raise RuntimeError("Expected one completed transition to " + route["to"])
+    if (
+        report.get("stage", {}).get("scene") != route["to"]
+        or progress.get("actualScene") != route["to"]
+        or progress.get("actualSceneDef") != route["to"]
+        or progress.get("activeSceneVerified") is not True
+    ):
+        raise RuntimeError("Native destination scene does not match " + route["to"])
+    # The native transport owner increments transitions after verifying run,
+    # master, body, authority, money, experience, inventory and stage count.
+    age = stage_world_seconds(report)
+    return report.get("phase") == "integrated-world-playing" and report.get("world", {}).get("ready") is True and age is not None and age >= STAGE_WORLD_SECONDS
 
 
 def observe_pacing(device, output, pid, snapshot):
@@ -1241,6 +1313,7 @@ def execute(request):
     exception_log = None
     initial_exception_bytes = None
     active_hash = None
+    initial_hash_pending = False
     started = time.monotonic()
     prior_selectors = command_selectors()
     try:
@@ -1255,7 +1328,9 @@ def execute(request):
         if device.exists():
             if not device.receipt("installed.json").exists() and "prior_receipt" in request:
                 adopt_receipt(device, request["prior_receipt"])
+            initial_hash_pending = True
             active_hash = verify_owned(device)["apk_sha256"]
+            initial_hash_pending = False
         payload = payload_files(request)
         payload_size = sum(path.stat().st_size for path in payload)
         reserve = apk.stat().st_size + payload_size + DEVICE_RESERVE_BYTES
@@ -1324,7 +1399,13 @@ def execute(request):
             if json.loads(device.sh("cat", remote)) != payload:
                 raise RuntimeError("Uploaded config differs: " + name)
         # Each invocation starts its own cooldown budget here, never a caller's clock.
-        thermal = _GameThermalOwner(device, active_hash, output / "thermal.jsonl", time.monotonic() + request["cooldown_seconds"])
+        thermal = _GameThermalOwner(
+            device,
+            active_hash,
+            output / "thermal.jsonl",
+            time.monotonic() + request["cooldown_seconds"],
+            enforce_soc_ceiling=request.get("enforce_soc_ceiling", False),
+        )
         thermal.phase = "cooldown"
         thermal.cool()
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600
@@ -1398,6 +1479,11 @@ def execute(request):
                     time_above80_seconds=thermal.time_above_80_seconds,
                     admission_battery=thermal.admission_battery,
                 )
+            if initial_hash_pending:
+                # An interrupted preinstall hash can still permit verified cleanup.
+                installed = clean("initial-ownership", lambda: verify_owned(device))
+                if installed:
+                    active_hash = installed["apk_sha256"]
             if device and active_hash:
 
                 def stop():
