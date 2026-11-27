@@ -214,7 +214,7 @@ class Runner:
     def admit_battery(self, serial, *, heavy=False):
         for sample in range(3):
             level, current, temperature = self.battery(serial)
-            if heavy and level < 30:
+            if heavy and level < 30 and not self.charge_override:
                 return f"battery at {level} % (< 30 % for phone producers)"
             refusal = battery_refusal(level, current, temperature, self.charge_override)
             if level > 85 or temperature > 350 or not refusal:

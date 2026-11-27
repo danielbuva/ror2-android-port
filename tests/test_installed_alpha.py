@@ -166,6 +166,22 @@ class InstalledAlphaTests(unittest.TestCase):
             stages.append(stage)
         return apk, hashlib.sha256(apk.read_bytes()).hexdigest(), 4, *stages
 
+    def test_local_nightly_preflight_accepts_one_signed_release(self):
+        apk, digest, version, baseline, _ = self.stage_update_pair()
+        public = self.owner.public()
+        with (
+            patch.object(installed_alpha, "release_tools", return_value=self.owner),
+            patch.object(public, "verify_signature") as signature,
+            patch.object(public, "validate_publication") as validate,
+        ):
+            plan = installed_alpha.preflight_releases(apk, digest, version, baseline)
+        self.assertEqual(set(plan), {"baseline"})
+        self.assertEqual(plan["baseline"]["publisher_version_code"], 2)
+        self.assertEqual(plan["baseline"]["attempt"], "baseline")
+        signature.assert_called_once()
+        self.assertEqual(validate.call_args.args[0], baseline / "public-tools.zip")
+        validate.assert_called_once()
+
     def test_local_update_preflight_uses_numeric_versions_and_signed_output_dependencies(self):
         args = self.stage_update_pair()
         public = self.owner.public()

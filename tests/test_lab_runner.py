@@ -137,6 +137,17 @@ class BatteryRuleTest(unittest.TestCase):
             with mock.patch.object(runner, "battery", return_value=(30, 0, 260)):
                 self.assertIsNone(runner.admit_battery("synthetic", heavy=True))
 
+    def test_charge_override_admits_phone_producers_at_any_charge(self):
+        with tempfile.TemporaryDirectory() as repo:
+            config = Path(repo) / "work/config/lab-runner.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(json.dumps({"battery_charge_override": True}))
+            runner = lab_runner.Runner(repo, {})
+            with mock.patch.object(runner, "battery", return_value=(29, 0, 260)):
+                self.assertIsNone(runner.admit_battery("synthetic", heavy=True))
+            with mock.patch.object(runner, "battery", return_value=(29, 0, 351)):
+                self.assertIsNotNone(runner.admit_battery("synthetic", heavy=True))
+
     def test_uncertain_emission_preserves_lease_through_runner_cleanup(self):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {})
