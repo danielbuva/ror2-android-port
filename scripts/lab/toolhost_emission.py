@@ -94,7 +94,8 @@ def load_request(path, *, refresh_repo=False):
     if signed_code or decode:
         required = (required - {"expected_records"}) | {"operation", count}
     if artifact:
-        required = (required - {"expected_records"}) | {"operation", "expected_sha256"}
+        artifact_pins = "expected_artifacts" if "expected_artifacts" in request else "expected_sha256"
+        required = (required - {"expected_records"}) | {"operation", artifact_pins}
     if signed_code and "profile_resources" in request:
         if type(request["profile_resources"]) is not bool:
             raise ValueError("signed-code-resource-profile-selector")
@@ -114,8 +115,26 @@ def load_request(path, *, refresh_repo=False):
         raise ValueError("emission-request-contract")
     if decode and not re.fullmatch(r"[0-9a-f]{64}", request["expected_decoded_sha256"]):
         raise ValueError("emission-decode-result-pin")
-    if artifact and not re.fullmatch(r"[0-9a-f]{64}", request["expected_sha256"]):
-        raise ValueError("emission-artifact-result-pin")
+    if artifact:
+        if artifact_pins == "expected_artifacts":
+            pins = request[artifact_pins]
+            if (
+                not isinstance(pins, dict)
+                or not pins
+                or any(
+                    not label
+                    or not isinstance(pin, dict)
+                    or set(pin) != {"sha256", "bytes"}
+                    or not isinstance(pin["sha256"], str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", pin["sha256"])
+                    or type(pin["bytes"]) is not int
+                    or pin["bytes"] < 0
+                    for label, pin in pins.items()
+                )
+            ):
+                raise ValueError("emission-artifact-result-pins")
+        elif not re.fullmatch(r"[0-9a-f]{64}", request[artifact_pins]):
+            raise ValueError("emission-artifact-result-pin")
     for key in ("tool_apk", "manifest"):
         pin = request[key]
         if set(pin) != {"path", "sha256"} or digest(pin["path"]) != pin["sha256"]:
@@ -156,11 +175,16 @@ def load_request(path, *, refresh_repo=False):
         if operation in (SIGNED_NATIVE, SIGNED_ARTIFACT):
             required_code = {"bundle", "envelope", "public_key", "key_id", "output"}
             if artifact:
-                required_code |= {"job", "artifact", "bindings"}
+                selection = "artifacts" if artifact_pins == "expected_artifacts" else "artifact"
+                required_code |= {"job", selection, "bindings"}
             if set(code) == required_code:
                 private_files += tuple(relative(code[key]) for key in ("bundle", "envelope", "public_key"))
         if set(code) != required_code or any((root / name).as_posix() not in files for name in private_files):
             raise ValueError("signed-code-staged-input-contract")
+        if artifact and selection == "artifacts":
+            labels = code[selection]
+            if not isinstance(labels, list) or not all(isinstance(label, str) for label in labels) or sorted(labels) != sorted(pins):
+                raise ValueError("signed-artifact-selection-differs-from-expected-pins")
         relative(code["output"])
     return request, files
 
@@ -724,12 +748,15 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
             elif signed_artifact:
                 result.update(collect(phone, state, destination, code_output=code_output, signed_artifact=True, failed=observed.returncode != 0))
                 report = result.get("signed_artifact", {})
+                if "expected_artifacts" in request:
+                    readback_matches = report.get("artifacts") == request["expected_artifacts"]
+                else:
+                    readback_matches = report.get("artifact") == code_request["artifact"] and report.get("sha256") == request["expected_sha256"]
                 result["success"] = (
                     observed.returncode == 0
                     and report.get("success") is True
                     and report.get("job") == code_request["job"]
-                    and report.get("artifact") == code_request["artifact"]
-                    and report.get("sha256") == request["expected_sha256"]
+                    and readback_matches
                     and "thermal" in result
                 )
             elif signed:

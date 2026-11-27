@@ -394,3 +394,19 @@ class Dispatcher:
         path = self.descriptor(job)["artifacts"][artifact]
         self.execute(job)
         return self.output_hashes[job][path]
+
+    def artifact_pins(self, job, labels):
+        if job not in self.validated_jobs:
+            raise ValueError("producer is outside the signed entry graph")
+        declared = self.descriptor(job).get("artifacts", {})
+        if not labels or not set(labels) <= declared.keys():
+            raise ValueError("artifact readback requires declared producer artifacts")
+        root = self.execute(job)
+        hashes = self.output_hashes[job]
+        pins = {}
+        for label in labels:
+            path = declared[label]
+            if path not in hashes:
+                raise ValueError("artifact readback requires a regular file")
+            pins[label] = {"sha256": hashes[path], "bytes": UPDATES.within(root, path, exists=True).stat().st_size}
+        return pins
