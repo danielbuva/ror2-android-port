@@ -1,0 +1,309 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shrineblood_static_assets_all_222afe0f37447281046975649023b9b6.bundle",
+      "sha256": "5e19a7b9c33c8383e643455b321ceadcacee08a4bcc390ef522d0fc40418d5bc",
+      "members": [
+        {
+          "name": "CAB-0c321f5c110e77ebabac48e4d2551d8f",
+          "objects": [
+            {
+              "path_id": 5575365139680516269,
+              "class_id": 114,
+              "sha256": "05f9eb1a3c271790c0503df4f5361528f28fc76455567becb004dd2d254f735b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -9107177057870567654,
+                  "bytes": 56,
+                  "sha256": "c0606dacadcb0a0b1db4ba6623a5b3c8d6d5af1bdb9c0530faad79fa1e4241fe",
+                  "native_type_hash": "9ccb4aab8d0312620a34005554c7a197",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -4614866815851439955
+                        ],
+                        "to": [
+                          0,
+                          -3277344873475674188
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -1986416965857983244
+                        ],
+                        "to": [
+                          1,
+                          8975181616605098179
+                        ]
+                      },
+                      {
+                        "offset": 44,
+                        "from": [
+                          0,
+                          -7269936352756246355
+                        ],
+                        "to": [
+                          0,
+                          -3864519837708028214
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shrineboss_static_assets_all_fa83cc91ef661fee3f45f25b3f0cda42.bundle",
+      "sha256": "a043ab12cf5be99baa2f8599ebd09a1768831507ed9aad70f046735278487109",
+      "members": [
+        {
+          "name": "CAB-82c5e08bba0adc87482a367fbfc0af74",
+          "objects": [
+            {
+              "path_id": 3371638923931331511,
+              "class_id": 114,
+              "sha256": "bdf8d294e7b4c6fa201e7cdb89cc2307dd6c9b3ca92013e652710ac539234d7a",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2029683767597115769,
+                  "bytes": 76,
+                  "sha256": "189639be80d43dd0d90e69aa0992d927cfc8741cab8dc849cd84486998209b1a",
+                  "native_type_hash": "c70e401b5f2fb548fa7f1a6cea1528b9",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          206093982757399479
+                        ],
+                        "to": [
+                          0,
+                          879520621870136010
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          6910268792189815064
+                        ],
+                        "to": [
+                          1,
+                          3156018183597106287
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          6713847741560271358
+                        ],
+                        "to": [
+                          0,
+                          -6223473037422295021
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          3,
+                          8909884022537208187
+                        ],
+                        "to": [
+                          0,
+                          4941731903669401785
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          1949101297511934903
+                        ],
+                        "to": [
+                          0,
+                          6590098252748246447
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shrinechance_static_assets_all_1f40c467578576cf1759810cb4683b4c.bundle",
+      "sha256": "283310d943e53f616d865dfb6cb211adda27dcd85a63951c36150768abd8b6c0",
+      "members": [
+        {
+          "name": "CAB-ede5b99bc771850e8eeee17455eb3c71",
+          "objects": [
+            {
+              "path_id": 722722415771431707,
+              "class_id": 114,
+              "sha256": "63bdfb20fce19d731155c88c3eb0bca03e3adb661a8168c0e67bcb34ae571c34",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2669158372626043188,
+                  "bytes": 204,
+                  "sha256": "093a8905adbba2832cc7591aed7945cd8e6d18b773ad7db968e44e070f2db2b5",
+                  "native_type_hash": "767ccf6943fd9c9194bf716c5e8dc433",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -4311041816970808549
+                        ],
+                        "to": [
+                          0,
+                          5273020304721548767
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -5094190573479519615
+                        ],
+                        "to": [
+                          1,
+                          7225617643734030214
+                        ]
+                      },
+                      {
+                        "offset": 44,
+                        "from": [
+                          0,
+                          4822640436307676478
+                        ],
+                        "to": [
+                          0,
+                          2621697288023187265
+                        ]
+                      },
+                      {
+                        "offset": 56,
+                        "from": [
+                          2,
+                          -5793668960970189961
+                        ],
+                        "to": [
+                          0,
+                          -3646788476822031156
+                        ]
+                      },
+                      {
+                        "offset": 68,
+                        "from": [
+                          0,
+                          7217300950038459163
+                        ],
+                        "to": [
+                          0,
+                          -4489285021233283967
+                        ]
+                      },
+                      {
+                        "offset": 80,
+                        "from": [
+                          0,
+                          8935021704441541403
+                        ],
+                        "to": [
+                          0,
+                          -5905106673273503964
+                        ]
+                      },
+                      {
+                        "offset": 92,
+                        "from": [
+                          3,
+                          -3346469373335147593
+                        ],
+                        "to": [
+                          1,
+                          -900021863104514373
+                        ]
+                      },
+                      {
+                        "offset": 104,
+                        "from": [
+                          3,
+                          6151547143912087289
+                        ],
+                        "to": [
+                          1,
+                          3591717231746354337
+                        ]
+                      },
+                      {
+                        "offset": 116,
+                        "from": [
+                          3,
+                          -4673582576076595149
+                        ],
+                        "to": [
+                          2,
+                          -7206198047464236889
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -5243370089862548709
+                        ],
+                        "to": [
+                          0,
+                          245229126422487089
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          -6209350220520246501
+                        ],
+                        "to": [
+                          0,
+                          7025694512109880546
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sdk": {
+    "path": "Contents/Resources/unity editor resources",
+    "sha256": "25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190",
+    "path_id": -9215203055440829681
+  }
+}
