@@ -81,19 +81,44 @@ def acquired_inventory(value):
             or not name.isprintable()
             or any(str(parent) in value for parent in path.parents)
             or not isinstance(pin, dict)
-            or set(pin) != {"bytes", "sha256"}
+            or set(pin) - {"url"} != {"bytes", "sha256"}
             or type(pin["bytes"]) is not int
             or not 0 <= pin["bytes"] <= 2**60
         ):
             raise ValueError("invalid acquired-tool inventory entry: " + name)
         UPDATES.ALPHA.sha256(pin["sha256"])
+        if "url" in pin:
+            validate_download(name, pin["url"])
     return value
+
+
+def validate_download(name, url):
+    """Permit immutable upstream source files and versioned public Maven JARs."""
+    if not isinstance(url, str) or len(url) > 2048 or not re.fullmatch(r"https://[a-z.]+/[a-zA-Z0-9_./-]+", url):
+        raise ValueError("unapproved tool download: " + name)
+    UPDATES.relative(url.split("/", 3)[3])
+    if name.startswith("acquired/asset-ripper/"):
+        relative = name.removeprefix("acquired/asset-ripper/")
+        if re.fullmatch(r"[0-9a-f]{40}/.+", relative) and url == "https://raw.githubusercontent.com/AssetRipper/AssetRipper/" + relative:
+            return
+    if name.startswith("acquired/android-sdk/") and name.endswith(".jar") and url.rsplit("/", 1)[-1] == Path(name).name:
+        if url.startswith(
+            (
+                "https://dl.google.com/dl/android/maven2/com/android/tools/",
+                "https://repo.maven.apache.org/maven2/com/google/guava/",
+                "https://repo.maven.apache.org/maven2/com/squareup/javawriter/",
+                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/",
+                "https://repo.maven.apache.org/maven2/org/ow2/asm/",
+            )
+        ):
+            return
+    raise ValueError("unapproved tool download: " + name)
 
 
 def verify_acquired(root, name, pin):
     path = UPDATES.within(root, name)
     if not path.is_file() or path.stat().st_size != pin["bytes"] or UPDATES.RELEASE.digest(path) != pin["sha256"]:
-        raise ValueError("owner-acquired tool missing or changed: " + name)
+        raise ValueError("owner-acquired tool missing or changed: " + name + ". Use Acquire / resume required tools.")
     return path
 
 
@@ -132,6 +157,9 @@ def input_description(plan, manifest, acquired=None):
         "import_root": "import",
         "stages": plan["stages"],
     }
+    if tools:
+        description["acquired_inputs"] = tools
+        description["acquired_inputs_sha256"] = hashlib.sha256(UPDATES.RELEASE.signed_bytes(tools)).hexdigest()
     if len(UPDATES.RELEASE.signed_bytes(description)) > 3 * 1024**2:
         raise ValueError("phone input description exceeds bounded UI metadata limit")
     return description
@@ -160,10 +188,18 @@ def prepare(index, repo, inputs):
     """Rehash admitted originals; generate private paths, never trust UI receipts."""
     description, acquired = read_plan(index, repo)
     write_description(inputs, description)
+    hashes = {}
+    if acquired:
+        for name, pin in acquired.items():
+            verify_acquired(inputs, name, pin)
+            hashes[name] = pin["sha256"]
+        tool_root = UPDATES.within(inputs, "acquired", exists=True)
+        staged = {path.relative_to(inputs).as_posix() for path in tool_root.rglob("*") if path.is_symlink() or not path.is_dir()}
+        if staged != acquired.keys():
+            raise ValueError("owner-acquired tool tree differs from signed inventory. Use Acquire / resume required tools.")
     importer = module("install_game_import", HERE / "game_import.py")
     imported_root = UPDATES.within(inputs, "import/files", exists=True)
     manifest = importer.select_version(importer.FolderSource(imported_root), description["catalog"])
-    hashes = {}
     names = set()
     inventory = []
     # The native owners use the host inventory's Path ordering for identity.
@@ -187,14 +223,6 @@ def prepare(index, repo, inputs):
             observed.add(path.relative_to(imported_root).as_posix())
     if observed != names:
         raise ValueError("private import contains files from another selection; import into a fresh version-bound folder")
-    if acquired:
-        for name, pin in acquired.items():
-            verify_acquired(inputs, name, pin)
-            hashes[name] = pin["sha256"]
-        tool_root = UPDATES.within(inputs, "acquired", exists=True)
-        staged = {path.relative_to(inputs).as_posix() for path in tool_root.rglob("*") if path.is_symlink() or not path.is_dir()}
-        if staged != acquired.keys():
-            raise ValueError("owner-acquired tool tree differs from signed inventory")
     bindings = {}
     for name, relative in index["install_plan"]["configuration"]["bindings"].items():
         if acquired and (relative == "acquired" or relative.startswith(ACQUIRED)):

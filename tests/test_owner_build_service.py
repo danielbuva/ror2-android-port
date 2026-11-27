@@ -61,11 +61,14 @@ public class OwnerInputSource {
         if(!access.closed.await(5,TimeUnit.SECONDS))throw new IOException("provider read did not close");
         throw new InterruptedIOException("read interrupted");
     }
+    public static void acquire(Context c,OwnerInputImport.Observer observer,Access access)throws Exception {
+        throw new IOException("tool provider unavailable");
+    }
 }""",
     PACKAGE
     + "ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;import android.content.*;import java.io.*;import java.util.concurrent.*;import org.json.*;public class ToolHostActivity {
-public static String backgroundProgress(Context c){return "synthetic thermal state";}public static String status;public static int controls,installs;public static CountDownLatch installEntered,installRelease;public static JSONObject importState;public static JSONObject readJson(File f){return new JSONObject().put("state",status);}
-public static void writeJson(Context c,File f,JSONObject j){if(f.getName().equals("import-state.json"))importState=j;else controls++;}
+public static String backgroundProgress(Context c){return "synthetic thermal state";}public static String status;public static int controls,installs;public static CountDownLatch installEntered,installRelease;public static JSONObject importState,toolState;public static JSONObject readJson(File f){return new JSONObject().put("state",status);}
+public static void writeJson(Context c,File f,JSONObject j){if(f.getName().equals("import-state.json"))importState=j;else if(f.getName().equals("tools-state.json"))toolState=j;else controls++;}
 public static void updateStatus(Context c,String s,String m){status=s;}public static void installPrepared(Context c)throws Exception{installs++;if(installEntered!=null){installEntered.countDown();installRelease.await();}}
 public static class Worker {public static volatile int executions,cancels;public static CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1);Context context;public Worker(Context c){context=c;}public void executeUpdate(String a)throws Exception {executions++;entered.countDown();release.await();if("release-build".equals(a)){File f=new File(context.getFilesDir(),"owner-input/update-state.json");f.getParentFile().mkdirs();f.createNewFile();status="READY";}}public void cancel(){cancels++;}}}""",
 }
@@ -133,6 +136,10 @@ importer.onStartCommand(action("import"),0,20);
 finish();
 check("ERROR".equals(ToolHostActivity.importState.optString("state")));
 check("provider unavailable".equals(ToolHostActivity.importState.optString("message")));
+recreated.onStartCommand(action("tool-acquire"),0,27);
+finish();
+check("TOOLS_UNAVAILABLE".equals(ToolHostActivity.toolState.optString("state")));
+check("tool provider unavailable".equals(ToolHostActivity.toolState.optString("message")));
 System.out.println("single-flight lifecycle PASS");
 }}
 """

@@ -73,7 +73,10 @@ class InstallInputTests(unittest.TestCase):
         self.plan["configuration"]["bindings"]["tool_root"] = "acquired/sdk"
         self.index["files"]["recipe/acquired.json"] = INPUTS.UPDATES.RELEASE.digest(manifest)
 
-        self.assertEqual(INPUTS.describe(self.index, self.repo, self.inputs)["manifest"], self.manifest)
+        description = INPUTS.describe(self.index, self.repo, self.inputs)
+        self.assertEqual(description["manifest"], self.manifest)
+        self.assertEqual(description["acquired_inputs"], {name: pin})
+        self.assertEqual(description["acquired_inputs_sha256"], hashlib.sha256(INPUTS.UPDATES.RELEASE.signed_bytes({name: pin})).hexdigest())
         with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
             INPUTS.prepare(self.index, self.repo, self.inputs)
         tool.write_bytes(data)
@@ -98,6 +101,27 @@ class InstallInputTests(unittest.TestCase):
         for value in ({"import/files/a": pin}, {"signing/owner/a": pin}, {"acquired/sdk": pin, "acquired/sdk/tool.txt": pin}):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, "invalid acquired-tool inventory entry"):
                 INPUTS.acquired_inventory(value)
+
+    def test_signed_tool_urls_are_limited_to_reviewed_provider_paths(self):
+        revision = "a" * 40
+        source = f"acquired/asset-ripper/{revision}/LICENSE.md"
+        raw = f"https://raw.githubusercontent.com/AssetRipper/AssetRipper/{revision}/LICENSE.md"
+        jar = "acquired/android-sdk/jars/asm-9.2.jar"
+        maven = "https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.2/asm-9.2.jar"
+        pin = {"bytes": 1, "sha256": "b" * 64}
+        accepted = {source: dict(pin, url=raw), jar: dict(pin, url=maven), "acquired/unity-android-support.pkg": pin}
+        self.assertEqual(INPUTS.acquired_inventory(accepted), accepted)
+        for name, url in (
+            (source, raw.replace(revision, "main")),
+            (source, raw.replace("AssetRipper/AssetRipper", "other/AssetRipper")),
+            (source, raw + "?download=true"),
+            (jar, maven.replace("https:", "http:")),
+            (jar, maven.replace("asm/9.2", "asm/../9.2")),
+            (jar, raw),
+            ("acquired/unity-android-support.pkg", "https://download.unity3d.com/component.pkg"),
+        ):
+            with self.subTest(name=name, url=url), self.assertRaises(ValueError):
+                INPUTS.acquired_inventory({name: dict(pin, url=url)})
 
     def test_signed_versions_feed_the_native_original_inventory(self):
         imported = self.import_fixture()
