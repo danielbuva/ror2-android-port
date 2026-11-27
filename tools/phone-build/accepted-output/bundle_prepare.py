@@ -240,7 +240,7 @@ def extend_selection(owner, member, required, selected, types, routes, extension
     required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
 
 
-def original_identities(owner, path, source_files=None, *, destinations=None, generated=None, relocations=None):
+def original_identities(owner, path, source_files=None, *, destinations=None, generated=None, relocations=None, shader_dependencies=None):
     """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
 
@@ -271,6 +271,17 @@ def original_identities(owner, path, source_files=None, *, destinations=None, ge
             return result
         if "shader_links" in profile:
             shader_records = [(row["original"], row["outputs"]) for row in profile["records"]]
+            if shader_dependencies is not None:
+                sdk = "sdk", "Resources/unity_builtin_extra"
+                links = {tuple(link["to"]): (*sdk, link["sdk_shader"]) for link in profile["shader_links"]}
+                for row in profile["records"]:
+                    routes = links
+                    if "fallback_original" in row:
+                        routes = {tuple(link["to"]): tuple(link["original"][key] for key in ("path", "member", "path_id")) for link in row["fallback_original"]}
+                    source = tuple(row["original"][key] for key in ("path", "member", "path_id"))
+                    for output in row["outputs"]:
+                        record = tuple(output[key] for key in ("bundle", "member", "path_id"))
+                        shader_dependencies[record, source] = routes
         elif "shaders" in profile and "source" in profile and "template_inputs" in profile:
             shader_records = [(dict(profile["source"], path_id=row["path_id"]), row["outputs"]) for row in profile["shaders"]]
         elif "source_type" in profile and "compiler_sdk" in profile and "materials" in profile:
@@ -416,10 +427,18 @@ def prepare(owner, inputs, output):
         if logical in providers and providers[logical] != directory:
             raise ValueError("ambiguous supplier provider")
         providers[logical] = directory
-        generated, relocations = {}, {}
-        profiles[name] = original_identities(owner, paths["profile"], source_files, generated=generated, relocations=relocations)
+        generated, relocations, shader_dependencies = {}, {}, {}
+        profiles[name] = original_identities(
+            owner, paths["profile"], source_files, generated=generated, relocations=relocations, shader_dependencies=shader_dependencies
+        )
         suppliers[name] = SimpleNamespace(
-            paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]), generated=generated, relocations=relocations
+            paths=paths,
+            types=types,
+            provider=logical,
+            profile_sha=owner.O.B.sha(paths["profile"]),
+            generated=generated,
+            relocations=relocations,
+            shader_dependencies=shader_dependencies,
         )
     producer = owner.ProducerRecords(providers)
     bindings, sources = {}, {}
@@ -631,8 +650,12 @@ def prepare(owner, inputs, output):
             binding = bindings.get(target, {})
             source = value.get("source")
             references = {}
+            shader_dependencies = None
             if source is not None:
-                references = suppliers[binding["supplier"]].relocations.get((tuple(binding["record_source"]), tuple(source)), {})
+                supplier = suppliers[binding["supplier"]]
+                selector = tuple(binding["record_source"]), tuple(source)
+                references = supplier.relocations.get(selector, {})
+                shader_dependencies = supplier.shader_dependencies.get(selector)
             edges = []
             for field, offset, pointer in fields:
                 if not pointer[1]:
@@ -651,6 +674,19 @@ def prepare(owner, inputs, output):
                         if not 0 <= fid < len(namespace):
                             raise ValueError("produced pointer outside declared member table")
                         endpoint = (*namespace[fid], pid)
+                    elif typ["class_id"] == 48 and field[0] == "m_Dependencies" and shader_dependencies is not None:
+                        dependency = shader_dependencies.get(pointer)
+                        if dependency is None:
+                            raise ValueError(f"Shader dependency missing from producer recipe: {target} {field} {pointer}")
+                        if not pointer[0] and dependency[0] == "sdk":
+                            endpoint = (*member, pointer[1])
+                        else:
+                            candidates = sources.get(dependency, ())
+                            if len(candidates) != 1:
+                                raise ValueError(f"Shader dependency endpoint absent or ambiguous: {target} {field} {dependency}")
+                            (endpoint,) = candidates
+                        if read(endpoint)[0]["class_id"] != 48:
+                            raise ValueError(f"Shader dependency endpoint type differs: {target} {field} {endpoint}")
                     else:
                         _, _, metadata = original(source)
                         reference = references.get(offset)

@@ -43,13 +43,34 @@ class BundlePreparationTests(unittest.TestCase):
             destination = ("content", "CAB-content", 7)
             original = dict(zip(("path", "member", "path_id"), source), sha256="a" * 64)
             output = dict(zip(("bundle", "member", "path_id"), destination))
-            path.write_text(json.dumps(dict(shader_links=[dict(sdk_shader=1, to=[3, 6])], records=[dict(original=original, outputs=[output])])))
+            local_output = dict(output, path_id=8)
+            original_fallback = dict(original, path_id=12)
+            profile = dict(
+                shader_links=[dict(sdk_shader=6, to=[3, 6]), dict(sdk_shader=34, to=[0, 41])],
+                records=[
+                    dict(original=original, outputs=[output]),
+                    dict(original=original, outputs=[local_output], fallback_original=[dict(original=original_fallback, to=[0, 42])]),
+                ],
+            )
+            path.write_text(json.dumps(profile))
 
             pin = P.O.B.sha(path)
-            self.assertEqual(G.Graph(root, {}).source_suppliers([pin], {source}), {source: {(pin, destination)}})
+            local = "content", "CAB-content", 8
+            self.assertEqual(G.Graph(root, {}).source_suppliers([pin], {source}), {source: {(pin, destination), (pin, local)}})
             source_files = {}
-            self.assertEqual(P.module("bundle_prepare").original_identities(P, path, source_files), {destination: {source}})
+            dependencies = {}
+            self.assertEqual(
+                P.module("bundle_prepare").original_identities(P, path, source_files, shader_dependencies=dependencies),
+                {destination: {source}, local: {source}},
+            )
             self.assertEqual(source_files, {source[0]: original["sha256"]})
+            self.assertEqual(
+                dependencies,
+                {
+                    (destination, source): {(3, 6): ("sdk", "Resources/unity_builtin_extra", 6), (0, 41): ("sdk", "Resources/unity_builtin_extra", 34)},
+                    (local, source): {(0, 42): ("shaders.bundle", "CAB-source", 12)},
+                },
+            )
             with self.assertRaisesRegex(ValueError, "original source file pins disagree"):
                 P.module("bundle_prepare").original_identities(P, path, {source[0]: "b" * 64})
 
