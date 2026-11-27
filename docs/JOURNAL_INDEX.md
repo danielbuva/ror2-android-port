@@ -352,3 +352,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1517](PORTING_JOURNAL.md#j1517--recover-the-assisted-gold-shrine-to-teleporter-route) | 2026-11-26 | Recover the assisted Gold shrine-to-teleporter route | 2026-11-26. |
 | [J1518](PORTING_JOURNAL.md#j1518--observe-the-native-siren-boss-and-restore-its-reward-drop) | 2026-11-26 | Observe the native Siren boss and restore its reward drop | 2026-11-26. |
 | [J1519](PORTING_JOURNAL.md#j1519--bind-direct-selected-survivor-animators-before-native-locomotion) | 2026-11-26 | Bind direct-selected survivor Animators before native locomotion | 2026-11-26. |
+| [J1520](PORTING_JOURNAL.md#j1520--restore-the-native-gold-shores-boss-reward) | 2026-11-26 | Restore the native Gold Shores boss reward | 2026-11-27. |
