@@ -2739,6 +2739,16 @@ routing. Programs, translated bodies and device evidence stay local.
 | `owner-histogram-compute-translation.json` | `237d60bfb5624afc874cf152a6ea785f9b9afea6077b185023cf19526d404d50` |
 | `owner-camera-compute-translation.json` | `b089d2fc030cef076d780d1c0e293c69eeed5c4573462011be9406ce39f75716` |
 
+The Cloud Intersection Remap profile selects the original Shader leaf and
+its canonical destination. It reuses the signed graphics translator and its
+pinned public tools. The recipe contains source selectors, hashes and output
+routing. Source programs, translated bodies and raw device records stay local.
+Provenance, privacy, licensing and sensitive-content review completed 2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-cloud-intersection-graphics-translation.json` | `28da3f8dfb441d3f621bdccfe5b15622f34f5b83c4e7bed345ef731afed0fa80` |
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP
