@@ -86,6 +86,11 @@ namespace EntityStates.BeetleQueenMonster
 }
 namespace EntityStates.Croco
 {
+    public class BaseLeap
+    {
+        public static GameObject projectilePrefab;
+    }
+
     public class Slash
     {
         public static GameObject configuredNormal;
@@ -351,6 +356,14 @@ static class Fixture
             directReference = new GameObject { components = new[] { fallback } }
         };
         var operation = new AsyncOperationHandle<GameObject> { Result = new GameObject { components = new[] { finisher } } };
+        var crocoGas = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
+        var crocoSpittle = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
+        var crocoAcid = new GameObject { components = new[] {
+            new RoR2.Projectile.ProjectileController {
+                ghostPrefab = new GameObject { components = new[] { crocoGas, crocoSpittle } }
+            }
+        } };
+        EntityStates.Croco.BaseLeap.projectilePrefab = crocoAcid;
         var queenGas = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
         var queenSpittle = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
         var queenAcid = new GameObject { components = new[] {
@@ -396,13 +409,18 @@ static class Fixture
         Check(prepare.MoveNext() && finisher.sharedMaterials[0] != original &&
               queenGas.sharedMaterials[0] == original && queenSpittle.sharedMaterials[0] == original,
               "native finisher should be prepared while the Queen projectile loads");
+        Check(EntityStates.Croco.BaseLeap.projectilePrefab == crocoAcid, "Croco preparation must retain the native projectile");
+        foreach (var renderer in new[] { crocoGas, crocoSpittle })
+            Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
+                  session.worldLootSourceMaterials[renderer][0] == original,
+                  "Croco acid ghost must inherit the prepared material and retain its original slot for teardown");
         Check((string)Addressables.requestedKey == "native-queen-spit" &&
               session.ownedOriginalVisualHandles[1] == queenOperation,
               "native Queen projectile address and ownership must be preserved");
         queenOperation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 &&
               EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab == queenReference &&
-              session.worldLootSourceMaterials.Count == 9, "Queen preparation must retain native state configuration");
+              session.worldLootSourceMaterials.Count == 11, "Queen preparation must retain native state configuration");
         foreach (var renderer in new[] { queenGas, queenSpittle })
             Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
                   session.worldLootSourceMaterials[renderer][0] == original,
