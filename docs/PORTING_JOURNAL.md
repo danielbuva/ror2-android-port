@@ -4839,3 +4839,28 @@ Across 7,105 frames including startup and transitions, median was 8.333 ms and
 p95 was 10.864 ms. SoC peaked at 84.8 °C, with 2.171 s above 80 °C.
 Adopted placement, scratch removal, OLED sleep and lease release passed.
 Two GameObject Addressables errors, matched render parity and physical audibility remain open.
+## J1542 — Recover a native profile save after injected ENOSPC
+
+2026-11-27. The shared lab runner injected ENOSPC before the live profile
+pending-file write on Secondary Nova, after one unassisted native loss and its
+XML report became durable. The app stayed alive, preserved the profile primary,
+backup and settings, and left no pending profile. Two cold Starts applied one
+result, then zero, with stable hashes after recovery. The runner removed scratch,
+verified a stopped app and sleeping OLED, and released the lease.
+APK SHA-256 `82e49513ca58aba8a002d15cf14365f3db1ceac4b69a7e9d2ec4e42215368845`
+(build source `ece0f01a`). Evidence is under
+`work/coordination/alpha-saf-stability-20261127/nova-b-profile-save-failure/`.
+Physical volume exhaustion, power loss and production-alpha retention remain open.
+
+## J1543 — Record sustained assisted combat on Secondary Nova
+
+2026-11-27. The shared runner captured 1,800.011 s of bounded native primary fire.
+The reconciled window recorded 106,604 frames, 59.311 FPS and 14 frames above
+50 ms. The covered 570.008 s tail averaged 59.410 FPS. All 61 power samples
+showed external power. Battery held at 80% and reached 35 °C. The runner
+recorded a 94.3 °C SoC peak and 13.006 s above 80 °C, with no safety abort.
+APK SHA-256 `5af412ac93b310c221879305194cb68d3f81868252c048a573ef2c99db2d236e`
+(build source `53b5781a`). Evidence is under
+`work/coordination/alpha-saf-stability-20261127/nova-b-sustained-placement/`.
+The native enemy cap, scratch, display and lease teardown passed. Both FPS
+means missed 60 FPS. Ordinary play, matched visuals and budgets remain open.

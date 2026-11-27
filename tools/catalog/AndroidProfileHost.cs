@@ -73,6 +73,20 @@ public static class AndroidProfileHost
             if (store.ShouldApply(baseline) || store.ApplyResult(baseline, delta) || store.appliedRuns != 0 ||
                 store.profile.statSheet.GetStatValueULong(StatDef.totalKills) != 0)
                 throw new Exception("Historical baseline imported statistics");
+            var path = System.IO.Path.Combine(directory, "profile.json");
+            string initialPrimary = File.ReadAllText(path), initialBackup = File.ReadAllText(path + ".backup");
+            try
+            {
+                store.ApplyResult(run, delta, injectWriteFailure: true);
+                throw new Exception("Profile write failure was not injected");
+            }
+            catch (IOException error) when (error.Message == "ENOSPC: injected profile write failure")
+            {
+                if (!store.ShouldApply(run) || store.profile.statSheet.GetStatValueULong(StatDef.totalKills) != 0 ||
+                    File.ReadAllText(path) != initialPrimary || File.ReadAllText(path + ".backup") != initialBackup ||
+                    File.Exists(path + ".pending"))
+                    throw new Exception("Failed profile write changed a committed generation");
+            }
             if (!store.ApplyResult(run, delta) || store.ApplyResult(run, delta))
                 throw new Exception("Result deduplication failed");
             store.Save();
@@ -82,7 +96,6 @@ public static class AndroidProfileHost
                 loaded.profile.statSheet.GetStatValueULong(StatDef.totalKills) != 3 || loaded.appliedRuns != 1 ||
                 loaded.baselineRuns != 1 || loaded.ShouldApply(baseline) || loaded.ShouldApply(run) || !loaded.ShouldApply(nextRun))
                 throw new Exception("Cold native profile/baseline differs");
-            var path = System.IO.Path.Combine(directory, "profile.json");
             File.WriteAllText(path + ".pending", "interrupted owned fixture");
             var interrupted = new AndroidOfflineProfile(directory);
             if (interrupted.recovery != "validated-primary" || interrupted.appliedRuns != 1)

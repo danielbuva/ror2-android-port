@@ -3904,6 +3904,13 @@ checks two cold world Starts for one reconciliation and unchanged settings.
 Native replay supersedes the pending generation. Cleanup stops the package and
 clears the attempt's request and witness files.
 
+The same runner owns `profile-save-failure`. It selects ordinary Start with
+an attempt-bound lab request, and `AndroidProfileBoundary` consumes the fault
+at the native result commit. `AndroidOfflineProfile` raises an injected write
+error before creating the pending file. The runner verifies the live writer,
+durable native XML and ledger, and retained profile and settings before stopping
+the process. It clears the selector and reuses the two cold reconciliation checks.
+
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
 expected storage/validation failures into a bounded message; the settings owner
