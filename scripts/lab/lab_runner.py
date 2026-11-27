@@ -406,7 +406,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
     try:
         device = request["device"]
         operation = request.get("operation", "packaging")
-        if operation not in ("packaging", "acquisition", "staged-update", "nightly", "toolhost"):
+        if operation not in ("packaging", "acquisition", "tool-acquisition", "staged-update", "nightly", "toolhost"):
             raise CommandError("unknown local packaging operation")
         build_toolhost = operation == "toolhost"
         retain_signer = request.get("backup_installer_key", False)
@@ -423,12 +423,14 @@ def local_packaging(path, *, dry_run=False, detach=False):
         if Path(common_dir).resolve() != (repo / ".git").resolve():
             raise CommandError("packaging checkout must belong to the canonical repository")
         command = parse_command("/lab script device=" + device + " -- scripts/lab-alpha-packaging.py")
-        if operation == "acquisition":
-            command["args"].extend(["--acquisition-request", str(Path(path).resolve())])
+        if operation in ("acquisition", "tool-acquisition"):
+            command["args"].extend([f"--{operation}-request", str(Path(path).resolve())])
         elif operation in ("staged-update", "nightly"):
             # The signed native producer alone took 9,158 seconds in J1512.
             command["args"].extend([f"--{operation}-request", str(Path(path).resolve()), "--timeout", str(STAGED_UPDATE_STEP_TIMEOUT)])
             command["timeout_seconds"] = 2 * STAGED_UPDATE_STEP_TIMEOUT + 3000 if operation == "nightly" else 3 * STAGED_UPDATE_STEP_TIMEOUT + 1800
+            if operation == "staged-update" and request.get("acquire_on_phone") is True:
+                command["timeout_seconds"] += STAGED_UPDATE_STEP_TIMEOUT
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
             if operation == "packaging" and "toolhost_source_commit" in request:
