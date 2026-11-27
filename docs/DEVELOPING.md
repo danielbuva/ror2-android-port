@@ -11,11 +11,14 @@ Current independent prepared builds use [build lanes](build-lanes.md):
 Shared device runs use the current `./dev device-session --request <JSON>`
 entry point. Validate with `--dry-run`, then use `--detach` after the dispatcher
 grants the device. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
-evidence rules. Required request fields are `canonical_root`, `output` (under
-its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
-`adopted_install: true` and `duration_seconds`. Optional fields are
+evidence rules. For disposable APKs, supply `canonical_root`, `output` (under
+its `work/`), `workstream`, `package`, `apk`, `apk_sha256` and `duration_seconds`.
+Select the granted serial with `--device` or the request's `serial` field.
+Set `adopted_install: true` for adopted-only placement. Omit it when using the
+second Nova's internal storage profile. Other optional fields include
 `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
-`settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`),
+`settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`,
+or fixture modes `shader-draw`, `shader-compute` and `texture-readback`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
 the runner), `input_schedule` (launch-mode list of `{ "at_seconds": 5,
 "script": "touch.json" }`, ordered within the observation duration),
