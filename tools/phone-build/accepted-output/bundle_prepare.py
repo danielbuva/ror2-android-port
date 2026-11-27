@@ -270,11 +270,18 @@ def original_identities(owner, path, source_files=None, *, destinations=None, ge
                     add(record, ("sdk", "Resources/unity_builtin_extra", row["sdk_shader"]))
             return result
         if "shader_links" in profile:
-            for row in profile["records"]:
-                source = row["original"]
+            shader_records = [(row["original"], row["outputs"]) for row in profile["records"]]
+        elif "shaders" in profile and "source" in profile and "template_inputs" in profile:
+            shader_records = [(dict(profile["source"], path_id=row["path_id"]), row["outputs"]) for row in profile["shaders"]]
+        elif "source_type" in profile and "compiler_sdk" in profile and "materials" in profile:
+            shader_records = [(profile["source_type"], profile["outputs"])]
+        else:
+            shader_records = None
+        if shader_records is not None:
+            for source, outputs in shader_records:
                 if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
                     raise ValueError("original source file pins disagree")
-                for target in row["outputs"]:
+                for target in outputs:
                     add((target["bundle"], target["member"], target["path_id"]), (source["path"], source["member"], source["path_id"]))
             return result
         if "original_sources" in profile:
