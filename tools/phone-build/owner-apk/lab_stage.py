@@ -13,7 +13,10 @@ import time
 SPEC = importlib.util.spec_from_file_location("phone_stage_release_jobs", Path(__file__).with_name("release_jobs.py"))
 JOBS = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(JOBS)
-PRODUCERS = {name for name in JOBS.PRODUCERS if name.startswith("tools/phone-build/accepted-output/")}
+ACCEPTED_OUTPUT = "tools/phone-build/accepted-output/"
+SCOREBOARD = ACCEPTED_OUTPUT + "whole_game_scoreboard.py"
+PRODUCER_SUPPORT = {SCOREBOARD: tuple(ACCEPTED_OUTPUT + name for name in ("unity_bundle.py", "unity_write.py"))}
+PRODUCERS = {name for name in JOBS.PRODUCERS if name.startswith(ACCEPTED_OUTPUT)} | PRODUCER_SUPPORT.keys()
 UPDATES = JOBS.UPDATES
 
 
@@ -69,7 +72,8 @@ def run(stage, repo, owner_input, output, native, runtime, python, receipt):
             arguments.extend(("--workers", "1"))
         log = output.parent / "producer.log"
         with log.open("wb") as stream:
-            observed = subprocess.run([*python, str(producer), *arguments], cwd=repo, stdout=stream, stderr=subprocess.STDOUT)
+            cwd = inputs if stage["producer"] == SCOREBOARD else repo
+            observed = subprocess.run([*python, str(producer), *arguments], cwd=cwd, stdout=stream, stderr=subprocess.STDOUT)
         if observed.returncode:
             with log.open("rb") as stream:
                 stream.seek(max(0, stream.seek(0, 2) - 4096))
