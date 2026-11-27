@@ -99,8 +99,10 @@ def run_editor(path, *, build=False):
     bundle = project / "Assets/StreamingAssets/texture-readback.bundle"
     apk = attempt / "phone-content-fixture.apk"
     if build:
+        build_output = attempt / "editor-build"
+        build_output.mkdir()
         editor_env.update(
-            ROR2_PHONE_ORACLE_REPORT=str(attempt / "oracle.json"),
+            ROR2_PHONE_ORACLE_REPORT=str(build_output / "oracle.json"),
             ANDROID_SDK_HOME=str(ROOT / ".local/phone-build-android"),
             ANDROID_USER_HOME=str(ROOT / ".local/phone-build-android/.android"),
             GRADLE_USER_HOME=str(ROOT / ".local/phone-build-gradle"),
@@ -120,7 +122,14 @@ def run_editor(path, *, build=False):
         "-logFile",
         str(log),
     ]
-    result = {"success": False, "source_commit": commit, "unity": VERSION, "log": str(log), "inputs": fixture}
+    result = {
+        "success": False,
+        "source_commit": commit,
+        "unity": VERSION,
+        "log": str(log),
+        "inputs": fixture,
+        "bundle_sha256": request["sha256"],
+    }
     try:
         with host_build_lock(common_dir.parent / "work/coordination/unity-build.lock", operation="exact-editor texture mip readback", timeout=1):
             if build:
@@ -134,12 +143,12 @@ def run_editor(path, *, build=False):
         if child.returncode:
             raise RuntimeError("Exact-editor texture readback failed: " + str(log))
         if build:
-            report = json.loads((attempt / "player-build.json").read_text())
+            report = json.loads((build_output / "player-build.json").read_text())
             if report["source_commit"] != commit or report["unity"] != VERSION or not report["build_report_guid"]:
                 raise RuntimeError("Vulkan texture player build receipt differs")
             with apk.open("rb") as stream:
                 apk_sha256 = hashlib.file_digest(stream, "sha256").hexdigest()
-            result.update(success=True, apk=str(apk), apk_sha256=apk_sha256, bundle_sha256=request["sha256"])
+            result.update(success=True, apk=str(apk), apk_sha256=apk_sha256)
         else:
             report = validate_native_content(attempt, commit)
             samples = json.loads((attempt / "texture-readback.json").read_text())
