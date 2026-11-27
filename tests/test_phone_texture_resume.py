@@ -251,6 +251,30 @@ t.produce(p, t.BUNDLE.sha(p), Path(sys.argv[3]), Path(sys.argv[4]))
         with self.assertRaisesRegex(ValueError, "bundle drift"):
             self.resume()
 
+    def test_native_decoder_pin_must_match_before_checkpoint_recovery(self):
+        decoder = self.root / "native-decoder"
+        decoder.write_bytes(b"original authored decoder")
+        pin = {"pixels_codec": decoder, "pixels_codec_sha256": T.BUNDLE.sha(decoder)}
+        self.kill_batch()
+        with self.assertRaisesRegex(ValueError, "checkpoint.*drift"):
+            self.resume(**pin)
+
+        output = self.root / "with-decoder"
+        T.produce(self.profile, T.BUNDLE.sha(self.profile), self.pc, output, **pin)
+        with (output / "objects.bin").open("ab") as stream:
+            stream.write(b"uncommitted object")
+        before = {path.name: path.read_bytes() for path in output.iterdir()}
+        different = self.root / "different-decoder"
+        different.write_bytes(b"updated authored decoder")
+        changed = {"pixels_codec": different, "pixels_codec_sha256": T.BUNDLE.sha(different)}
+        for resume_pin in ({}, changed):
+            with self.assertRaisesRegex(ValueError, "checkpoint.*drift"):
+                self.resume(output, **resume_pin)
+            self.assertEqual(before, {path.name: path.read_bytes() for path in output.iterdir()})
+
+        self.assertTrue(self.resume(output, **pin)["success"])
+        self.assertEqual((self.fresh / "objects.bin").read_bytes(), (output / "objects.bin").read_bytes())
+
 
 if __name__ == "__main__":
     unittest.main()
