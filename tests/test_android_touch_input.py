@@ -24,13 +24,10 @@ class AndroidTouchInputTests(unittest.TestCase):
         cls.exe = Path(cls.temp.name) / "touch.exe"
         camera_source = (ROOT / "tools/unity/runtime/input/NovaThirdPersonView.cs").read_text()
         method = camera_source.split("    public void LookTouch(", 1)[1].split("    public Vector3 Movement(", 1)[0]
+        aim = camera_source.split("    public Vector3 Aim(", 1)[1].split("    public void DiagnosticDirection(", 1)[0]
         camera = Path(cls.temp.name) / "Camera.cs"
         camera.write_text(
-            "using UnityEngine;\npublic sealed class AndroidOfflineSettings { public sealed class Values { "
-            "public float lookSensitivity=1; public bool invertY; } public static Values current=new Values(); }\n"
-            "public sealed class CameraFixture { public sealed class Report { public int touchFrames,lookFrames; } "
-            "public Report report=new Report(); public float yaw,pitch; public int poses; void Place(){poses++;} "
-            "public void LookTouch(" + method + "}\n"
+            "using UnityEngine;\npublic sealed partial class CameraFixture {\npublic void LookTouch(" + method + "public Vector3 Aim(" + aim + "}\n"
         )
         bridge_source = (ROOT / "tools/unity/runtime/input/NovaInputBridge.cs").read_text()
         bank_method = bridge_source.split("    void ObserveTouchBank(bool countTouchPresses)", 1)[1].split("    public void Neutral()", 1)[0]
@@ -67,6 +64,7 @@ class AndroidTouchInputTests(unittest.TestCase):
                         "UnityEngine.CoreModule.dll",
                         "UnityEngine.IMGUIModule.dll",
                         "UnityEngine.InputLegacyModule.dll",
+                        "UnityEngine.PhysicsModule.dll",
                         "UnityEngine.TextRenderingModule.dll",
                     )
                 ],
@@ -103,6 +101,9 @@ class AndroidTouchInputTests(unittest.TestCase):
 
     def test_camera_drag_is_pixel_based_and_honors_sensitivity_and_invert(self):
         self.case("camera-delta")
+
+    def test_camera_aim_skips_detached_own_hurtboxes_and_preserves_target_selection(self):
+        self.case("camera-aim")
 
     def test_captured_gameplay_touches_do_not_activate_legacy_gui_and_can_pause(self):
         self.case("gui-ownership")
