@@ -555,7 +555,7 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
         print(json.dumps(dict(success=True, dry_run=True, files=len(files))))
         return 0
     result = dict(success=False)
-    runner = Runner(repo, {}, strict_battery=strict_battery or request.get("operation") == "converter-stage")
+    runner = Runner(repo, {}, strict_battery=strict_battery)
     if resume or restage:
         runner.resume_state = done.parent / "device-state.json"
 
@@ -604,7 +604,7 @@ def converter_stage(argv):
 
     from toolhost_emission import prepare_stage
 
-    parser = argparse.ArgumentParser(description="Current lab action: run a converter stage against existing toolhost inputs")
+    parser = argparse.ArgumentParser(description="Current lab action: run a converter stage against retained or freshly staged pinned inputs")
     parser.add_argument("stage", help="Hyphenated stem of an existing converter producer")
     parser.add_argument("--request", type=Path, required=True)
     parser.add_argument("--workstream", required=True, help="Dispatcher device grant owner")
