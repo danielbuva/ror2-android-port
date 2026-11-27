@@ -1,4 +1,4 @@
-"""Build the public DXBC translator and SPIR-V validator for Android ARM64 API 24."""
+"""Build the public DXBC-to-Vulkan tools for Android ARM64 API 24."""
 
 import argparse
 import hashlib
@@ -20,6 +20,11 @@ SOURCES = {
     "spirv-headers.tar.gz": ("SPIRV-Headers-496543121ce6419f23d6fa5d7194ba66c36212d2", "a9bb9c48713245eacf97cc539b6f1d45405a92d8813f8b82e635f0a085ee9898"),
     "vulkan-headers.tar.gz": ("Vulkan-Headers-vulkan-sdk-1.4.350.1", "6d1bb65e49520344cc0a48af3dc02e993781efff14c7ebdcb8ae9fa23ddf7e83"),
 }
+GRAPHICS_SOURCES = {
+    "smol-v.tar.gz": ("smol-v-55000efe742f56d8b51223b9ea7775a8f0501881", "8b9db8b37fe1a2a6db154b0753e3a6c0309778bb89b7d2cab8fa8a764c598b5f"),
+    "spirv-cross.tar.gz": ("SPIRV-Cross-vulkan-sdk-1.4.363.0", "f708982e88b763ef5b0394ed468fc2c3628f68cdab89f2e7a946cd628c04e721"),
+    "glslang.tar.gz": ("glslang-16.6.0", "9c09b901149c729df745057dafa815278aaa101b84d2b6e14f16a42de52f97f2"),
+}
 
 
 def sha(path):
@@ -27,8 +32,9 @@ def sha(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def build(sources, ndk, bison, output, jobs):
-    for name, (_, expected) in SOURCES.items():
+def build(sources, ndk, bison, output, jobs, *, graphics=False):
+    archives = SOURCES | GRAPHICS_SOURCES if graphics else SOURCES
+    for name, (_, expected) in archives.items():
         if sha(sources / name) != expected:
             raise ValueError(f"shader source archive drift: {name}")
     if not re.search(r"^Pkg\.Revision\s*=\s*21\.3\.6528147\s*$", (ndk / "source.properties").read_text(), re.M):
@@ -53,11 +59,22 @@ def build(sources, ndk, bison, output, jobs):
 
     translator = output / "libshader-dxbc.so"
     validator = output / "libspirv-val.so"
+    executables = [translator, validator]
+    cmake_flags = [
+        f"-DCMAKE_TOOLCHAIN_FILE={ndk / 'build/cmake/android.toolchain.cmake'}",
+        "-DANDROID_ABI=arm64-v8a",
+        "-DANDROID_PLATFORM=android-24",
+        "-DANDROID_STL=c++_static",
+        "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
+        "-DCMAKE_BUILD_TYPE=Release",
+        f"-DCMAKE_CXX_ARCHIVE_CREATE={ar} qc <TARGET> <LINK_FLAGS> <OBJECTS>",
+        f"-DCMAKE_CXX_ARCHIVE_FINISH={ranlib} <TARGET>",
+    ]
     material = output / "public-sources"
     material.mkdir()
     with TemporaryDirectory(prefix="shader-build-", dir=output) as temp:
         scratch = Path(temp)
-        for name, (_, expected) in SOURCES.items():
+        for name, (_, expected) in archives.items():
             archive_path = material / name
             copy2(sources / name, archive_path)
             if sha(archive_path) != expected:
@@ -126,16 +143,9 @@ def build(sources, ndk, bison, output, jobs):
                 spirv,
                 "-B",
                 cmake_output,
-                f"-DCMAKE_TOOLCHAIN_FILE={ndk / 'build/cmake/android.toolchain.cmake'}",
-                "-DANDROID_ABI=arm64-v8a",
-                "-DANDROID_PLATFORM=android-24",
-                "-DANDROID_STL=c++_static",
-                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
-                "-DCMAKE_BUILD_TYPE=Release",
+                *cmake_flags,
                 "-DSPIRV_SKIP_TESTS=ON",
                 f"-DSPIRV-Headers_SOURCE_DIR={headers}",
-                f"-DCMAKE_CXX_ARCHIVE_CREATE={ar} qc <TARGET> <LINK_FLAGS> <OBJECTS>",
-                f"-DCMAKE_CXX_ARCHIVE_FINISH={ranlib} <TARGET>",
             ],
         )
         run("validator-build", ["cmake", "--build", cmake_output, "--parallel", str(jobs), "--target", "SPIRV-Tools-static"])
@@ -166,8 +176,53 @@ def build(sources, ndk, bison, output, jobs):
         copytree(vulkan / "LICENSES", notices / "Vulkan-Headers")
         copy2(ndk / "NOTICE.toolchain", notices / "Android-NDK-toolchain-NOTICE.txt")
         copy2(ndk / "sources/cxx-stl/llvm-libc++/NOTICE", notices / "LLVM-libc++-NOTICE.txt")
+        if graphics:
+            smolv, cross, glslang = (scratch / top for top, _ in GRAPHICS_SOURCES.values())
+            patch = material / "glslang-android-cli.patch"
+            copy2(root / patch.name, patch)
+            run("glslang-patch", ["patch", "-f", "-F", "0", "-p1", "-i", patch], cwd=glslang)
+            encoder = output / "libshader-smolv.so"
+            run(
+                "smolv-build",
+                [
+                    cxx,
+                    "-std=c++17",
+                    "-O2",
+                    "-pie",
+                    "-static-libstdc++",
+                    "-Wl,-s",
+                    "-I",
+                    smolv / "source",
+                    root.parent / "accepted-output/shader_smolv.cpp",
+                    smolv / "source/smolv.cpp",
+                    "-o",
+                    encoder,
+                ],
+            )
+            executables.append(encoder)
+            for name, source, target, executable, flags in (
+                ("spirv-cross", cross, "spirv-cross", "spirv-cross", ["-DSPIRV_CROSS_ENABLE_TESTS=OFF", "-DCMAKE_DISABLE_FIND_PACKAGE_Git=ON"]),
+                (
+                    "glslang",
+                    glslang,
+                    "glslang-standalone",
+                    "StandAlone/glslang",
+                    ["-DROR2_ANDROID_GLSLANG_CLI=ON", "-DBUILD_EXTERNAL=OFF", "-DENABLE_OPT=OFF", "-DGLSLANG_TESTS=OFF"],
+                ),
+            ):
+                cmake_output = scratch / f"{name}-build"
+                run(f"{name}-configure", ["cmake", "-G", "Ninja", "-S", source, "-B", cmake_output, *cmake_flags, *flags])
+                run(f"{name}-build", ["cmake", "--build", cmake_output, "--parallel", str(jobs), "--target", target])
+                native = output / f"lib{name}.so"
+                run(f"{name}-strip", [ndk_bin / "llvm-strip", "-o", native, cmake_output / executable])
+                executables.append(native)
+            copy2(smolv / "license.txt", notices / "SMOL-V-LICENSE.txt")
+            copy2(cross / "LICENSE", notices / "SPIRV-Cross-LICENSE.txt")
+            copytree(cross / "LICENSES", notices / "SPIRV-Cross")
+            copy2(glslang / "LICENSE.txt", notices / "glslang-LICENSE.txt")
+            copytree(glslang / "LICENSES", notices / "glslang")
 
-    natives = {path.name: {"path": str(path), "sha256": sha(path)} for path in (translator, validator)}
+    natives = {path.name: {"path": str(path), "sha256": sha(path)} for path in executables}
     (output / "native-tools.json").write_text(json.dumps({"natives": natives}, indent=2) + "\n")
 
 
@@ -178,8 +233,16 @@ def main():
     parser.add_argument("--bison", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--jobs", type=int, default=4)
+    parser.add_argument("--graphics", action="store_true", help="also build SMOL-V, SPIRV-Cross and glslang executables")
     args = parser.parse_args()
-    build(args.sources.resolve(strict=True), args.ndk.resolve(strict=True), args.bison.resolve(strict=True), args.output.absolute(), args.jobs)
+    build(
+        args.sources.resolve(strict=True),
+        args.ndk.resolve(strict=True),
+        args.bison.resolve(strict=True),
+        args.output.absolute(),
+        args.jobs,
+        graphics=args.graphics,
+    )
 
 
 if __name__ == "__main__":

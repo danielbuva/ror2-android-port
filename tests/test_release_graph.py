@@ -27,8 +27,15 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
-    def test_direct_compute_job_binds_original_record_and_installed_tools(self):
-        path = ROOT / "recipe/owner-histogram-compute-translation.json"
+    def test_direct_shader_jobs_bind_original_records_and_installed_tools(self):
+        compute = ("libshader-dxbc.so", "libspirv-val.so")
+        graphics = (*compute, "libshader-smolv.so", "libspirv-cross.so", "libglslang.so")
+        for profile, tools in (("owner-histogram-compute-translation.json", compute), ("owner-outline-graphics-translation.json", graphics)):
+            with self.subTest(profile=profile):
+                self.check_direct_shader_job(profile, tools)
+
+    def check_direct_shader_job(self, profile, tools):
+        path = ROOT / "recipe" / profile
         pin = G.digest(path)
         (record,) = json.loads(path.read_bytes())["typed_records"]
         destination = [record["output"][key] for key in ("bundle", "member", "path_id")]
@@ -53,7 +60,7 @@ class ReleaseGraphTests(unittest.TestCase):
             dispatch.jobs_root = native / "work/jobs"
             dispatch.descriptors = graph.jobs
             expected = {}
-            for tool in ("libshader-dxbc.so", "libspirv-val.so"):
+            for tool in tools:
                 binary = native / tool
                 binary.write_text(tool)
                 expected[f"native_sha256:{tool}"] = G.digest(binary)

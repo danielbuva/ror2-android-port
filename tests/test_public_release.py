@@ -227,7 +227,7 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
                 needs=[code_job],
                 arguments=["${output}", "${job:" + code_job + ":burst}"],
                 outputs={library: "native.so", metadata: "metadata.dat"},
-                artifacts=dict(receipt="result.json"),
+                artifacts=dict(library="native.so", metadata="metadata.dat", receipt="result.json"),
             ),
         )
         self.commit()
@@ -254,10 +254,18 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
         inventory.write_text(json.dumps(dict(files=[dict(path="fixture", sha256=sha, size=original.stat().st_size, mtime_ns=0)])))
         (stage / "input-hashes.json").write_text(json.dumps({"game/fixture": sha}))
         request = stage / "request.json"
-        request.write_text(json.dumps(dict(bundle=archive.name, envelope="release.json", public_key=pub.name, key_id="test", output="rehearsal")))
+        release_request = dict(bundle=archive.name, envelope="release.json", public_key=pub.name, key_id="test", output="rehearsal")
+        request.write_text(json.dumps(release_request))
         android = PUBLIC._module("native_phone_fixture", ROOT / "tools/phone-build/owner-code/run_android.py")
         with patch.dict("os.environ"), patch("builtins.print"):
             android.run(request, runtime, host)
+            job_cache = stage / "work/releases/jobs"
+            native_jobs = set(job_cache.glob("*.json"))
+            self.assertEqual(len(native_jobs), 2)
+            artifact_request = dict(release_request, output="artifacts", job=native_job, artifacts=["library", "metadata"], bindings={})
+            request.write_text(json.dumps(artifact_request))
+            android.run(request, runtime, host)
+            self.assertEqual(len(set(job_cache.glob("*.json")) - native_jobs), 2)
             envelope["signature"]["value"] = "AAAA"
             (stage / "release.json").write_text(json.dumps(envelope))
             with self.assertRaisesRegex(ValueError, "release signature invalid"):
@@ -274,7 +282,16 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
                 for name, value in ((library, b"synthetic native"), (metadata, b"synthetic metadata"), (burst, b"synthetic burst"))
             },
         )
-        self.assertEqual(len(list((stage / "work/releases/jobs").glob("*.json"))), 2)
+        readback = json.loads((stage / "work/artifacts/result.json").read_text())
+        self.assertTrue(readback["success"])
+        self.assertEqual(readback["bundle_sha256"], built["bundle_sha256"])
+        self.assertEqual(
+            readback["artifacts"],
+            {
+                label: {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
+                for label, data in (("library", b"synthetic native"), ("metadata", b"synthetic metadata"))
+            },
+        )
 
     def test_reviewed_unity_source_is_published_and_verified(self):
         def recipe(name):
@@ -388,6 +405,19 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
         self.assertIn("recipe/inputs.json", result["index"]["files"])
         with zipfile.ZipFile(Path(self.temporary.name) / "public.zip") as archive:
             self.assertEqual(PUBLIC.load_json(archive.read("recipe/inputs.json")), manifest)
+
+        tools = {"acquired/sdk/example.jar": {"bytes": 2, "sha256": "b" * 64}}
+        tools_path = "recipe/acquired-tools.json"
+        (self.root / tools_path).write_text(json.dumps(tools))
+        self.commit()
+        self.plan["install_plan"]["acquired_inputs"] = tools_path
+        self.plan["install_plan"]["configuration"]["bindings"]["sdk"] = "acquired/sdk"
+        with_tools = self.build("with-tools.zip")
+        self.assertEqual(with_tools["entries"], result["entries"])
+        with zipfile.ZipFile(Path(self.temporary.name) / "with-tools.zip") as archive:
+            self.assertEqual(PUBLIC.load_json(archive.read(tools_path)), tools)
+            self.assertEqual(set(archive.namelist()), {*result["index"]["files"], tools_path, PUBLIC.INDEX})
+
         self.plan["install_plan"]["configuration"]["bindings"]["originals"] = "../../escape"
         with self.assertRaises(ValueError):
             self.build("bad.zip")

@@ -6710,13 +6710,14 @@ same-cohort conversion, Burst and IL2CPP jobs to `owner-apk/release_jobs.py`.
 It compares the dispatcher readback hashes with the producer receipts and
 requires the entire compile plan before the runner collects evidence and
 removes owned scratch.
-Signed artifact requests use the same envelope and dispatcher to qualify one
-declared producer artifact from a release. The managed-host stage includes
+Signed artifact requests use the same envelope and dispatcher to qualify
+selected artifacts in a single execution of their release job. The managed-host
+stage includes
 `owner-code/GnuToolAdapter.c` so the toolhost builder can package the QEMU
-bridge for signed texture fixtures. The runner checks the selected
-artifact hash, collects the producer and thermal receipts, and removes the
-owned input and output files. The artifact itself stays on the device until
-cleanup.
+bridge for signed texture fixtures. The runner compares the requested hashes
+and sizes with the dispatcher's readback, collects the producer and thermal
+receipts, and removes owned input and output files. Artifacts stay on the
+device until cleanup.
 
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
@@ -8477,6 +8478,13 @@ opts into Vulkan storage-buffer loads for those inputs. The existing native
 provider plan stages the executables. The shared
 runner verified the signed Histogram producer on Android. Its output hash
 matched the object dispatched in the Vulkan fixture.
+
+The signed `owner-graphics-shader-translation-v1` profile routes the original
+Outline record to its canonical bundle identity. It binds SMOL-V encoding,
+SPIRV-Cross and glslang alongside DXBC translation and SPIR-V validation.
+The managed-host builder builds five Android executables and retains their
+public source and notices. The producer checks their hashes before and after
+translation and includes them in the typed pack receipt.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the

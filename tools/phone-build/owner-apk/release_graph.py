@@ -58,6 +58,15 @@ TEXTURE_NATIVE = {
     "pixels_codec": "libtexture-pixels.so",
 }
 COMPUTE_NATIVE = {"dxbc": "libshader-dxbc.so", "spirv_val": "libspirv-val.so"}
+SHADER_NATIVE = {
+    "owner-compute-shader-translation-v1": COMPUTE_NATIVE,
+    "owner-graphics-shader-translation-v1": {
+        **COMPUTE_NATIVE,
+        "smolv": "libshader-smolv.so",
+        "spirv_cross": "libspirv-cross.so",
+        "glslang": "libglslang.so",
+    },
+}
 PIXEL_DECODER = "libtexture-pixels.so"
 TEXTURE_GUEST = "${installed_runtime}/texture-sdk/"
 TEXTURE_GUEST_LIB = "linux/lib/x86_64-linux-gnu/"
@@ -98,7 +107,7 @@ def owner(profile):
         return "bundle_endpoints"
     if profile.get("schema") == "owner-bundle-preload-release-v1":
         return "bundle_preload"
-    if profile.get("schema") == "owner-compute-shader-translation-v1":
+    if profile.get("schema") in SHADER_NATIVE:
         return "shader_translate"
     if "project_assemblies" in profile and "outputs" in profile:
         return "player_data"
@@ -340,7 +349,7 @@ class Graph:
                 "profile": {"path": "${repo}/" + path, "sha256": pin, "bytes": (self.repo / path).stat().st_size},
                 "tools": {
                     name: {"path": "${native}/" + installed, "sha256": "${native_sha256:" + installed + "}", "bytes": "${native_bytes:" + installed + "}"}
-                    for name, installed in COMPUTE_NATIVE.items()
+                    for name, installed in SHADER_NATIVE[profile["schema"]].items()
                 },
             }
         if producer == "shader_produce":

@@ -8,11 +8,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 from shader_source import bind_hlsl
-from shader_segments import parameter_layout, selected_layout
+from shader_segments import parameter_layout, read_program_code, selected_layout
 from shader_programs import NativePrograms, NativeVariantUnavailable
 
 
 class ShaderBindingTests(unittest.TestCase):
+    def test_2021_shader_program_header_matches_the_variant(self):
+        code = b"DXBCfixture"
+        # Keyword strings start with an unpadded length and occupy aligned slots.
+        record = struct.pack("<7i", 202012090, 16, 0, 0, 0, 0, 2)
+        record += struct.pack("<i4s", 1, b"Z") + struct.pack("<i4s", 3, b"FOO")
+        record += struct.pack("<i", len(code)) + code
+        self.assertEqual(read_program_code(record, {"gpu_type": 16, "keywords": ["FOO", "Z"]}), code)
+        with self.assertRaisesRegex(RuntimeError, "serialized variant disagree"):
+            read_program_code(record, {"gpu_type": 16, "keywords": ["FOO", "Y"]})
+
     def test_missing_variant_is_distinct_from_ambiguous_original_programs(self):
         emitter = NativePrograms(None, {}, None)
         context = ({"m_ParsedForm": {"m_Name": "Fixture"}}, None, [], None, None)
