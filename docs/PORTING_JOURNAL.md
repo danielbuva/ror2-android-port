@@ -5079,3 +5079,15 @@ Installer APK SHA-256 `e1d1ad492522bd6c7cef1381da3810719b3fde5ccf6e7ca80316292d8
 Evidence is under `work/coordination/alpha-packaging-acceptance/run-l6dfyzhs/`.
 The runner removed its fixture, installer and reverse mapping, slept the OLED
 and released the lease. Complete playable-release acquisition remains open.
+## J1562 — Draw original Outline instancing on Android Vulkan
+
+2026-11-27. The original-derived OutlineHighlightNew shader uses distinct
+vertex and fragment uniform bindings and retains Unity's native instancing
+buffer names. The exact Android Unity fixture matched ordinary white, red
+and green instances, and the untouched blue gap on Vulkan.
+APK SHA-256 `03c79160e16ae3961c1464d7e1a71de5920e857bd78ac119c889408ec586aaa9`
+(source `aac6e0f8`). Evidence is under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `outline-instancing-binding-device-02/terminal.done.json`.
+Peak SoC was 57.7 °C, with 0 s above 80 °C and a 28 °C admission battery.
+Fixture removal, OLED sleep and lease release passed. Larger batches and
+canonical game integration remain open.

@@ -49,7 +49,7 @@ def vertex_channels(dxbc):
     return sorted(channels)
 
 
-def stage_parameters(layout, vertex):
+def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=None):
     """Route source-layout resources to the linked pass's descriptor sets."""
     stage_flag = 0x04000000 if vertex else 0x08000000
     rows, descriptors = [], []
@@ -60,17 +60,28 @@ def stage_parameters(layout, vertex):
         )
 
     for buffer in layout["buffers"]:
-        slot = buffer["slot"] + (2 if vertex else 0)
-        name = ("vs_" if vertex else "fs_") + buffer["name"]
+        slot = buffer["slot"] + (vertex_binding_base if vertex else 0)
+        name = buffer["name"]
+        draw_call = name == "UnityDrawCallInfo"
+        if not draw_call and not name.startswith("UnityInstancing_"):
+            name = ("vs_" if vertex else "fs_") + name
+        if draw_call and shared_draw_call is not None:
+            slot = shared_draw_call
+        descriptors.extend(("cbv", str(buffer["slot"]), "1", str(slot)))
+        if draw_call and shared_draw_call is not None and vertex:
+            continue  # The fragment metadata declares the binding for both stages.
         variables = buffer["variables"]
-        rows.append(f"cb: {name} {buffer['size']} {len(variables)}")
+        # The SDK's Vulkan runtime binding exposes two integers. DXBC pads
+        # the register to 16 bytes, while both translated stages read lane 0.
+        size = 8 if draw_call else buffer["size"]
+        rows.append(f"cb: {name} {size} {len(variables)}")
         rows.extend(constant_row(variable["name"], variable) for variable in variables)
         for structure in buffer.get("structures", []):
             name_prefix = structure["name"]
             rows.append(f"const: {name_prefix} {structure['offset']} 0 2 {structure['stride']} 0 {structure['array_size']}")
             rows.extend(constant_row(f"{name_prefix}.{variable['name']}", variable) for variable in structure["variables"])
-        rows.append(f"cbbind: {name} {stage_flag | 0x10000 | slot}")
-        descriptors.extend(("cbv", str(buffer["slot"]), "1", str(slot)))
+        visibility = 0x0C000000 if draw_call and shared_draw_call is not None else stage_flag
+        rows.append(f"cbbind: {name} {visibility | 0x10000 | slot}")
     textures = layout["textures"]
     image_base = max(3, 1 + max((texture["sampler"] for texture in textures), default=-1))
     bound_samplers = set()
@@ -117,29 +128,40 @@ def translate_tree(original, directory, tools):
         raise ValueError("translation requires one leaf vertex/fragment pass")
     raw, records, dxbc = read_segments(original, bytes(original["compressedBlob"]))
     stages = {}
-    for stage, vertex in (("progVertex", True), ("progFragment", False)):
+    # Both stages share descriptor set 1. Keep the vertex range above all
+    # fragment constant buffers, including those in instanced variants.
+    for stage in ("progVertex", "progFragment"):
         entries = shader_pass[stage]["m_PlayerSubPrograms"][3]
         stages[stage] = {}
         for entry in entries:
             index = entry["m_BlobIndex"]
             record, program = records[index], dxbc[index]
             layout = selected_layout(original, raw, record, structured=True)
-            rows, descriptors = stage_parameters(layout, vertex)
-            if vertex:
-                rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))
-            spirv = compile_spirv(tools, directory, index, program, descriptors, vertex=vertex)
-            code = subprocess.run([tools["smolv"]], input=spirv, capture_output=True, check=True).stdout
-            stages[stage][tuple(record["keywords"])] = (rows, code, entry["m_ShaderRequirements"])
+            stages[stage][tuple(record["keywords"])] = (index, program, layout, entry["m_ShaderRequirements"])
 
     vertices, fragments = stages["progVertex"], stages["progFragment"]
     if not vertices or vertices.keys() != fragments.keys():
         raise ValueError("Vulkan translation requires paired source keyword variants")
+    fragment_slots = (buffer["slot"] for _, _, layout, _ in fragments.values() for buffer in layout["buffers"])
+    vertex_binding_base = max(2, max(fragment_slots, default=-1) + 1)
     variants = []
-    for keywords, (vertex_rows, vertex_code, vertex_requirements) in vertices.items():
-        fragment_rows, fragment_code, fragment_requirements = fragments[keywords]
-        executable = shader.linked_vulkan_program(vertex_code, fragment_code, alpha_clip="UNITY_UI_ALPHACLIP" in keywords)
-        compilation = {"reflection": vertex_rows + fragment_rows, "data": executable, "gpu_program_type": 25}
-        variants.append({"keywords": keywords, "requirements": vertex_requirements | fragment_requirements, "compilation": compilation})
+    for keywords, vertex_stage in vertices.items():
+        fragment_stage = fragments[keywords]
+        vertex_draw_call = next((buffer for buffer in vertex_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
+        fragment_draw_call = next((buffer for buffer in fragment_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
+        shared_draw_call = fragment_draw_call["slot"] if vertex_draw_call and fragment_draw_call else None
+        reflection, codes, requirements = [], [], 0
+        for vertex, (index, program, layout, stage_requirements) in ((True, vertex_stage), (False, fragment_stage)):
+            rows, descriptors = stage_parameters(layout, vertex, vertex_binding_base=vertex_binding_base, shared_draw_call=shared_draw_call)
+            if vertex:
+                rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))
+            spirv = compile_spirv(tools, directory, index, program, descriptors, vertex=vertex)
+            codes.append(subprocess.run([tools["smolv"]], input=spirv, capture_output=True, check=True).stdout)
+            reflection.extend(rows)
+            requirements |= stage_requirements
+        executable = shader.linked_vulkan_program(*codes, alpha_clip="UNITY_UI_ALPHACLIP" in keywords)
+        compilation = {"reflection": reflection, "data": executable, "gpu_program_type": 25}
+        variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
     raw, table, programs, parameters = shader.variant_records(variants, form["m_KeywordNames"])
     tree = shader.deepcopy(original)
     target = tree["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]
