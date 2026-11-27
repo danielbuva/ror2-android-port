@@ -85,8 +85,8 @@ def read_segments(tree, blob):
     return flattened, records, programs
 
 
-def parameter_layout(data):
-    """Measured 2021.3 parameter records; reject unknown structures/layouts."""
+def parameter_layout(data, *, structured=False):
+    """Decode measured 2021.3 parameter records for the selected consumer."""
     cursor = 0
 
     def integer():
@@ -112,23 +112,37 @@ def parameter_layout(data):
         cursor = (cursor + size + 3) // 4 * 4
         return value
 
+    def variable(extent):
+        variable_name = name()
+        kind, rows, columns, matrix, array_size, offset = (integer() for _ in range(6))
+        if rows < 1 or rows > 4 or columns < 1 or columns > 4 or matrix not in (0, 1) or array_size < 0 or not 0 <= offset < extent:
+            raise RuntimeError("Unsupported shader constant shape/offset")
+        return {"name": variable_name, "type": kind, "rows": rows, "columns": columns, "matrix": bool(matrix), "array_size": array_size, "offset": offset}
+
     if integer() != 202012090:
         raise RuntimeError("Shader parameter version changed")
     buffers = []
     for _ in range(count()):
         buffer_name, size = name(), integer()
-        parameters = []
-        for _ in range(count()):
-            variable = name()
-            kind, rows, columns, matrix, array_size, offset = [integer() for _ in range(6)]
-            if rows < 1 or rows > 4 or columns < 1 or columns > 4 or matrix not in [0, 1] or array_size < 0 or offset < 0 or offset >= size:
-                raise RuntimeError("Unsupported shader constant shape/offset")
-            parameters.append(
-                {"name": variable, "type": kind, "rows": rows, "columns": columns, "matrix": bool(matrix), "array_size": array_size, "offset": offset}
-            )
-        if count() != 0:
+        buffer = {"name": buffer_name, "size": size, "variables": [variable(size) for _ in range(count())]}
+        structure_count = count()
+        if structure_count and not structured:
             raise RuntimeError("Structured shader constants need separately measured decoding")
-        buffers.append({"name": buffer_name, "size": size, "variables": parameters})
+        for _ in range(structure_count):
+            structure_name = name()
+            offset, array_size, stride = integer(), count(), integer()
+            if offset < 0 or stride <= 0 or offset + max(1, array_size) * stride > size:
+                raise RuntimeError("Shader constant structure exceeds native buffer")
+            members = [variable(stride) for _ in range(count())]
+            if any(
+                member["offset"] + (16 * member["rows"] if member["matrix"] else member["columns"] * 4) * max(1, member["array_size"]) > stride
+                for member in members
+            ):
+                raise RuntimeError("Shader constant member exceeds native structure")
+            buffer.setdefault("structures", []).append(
+                {"name": structure_name, "offset": offset, "array_size": array_size, "stride": stride, "variables": members}
+            )
+        buffers.append(buffer)
     bindings = []
     for _ in range(count()):
         resource_name = name()
@@ -144,10 +158,11 @@ def parameter_layout(data):
     return {"buffers": buffers, "bindings": bindings}
 
 
-def selected_layout(tree, flattened, record):
+def selected_layout(tree, flattened, record, *, structured=False):
     if record.get("consumers"):
         layouts = [
-            selected_layout(tree, flattened, dict({k: v for k, v in record.items() if k != "consumers"}, **consumer)) for consumer in record["consumers"]
+            selected_layout(tree, flattened, dict({k: v for k, v in record.items() if k != "consumers"}, **consumer), structured=structured)
+            for consumer in record["consumers"]
         ]
         if any(any(layout[k] != layouts[0][k] for k in ["buffers", "textures"]) for layout in layouts[1:]):
             raise RuntimeError("Shared shader program consumers disagree about native bindings")
@@ -156,7 +171,7 @@ def selected_layout(tree, flattened, record):
     offset, length, segment = struct.unpack_from("<iii", flattened, 4 + 12 * index)
     if segment != 0:
         raise RuntimeError("Parameter layout requires normalized segment offsets")
-    native = parameter_layout(flattened[offset : offset + length])
+    native = parameter_layout(flattened[offset : offset + length], structured=structured)
     if "subshader_index" in record and "pass_index" in record:
         p = tree["m_ParsedForm"]["m_SubShaders"][record["subshader_index"]]["m_Passes"][record["pass_index"]]
         if p["m_State"]["m_Name"] != record["pass"]:
@@ -177,6 +192,8 @@ def selected_layout(tree, flattened, record):
             raise RuntimeError("Native/common shader binding disagreement")
         bindings[name] = slot
     for b in common["m_ConstantBuffers"]:
+        if structured and b.get("m_StructParams"):
+            raise RuntimeError("Common shader constant structures require a measured merge")
         name = names[b["m_NameIndex"]]
         if name not in buffers:
             raise RuntimeError("Common constant buffer absent from native parameter record")

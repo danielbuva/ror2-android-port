@@ -39,7 +39,12 @@ class ReleaseSourceTests(unittest.TestCase):
 
     def test_release_build_rejects_url_key_and_combined_override(self):
         validate = Mock()
-        for override in (self.override, {"base_url": self.override["base_url"]}, {"key_id": "lab-test", "public_key": "test"}):
+        for override in (
+            self.override,
+            {"enabled": True, "base_url": self.override["base_url"]},
+            {"base_url": self.override["base_url"]},
+            {"key_id": "lab-test", "public_key": "test"},
+        ):
             with self.subTest(override=override), self.assertRaisesRegex(ValueError, "forbidden in release builds"):
                 S.configure(self.trust, override, debuggable=False, validate_public_key=validate)
         validate.assert_not_called()
@@ -52,6 +57,17 @@ class ReleaseSourceTests(unittest.TestCase):
         del without_opt_in["enabled"]
         with self.assertRaisesRegex(ValueError, "explicit enabled=true"):
             S.configure(self.trust, without_opt_in, debuggable=True, validate_public_key=Mock())
+
+    def test_loopback_source_keeps_provisioned_keys_and_refuses_partial_key(self):
+        override = {"enabled": True, "base_url": self.override["base_url"]}
+        validate = Mock()
+        trust, transport = S.configure(self.trust, override, debuggable=True, validate_public_key=validate)
+        self.assertIs(trust, self.trust)
+        self.assertEqual(transport.metadata_url(), "http://127.0.0.1:9000/latest.json")
+        for field in ("key_id", "public_key"):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "must be supplied together"):
+                S.configure(self.trust, {**override, field: self.override[field]}, debuggable=True, validate_public_key=validate)
+        validate.assert_not_called()
 
     def test_test_key_is_additional_validated_and_not_persisted_into_trust(self):
         before = copy.deepcopy(self.trust)
@@ -169,6 +185,26 @@ class DebugUpdateHTTPTests(unittest.TestCase):
         self.assertEqual(json.loads((self.inputs / "update-state.json").read_text())["state"], "UPDATE_AVAILABLE")
         self.assertEqual(set(self.requests), {"/latest.json", "/release.json", "/release.sig"})
         self.assertEqual(json.loads((self.runtime / "release-trust.json").read_text())["keys"], {})
+
+    def test_local_release_check_uses_only_the_provisioned_publisher(self):
+        override = self.inputs / "debug-release-source.json"
+        U.write_json(override, {"enabled": True, "base_url": json.loads(override.read_text())["base_url"]})
+        trust_file = self.runtime / "release-trust.json"
+        trust = json.loads(trust_file.read_text())
+        trust["keys"] = {"provisioned": "authored public marker"}
+        U.write_json(trust_file, trust)
+
+        with self.assertRaisesRegex(ValueError, "not trusted"):
+            U.run(self.request, self.runtime, self.native, debuggable=True)
+        self.assertFalse((self.inputs / "release-candidate.json").exists())
+
+        signature = json.loads(self.paths["/release.sig"])
+        signature["key_id"] = "provisioned"
+        self.paths["/release.sig"] = json.dumps(signature).encode()
+        U.run(self.request, self.runtime, self.native, debuggable=True)
+        self.assertEqual(json.loads((self.inputs / "update-state.json").read_text())["state"], "UPDATE_AVAILABLE")
+        self.assertEqual(set(self.requests), {"/latest.json", "/release.json", "/release.sig"})
+        self.assertEqual(json.loads(trust_file.read_text()), trust)
 
     def test_release_refuses_before_network_or_key_validation(self):
         with self.assertRaisesRegex(ValueError, "forbidden in release builds"):

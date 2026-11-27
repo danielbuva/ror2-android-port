@@ -10,6 +10,7 @@ description: Use when running as a Codex/Claude worker launched by the orchestra
 - Simplest design that fully meets the goal: no speculative abstractions, option matrices, schema versions or guards for impossible cases; extend existing owners/scripts instead of adding new frameworks. Every new file, flag or receipt field must be required by the goal or an AGENTS.md rule.
 - Reuse existing branches/PRs listed in your brief before writing new machinery (`gh pr list`, `git worktree list`).
 - Commit logical checkpoints with Conventional Commits; push your branch; open/update a PR. Merge to main only when the brief allows it and `land-pr` passes.
+- Journal shipped device-verified behaviour and closed readiness or alpha gates. Record routine host-only fixes in their PR.
 - Append a status line to `.local/orchestrator/status/<workstream>.md` (timestamp, what changed, next step, blockers) after each milestone so the orchestrator can track you without reading your transcript.
 - Before finishing: `python3 scripts/prune-generated.py --apply`, leave the device idle (app stopped, screen asleep), and release any lease you recorded.
-- Final reply: outcome (done / partial / blocked), commits + PR, device evidence (journal number, APK hash), what remains, and the single most valuable next step.
+- Final reply: outcome (done / partial / blocked), commits + PR, applicable journal number and APK hash, what remains, and the single most valuable next step.

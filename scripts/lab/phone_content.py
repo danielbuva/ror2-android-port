@@ -21,6 +21,7 @@ NATIVE_CONTENT_TYPES = frozenset(
         "AnimationClip",
         "Material",
         "Shader",
+        "ComputeShader",
         "Texture2D",
         "Cubemap",
         "Sprite",
@@ -62,7 +63,7 @@ def stage(destination, *, ambient=False):
         (folder / name).write_bytes(source.read_bytes())
     (destination / "Packages").mkdir()
     (destination / "Packages/manifest.json").write_text(
-        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.terrain":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0"}}\n'
+        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.terrain":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0","com.unity.modules.unitywebrequestassetbundle":"1.0.0"}}\n'
     )
     (destination / "ProjectSettings").mkdir()
     (destination / "ProjectSettings/ProjectVersion.txt").write_text(
@@ -139,6 +140,8 @@ def native_content_request(path):
             raise RuntimeError("Native scene requires an exact scene path")
         if request.get("loadMode", "Additive") not in ("Additive", "Single"):
             raise RuntimeError("Native scene loadMode must be Additive or Single")
+        if "expectedBakedReflectionCubemaps" in request and baked_reflection_cubemaps(request["expectedBakedReflectionCubemaps"]) is None:
+            raise RuntimeError("Native scene expectedBakedReflectionCubemaps requires Cubemap widths, mip counts and formats")
         return request
     assets = request["assets"]
     if not isinstance(assets, list) or not assets:
@@ -172,6 +175,25 @@ def validate_native_scene(report, request, commit):
         or report.get("roots", 0) <= 0
     ):
         raise RuntimeError("Exact-editor native scene contract failed")
+    if "expectedBakedReflectionCubemaps" in request and baked_reflection_cubemaps(report.get("bakedReflectionCubemaps")) != baked_reflection_cubemaps(
+        request["expectedBakedReflectionCubemaps"]
+    ):
+        raise RuntimeError("Exact-editor native scene baked ReflectionProbe contract failed")
+
+
+def baked_reflection_cubemaps(rows):
+    if not isinstance(rows, list) or any(
+        not isinstance(row, dict)
+        or type(row.get("width")) is not int
+        or row["width"] <= 0
+        or type(row.get("mipCount")) is not int
+        or row["mipCount"] <= 0
+        or not isinstance(row.get("format"), str)
+        or not row["format"]
+        for row in rows
+    ):
+        return None
+    return sorted((row["width"], row["mipCount"], row["format"]) for row in rows)
 
 
 def material_references(value):
@@ -340,6 +362,10 @@ def run_editor(project, *, build=False, ambient=False):
     env = unity_editor_env()
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
     scene_check = False
+    shader_bundle = None
+    probes = [(key, kind) for key, kind in (("ROR2_PHONE_SHADER_DRAW", "Shader"), ("ROR2_PHONE_SHADER_COMPUTE", "ComputeShader")) if env.get(key)]
+    if len(probes) > 1 or (probes and (not build or not env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"))):
+        raise RuntimeError("Select one shader probe with a fixture build and a native-content request")
     if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
         if ambient:
             raise RuntimeError("Native-content typed loads require the content fixture")
@@ -348,6 +374,13 @@ def run_editor(project, *, build=False, ambient=False):
         request_path.write_text(json.dumps(request, indent=2) + "\n")
         env["ROR2_PHONE_NATIVE_CONTENT_CHECK"] = str(request_path)
         scene_check = "scene" in request
+        if probes:
+            ((probe, kind),) = probes
+            assets = request.get("assets", [])
+            if len(assets) != 1 or assets[0]["type"] != kind or assets[0].get("subasset") or request.get("dependencies"):
+                raise RuntimeError(f"Shader probe requires exactly one {kind} address in a standalone bundle")
+            env[probe] = assets[0]["name"]
+            shader_bundle = project / "Assets/StreamingAssets/phone-shader.bundle"
         if scene_check:
             if build:
                 raise RuntimeError("Native scene check requires Play Mode without a player build")
@@ -373,7 +406,16 @@ def run_editor(project, *, build=False, ambient=False):
         str(log),
     ]
     with host_build_lock(lock, operation="Alpha phone content fixture " + operation, timeout=1):
-        result = subprocess.run(args, env=env, capture_output=True, timeout=600)
+        if shader_bundle is not None:
+            if shader_bundle.exists() or shader_bundle.is_symlink():
+                raise RuntimeError("Generated fixture already has a staged shader bundle")
+            subprocess.run(["/bin/cp", "-c", request["path"], shader_bundle], check=True)
+        try:
+            result = subprocess.run(args, env=env, capture_output=True, timeout=600)
+        finally:
+            if shader_bundle is not None:
+                shader_bundle.unlink()
+                shader_bundle.with_suffix(".bundle.meta").unlink(missing_ok=True)
     (attempt / "launch.txt").write_bytes(result.stdout + result.stderr)
     oracle = None
     oracle_error = None

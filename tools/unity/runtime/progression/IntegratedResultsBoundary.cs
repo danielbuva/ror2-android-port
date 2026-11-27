@@ -632,6 +632,8 @@ public sealed partial class PortSession
             var nonce = coordinator.profileWriteObserverNonce;
             if (nonce == null)
                 return true;
+            coordinator.Check(coordinator.r.debugOptions?.profileSaveFailure != true,
+                              "Profile failure injection and the write observer require separate runs");
             if (profileWriteObserverDeadline == 0)
             {
                 coordinator.Check(!coordinator.IsRunAssisted() && coordinator.r.profile != null && coordinator.r.profile.ready,

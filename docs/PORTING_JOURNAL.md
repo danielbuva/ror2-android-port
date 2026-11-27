@@ -6,6 +6,43 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1544 — Recover Beetle Queen acid ghost materials
+
+2026-11-27. The existing native effect owner resolves the Queen's addressed
+spit and follows its enabled impact-child projectile to prepare Acid Ghost.
+Assisted Loader combat on Distant Roost kept the native Queen encounter and
+live Gas and Spittle particles on Android variants 105 and 36, queue 3000.
+At 21–22% teleporter charge, paired captures show the large white sheets clear
+while green acid and fizz remain. Other brief cards and distortion remain open.
+APK SHA-256 `a166df7f4e2d17de25c7aad1658843d4cf2b7a057e3e0e6177d771b17baf2035` (source `1e7a4b31`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/queen-acid-child-main-nova/`
+includes paired screenshots, same-process log and the frame 4170 renderer census.
+SoC peaked at 93.5 °C with 18.196 s above 80 °C. Admission battery was 29 °C.
+Adopted placement, scratch cleanup, OLED sleep and lease release passed.
+## J1540 — Dispatch translated source ComputeShader kernels on Android Vulkan
+
+2026-11-27. The translated source histogram ComputeShader retains both
+kernel declarations and their workgroup sizes. Android Vulkan cleared all
+256 bins and gathered all 256 red pixels into bin 255. Peak SoC was 54.5 °C
+with no time above 80 °C. Fixture removal, OLED sleep and lease release passed.
+APK SHA-256 `e75ac3c1098b3dbd3c41f7c9ae3d65f7d6b5f06cdf7fd57c4f94c43a1c74b528`
+(source `a452a340`). Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-histogram-device-01/terminal.done.json`.
+Device draw for the additional graphics variants and game integration remain open.
+
+## J1538 — Draw a translated source Shader on Android Vulkan
+
+2026-11-27. Wine vkd3d-shader translated all eight Animate Alpha DXBC
+variant pairs. The record producer kept source state, keywords and bindings
+under the original Shader name. Unity typed-loaded the resulting leaf.
+The Android Vulkan fixture sampled opaque red and green, matching the SDK
+compiler control at both ramp endpoints. SoC peaked at 70.8 °C with no time
+above 80 °C. Fixture removal, OLED sleep and lease release passed.
+APK SHA-256 `267913901faf8778caafbdf33f4b45c409e38e699bced633e9d655c0981fd4dd`.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`vulkan-wine-device-01/terminal.done.json` and the `vulkan-control-device-02/` receipt.
+Other shader passes, ComputeShader dispatch and normal gameplay remain open.
+
 ## J1537 — Activate the native Commencement mission on entry
 
 2026-11-26. The lab verifies the 730-component Moon2 scene contract,
@@ -4801,3 +4838,29 @@ The stage ran in 4.82 s with 47.7 MiB peak child RSS. The supervisor recorded
 Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
 The runner removed its attempt scratch, preserved staged inputs, slept the
 display and released the lease. Typed load and gameplay remain open.
+
+## J1542 — Recover a native profile save after injected ENOSPC
+
+2026-11-27. The shared lab runner injected ENOSPC before the live profile
+pending-file write on Secondary Nova, after one unassisted native loss and its
+XML report became durable. The app stayed alive, preserved the profile primary,
+backup and settings, and left no pending profile. Two cold Starts applied one
+result, then zero, with stable hashes after recovery. The runner removed scratch,
+verified a stopped app and sleeping OLED, and released the lease.
+APK SHA-256 `82e49513ca58aba8a002d15cf14365f3db1ceac4b69a7e9d2ec4e42215368845`
+(build source `ece0f01a`). Evidence is under
+`work/coordination/alpha-saf-stability-20261127/nova-b-profile-save-failure/`.
+Physical volume exhaustion, power loss and production-alpha retention remain open.
+
+## J1543 — Record sustained assisted combat on Secondary Nova
+
+2026-11-27. The shared runner captured 1,800.011 s of bounded native primary fire.
+The reconciled window recorded 106,604 frames, 59.311 FPS and 14 frames above
+50 ms. The covered 570.008 s tail averaged 59.410 FPS. All 61 power samples
+showed external power. Battery held at 80% and reached 35 °C. The runner
+recorded a 94.3 °C SoC peak and 13.006 s above 80 °C, with no safety abort.
+APK SHA-256 `5af412ac93b310c221879305194cb68d3f81868252c048a573ef2c99db2d236e`
+(build source `53b5781a`). Evidence is under
+`work/coordination/alpha-saf-stability-20261127/nova-b-sustained-placement/`.
+The native enemy cap, scratch, display and lease teardown passed. Both FPS
+means missed 60 FPS. Ordinary play, matched visuals and budgets remain open.

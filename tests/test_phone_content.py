@@ -68,6 +68,18 @@ class PhoneContentTests(unittest.TestCase):
             validate_native_scene(report | {"loadMode": "Single"}, single, "c" * 40)
             with self.assertRaisesRegex(RuntimeError, "native scene contract"):
                 validate_native_scene(report, single, "c" * 40)
+            cubes = [dict(width=128, mipCount=8, format="BC6H"), dict(width=256, mipCount=9, format="BC6H")]
+            reflection_request = single | {"expectedBakedReflectionCubemaps": cubes}
+            request_path.write_text(json.dumps(reflection_request))
+            self.assertEqual(native_content_request(request_path), reflection_request)
+            reflection_report = report | {"loadMode": "Single", "bakedReflectionCubemaps": cubes[::-1]}
+            validate_native_scene(reflection_report, reflection_request, "c" * 40)
+            for actual in (None, cubes[:1], [cubes[0], cubes[1] | {"format": "RGBAHalf"}]):
+                with self.assertRaisesRegex(RuntimeError, "baked ReflectionProbe contract"):
+                    validate_native_scene(reflection_report | {"bakedReflectionCubemaps": actual}, reflection_request, "c" * 40)
+            request_path.write_text(json.dumps(reflection_request | {"expectedBakedReflectionCubemaps": [dict(width=0)]}))
+            with self.assertRaisesRegex(RuntimeError, "expectedBakedReflectionCubemaps"):
+                native_content_request(request_path)
             request_path.write_text(json.dumps(request | {"loadMode": "Unknown"}))
             with self.assertRaisesRegex(RuntimeError, "loadMode"):
                 native_content_request(request_path)

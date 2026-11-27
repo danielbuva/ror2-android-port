@@ -15,7 +15,7 @@ evidence rules. Required request fields are `canonical_root`, `output` (under
 its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
 `adopted_install: true` and `duration_seconds`. Optional fields are
 `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
-`settings-save-failure`),
+`settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
 the runner), `input_schedule` (launch-mode list of `{ "at_seconds": 5,
 "script": "touch.json" }`, ordered within the observation duration),
@@ -71,6 +71,10 @@ settings failure workload owns its attempt-bound selector and injects one
 write failure and one rename failure in the lab settings writer, checking
 visible retry, retained generations and cold recovery without filling storage.
 It requires the lab package and does not accept a custom `selection`.
+The profile workloads also own their selectors and require the lab package.
+`profile-save-failure` injects ENOSPC into the profile commit of a native loss,
+checks that the process and prior generations survive, then verifies one replay
+across two cold Starts.
 The device free-space reservation includes the requested payload size.
 Requests and results stay private.
 
@@ -365,8 +369,13 @@ fixtures run in one serial group, not concurrently against their shared outputs.
 Reports contain local diagnostics: review them before sharing. Neither runner
 mode replaces toolchain or device acceptance.
 
-The pre-push hook still tests the exact pushed commit with every audit, Ruff,
-journal-index, README and host-test check. `scripts/ci-local.sh [TARGET [BASE]]`
+The pre-push hook runs Ruff, the public audit, journal-index and README checks
+on the exact pushed commit, then runs the affected host-test modules and smoke
+tests. It uses a Python import graph, literal file references and maintained
+mappings in `scripts/ci-test-impact.py` for inputs such as recipes and fixtures.
+Update those mappings when a test starts finding repository files dynamically.
+Unknown file types, unmapped paths, CI infrastructure and discovery problems
+run the full suite. `scripts/ci-local.sh [TARGET [BASE]]` runs the full suite and
 uses a locked Git-object cache and dependency environment under the repository's
 Git common directory, but creates a new clean checkout/index/config and temporary
 workspace on every invocation. Requirements bytes and Python interpreter/ABI/
@@ -377,7 +386,7 @@ pushes do not share a running workspace. Darwin keeps the Unity-read sandbox and
 case-sensitive temporary-volume setup/cleanup. Linux removes scratch before exit;
 macOS retains asynchronous volume cleanup. `HOST_TEST_WORKERS` controls local
 concurrency (default 2); GitHub uses 4. Set 1 to diagnose serial behavior, not to
-skip a check. Documentation-only changes still run the complete suite.
+skip a check.
 
 GitHub caches only pip downloads using the pinned requirements, Python version
 and runner platform. It still installs/checks the requested dependencies on each
