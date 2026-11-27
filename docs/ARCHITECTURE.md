@@ -8377,8 +8377,9 @@ record and destination, and `shader_translate.py` verifies the installed
 translator and validator before producing its typed pack receipt. Managed-host
 `build_shader_tools.py` builds the two ARM64 API 24 native executables from
 pinned public archives and retains corresponding source, notices and relink
-materials. The existing native provider plan stages the executables. Android
-execution of the signed producer remains open.
+materials. The existing native provider plan stages the executables. The shared
+runner verified the signed Histogram producer on Android. Its output hash
+matched the object dispatched in the Vulkan fixture.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
