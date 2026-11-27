@@ -1597,7 +1597,7 @@ def execute(request):
                 clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {}), cleanup))
                 clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {}), cleanup))
 
-            if device and (active_hash or "install_recovery" in result):
+            if device:
 
                 def terminal():
                     independent = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
@@ -1607,7 +1607,7 @@ def execute(request):
                         elif not independent.exists():
                             result["terminal_readback"] = dict(installed=False)
                         else:
-                            raise RuntimeError("Package appeared without verified ownership after signature recovery")
+                            raise RuntimeError("Package present without verified ownership at terminal readback")
                         result["storage_final"] = independent.storage()
                     finally:
                         if not independent.display(False):
@@ -1615,8 +1615,6 @@ def execute(request):
                     result["terminal_readback"]["oled_asleep"] = True
 
                 clean("terminal", terminal)
-            elif device:
-                clean("sleep", lambda: device.display(False))
             result["cleanup_errors"] = cleanup_errors
             if cleanup_errors or not result.get("terminal_readback"):
                 result["success"] = False

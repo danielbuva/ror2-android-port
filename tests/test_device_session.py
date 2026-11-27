@@ -301,6 +301,31 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertFalse(lease_path.exists())
 
+    def test_storage_rejection_with_absent_package_releases_after_verified_sleep(self):
+        lease_path = runner.Lease(self.request).path
+        target, independent = mock.Mock(), mock.Mock()
+        target.exists.return_value = False
+        independent.exists.return_value = False
+        independent.storage.return_value = dict(mode="internal")
+        independent.display.return_value = True
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
+            mock.patch.object(device_module, "Device", side_effect=[target, independent]),
+            mock.patch.object(runner, "reset_other_lab"),
+            mock.patch.object(runner, "placement", side_effect=RuntimeError("This request requires adopted storage")),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(self.request)
+
+        target.install.assert_not_called()
+        independent.display.assert_called_once_with(False)
+        self.assertFalse(result["success"])
+        self.assertIn("requires adopted storage", result["error"])
+        self.assertEqual(result["terminal_readback"], dict(installed=False, oled_asleep=True))
+        self.assertTrue(result["lease_released"])
+        self.assertFalse(lease_path.exists())
+
     def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
         target, thermal = mock.Mock(package=self.request["package"]), mock.Mock(error=None)
         target.sh.return_value = process_snapshot(("12", "03:19:58", target.package))
