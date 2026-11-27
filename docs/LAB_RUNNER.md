@@ -34,7 +34,7 @@ Jobs run one at a time in comment order. Every job also gets `LAB_TOOLHOST_ROOT`
 `<commit>/signed.apk`, `result.json` and `test-publisher.json` (the local path of the test publisher key the
 build trusts) there, so a later `script` job can install that build and sign synthetic test releases.
 
-## Observe an already-installed alpha release
+## Tour an already-installed alpha release
 
 Run the current `./dev device-session --request <private JSON> --dry-run` with
 `serial` in the request. After the device grant, run the same action with
@@ -44,9 +44,15 @@ Run the current `./dev device-session --request <private JSON> --dry-run` with
 `workstream` and `duration_seconds`. Use `installer_apk`, `installer_package`
 and `installer_sha256` to select the authorized, debuggable production installer with
 provisioned publisher keys. Use the selected publisher release's fingerprint
-as `source_sha256`. The installed game is read back on the phone, so the
-request needs no game APK path or game APK hash. The runner reports bootstrap
-Play and Unity activity focus, then stops the game and sleeps the display.
+as `source_sha256` and its published `public-tools.zip` as `public_tools`.
+The signed recipe supplies the runtime attempt. The installer receipt and
+on-device readback supply the installed APK hash. Use a device with working
+controls for that release. Nova requires the game's matching Nova input map.
+
+The runner records bootstrap Play, Unity activity focus, character select,
+one ordinary first stage, and return to character select via End Run. It
+writes JSON receipts and the first failure, then stops the game and sleeps
+the display. A separate native title screen is currently unobserved.
 
 ## Current local packaging request
 

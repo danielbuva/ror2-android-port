@@ -3462,12 +3462,13 @@ The same runner's `installed-alpha` mode observes an existing
 `dev.ror2lab.alpha` installation. `installed_alpha.py` pins publisher trust to
 the authorized installer APK, verifies the installer-private completion receipt
 against the selected signed release, then binds the live alpha version, APK hash
-and storage placement. The shared lifecycle observes the bootstrap Play action
-and PID-bound Unity activity on display 0. Cleanup stops the verified game,
-checks the installed hash and sleeps the display. This mode transfers JSON
-evidence and leaves package installation, payload and saves to the installer.
-The Unity activity observation is a launch checkpoint. Native menu and stage
-observations belong to the subsequent tour.
+and storage placement. The signed member's recipe closure in `public-tools.zip`
+binds the runtime attempt. After bootstrap Play and Unity activity focus on
+display 0, the runner uses PID- and attempt-bound native reports for character
+select, first-stage readiness, End Run cleanup and return to character select.
+Cleanup stops the verified game, checks the installed hash and sleeps the
+display. The tour transfers JSON evidence and leaves package installation,
+payload and saves to the installer.
 
 For `owner-unplugged`, the same runner arms a one-shot request on adopted
 app storage and verifies that the launched PID can read the admitted thermal

@@ -79,9 +79,9 @@ def load_request(path, serial=None):
     path_fields = ("canonical_root", "output", "apk", "input_script", "input_mapping", "prior_receipt", "payload_directory")
     if installed_alpha:
         required -= {"apk", "apk_sha256"}
-        required |= {"installer_apk", "installer_package", "installer_sha256", "source_sha256"}
+        required |= {"installer_apk", "installer_package", "installer_sha256", "source_sha256", "public_tools"}
         optional &= {"mode", "serial", "adopted_install", "cooldown_seconds"}
-        path_fields += ("installer_apk",)
+        path_fields += ("installer_apk", "public_tools")
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
     for name in path_fields:
@@ -112,6 +112,8 @@ def load_request(path, serial=None):
 
         validate_selection(value["package"], value["installer_package"], value["installer_sha256"], value["source_sha256"])
         value["installer_trust"] = installer_trust(value["installer_apk"], value["installer_sha256"])
+        if not Path(value["public_tools"]).is_file():
+            raise ValueError("Selected public tools archive is required")
         return value
     if not re.fullmatch(r"[0-9a-f]{64}", value["apk_sha256"]):
         raise ValueError("Expected APK SHA-256 required")
@@ -826,14 +828,15 @@ def retain_diagnostic_scratch(device, runtime, initial, output, cleanup):
         raise ExceptionGroup("Diagnostic scratch cleanup failed", errors)
 
 
-def wait_for_settings_report(device, thermal, pid, predicate, timeout=100, *, report_id=None, attempt=None):
+def wait_for_settings_report(device, thermal, pid, predicate, timeout=100, *, report_id=None, attempt=None, runtime=None, stop_phases=()):
     import session_cleanup_check as cleanup
     from installed_attempt import attempt_from_installed
 
     report_id = report_id or cleanup.SPINE_ID
     if attempt is None:
         attempt = attempt_from_installed(device.owned())
-    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    if runtime is None:
+        runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     deadline = time.monotonic() + timeout
     last_phase = None
     while time.monotonic() < deadline:
@@ -846,6 +849,8 @@ def wait_for_settings_report(device, thermal, pid, predicate, timeout=100, *, re
             last_phase = report.get("phase")
             if report.get("firstFailure"):
                 raise RuntimeError("Native first failure: " + str(report["firstFailure"]))
+            if last_phase in stop_phases:
+                raise RuntimeError("Native tour interrupted at " + last_phase)
             if predicate(report):
                 return report
         time.sleep(0.5)
@@ -1236,10 +1241,14 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
     if request["mode"] == INSTALLED_ALPHA:
+        tour = result["tour"] = {"native_title": "unobserved", "phase": "bootstrap"}
         if launched.get("activity") != device.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity":
             raise RuntimeError("Expected the source release's owner bootstrap launcher")
         play_from_bootstrap(device, thermal, pid, output)
+        tour["bootstrap_play"] = True
+        tour["phase"] = "player-activity"
         observe_alpha_player(device, thermal, pid, output, request["duration_seconds"])
+        observe_alpha_tour(device, thermal, pid, output, tour, start_attempt, request["duration_seconds"])
         return
     if request.get("start_from_menu") and "input_script" not in request:
         reference = request.get("bootstrap_play_reference")
@@ -1271,6 +1280,83 @@ def observe_alpha_player(device, thermal, pid, output, duration):
             return
         time.sleep(1)
     raise RuntimeError("Unity player did not gain focus after bootstrap Play")
+
+
+def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
+    from session_cleanup_check import _read_json, abandon_control_coordinates, matches_run, menu_start_coordinates
+    from touch_gesture import owned_display_zero_focus
+
+    report_id = "body-state-spawn-state-auto-player"
+    runtime = "/sdcard/Android/data/" + device.package + "/files"
+    device.validate_runtime({"persistentDataPath": runtime})
+    deadline = time.monotonic() + duration
+    tour.update(attempt=attempt, pid=pid)
+
+    def wait(phase, predicate):
+        tour["phase"] = phase
+        thermal.phase = phase
+        return wait_for_settings_report(
+            device,
+            thermal,
+            pid,
+            predicate,
+            timeout=max(0, deadline - time.monotonic()),
+            report_id=report_id,
+            attempt=attempt,
+            runtime=runtime,
+            stop_phases=("commando-defeated",),
+        )
+
+    def tap(control, coordinates, windows):
+        if thermal.error:
+            raise RuntimeError(thermal.error)
+        if device.sh("pidof", device.package, check=False, timeout=5) != pid or not owned_display_zero_focus(
+            windows, device.package, activity="com.unity3d.player.UnityPlayerActivity"
+        ):
+            raise RuntimeError("Owned Unity display or process changed before " + control)
+        if coordinates is None:
+            raise RuntimeError("Current native geometry unavailable for " + control)
+        device.sh("input", "-d", "0", "tap", *map(str, coordinates), timeout=5)
+
+    menu = wait("character-select", lambda r: r.get("phase") == "offline-start-menu" and (r.get("hud") or {}).get("survivorSelectableCount", 0) > 0)
+    save(output / "start-menu.json", menu)
+    tour["character_select"] = True
+    session = menu["session"]
+    tap("Start", menu_start_coordinates(menu), device.sh("dumpsys", "window", "displays", timeout=5))
+    report = wait(
+        "first-stage",
+        lambda r: r.get("session") == session
+        and r.get("phase") == "integrated-world-playing"
+        and (r.get("world") or {}).get("ready") is True
+        and bool((r.get("stage") or {}).get("scene")),
+    )
+    save(output / "world-start.json", report)
+    tour["first_stage"] = report["stage"]["scene"]
+    for control, phase, condition in (
+        (
+            "button",
+            "pause",
+            lambda r: r.get("session") == session and (r.get("settings") or {}).get("paused") is True and r["settings"].get("canEndRun") is True,
+        ),
+        ("endRunButton", "end-run", lambda r: r.get("session") == session and (r.get("settings") or {}).get("endRunConfirmationVisible") is True),
+        ("confirmEndRunButton", "return", lambda r: r.get("session") == session + 1 and r.get("phase") == "offline-start-menu"),
+    ):
+        tour["phase"] = phase
+        windows = device.sh("dumpsys", "window", "displays", timeout=5)
+        tap(control, abandon_control_coordinates(report, control, device.sh("wm", "size", timeout=5), windows), windows)
+        report = wait(phase, condition)
+    completed = _read_json(device, runtime + f"/movement-completed-session-{session}.json")
+    if (
+        not matches_run(completed, pid, attempt, session, report_id=report_id)
+        or completed.get("firstFailure")
+        or completed.get("success") is not True
+        or completed.get("cleanup") is not True
+        or (completed.get("settings") or {}).get("sessionAbandoned") is not True
+    ):
+        raise RuntimeError("Native End Run cleanup receipt is unavailable for the owned session")
+    save(output / "completed-session.json", completed)
+    save(output / "returned-menu.json", report)
+    tour.update(phase="completed", returned=True)
 
 
 def observe_launch(device, thermal, request, output, result, pid, *, start_attempt=None):
@@ -1458,14 +1544,14 @@ def execute(request):
 
             device = InstalledAlphaDevice(request["serial"], common.WORK)
             device.installed = verify_installed(
-                device, request["installer_package"], request["installer_sha256"], request["installer_trust"], request["source_sha256"]
+                device, request["installer_package"], request["installer_sha256"], request["installer_trust"], request["source_sha256"], request["public_tools"]
             )
             result["apk_sha256"] = device.installed["apk_sha256"]
             result["installed_release"] = device.installed
             result["storage_before"] = placement(device, DEVICE_RESERVE_BYTES, adopted_only=request.get("adopted_install", False))
             check_lab_processes(device, result["process_checkpoints"], "before-cooldown")
             active_hash = device.installed["apk_sha256"]
-            start_attempt = None
+            start_attempt = device.installed["attempt"]
         else:
             device = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
             reset_other_lab(request, lease, result.setdefault("initial_lab_reset", {}), cleanup)
@@ -1585,8 +1671,10 @@ def execute(request):
             start_attempt=start_attempt,
         )
         result["success"] = True
-    except BaseException:
+    except BaseException as error:
         result["error"] = traceback.format_exc()
+        if installed_alpha:
+            result["first_failure"] = str(error) or type(error).__name__
     finally:
         if lease.acquired:
             cleanup_errors = []
@@ -1728,6 +1816,9 @@ def execute(request):
         except BaseException:
             result["prune_error"] = traceback.format_exc()
             result["success"] = False
+        if installed_alpha and not result["success"] and "first_failure" not in result:
+            details = result.get("cleanup_errors") or [result.get("thermal_finish_error") or result.get("prune_error") or "Idle cleanup was not verified"]
+            result["first_failure"] = details[0].strip().splitlines()[-1]
         result["elapsed_seconds"] = time.monotonic() - started
         set_command_selector(*prior_selectors)
         save(done, result)

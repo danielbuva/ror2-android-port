@@ -90,7 +90,50 @@ def validate_selection(package, installer_package, installer_sha256, expected_so
         raise ValueError("Explicit production installer and source release required")
 
 
-def verify_installed(device, installer_package, installer_sha256, trust, expected_source_sha256):
+def release_attempt(bundle, release, public):
+    """Read the runtime attempt from the signed output's authored recipe."""
+    profile_name = "recipe/owner-player-data.json"
+    config_name = "recipe/runtime-config.json"
+    with Path(bundle).open("rb") as stream:
+        if hashlib.file_digest(stream, "sha256").hexdigest() != release["bundle_sha256"]:
+            raise ValueError("Public tools bundle differs from the installed signed release")
+        stream.seek(0)
+        with zipfile.ZipFile(stream) as archive:
+            names = archive.namelist()
+
+            def read(name, limit):
+                if names.count(name) != 1 or archive.getinfo(name).file_size > limit:
+                    raise ValueError("Expected one bounded public member: " + name)
+                return archive.read(name)
+
+            index = public.read_bundle_index(read(public.INDEX, public.MAX_BUNDLE_INDEX_BYTES), release)
+
+            def recipe(name):
+                data = read(name, public.MAX_JSON_BYTES)
+                if hashlib.sha256(data).hexdigest() != index["files"].get(name):
+                    raise ValueError("Public recipe hash differs: " + name)
+                return data
+
+            profile = public.load_json(recipe(profile_name))
+            matches = [row for row in profile["text_assets"]["files"] if row.get("name") == "MovementBatchProbe"]
+            if len(matches) != 1:
+                raise ValueError("Signed player data must select one MovementBatchProbe")
+            row = matches[0]
+            member = row["file"]
+            if Path(member).name != member or not {profile_name, config_name} <= set(
+                index["entries"].get("apk/assets/bin/Data/" + member, {}).get("recipe_files", [])
+            ):
+                raise ValueError("MovementBatchProbe recipes are outside the signed APK member closure")
+            config = recipe(config_name)
+            if row.get("recipe") != {"path": Path(config_name).name, "bytes": len(config), "sha256": hashlib.sha256(config).hexdigest()}:
+                raise ValueError("MovementBatchProbe runtime recipe differs from the signed player data")
+            attempt = public.load_json(config).get("attempt")
+            if not isinstance(attempt, str) or not attempt.strip():
+                raise ValueError("Signed runtime recipe has no attempt")
+            return attempt
+
+
+def verify_installed(device, installer_package, installer_sha256, trust, expected_source_sha256, public_tools):
     """Read only the verified installer receipt and small PackageManager results."""
     validate_selection(device.package, installer_package, installer_sha256, expected_source_sha256)
     installer_path = base_apk(device, installer_package)
@@ -120,6 +163,7 @@ def verify_installed(device, installer_package, installer_sha256, trust, expecte
     public.validate_alpha_release(release)
     if release != receipt.get("release") or owner.ALPHA.fingerprint(release) != expected_source_sha256:
         raise RuntimeError("Publisher signature differs from the installed source release")
+    attempt = release_attempt(public_tools, release, public)
     version = owner.ALPHA.code(receipt.get("version_code"))
     signer = owner.ALPHA.sha256(receipt.get("signer_sha256"))
     package_path = base_apk(device, PACKAGE)
@@ -138,4 +182,5 @@ def verify_installed(device, installer_package, installer_sha256, trust, expecte
         version_code=version,
         source_sha256=expected_source_sha256,
         publisher_version_code=release["version_code"],
+        attempt=attempt,
     )

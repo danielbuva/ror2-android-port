@@ -65,7 +65,9 @@ class DeviceSessionTests(unittest.TestCase):
             installer_package="example.authorized.installer",
             installer_sha256="a" * 64,
             source_sha256="b" * 64,
+            public_tools="public-tools.zip",
         )
+        (self.root / "public-tools.zip").touch()
         runner.save(self.request_file, request)
         with mock.patch("installed_alpha.installer_trust", return_value={"keys": {"fixture": "example"}}) as trust:
             normalized = runner.load_request(self.request_file)
@@ -85,16 +87,65 @@ class DeviceSessionTests(unittest.TestCase):
         with (
             mock.patch.object(runner, "launch", return_value=launched),
             mock.patch.object(runner, "play_from_bootstrap") as play,
+            mock.patch.object(runner, "observe_alpha_tour") as tour,
             mock.patch.object(runner, "capture") as capture,
         ):
-            runner.run_workload(target, thermal, request, self.output, {})
+            runner.run_workload(target, thermal, request, self.output, {}, start_attempt="signed")
         self.assertEqual(json.loads((self.output / "player-activity.json").read_text()), {"activity": unity, "pid": "12"})
         play.assert_called_once_with(target, thermal, "12", self.output)
+        tour.assert_called_once_with(
+            target, thermal, "12", self.output, {"native_title": "unobserved", "phase": "player-activity", "bootstrap_play": True}, "signed", 30
+        )
         capture.assert_not_called()
+
+    def test_alpha_tour_binds_native_return_to_the_same_process_and_attempt(self):
+        target = mock.Mock(package="dev.ror2lab.alpha")
+        thermal = mock.Mock(error=None)
+        unity = target.package + "/com.unity3d.player.UnityPlayerActivity"
+        focus = "  Display: mDisplayId=0\n  mCurrentFocus=Window{focus u0 " + unity + "}\n  mDisplayRotation=ROTATION_0"
+        settings = dict(
+            screenWidth=1920,
+            screenHeight=1080,
+            buttonX=200,
+            buttonY=200,
+            endRunButtonX=300,
+            endRunButtonY=300,
+            confirmEndRunButtonX=400,
+            confirmEndRunButtonY=400,
+        )
+        base = dict(id="body-state-spawn-state-auto-player", attempt="signed", pid=12, session=1)
+        menu = dict(base, phase="offline-start-menu", hud=dict(survivorSelectableCount=4, menuStartX=100, menuStartY=100, screenWidth=1920, screenHeight=1080))
+        world = dict(base, phase="integrated-world-playing", world={"ready": True}, stage={"scene": "first-stage"}, settings=settings)
+        reports = iter(
+            [
+                dict(menu, attempt="stale"),
+                menu,
+                world,
+                dict(world, settings=dict(settings, paused=True, canEndRun=True)),
+                dict(world, settings=dict(settings, endRunConfirmationVisible=True)),
+                dict(menu, session=2),
+            ]
+        )
+        completed = dict(base, success=True, cleanup=True, settings={"sessionAbandoned": True})
+
+        def shell(cmd, *args, **kwargs):
+            if cmd == "cat":
+                return json.dumps(completed if "movement-completed-session-1.json" in args[0] else next(reports))
+            return {"pidof": "12", "dumpsys": focus, "wm": "Physical size: 1920x1080", "input": ""}[cmd]
+
+        target.sh.side_effect = shell
+        tour = {}
+        with mock.patch.object(runner.time, "sleep"):
+            runner.observe_alpha_tour(target, thermal, "12", self.output, tour, "signed", 30)
+        self.assertEqual(tour, dict(attempt="signed", pid="12", phase="completed", character_select=True, first_stage="first-stage", returned=True))
+        taps = [call.args for call in target.sh.call_args_list if call.args[0] == "input"]
+        self.assertEqual(taps, [("input", "-d", "0", "tap", str(coord), str(coord)) for coord in (100, 200, 300, 400)])
+        self.assertEqual(json.loads((self.output / "returned-menu.json").read_text())["session"], 2)
+        target.collect.assert_not_called()
 
     def test_installed_alpha_stops_only_the_verified_game_and_releases_lease(self):
         package = "dev.ror2lab.alpha"
-        installed = dict(package=package, package_path="package:/fixture/base.apk", apk_sha256=self.digest)
+        installed = dict(package=package, package_path="package:/fixture/base.apk", apk_sha256=self.digest, attempt="signed")
         request = dict(
             self.request,
             package=package,
@@ -103,6 +154,7 @@ class DeviceSessionTests(unittest.TestCase):
             installer_sha256="a" * 64,
             installer_trust={"keys": {}},
             source_sha256="b" * 64,
+            public_tools="fixture.zip",
         )
         targets = [mock.Mock(package=package), mock.Mock(package=package)]
         for selected in targets:
