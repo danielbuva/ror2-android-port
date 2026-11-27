@@ -2,6 +2,11 @@ import argparse
 import sys
 from common import *
 
+if len(sys.argv) > 1 and sys.argv[1] == "converter-stage":
+    from lab_runner import converter_stage
+
+    sys.exit(converter_stage(sys.argv[2:]))
+
 if len(sys.argv) > 1 and sys.argv[1] == "device-session":
     from device_session import main
 
@@ -34,6 +39,7 @@ p = argparse.ArgumentParser(
   device-session: current
   shared-build: current
   pc-reference: current
+  converter-stage: current
   diagnostics: current
   migrate-device-receipts: current
   test: current
@@ -71,6 +77,7 @@ p.add_argument(
         "device-session",
         "shared-build",
         "pc-reference",
+        "converter-stage",
         "diagnostics",
         "migrate-device-receipts",
         "test",
