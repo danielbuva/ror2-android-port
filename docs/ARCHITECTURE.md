@@ -1640,6 +1640,8 @@ after its suppliers. Authoring reports missing admitted input bindings across
 the closure before validating the resulting plan with the installer owners.
 The graph's optional `--bundle-manifest` fans every selected payload bundle into
 `bundle_manifest.py` through declared path, digest and integer byte-size artifacts.
+It reads each producer's existing bundle artifact. Adding a bundle changes the
+manifest job while preserving the cache identity of unchanged bundle producers.
 The existing native owner reads actual bundle dependencies and rejects missing
 providers; it never substitutes a historical manifest. Its generated file shares
 the signed supplier closure and private incremental cache with those bundles.
