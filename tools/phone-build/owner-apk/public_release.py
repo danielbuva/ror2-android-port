@@ -495,8 +495,11 @@ def build_bundle(repository, plan, output):
                 raise ValueError("dependency file list required")
             selected.update(row[field])
     if "install_plan" in plan:
-        selected.add(public_path(plan["install_plan"]["required_inputs"]))
-        for stage in plan["install_plan"]["stages"]:
+        install_plan = plan["install_plan"]
+        selected.add(public_path(install_plan["required_inputs"]))
+        if "acquired_inputs" in install_plan:
+            selected.add(public_path(install_plan["acquired_inputs"]))
+        for stage in install_plan["stages"]:
             selected.update(stage["jobs"])
     if INDEX in selected:
         raise ValueError("bundle index is generated, not supplied")
