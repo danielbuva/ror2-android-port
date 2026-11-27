@@ -170,12 +170,21 @@ def preflight_releases(installer_apk, installer_sha256, installer_version, basel
             with zipfile.ZipFile(bundle) as archive:
                 index = public.read_bundle_index(archive.read(public.INDEX), release)
                 plan = index["install_plan"]
-                with archive.open(plan["required_inputs"]) as catalog:
-                    contents = catalog.read(public.MAX_JSON_BYTES + 1)
-                if hashlib.sha256(contents).hexdigest() != index["files"][plan["required_inputs"]]:
-                    raise ValueError("required-input catalog differs from the signed plan")
+
+                def read_manifest(key):
+                    name = plan[key]
+                    with archive.open(name) as stream:
+                        contents = stream.read(public.MAX_JSON_BYTES + 1)
+                    if hashlib.sha256(contents).hexdigest() != index["files"][name]:
+                        raise ValueError("input inventory differs from the signed plan: " + key)
+                    return public.load_json(contents)
+
+                manifest = read_manifest("required_inputs")
+                acquired = read_manifest("acquired_inputs") if "acquired_inputs" in plan else None
             inputs = load_module("installed_alpha_input_plan", ROOT / "tools/phone-build/owner-apk/install_inputs.py")
-            source["input_plan"] = inputs.input_description(plan, public.load_json(contents))
+            source["input_plan"] = inputs.input_description(plan, manifest, acquired)
+            if acquired is not None:
+                source["acquired_inputs"] = acquired
             source["jobs"] = sorted(job for stage in plan["stages"] for job in stage["jobs"])
         sources.append(source)
     if update is None:

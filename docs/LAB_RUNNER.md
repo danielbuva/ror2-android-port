@@ -137,7 +137,11 @@ For a signed source-release update, set `operation` to `staged-update` and add
 Each release directory supplies its signed manifest, signature and public tools
 ZIP. Use a disposable installer with the publisher key in its packaged trust.
 The dry-run verifies both signed source graphs and checks that both support the
-current inventory. The detached run serves the releases over local ADB reverse,
+current inventory. For a plan with an `acquired_inputs` inventory, set
+`acquired_source` to the owner-local directory containing the declared
+`acquired/` files. Both releases must pin the same tool inventory. The runner
+verifies and streams those files into the disposable installer before import.
+The detached run serves the releases over local ADB reverse,
 imports the staged originals through Android's picker, and checks native save
 retention across a same-key update. Each play phase writes a
 `terminal.done.json` bound to the live APK hash and signed runtime attempt.

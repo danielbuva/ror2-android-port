@@ -123,6 +123,8 @@ class ManagedHostStageTests(unittest.TestCase):
 
         self.assertEqual((destination / "backend-tools.json").read_bytes(), plan.read_bytes())
         self.assertEqual(result["files"]["backend-tools.json"], stage.digest(plan))
+        adapter = "repo/tools/phone-build/owner-code/GnuToolAdapter.c"
+        self.assertEqual(result["files"][adapter], stage.digest(ROOT / adapter.removeprefix("repo/")))
         with self.assertRaisesRegex(ValueError, "must be new"):
             stage.stage(self.profile, self.sdk, self.root / "outside", root=checkout, backend_tools=plan)
 

@@ -20,18 +20,21 @@ def module(name, path):
 HERE = Path(__file__).resolve().parent
 UPDATES = module("install_input_updates", HERE / "updates.py")
 STAGES = ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install")
+ACQUIRED = "acquired/"
 
 
 def validate_plan(plan, files):
     if (
         not isinstance(plan, dict)
-        or set(plan) != {"schema", "required_inputs", "stages", "workspace_bytes", "configuration"}
+        or set(plan) - {"acquired_inputs"} != {"schema", "required_inputs", "stages", "workspace_bytes", "configuration"}
         or type(plan["schema"]) is not int
         or plan["schema"] != 1
     ):
         raise ValueError("explicit install plan schema 1 required")
     if UPDATES.relative(plan["required_inputs"]) not in files:
         raise ValueError("required-input manifest absent from signed bundle")
+    if "acquired_inputs" in plan and (UPDATES.relative(plan["acquired_inputs"]) not in files or plan["acquired_inputs"] == plan["required_inputs"]):
+        raise ValueError("separate acquired-tool inventory required in signed bundle")
     if type(plan["workspace_bytes"]) is not int or not 0 <= plan["workspace_bytes"] <= 2**60:
         raise ValueError("nonnegative bounded workspace estimate required")
     config = plan["configuration"]
@@ -67,13 +70,48 @@ def verified_file(repo, index, name):
     return path
 
 
-def input_description(plan, manifest):
+def acquired_inventory(value):
+    """Read signed size and hash pins for owner-acquired regular files."""
+    if not isinstance(value, dict) or not value:
+        raise ValueError("nonempty acquired-tool inventory required")
+    for name, pin in value.items():
+        path = Path(UPDATES.relative(name))
+        if (
+            not name.startswith(ACQUIRED)
+            or not name.isprintable()
+            or any(str(parent) in value for parent in path.parents)
+            or not isinstance(pin, dict)
+            or set(pin) != {"bytes", "sha256"}
+            or type(pin["bytes"]) is not int
+            or not 0 <= pin["bytes"] <= 2**60
+        ):
+            raise ValueError("invalid acquired-tool inventory entry: " + name)
+        UPDATES.ALPHA.sha256(pin["sha256"])
+    return value
+
+
+def verify_acquired(root, name, pin):
+    path = UPDATES.within(root, name)
+    if not path.is_file() or path.stat().st_size != pin["bytes"] or UPDATES.RELEASE.digest(path) != pin["sha256"]:
+        raise ValueError("owner-acquired tool missing or changed: " + name)
+    return path
+
+
+def input_description(plan, manifest, acquired=None):
     """Bound the entire cross-language UI document, not only its input JSON."""
     importer = module("install_game_import", HERE / "game_import.py")
     catalog = importer.validate_catalog(manifest)
+    tools = acquired_inventory(acquired) if "acquired_inputs" in plan else {}
+    originals = {}
+    for name, path in plan["configuration"]["bindings"].items():
+        if tools and (path == "acquired" or path.startswith(ACQUIRED)):
+            if path not in tools and not any(candidate.startswith(path + "/") for candidate in tools):
+                raise ValueError(f"signed plan has no acquired tool for binding {name}: {path}")
+        else:
+            originals[name] = path
     for supported in catalog["supported"]:
         names = {row["path"] for row in supported["files"]}
-        for name, path in plan["configuration"]["bindings"].items():
+        for name, path in originals.items():
             if path != "." and path not in names and not any(candidate.startswith(path + "/") for candidate in names):
                 raise ValueError(f"supported game version {supported['game_version']} has no admitted original for binding {name}: {path}")
     manifest = catalog["supported"][0]
@@ -99,18 +137,29 @@ def input_description(plan, manifest):
     return description
 
 
+def read_plan(index, repo):
+    plan = validate_plan(index.get("install_plan"), index["files"])
+    load = UPDATES.public().load_json
+    manifest = load(verified_file(repo, index, plan["required_inputs"]).read_bytes())
+    acquired = load(verified_file(repo, index, plan["acquired_inputs"]).read_bytes()) if "acquired_inputs" in plan else None
+    return input_description(plan, manifest, acquired), acquired or {}
+
+
+def write_description(inputs, description):
+    UPDATES.write_json(UPDATES.within(inputs, "install-inputs.json"), description)
+
+
 def describe(index, repo, inputs):
     """Publish only verified recipe metadata for the SAF UI before import."""
-    plan = validate_plan(index.get("install_plan"), index["files"])
-    manifest_file = verified_file(repo, index, plan["required_inputs"])
-    description = input_description(plan, UPDATES.public().load_json(manifest_file.read_bytes()))
-    UPDATES.write_json(UPDATES.within(inputs, "install-inputs.json"), description)
+    description, _ = read_plan(index, repo)
+    write_description(inputs, description)
     return description
 
 
 def prepare(index, repo, inputs):
     """Rehash admitted originals; generate private paths, never trust UI receipts."""
-    description = describe(index, repo, inputs)
+    description, acquired = read_plan(index, repo)
+    write_description(inputs, description)
     importer = module("install_game_import", HERE / "game_import.py")
     imported_root = UPDATES.within(inputs, "import/files", exists=True)
     manifest = importer.select_version(importer.FolderSource(imported_root), description["catalog"])
@@ -138,9 +187,20 @@ def prepare(index, repo, inputs):
             observed.add(path.relative_to(imported_root).as_posix())
     if observed != names:
         raise ValueError("private import contains files from another selection; import into a fresh version-bound folder")
+    if acquired:
+        for name, pin in acquired.items():
+            verify_acquired(inputs, name, pin)
+            hashes[name] = pin["sha256"]
+        tool_root = UPDATES.within(inputs, "acquired", exists=True)
+        staged = {path.relative_to(inputs).as_posix() for path in tool_root.rglob("*") if path.is_symlink() or not path.is_dir()}
+        if staged != acquired.keys():
+            raise ValueError("owner-acquired tool tree differs from signed inventory")
     bindings = {}
     for name, relative in index["install_plan"]["configuration"]["bindings"].items():
-        bindings[name] = "import/files" + ("/" + relative if relative != "." else "")
+        if acquired and (relative == "acquired" or relative.startswith(ACQUIRED)):
+            bindings[name] = relative
+        else:
+            bindings[name] = "import/files" + ("/" + relative if relative != "." else "")
         UPDATES.within(inputs, bindings[name], exists=True)
     bindings.setdefault("inventory", "input-hashes.json")
     input_id = hashlib.sha256(UPDATES.RELEASE.signed_bytes([(row["path"], row["sha256"]) for row in inventory])).hexdigest()

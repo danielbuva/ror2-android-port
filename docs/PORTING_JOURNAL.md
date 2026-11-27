@@ -5017,3 +5017,15 @@ APK SHA-256 `a08d72b5d564b86b84458ce094cf6e7a0781bfc21d66884c51f9f0673f68a4c7`
 in `whole-game-structured-srv/auto-exposure-device-02/terminal.done.json`.
 Peak SoC was 58.1 °C, with 0 s above 80 °C. Battery was 28 °C at admission.
 Fixture removal, OLED sleep and lease release passed. Camera integration remains open.
+## J1554 — Verify signed Crunch and BC7 texture conversion on Android
+
+2026-11-27. The staged toolhost uses the packaged QEMU adapter to run the
+signed fixture for three Crunch Texture2Ds and one BC7 Cubemap on Nova B.
+The emitted resource matched the host SHA-256
+`44117ec691edf01d8f6d09fc352d84616d2b030d40e7ef424d402f91a0ec1ba6`.
+Production took 689.4 s, peaked at 47.4 MiB child RSS and used 20.0 MiB of
+net stage storage. Peak CPU/GPU was 58.5 °C at admission, with 0 s above 80 °C.
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+The runner removed its disposable package and released the lease.
+Evidence `work/coordination/p1-textures/phone-crunch-bc7-1127/signed-device/terminal.done.json`.
+Canonical conversion integration and in-game visuals remain open.
