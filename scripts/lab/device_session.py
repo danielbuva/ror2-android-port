@@ -1,10 +1,10 @@
 """Current shared device lifecycle. Private requests/evidence stay under work/.
 
 python3 scripts/lab/device_session.py --request work/.../request.json --dry-run
-python3 scripts/lab/device_session.py --request work/.../request.json --detach
+python3 scripts/lab/device_session.py --request work/.../request.json --queue --detach
 
-The dispatcher grants the device before invocation. This runner acquires its
-lease atomically; it never waits for a peer, publishes, or grants itself a slot.
+Queued jobs claim the atomic lease at the head of the dispatcher FIFO.
+Legacy jobs continue to use the dispatcher grant.
 """
 
 import argparse
@@ -50,7 +50,7 @@ def save(path, value):
     temporary.replace(path)
 
 
-def load_request(path, serial=None):
+def load_request(path, serial=None, *, queued=False):
     path = Path(path).resolve(strict=True)
     value = json.loads(path.read_text())
     required = {"canonical_root", "output", "workstream", "package", "apk", "apk_sha256", "duration_seconds"}
@@ -101,7 +101,7 @@ def load_request(path, serial=None):
     value["serial"] = validate_serial(serial if serial is not None else value.get("serial"))
     if not re.fullmatch(r"[a-z0-9-]+", value["workstream"]):
         raise ValueError("Explicit serial and workstream required")
-    if serial is not None:
+    if serial is not None and not queued:
         grant = root / ".local/orchestrator/devqueue" / (serial + ".granted")
         if not grant.is_file() or grant.read_text().strip() != value["workstream"]:
             raise ValueError("Selected device queue grant does not name this workstream")
@@ -1584,7 +1584,7 @@ def observe_pacing(device, output, pid, snapshot):
         (output / ("latency-%02d.txt" % index)).write_text(device.sh("dumpsys", "SurfaceFlinger", "--latency", layer, check=False))
 
 
-def execute(request):
+def execute(request, *, queued=False):
     import common
 
     root, output = Path(request["canonical_root"]), Path(request["output"])
@@ -1627,7 +1627,14 @@ def execute(request):
         result["host_storage"] = dict(estimated_output_bytes=1024**3, margin_bytes=20 * 1024**3, free_bytes=shutil.disk_usage(output).free)
         if result["host_storage"]["free_bytes"] < 21 * 1024**3:
             raise RuntimeError("Host capture output plus 20 GiB margin unavailable")
-        lease.acquire()
+        if queued:
+            from device_queue import DeviceQueue
+
+            queued_at = time.monotonic()
+            DeviceQueue(lease.path.parent.parent, request["serial"]).wait(lease.acquire)
+            result["queue_wait_seconds"] = time.monotonic() - queued_at
+        else:
+            lease.acquire()
         set_command_selector(request["serial"], None)
         if installed_alpha:
             from installed_alpha import InstalledAlphaDevice, verify_installed
@@ -1940,12 +1947,13 @@ def execute(request):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--request", type=Path, required=True)
-    parser.add_argument("--device", metavar="SERIAL", help="Select the serial granted to the request's workstream")
+    parser.add_argument("--device", metavar="SERIAL", help="Select the configured device serial")
+    parser.add_argument("--queue", action="store_true", help="Wait for the device at the head of the shared FIFO")
     parser.add_argument("--dry-run", action="store_true", help="Validate request, imports and APK bytes without device access")
     parser.add_argument("--detach", action="store_true", help="Start the same tracked runner in a new session; terminal receipt is always written")
     args = parser.parse_args(argv)
     try:
-        request = load_request(args.request, args.device)
+        request = load_request(args.request, args.device, queued=args.queue)
     except BaseException:
         if args.dry_run or args.detach:
             raise
@@ -1976,29 +1984,42 @@ def main(argv=None):
     if args.detach:
         output = Path(request["output"])
         output.mkdir(parents=True, exist_ok=True)
-        if (output / "job.json").exists() or (output / "terminal.done.json").exists():
+        done = output / "terminal.done.json"
+        job_file = output / "job.json"
+        if done.exists():
             raise RuntimeError("Run already dispatched; consume its terminal receipt")
+        with job_file.open("x") as reservation:
+            json.dump(dict(done_file=str(done)), reservation)
         command = [sys.executable, str(Path(__file__).resolve()), "--request", str(args.request.resolve())]
         if args.device is not None:
             command.extend(("--device", args.device))
-        with (output / "runner.log").open("w") as log:
-            job = subprocess.Popen(
-                command,
-                start_new_session=True,
-                stdin=subprocess.DEVNULL,
-                stdout=log,
-                stderr=subprocess.STDOUT,
-            )
-        save(output / "job.json", dict(pid=job.pid, done_file=str(output / "terminal.done.json")))
-        print("WAITING done-file " + str(output / "terminal.done.json"))
+        if args.queue:
+            command.append("--queue")
+        try:
+            with (output / "runner.log").open("w") as log:
+                job = subprocess.Popen(
+                    command,
+                    start_new_session=True,
+                    stdin=subprocess.DEVNULL,
+                    stdout=log,
+                    stderr=subprocess.STDOUT,
+                )
+        except OSError:
+            save(done, dict(success=False, lease_released=False, error=traceback.format_exc()))
+            print("WAITING done-file " + str(done), flush=True)
+            return 1
+        else:
+            save(job_file, dict(pid=job.pid, done_file=str(done)))
+        print("WAITING done-file " + str(done), flush=True)
         return 0
 
     def interrupted(signum, frame):
         raise RuntimeError("Device runner interrupted by signal " + str(signum))
 
-    signal.signal(signal.SIGTERM, interrupted)
+    for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(number, interrupted)
     try:
-        return 0 if execute(request)["success"] else 1
+        return 0 if execute(request, queued=args.queue)["success"] else 1
     except BaseException:
         done = Path(request["output"]) / "terminal.done.json"
         if not done.exists():

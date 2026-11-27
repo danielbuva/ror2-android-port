@@ -2144,6 +2144,16 @@ Clang driver, and invokes it without a global Linux execution handler. Original
 SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
 fallback; whole-player Linux app hosting and runtime parity are separate gates.
 
+`tools/phone-build/owner-code/wwise_native.py` builds the Android Wwise player
+library from the owner's licensed stock integration, SDK archives, and NDK
+r25c target files. The authored diagnostic code and
+`recipe/owner-wwise-native.json` reconstruct the two modified source files in
+the private output after checking their stock hashes. Clang and LLD link the
+result directly. The resulting receipt records the ELF hash, exact export
+roster digest, dependencies and load alignment. This standalone producer has
+passed host cross-compilation. Signed release dispatch and Android execution
+are separate gates.
+
 `owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
 invocation over freshly produced managed assemblies. The existing public Burst
 policy selects roots, SDK compilation API defines, options and tool hashes.
@@ -3309,6 +3319,12 @@ historical staging pipelines. Their selections are recorded in preparation
 receipts; source-byte and runtime acceptance checks are unchanged. Registration
 contracts are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-scene-runtime-evidence).
 
+`scripts/worker-yield.py` (current) sizes the orchestrated worker set. It reads
+the ignored `.local/orchestrator` logs, status lines, device grants and parks plus
+squash merges on `origin/main`, and reports per workstream tokens, merged PRs,
+cost per PR, device grants and a KEEP/WATCH/PARK verdict, with quota, budget
+(`budget-daily`) and device-contention notes (AGENTS.md "Working speed").
+
 `scripts/prune-generated.py` (current) discards rebuildable build outputs under
 `work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
 device receipts and the coordination lock; agents run it after each build/run task
@@ -3608,11 +3624,20 @@ package; no parser or third-party implementation is vendored into the lab/player
 
 `scripts/lab/device_session.py` owns the current shared device lifecycle via
 `./dev device-session --request <private JSON> --device SERIAL --dry-run` and
-`--detach`. Use the serial from the workstream's queue grant for both commands.
+`--detach`. Add `--queue` to both commands to submit directly to the device
+FIFO. Without it, use the serial from the workstream's dispatcher grant.
 Portable requests can omit `serial` and `adopted_install`. Existing requests
 can embed `serial` and assert adopted-only placement with `adopted_install: true`.
-The dispatcher grants a device. The child takes the canonical atomic lease
-before ADB and sources the pinned environment. If discovery fails before the
+`scripts/lab/device_queue.py` owns ordering for detached jobs and legacy
+workstream rows in the canonical `devqueue/<serial>.queue`. It serializes
+head transitions per device and advances a cursor so shell appends remain
+intact. The local dispatcher calls
+`python3 scripts/lab/device_queue.py --dispatch ORCHESTRATOR_DIR` in place of
+its queue loop and uses the emitted serial/workstream pairs to notify legacy
+grantees. This activation enables detached jobs to claim their own turn.
+Legacy reservations block later jobs until taken and released or expired.
+The child sources the pinned environment and takes the canonical atomic lease
+before ADB. If discovery fails before the
 device context opens, the runner releases its lease and writes a failed receipt.
 Once a device context opens,
 the runner requires verified idle cleanup before releasing the lease.
