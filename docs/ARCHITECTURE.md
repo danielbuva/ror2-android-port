@@ -344,7 +344,10 @@ promotional graphics and their sources; they are not part of the runtime pipelin
 Unity editor and batch launchers share the lab's Homebrew ADB server on port
 5037. `scripts/lab/build_lock.py::unity_editor_env` configures the child to
 connect to the numeric loopback address so the bundled ADB client cannot start
-its own daemon. Device tooling starts the shared server when needed. Android
+its own daemon. Unity's Android module also kills any running adb server that
+was not started from its own SDK; `scripts/env.sh` keeps that editor preference
+(`AndroidADBKillExternalInstance`) off and `./dev doctor` checks it.
+Device tooling starts the shared server when needed. Android
 user and Gradle homes remain isolated where configured.
 `scripts/lab/build.py::editor` owns `./dev editor`.
 `scripts/build-smoke.sh`, `scripts/lab/unity_rebuild.py`, `phone_content.py`,
