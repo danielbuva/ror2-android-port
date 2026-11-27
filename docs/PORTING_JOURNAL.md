@@ -6,6 +6,21 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1532 — Exclude detached player HurtBoxes from touch aim
+
+2026-11-27. The camera ray skips native HurtBoxes owned by the playable
+body's HealthComponent, including those on its detached model.
+Assisted Artificer play on Distant Roost recorded 1,510 rejections at
+sample 30. The reticle target moved from about 8.06 m to 12.11 m from the
+camera. Native aim and state aim aligned with the selected target. Paired
+video shows the orange flame without the vertical streaks.
+Native authority and server callbacks paired for four Fire Bolts, one
+Nano-Bomb and one Flamethrower. All skill machines returned to Idle.
+APK SHA-256 `5d0909595ad139bb5f56c1cd9c8b7386350a4e90b0ed702ba2a836086572b637` (source `c8639826`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-touch-aim-main-nova/`.
+SoC peaked at 90 °C with 12.705 s above 80 °C. Cleanup and OLED sleep passed.
+The black card around the Nano-Bomb cast and Fire Bolt strips remain open.
+
 ## J1531 — Restore Artificer charge and flame materials
 
 2026-11-27. The body visual owner submits the native Nano-Bomb charge and
