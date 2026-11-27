@@ -146,6 +146,23 @@ Cleanup removes the scoped stage and the packages the run installed. Import
 and each reconstruction have a four-hour limit to accommodate the measured
 signed native build.
 
+For the scheduled phone conversion, use `operation: nightly` and
+`device: nova-b`. Supply the same installer, inventory and baseline release
+fields. Set `phone_source` to a two-or-more-component folder path relative to
+the phone's Downloads directory, for example `LabInput/Originals`. The runner
+verifies that existing folder against `current_inventory` and imports it
+through the system picker. Use a fresh `done_file` under
+`work/coordination/p1-nightly/<UTC date>/`. Dry-run before joining the device
+queue, then detach on the grant.
+
+The nightly builds and installs one signed release, then observes bootstrap
+Play, character select, first stage and End Run. It records the native title
+as unobserved. The installer toolhost inventories the retained signed APK on
+the phone. The host joins the census and tour by APK hash and retains the
+scoreboard, thermal metrics and first failure in the dated run directory.
+Classes without a comparison APK are counted as unverified. Cleanup removes
+the run's installer and game packages and leaves the staged originals in place.
+
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
 existing Android tool workspace containing `material/`, `archives/` and the
