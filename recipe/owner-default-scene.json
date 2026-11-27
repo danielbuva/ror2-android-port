@@ -5,7 +5,7 @@
     "player": {
       "path": "recipe/owner-player-data.json",
       "bytes": 174575,
-      "sha256": "51bb900b1fba05fc3b4d05cc5664c741f0a6561236b0569057cbe46912d5ff8a"
+      "sha256": "1f5526c19b1ed5d1ee847290f10bd5c55ff807281e05312e5b4fa471e17a0644"
     },
     "bootstrap": {
       "path": "smoke/Assets/Bootstrap.unity",

@@ -2,6 +2,11 @@ import argparse
 import sys
 from common import *
 
+if len(sys.argv) > 1 and sys.argv[1] == "pins":
+    from source_pins import main
+
+    sys.exit(main(sys.argv[2:]))
+
 if len(sys.argv) > 1 and sys.argv[1] == "converter-stage":
     from lab_runner import converter_stage
 
@@ -48,6 +53,7 @@ p = argparse.ArgumentParser(
   decompile: current
   export-project: current
   preflight: current
+  pins: current
   build-hook-pins: current
   check-baseline: current
   build: current
@@ -86,6 +92,7 @@ p.add_argument(
         "decompile",
         "export-project",
         "preflight",
+        "pins",
         "build-hook-pins",
         "check-baseline",
         "build",

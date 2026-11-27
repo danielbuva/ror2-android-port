@@ -3235,6 +3235,8 @@ The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
 | --- | --- | --- |
+| pins | `check` | current |
+| pins | `refresh` | current |
 | build-hook-pins | `check` (default) | current |
 | build-hook-pins | `refresh` | current |
 | editor | `open` | current |
@@ -3273,6 +3275,18 @@ registry labels and the editor/perf/lane selectors without starting an editor or
 querying a device. Labels live with existing CLI owners; dispatch is unchanged.
 
 ## Build pipeline
+
+`scripts/lab/source_pins.py` owns `./dev pins check` and `./dev pins refresh`.
+It resolves public recipe and profile hashes from tracked files, following
+dependencies through producer sources, embedded build-hook bindings and other
+profiles. Digest-only supplier selectors use tracked recipe identities from
+the current tree or the applicable Git base. `--show-external` lists recipes
+with SHA fields that still need their original input or produced-byte witness.
+Historical manifests and signed or retained receipts keep their recorded identities.
+The pre-push hook checks the outgoing commit before launching local CI. It
+refreshes eligible files on the checked-out outgoing branch and stops the push
+so the author can review and commit the changes. Staged or unstaged edits to
+the affected files take precedence and require an explicit refresh.
 
 Historical `input-update-check` uses `scripts/lab/historical_receipts.py` to
 resolve an explicitly registered, hash-pinned optional-guard receipt against the
@@ -3337,6 +3351,16 @@ requires that merged baseline and resolved conflict markers; `--dry-run` writes
 nothing. It retains no process state, closes Git/file readers at exit and leaves
 journal/index edits for manual reference review and staging. It neither fetches
 nor commits. `tests/test_journal_renumber.py` covers ownership and refusal cases.
+
+For a clean checked-out topic containing fetched `origin/main`,
+`scripts/journal-pre-push.py` (support) uses the same renumber and index owners.
+It reads the outgoing commit, computes heading dates against its history,
+and creates a forward-only local commit limited to the two journal paths if
+they need repair. The hook stops that push because Git captured the old tip;
+the next push validates the exact new tip. No temporary file or state survives
+the check. Dirty worktrees and ambiguous journal content are not repaired.
+`tests/test_journal_pre_push.py` exercises the real hook and remote ref update
+against a disposable local Git remote.
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh exact-commit checkout. The hook uses
