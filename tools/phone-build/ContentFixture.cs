@@ -35,6 +35,7 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32 low;
         public Color32 high;
         public Color32[] outlineSamples;
+        public Color32[] intersectionSamples;
         public bool passed;
         public string failure;
     }
@@ -293,6 +294,7 @@ public sealed class ContentFixture : MonoBehaviour
             if (shader == null || !shader.isSupported) throw new Exception("Shader is unavailable or unsupported");
             report.shader = shader.name;
             if (shader.name == "Unlit/OutlineHighlightNew") DrawOutline(shader, report);
+            else if (shader.name == "Hopoo Games/FX/Cloud Intersection Remap") DrawIntersection(shader, report);
             else DrawAnimateAlpha(shader, report);
         }
         catch (Exception error) { report.failure = error.Message; }
@@ -618,6 +620,97 @@ public sealed class ContentFixture : MonoBehaviour
             Destroy(plain);
             Destroy(instanced);
             Destroy(mesh);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawIntersection(Shader shader, ShaderDrawReport report)
+    {
+        const string directional = "DIRECTIONAL";
+        int cameraPosition = Shader.PropertyToID("_WorldSpaceCameraPos");
+        var previousCameraPosition = Shader.GetGlobalVector(cameraPosition);
+        bool previousDirectional = Shader.IsKeywordEnabled(directional);
+        var mainMask = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var ramp = new Texture2D(2, 1, TextureFormat.RGBA32, false, true) {
+            filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp
+        };
+        var pixels = new Texture2D(32, 1, TextureFormat.RGBA32, false, true);
+        var target = RenderTexture.GetTemporary(32, 32, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        var previous = RenderTexture.active;
+        var plain = new Material(shader);
+        var mesh = new Mesh();
+        Material instanced = null;
+        try
+        {
+            using var commands = new CommandBuffer();
+            mainMask.SetPixel(0, 0, Color.clear);
+            mainMask.Apply();
+            ramp.SetPixels(new[] { Color.red, Color.green });
+            ramp.Apply();
+            plain.SetTexture("_MainTex", mainMask);
+            plain.SetTexture("_Cloud1Tex", Texture2D.whiteTexture);
+            plain.SetTexture("_Cloud2Tex", Texture2D.whiteTexture);
+            plain.SetTexture("_RemapTex", ramp);
+            plain.SetColor("_TintColor", Color.white);
+            plain.SetInt("_SrcBlendFloat", (int)BlendMode.One);
+            plain.SetInt("_DstBlendFloat", (int)BlendMode.Zero);
+            plain.SetInt("_Cull", (int)CullMode.Off);
+            foreach (string property in new[] { "_Boost", "_ExternalAlpha", "_AlphaBoost",
+                "_IntersectionStrength", "_RimPower", "_RimStrength" })
+                plain.SetFloat(property, 1);
+            plain.SetFloat("_InvFade", 0);
+            instanced = new Material(plain) { enableInstancing = true };
+            instanced.SetTexture("_MainTex", Texture2D.whiteTexture);
+
+            mesh.vertices = new[] {
+                new Vector3(-0.15f, -0.2f, 0.5f), new Vector3(-0.15f, 0.2f, 0.5f),
+                new Vector3(0.15f, 0.2f, 0.5f), new Vector3(0.15f, -0.2f, 0.5f)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            mesh.uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+            mesh.normals = new[] { Vector3.up, Vector3.up, Vector3.up, Vector3.up };
+            mesh.colors = new[] { Color.white, Color.white, Color.white, Color.white };
+            var transforms = new[] {
+                Matrix4x4.Translate(new Vector3(-0.6f, 0, 0)), Matrix4x4.Translate(new Vector3(0.6f, 0, 0))
+            };
+            commands.SetRenderTarget(target);
+            commands.ClearRenderTarget(true, true, Color.blue);
+            commands.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+            commands.SetGlobalVector(cameraPosition, new Vector4(0, 0, 2, 1));
+            commands.EnableShaderKeyword(directional);
+            commands.DrawMesh(mesh, Matrix4x4.identity, plain, 0, 0);
+            commands.DrawMeshInstanced(mesh, 0, instanced, 0, transforms, transforms.Length, null);
+            Graphics.ExecuteCommandBuffer(commands);
+
+            RenderTexture.active = target;
+            pixels.ReadPixels(new Rect(0, 16, 32, 1), 0, 0, false);
+            report.intersectionSamples = new Color32[] {
+                pixels.GetPixel(16, 0), pixels.GetPixel(6, 0), pixels.GetPixel(25, 0), pixels.GetPixel(11, 0)
+            };
+            // With depth fade disabled, the camera-facing rim drives opaque masks
+            // to the high ramp endpoint. The transparent mask stays at the low end.
+            var expected = new Color32[] { Color.red, Color.green, Color.green, Color.blue };
+            for (int i = 0; i < expected.Length; ++i)
+            {
+                var sample = report.intersectionSamples[i];
+                var match = expected[i];
+                if (Mathf.Abs(sample.r - match.r) > 5 || Mathf.Abs(sample.g - match.g) > 5 ||
+                    Mathf.Abs(sample.b - match.b) > 5)
+                    throw new Exception("Cloud Intersection sample " + i + " did not match the expected RGB");
+            }
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            if (!previousDirectional) Shader.DisableKeyword(directional);
+            Shader.SetGlobalVector(cameraPosition, previousCameraPosition);
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(target);
+            Destroy(plain);
+            Destroy(instanced);
+            Destroy(mesh);
+            Destroy(mainMask);
+            Destroy(ramp);
             Destroy(pixels);
         }
     }
