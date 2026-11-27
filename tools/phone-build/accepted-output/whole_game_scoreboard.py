@@ -225,14 +225,14 @@ def device_observations(receipts, apk_sha256):
             raise ValueError("Device observation belongs to a different build")
         checks = row.get("process_checkpoints", [])
         pids = {str(check["verified_launch_pid"]) for check in checks if check.get("phase") == "launch" and "verified_launch_pid" in check}
-        if pids:
-            results["launch"] = "passed"
         alpha = row.get("mode") == "installed-alpha"
         tour = row.get("tour", {})
         attempt = None
         if alpha:
             attempt = row.get("installed_release", {}).get("attempt")
             pids &= {str(tour.get("pid"))} if attempt and tour.get("attempt") == attempt else set()
+        if pids:
+            results["launch"] = "passed"
         observed = {}
         for key, name, phase in (
             ("menu", "start-menu.json", "offline-start-menu"),

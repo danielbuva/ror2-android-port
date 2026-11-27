@@ -151,6 +151,7 @@ class WholeGameScoreboardTests(unittest.TestCase):
             ):
                 (root / filename).write_text(json.dumps(report))
             result = S.device_observations([pin(terminal)], apk_sha256)
+            self.assertEqual(result["launch"], "passed")
             self.assertEqual(result["return"], "passed")
             self.assertEqual(result["alpha_tours"][0]["native_title"], "unobserved")
             (root / "returned-menu.json").write_text(json.dumps(dict(marker, phase="offline-start-menu", session=5, attempt="previous")))
@@ -159,3 +160,10 @@ class WholeGameScoreboardTests(unittest.TestCase):
             result = S.device_observations([pin(terminal)], apk_sha256)
             self.assertEqual(result["return"], "unobserved")
             self.assertEqual(result["alpha_tours"][0]["first_failure"], "fixture cleanup failure")
+
+            receipt["tour"]["attempt"] = "previous"
+            terminal.write_text(json.dumps(receipt))
+            result = S.device_observations([pin(terminal)], apk_sha256)
+            self.assertEqual(result["launch"], "unobserved")
+            self.assertEqual(result["menu"], "unobserved")
+            self.assertEqual(result["first_stage"], "unobserved")
