@@ -48,6 +48,15 @@ public sealed class ContentFixture : MonoBehaviour
         public string failure;
     }
 
+    [Serializable] sealed class DownsampleReport
+    {
+        public string graphics;
+        public int regularComponents;
+        public int msaaComponents;
+        public bool passed;
+        public string failure;
+    }
+
     [Serializable] sealed class ScopeReport
     {
         public string shader;
@@ -262,6 +271,11 @@ public sealed class ContentFixture : MonoBehaviour
                     CheckAutoExposure(shader, graphics);
                     return;
                 }
+                if (shader.name == "MultiScaleVODownsample2")
+                {
+                    CheckDownsample2(shader, graphics);
+                    return;
+                }
                 histogram.shader = shader.name;
                 DispatchHistogram(shader, histogram);
             }
@@ -373,6 +387,111 @@ public sealed class ContentFixture : MonoBehaviour
         if (readback.hasError || readback.layerCount != 1 || readback.layerDataSize != sizeof(float))
             throw new Exception("Unexpected RFloat exposure readback shape or status");
         return readback.GetData<float>()[0];
+    }
+
+    const int DownsampleInputSize = 16;
+
+    static float DownsampleDepth(int x, int y, int channel)
+    {
+        float depth = (1 + x + DownsampleInputSize * y) / 512f;
+        return channel == 0 ? depth : 1f - depth;
+    }
+
+    static void CheckDownsample2(ComputeShader shader, string graphics)
+    {
+        var report = new DownsampleReport { graphics = graphics };
+        try
+        {
+            report.regularComponents = DispatchDownsample2(shader, false);
+            report.msaaComponents = DispatchDownsample2(shader, true);
+            report.passed = graphics == "Vulkan" && report.regularComponents == 160 && report.msaaComponents == 320;
+        }
+        catch (Exception error) { report.failure = error.Message; }
+        Debug.Log("PHONE_SHADER_COMPUTE " + JsonUtility.ToJson(report));
+    }
+
+    static int DispatchDownsample2(ComputeShader shader, bool msaa)
+    {
+        // Post Processing 2.3.0 passes a single-sample DS4x plane with one or two depth channels.
+        int channels = msaa ? 2 : 1;
+        string kernelName = msaa ? "MultiScaleVODownsample2_MSAA" : "MultiScaleVODownsample2";
+        int kernel = shader.FindKernel(kernelName);
+        var threads = KernelThreads(shader, kernel);
+        if (threads[0] != 8 || threads[1] != 8 || threads[2] != 1)
+            throw new Exception("Unexpected downsample workgroup dimensions: " + kernelName);
+
+        string[] names = { "DS8x", "DS8xAtlas", "DS16x", "DS16xAtlas" };
+        var outputs = new RenderTexture[names.Length];
+        var source = new Texture2D(DownsampleInputSize, DownsampleInputSize,
+            msaa ? TextureFormat.RGFloat : TextureFormat.RFloat, false, true);
+        try
+        {
+            var pixels = new float[DownsampleInputSize * DownsampleInputSize * channels];
+            for (int y = 0, i = 0; y < DownsampleInputSize; ++y)
+                for (int x = 0; x < DownsampleInputSize; ++x)
+                    for (int channel = 0; channel < channels; ++channel)
+                        pixels[i++] = DownsampleDepth(x, y, channel);
+            source.SetPixelData(pixels, 0);
+            source.Apply();
+            shader.SetTexture(kernel, "DS4x", source);
+
+            for (int i = 0; i < outputs.Length; ++i)
+            {
+                bool atlas = (i & 1) != 0;
+                int size = (i < 2 ? 8 : 4) / (atlas ? 4 : 1);
+                var format = atlas ? (msaa ? RenderTextureFormat.RGHalf : RenderTextureFormat.RHalf)
+                    : (msaa ? RenderTextureFormat.RGFloat : RenderTextureFormat.RFloat);
+                var output = new RenderTexture(new RenderTextureDescriptor(size, size, format, 0) {
+                    dimension = atlas ? TextureDimension.Tex2DArray : TextureDimension.Tex2D,
+                    volumeDepth = atlas ? 16 : 1, enableRandomWrite = true, sRGB = false
+                });
+                outputs[i] = output;
+                if (!output.Create()) throw new Exception("Downsample target allocation failed: " + names[i]);
+                shader.SetTexture(kernel, names[i], output);
+            }
+            shader.Dispatch(kernel, 1, 1, 1);
+
+            int components = 0;
+            for (int i = 0; i < outputs.Length; ++i)
+                components += CheckDownsampleOutput(outputs[i], names[i], i < 2 ? 2 : 4, channels);
+            return components;
+        }
+        finally
+        {
+            foreach (var output in outputs)
+                if (output != null) { output.Release(); Destroy(output); }
+            Destroy(source);
+        }
+    }
+
+    static int CheckDownsampleOutput(RenderTexture output, string name, int scale, int channels)
+    {
+        var readback = AsyncGPUReadback.Request(output, 0);
+        readback.WaitForCompletion();
+        bool atlas = output.dimension == TextureDimension.Tex2DArray;
+        int components = output.width * output.height * channels;
+        if (readback.hasError || readback.layerCount != output.volumeDepth ||
+            readback.layerDataSize != components * (atlas ? sizeof(ushort) : sizeof(float)))
+            throw new Exception("Unexpected downsample readback shape or status: " + name);
+
+        // Each atlas layer selects one pixel from every 4 by 4 tile of the plane.
+        for (int layer = 0; layer < readback.layerCount; ++layer)
+        {
+            var halves = atlas ? readback.GetData<ushort>(layer) : default;
+            var singles = atlas ? default : readback.GetData<float>(layer);
+            for (int y = 0, i = 0; y < output.height; ++y)
+                for (int x = 0; x < output.width; ++x)
+                    for (int channel = 0; channel < channels; ++channel, ++i)
+                    {
+                        int sourceX = scale * (atlas ? 4 * x + (layer & 3) : x);
+                        int sourceY = scale * (atlas ? 4 * y + (layer >> 2) : y);
+                        float expected = DownsampleDepth(sourceX, sourceY, channel);
+                        bool matches = atlas ? halves[i] == Mathf.FloatToHalf(expected) : singles[i] == expected;
+                        if (!matches)
+                            throw new Exception($"Downsample mismatch: {name}, layer {layer}, ({x}, {y}), channel {channel}");
+                    }
+        }
+        return components * readback.layerCount;
     }
 
     static void DispatchHistogram(ComputeShader shader, HistogramReport report)
