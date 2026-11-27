@@ -5117,7 +5117,7 @@ Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
 The runner removed the fixture, slept the OLED and released the lease.
 Linked native Materials and depth-fade rendering remain open.
 
-## J1572 — Run detached device jobs through the shared FIFO
+## J1566 — Run detached device jobs through the shared FIFO
 
 2026-11-27. Detached sessions waited for the shared lease and completed
 without a worker taking a manual grant. The main Nova queued for 1082.18 s
