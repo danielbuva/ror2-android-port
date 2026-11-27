@@ -167,6 +167,7 @@ public sealed partial class PortSession
         public int particles;
         public float projectedBoundsFraction;
         public Vector3 center, size;
+        public Vector4 screenBounds;
         public string particleRenderMode, particleAlignment;
         public string[] vertexStreams;
         public string[] particleMeshes;
@@ -407,6 +408,8 @@ public sealed partial class PortSession
             new HashSet<AssetOrDirectReference<GameObject>>();
         readonly Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]> nativeTeamAreaMaterials =
             new Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]>();
+        readonly Dictionary<OmniEffect.OmniEffectElement, Material> nativeOmniEffectMaterials =
+            new Dictionary<OmniEffect.OmniEffectElement, Material>();
         readonly List<CharacterMaster> pendingObjectiveActors = new List<CharacterMaster>();
         readonly Dictionary<CharacterMaster, int> objectiveAmbientExpected = new Dictionary<CharacterMaster, int>();
         readonly HashSet<CharacterMaster> objectiveDirectorActors = new HashSet<CharacterMaster>();
@@ -537,6 +540,9 @@ public sealed partial class PortSession
                 if (pair.Key)
                     pair.Key.teamMaterialPairs = pair.Value;
             nativeTeamAreaMaterials.Clear();
+            foreach (var pair in nativeOmniEffectMaterials)
+                pair.Key.particleSystemOverrideMaterial = pair.Value;
+            nativeOmniEffectMaterials.Clear();
         }
         void PrepareNativeTeamAreaMaterials(TeamAreaIndicator indicator)
         {
@@ -562,6 +568,23 @@ public sealed partial class PortSession
                 indicator.teamMaterialPairs = prepared;
             }
         }
+        void PrepareNativeOmniEffectMaterials(OmniEffect effect)
+        {
+            // Native Start selects a radius group and overwrites prepared renderer slots.
+            foreach (var group in effect.omniEffectGroups ?? Array.Empty<OmniEffect.OmniEffectGroup>())
+                foreach (var element in group.omniEffectElements)
+                {
+                    if (nativeOmniEffectMaterials.ContainsKey(element))
+                        continue;
+                    var source = element.particleSystemOverrideMaterial;
+                    var material = AndroidMaterialPresentation.RecoverMaterial(source, coordinator.worldMaterials, includeIntersection: true);
+                    if (material == source)
+                        continue;
+                    nativeOmniEffectMaterials.Add(element, source);
+                    element.particleSystemOverrideMaterial = material;
+                    coordinator.nativeEffectSourceMaterials++;
+                }
+        }
         public void PresentNativeEffectSource(GameObject source)
         {
             var visited = new HashSet<GameObject>();
@@ -571,6 +594,8 @@ public sealed partial class PortSession
                     return;
                 foreach (var indicator in root.GetComponentsInChildren<TeamAreaIndicator>(true))
                     PrepareNativeTeamAreaMaterials(indicator);
+                foreach (var effect in root.GetComponentsInChildren<OmniEffect>(true))
+                    PrepareNativeOmniEffectMaterials(effect);
                 foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
                 {
                     if (coordinator.worldLootSourceMaterials.ContainsKey(renderer))
@@ -2001,6 +2026,11 @@ public sealed partial class PortSession
 
         public ObjectiveRendererObservation ObserveOwnedSurface(Renderer renderer)
         {
+            return ObserveOwnedSurface(renderer, true);
+        }
+
+        public ObjectiveRendererObservation ObserveOwnedSurface(Renderer renderer, bool includeMaterialProperties)
+        {
             var materials = renderer.sharedMaterials;
             var bounds = renderer.bounds;
             var lo = new Vector2(float.MaxValue, float.MaxValue);
@@ -2031,10 +2061,11 @@ public sealed partial class PortSession
             if (particleRenderer)
                 particleRenderer.GetMeshes(meshes);
             var billboardRenderer = renderer as BillboardRenderer;
-            var materialState = materials.Select(ObserveSurfaceMaterial).ToArray();
+            var materialState = materials.Select(material => ObserveSurfaceMaterial(material, includeMaterialProperties)).ToArray();
             var path = PortSession.StageObjectPath(renderer.transform);
             EffectiveSurfaceSlotObservation[] effectiveProperties = null;
-            if (renderer.name == "VagrantMesh" && path.StartsWith("VagrantBody(Clone)/", StringComparison.Ordinal))
+            if (includeMaterialProperties && renderer.name == "VagrantMesh" &&
+                path.StartsWith("VagrantBody(Clone)/", StringComparison.Ordinal))
             {
                 if (surfaceRendererBlock == null)
                 {
@@ -2043,30 +2074,34 @@ public sealed partial class PortSession
                 }
                 effectiveProperties = ObserveVagrantProperties(renderer, materialState, surfaceRendererBlock, surfaceSlotBlock);
             }
-            return new ObjectiveRendererObservation { unityFrame = Time.frameCount,
-                                                      particleRenderMode = particleRenderer ? particleRenderer.renderMode.ToString() : null,
-                                                      particleAlignment = particleRenderer ? particleRenderer.alignment.ToString() : null,
-                                                      vertexStreams = particleRenderer ? streams.Select(x => x.ToString()).ToArray() : null,
-                                                      particleMeshes = meshes.Select(mesh => mesh ? mesh.name : null).ToArray(),
-                                                      trailMaterial = particleRenderer ? ObserveSurfaceMaterial(particleRenderer.trailMaterial) : null,
-                                                      billboardMaterial = billboardRenderer && billboardRenderer.billboard
-                                                          ? ObserveSurfaceMaterial(billboardRenderer.billboard.material) : null,
-                                                      materialState = materialState,
-                                                      effectiveProperties = effectiveProperties,
-                                                      path = path,
-                                                      kind = renderer.GetType().Name,
-                                                      materials = materials.Select(m => m ? m.name : "missing").ToArray(),
-                                                      shaders = materials.Select(m => m && m.shader ? m.shader.name : "missing").ToArray(),
-                                                      queues = materials.Select(m => m ? m.renderQueue : -1).ToArray(),
-                                                      enabled = renderer.enabled,
-                                                      active = renderer.gameObject.activeInHierarchy,
-                                                      visible = renderer.isVisible,
-                                                      worldOwned = coordinator.worldPresented.Contains(renderer.GetInstanceID()) ||
-                                                                   materials.Any(m => m && coordinator.worldMaterials.Contains(m)),
-                                                      center = bounds.center,
-                                                      size = bounds.size,
-                                                      particles = particle ? particle.particleCount : 0,
-                                                      projectedBoundsFraction = area };
+            return new ObjectiveRendererObservation {
+                unityFrame = Time.frameCount,
+                particleRenderMode = particleRenderer ? particleRenderer.renderMode.ToString() : null,
+                particleAlignment = particleRenderer ? particleRenderer.alignment.ToString() : null,
+                vertexStreams = particleRenderer ? streams.Select(x => x.ToString()).ToArray() : null,
+                particleMeshes = meshes.Select(mesh => mesh ? mesh.name : null).ToArray(),
+                trailMaterial = particleRenderer ? ObserveSurfaceMaterial(particleRenderer.trailMaterial, includeMaterialProperties) : null,
+                billboardMaterial = billboardRenderer && billboardRenderer.billboard
+                                        ? ObserveSurfaceMaterial(billboardRenderer.billboard.material, includeMaterialProperties)
+                                        : null,
+                materialState = materialState,
+                effectiveProperties = effectiveProperties,
+                path = path,
+                kind = renderer.GetType().Name,
+                materials = materials.Select(m => m ? m.name : "missing").ToArray(),
+                shaders = materials.Select(m => m && m.shader ? m.shader.name : "missing").ToArray(),
+                queues = materials.Select(m => m ? m.renderQueue : -1).ToArray(),
+                enabled = renderer.enabled,
+                active = renderer.gameObject.activeInHierarchy,
+                visible = renderer.isVisible,
+                worldOwned = coordinator.worldPresented.Contains(renderer.GetInstanceID()) ||
+                             materials.Any(m => m && coordinator.worldMaterials.Contains(m)),
+                center = bounds.center,
+                size = bounds.size,
+                particles = particle ? particle.particleCount : 0,
+                screenBounds = inFront ? new Vector4(lo.x, lo.y, hi.x, hi.y) : Vector4.zero,
+                projectedBoundsFraction = area
+            };
         }
         static EffectiveSurfaceSlotObservation[] ObserveVagrantProperties(Renderer renderer, SurfaceMaterialObservation[] materials,
                                                                            MaterialPropertyBlock rendererBlock, MaterialPropertyBlock slotBlock)
@@ -2106,13 +2141,13 @@ public sealed partial class PortSession
             }
             return slots;
         }
-        public SurfaceMaterialObservation ObserveSurfaceMaterial(Material material)
+        public SurfaceMaterialObservation ObserveSurfaceMaterial(Material material, bool includeProperties = true)
         {
             if (!material || !material.shader)
                 return null;
             var shader = material.shader;
             var properties = new List<SurfacePropertyObservation>();
-            for (int i = 0; i < shader.GetPropertyCount(); i++)
+            for (int i = 0; includeProperties && i < shader.GetPropertyCount(); i++)
             {
                 var name = shader.GetPropertyName(i);
                 var type = shader.GetPropertyType(i);

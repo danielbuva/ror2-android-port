@@ -1,6 +1,7 @@
 // Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
 // Session phases: setup Awake, OnEnable; teardown OnDestroy.
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -40,6 +41,149 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         public bool sourceCubemap, sourceSun, cameraHdrAllowed, halfFloatSupported;
         public string colorTargetFormat, colorGraphicsFormat, gBuffer3Format, skybox, sun, skyboxStatus, error;
         public List<Sample> samples = new List<Sample>();
+        public FrameCaptureReport frameCapture;
+    }
+    [Serializable]
+    public sealed class FrameCaptureReport
+    {
+        public string scene, error;
+        public float targetRunSeconds, maxScreenGrayFraction;
+        public int sampledFrames;
+        public FrameCaptureSample sample;
+    }
+    [Serializable]
+    public sealed class FrameCaptureSample
+    {
+        public int frame, obstructionLayer;
+        public float runSeconds, realtime, cameraDistance, obstructionDistance, sourceGrayFraction, screenGrayFraction;
+        public string sourceFormat, gBuffer3Format, skybox, obstruction, sourcePngBase64, screenPngBase64;
+        public bool grading;
+        public Color background;
+        public Matrix4x4 worldToCamera, projection;
+        public AndroidNativeSourceSkinLifecycle.VisualCameraSnapshot camera;
+    }
+    const int CaptureWidth = 160, CaptureHeight = 90;
+    NovaThirdPersonView captureOrbit;
+    float nextCapture;
+    Coroutine pendingCapture;
+    Texture2D sourceCapture, screenCapture;
+
+    public void BeginFrameCapture(string scene, float runSeconds, NovaThirdPersonView orbit)
+    {
+        captureOrbit = orbit;
+        report.frameCapture = new FrameCaptureReport { scene = scene, targetRunSeconds = runSeconds };
+    }
+
+    void ObserveFrameCapture(RenderTexture source, bool grading)
+    {
+        var capture = report.frameCapture;
+        if (capture == null || capture.sampledFrames >= 48 || capture.error != null ||
+            (capture.sample != null && capture.sample.screenGrayFraction >= .05f) ||
+            pendingCapture != null || SceneManager.GetActiveScene().name != capture.scene)
+            return;
+        var run = RoR2.Run.instance;
+        if (!run)
+            return;
+        float seconds = run.GetRunStopwatch();
+        if (Mathf.Abs(seconds - capture.targetRunSeconds) > 12 || Time.realtimeSinceStartup < nextCapture)
+            return;
+        nextCapture = Time.realtimeSinceStartup + .5f;
+        try
+        {
+            if (!sourceCapture)
+                sourceCapture = new Texture2D(CaptureWidth, CaptureHeight, TextureFormat.RGBA32, false);
+            ReadCapture(source, sourceCapture);
+            var obstruction = captureOrbit.LastObstruction;
+            pendingCapture = StartCoroutine(FinishFrameCapture(new FrameCaptureSample
+            {
+                frame = Time.frameCount, runSeconds = seconds, realtime = Time.realtimeSinceStartup,
+                cameraDistance = captureOrbit.report.distance,
+                obstruction = obstruction.collider ? PortSession.StageObjectPath(obstruction.collider.transform) : null,
+                obstructionLayer = obstruction.collider ? obstruction.collider.gameObject.layer : -1,
+                obstructionDistance = obstruction.distance,
+                sourceFormat = report.colorGraphicsFormat, gBuffer3Format = report.gBuffer3Format,
+                skybox = RenderSettings.skybox ? RenderSettings.skybox.name : null,
+                background = view.backgroundColor, grading = grading,
+                worldToCamera = view.worldToCameraMatrix, projection = view.projectionMatrix,
+                camera = AndroidNativeSourceSkinLifecycle.CaptureCamera(view, false)
+            }));
+        }
+        catch (Exception error)
+        {
+            capture.error = error.GetType().Name + ": " + error.Message;
+        }
+    }
+
+    IEnumerator FinishFrameCapture(FrameCaptureSample sample)
+    {
+        yield return new WaitForEndOfFrame();
+        pendingCapture = null;
+        var capture = report.frameCapture;
+        if (Time.frameCount != sample.frame)
+        {
+            capture.error = "End-of-frame screenshot did not match the camera frame";
+            yield break;
+        }
+        var previous = RenderTexture.active;
+        RenderTexture screen = null;
+        try
+        {
+            if (!screenCapture)
+                screenCapture = new Texture2D(CaptureWidth, CaptureHeight, TextureFormat.RGBA32, false);
+            screen = RenderTexture.GetTemporary(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
+            ScreenCapture.CaptureScreenshotIntoRenderTexture(screen);
+            ReadCapture(screen, screenCapture);
+            sample.screenGrayFraction = FlatGrayFraction(screenCapture);
+            capture.sampledFrames++;
+            capture.maxScreenGrayFraction = Mathf.Max(capture.maxScreenGrayFraction, sample.screenGrayFraction);
+            if (capture.sample == null || sample.screenGrayFraction >= .05f)
+            {
+                sample.sourceGrayFraction = FlatGrayFraction(sourceCapture);
+                sample.sourcePngBase64 = Convert.ToBase64String(sourceCapture.EncodeToPNG());
+                sample.screenPngBase64 = Convert.ToBase64String(screenCapture.EncodeToPNG());
+                capture.sample = sample;
+            }
+        }
+        catch (Exception error)
+        {
+            capture.error = error.GetType().Name + ": " + error.Message;
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            if (screen)
+                RenderTexture.ReleaseTemporary(screen);
+        }
+    }
+
+    static void ReadCapture(RenderTexture source, Texture2D pixels)
+    {
+        var previous = RenderTexture.active;
+        bool previousSrgbWrite = GL.sRGBWrite;
+        var small = RenderTexture.GetTemporary(CaptureWidth, CaptureHeight, 0, RenderTextureFormat.ARGB32);
+        try
+        {
+            GL.sRGBWrite = small.sRGB;
+            Graphics.Blit(source, small);
+            RenderTexture.active = small;
+            pixels.ReadPixels(new Rect(0, 0, CaptureWidth, CaptureHeight), 0, 0, false);
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            GL.sRGBWrite = previousSrgbWrite;
+            RenderTexture.ReleaseTemporary(small);
+        }
+    }
+
+    static float FlatGrayFraction(Texture2D pixels)
+    {
+        var data = pixels.GetRawTextureData<Color32>();
+        int gray = 0;
+        foreach (var pixel in data)
+            if (pixel.r >= 126 && pixel.r <= 128 && pixel.r == pixel.g && pixel.r == pixel.b)
+                gray++;
+        return (float)gray / data.Length;
     }
     public Light fallbackLight;
     [Serializable]
@@ -395,7 +539,9 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         report.colorGraphicsFormat = source.graphicsFormat.ToString();
         var gbuffer = Shader.GetGlobalTexture("_CameraGBufferTexture3") as RenderTexture;
         report.gBuffer3Format = gbuffer ? gbuffer.format.ToString() : "unavailable";
-        if (grade && AndroidMaterialPresentation.report.enabled)
+        bool grading = grade && AndroidMaterialPresentation.report.enabled;
+        ObserveFrameCapture(source, grading);
+        if (grading)
         {
             Graphics.Blit(source, destination, grade);
             report.colorPasses++;
@@ -405,6 +551,12 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
     }
     void OnDestroy()
     {
+        if (pendingCapture != null)
+            StopCoroutine(pendingCapture);
+        if (sourceCapture)
+            Destroy(sourceCapture);
+        if (screenCapture)
+            Destroy(screenCapture);
         FinishRawFrameCapture();
         mainThreadRecorder.Dispose();
         renderThreadRecorder.Dispose();

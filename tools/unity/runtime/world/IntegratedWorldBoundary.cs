@@ -9,6 +9,8 @@ using HG.Reflection;
 using RoR2;
 using RoR2.Audio;
 using RoR2.Networking;
+using RoR2.Projectile;
+using EntityStates.Mage.Weapon;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.AddressableAssets;
@@ -121,11 +123,36 @@ public sealed partial class PortSession
             skillLocatorState, primarySlotState, primaryDefinitionState, utilitySlotState;
     }
     [Serializable]
+    public class MageBombReleaseReport
+    {
+        public int lastChargeFrame, releaseFrame, projectileIndex, screenWidth, screenHeight;
+        public string projectile, muzzle, impact, explosion, blastImpact, error;
+        public float releaseRealSeconds;
+        public bool completed;
+        public List<MageBombReleaseFrame> frames = new List<MageBombReleaseFrame>();
+    }
+    [Serializable]
+    public class MageBombReleaseFrame
+    {
+        public int frame;
+        public float worldSeconds, realSeconds;
+        public string secondaryState;
+        public List<MageBombReleaseRoot> roots = new List<MageBombReleaseRoot>();
+    }
+    [Serializable]
+    public class MageBombReleaseRoot
+    {
+        public int instanceId;
+        public string role, name;
+        public ObjectiveRendererObservation[] renderers;
+    }
+    [Serializable]
     public class WorldReport
     {
         public bool sourceCollisionPolicyVerified;
         public int nativeEffectSourceRenderers, nativeEffectSourceMaterials;
         public ObjectiveRendererObservation[] nativeEffectViews;
+        public MageBombReleaseReport mageBombRelease;
 
         public NovaThirdPersonView.Report camera;
         public WorldEquipmentReport equipment;
@@ -483,6 +510,7 @@ public sealed partial class PortSession
         readonly PortSession coordinator;
         SurvivorSkillObserver survivorSkills;
         SurvivorCombatOutputObserver survivorCombatOutputs;
+        EffectIndex mageBombMuzzle, mageBombImpact, mageBombExplosion, mageBombBlastImpact;
         SirenEggDiagnosticInput sirenEggDiagnosticInput;
         EngineerNativeOutputObserver engiNativeOutputs;
         SurvivorSkillInputCoverage skillInputCoverage;
@@ -2184,6 +2212,100 @@ public sealed partial class PortSession
                     renderer.gameObject.layer = 30;
             }
         }
+        void ObserveMageBombRelease(CharacterBody player, float elapsed)
+        {
+            var report = coordinator.r.world.mageBombRelease;
+            if (report != null && report.completed)
+                return;
+            var secondary = player.skillLocator ? player.skillLocator.secondary : null;
+            var state = secondary && secondary.stateMachine ? secondary.stateMachine.state : null;
+            if (state is ChargeNovabomb)
+            {
+                if (report == null)
+                    coordinator.r.world.mageBombRelease = report = new MageBombReleaseReport();
+                if (report.releaseFrame == 0)
+                    report.lastChargeFrame = Time.frameCount;
+            }
+            if (report == null)
+                return;
+
+            try
+            {
+                float realSeconds = Time.realtimeSinceStartup;
+                if (report.releaseFrame == 0)
+                {
+                    if (!(state is ThrowNovabomb release))
+                        return;
+                    report.releaseFrame = Time.frameCount;
+                    report.releaseRealSeconds = realSeconds;
+                    report.screenWidth = Screen.width;
+                    report.screenHeight = Screen.height;
+                    var projectile = release.projectilePrefab;
+                    var explosion = projectile ? projectile.GetComponent<ProjectileImpactExplosion>() : null;
+                    report.projectile = projectile ? projectile.name : null;
+                    report.projectileIndex = projectile ? ProjectileCatalog.GetProjectileIndex(projectile) : -1;
+                    mageBombMuzzle = RecordMageEffect(release.muzzleflashEffectPrefab, out report.muzzle);
+                    mageBombImpact = RecordMageEffect(explosion ? explosion.impactEffect : null, out report.impact);
+                    mageBombExplosion = RecordMageEffect(explosion ? explosion.explosionEffect : null, out report.explosion);
+                    mageBombBlastImpact = RecordMageEffect(explosion ? explosion.blastImpactEffect : null, out report.blastImpact);
+                    Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null,
+                                    "lab-mage-bomb-release frame={0} worldSeconds={1:F3} realSeconds={2:F3}", Time.frameCount, elapsed,
+                                    realSeconds);
+                }
+                if (realSeconds - report.releaseRealSeconds >= 1.25f || report.frames.Count == 120)
+                {
+                    report.completed = true;
+                    coordinator.Save();
+                    return;
+                }
+                if (report.frames.Count != 0 && report.frames[report.frames.Count - 1].frame == Time.frameCount)
+                    return;
+                var sample = new MageBombReleaseFrame { frame = Time.frameCount, worldSeconds = elapsed, realSeconds = realSeconds,
+                                                        secondaryState = state?.GetType().FullName };
+                foreach (var projectile in InstanceTracker.GetInstancesList<ProjectileController>())
+                {
+                    if (!projectile || projectile.owner != player.gameObject || report.projectileIndex < 0 ||
+                        projectile.catalogIndex != report.projectileIndex)
+                        continue;
+                    sample.roots.Add(ObserveMageBombRoot(projectile.gameObject, "projectile"));
+                    if (projectile.ghost)
+                        sample.roots.Add(ObserveMageBombRoot(projectile.ghost.gameObject, "ghost"));
+                }
+                foreach (var effect in UnityEngine.Object.FindObjectsOfType<EffectComponent>())
+                {
+                    var index = effect.effectIndex;
+                    if (index == EffectIndex.Invalid)
+                        continue;
+                    if (index == mageBombMuzzle)
+                        sample.roots.Add(ObserveMageBombRoot(effect.gameObject, "muzzle"));
+                    else if (index == mageBombImpact || index == mageBombExplosion || index == mageBombBlastImpact)
+                        sample.roots.Add(ObserveMageBombRoot(effect.gameObject, "impact"));
+                }
+                report.frames.Add(sample);
+            }
+            catch (Exception error)
+            {
+                report.error = error.GetBaseException().Message;
+                report.completed = true;
+            }
+        }
+
+        static EffectIndex RecordMageEffect(GameObject prefab, out string name)
+        {
+            name = prefab ? prefab.name : null;
+            return prefab ? EffectCatalog.FindEffectIndexFromPrefab(prefab) : EffectIndex.Invalid;
+        }
+
+        MageBombReleaseRoot ObserveMageBombRoot(GameObject root, string role)
+        {
+            var surfaceObserver = coordinator.GetTeleporterWorldSession();
+            return new MageBombReleaseRoot { instanceId = root.GetInstanceID(), role = role, name = root.name,
+                                             renderers = root.GetComponentsInChildren<Renderer>()
+                                                             .Where(renderer => renderer.enabled)
+                                                             .Select(renderer => surfaceObserver.ObserveOwnedSurface(renderer, false))
+                                                             .ToArray() };
+        }
+
         public void ObserveIntegratedWorld(CharacterBody player, float elapsed)
         {
             var cameraCreation = originalAudioCameraContextCreationSchedule.Begin(
@@ -2220,6 +2342,8 @@ public sealed partial class PortSession
                     coordinator.activeBodyClient.GetType().GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance));
             worldClientUpdate();
             coordinator.r.performance.clientUpdateMs += PortSession.PerformanceMs(performancePart);
+            if (coordinator.r.diagnosticMageBombRelease)
+                ObserveMageBombRelease(player, elapsed);
             performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             coordinator.Check(coordinator.activeBodyClient.isConnected && player.networkIdentity.hasAuthority &&
                                   player.networkIdentity.clientAuthorityOwner == coordinator.activeBodyOwner &&

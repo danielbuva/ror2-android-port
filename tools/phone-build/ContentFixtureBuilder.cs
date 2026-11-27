@@ -72,6 +72,7 @@ public static partial class ContentFixtureBuilder
         switch (name)
         {
             case "LightingSettings": return typeof(LightingSettings);
+            case "OcclusionCullingData": return typeof(UnityEngine.Object);
             case "Mesh": return typeof(Mesh);
             case "Avatar": return typeof(Avatar);
             case "AnimationClip": return typeof(AnimationClip);
@@ -165,11 +166,14 @@ public static partial class ContentFixtureBuilder
                 var type = NativeContentType(asset.type);
                 var value = String.IsNullOrEmpty(asset.subasset) ? bundle.LoadAsset(asset.name, type)
                     : Array.Find(bundle.LoadAssetWithSubAssets(asset.name, type), item => item.name == asset.subasset);
-                if (value == null || value.GetType() != type)
-                    throw new Exception("Native-content typed load failed: " + asset.name + " as " + type.FullName);
+                bool nativeOcclusion = asset.type == "OcclusionCullingData";
+                string loadedType = value == null ? null : nativeOcclusion
+                    ? ObjectNames.GetClassName(value) : value.GetType().FullName;
+                if (loadedType != (nativeOcclusion ? asset.type : type.FullName))
+                    throw new Exception("Native-content typed load failed: " + asset.name + " as " + asset.type);
                 loaded.Add(value);
                 receipt.assets.Add(new NativeContentAsset {
-                    name = asset.name, type = asset.type, subasset = asset.subasset, loaded_name = value.name, loaded_type = value.GetType().FullName,
+                    name = asset.name, type = asset.type, subasset = asset.subasset, loaded_name = value.name, loaded_type = loadedType,
                     material = asset.material != null && value is Material material ? ObserveMaterial(material) : null,
                     manifest = asset.manifest != null && value is AssetBundleManifest manifest ? ObserveManifest(manifest) : null
                 });
