@@ -6,7 +6,7 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
-## J1523 — Restore converted Goolake's native Mesh references
+## J1524 — Restore converted Goolake's native Mesh references
 
 2026-11-27. Pack five source Mesh records into Goolake's dependency donor and
 bind the pack to the consuming scene in the signed release graph.
