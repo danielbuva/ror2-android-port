@@ -10,7 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1571](PORTING_JOURNAL.md#j1571--batch-sdk-etc2-colour-encoding-per-mip-on-android) | 2026-11-27 | Batch SDK ETC2 colour encoding per mip on Android | 2026-11-27. |
+| [J1575](PORTING_JOURNAL.md#j1575--batch-sdk-etc2-colour-encoding-per-mip-on-android) | 2026-11-27 | Batch SDK ETC2 colour encoding per mip on Android | 2026-11-27. |
 | [J1574](PORTING_JOURNAL.md#j1574--draw-cloud-remap-and-reproduce-its-signed-vulkan-pack) | 2026-11-27 | Draw Cloud Remap and reproduce its signed Vulkan pack | 2026-11-27. |
 | [J1567](PORTING_JOURNAL.md#j1567--run-detached-device-jobs-through-the-shared-fifo) | 2026-11-27 | Run detached device jobs through the shared FIFO | 2026-11-27. |
 | [J1568](PORTING_JOURNAL.md#j1568--verify-signed-native-bc3-texture-production-on-android) | 2026-11-27 | Verify signed native BC3 texture production on Android | 2026-11-27. |
