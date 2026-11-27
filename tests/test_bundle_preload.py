@@ -166,7 +166,35 @@ class BundlePreloadTests(unittest.TestCase):
                     source, root / destination, name, member, [], codec=None, codec_sha256=None, packs=[pack], mesh_consumers=consumers
                 )
 
-            result = expose("extended", [(consumer, consumer_member)])
+            def pin(path):
+                return dict(path=str(path), bytes=path.stat().st_size, sha256=W.B.sha(path))
+
+            types = root / "types.json"
+            types.write_text(json.dumps(pack["types"]))
+            pack_pins = {"objects.bin": pin(objects), "index.jsonl": pin(index), "types.json": pin(types)}
+            receipt = root / "pack-receipt.json"
+            receipt.write_text(json.dumps(dict(success=True, outputs=pack_pins)))
+            request = root / "release.json"
+            request.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-bundle-preload-release-v1",
+                        profiles=[],
+                        request=dict(policy=dict(bundle=name, member=member), codec=None),
+                        mesh_append=dict(packs=[dict(pack_pins, receipt=pin(receipt))], mesh_consumers=[dict(bundle=pin(consumer), member=consumer_member)]),
+                    )
+                )
+            )
+            output = root / "release"
+            prepared = dict(request=dict(path="synthetic"))
+            with (
+                patch.object(P, "prepare_request", return_value=prepared),
+                patch.object(P, "produce_request", return_value=P.catalog_artifacts(inputs["required"], dict(bundle=source), root)),
+            ):
+                release = P.produce_release_request(request, output)
+            result = release["mesh_append"]
+            self.assertEqual(Path(result["bundle"]).parent, (output / "mesh-complete").resolve())
+            self.assertEqual(release["catalog_bundle"], pin(Path(result["bundle"])))
             self.assertEqual((result["added_objects"], result["external_mesh_endpoints"]), (1, [-22]))
             with W.B.Bundle(Path(result["bundle"])).member(member) as stream:
                 final = W.read_serialized(stream)

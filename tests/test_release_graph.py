@@ -325,6 +325,40 @@ class ReleaseGraphTests(unittest.TestCase):
                 self.assertEqual(graph.jobs[dependency]["artifacts"][artifact], output)
                 self.assertEqual(graph.jobs[dependency]["outputs"][output], output)
 
+            mesh_profile = ROOT / "recipe/owner-goolake-scene-mesh-endpoints.json"
+            (recipes / mesh_profile.name).write_bytes(mesh_profile.read_bytes())
+            mesh_job = "recipe/jobs/" + mesh_profile.stem + ".json"
+            pack = {
+                filename: G.Graph.artifact_pin(mesh_job, artifact)
+                for filename, artifact in {
+                    "receipt": "receipt",
+                    "objects.bin": "objects",
+                    "resources.bin": "resources",
+                    "index.jsonl": "index",
+                    "types.json": "types",
+                }.items()
+            }
+            wrapper = json.loads(follower.read_bytes())
+            wrapper["profiles"].append("recipe/" + mesh_profile.name)
+            wrapper["mesh_append"] = dict(
+                packs=[pack],
+                mesh_consumers=[dict(bundle=staged[0]["file"], member="BuildPlayer-authored")],
+            )
+            follower.write_text(json.dumps(wrapper))
+            graph = G.Graph(repo, {})
+            final = graph.build(G.digest(follower))
+            job = graph.jobs[final]
+            self.assertEqual(job["outputs"], {"payload/follower": "mesh-complete/follower.bundle"})
+            self.assertEqual(job["artifacts"]["catalog_bundle"], job["outputs"]["payload/follower"])
+            self.assertIn(mesh_job, job["needs"])
+            self.assertEqual(graph.jobs[mesh_job]["outputs"], {})
+            manifest = graph.jobs[graph.bundle_manifest([final, "recipe/jobs/owner-donor.json"])]
+            self.assertIn(dict(name="follower", **graph.artifact_pin(final, "catalog_bundle")), manifest["request"]["bundles"])
+            wrapper["mesh_append"]["packs"][0]["objects.bin"] = dict(pack["objects.bin"], path="${input:retained_meshes}")
+            follower.write_text(json.dumps(wrapper))
+            with self.assertRaisesRegex(ValueError, "generated producer per pack"):
+                G.Graph(repo, {}).build(G.digest(follower))
+
     def test_catalog_fanin_binds_actual_outputs_and_embedded_bootstrap(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)

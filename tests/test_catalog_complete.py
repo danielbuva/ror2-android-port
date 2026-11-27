@@ -505,7 +505,7 @@ class CatalogCompletionTests(unittest.TestCase):
         policy = dict(
             schema="owner-catalog-projection-v1",
             source_catalog_sha256="catalog-hash",
-            remaps={},
+            remaps={"3": "Assets/Typed/Remap.asset"},
             exclusions=[],
             provider_roots=[1],
             runtime_roots=[],
@@ -513,11 +513,15 @@ class CatalogCompletionTests(unittest.TestCase):
             mesh_subobjects=[],
             append_locations=[3, 4, 5],
         )
-        builds = [dict(assetNames=[row["internalId"] for row in locations])]
+        builds = [dict(assetNames=["assets/1.asset", "assets/wholegame/2.asset", "assets/typed/remap.asset", "assets/4.asset", "assets/5.asset"])]
         with patch.object(sys, "path", [str(ROOT / "scripts/lab"), *sys.path]):
             result = C.project_source_catalog(source, policy, builds, input_id="source", attempt="startup")
             self.assertEqual(result["keys"], [dict(key="aliases", locations=[1, 2, 4, 3]), source["keys"][1]])
             self.assertEqual(result["roots"], [1, 5])
+            self.assertEqual(
+                [row["path"] for row in result["locations"][:3]],
+                ["Assets/1.asset", "Assets/WholeGame/2.asset", "Assets/Typed/Remap.asset"],
+            )
             for invalid in ([3, 3], [6]):
                 with self.assertRaisesRegex(ValueError, "catalog projection append selection differs"):
                     C.project_source_catalog(source, dict(policy, append_locations=invalid), builds, input_id="source", attempt="startup")
