@@ -3,14 +3,22 @@
 import argparse
 from collections import defaultdict
 from hashlib import sha256
+import importlib.util
 import io
 import json
 from pathlib import Path
 import struct
 
-import bundle_preload as preload
-import texture_produce as texture
 
+def module(name):
+    spec = importlib.util.spec_from_file_location("_texture_profile_" + name, Path(__file__).with_name(name + ".py"))
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+preload = module("bundle_preload")
+texture = module("texture_produce")
 
 NATIVE_2D_PIXEL_BYTES = {1: 1, 3: 3, 4: 4, 5: 4}
 

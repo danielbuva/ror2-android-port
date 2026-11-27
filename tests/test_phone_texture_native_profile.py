@@ -67,7 +67,8 @@ class TextureNativeProfileTests(unittest.TestCase):
             witnesses.write_text(json.dumps([dict(source=[source.name, "CAB-test", 6], class_id=28, sha256=sha256(source.read_bytes()).hexdigest())]))
             profile_path = root / "profile.json"
             subprocess.run(
-                [sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--schema-witnesses", str(witnesses), "--output", str(profile_path)], check=True
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--schema-witnesses", str(witnesses), "--output", str(profile_path)],
+                check=True,
             )
             profile = json.loads(profile_path.read_bytes())
             self.assertEqual([item["resources"] for item in profile["bundles"]], [{}, {resource.name: sha256(resource.read_bytes()).hexdigest()}])
@@ -147,7 +148,9 @@ class TextureNativeProfileTests(unittest.TestCase):
                 )
             )
             output = root / "profile.json"
-            result = subprocess.run([sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--output", str(output)], capture_output=True, text=True)
+            result = subprocess.run(
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--output", str(output)], capture_output=True, text=True
+            )
             self.assertEqual(result.returncode, 0, result.stderr)
             profile = json.loads(output.read_text())
             members = profile["bundles"][0]["members"]
@@ -164,7 +167,7 @@ class TextureNativeProfileTests(unittest.TestCase):
             self.assertEqual((target["sha256"], target["pixel_sha256"]), (sha256(clean).hexdigest(), sha256(pixels).hexdigest()))
             output = root / "bc3.json"
             result = subprocess.run(
-                [sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--source-bc3", "--output", str(output)], capture_output=True, text=True
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--source-bc3", "--output", str(output)], capture_output=True, text=True
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             members = json.loads(output.read_text())["bundles"][0]["members"]
@@ -177,7 +180,7 @@ class TextureNativeProfileTests(unittest.TestCase):
             self.assertEqual((target["bytes"], target["pixel_bytes"], target["usage"], target["alpha_optional"]), (len(normal) - 16, 16, 4, True))
             output = root / "bc1.json"
             result = subprocess.run(
-                [sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--source-bc1", "--output", str(output)], capture_output=True, text=True
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--source-bc1", "--output", str(output)], capture_output=True, text=True
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             members = json.loads(output.read_text())["bundles"][0]["members"]
