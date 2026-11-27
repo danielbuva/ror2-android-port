@@ -14,7 +14,7 @@ one Utility tap produced one authority and one server callback. All 11 charge
 samples showed the recovered Glow at queue 3000 and recovered distortion.
 The same-process video shows the opaque charge card clear and visible green
 and purple release particles. Release-material and PC visual parity are open.
-APK SHA-256 `0b8d9a8990ee717bcfb8e433586ffcdb1a545724ea244db39ec4cccbe301b072` (source `3b281404`).
+APK SHA-256 `0b8d9a8990ee717bcfb8e433586ffcdb1a545724ea244db39ec4cccbe301b072` (source `ed6d7805`).
 Evidence `work/coordination/gameplay-fidelity-coverage-20261117/rex-disperse-charge-main-nova/`
 contains the native log, paired capture assessment and terminal receipt.
 SoC peaked at 81.6 °C with 0.317 s above 80 °C and 29 °C battery.
