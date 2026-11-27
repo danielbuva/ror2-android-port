@@ -1737,9 +1737,12 @@ source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
 pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
 separate output directory set up production; process exit tears down each
 producer while local receipts persist. The existing member-aware writer exposes
-`payload/golemplains-source-lab`. All 10,828 persisted objects, both serialized
-members and the compressed bundle are host raw-exact against J850. No runtime
-owner is added; phone production, installation and original scene behavior remain open.
+`payload/golemplains-source-lab`. The Plains, Blackbeach and Goolake object
+profiles preserve the source occlusion renderer slot order and null entries.
+Checked remaps resolve occupied slots to staged MeshRenderers. The Goolake
+record producer profile supplies its native visibility record for assembly into
+the whole-game dependency. The streamed scene fixture checks typed scene load
+and teardown with explicit dependency bundle pins.
 
 Skymeadow complete source-scene selections extend the existing object/Shader
 owners through `recipe/owner-skymeadow-source-objects.json` and the source-lab

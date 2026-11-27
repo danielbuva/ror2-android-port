@@ -19,6 +19,7 @@ from phone_content import (
     validate_ambient_capture,
     validate_linker_capture,
     validate_native_content,
+    validate_native_scene,
     validate_oracle,
 )
 
@@ -35,9 +36,38 @@ class PhoneContentTests(unittest.TestCase):
             args = [str(mono), str(compiler), "/nologo", "/target:library", "/define:UNITY_EDITOR", "/out:" + str(Path(root) / "fixture.dll")]
             args += ["/r:" + str(path) for path in sorted((sdk / "Managed/UnityEngine").glob("UnityEngine*.dll"))]
             args += ["/r:" + str(sdk / "Managed/UnityEditor.dll")]
-            args += [str(source / name) for name in ("ContentFixtureBuilder.cs", "ContentFixture.cs", "NativeScriptSchemaFixture.cs")]
+            args += [
+                str(source / name) for name in ("ContentFixtureBuilder.cs", "ContentFixtureSceneCheck.cs", "ContentFixture.cs", "NativeScriptSchemaFixture.cs")
+            ]
             result = subprocess.run(args, capture_output=True, text=True, timeout=45)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_native_scene_requires_loaded_roots_occlusion_data_and_unload(self):
+        with tempfile.TemporaryDirectory() as root:
+            attempt = Path(root).resolve()
+            bundle = attempt / "authored.bundle"
+            bundle.write_bytes(b"authored scene request control")
+            request_path = attempt / "request.json"
+            scene = "Assets/Fixture.unity"
+            request = dict(path=str(bundle), sha256=hashlib.sha256(bundle.read_bytes()).hexdigest(), scene=scene)
+            request_path.write_text(json.dumps(request))
+            self.assertEqual(native_content_request(request_path), request)
+            report = dict(
+                unity="2021.3.45f2",
+                sourceCommit="c" * 40,
+                bundleSha256=request["sha256"],
+                scenePath=scene,
+                roots=2,
+                occlusionDataResolved=True,
+                unloaded=True,
+            )
+            validate_native_scene(report, request, "c" * 40)
+            for change in (dict(roots=0), dict(occlusionDataResolved=False), dict(scenePath="Assets/Other.unity"), dict(unloaded=False)):
+                with self.assertRaisesRegex(RuntimeError, "native scene contract"):
+                    validate_native_scene(report | change, request, "c" * 40)
+            request_path.write_text(json.dumps(request | {"assets": []}))
+            with self.assertRaisesRegex(RuntimeError, "Native scene"):
+                native_content_request(request_path)
 
     def test_native_content_requires_each_typed_load_and_bound_bundle_destruction(self):
         with tempfile.TemporaryDirectory() as root:

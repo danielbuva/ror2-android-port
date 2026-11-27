@@ -2366,7 +2366,15 @@ The request may pin dependency bundles in load order. The fixture opens them
 before loading root assets and unloads the full set in reverse order. An
 explicit Material expectation checks the loaded shader name and each saved
 non-null texture property and object name against the receipt.
-This is desktop loadability evidence; device appearance/playability remains open.
+For a streamed scene, the same request pins the bundle and dependencies and
+specifies the exact path in `scene`.
+`ContentFixtureSceneCheck.cs` enters Play Mode in the isolated project, loads
+the bundle additively, selects the scene and reads native occlusion settings.
+It records loaded roots, MeshRenderer counts, the resolved data reference
+and Umbra sizes around activation, then unloads the scene and its bundles.
+The editor exposes the data reference. Serialized scene checks cover the
+release renderer table. Android culling, appearance and gameplay require
+device evidence.
 
 `bundle_preload.emit_closed_native` optionally caches transformed records and
 ordered preload groups in a private SQLite file. Record keys bind source bodies,
@@ -7529,9 +7537,12 @@ source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
 pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
 separate output directory set up production; process exit tears down each
 producer while local receipts persist. The existing member-aware writer exposes
-`payload/golemplains-source-lab`. All 10,828 persisted objects, both serialized
-members and the compressed bundle are host raw-exact against J850. No runtime
-owner is added; phone production, installation and original scene behavior remain open.
+`payload/golemplains-source-lab`. Its source object profile and the Blackbeach
+profile keep the original occlusion renderer slot order and null entries, with
+occupied slots remapped to staged local MeshRenderers. The original scene GUID,
+portal table and native data reference are retained. The isolated streamed
+scene fixture checks typed load and teardown. Active Android culling still
+requires device evidence.
 
 Skymeadow source-lab particle selections extend the existing
 `payload_shader_records.py` owner through
@@ -7713,9 +7724,11 @@ Bezier owner evaluates original curves with captured build angles, then applies
 ten explicitly pinned build-rounding words across two curves; default arithmetic
 is unchanged. Explicit PC/SDK roots, pinned source packs and a fresh output
 directory set up production; process exit tears down producers while receipts
-persist. All 13,012 objects, both serialized members and the compressed bundle
-are host raw-exact to J850. This adds no runtime owner. Phone production,
-installation and original scene behavior remain open.
+persist. The source object profile restores the original occlusion renderer
+slots with checked local MeshRenderer remaps. `record_produce.py` and
+`recipe/owner-goolake-occlusion-record.json` select the original native
+visibility record at the scene's existing whole-game data alias. A typed scene
+load needs that record in the canonical supplier bundle.
 
 Voidraid complete scene selections extend the existing object/Shader owners
 through `recipe/owner-voidraid-whole-objects.json` and matching post-processing

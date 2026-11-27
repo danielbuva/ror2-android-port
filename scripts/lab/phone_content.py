@@ -37,6 +37,7 @@ SOURCES = {
     "NativeScriptSchemaFixture.cs": "Assets",
     "ContentFixtureBuilder.cs": "Assets/Editor",
     "ContentFixtureLinkerCapture.cs": "Assets/Editor",
+    "ContentFixtureSceneCheck.cs": "Assets/Editor",
 }
 
 
@@ -131,6 +132,11 @@ def native_content_request(path):
         if actual_hash != pin["sha256"]:
             raise RuntimeError("Native-content bundle SHA-256 mismatch")
         pin["path"] = str(resolved)
+    if "scene" in request:
+        scene = request["scene"]
+        if "assets" in request or not isinstance(scene, str) or not scene.endswith(".unity"):
+            raise RuntimeError("Native scene requires an exact scene path")
+        return request
     assets = request["assets"]
     if not isinstance(assets, list) or not assets:
         raise RuntimeError("Native-content request needs typed assets")
@@ -148,6 +154,20 @@ def native_content_request(path):
         if "manifest" in asset and (asset["type"] != "AssetBundleManifest" or not manifest_entries(asset["manifest"])):
             raise RuntimeError("Native-content AssetBundleManifest needs expected bundle hashes and dependencies")
     return request
+
+
+def validate_native_scene(report, request, commit):
+    if (
+        report.get("unity") != VERSION
+        or report.get("sourceCommit") != commit
+        or report.get("bundleSha256") != request["sha256"]
+        or report.get("scenePath") != request["scene"]
+        or not report.get("occlusionDataResolved")
+        or not report.get("unloaded")
+        or report.get("failure")
+        or report.get("roots", 0) <= 0
+    ):
+        raise RuntimeError("Exact-editor native scene contract failed")
 
 
 def material_references(value):
@@ -312,6 +332,7 @@ def run_editor(project, *, build=False, ambient=False):
     method = "AmbientSkyFixture.Begin" if ambient else "ContentFixtureBuilder.Build" if build else "ContentFixtureBuilder.Check"
     env = unity_editor_env()
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
+    scene_check = False
     if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
         if ambient:
             raise RuntimeError("Native-content typed loads require the content fixture")
@@ -319,6 +340,11 @@ def run_editor(project, *, build=False, ambient=False):
         request_path = attempt / "native-content-request.json"
         request_path.write_text(json.dumps(request, indent=2) + "\n")
         env["ROR2_PHONE_NATIVE_CONTENT_CHECK"] = str(request_path)
+        scene_check = "scene" in request
+        if scene_check:
+            if build:
+                raise RuntimeError("Native scene check requires Play Mode without a player build")
+            method = "ContentFixtureBuilder.BeginSceneCheck"
     if ambient:
         env["ROR2_AMBIENT_CAPTURE"] = str(attempt)
     env["ROR2_PHONE_BUILD_SOURCE"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -329,7 +355,7 @@ def run_editor(project, *, build=False, ambient=False):
     args = [
         env["UNITY_EDITOR"],
         "-batchmode",
-        *([] if ambient else ["-nographics", "-quit"]),
+        *([] if ambient or scene_check else ["-nographics", "-quit"]),
         "-projectPath",
         str(project),
         "-buildTarget",
@@ -349,9 +375,12 @@ def run_editor(project, *, build=False, ambient=False):
     native_content = None
     try:
         oracle = json.loads((attempt / "oracle.json").read_text())
-        (validate_ambient_oracle if ambient else validate_oracle)(oracle)
-        if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
-            native_content = validate_native_content(attempt, env["ROR2_PHONE_BUILD_SOURCE"])
+        if scene_check:
+            validate_native_scene(oracle, request, env["ROR2_PHONE_BUILD_SOURCE"])
+        else:
+            (validate_ambient_oracle if ambient else validate_oracle)(oracle)
+            if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
+                native_content = validate_native_content(attempt, env["ROR2_PHONE_BUILD_SOURCE"])
         if ambient and result.returncode == 0:
             ambient_capture = validate_ambient_capture(attempt)
         if build and result.returncode == 0:
