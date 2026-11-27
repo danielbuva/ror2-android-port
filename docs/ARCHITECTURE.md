@@ -5499,9 +5499,9 @@ for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, and
 REX's Disperse charge and Mortar's aim endpoint and projectile. Mortar's
 endpoint rim and expanding projectile sphere retain their distinct source
 blend modes.
-Artificer's configured Nano-Bomb projectile
-also enters this owner so the projectile controller's detached ghost takes the
-same material recovery path. It holds native addressable provider leases through
+Artificer's configured Nano-Bomb and Fire Bolt projectiles also enter this
+owner so their detached ghosts take the same material recovery path. The
+session holds native addressable provider leases through
 the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.

@@ -123,6 +123,11 @@ namespace EntityStates.Mage.Weapon
         public static GameObject configuredProjectile;
         public GameObject projectilePrefab = configuredProjectile;
     }
+    public class FireFireBolt
+    {
+        public static GameObject configuredProjectile;
+        public GameObject projectilePrefab = configuredProjectile;
+    }
 }
 namespace EntityStates.Treebot.Weapon
 {
@@ -362,6 +367,7 @@ static class Fixture
         };
         var mortarExpander = new Renderer { sharedMaterials = new[] { mortarCharge } };
         var bombGhost = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
+        var boltGhost = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
         var mercNormal = new Renderer { sharedMaterials = new[] { original } };
         var mercFinisher = new Renderer { sharedMaterials = new[] { original } };
         var normal = new Renderer { sharedMaterials = new[] { original } };
@@ -379,6 +385,10 @@ static class Fixture
         EntityStates.Mage.Weapon.ThrowNovabomb.configuredProjectile = new GameObject { components = new[] {
             new RoR2.Projectile.ProjectileController { ghostPrefab = new GameObject { components = new[] { bombGhost } } }
         } };
+        var fireBolt = new GameObject { components = new[] {
+            new RoR2.Projectile.ProjectileController { ghostPrefab = new GameObject { components = new[] { boltGhost } } }
+        } };
+        EntityStates.Mage.Weapon.FireFireBolt.configuredProjectile = fireBolt;
         WholeCatalogComposed.mercNormal = new GameObject { components = new[] { mercNormal } };
         WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { mercFinisher } };
         EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
@@ -422,6 +432,10 @@ static class Fixture
         Check(bombGhost.trailMaterial.shader.name == "Recovered/" + original.shader.name &&
               session.worldLootSourceTrails[bombGhost] == original,
               "Mage Nano-Bomb ghost trail should be prepared and its original retained");
+        Check(EntityStates.Mage.Weapon.FireFireBolt.configuredProjectile == fireBolt &&
+              boltGhost.trailMaterial.shader.name == "Recovered/" + original.shader.name &&
+              session.worldLootSourceTrails[boltGhost] == original,
+              "Mage Fire Bolt should keep its native projectile and recover the ghost trail");
         var recoveredRim = mortarSphere.sharedMaterials[0];
         Check(EntityStates.Treebot.Weapon.AimMortar2.configuredEndpoint == mortarEndpoint &&
               recoveredRim.shader.name == "Recovered/Intersection" && recoveredRim.srcBlend == 5 &&
@@ -437,7 +451,7 @@ static class Fixture
               "Mortar projectile must retain its native prefab and additive charge material properties");
         Check(!EntityStates.Merc.GroundLight.comboSwingEffectPrefab && !EntityStates.Merc.GroundLight.comboFinisherSwingEffectPrefab,
               "Merc presentation must leave native state configuration to the game");
-        foreach (var renderer in new Renderer[] { flame, charge, disperseGlow, bombGhost, mercNormal, mercFinisher })
+        foreach (var renderer in new Renderer[] { flame, charge, disperseGlow, bombGhost, boltGhost, mercNormal, mercFinisher })
         {
             var material = renderer.sharedMaterials[0];
             Check(material.shader.name == "Recovered/" + original.shader.name &&
@@ -464,7 +478,7 @@ static class Fixture
         queenOperation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 &&
               EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab == queenReference &&
-              session.worldLootSourceMaterials.Count == 14, "Queen preparation must retain native state configuration");
+              session.worldLootSourceMaterials.Count == 15, "Queen preparation must retain native state configuration");
         foreach (var renderer in new[] { queenGas, queenSpittle })
             Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
                   session.worldLootSourceMaterials[renderer][0] == original,
