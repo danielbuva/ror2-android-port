@@ -1883,6 +1883,12 @@ local signed fixture server, actual UI/session assertions and owned cleanup.
 The fixture checks that one changed output rebuilds, the unchanged producer is
 reused, the profile and settings survive, and the next check reports the installed
 release is current. Its toolhost and generated binaries/keys stay in the lab.
+Its host-only `--preflight-alpha-update` mode verifies both local alpha release
+graphs against the hash-pinned installer's packaged publisher trust. The
+`installed_alpha` verifier checks their assembly plans and signed runtime
+attempts, and the update owner reports the changed, removed and unchanged
+output dependencies in ascending publisher version order. Device cache reuse
+and native profile retention require the installed game.
 `scripts/lab-alpha-packaging.py` extends that owner with synthetic package issuance,
 installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending
@@ -3898,6 +3904,13 @@ binds the separate writer and observer, retains pending evidence by hash, and
 checks two cold world Starts for one reconciliation and unchanged settings.
 Native replay supersedes the pending generation. Cleanup stops the package and
 clears the attempt's request and witness files.
+
+The same runner owns `profile-save-failure`. It selects ordinary Start with
+an attempt-bound lab request, and `AndroidProfileBoundary` consumes the fault
+at the native result commit. `AndroidOfflineProfile` raises an injected write
+error before creating the pending file. The runner verifies the live writer,
+durable native XML and ledger, and retained profile and settings before stopping
+the process. It clears the selector and reuses the two cold reconciliation checks.
 
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
@@ -8544,6 +8557,10 @@ material values for missing properties. The original material rows are retained.
 prefabs through the owned content loader before the native state configuration
 populates the GroundLight fields. Native GroundLight selects and spawns each
 effect. The native effect owner restores the prefabs' material slots at teardown.
+The same session retains the projectile at Beetle Queen's configured FireSpit
+address. The native effect owner follows the explosion's enabled child projectile
+reference and prepares both detached ghosts before the director spawns enemies.
+Teardown restores the original material slots.
 `IntegratedWorldSession` sends the owned Engineer shield template through the
 same presentation owner before native deployment. The center and edge renderers
 inherit the prepared materials, and world teardown restores the template slots.

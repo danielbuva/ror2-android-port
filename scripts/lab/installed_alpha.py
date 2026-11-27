@@ -133,6 +133,47 @@ def release_attempt(bundle, release, public):
             return attempt
 
 
+def preflight_update(installer_apk, installer_sha256, installer_version, baseline, update):
+    """Qualify two local signed source graphs before selecting a phone."""
+    trust = installer_trust(installer_apk, installer_sha256)
+    owner = release_tools()
+    public = owner.public()
+
+    def read(directory, name, limit):
+        with (Path(directory) / name).open("rb") as stream:
+            return public.load_json(stream.read(limit + 1), max_bytes=limit)
+
+    versions = []
+    for directory in (baseline, update):
+        envelope = {
+            "release": read(directory, "release.json", owner.MAX_METADATA),
+            "signature": read(directory, "release.sig", 16384),
+        }
+        release = public.verify_envelope(envelope, trust["keys"])
+        owner.RELEASE.validate(release, installer_version, PACKAGE, versions[-1]["version_code"] if versions else 0)
+        versions.append(release)
+
+    sources = []
+    for directory, release in zip((baseline, update), versions):
+        bundle = Path(directory) / "public-tools.zip"
+        public.validate_publication(bundle, release)
+        sources.append(
+            {
+                "publisher_version_code": release["version_code"],
+                "source_sha256": owner.ALPHA.fingerprint(release),
+                "bundle_sha256": release["bundle_sha256"],
+                "attempt": release_attempt(bundle, release, public),
+            }
+        )
+    changes = owner.release_changes(versions[0]["entries"], versions[1]["entries"])
+    return {
+        "baseline": sources[0],
+        "update": sources[1],
+        **changes,
+        "unchanged_entries": sorted(versions[1]["entries"].keys() - set(changes["changed_entries"])),
+    }
+
+
 def verify_installed(device, installer_package, installer_sha256, trust, expected_source_sha256, public_tools):
     """Read only the verified installer receipt and small PackageManager results."""
     validate_selection(device.package, installer_package, installer_sha256, expected_source_sha256)

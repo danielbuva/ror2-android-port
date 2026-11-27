@@ -308,6 +308,14 @@ def changed_entries(release, cache, input_sha256):
     return changed
 
 
+def release_changes(previous_entries, release_entries):
+    """Compare signed output dependencies independently of the local build cache."""
+    return {
+        "changed_entries": sorted(name for name, hashes in release_entries.items() if previous_entries.get(name) != hashes),
+        "removed_entries": sorted(set(previous_entries) - set(release_entries)),
+    }
+
+
 def installed_changes(release, request, inputs):
     path = Path(inputs) / "installed-release.json"
     installed = public().load_json(path.read_bytes()) if path.exists() else {}
@@ -320,10 +328,8 @@ def installed_changes(release, request, inputs):
     ):
         previous = {}
         known = False
-    entries = previous.get("entries", {})
     return {
-        "changed_entries": sorted(name for name, hashes in release["entries"].items() if entries.get(name) != hashes),
-        "removed_entries": sorted(set(entries) - set(release["entries"])),
+        **release_changes(previous.get("entries", {}), release["entries"]),
         "installed_manifest_known": known,
     }
 

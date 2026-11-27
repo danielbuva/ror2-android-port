@@ -24,7 +24,8 @@ class InstalledAlphaTests(unittest.TestCase):
         self.release = release_body()
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        self.bundle = Path(temporary.name) / "public-tools.zip"
+        self.root = Path(temporary.name)
+        self.bundle = self.root / "public-tools.zip"
         self.write_bundle()
         self.source_sha = self.owner.ALPHA.fingerprint(self.release)
         self.trust = {"application_id": installed_alpha.PACKAGE, "repository": "example/project", "keys": {"example": "fixture"}}
@@ -55,14 +56,14 @@ class InstalledAlphaTests(unittest.TestCase):
 
         self.device.sh.side_effect = shell
 
-    def write_bundle(self, *, bind_config=True):
+    def write_bundle(self, *, bind_config=True, attempt="signed-attempt", extra_entry=""):
         public = self.owner.public()
         config = "recipe/runtime-config.json"
         profile = "recipe/owner-player-data.json"
         member = "authored-text"
         name = "apk/assets/bin/Data/" + member
         script = "tools/phone-build/accepted-output/player_data.py"
-        runtime = b'{"attempt":"signed-attempt"}'
+        runtime = json.dumps({"attempt": attempt}).encode()
         player = {
             "text_assets": {
                 "files": [
@@ -86,7 +87,13 @@ class InstalledAlphaTests(unittest.TestCase):
                 name: {"recipe_files": [profile, config] if bind_config else [profile], "producer_files": [script], "job": None},
             },
         }
-        self.release["entries"] = {name: public.entry_dependencies(index, name)}
+        if extra_entry:
+            stable_recipe = "recipe/stable.json"
+            files[stable_recipe] = b"{}"
+            index["files"][stable_recipe] = hashlib.sha256(files[stable_recipe]).hexdigest()
+            stable = {"recipe_files": [stable_recipe], "producer_files": [script], "job": None}
+            index["entries"].update({"apk/stable.txt": stable, extra_entry: stable})
+        self.release["entries"] = {name: public.entry_dependencies(index, name) for name in index["entries"]}
         with zipfile.ZipFile(self.bundle, "w") as archive:
             for key, value in files.items():
                 archive.writestr(key, value)
@@ -141,3 +148,55 @@ class InstalledAlphaTests(unittest.TestCase):
         self.bundle.write_bytes(b"different public tools")
         with self.assertRaisesRegex(ValueError, "differs from the installed signed release"):
             self.verify()
+
+    def stage_update_pair(self):
+        apk = self.root / "installer.apk"
+        with zipfile.ZipFile(apk, "w") as archive:
+            archive.writestr("assets/release-trust.json", json.dumps(self.trust))
+        stages = []
+        for tag, version, attempt, entry in (("later-label", 2, "baseline", "apk/remove.txt"), ("earlier-label", 10, "update", "apk/new.txt")):
+            stage = self.root / f"owner-v{version}"
+            stage.mkdir()
+            self.bundle = stage / "public-tools.zip"
+            self.release = dict(release_body(), version=tag, version_code=version)
+            self.write_bundle(attempt=attempt, extra_entry=entry)
+            (stage / "release.json").write_text(json.dumps(self.release))
+            (stage / "release.sig").write_text(json.dumps(self.receipt["envelope"]["signature"]))
+            stages.append(stage)
+        return apk, hashlib.sha256(apk.read_bytes()).hexdigest(), 4, *stages
+
+    def test_local_update_preflight_uses_numeric_versions_and_signed_output_dependencies(self):
+        args = self.stage_update_pair()
+        public = self.owner.public()
+        with (
+            patch.object(installed_alpha, "release_tools", return_value=self.owner),
+            patch.object(public, "verify_signature") as signature,
+            patch.object(public, "validate_publication") as validate,
+        ):
+            plan = installed_alpha.preflight_update(*args)
+        self.assertEqual(signature.call_count, 2)
+        self.assertEqual([call.args[0] for call in validate.call_args_list], [stage / "public-tools.zip" for stage in args[-2:]])
+        self.assertEqual(plan["baseline"]["publisher_version_code"], 2)
+        self.assertEqual(plan["update"]["publisher_version_code"], 10)
+        self.assertEqual(plan["baseline"]["attempt"], "baseline")
+        self.assertEqual(plan["update"]["attempt"], "update")
+        self.assertEqual(plan["update"]["source_sha256"], self.owner.ALPHA.fingerprint(self.release))
+        self.assertEqual(plan["changed_entries"], ["apk/assets/bin/Data/authored-text", "apk/new.txt"])
+        self.assertEqual(plan["removed_entries"], ["apk/remove.txt"])
+        self.assertEqual(plan["unchanged_entries"], ["apk/stable.txt"])
+
+    def test_local_update_preflight_rejects_wrong_order_and_untrusted_publisher(self):
+        apk, digest, version, baseline, update = self.stage_update_pair()
+        public = self.owner.public()
+        with (
+            patch.object(installed_alpha, "release_tools", return_value=self.owner),
+            patch.object(public, "verify_signature"),
+            patch.object(public, "validate_publication") as validate,
+        ):
+            for first, second in ((update, baseline), (baseline, baseline)):
+                with self.subTest(first=first.name, second=second.name), self.assertRaisesRegex(ValueError, "versionCode must increase"):
+                    installed_alpha.preflight_update(apk, digest, version, first, second)
+            (update / "release.sig").write_text(json.dumps(dict(self.receipt["envelope"]["signature"], key_id="other")))
+            with self.assertRaisesRegex(ValueError, "trusted"):
+                installed_alpha.preflight_update(apk, digest, version, baseline, update)
+            validate.assert_not_called()

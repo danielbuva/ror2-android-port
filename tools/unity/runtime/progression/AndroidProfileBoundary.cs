@@ -689,8 +689,17 @@ public sealed partial class PortSession
             coordinator.r.profile.assistedExcluded = assisted;
             if (!assisted)
             {
+                var diagnostic = coordinator.r.debugOptions;
+                bool injectWriteFailure = diagnostic != null && diagnostic.profileSaveFailure;
+                if (injectWriteFailure)
+                {
+                    coordinator.Check(Application.identifier == "dev.ror2lab.arm64" &&
+                                      !string.IsNullOrWhiteSpace(diagnostic.purpose) && diagnostic.purpose.Length <= 160,
+                                      "Profile failure injection requires the lab package and a purpose");
+                    diagnostic.profileSaveFailure = false;
+                }
                 coordinator.r.profile.resultApplied = coordinator.resultsSaveSystem.local.ApplyResult(
-                    coordinator.resultsRunReport.runGuid, coordinator.resultsRunReport.GetPlayerInfo(0).statSheet);
+                    coordinator.resultsRunReport.runGuid, coordinator.resultsRunReport.GetPlayerInfo(0).statSheet, injectWriteFailure);
                 coordinator.resultsSaveSystem.userProfile = coordinator.resultsSaveSystem.local.profile;
             }
             ObserveAndroidProfile();
