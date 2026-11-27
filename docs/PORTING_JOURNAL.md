@@ -5117,7 +5117,7 @@ Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
 The runner removed the fixture, slept the OLED and released the lease.
 Linked native Materials and depth-fade rendering remain open.
 
-## J1567 — Run signed Cloud Intersection Remap translation on Android
+## J1566 — Run signed Cloud Intersection Remap translation on Android
 
 2026-11-27. The signed Android graphics producer emitted the original-derived
 Cloud Intersection Remap pack used in the J1565 Vulkan draw. Object SHA-256
@@ -5129,7 +5129,7 @@ The runner removed the disposable toolhost and released the lease.
 Evidence `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/signed-cloud-device-02/terminal.done.json`.
 Linked gameplay and depth-fade rendering remain open.
 
-## J1570 — Translate and draw original multipass terrain shaders on Vulkan
+## J1567 — Translate and draw original multipass terrain shaders on Vulkan
 
 2026-11-27. The signed DXBC translator retained 12 passes across PaintHeight,
 Cutout/VertexLit and TerrainLayerUtils. Unity 2021.3.45f2 typed-loaded all three.
