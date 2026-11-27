@@ -5232,7 +5232,7 @@ callback; successful refusal and post-transaction reporting failures retain it.
 Session disposal clears the set. The extracted production-method fixture in
 `tests/test_offline_achievement_event_retry.py` checks this host contract (J1039).
 
-Ordinary Huntress and Acrid runs attach `AndroidNativeSourceSkinLifecycle`
+Ordinary Huntress, Acrid and Artificer runs attach `AndroidNativeSourceSkinLifecycle`
 before the detached source model activates. Their original
 `ModelSkinController` applies the selected SkinDef and supplies the meshes,
 renderer records, controller and avatar. The adapter publishes translated
@@ -8208,13 +8208,14 @@ initializing the Animator. The boundary verifies locomotion parameters during
 `SpawnTeleporterState`, before native `BaseCharacterMain` snapshots them. It keeps
 direct-binding source renderers out of the loading view until the display has
 prepared their materials. The display retains the binding, enables native aim
-and reports the movement cache and Animator state. Native selected-skin loads
-retain their asynchronous controller and avatar owner. The existing display
-and detached-model disposal own teardown.
+and reports the movement cache and Animator state. Artificer attaches the native
+skin owner before detachment to load the selected mesh and materials. The
+display retains the pre-bound, running Animator and the native owner's material
+copies. The existing display and detached-model disposal own teardown.
 `./dev editor --target lab --action commando-animation-host` is a current exact-editor
 contract check reproducing unavailable parameters under an inactive model base
 and parameter discovery after native detachment, before the main state, including
-the imported Bandit and Captain controllers
+the imported Bandit, Captain and Artificer controllers
 (`SurvivorSkillInputHost.VerifyAnimatorBeforeMainState`); gameplay remains a
 device gate.
 `NovaInputBridge` neutralizes unavailable physical input without suspending idle

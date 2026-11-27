@@ -102,7 +102,7 @@ public static class SurvivorSkillInputHost
                     "Native locomotion snapshot unavailable after native model detachment before main state");
             return new { initializedBeforeMainState = true, nativeModelDetachment = true,
                          nativeParameterSnapshot = true, nativeGameplayTested = false,
-                         sourceControllers = new[] { "Bandit2", "Captain" }.Select(VerifySourceAnimatorBeforeMainState).ToArray() };
+                         sourceControllers = new[] { "Bandit2", "Captain", "Mage" }.Select(VerifySourceAnimatorBeforeMainState).ToArray() };
         }
         finally
         {
@@ -131,12 +131,24 @@ public static class SurvivorSkillInputHost
             var before = CharacterAnimParamAvailability.FromAnimator(animator);
             Require(!before.isMoving && !before.forwardSpeed && !before.rightSpeed,
                     "Inactive source fixture unexpectedly exposes locomotion parameters: " + survivor);
-            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, sourceSelected: true);
+            AndroidNativeSourceSkinLifecycle skinOwner = null;
+            if (survivor == "Mage")
+            {
+                var report = new AndroidNativeSourceSkinLifecycle.Report();
+                skinOwner = AndroidNativeSourceSkinLifecycle.PrepareInactive(model.gameObject, body.GetComponent<CharacterBody>(), report,
+                                                                           useCharacterModelCallbacks: false);
+                Require(report.attached, "Artificer native skin owner must attach while inactive");
+            }
+            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, sourceSelected: true, skinOwner: skinOwner);
             locator.Start();
             animator.Update(0);
             var after = CharacterAnimParamAvailability.FromAnimator(animator);
             Require(animator.isInitialized && after.isMoving && after.forwardSpeed && after.rightSpeed,
                     "Source locomotion parameters unavailable after native detachment: " + survivor);
+            if (skinOwner)
+                Require(skinOwner.isActiveAndEnabled && model.GetComponent<ModelSkinController>().isActiveAndEnabled &&
+                            !model.GetComponent<CharacterModel>().enabled,
+                        "Artificer native skin must stay enabled alongside the pre-bound Animator");
             return survivor;
         }
         finally
