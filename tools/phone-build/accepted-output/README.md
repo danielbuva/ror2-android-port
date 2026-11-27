@@ -2188,8 +2188,11 @@ identical native types and bodies with no external data or nonzero PPtrs.
 Preparation preserves supplier record identities through
 retained lineage while relocating only qualified PPtr fields. It refuses missing
 bodies, conflicting source destinations, stale type tables and mismatching or
-unused overrides. Preparation is host qualification support; signed dispatch and
-the phone conversion experience remain unqualified.
+unused overrides. Missing or ambiguous original PPtrs are accumulated across
+the reachable records in `unresolved-source-endpoints.json` before preparation
+fails. Each gap includes the typed field, source member and candidate destinations.
+Preparation is host qualification support. Signed dispatch and the phone
+conversion experience remain unqualified.
 
 Standalone Sprite recipes declare PPtr relocations by source offset.
 Preparation matches them to the assembled record's typed fields and checks

@@ -1070,6 +1070,13 @@ every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
 game builds; two mesh cases are excluded from that immutable cohort profile.
+`recipe/owner-whole-game-mesh-frontier.json` supplies two original inline
+Meshes that the canonical graph's Fungal and Solus Wing component references
+need. The profile preserves the original bodies, including the collision data.
+The existing preload preparer binds each supplier record through its original
+member and path ID. The exact-editor fixture loads both as Meshes at scoped
+test addresses. Their original FBX preload groups and signed release integration
+remain open.
 The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
 excluded MercSwordSwipe record through the same setup/teardown. The optional
 `unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
@@ -1457,6 +1464,11 @@ no codec or SDK is consumed. Existing input/profile/body/resource hash gates,
 checkpoint ownership and teardown apply. Native BC6H support is a device gate;
 this profile is not automatically selected by accepted-file admission. Complete
 scene relationships and functional file admission remain open.
+The same owner reads `recipe/owner-scene-baked-reflection-textures.json` to
+supply 75 original BC6H Cubemaps for staged scene probes. The texture pack
+retains each complete chain and exposes its typed body and stream for bundle
+assembly. The scene owner binds original probe pointers to the emitted
+records and qualifies in-game rendering.
 Complete original-lighting alternatives for Promo and Snowy Forest use
 `owner-<stage>-source-lighting-objects.json` and the corresponding texture,
 shader and (Promo only) Timeline recipes. The existing object owner emits
@@ -3457,6 +3469,19 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+
+The same runner's `installed-alpha` mode observes an existing
+`dev.ror2lab.alpha` installation. `installed_alpha.py` pins publisher trust to
+the authorized installer APK, verifies the installer-private completion receipt
+against the selected signed release, then binds the live alpha version, APK hash
+and storage placement. The signed member's recipe closure in `public-tools.zip`
+binds the runtime attempt. After bootstrap Play and Unity activity focus on
+display 0, the runner uses PID- and attempt-bound native reports for character
+select, first-stage readiness, End Run cleanup and return to character select.
+Cleanup stops the verified game, checks the installed hash and sleeps the
+display. The tour transfers JSON evidence and leaves package installation,
+payload and saves to the installer.
+
 For `owner-unplugged`, the same runner arms a one-shot request on adopted
 app storage and verifies that the launched PID can read the admitted thermal
 sensors before prompting the owner. `LabDiagnostics` reports foreground

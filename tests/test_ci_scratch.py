@@ -231,6 +231,7 @@ class ScratchTests(unittest.TestCase):
             self.assertEqual(cleanup.linux_mounts(), [Path("/synthetic/with space")])
 
     def test_scratch_identity_rechecked_after_inventory(self):
+        self.fake_hdiutil(attached=False)
         moved = self.root / "original"
 
         def replace(_path):
@@ -238,7 +239,10 @@ class ScratchTests(unittest.TestCase):
             self.path.mkdir()
             (self.path / "unrelated").write_text("keep")
 
-        with mock.patch.object(cleanup, "require_no_mounts", side_effect=replace):
+        with (
+            mock.patch.object(cleanup.sys, "platform", "darwin"),
+            mock.patch.object(cleanup, "require_no_mounts", side_effect=replace),
+        ):
             self.assertEqual(self.reclaim(), "changed")
         self.assertTrue((self.path / "unrelated").exists())
 

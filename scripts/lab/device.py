@@ -84,9 +84,10 @@ def validate_apk_identity(apk, expected_package=PACKAGE):
 class Device:
     _awake_devices = {}
     package = PACKAGE
+    supported_packages = {PACKAGE, "dev.ror2lab.converted"}
 
     def __init__(self, selector=None, work_root=None, *, package=PACKAGE):
-        if package not in {PACKAGE, "dev.ror2lab.converted"}:
+        if package not in self.supported_packages:
             raise ValueError("Only disposable lab packages are supported")
         self.package = package
         require_device_access()
