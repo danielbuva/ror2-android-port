@@ -134,8 +134,11 @@ public static class SurvivorSkillInputHost
             AndroidNativeSourceSkinLifecycle skinOwner = null;
             if (survivor == "Mage")
             {
+                // The player path invokes native Awake on the inactive body before binding its model.
+                var characterBody = body.GetComponent<CharacterBody>();
+                typeof(CharacterBody).GetMethod("Awake", Instance).Invoke(characterBody, null);
                 var report = new AndroidNativeSourceSkinLifecycle.Report();
-                skinOwner = AndroidNativeSourceSkinLifecycle.PrepareInactive(model.gameObject, body.GetComponent<CharacterBody>(), report,
+                skinOwner = AndroidNativeSourceSkinLifecycle.PrepareInactive(model.gameObject, characterBody, report,
                                                                            useCharacterModelCallbacks: false);
                 Require(report.attached, "Artificer native skin owner must attach while inactive");
             }
