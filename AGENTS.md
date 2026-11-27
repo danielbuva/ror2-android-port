@@ -23,7 +23,7 @@ The host disk is shared by every agent; unchecked build copies once filled
 866 GB. Each agent cleans up after itself:
 
 - When a build/run task finishes (pass or fail), and before ending a session,
-  run `python3 scripts/prune-generated.py --apply`. It discards only rebuildable
+  run `python3 scripts/prune-generated.py --apply --aggressive`. It discards only rebuildable
   binaries (superseded build-cache entries, staged symbols, APK/AAB/symbol/
   libil2cpp/payload copies, Unity `Library`/`Bee`/`il2cppOutput` trees in
   experiment and coordination roots), keeps receipts/logs/evidence, protects

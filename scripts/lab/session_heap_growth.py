@@ -23,12 +23,14 @@ import os
 from pathlib import Path
 import re
 import signal
+import shutil
 import sqlite3
 import subprocess
 import sys
 import tarfile
 import tempfile
 
+from evidence_files import compressed_path, open_evidence
 
 TYPE_NAME = re.compile(r"[A-Za-z_<][A-Za-z0-9_.+`\[\],<>*&-]{0,511}\Z")
 UNKNOWN_TYPE = "<unavailable-type>"
@@ -67,6 +69,40 @@ def file_sha256(path):
         for block in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def snapshot_identity(path):
+    size = 0
+    digest = hashlib.sha256()
+    with open_evidence(path) as source:
+        for block in iter(lambda: source.read(1 << 20), b""):
+            size += len(block)
+            digest.update(block)
+    return size, digest.hexdigest()
+
+
+@contextmanager
+def seekable_snapshot(path, directory, expected_hash):
+    if path.is_file():
+        yield path
+        return
+    # The pinned parser seeks. Materialize only the current compressed snapshot
+    # inside the export's existing temporary directory.
+    with tempfile.TemporaryDirectory(dir=directory) as scratch:
+        materialized = Path(scratch) / path.name
+        with open_evidence(path) as source, materialized.open("wb") as output:
+            shutil.copyfileobj(source, output, 1 << 20)
+        if file_sha256(materialized) != expected_hash:
+            raise AnalysisError("export_snapshot_or_database_mismatch")
+        yield materialized
+
+
+def bind_materialized_export(database_path, parser_input, snapshot):
+    import duckdb
+
+    with duckdb.connect(str(database_path), config={"enable_external_access": False}) as connection:
+        verify_export(connection, parser_input)
+        connection.execute("UPDATE snapshot_info SET snapshot_path = ?", [str(snapshot)])
 
 
 def private_path(value, root=None):
@@ -164,16 +200,20 @@ def export_pair(receipt_path, pair, menus, expected_apk_sha256, output, root=Non
             for menu, (snapshot, snapshot_hash) in zip(menus, pair):
                 database_path = out / ("menu-%d.duckdb" % menu)
                 roots_path = out / ("menu-%d.roots.log" % menu)
-                command(
-                    dotnet_command(
-                        root, ["run", "--project", "Cli", "-c", "Release", "--no-build", "--", "export", snapshot, database_path, "--validate", "minimal"]
-                    ),
-                    source,
-                    out / ("menu-%d.export.stdout" % menu),
-                    roots_path,
-                )
-                if not database_path.is_file() or not database_path.stat().st_size or file_sha256(snapshot) != snapshot_hash:
-                    raise AnalysisError("export_snapshot_or_database_mismatch")
+                with seekable_snapshot(snapshot, temporary, snapshot_hash) as parser_input:
+                    command(
+                        dotnet_command(
+                            root,
+                            ["run", "--project", "Cli", "-c", "Release", "--no-build", "--", "export", parser_input, database_path, "--validate", "minimal"],
+                        ),
+                        source,
+                        out / ("menu-%d.export.stdout" % menu),
+                        roots_path,
+                    )
+                    if not database_path.is_file() or not database_path.stat().st_size or file_sha256(parser_input) != snapshot_hash:
+                        raise AnalysisError("export_snapshot_or_database_mismatch")
+                    if parser_input != snapshot:
+                        bind_materialized_export(database_path, parser_input, snapshot)
                 with roots_path.open() as lines:
                     if not any(ROOT_LINE.fullmatch(line.rstrip("\r\n")) for line in lines):
                         raise AnalysisError("export_root_sidecar_missing")
@@ -283,8 +323,14 @@ def capture_pair(receipt_path, menus, expected_apk_sha256, root=None):
         item = snapshots[str(menu)]
         if not isinstance(item.get("file"), str) or not re.fullmatch(r"session-%d-[0-9a-f]{32}\.snap" % menu, item["file"]):
             raise AnalysisError("capture_snapshot_name_mismatch")
-        snapshot = (evidence / item["file"]).resolve()
-        if snapshot.parent != evidence or not snapshot.is_file() or snapshot.stat().st_size != item["bytes"] or file_sha256(snapshot) != item["sha256"]:
+        snapshot = evidence / item["file"]
+        if snapshot.is_symlink() or compressed_path(snapshot).is_symlink():
+            raise AnalysisError("capture_snapshot_hash_mismatch")
+        try:
+            identity = snapshot_identity(snapshot)
+        except OSError:
+            raise AnalysisError("capture_snapshot_hash_mismatch") from None
+        if identity != (item["bytes"], item["sha256"]):
             raise AnalysisError("capture_snapshot_hash_mismatch")
         pair.append((snapshot, item["sha256"]))
     return pair

@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/prune-generated.py"
 sys.path.insert(0, str(SCRIPT.parent / "lab"))
+sys.path.insert(0, str(SCRIPT.parent))
 spec = importlib.util.spec_from_file_location("prune_generated", SCRIPT)
 prune = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prune)
@@ -32,7 +33,7 @@ def age(path):
 class PruneGeneratedTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.work = self.root / "work"
         self.addCleanup(self.temporary.cleanup)
         prune.ROOT = self.root
@@ -56,6 +57,99 @@ class PruneGeneratedTests(unittest.TestCase):
         for name in prune.SCAN_ROOTS:
             planner.scan(name)
         return planner
+
+    def aggressive_plan(self):
+        hashes, paths = prune.protected_state(self.work, [])
+        planner = prune.Planner(self.work, hashes, paths, 24, aggressive=True)
+        for name in prune.SCAN_ROOTS:
+            planner.scan(name)
+        planner.rebuild_outputs()
+        planner.aggressive_files()
+        return planner
+
+    def test_aggressive_apks_require_48_hours_and_respect_protection(self):
+        from hashlib import sha256
+
+        installed = self.work / "device/phone"
+        installed.mkdir(parents=True)
+        pinned = {
+            "state.apk": b"state",
+            "baseline.apk": b"baseline",
+            "installed.apk": b"installed",
+        }
+        (self.root / "PORTING_STATE.md").write_text(sha256(pinned["state.apk"]).hexdigest())
+        (self.root / "docs").mkdir()
+        (self.root / "docs/BASELINE.md").write_text(sha256(pinned["baseline.apk"]).hexdigest())
+        (installed / "installed.json").write_text(json.dumps({"apk_sha256": sha256(pinned["installed.apk"]).hexdigest()}))
+        for name, data in dict(pinned, **{"old.apk": b"old", "recent.apk": b"recent"}).items():
+            (installed / name).write_bytes(data)
+        for name in ("kept", "immutable-history", "retired-storage"):
+            directory = installed / name
+            directory.mkdir()
+            (directory / "old.apk").write_bytes(b"old")
+        (installed / "kept/.prune-keep").touch()
+        (installed / "linked.apk").symlink_to(installed / "old.apk")
+        (installed / "result.log").write_text("retain evidence")
+        age(installed)
+        recent = time.time() - 36 * 3600
+        os.utime(installed / "recent.apk", (recent, recent))
+        planner = self.aggressive_plan()
+        self.assertEqual([i["path"].name for i in planner.items], ["old.apk"])
+        # Revalidate pins if another process recorded an install after planning.
+        (installed / "installed.json").write_text(json.dumps({"apk_sha256": sha256(b"old").hexdigest()}))
+        with patch.object(prune, "volume_available", side_effect=[1000, 2024]):
+            report = prune.apply(planner.items, self.work, self.work / "cleanup-analysis/ledger.json", aggressive=True)
+        self.assertEqual(report["volume_available_delta_bytes"], 1024)
+        self.assertTrue((installed / "old.apk").is_file())
+        self.assertEqual(planner.items[0]["skipped"], "APK became pinned after planning")
+
+    @unittest.skipUnless(shutil.which("zstd"), "Zstandard CLI required for lossless readback")
+    def test_aggressive_compression_round_trips_evidence_and_preserves_producer_inputs(self):
+        from lab.evidence_files import open_evidence
+
+        run = self.work / "coordination/run"
+        run.mkdir(parents=True)
+        raw = b'{"sample":1}\r\n' * 8192
+        for name in ("thermal.jsonl", "capture.snap", "index.jsonl", "resources.jsonl", "cloned.snap", "linked.jsonl"):
+            (run / name).write_bytes(raw)
+        os.link(run / "linked.jsonl", run / "exceptions.jsonl")
+        age(run)
+        with patch.object(prune, "apfs_sharing", side_effect=lambda path, _: path.name == "cloned.snap"):
+            planner = self.aggressive_plan()
+            self.assertEqual({i["path"].name for i in planner.items}, {"thermal.jsonl", "capture.snap"})
+            ledger = self.work / "cleanup-analysis/ledger.json"
+            prune.apply(planner.items, self.work, ledger, aggressive=True)
+        for name in ("thermal.jsonl", "capture.snap"):
+            path = run / name
+            self.assertFalse(path.exists())
+            for source in (path, prune.compressed_path(path)):
+                with open_evidence(source) as stream:
+                    self.assertEqual(stream.read(), raw)
+        self.assertEqual({i["action"] for i in json.loads(ledger.read_text())["items"]}, {"compressed"})
+        for name in ("index.jsonl", "resources.jsonl", "cloned.snap", "exceptions.jsonl"):
+            self.assertEqual((run / name).read_bytes(), raw)
+
+    def test_r9_retires_only_receipted_unpinned_build_copies(self):
+        run = self.work / "rebuild/input/renamed/.rebuild/unity/attempt"
+        payload = run / "generated-android-data"
+        payload.mkdir(parents=True)
+        cache = run / "gradle/caches"
+        cache.mkdir(parents=True)
+        (cache / "dependency.jar").write_bytes(b"cache")
+        (run / "gradle/daemon.log").write_bytes(b"keep")
+        for name, data in {"member": b"UnityFS\0bundle", "unknown": b"UnityFS\0unknown", "other": b"not-a-bundle", "member.manifest": b"keep"}.items():
+            (payload / name).write_bytes(data)
+        receipt = run / "result.json"
+        result = dict(success=True, apk_sha256="b" * 64, payload_directory=str(payload), payload={"member": "witness", "other": "witness"})
+        receipt.write_text(json.dumps(result))
+        age(run)
+        planner = self.aggressive_plan()
+        self.assertEqual({i["path"] for i in planner.items}, {cache, payload / "member"})
+        prune.apply(planner.items, self.work, self.work / "cleanup-analysis/ledger.json", aggressive=True)
+        self.assertFalse(cache.exists())
+        self.assertEqual({p.name for p in payload.iterdir() if not p.name.endswith(".retired.json")}, {"unknown", "other", "member.manifest"})
+        self.assertTrue(receipt.exists())
+        self.assertTrue((run / "gradle/daemon.log").exists())
 
     def test_protected_cache_entry_is_kept_and_superseded_one_is_retired_with_receipt(self):
         keep = self.cache_entry("k" * 64, PROTECTED)

@@ -1,6 +1,6 @@
 """Synthetic exported heap graphs only; never load snapshots or game material."""
 
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import closing, redirect_stderr, redirect_stdout
 import hashlib
 import io
 import json
@@ -105,7 +105,7 @@ def export_fixture(root, before, after, receipt):
     for menu, database, (_, snapshot_hash) in zip((2, 4), (before, after), pair):
         target = output / ("menu-%d.db" % menu)
         shutil.copyfile(database, target)
-        with sqlite3.connect(database) as connection:
+        with closing(sqlite3.connect(database)) as connection:
             row = connection.execute("SELECT managed_object_index FROM managed_objects LIMIT 1").fetchone()
         roots = output / ("menu-%d.roots.log" % menu)
         roots.write_text("LAB_STATIC_ROOT %d PRIVATE_GENERATED_LABEL\n" % (row[0] if row else 0))
@@ -389,6 +389,29 @@ class SessionHeapGrowthTests(unittest.TestCase):
             with self.assertRaises(heap.AnalysisError):
                 heap.capture_pair(receipt, [2, 4], "f" * 64, root)
             pair[1][0].write_bytes(b"changed synthetic bytes")
+            with self.assertRaisesRegex(heap.AnalysisError, "hash_mismatch"):
+                heap.capture_pair(receipt, [2, 4], "a" * 64, root)
+
+    @unittest.skipUnless(shutil.which("zstd"), "Zstandard CLI required for retained snapshots")
+    def test_compressed_snapshot_keeps_receipt_identity_and_materializes_in_export_scratch(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            before, after = root / "before.db", root / "after.db"
+            fixture(before).close()
+            fixture(after).close()
+            receipt = capture(root, before, after)
+            pair = heap.capture_pair(receipt, [2, 4], "a" * 64, root)
+            snapshot, digest = pair[0]
+            original = snapshot.read_bytes()
+            archive = heap.compressed_path(snapshot)
+            subprocess.run(["zstd", "-q", "--rm", "--", str(snapshot)], check=True)
+            self.assertFalse(snapshot.exists())
+            self.assertEqual(heap.capture_pair(receipt, [2, 4], "a" * 64, root), pair)
+            with heap.seekable_snapshot(snapshot, root, digest) as materialized:
+                self.assertEqual(materialized.read_bytes(), original)
+                self.assertEqual(materialized.parent.parent, root)
+            self.assertFalse(materialized.exists())
+            archive.write_bytes(subprocess.check_output(["zstd", "-qc"], input=b"changed"))
             with self.assertRaisesRegex(heap.AnalysisError, "hash_mismatch"):
                 heap.capture_pair(receipt, [2, 4], "a" * 64, root)
 

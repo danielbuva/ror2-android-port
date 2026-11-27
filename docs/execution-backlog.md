@@ -9,15 +9,13 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
 
 ## Phone-only installation (P1)
 
-- [ ] Close the three remaining whole-game record selectors: two Clips and one
-      AssetBundle. The former 345-record frontier is closed except for these
-      [three](PORTING_JOURNAL.md#j1347--reconstruct-whole-game-customrendertextures);
-      supplier coverage does not prove a complete bundle.
 - [ ] Assemble and qualify complete groups, bundles, scene/player/lab data and
       catalogs from public producers and legitimate current PC input, including
-      managed subtype/reference closure and source Menu/HUD presentation. Preserve
-      strict PPtr/file-ID, type-tree, script-binding and collider checks; qualify
-      a playable APK against the latest lab build. The
+      managed subtype/reference closure and source Menu/HUD presentation. Include
+      the [original animation clip suppliers](../recipe/README.md#whole-game-original-animation-clips)
+      and regenerate the AssetBundle container and preloads for the assembled
+      content. Preserve strict PPtr/file-ID, type-tree, script-binding and collider
+      checks and qualify a playable APK against the latest lab build. The
       [partial typed native bundle](PORTING_JOURNAL.md#j1388--emit-and-typed-load-a-closed-source-native-bundle-subset)
       and [camera suppliers](https://github.com/danielbuva/ror2-android-port/pull/428)
       do not qualify complete outputs. Historical byte equality is diagnostic under
