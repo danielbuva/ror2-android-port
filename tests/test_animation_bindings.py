@@ -83,6 +83,22 @@ AnimatorController:
         plain = reference_curves(tree, "    path: " + path + "\n    classID: 4\n")
         self.assertEqual(reference_curves(tree, "    path: Rig/Long Bone/Long Bone\n      Chip\n    classID: 4\n"), plain)
 
+    def test_reference_pose_keeps_named_animator_parameter_in_native_stream_order(self):
+        parameter = "Skill.active"
+        path = "Rig/Arm"
+        binding = dict(path=0, attribute=zlib.crc32(parameter.encode()), typeID=95, customType=0)
+        tree = dict(
+            m_MuscleClip=dict(m_ValueArrayReferencePose=[0.5, 1, 2, 3]),
+            m_ClipBindingConstant=dict(genericBindings=[binding, dict(path=zlib.crc32(path.encode()), attribute=1, typeID=4)]),
+        )
+        exported = "    path: Rig/Arm\n  m_FloatCurves:\n  - curve:\n    attribute: Skill.active\n    path:\n    classID: 95\n  m_PPtrCurves: []\n"
+        curves = reference_curves(tree, exported)
+        self.assertEqual(curves[0], dict(path="", property=parameter, value=0.5, animator=True))
+        self.assertEqual([curve["value"] for curve in curves[1:]], [1, 2, 3])
+        self.assertIsNone(reference_curves(tree, exported.replace(parameter, "Other.active")))
+        binding["customType"] = 1
+        self.assertIsNone(reference_curves(tree, exported))
+
     def test_repairs_only_original_animator_parameter_hashes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "Assets/WholeGame"

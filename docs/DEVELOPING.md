@@ -38,6 +38,10 @@ and waits for a ready world before the clock begins. The lab and converted packa
 use their respective gameplay reports. For a lab stage-transition memory
 soak, pair it with an explicit auto-route selector. Physical input
 qualification remains separate.
+`capture_video: true` records up to 180 seconds after the owned world is
+ready. For a direct lab survivor launch, use an explicit spine report ID in
+`selection` and `developerSurvivorOverride: true` without `start_from_menu`.
+Schedule any touches after the recording starts with `input_schedule`.
 For one bounded native stage exit, include
 `"stage_transition": {"from": "golemplains", "to": "goolake"}` with
 `start_from_menu` and the `body-state-spawn-state-auto-nova-spine-bringup`

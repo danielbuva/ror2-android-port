@@ -47,7 +47,7 @@ def additive_clip_guids(controller, *, aim_only=False, override_layer=None):
 
 
 def reference_curves(tree, exported):
-    """Map the source reference-pose stream onto the exported Transform paths."""
+    """Map source reference values onto imported Transform and named Animator curves."""
     paths = defaultdict(set)
     # Unity folds long YAML scalars after saving imported clips. Continuation
     # indentation is six spaces, while the next curve/field starts at two/four.
@@ -57,11 +57,35 @@ def reference_curves(tree, exported):
             path = json.loads(path)
         paths[zlib.crc32(path.encode())].add(path)
     values = tree["m_MuscleClip"]["m_ValueArrayReferencePose"]
+    bindings = tree["m_ClipBindingConstant"]["genericBindings"]
+    parameters = defaultdict(set)
+    if any(binding["typeID"] != 4 for binding in bindings):
+        floats = re.search(r"^  m_FloatCurves:\n(.*?)(?=^  \w|\Z)", exported, re.M | re.S)
+        if floats:
+            for name in re.findall(r"^    attribute: (.+)\n    path: *\n    classID: 95$", floats[1], re.M):
+                parameters[zlib.crc32(name.encode())].add(name)
+        for binding in bindings:
+            if binding["typeID"] == 4:
+                continue
+            if (
+                binding["typeID"] != 95
+                or binding["path"] != 0
+                or binding.get("customType")
+                or binding.get("isPPtrCurve")
+                or len(parameters[binding["attribute"]]) != 1
+            ):
+                return None
     if not values:
         return []
     curves, offset = [], 0
-    for binding in tree["m_ClipBindingConstant"]["genericBindings"]:
+    for binding in bindings:
         attribute = binding["attribute"]
+        if binding["typeID"] == 95:
+            if offset >= len(values) or not math.isfinite(values[offset]):
+                raise RuntimeError("Invalid native additive reference-pose values")
+            curves.append(dict(path="", property=next(iter(parameters[attribute])), value=values[offset], animator=True))
+            offset += 1
+            continue
         candidates = paths[binding["path"]]
         if binding["typeID"] != 4 or binding.get("isPPtrCurve") or attribute not in (1, 2, 3, 4) or len(candidates) != 1:
             raise RuntimeError("Unsupported or ambiguous native additive reference binding: " + str(binding))
@@ -186,7 +210,7 @@ def stage_additive_reference_poses(io, *, code_only=False):
     bandit = None
     for controller in io.glob(root, "**/*.controller"):
         # These controllers have exact-editor coverage for their source gestures.
-        aim_only = controller.stem not in {"animCommando", "animHuntress", "animCaptain", "animBandit2"}
+        aim_only = controller.stem not in {"animCommando", "animHuntress", "animCaptain", "animBandit2", "animMage"}
         override_layer = "Gesture, Override" if controller.stem == "animBandit2" else None
         requested.update(additive_clip_guids(io.read_text(controller), aim_only=aim_only, override_layer=override_layer))
         if controller.stem == "animBandit2":
@@ -251,17 +275,14 @@ def stage_additive_reference_poses(io, *, code_only=False):
                     continue
                 clip, text = clips[key]
                 tree = asset.read_typetree()
-                # Humanoid reference streams include muscle channels. This repair
-                # only changes the generic Transform stream proven on Commando.
-                unsupported = any(binding["typeID"] != 4 for binding in tree["m_ClipBindingConstant"]["genericBindings"])
-                curves = [] if unsupported else reference_curves(tree, text)
+                curves = reference_curves(tree, text)
                 row = dict(
                     clip=str(clip.relative_to(io.project)),
                     source=matches[0]["path"],
                     source_sha256=matches[0]["sha256"],
                     identities=[dict(serialized_file=asset.assets_file.name, path_id=asset.path_id)],
-                    curves=curves,
-                    status="unsupported-muscle-bindings" if unsupported else "source-reference" if curves else "no-source-reference",
+                    curves=curves or [],
+                    status="unsupported-muscle-bindings" if curves is None else "source-reference" if curves else "no-source-reference",
                 )
                 if key in found:
                     if any(found[key][field] != row[field] for field in ("source_sha256", "curves", "status")):

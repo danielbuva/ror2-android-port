@@ -3489,9 +3489,11 @@ After stopping the app, the runner copies new or updated lab reports and frame
 traces to the host, verifies their hashes, then removes those device copies.
 Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots.
-Timed menu Start requests can set `capture_video` to retain a display-zero MP4
-from world admission for up to 180 seconds. The shared runner binds the file to
-the owned PID, verifies its hash and removes the device copy before going idle.
+Timed menu Start and direct lab survivor requests can set `capture_video` to
+retain a display-zero MP4 from world admission for up to 180 seconds. The
+runner waits for the same PID and APK attempt's live world before starting the
+recorder and dispatching any scheduled input. It verifies the recording hash
+and removes the device copy before going idle.
 Sustained mode delegates to the existing sustained-session owner, using
 `capture_interval_seconds` for observations (default five seconds). Observations
 follow elapsed-time boundaries and retain available CPU/GPU clocks and limits,
@@ -5257,7 +5259,7 @@ callback; successful refusal and post-transaction reporting failures retain it.
 Session disposal clears the set. The extracted production-method fixture in
 `tests/test_offline_achievement_event_retry.py` checks this host contract (J1039).
 
-Ordinary Huntress and Acrid runs attach `AndroidNativeSourceSkinLifecycle`
+Ordinary Huntress, Acrid and Artificer runs attach `AndroidNativeSourceSkinLifecycle`
 before the detached source model activates. Their original
 `ModelSkinController` applies the selected SkinDef and supplies the meshes,
 renderer records, controller and avatar. The adapter publishes translated
@@ -8238,13 +8240,14 @@ initializing the Animator. The boundary verifies locomotion parameters during
 `SpawnTeleporterState`, before native `BaseCharacterMain` snapshots them. It keeps
 direct-binding source renderers out of the loading view until the display has
 prepared their materials. The display retains the binding, enables native aim
-and reports the movement cache and Animator state. Native selected-skin loads
-retain their asynchronous controller and avatar owner. The existing display
-and detached-model disposal own teardown.
+and reports the movement cache and Animator state. Artificer attaches the native
+skin owner before detachment to load the selected mesh and materials. The
+display retains the pre-bound, running Animator and the native owner's material
+copies. The existing display and detached-model disposal own teardown.
 `./dev editor --target lab --action commando-animation-host` is a current exact-editor
 contract check reproducing unavailable parameters under an inactive model base
 and parameter discovery after native detachment, before the main state, including
-the imported Bandit and Captain controllers
+the imported Bandit, Captain and Artificer controllers
 (`SurvivorSkillInputHost.VerifyAnimatorBeforeMainState`); gameplay remains a
 device gate.
 `NovaInputBridge` neutralizes unavailable physical input without suspending idle
@@ -8254,11 +8257,12 @@ and full cancellation through `Neutral`.
 
 Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
 and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
-Commando, Huntress, Captain and Bandit2 additive states and blend trees, plus
-other native AimPitch/AimYaw layers. It resolves current catalog containers
-against accepted input hashes and emits private source identities and Transform
-reference values through StageIO. The latter creates owned
-constant reference clips before bundle production and applies the original
+Commando, Huntress, Captain, Bandit2 and Artificer additive states and blend
+trees, plus other native AimPitch/AimYaw layers. It resolves current catalog containers
+against accepted input hashes and emits private source identities and reference
+values through StageIO. These retain Transform channels and root Animator
+parameters matched by hash to a named curve in the imported clip. The latter
+creates owned constant reference clips before bundle production and applies the original
 additive reference settings. It also restores Bandit2's gesture synchronization
 and override-only motions from the source controller's layer and motion slots.
 The same stage imports Bandit2's SideWeapon clips from the accepted export.
@@ -8274,8 +8278,11 @@ curves and compares positions and directions on a frozen rig against the origina
 clips. It samples Commando's muzzles and Huntress's torso, head and bow during
 aim, firing and hit reactions, and Captain's torso, head, gun and radio during
 aim, firing and call-ins. It samples Bandit2's torso, head and weapon attachment
-poses during aim, firing, reload, smoke bomb and blade gestures. Huntress firing
-and recovery and Captain's selected gestures play both gesture layers. Their
+poses during aim, firing, reload, smoke bomb and blade gestures. It samples
+Artificer's torso, head, hands and muzzles during aim, alternating casts, bomb
+and Flamethrower phases, including the gauntlet and hand gestures playing
+together. Huntress firing and recovery and Captain's selected gestures play
+both gesture layers. Their
 comparison overrides controller clips with the originals, including Captain's
 shared Commando clips. The Bandit2 fixture drives the source gesture layer and
 compares both synchronized layers against the original controller.

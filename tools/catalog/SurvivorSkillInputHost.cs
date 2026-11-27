@@ -102,7 +102,7 @@ public static class SurvivorSkillInputHost
                     "Native locomotion snapshot unavailable after native model detachment before main state");
             return new { initializedBeforeMainState = true, nativeModelDetachment = true,
                          nativeParameterSnapshot = true, nativeGameplayTested = false,
-                         sourceControllers = new[] { "Bandit2", "Captain" }.Select(VerifySourceAnimatorBeforeMainState).ToArray() };
+                         sourceControllers = new[] { "Bandit2", "Captain", "Mage" }.Select(VerifySourceAnimatorBeforeMainState).ToArray() };
         }
         finally
         {
@@ -131,12 +131,27 @@ public static class SurvivorSkillInputHost
             var before = CharacterAnimParamAvailability.FromAnimator(animator);
             Require(!before.isMoving && !before.forwardSpeed && !before.rightSpeed,
                     "Inactive source fixture unexpectedly exposes locomotion parameters: " + survivor);
-            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, sourceSelected: true);
+            AndroidNativeSourceSkinLifecycle skinOwner = null;
+            if (survivor == "Mage")
+            {
+                // The player path invokes native Awake on the inactive body before binding its model.
+                var characterBody = body.GetComponent<CharacterBody>();
+                typeof(CharacterBody).GetMethod("Awake", Instance).Invoke(characterBody, null);
+                var report = new AndroidNativeSourceSkinLifecycle.Report();
+                skinOwner = AndroidNativeSourceSkinLifecycle.PrepareInactive(model.gameObject, characterBody, report,
+                                                                           useCharacterModelCallbacks: false);
+                Require(report.attached, "Artificer native skin owner must attach while inactive");
+            }
+            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, sourceSelected: true, skinOwner: skinOwner);
             locator.Start();
             animator.Update(0);
             var after = CharacterAnimParamAvailability.FromAnimator(animator);
             Require(animator.isInitialized && after.isMoving && after.forwardSpeed && after.rightSpeed,
                     "Source locomotion parameters unavailable after native detachment: " + survivor);
+            if (skinOwner)
+                Require(skinOwner.isActiveAndEnabled && model.GetComponent<ModelSkinController>().isActiveAndEnabled &&
+                            !model.GetComponent<CharacterModel>().enabled,
+                        "Artificer native skin must stay enabled alongside the pre-bound Animator");
             return survivor;
         }
         finally
@@ -161,6 +176,19 @@ public static class SurvivorSkillInputHost
         SampleSourcePoses("Captain", "mdlCaptainAvatar", new[] { "chest", "head", "MuzzleGun", "MuzzleHandRadio" },
                           new[] { ("", 0), ("ChargeCaptainShotgun", 2), ("FireCaptainShotgun", 2),
                                   ("FireTazer", 2), ("CallSupplyDrop", 2), ("CallAirstrike1", 2) }, new[] { "Commando" });
+
+    public static object SampleArtificerGestures() =>
+        SampleSourcePoses("Mage", "mdlMageAvatar", new[] { "chest", "head", "hand.l", "hand.r", "MuzzleLeft", "MuzzleRight" },
+                          new[] { ("", 0), ("Cast1Left", 1), ("Cast1Right", 1),
+                                  ("FireGauntletLeft", 1), ("FireGauntletRight", 1),
+                                  ("ChargeNovaBomb", 1), ("FireNovaBomb", 1), ("ExitNovaBomb", 1),
+                                  ("PrepFlamethrower", 1), ("PrepFlamethrowerToLoop", 1), ("ExitFlamethrower", 1) },
+                          new[] { "Huntress" },
+                          companionGestures: new Dictionary<string, string>
+                          {
+                              ["FireGauntletLeft"] = "HoldGauntletsUp",
+                              ["FireGauntletRight"] = "HoldGauntletsUp"
+                          });
 
     public static object SampleBanditGestures() =>
         SampleSourcePoses("Bandit2", "mdlBandit2Avatar",
@@ -220,7 +248,8 @@ public static class SurvivorSkillInputHost
 
     static object SampleSourcePoses(string survivor, string avatarName, string[] poseNames,
                                     (string Name, int Layers)[] gestures, string[] sharedClipSurvivors = null,
-                                    string synchronizedDriver = null, string weaponLayer = null)
+                                    string synchronizedDriver = null, string weaponLayer = null,
+                                    Dictionary<string, string> companionGestures = null)
     {
         string path = SurvivorAssetRoot + survivor + "/";
         string project = System.IO.Path.GetDirectoryName(Application.dataPath);
@@ -269,7 +298,8 @@ public static class SurvivorSkillInputHost
                     "Current source pose transforms missing or ambiguous: " + survivor);
             var pairs = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>>();
             RuntimeAnimatorController nativeController;
-            if (synchronizedDriver != null)
+            bool useSourceController = synchronizedDriver != null;
+            if (useSourceController)
             {
                 nativeController = bundles[path].LoadAllAssets<RuntimeAnimatorController>().Single(x => x.name == controller.name);
             }
@@ -290,6 +320,7 @@ public static class SurvivorSkillInputHost
                 nativeController = overrides;
             }
             var samples = new System.Collections.Generic.List<float[]>();
+            var gestureErrors = new Dictionary<string, float>();
             float maximum = 0;
             int components = 0, sampleIndex = 0;
             foreach (bool native in new[] { false, true })
@@ -303,7 +334,7 @@ public static class SurvivorSkillInputHost
                 }
                 foreach (var gesture in gestures)
                     foreach (float cycle in new[] { 0f, .5f, .999f })
-                        foreach (float time in new[] { 0f, .07f, .15f })
+                        foreach (float time in companionGestures == null ? new[] { 0f, .07f, .15f } : new[] { 0f, .15f, .27f, .55f })
                         {
                             animator.Rebind();
                             animator.Update(0);
@@ -316,9 +347,17 @@ public static class SurvivorSkillInputHost
                             animator.Play("YawControl", yaw, 0);
                             if (gesture.Layers != 0)
                             {
+                                if (companionGestures != null && companionGestures.TryGetValue(gesture.Name, out var companion))
+                                {
+                                    int layer = animator.GetLayerIndex("Gesture, Additive");
+                                    int companionHash = Animator.StringToHash(companion);
+                                    Require(layer >= 0 && animator.HasState(layer, companionHash), "Native companion gesture missing: " + companion);
+                                    animator.PlayInFixedTime(companionHash, layer, time);
+                                }
                                 int hash = Animator.StringToHash(gesture.Name);
                                 var layers = Enumerable.Range(0, animator.layerCount).Where(i => animator.HasState(i, hash)).ToArray();
-                                Require(layers.Length == gesture.Layers, "Native gesture layers changed: " + gesture.Name);
+                                Require(layers.Length == gesture.Layers,
+                                        survivor + " gesture layers for " + gesture.Name + ": expected " + gesture.Layers + ", found " + layers.Length);
                                 int[] drivers = synchronizedDriver == null ? layers : new[] { animator.GetLayerIndex(synchronizedDriver) };
                                 Require(drivers.All(layers.Contains), "Native gesture driver missing: " + gesture.Name);
                                 foreach (int layer in drivers)
@@ -328,16 +367,17 @@ public static class SurvivorSkillInputHost
                                         "Native gesture did not play: " + gesture.Name);
                             }
                             animator.Update(0);
-                            Compare(ReadPose(poseTransforms), native);
+                            Compare(ReadPose(poseTransforms), native, gesture.Name.Length == 0 ? "Idle" : gesture.Name);
                         }
             }
             Require(maximum <= .001f,
-                    survivor + " " + (weaponLayer ?? "additive") + " poses differ from native playback: " + maximum);
+                    survivor + " " + (weaponLayer ?? "additive") + " poses differ from native playback: " + maximum +
+                    " (" + string.Join(", ", gestureErrors.Select(pair => pair.Key + "=" + pair.Value)) + ")");
             return new { samples = samples.Count, components, maximumComponentError = maximum,
-                         nativeClipOverrides = pairs.Count, sourceController = synchronizedDriver != null,
-                         matchesNativePoses = maximum <= .001f };
+                         nativeClipOverrides = pairs.Count, sourceController = useSourceController,
+                         matchesNativePoses = maximum <= .001f, gestureErrors };
 
-            void Compare(float[] values, bool native)
+            void Compare(float[] values, bool native, string gesture = null)
             {
                 if (!native)
                 {
@@ -345,7 +385,11 @@ public static class SurvivorSkillInputHost
                     return;
                 }
                 var imported = samples[sampleIndex++];
-                for (int i = 0; i < values.Length; i++) maximum = Mathf.Max(maximum, Mathf.Abs(imported[i] - values[i]));
+                float error = 0;
+                for (int i = 0; i < values.Length; i++) error = Mathf.Max(error, Mathf.Abs(imported[i] - values[i]));
+                maximum = Mathf.Max(maximum, error);
+                if (gesture != null)
+                    gestureErrors[gesture] = Mathf.Max(gestureErrors.TryGetValue(gesture, out var prior) ? prior : 0, error);
                 components += values.Length;
             }
         }
