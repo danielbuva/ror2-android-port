@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1550 — Reuse unchanged producer outputs on Android updates
+
+2026-11-27. The signed synthetic alpha update on Nova B rebuilt one payload
+entry and reused 18 APK entries. The changed producer executed once and the
+stable producer was reused. Check for updates showed one changed entry and,
+after installation, showed up to date without fetching the tools bundle.
+Android code 2 retained the same signer and the synthetic profile and settings.
+Updated APK SHA-256 `f549ad0e974dc8dfeeefe6d89752759de947d0a88296050a1ae52fe23c71d135`.
+Evidence `work/coordination/alpha-packaging-acceptance/run-jwnwuuit/` includes
+the installed receipt and verified removal of both disposable packages.
+Reconstruction and install took 97.3 s fresh and 135.9 s for the update.
+Peak CPU/GPU was 71.2 °C, with 0 s above 80 °C and a 0.505 s maximum sample gap.
+Playable signed alpha releases and native save retention remain open.
+
 ## J1548 — Recover Acrid Leap acid ghost materials
 
 2026-11-27. The original body visual owner prepares the native Leap

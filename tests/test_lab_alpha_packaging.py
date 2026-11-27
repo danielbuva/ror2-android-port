@@ -294,12 +294,15 @@ class AlphaPackagingTests(unittest.TestCase):
             patch.object(A, "import_acceptance"),
             patch("sys.stdout", new_callable=io.StringIO) as output,
         ):
+            evidence = Path("work/coordination/alpha-packaging-acceptance/run-test")
+            diagnostics.return_value.directory = A.ROOT / evidence
             phone.return_value.cleanup.return_value = "verified-absent"
             phone.return_value.flow_metrics.report.return_value = {"stages": []}
             self.assertEqual(A.main(["--qualify-install-prompts"]), 0)
         phone.assert_called_once_with("synthetic-test-device", 1200, allow_test_installs=False)
         for case in A.INSTALLER.PROMPT_CASES:
             self.assertIn("PASS " + case, output.getvalue())
+        self.assertIn("INFO alpha-packaging evidence=" + evidence.as_posix(), output.getvalue())
         phone.return_value.cleanup.assert_called_once_with()
         diagnostics.return_value.write.assert_called_once_with("phone-flow-metrics.json", b'{"stages":[]}\n')
 
