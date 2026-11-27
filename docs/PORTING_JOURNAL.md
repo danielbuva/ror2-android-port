@@ -5105,6 +5105,19 @@ The runner removed the toolhost and put the display to sleep.
 Evidence `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/signed-outline-device-02/terminal.done.json`.
 Canonical converted gameplay and the remaining graphics shader families stay open.
 
+## J1566 — Match texture mip readback on Android Vulkan and editor Metal
+
+2026-11-27. The Unity 2021.3.45f2 IL2CPP fixture loaded bundle `82af7d7a`
+on Secondary Nova and unloaded both textures after readback. The 1024 × 1024
+ETC1 Cubemap +Y mip 1 and 256 × 256 ETC2 RGBA8 Texture2D mip 1 both matched
+the Gamma Metal RGBA8 references byte for byte (`99a14960`, `764574a2`).
+APK SHA-256 `cd6fcb5fb3cb355c31139baeae4669d837013665af07a0d0bcfccac18c4bf3ee`
+(source `a4ba67d2`). Evidence is under `work/coordination/p1-textures/crunch-wholegame-1127/`
+in `vulkan-device-nova-b-retry-1127/terminal.done.json` (`3a8f7701`).
+Internal install took 5.15 s. Battery started at 30 °C and SoC peaked at
+70.4 °C. The runner removed the package and 4.25 MiB of scratch, slept the
+OLED and released the lease. Canonical integration and in-game visuals stay open.
+
 ## J1565 — Draw original Cloud Intersection Remap on Android Vulkan
 
 2026-11-27. The exact Unity fixture drew the original-derived directional
@@ -5117,7 +5130,7 @@ Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
 The runner removed the fixture, slept the OLED and released the lease.
 Linked native Materials and depth-fade rendering remain open.
 
-## J1566 — Verify signed native BC3 texture production on Android
+## J1567 — Verify signed native BC3 texture production on Android
 
 2026-11-27. The signed ARM64 texture job processed three original BC3
 Texture2Ds, covering colour, UI alpha and packed A/G normals across their

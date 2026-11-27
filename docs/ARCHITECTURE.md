@@ -2470,11 +2470,17 @@ and hash the explicit request, load every address with its exact engine type, re
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
 The separate `phone-texture-readback` action stages an isolated editor project
-via `phone_texture_readback.py`. `ContentFixtureTextureMip.cs` point-samples an
+via `phone_texture_readback.py`. `TextureMipSampling.cs` point-samples an
 explicit Texture2D mip or Cubemap face and mip through `TextureMipFixture.shader`,
 writes a private RGBA8 readback and releases the temporary rendering objects.
 The host checks the sample identity, extent and hash alongside the typed-load
 receipt.
+The experimental `phone-texture-readback-build` action checks authored pixel
+controls and uses the same sampler in an isolated Vulkan IL2CPP player.
+`TextureMipPlayer.cs` loads the hash-pinned standalone bundle from the fixture
+APK, writes samples to app external storage and unloads the bundle. The shared
+device session's `texture-readback` mode binds the sample receipt to the fixture
+PID, verifies and removes the raw files, then uninstalls the fixture.
 The editor reports native AnimatorController roots as
 `UnityEditor.Animations.AnimatorController`; their original Addressables
 locations use `UnityEngine.RuntimeAnimatorController`.
@@ -3343,6 +3349,14 @@ The shared device runner calls the pruner from its own checkout and passes the
 canonical work directory explicitly.
 The ledger distinguishes logical candidate bytes from the signed change in
 volume-available bytes measured by `df`, which includes concurrent host activity.
+`--dedupe` plans only APFS cloning across canonical `work/` and
+`.local/build-lanes/`. It matches regular files of at least 64 MiB by size and
+full SHA-256, then atomically replaces each later copy with a verified clone of
+the first copy. It preserves destination mode, timestamps, ACLs and extended
+attributes. Immutable history, symlinks, open files and files modified in the
+last 30 minutes are skipped. Byte-identical copies inside `.prune-keep` trees
+are eligible. The standalone mode measures the volume change from cloning;
+`--aggressive` includes cloning after ordinary cleanup.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
