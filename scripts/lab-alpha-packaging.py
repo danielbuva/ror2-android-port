@@ -128,7 +128,7 @@ class Phone(INSTALLER.Phone):
                 require(device.display(False), "acquisition-display-cleanup-not-verified")
 
     @contextmanager
-    def observe_thermal(self, *, duration=1800):
+    def observe_thermal(self, *, duration=1800, require_continuous_trace=False):
         sys.path.insert(0, str(ROOT / "scripts/lab"))
         from alpha_stability_batch import _GameThermalOwner
         from device import Device
@@ -136,9 +136,15 @@ class Phone(INSTALLER.Phone):
         phone = self
 
         class PackagingThermal(_GameThermalOwner):
+            maximum_sample_gap = 0.0
+
             def sample(self, all_zones=False):
                 self.phase = INSTALLER.CURRENT_PHASE
-                return super().sample(all_zones=all_zones)
+                previous = self.previous
+                result = super().sample(all_zones=all_zones)
+                if not all_zones and previous is not None:
+                    self.maximum_sample_gap = max(self.maximum_sample_gap, self.previous - previous)
+                return result
 
             def terminate_game(self):
                 if not self.cancelled.is_set():
@@ -170,6 +176,7 @@ class Phone(INSTALLER.Phone):
                         require(thermal.device.display(False), "alpha-packaging-display-cleanup-not-verified")
                 finally:
                     thermal.finish()
+            require(not require_continuous_trace or thermal.maximum_sample_gap <= 1, "staged-thermal-trace-gap")
         except RuntimeError as error:
             diagnostics.write("thermal-error.json", INSTALLER.encoded({"error": str(error)}))
             raise INSTALLER.Failure("alpha-packaging-thermal-evidence-failed") from error
@@ -182,6 +189,7 @@ class Phone(INSTALLER.Phone):
                         "admission_battery": thermal.admission_battery,
                         "peak_cpu_gpu_celsius": thermal.peak_cpu_gpu_celsius,
                         "time_above_80_seconds": thermal.time_above_80_seconds,
+                        "maximum_sample_gap_seconds": thermal.maximum_sample_gap,
                         "error": thermal.error,
                     }
                 ),
@@ -308,7 +316,9 @@ def main(argv=None):
                 return 0
             phone = Phone(serial, args.timeout)
             phase = "staged-update"
-            with phone.observe_thermal(duration=6 * args.timeout):
+            # Reserve separate windows for import and both builds, with time
+            # left for play checks and cleanup before the outer runner exits.
+            with phone.observe_thermal(duration=3 * args.timeout + 1200, require_continuous_trace=True):
                 try:
                     acquisition.run(phone, passed)
                 finally:

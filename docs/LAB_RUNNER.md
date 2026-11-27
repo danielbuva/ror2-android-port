@@ -135,7 +135,8 @@ The dry-run verifies both signed source graphs and checks that both support the
 current inventory. The detached run serves the releases over local ADB reverse,
 imports the staged originals through Android's picker, and checks native save
 retention across a same-key update. Its cleanup removes only the scoped stage
-and the packages it installed.
+and the packages it installed. Import and each reconstruction have a four-hour
+limit to accommodate the measured signed native build.
 
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the

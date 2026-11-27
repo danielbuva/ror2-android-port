@@ -38,6 +38,7 @@ REF = re.compile(r"^(?!.*\.\.)[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$")
 COMMENT_LIMIT = 60000
 TAIL_LINES = 150
 JOB_TIMEOUT = 5 * 3600
+STAGED_UPDATE_STEP_TIMEOUT = 4 * 3600
 TEST_PACKAGE = "dev.ror2lab.installertest"  # disposable identity; never the lab or toolhost packages
 
 
@@ -317,7 +318,7 @@ class Runner:
                 extra["LAB_DEVICE_SERIAL"] = serial
                 extra["LAB_RUNNER_LEASE"] = str(lease)
                 extra["LAB_CANONICAL_ROOT"] = str(self.repo)
-            code = self.run(argv, checkout, extra_env=extra)
+            code = self.run(argv, checkout, timeout=request.get("timeout_seconds", JOB_TIMEOUT), extra_env=extra)
             return code, None
         finally:
             if lease:  # only a device this job leased; a refused lease belongs to another worker's live run
@@ -423,7 +424,9 @@ def local_packaging(path, *, dry_run=False, detach=False):
         if operation == "acquisition":
             command["args"].extend(["--acquisition-request", str(Path(path).resolve())])
         elif operation == "staged-update":
-            command["args"].extend(["--staged-update-request", str(Path(path).resolve())])
+            # The signed native producer alone took 9,158 seconds in J1512.
+            command["args"].extend(["--staged-update-request", str(Path(path).resolve()), "--timeout", str(STAGED_UPDATE_STEP_TIMEOUT)])
+            command["timeout_seconds"] = 3 * STAGED_UPDATE_STEP_TIMEOUT + 1800
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
             if operation == "packaging" and "toolhost_source_commit" in request:
