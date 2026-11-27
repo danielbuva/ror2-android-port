@@ -8113,6 +8113,13 @@ from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
 
+The V38 pickup and skin preload scope uses the existing record and texture
+producers. `owner-preload-droplet-records.json` pins the original droplet
+components and their MonoScript witnesses. `owner-preload-snow-texture.json`
+pins the source object and stream used by the Android RGBA mip conversion.
+The release graph binds both alongside the existing root and media
+suppliers. The scoped preparation owns endpoint and script validation.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
