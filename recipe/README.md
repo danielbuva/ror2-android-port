@@ -6276,6 +6276,22 @@ Pinned AssetRipper `AssetCollection.TryGetAsset` informed the external
 member lookup. Unity 2021.3.45f2 loaded and unloaded all eight Materials
 in the isolated fixture and verified eight Shader and 33 texture bindings.
 
+### Whole-game Mire Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-mire-native-material-records.json` | `5e24dc046ea17fd59d4cf88c2fa58651fbe3736aa507c0a9b411e97e5e7626f8` |
+
+Audit date 2026-11-27. The recipe selects nine Mire and Access Codes Node
+Materials from the legitimate Steam input. It publishes source paths,
+record and member IDs, sizes and hashes. Material bodies, dependency
+bytes and local paths stay in ignored storage. The pinned AssetRipper
+PPtr and Material extensions informed member and saved texture lookup.
+The isolated fixture verified that all nine emitted records differ
+from the original bodies only at their 47 relocated pointers. Unity
+2021.3.45f2 checked nine Shader bindings and 38 saved texture bindings
+and unloaded the bundles. Release integration and rendered output remain open.
+
 ### Whole-game Standard fallback keyword registration (J1306)
 
 | Recipe | SHA-256 |
@@ -7764,3 +7780,20 @@ pack data or private paths are included. Producer output stays under ignored
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-canonical-native-roster-records.jsonl.gz` | `f20a75d8b362e4f3e39c6da4963c7260de0a8232057af23d524808e649863994` |
+
+## Nest FBX native records (2026-11-27)
+
+`owner-nest-fbx-native-records.json` supplies 253 original native records
+for 42 Nest FBX groups through `record_produce.py`. The existing Mesh and
+shader recipes supply their remaining native records. Unity 2021.3.45f2
+loaded and unloaded 84 typed GameObject and Mesh requests for the scoped
+bundle. Release admission still requires preserving source preload order.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative original bundle selectors, source and destination object IDs,
+class IDs, sizes and hashes. The producer reads original serialized bodies
+from the user's installation and writes the pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-nest-fbx-native-records.json` | `00330558b4b1fad6131bd4d34dfb3d1dba7699f835ea963457d97e005b7c8545` |

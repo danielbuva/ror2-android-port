@@ -8179,6 +8179,12 @@ original member references to Shader and texture providers. The isolated
 fixture checks the typed bindings and unloads the Material bundle and its
 dependencies after the check.
 
+`recipe/owner-whole-game-mire-native-material-records.json` uses the same
+producer and preparation owners for nine Mire and Access Codes Node
+Materials. It supplies two of the Material destinations referenced by
+the Mire Clip cohort. The isolated fixture validates the original
+Material fields and Shader and texture links before bundle teardown.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
@@ -8632,6 +8638,13 @@ feeds the original Transform, MeshFilter, MeshRenderer and Material bodies to
 `record_produce.py`. Canonical bundle preparation relocates their PPtrs using
 the original serialized file and PathID, including the two same-PathID
 Materials from distinct files.
+
+The Nest FBX roster feeds original GameObject, Transform, MeshFilter,
+MeshRenderer and Material records to `record_produce.py`. The scoped
+bundle graph joins them to the existing Mesh and built-in shader suppliers.
+The exact-editor fixture loads each advertised GameObject and Mesh and
+unloads the bundle. The source preload sequence remains a release graph
+admission requirement for this cohort.
 
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
