@@ -8122,6 +8122,8 @@ final object bundles and the player's actual runtime script registry through
 `catalog_complete.py`. The canonical whole-game profile contributes paths to
 source projection. Catalog ownership gives explicit builds precedence over
 canonical copies, with the whole-game bundle owning remaining ordinary assets.
+Source and explicitly remapped paths retain their spelling for runtime metadata
+checks. The produced container lookup matches those paths case-insensitively.
 Supplier packs, Windows shader passthrough and derived manifest/catalog outputs
 are excluded from native catalog ownership. The signed
 closure retains the metadata pin, final profiles and embedded bootstrap recipe;
