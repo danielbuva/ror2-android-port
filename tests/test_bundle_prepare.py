@@ -111,7 +111,20 @@ class BundlePreparationTests(unittest.TestCase):
             layout = dict(class_id=21, stripped=0, script_type=-1, hash=b"m" * 16, tree=M.S._tree(nodes), dependencies=[])
             body = struct.pack("<i", 73)
             original = root / "original" / "type.assets"
+            renderer_nodes = [
+                M.S._node("MeshRenderer", "Base", -1, level=0),
+                M.S._node("PPtr<Material>", "m_Material", 12),
+                M.S._node("int", "m_FileID", 4, level=2),
+                M.S._node("SInt64", "m_PathID", 8, level=2),
+            ]
+            renderer_type = dict(class_id=23, stripped=0, script_type=-1, hash=b"r" * 16, tree=M.S._tree(renderer_nodes), dependencies=[])
+            renderer = struct.pack("<iq", 0, 10)
             original.write_bytes(self.serialized([dict(path_id=10, type=layout, body=body)]))
+            source_bundle = original.with_name("renderer.bundle")
+            source_member = "CAB-renderer"
+            source_bytes = self.serialized([dict(path_id=10, type=layout, body=body), dict(path_id=11, type=renderer_type, body=renderer)], platform=19)
+            with source_bundle.open("wb") as stream:
+                P.O.W.write_bundle(stream, [(source_member, 4, len(source_bytes), lambda: io.BytesIO(source_bytes))], lambda block, method: block, flags=0x40)
             profile = root / "recipe/owner-material.json"
             profile.parent.mkdir()
             destination = ["content", "CAB-content", 100]
@@ -144,6 +157,27 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(job["outputs"], {})
             self.assertNotIn("catalog_bundle", job["artifacts"])
             binding["supplier"] = "material"
+            reference = {"offset": 0, "from": [0, 10], "to": [0, 100]}
+            renderer_destination = [*destination[:2], 101]
+            renderer_output = dict(
+                bundle=destination[0],
+                member=destination[1],
+                path_id=101,
+                bytes=len(renderer),
+                sha256=P.hashlib.sha256(P.O.remap(renderer, [reference])).hexdigest(),
+                transform=dict(references=[reference]),
+            )
+            renderer_record = dict(path_id=11, class_id=23, sha256=P.hashlib.sha256(renderer).hexdigest(), outputs=[renderer_output])
+            renderer_source = dict(
+                path=source_bundle.name,
+                sha256=P.O.B.sha(source_bundle),
+                members=[dict(name=source_member, objects=[renderer_record])],
+            )
+            renderer_profile = root / "renderer.json"
+            renderer_profile.write_text(json.dumps(dict(input_id=P.O.M.INPUT_ID, bundles=[renderer_source])))
+            renderer_pack = root / "renderer"
+            P.A.produce(renderer_profile, P.O.B.sha(renderer_profile), original.parent, renderer_pack)
+            renderer_binding = dict(destination=renderer_destination, record_source=renderer_destination, supplier="renderer")
             policy = root / "policy.json"
             request.update(
                 staged=[],
@@ -155,7 +189,15 @@ class BundlePreparationTests(unittest.TestCase):
                             key: pin(pack / filename)
                             for key, filename in (("receipt", "result.json"), ("index", "index.jsonl"), ("objects", "objects.bin"), ("types", "types.json"))
                         },
-                    )
+                    ),
+                    dict(
+                        name="renderer",
+                        profile=pin(renderer_profile),
+                        **{
+                            key: pin(renderer_pack / filename)
+                            for key, filename in (("receipt", "result.json"), ("index", "index.jsonl"), ("objects", "objects.bin"), ("types", "types.json"))
+                        },
+                    ),
                 ],
             )
             for wrong_source in (False, True):
@@ -165,9 +207,9 @@ class BundlePreparationTests(unittest.TestCase):
                         dict(
                             bundle=destination[0],
                             member=destination[1],
-                            bindings=[row],
-                            asset_groups=[dict(guid="12" * 16, path="Assets/Material.mat", roots=[100])],
-                            assets=[dict(name="assets/material.mat", type="Material")],
+                            bindings=[row, renderer_binding],
+                            asset_groups=[dict(guid="12" * 16, path="Assets/Renderer.asset", roots=[101])],
+                            assets=[dict(name="assets/renderer.asset", type="MeshRenderer")],
                         )
                     )
                 )
@@ -180,7 +222,9 @@ class BundlePreparationTests(unittest.TestCase):
                 prepared = P.prepare_request(inputs, root / "prepared")
                 emitted = P.produce_request(prepared["request"]["path"], root / "emitted")
                 self.assertTrue(emitted["success"])
-                record = json.loads((root / "prepared/selected-records.jsonl").read_text())
+                records = list(P.json_rows(root / "prepared/selected-records.jsonl"))
+                self.assertEqual([item["destination"] for item in records], [destination, renderer_destination])
+                record = records[0]
                 self.assertEqual(record["generated"], "sdk_material")
                 self.assertEqual(record["pointer_namespace"], binding["pointer_namespace"])
                 self.assertNotIn("source", record)

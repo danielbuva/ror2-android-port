@@ -212,6 +212,8 @@ boundary. Destinations that share a supplier record keep separate relocation
 packs so each can bind its own checked field routes to the same source lineage.
 Retained suppliers bind their own receipt-pinned type tables;
 an explicit `pointer_namespace` declares their already-relocated member table.
+When a checked producer patch names a generated record in its own output
+member, preparation resolves the typed field directly to that declared record.
 Setup opens declared original and staged members; teardown closes streams on
 success or failure. Preparation retains pins and emits the existing request,
 including original script properties and canonical body-identity witnesses.
