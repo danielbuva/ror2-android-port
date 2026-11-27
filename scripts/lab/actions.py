@@ -335,6 +335,15 @@ _ENTRIES = (
         handler=_target,
     ),
     Action(
+        "phone-texture-readback",
+        "phone_texture_readback",
+        "run_editor",
+        {},
+        "current",
+        "Experimental: read selected texture mips and cube faces from hash-pinned bundles in --target REQUEST.json with the exact editor GPU. No player build or device access.",
+        handler=_target,
+    ),
+    Action(
         "phone-content-build",
         "phone_content",
         "run_editor",
