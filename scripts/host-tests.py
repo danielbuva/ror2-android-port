@@ -143,6 +143,7 @@ def worker(modules, connection, directory):
     # A new process/session per pool job prevents cross-job globals and gives the
     # parent ownership of descendant compilers on timeout or abrupt worker exit.
     os.setsid()
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
     directory = Path(directory)
     directory.mkdir()
     os.environ.update(TMPDIR=str(directory), TEMP=str(directory), TMP=str(directory), PYTHONDONTWRITEBYTECODE="1")
@@ -220,9 +221,18 @@ def run_pool(modules, workers, timeout, scratch):
     results = {}
     infrastructure_errors = []
     next_job = 0
+    interrupted = None
+
+    def record_termination(signum, _frame):
+        # Register a started worker before observing the signal. Workers use
+        # separate sessions and must be reaped before the volume can detach.
+        nonlocal interrupted
+        interrupted = signum
+
+    previous = signal.signal(signal.SIGTERM, record_termination)
     try:
-        while next_job < len(jobs) or active:
-            while next_job < len(jobs) and len(active) < workers:
+        while not interrupted and (next_job < len(jobs) or active):
+            while not interrupted and next_job < len(jobs) and len(active) < workers:
                 receive, send = context.Pipe(duplex=False)
                 job = jobs[next_job]
                 process = context.Process(target=worker, args=(job, send, str(scratch / f"worker-{next_job}")))
@@ -264,6 +274,9 @@ def run_pool(modules, workers, timeout, scratch):
         for state in active:
             terminate(state["process"])
             state["pipe"].close()
+        signal.signal(signal.SIGTERM, previous)
+    if interrupted:
+        raise SystemExit(128 + interrupted)
     return [results[index] for index in sorted(results)], infrastructure_errors
 
 
