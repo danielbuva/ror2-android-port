@@ -1,0 +1,161 @@
+{
+  "pack_only": true,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "path": "Contents/Resources/unity editor resources",
+    "sha256": "25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190",
+    "path_id": -9215203055440829681
+  },
+  "sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+      "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+      "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-vagrant_assets_all_a854c450d745276277ecaad1249ad03e.bundle",
+      "member": "CAB-d0526909c706d2fc78838bde4aae28e3",
+      "sha256": "15866801c12eccf486a38b6f111041b8025a19714a4dfe4e9a633cab0aec44d7"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+      "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+      "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidbarnacle_static_assets_all_a3be8b332cb0bebd6aa6983d463655ec.bundle",
+      "member": "CAB-7d2215c36f5d842b5194a5ff75337f11",
+      "sha256": "78ad5693b74305f0c639008b652e36e8605ce03a7e2b40061e03553d0afbde41"
+    }
+  ],
+  "bundle": {
+    "name": "whole-game-content",
+    "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+    "externals": [],
+    "comparison": "diagnostic"
+  },
+  "objects": [
+    {
+      "path_id": -1682175822698124268,
+      "generate": "DefaultMaterial",
+      "type_source": [
+        1,
+        3653340983115571221
+      ],
+      "sdk_source": {
+        "path": "Contents/Resources/unity_builtin_extra",
+        "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e",
+        "path_id": 10303
+      },
+      "shader_source": [
+        2,
+        -8014961710185377972
+      ],
+      "references": [
+        {
+          "offset": 20,
+          "from": [
+            0,
+            46
+          ],
+          "to": [
+            0,
+            -4850512016903265157
+          ]
+        }
+      ],
+      "bytes": 1064,
+      "sha256": "f57650ad0c140d260adff5220b07c155ca37540e45c0d9b81a95652508f4faf0"
+    },
+    {
+      "path_id": 3231134817632079172,
+      "record": "69173f28198b6038a015743b8de8be287ba3524c80ccd8fdd8f17700079300c0",
+      "type_source": [
+        0,
+        -6455632894822689791
+      ],
+      "bytes": 104,
+      "sha256": "d4b1c09da30beead8bcb54d38e8ba98747c84c72d861cf7acc2f762ce0905a21",
+      "script_identity": [
+        "Assembly-CSharp.dll",
+        "",
+        "SilentProjectileBoundary"
+      ],
+      "record_source": [
+        "objective-support-lab",
+        "CAB-d621b06adada9dbd86ac345cd5e6cc93",
+        3231134817632079172
+      ]
+    },
+    {
+      "path_id": 5559287730328692973,
+      "source": [
+        3,
+        4507658092224489211
+      ],
+      "source_sha256": "658c01e652a7ba162aad0790f8bbd52e44d2c9c41b2ab24325ea67c6ef2335bf",
+      "bytes": 32,
+      "sha256": "869fb881496c55f540b150233c361378902fe345c90cf3f2b748e3042a3136f7",
+      "fieldless_script_record": true,
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            6691840167283500795
+          ],
+          "to": [
+            0,
+            1649956150079605892
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            1323613569518340896
+          ],
+          "to": [
+            0,
+            3231134817632079172
+          ]
+        }
+      ]
+    },
+    {
+      "path_id": 8124885255962002810,
+      "source": [
+        3,
+        4507658092224489211
+      ],
+      "source_sha256": "658c01e652a7ba162aad0790f8bbd52e44d2c9c41b2ab24325ea67c6ef2335bf",
+      "bytes": 32,
+      "sha256": "2fadc2ae2aa2a4fcaec08217de9bdc6b6140ab239e36c89efde82423a9ebb1ec",
+      "fieldless_script_record": true,
+      "references": [
+        {
+          "offset": 0,
+          "from": [
+            0,
+            6691840167283500795
+          ],
+          "to": [
+            0,
+            -7140474258704961842
+          ]
+        },
+        {
+          "offset": 16,
+          "from": [
+            1,
+            1323613569518340896
+          ],
+          "to": [
+            0,
+            3231134817632079172
+          ]
+        }
+      ]
+    }
+  ]
+}

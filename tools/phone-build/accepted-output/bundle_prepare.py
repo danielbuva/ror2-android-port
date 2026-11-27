@@ -240,7 +240,7 @@ def extend_selection(owner, member, required, selected, types, routes, extension
     required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
 
 
-def original_identities(owner, path, source_files=None, *, destinations=None):
+def original_identities(owner, path, source_files=None, *, destinations=None, generated=None):
     """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
 
@@ -295,10 +295,23 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
                     if source_files.setdefault(source["path"], digest) != digest:
                         raise ValueError("original source file pins disagree")
             for row in profile["objects"]:
+                record = bundle["name"], bundle["member"], row["path_id"]
+                if row.get("generate") == "DefaultMaterial":
+                    declaration = dict(kind="sdk_material", class_id=21)
+                elif row.get("fieldless_script_record") is True:
+                    declaration = dict(kind="fieldless_component", class_id=114)
+                elif "record" in row and "script_identity" in row and "source" not in row:
+                    declaration = dict(kind="current_script", class_id=115, identity=row["script_identity"])
+                else:
+                    declaration = None
+                if declaration is not None:
+                    if generated is not None:
+                        generated[record] = declaration
+                    continue
                 source = row.get("source", row.get("properties_hash", {}).get("behaviour"))
                 if source is not None:
                     original = profile["sources"][source[0]]
-                    add((bundle["name"], bundle["member"], row["path_id"]), (original["path"], original["member"], source[1]))
+                    add(record, (original["path"], original["member"], source[1]))
             return result
         bundles = profile["bundles"]
     for bundle in bundles:
@@ -392,17 +405,26 @@ def prepare(owner, inputs, output):
         if logical in providers and providers[logical] != directory:
             raise ValueError("ambiguous supplier provider")
         providers[logical] = directory
-        profiles[name] = original_identities(owner, paths["profile"], source_files)
-        suppliers[name] = SimpleNamespace(paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]))
+        generated = {}
+        profiles[name] = original_identities(owner, paths["profile"], source_files, generated=generated)
+        suppliers[name] = SimpleNamespace(paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]), generated=generated)
     producer = owner.ProducerRecords(providers)
     bindings, sources = {}, {}
     for row in policy_rows(pins, policy["bindings"]):
         destination = tuple(row["destination"])
         if destination[:2] != member or destination in bindings or not destination[2]:
             raise ValueError("duplicate or foreign emitted destination")
-        if row["supplier"] not in suppliers:
+        supplier = suppliers.get(row["supplier"])
+        if supplier is None:
             raise ValueError("unknown binding supplier")
-        candidates = profiles[row["supplier"]].get(tuple(row["record_source"]), set())
+        record = tuple(row["record_source"])
+        if "generated" in row:
+            declaration = supplier.generated.get(record)
+            if declaration is None or declaration["kind"] != row["generated"] or "source" in row or not row.get("pointer_namespace"):
+                raise ValueError("generated binding requires a declared producer and pointer namespace")
+            bindings[destination] = row
+            continue
+        candidates = profiles[row["supplier"]].get(record, set())
         source = tuple(row["source"]) if "source" in row else next(iter(candidates)) if len(candidates) == 1 else None
         if source is None or source not in candidates:
             raise ValueError("original body source absent or ambiguous")
@@ -537,12 +559,21 @@ def prepare(owner, inputs, output):
                 if actual != row:
                     raise ValueError("supplier record changed")
                 identity = row.get("source_produced", {}).get("script_identity")
-                if binding["source"][:2] == ["sdk", "Resources/unity_builtin_extra"]:
+                provenance = {key: binding[key] for key in ("source", "generated") if key in binding}
+                if "generated" in binding:
+                    declaration = supplier.generated[tuple(binding["record_source"])]
+                    if declaration["class_id"] != typ["class_id"]:
+                        raise ValueError("generated supplier class differs from its declaration")
+                    provenance["pointer_namespace"] = binding["pointer_namespace"]
+                    if "identity" in declaration:
+                        owner.O.current_script_identity(body, typ["class_id"], declaration["identity"])
+                        provenance["current_registry_identity"] = declaration["identity"]
+                elif binding["source"][:2] == ["sdk", "Resources/unity_builtin_extra"]:
                     if identity is not None or typ["class_id"] != 48 or not typ.get("tree") or owner.pointers(body, typ, {}):
                         raise ValueError("SDK supplier requires a typed Shader without pointers")
                 else:
                     original_body, original_type, _ = original(binding["source"])
-                if identity is not None:
+                if "source" in provenance and identity is not None:
                     if not original_type.get("tree") or original_type["dependencies"]:
                         raise ValueError("registry MonoScript requires an original leaf layout and verified identity")
                     expected_type = (
@@ -556,7 +587,7 @@ def prepare(owner, inputs, output):
                         raise ValueError("original registry MonoScript layout contains pointers")
                     typ = original_type
                 value = descriptor(
-                    target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, source=binding["source"]
+                    target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, **provenance
                 )
                 if "resource" in row:
                     value["resource"] = row["resource"]
@@ -661,8 +692,9 @@ def prepare(owner, inputs, output):
             pack["blob"].extend(revised)
             pack["rows"].append(row)
             pack["types"].append(owner.O.json_layout(typ))
-            pack["witnesses"].append(dict(destination=list(target), source=value["source"], fields=routes[target]))
-            selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record", "source")})
+            provenance = {key: value[key] for key in ("source", "generated", "pointer_namespace", "current_registry_identity") if key in value}
+            pack["witnesses"].append(dict(destination=list(target), fields=routes[target], **provenance))
+            selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record")}, **provenance)
             if "resource" in value:
                 selected[target]["resource"] = value["resource"]
             selected[target]["provider"] = str(directory)
@@ -696,7 +728,7 @@ def prepare(owner, inputs, output):
                     pins.add(directory / filename)
         original_properties, null_sources = {}, []
         for target, value in selected.items():
-            if target[:2] != member or value["class_id"] != 114:
+            if target[:2] != member or value["class_id"] != 114 or "generated" in value:
                 continue
             source = value["source"]
             body, original_type, metadata = original(source)
@@ -772,7 +804,7 @@ def prepare(owner, inputs, output):
             for pair in canonical["pairs"]:
                 duplicate, endpoint = tuple(pair["duplicate"]), tuple(pair["canonical"])
                 value = selected[duplicate]
-                if set(donor_sources.get(endpoint, ())) != {tuple(value["source"])}:
+                if "source" not in value or set(donor_sources.get(endpoint, ())) != {tuple(value["source"])}:
                     raise ValueError("canonical donor original body identity differs")
                 if endpoint[:2] != (donor["name"], donor["member"]):
                     raise ValueError("canonical endpoint belongs to a different donor")

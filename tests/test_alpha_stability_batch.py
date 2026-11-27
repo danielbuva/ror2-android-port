@@ -27,12 +27,14 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.lease = self.root / ".local/orchestrator/leases" / SERIAL
         self.args = dict(device_serial=SERIAL, expected_apk_sha256=HASH, canonical_root=self.root, done_file=self.done)
 
-    def test_prune_uses_runner_checkout_with_shared_work_directory(self):
-        with mock.patch.object(batch.subprocess, "run", return_value=SimpleNamespace(returncode=0)) as run:
+    def test_prune_uses_runner_checkout_script_with_canonical_work(self):
+        pruner = Path(batch.__file__).resolve().parents[1] / "prune-generated.py"
+        with mock.patch.object(batch.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as run:
             batch._prune(self.root)
-        script = Path(batch.__file__).resolve().parents[1] / "prune-generated.py"
         run.assert_called_once_with(
-            [sys.executable, str(script), "--apply", "--aggressive", "--work-dir", str(self.root / "work")], capture_output=True, text=True
+            [sys.executable, str(pruner), "--apply", "--aggressive", "--work-dir", str(self.root / "work")],
+            capture_output=True,
+            text=True,
         )
 
     def test_host_capture_admission_uses_output_estimate_plus_margin(self):

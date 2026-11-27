@@ -499,8 +499,8 @@ def _sleep_awakened():
 
 
 def _prune(root):
-    script = Path(__file__).resolve().parents[1] / "prune-generated.py"
-    result = subprocess.run([sys.executable, str(script), "--apply", "--aggressive", "--work-dir", str(root / "work")], capture_output=True, text=True)
+    pruner = Path(__file__).resolve().parents[1] / "prune-generated.py"
+    result = subprocess.run([sys.executable, str(pruner), "--apply", "--aggressive", "--work-dir", str(root / "work")], capture_output=True, text=True)
     if result.returncode:
         raise RuntimeError("Canonical generated-output pruning failed: " + result.stderr[-1000:])
 
