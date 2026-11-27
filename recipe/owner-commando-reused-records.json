@@ -282,7 +282,7 @@
       ]
     },
     {
-      "source_profile_sha256": "b4191deeb8c420106418f1e62ad53dd35e439b62854f812c90afe14956340e04",
+      "source_profile_sha256": "eeba7dbb4ed816d6b457c436984e645d674dbfcafcc59d566b67518c5866e79f",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",
@@ -2824,7 +2824,7 @@
       ]
     },
     {
-      "source_profile_sha256": "b4191deeb8c420106418f1e62ad53dd35e439b62854f812c90afe14956340e04",
+      "source_profile_sha256": "eeba7dbb4ed816d6b457c436984e645d674dbfcafcc59d566b67518c5866e79f",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",
@@ -6821,7 +6821,7 @@
       ]
     },
     {
-      "source_profile_sha256": "b4191deeb8c420106418f1e62ad53dd35e439b62854f812c90afe14956340e04",
+      "source_profile_sha256": "eeba7dbb4ed816d6b457c436984e645d674dbfcafcc59d566b67518c5866e79f",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",

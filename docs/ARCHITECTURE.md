@@ -7700,9 +7700,11 @@ bundle through the existing object owner. The native alias, reused-record and
 Legacy particle Shader recipes supply independently qualified records. Setup
 requires explicit original PC/SDK roots, pinned record-pack receipts and a fresh
 output directory; process exit releases source handles and receipts persist.
-All 1,623 objects, every member and the compressed bundle are host
-raw-exact to J850. This adds no runtime owner; phone production, installation and
-original game behavior remain open.
+The staged recipe resolves five external references through `whole-game-content`.
+All 1,623 serialized records, their native types, external slots and container
+preloads match the V39 staged Objective bundle. Unity 2021.3.45f2 loaded the
+Fireball Vehicle, Ammo Pack and Razorwire Orb Effect as GameObjects. Phone
+production and use of this source-built bundle in a signed release remain open.
 
 `recipe/owner-presentation-objects.json` completes `android-presentation-lab`
 through the existing object owner and `owner-presentation-reused-records.json`.

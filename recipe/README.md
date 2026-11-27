@@ -1,5 +1,13 @@
 # Build recipes
 
+The objective-support recipe follows the staged canonical bundle for five
+references to camera parameters, materials, a pickup effect and a physics
+material. It also preserves the corresponding container preloads. The Commando
+supplier pins follow that profile and its three unchanged material records.
+Provenance, privacy, licensing and sensitive-content review covered the field
+selectors, PathIDs and verification hashes. Game records and fixtures stay in
+ignored work.
+
 2026-11-18 original-audio packaging audit: the audio and camera recipes refresh
 authored source hashes for the full bank roster. The shared stager copies
 only accepted local game inputs, with the existing adapted Init. Provenance,
