@@ -6730,6 +6730,11 @@ The runner removes attempt scratch and preserves retained inputs.
 The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
 accessible to the retained toolhost. The same scoreboard owner runs on the
 host and phone with the same request pins and JSON schema.
+`texture-native-profile` reads a pinned original PC tree and source-identity
+ledger. Its optional schema witnesses must be pinned alongside the inputs.
+The stage retains the discovered profile in attempt scratch for hashing and
+reports its hash and size. A signed release job can pass the private profile
+to a downstream producer through the existing job artifact map.
 
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the

@@ -35,6 +35,7 @@ PRODUCERS = {
             "record_produce",
             "shader_produce",
             "shader_translate",
+            "texture_native_profile",
             "texture_produce",
             "player_data",
             "sdk_inputs",
