@@ -1121,6 +1121,11 @@ original Transform, Light and Rigidbody records used by FireworkLight and
 SoundEmitter. Bundle preparation distinguishes file-local PPtrs from external
 member identities, resolves the component owners and checks every relocated
 pointer in the emitted prefab closure.
+`recipe/owner-goolake-shrine-script-bindings.json` supplies three Sandy shrine
+MonoBehaviours from the original bundles. Their relocated script PPtrs resolve
+to the canonical MonoScripts in the Commando donor. The staged bundle composer
+checks the relocated targets through the Goolake scene closure before writing
+the donor. The exact-editor fixture verifies the typed prefab clones.
 The same record owner imports named `ControlPlayableAsset` PropertyName mappings
 with `control_exposed_name_default`. An exact-editor authored fixture establishes
 the mapping default; original managed metadata and pinned AssetRipper encoding

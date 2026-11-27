@@ -7495,3 +7495,15 @@ device evidence stay under ignored `work/`.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-goolake-scene-mesh-endpoints.json` | `b9013e5afd13edd54d0c8298f597e147efae0457549d08ec109c19b7e3409060` |
+
+Audit 2026-11-27. `owner-goolake-shrine-script-bindings.json` selects three
+original MonoBehaviours and redirects their script PPtrs to the canonical
+Commando donor. The recipe contains original and destination identifiers,
+checked PPtr offsets and endpoints, SDK selectors and hashes. The provenance,
+privacy, licensing and sensitive-content review covered these fields. The
+producer obtains behaviour bodies and serialized definitions from local owned
+inputs. Generated bodies, type tables and evidence stay under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-goolake-shrine-script-bindings.json` | `a80f281cc3383dc24e113086657345ad77c466a380854ffd77d29884c8e76e4b` |
