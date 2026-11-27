@@ -1,9 +1,15 @@
 import copy
 from datetime import datetime, timedelta, timezone
+import hashlib
+import json
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import struct
+import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import perf_report as perf
@@ -33,6 +39,38 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("zstd"), "Zstandard CLI required for retained thermal traces")
+    def test_retained_thermal_trace_hashes_original_bytes(self):
+        session, thermal = fixture()
+        trace = ("\r\n".join(json.dumps(row) for row in thermal) + "\r\n").encode()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            receipt = root / "result.json"
+            receipt.write_text(json.dumps(session))
+            original = root / "session-sustained-thermal.jsonl"
+            original.with_suffix(".jsonl.zst").write_bytes(subprocess.check_output(["zstd", "-qc"], input=trace))
+            output = root / "report.json"
+            with patch.object(sys, "argv", ["perf_report", str(receipt), str(original), "--output", str(output)]):
+                perf.main()
+            self.assertEqual(json.loads(output.read_text())["input_sha256"]["thermal"], hashlib.sha256(trace).hexdigest())
+
+    def test_five_minute_bins_pair_runtime_and_temperature_by_utc(self):
+        session, _ = fixture()
+        origin = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        samples = []
+        thermal = []
+        for index, (host, utc, fps, cpu) in enumerate(((0, 0, 60, 55000), (299, 300, 30, 85000), (600, 599, 32, 87000))):
+            timestamp = (origin + timedelta(seconds=utc)).isoformat()
+            samples.append(dict(session["samples"][index], host_seconds=host, snapshot_utc=timestamp, fps=fps))
+            thermal.append(dict(utc=timestamp, admission=False, all_zones_raw=f"cpu-0\t{cpu}"))
+        report = perf.analyze(dict(session, samples=samples), thermal)
+        self.assertEqual(
+            [(row["start_seconds"], row["samples"], row["fps"], row["cpu_c"]) for row in report["bins"]],
+            [(0, 1, 60, 55), (300, 2, 31, 86)],
+        )
+        self.assertEqual(report["observed_seconds"], 600)
+        self.assertEqual(report["final_ten_minutes"]["observed_seconds"], 600)
+
     def test_enemy_count_bins_keep_observed_zero_distinct_from_missing(self):
         session, _ = fixture()
         origin = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -411,8 +449,34 @@ class PerfReportTests(unittest.TestCase):
         result = perf.analyze(session, thermal)
         self.assertEqual(result["thermal"]["gaps_over_one_second"], 1)
         self.assertEqual(result["thermal"]["time_above80_observed_seconds"], 1)
+        self.assertEqual(result["thermal"]["threshold_observed_seconds"], 1)
+        self.assertEqual(result["thermal"]["threshold_unobserved_seconds"], 2)
         self.assertEqual(result["thermal"]["peak_gpu_c"], 60)
         self.assertEqual(result["thermal"]["peak_cpu_c"], 81)
+
+    def test_processor_exposure_does_not_treat_a_missing_channel_as_cool(self):
+        session, thermal = fixture()
+        thermal[0]["all_zones_raw"] = "CPU-0\t80000\nGPU-0\t79999"
+        thermal[1]["all_zones_raw"] = "cpu-0\t79000\ngpu-0\tUNREADABLE"
+        thermal[2]["all_zones_raw"] = "cpu-0\t81000\ngpu-0\t-30000"
+        thermal[3]["all_zones_raw"] = "cpu-0\tmalformed\ngpu-0\tUNREADABLE"
+        report = perf.analyze(session, thermal)
+        result = report["thermal"]
+        self.assertEqual(result["samples"], 4)
+        self.assertEqual(result["threshold_observed_seconds"], 2)
+        self.assertEqual(result["threshold_unobserved_seconds"], 1)
+        self.assertEqual(result["time_above80_observed_seconds"], 1)
+        self.assertEqual(result["peak_gpu_c"], 79.999)
+        self.assertIn("1.000 s above 80 C; 2.000 s classified; 1.000 s unclassified", perf.markdown(report))
+
+    def test_fully_observed_cool_period_reports_zero_not_unavailable(self):
+        session, thermal = fixture()
+        for row in thermal:
+            row["all_zones_raw"] = "cpu-0\t80000\ngpu-0\t79000"
+        result = perf.analyze(session, thermal)["thermal"]
+        self.assertEqual(result["time_above80_observed_seconds"], 0)
+        self.assertEqual(result["threshold_observed_seconds"], 3)
+        self.assertEqual(result["threshold_unobserved_seconds"], 0)
 
     def test_hal_status_is_not_causal_throttling_onset(self):
         session, thermal = fixture()
@@ -435,6 +499,10 @@ class PerfReportTests(unittest.TestCase):
         self.assertEqual(result["thermal"]["samples"], 0)
         self.assertIsNone(result["thermal"]["peak_cpu_c"])
         self.assertEqual(result["thermal"]["boundary_uncovered_seconds"], 3)
+        self.assertIsNone(result["thermal"]["time_above80_observed_seconds"])
+        self.assertEqual(result["thermal"]["threshold_observed_seconds"], 0)
+        self.assertEqual(result["thermal"]["threshold_unobserved_seconds"], 3)
+        self.assertIn("time above 80 C unavailable; 3.000 s unclassified", perf.markdown(result))
 
 
 if __name__ == "__main__":

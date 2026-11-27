@@ -352,3 +352,15 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1517](PORTING_JOURNAL.md#j1517--recover-the-assisted-gold-shrine-to-teleporter-route) | 2026-11-26 | Recover the assisted Gold shrine-to-teleporter route | 2026-11-26. |
 | [J1518](PORTING_JOURNAL.md#j1518--observe-the-native-siren-boss-and-restore-its-reward-drop) | 2026-11-26 | Observe the native Siren boss and restore its reward drop | 2026-11-26. |
 | [J1519](PORTING_JOURNAL.md#j1519--bind-direct-selected-survivor-animators-before-native-locomotion) | 2026-11-26 | Bind direct-selected survivor Animators before native locomotion | 2026-11-26. |
+| [J1520](PORTING_JOURNAL.md#j1520--restore-the-native-gold-shores-boss-reward) | 2026-11-26 | Restore the native Gold Shores boss reward | 2026-11-27. |
+| [J1521](PORTING_JOURNAL.md#j1521--complete-the-assisted-converted-titanic-plains-teleporter-exit) | 2026-11-26 | Complete the assisted converted Titanic Plains teleporter exit | 2026-11-27. |
+| [J1522](PORTING_JOURNAL.md#j1522--retire-the-native-siren-boss-at-end-run) | 2026-11-26 | Retire the native Siren boss at End Run | 2026-11-27. |
+| [J1523](PORTING_JOURNAL.md#j1523--capture-commandos-natural-hit-flinch-and-recovery) | 2026-11-26 | Capture Commando's natural-hit flinch and recovery | 2026-11-27. |
+| [J1524](PORTING_JOURNAL.md#j1524--restore-converted-goolakes-native-mesh-references) | 2026-11-26 | Restore converted Goolake's native Mesh references | 2026-11-27. |
+| [J1525](PORTING_JOURNAL.md#j1525--measure-two-worker-native-compilation-on-android) | 2026-11-26 | Measure two-worker native compilation on Android | 2026-11-27. |
+| [J1526](PORTING_JOURNAL.md#j1526--restore-artificer-additive-gestures-and-default-skin) | 2026-11-26 | Restore Artificer additive gestures and default skin | 2026-11-27. |
+| [J1527](PORTING_JOURNAL.md#j1527--restore-transparency-to-the-native-engineer-shield) | 2026-11-27 | Restore transparency to the native Engineer shield | 2026-11-27. |
+| [J1529](PORTING_JOURNAL.md#j1529--qualify-external-saf-validation-and-import-resume) | 2026-11-27 | Qualify external SAF validation and import resume | 2026-11-27. |
+| [J1530](PORTING_JOURNAL.md#j1530--restore-converted-sandy-shrine-scripts-for-native-goolake-entry) | 2026-11-27 | Restore converted Sandy shrine scripts for native Goolake entry | 2026-11-27. |
+| [J1531](PORTING_JOURNAL.md#j1531--restore-artificer-charge-and-flame-materials) | 2026-11-27 | Restore Artificer charge and flame materials | 2026-11-27. |
+| [J1532](PORTING_JOURNAL.md#j1532--exclude-detached-player-hurtboxes-from-touch-aim) | 2026-11-27 | Exclude detached player HurtBoxes from touch aim | 2026-11-27. |

@@ -293,7 +293,8 @@ public sealed partial class PortSession
                                   "Native source skin lifecycle request requires an integrated run and an actual source-selected player model");
             bool bindSelectedSkin = coordinator.UsesNativeSelectedSkin(sourceSurvivor);
             if (bindSelectedSkin)
-                coordinator.r.nova.nativeSourceSkinLifecycle = new AndroidNativeSourceSkinLifecycle.Report { requested = true };
+                coordinator.r.nova.nativeSourceSkinLifecycle = coordinator.preSpawnSkin.report ??
+                    new AndroidNativeSourceSkinLifecycle.Report { requested = true };
             NovaInputBridge.Mapping mapping = null;
             if (physicalInputAvailable)
             {
@@ -374,8 +375,7 @@ public sealed partial class PortSession
                                                     coordinator.obstacle, spine, cfg.originalAimPresentation ? body : null,
                                                     sourceSurvivor,
                                                     nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle,
-                                                    coordinator.stageGeometryScene);
-                coordinator.RevealPreparedSourceModel();
+                                                    coordinator.stageGeometryScene, coordinator.preSpawnSkin.owner);
                 if (bindSelectedSkin)
                 {
                     float assetDeadline = Time.realtimeSinceStartup + 15f;
@@ -399,6 +399,7 @@ public sealed partial class PortSession
                                       "Original Animator did not initialize after native selected controller/avatar readiness");
                     display.EnableNativeAimAfterAnimatorReady();
                 }
+                coordinator.RevealPreparedSourceModel();
                 coordinator.r.framePacing = display.presentationCameraReport;
                 if (coordinator.r.rawFrameTimesRequested && display.presentationCamera)
                     display.presentationCamera.BeginRawFrameCapture();

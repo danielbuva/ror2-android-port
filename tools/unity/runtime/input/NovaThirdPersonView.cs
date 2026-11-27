@@ -14,8 +14,9 @@ public sealed class NovaThirdPersonView
         public bool perspective, originalParams, relativeMovement, rayAim;
         public string parameters;
         public int frames, collisions, physicalFrames, touchFrames, lookFrames;
+        public int detachedOwnHurtBoxRejections;
         public float yaw, pitch, distance, minDistance = 999, maxDistance, maxAimError;
-        public Vector3 position, direction, move;
+        public Vector3 position, direction, move, aimPoint;
         public float fov;
     }
     public readonly Report report = new Report();
@@ -84,6 +85,7 @@ public sealed class NovaThirdPersonView
         var ray = camera.ViewportPointToRay(new Vector3(.5f, .5f, 0));
         var point = ray.origin + ray.direction * 500;
         float closest = 500;
+        var ownHealth = body.healthComponent;
         int count =
             Physics.RaycastNonAlloc(ray, hits, 500, LayerIndex.world.mask | LayerIndex.entityPrecise.mask, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < count; i++)
@@ -91,11 +93,18 @@ public sealed class NovaThirdPersonView
             var hit = hits[i];
             if (!hit.collider || hit.collider.transform.IsChildOf(body.transform) || hit.distance >= closest)
                 continue;
+            // A native ModelLocator can detach the model and its HurtBoxes from the body.
+            if (ownHealth && hit.collider.TryGetComponent<HurtBox>(out var hurtBox) && hurtBox.healthComponent == ownHealth)
+            {
+                report.detachedOwnHurtBoxRejections++;
+                continue;
+            }
             closest = hit.distance;
             point = hit.point;
         }
         var direction = (point - body.inputBank.aimOrigin).normalized;
         report.rayAim = true;
+        report.aimPoint = point;
         report.direction = direction;
         return direction;
     }

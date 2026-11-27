@@ -24,7 +24,7 @@ class ScratchTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.path = self.root / "ci-local.fixture"
         self.path.mkdir()
         (self.path / "owner.lock").touch()
@@ -66,7 +66,9 @@ class ScratchTests(unittest.TestCase):
         self.addCleanup(self.env.stop)
 
     def test_old_dead_owner_removed(self):
-        self.assertEqual(self.reclaim(), "removed")
+        self.fake_hdiutil(attached=False)
+        with mock.patch.object(cleanup.sys, "platform", "darwin"):
+            self.assertEqual(self.reclaim(), "removed")
         self.assertFalse(self.path.exists())
 
     def test_live_owner_and_group_preserved(self):

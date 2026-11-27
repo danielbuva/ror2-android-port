@@ -21,6 +21,9 @@ leaves an adjacent <name>.retired.json marker. Rebuild from the recorded source
 commit if an old candidate is ever needed again.
 
 Defaults to a dry-run plan; --apply deletes and writes a ledger.
+--aggressive also retires stand-alone APKs in device/build output roots and
+compresses aged evidence. It uses a 48-hour minimum for stand-alone APKs and
+evidence, preserves immutable history, and measures volume free space on apply.
 --supersede OLD --by NEW marks a physical generated run as replaced by the
 latest direct result.json or *.done.json with success=true. After 24 hours,
 unchanged receipt-bound markers let generated outputs ignore historical manifest
@@ -34,17 +37,26 @@ guard defaults to three hours; other generated outputs retain the 24-hour guard.
 """
 
 import argparse
+import ctypes
+import fcntl
 import hashlib
 import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
+import struct
+import uuid
+
+from lab.evidence_files import compressed_path
 
 ROOT = Path(__file__).resolve().parent.parent
+PROTECTION_CHECKOUT = None
 HASH = re.compile(r"\b[0-9a-f]{64}\b")
 PROTECTION_DOCS = ("PORTING_STATE.md", "docs/BASELINE.md", "docs/history-retention.md")
 PROTECTION_RECEIPTS = ("coordination/codex-runtime.lock", "config/current-build.json", "config/iteration-base.json")
@@ -54,6 +66,57 @@ LARGE_BINARY = 32 * 1024 * 1024
 SCAN_ROOTS = ("experiments", "coordination", "rebuild")
 KEEP_MARKER = ".prune-keep"
 SUPERSEDED_MARKER = ".superseded-by"
+IMMUTABLE_DIRS = {"immutable-history", "retired-storage"}
+EXTRA_APK_ROOTS = {"device", "lab-build"}
+TRACE_NAMES = {"admission.jsonl", "exceptions.jsonl", "input-trace.jsonl", "phase-resources.jsonl"}
+AGGRESSIVE_KINDS = {"old APK", "trace compression"}
+
+
+def evidence_trace(path):
+    return (
+        path.suffix == ".snap"
+        or path.name in TRACE_NAMES
+        or (
+            path.suffix == ".jsonl"
+            and (re.search(r"(?:^|[.-])thermal\.jsonl$", path.name) or path.name.startswith("owner-unplugged-") or path.name.endswith(".samples.jsonl"))
+        )
+    )
+
+
+def apfs_sharing(path, info):
+    """Return possible sharing, or None if the filesystem exposes no answer."""
+    if sys.platform != "darwin":
+        return None
+    # getattrlist(2): ATTR_CMN_RETURNED_ATTRS and ATTR_CMNEXT_PRIVATESIZE,
+    # ATTR_CMNEXT_CLONE_REFCNT. FSOPT_ATTR_CMN_EXTENDED | FSOPT_NOFOLLOW.
+    private_size, clone_refcount = 0x0008, 0x1000
+    mask = private_size | clone_refcount
+    request = struct.pack("=HH5I", 5, 0, 0x80000000, 0, 0, 0, mask)
+    layout = struct.Struct("=6IQI")
+    result = ctypes.create_string_buffer(layout.size)
+    if ctypes.CDLL(None).getattrlist(os.fsencode(path), request, result, ctypes.c_size_t(layout.size), ctypes.c_ulong(0x21)):
+        return None
+    size, _, _, _, _, returned, private, refs = layout.unpack(result)
+    if size != layout.size or returned & mask != mask:
+        return None
+    return refs > 1 or private < info.st_blocks * 512
+
+
+def volume_available(work):
+    # POSIX df's available column reflects the backing volume, including clone
+    # sharing, open but unlinked files and activity from other processes.
+    row = subprocess.check_output(["df", "-kP", str(work)], text=True).splitlines()[-1]
+    return int(row.split()[3]) * 1024
+
+
+def file_identity(info):
+    return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns]
+
+
+def protected_docs(authoritative):
+    for root in dict.fromkeys((ROOT, PROTECTION_CHECKOUT or ROOT)):
+        for name in PROTECTION_DOCS[:2] if authoritative else PROTECTION_DOCS:
+            yield root / name
 
 
 def tree_size(path):
@@ -91,13 +154,12 @@ def sha256(path):
 
 def protected_state(work, extra, *, authoritative=False):
     hashes, paths = set(extra), set()
-    for name in PROTECTION_DOCS[:2] if authoritative else PROTECTION_DOCS:
-        path = ROOT / name
+    for path in protected_docs(authoritative):
         if path.is_file():
             hashes |= set(HASH.findall(path.read_text(errors="replace")))
     receipts = [work / PROTECTION_RECEIPTS[0]] if authoritative else [work / name for name in PROTECTION_RECEIPTS]
     if authoritative:
-        receipts += [ROOT / name for name in PROTECTION_DOCS[:2]]
+        receipts += list(protected_docs(authoritative=True))
     receipts += sorted((work / "device").glob("*.json")) + sorted((work / "device").glob("*/*.json"))
     for path in receipts:
         if not path.is_file():
@@ -110,18 +172,21 @@ def protected_state(work, extra, *, authoritative=False):
         for reference in references:
             candidate = Path(reference)
             candidate = candidate if candidate.is_absolute() else ROOT / candidate
+            resolved = candidate.resolve()
             # Shallow roots such as work/experiments would protect everything.
-            if (candidate.is_relative_to(work) and len(candidate.relative_to(work).parts) >= (2 if authoritative else 3)) or (
-                candidate.is_relative_to(ROOT / ".local/build-lanes") and len(candidate.relative_to(ROOT / ".local/build-lanes").parts) >= 1
-            ):
-                paths.add(candidate.resolve())
+            for witness in (candidate, resolved):
+                if (witness.is_relative_to(work) and len(witness.relative_to(work).parts) >= (2 if authoritative else 3)) or (
+                    witness.is_relative_to(ROOT / ".local/build-lanes") and len(witness.relative_to(ROOT / ".local/build-lanes").parts) >= 1
+                ):
+                    paths.add(resolved)
+                    break
     return hashes, paths
 
 
 def kept(path, work):
     """A `.prune-keep` file in a directory (or any parent under work/) protects it."""
     current = path if path.is_dir() else path.parent
-    while current.is_relative_to(work) and current != work:
+    while current.is_relative_to(work):
         if (current / KEEP_MARKER).exists():
             return True
         current = current.parent
@@ -213,10 +278,9 @@ def cache_protected_state(work, extra):
     """Select live cache references, never nested payload/member hash lists."""
     hashes = {digest: "explicit --keep-sha256" for digest in extra}
     keys = {}
-    for name in PROTECTION_DOCS[:2]:
-        path = ROOT / name
+    for path in protected_docs(authoritative=True):
         if path.is_file():
-            hashes.update({digest: "APK pinned in " + name for digest in HASH.findall(path.read_text(errors="replace"))})
+            hashes.update({digest: "APK pinned in " + path.name for digest in HASH.findall(path.read_text(errors="replace"))})
     cache_root = (work / "build-cache").resolve()
     for name in ("current-build", "iteration-base"):
         receipt = read_receipt(work / "config" / (name + ".json"))
@@ -284,11 +348,12 @@ def is_protected_path(path, paths):
 
 
 class Planner:
-    def __init__(self, work, hashes, paths, min_age_hours, cache_protection=None, cache_min_age_hours=None, superseded_protection=None):
+    def __init__(self, work, hashes, paths, min_age_hours, cache_protection=None, cache_min_age_hours=None, superseded_protection=None, *, aggressive=False):
         self.work, self.hashes, self.paths = work, hashes, paths
         self.cutoff = time.time() - min_age_hours * 3600
         self.cache_cutoff = time.time() - (min_age_hours if cache_min_age_hours is None else cache_min_age_hours) * 3600
         self.items, self.kept = [], []
+        self.aggressive_cutoff = min(self.cutoff, time.time() - 48 * 3600) if aggressive else None
         self.authoritative_hashes, self.authoritative_paths = (
             superseded_protection if superseded_protection is not None else protected_state(work, [], authoritative=True)
         )
@@ -403,6 +468,10 @@ class Planner:
         ):
             self.keep(path, KEEP_MARKER)
             return
+        if self.aggressive_cutoff is not None and path.is_dir() and not path.is_symlink():
+            if any(any(path.rglob(name)) for name in IMMUTABLE_DIRS) or any(path.rglob("*.apk")):
+                self.keep(path, "contains immutable history or separately managed APKs")
+                return
         if receipt_protection and is_protected_path(path, self.paths):
             self.keep(path, "named by a protection receipt")
             return
@@ -427,6 +496,8 @@ class Planner:
                 reasons[entry.name] = self.cache_keys[entry.name]
             elif newest_mtime(entry) >= self.cache_cutoff:
                 reasons[entry.name] = "recent"
+            elif self.aggressive_cutoff is not None and (kept(entry, self.work) or any(entry.rglob(KEEP_MARKER))):
+                reasons[entry.name] = KEEP_MARKER
         for entry, receipt in entries.items():
             if entry.name in reasons:
                 payload_key = payload_cache_key(cache_root, receipt.get("payload_directory"))
@@ -462,11 +533,15 @@ class Planner:
 
     def scan(self, name):
         root = self.work / name
-        if not root.is_dir():
+        if root.is_symlink() or not root.is_dir():
             return
         supersessions = {}
         for base, dirs, files in os.walk(root):
             here = Path(base)
+            dirs[:] = [d for d in dirs if d not in IMMUTABLE_DIRS]
+            if KEEP_MARKER in files or (here / KEEP_MARKER).exists():
+                dirs.clear()
+                continue
             superseded_run = next(
                 (
                     parent
@@ -513,16 +588,159 @@ class Planner:
                 library = f.endswith(".so") and path.stat().st_size >= LARGE_BINARY
                 if not (binary or library):
                     continue
+                if self.aggressive_cutoff is not None and path.suffix == ".apk":
+                    # The aggressive sweep applies one APK age guard and
+                    # records a digest for revalidation before unlinking.
+                    continue
                 if protected_here or is_protected_path(path, paths):
                     self.keep(path, "protected APK set")
                 elif self.old(path):
                     self.add(path, "generated binary", receipt_protection=not superseded_run, **extra)
 
+    def aggressive_files(self):
+        """Select old standalone APKs and losslessly compressible evidence."""
+        planned = {item["path"] for item in self.items}
+        volume = self.work.stat().st_dev
+        apk_roots = {*SCAN_ROOTS, *EXTRA_APK_ROOTS}
+        hashes = self.hashes | self.authoritative_hashes
+        paths = self.paths | self.authoritative_paths
+        supersessions = {}
+        for base, dirs, files in os.walk(self.work):
+            here = Path(base)
+            if (here / KEEP_MARKER).exists():
+                dirs.clear()
+                continue
+            dirs[:] = [d for d in dirs if d not in IMMUTABLE_DIRS and (here / d) not in planned and not (here / d).is_symlink()]
+            for name in files:
+                path = here / name
+                apk = path.suffix == ".apk" and path.relative_to(self.work).parts[0] in apk_roots
+                if path in planned or not (apk or evidence_trace(path)):
+                    continue
+                try:
+                    info = path.lstat()
+                    if not stat.S_ISREG(info.st_mode) or info.st_dev != volume or info.st_mtime >= self.aggressive_cutoff:
+                        continue
+                    item = {"path": path, "bytes": info.st_size, "identity": file_identity(info)}
+                    if apk:
+                        marked = next((p for p in path.parents if p.is_relative_to(self.work) and os.path.lexists(p / SUPERSEDED_MARKER)), None)
+                        if marked is not None:
+                            if marked not in supersessions:
+                                supersessions[marked] = superseded_ready(marked, self.work, self.authoritative_hashes, self.authoritative_paths, self.cutoff)
+                            if not supersessions[marked]:
+                                self.keep(path, "supersession not eligible or protected")
+                                continue
+                            item.update(superseded_run=str(marked.relative_to(ROOT)), superseded_marker_sha256=sha256(marked / SUPERSEDED_MARKER))
+                        if is_protected_path(path, paths) or any(digest[:12] in str(path.parent) for digest in hashes):
+                            self.keep(path, "protected APK set")
+                            continue
+                        digest = sha256(path)
+                        if digest in hashes:
+                            self.keep(path, "pinned APK hash")
+                            continue
+                        self.items.append(dict(item, kind="old APK", apk_sha256=digest))
+                    elif info.st_blocks * 512 > 4096 and not os.path.lexists(compressed_path(path)):
+                        sharing = apfs_sharing(path, info)
+                        if info.st_nlink > 1 or sharing:
+                            self.keep(path, "evidence may share allocated blocks")
+                        else:
+                            self.items.append(dict(item, kind="trace compression", apfs_sharing=sharing))
+                except FileNotFoundError:
+                    continue  # An active run may clean up its own scratch.
 
-def apply(plan, work, ledger_path):
+    def rebuild_outputs(self):
+        """Retire generated output copies from terminal, unpinned R9 attempts."""
+        hashes = self.hashes | self.authoritative_hashes
+        paths = self.paths | self.authoritative_paths
+        for receipt in (self.work / "rebuild").glob("*/*/.rebuild/unity/*/result.json"):
+            run = receipt.parent
+            result = read_receipt(receipt)
+            payload = run / "generated-android-data"
+            recorded_payload = result.get("payload_directory")
+            digest = result.get("apk_sha256")
+            members = result.get("payload")
+            if (
+                receipt.resolve() != receipt
+                or IMMUTABLE_DIRS.intersection(run.relative_to(self.work).parts)
+                or result.get("success") is not True
+                or not isinstance(recorded_payload, str)
+                or Path(recorded_payload).parts[-4:] != payload.parts[-4:]
+                or not isinstance(digest, str)
+                or not HASH.fullmatch(digest)
+                or digest in hashes
+                or not isinstance(members, dict)
+                or is_protected_path(run, paths)
+                or not self.old(run)
+            ):
+                continue
+            cache = run / "gradle/caches"
+            if cache.is_dir() and cache.resolve() == cache:
+                self.add(cache, "isolated R9 Gradle cache")
+            if not payload.is_dir() or payload.resolve() != payload:
+                continue
+            for bundle in payload.iterdir():
+                if bundle.is_symlink() or not bundle.is_file() or bundle.suffix or bundle.name not in members:
+                    continue
+                with bundle.open("rb") as stream:
+                    if stream.read(8) != b"UnityFS\0":
+                        continue
+                self.add(bundle, "receipted R9 Unity bundle")
+
+
+def compress_trace(path, info):
+    target = compressed_path(path)
+    zstd = shutil.which("zstd")
+    if zstd is None:
+        raise RuntimeError("zstd is required to compress retained evidence")
+    with tempfile.NamedTemporaryFile(prefix=".prune-", dir=path.parent) as temporary:
+        subprocess.run([zstd, "-q", "-6", "--check", "-c", "--", str(path)], stdout=temporary, check=True)
+        compressed = os.fstat(temporary.fileno())
+        if compressed.st_blocks >= info.st_blocks:
+            return {"skipped": "compression does not reduce allocated bytes"}
+        subprocess.run([zstd, "-qt", "--", temporary.name], check=True)
+        os.utime(temporary.name, ns=(info.st_atime_ns, info.st_mtime_ns))
+        if file_identity(path.lstat()) != file_identity(info):
+            return {"skipped": "source changed during compression"}
+        # Publish atomically without overwriting any existing archive. If
+        # interrupted here, the original and the verified archive both remain.
+        os.link(temporary.name, target)
+        path.unlink()
+        return {"action": "compressed", "zstd_bytes": compressed.st_size}
+
+
+def apply_aggressive(item, work, hashes, paths):
+    path = item["path"]
+    try:
+        info = path.lstat()
+        if file_identity(info) != item["identity"] or path.resolve() != path or kept(path, work):
+            item["skipped"] = "source changed or became protected after planning"
+        elif item["kind"] == "trace compression":
+            if info.st_nlink > 1 or apfs_sharing(path, info):
+                item["skipped"] = "evidence may share allocated blocks"
+            else:
+                item.update(compress_trace(path, info))
+        elif item["apk_sha256"] in hashes or is_protected_path(path, paths):
+            item["skipped"] = "APK became pinned after planning"
+        else:
+            path.unlink()
+            item["action"] = "deleted"
+    except FileNotFoundError:
+        item["skipped"] = "already removed by concurrent cleanup"
+    except FileExistsError:
+        item["skipped"] = "compressed evidence already exists"
+    except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+        item["error"] = str(error)
+
+
+def apply(plan, work, ledger_path, *, aggressive=False, extra_hashes=()):
     retired_receipts = work / "cleanup-analysis/pruned-build-cache"
     reason = "Rebuildable generated output discarded by scripts/prune-generated.py; rebuild from the recorded source commit"
     supersessions = {}
+    if aggressive:
+        hashes, paths = protected_state(work, extra_hashes)
+        authoritative_hashes, authoritative_paths = protected_state(work, extra_hashes, authoritative=True)
+        hashes |= authoritative_hashes
+        paths |= authoritative_paths
+        before = volume_available(work)
     for item in plan:
         path = item["path"]
         if not path.exists() and not path.is_symlink():
@@ -537,6 +755,9 @@ def apply(plan, work, ledger_path):
             if not supersessions[run]:
                 item["skipped"] = "supersession changed or became protected after planning"
                 continue
+        if item["kind"] in AGGRESSIVE_KINDS:
+            apply_aggressive(item, work, hashes, paths)
+            continue
         if item["kind"] == "build lane":
             from build_lanes import remove
 
@@ -574,19 +795,35 @@ def apply(plan, work, ledger_path):
                     + "\n"
                 )
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    ledger_path.write_text(json.dumps([{**i, "path": str(i["path"].relative_to(ROOT))} for i in plan], indent=2) + "\n")
+    items = [{**i, "path": str(i["path"].relative_to(ROOT))} for i in plan]
+    if aggressive:
+        after = volume_available(work)
+        measurements = {
+            "volume_available_before_bytes": before,
+            "volume_available_after_bytes": after,
+            "volume_available_delta_bytes": after - before,
+            "volume_available_delta_gib": round((after - before) / (1 << 30), 3),
+            "compression_sharing_unknown": sum(i["kind"] == "trace compression" and i["apfs_sharing"] is None for i in items),
+            "errors": sum("error" in i for i in items),
+        }
+        ledger_path.write_text(json.dumps({**measurements, "items": items}, indent=2) + "\n")
+        return measurements
+    ledger_path.write_text(json.dumps(items, indent=2) + "\n")
 
 
 def main():
-    global ROOT
+    global ROOT, PROTECTION_CHECKOUT
     # Linked worktrees share the canonical ignored work/ and build-lane owners.
-    ROOT = Path(subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()).parent
+    checkout = ROOT
+    PROTECTION_CHECKOUT = checkout
+    ROOT = Path(subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()).parent
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--work-dir", default=str(ROOT / "work"))
     parser.add_argument("--min-age-hours", type=float, default=24.0)
     parser.add_argument("--cache-min-age-hours", type=float, default=3.0, help="Age guard for superseded build-cache entries only")
     parser.add_argument("--keep-sha256", action="append", default=[], help="Additional APK SHA-256 to protect")
     parser.add_argument("--apply", action="store_true", help="Delete the planned items (default: print the plan only)")
+    parser.add_argument("--aggressive", action="store_true", help="Retire 48-hour-old unpinned APKs and compress old traces and snapshots")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--supersede", metavar="OLD", help="Mark a generated run/version as replaced; no deletion")
     parser.add_argument("--by", metavar="NEW", help="Replacement run with a passing receipt")
@@ -595,14 +832,23 @@ def main():
     if not work.is_dir() or not work.is_relative_to(ROOT):
         sys.exit("work directory must exist inside this checkout")
     if args.supersede or args.by:
-        if not args.supersede or not args.by or args.apply:
+        if not args.supersede or not args.by or args.apply or args.aggressive:
             parser.error("--supersede OLD requires --by NEW and cannot be combined with --apply")
         try:
             print(json.dumps(supersede(args.supersede, args.by, work)))
         except (OSError, ValueError) as error:
             parser.error(str(error))
         return
-    # No lock check: the --min-age-hours guard already excludes anything a running build writes.
+    if args.apply:
+        cleanup = work / "cleanup-analysis"
+        cleanup.mkdir(parents=True, exist_ok=True)
+        with (cleanup / ".prune.lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            return run(args, work)
+    return run(args, work)
+
+
+def run(args, work):
     hashes, paths = protected_state(work, args.keep_sha256)
     planner = Planner(
         work,
@@ -612,16 +858,22 @@ def main():
         cache_protected_state(work, args.keep_sha256),
         args.cache_min_age_hours,
         protected_state(work, args.keep_sha256, authoritative=True),
+        aggressive=args.aggressive,
     )
     planner.build_cache()
     planner.lab_build()
     planner.lanes()
-    planner.snapshots()
+    if not args.aggressive:
+        planner.snapshots()
     for name in SCAN_ROOTS:
         planner.scan(name)
+    if args.aggressive:
+        planner.rebuild_outputs()
+        planner.aggressive_files()
     total = sum(i["bytes"] for i in planner.items)
     summary = {
         "mode": "apply" if args.apply else "plan",
+        "aggressive": args.aggressive,
         "protected_hashes": len(hashes),
         "cache_protected_hashes": len(planner.cache_hashes),
         "cache_protected_keys": len(planner.cache_keys),
@@ -631,8 +883,11 @@ def main():
         "kept": len(planner.kept),
     }
     if args.apply:
-        ledger = work / "cleanup-analysis" / ("prune-" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + ".json")
-        apply(planner.items, work, ledger)
+        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        ledger = work / "cleanup-analysis" / f"{'aggressive-' if args.aggressive else ''}prune-{stamp}-{uuid.uuid4().hex[:8]}.json"
+        measurements = apply(planner.items, work, ledger, aggressive=args.aggressive, extra_hashes=args.keep_sha256)
+        if measurements:
+            summary.update(measurements)
         summary["ledger"] = str(ledger.relative_to(ROOT))
     if args.json:
         print(json.dumps({**summary, "kept_items": planner.kept, "plan": [{**i, "path": str(i["path"].relative_to(ROOT))} for i in planner.items]}, indent=2))
@@ -645,6 +900,8 @@ def main():
         for kind, (count, size) in sorted(by_kind.items()):
             print(f"{kind}: {count} items, {size / (1 << 30):.1f} GiB")
         print(json.dumps(summary))
+    if summary.get("errors"):
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -147,6 +147,23 @@ public final class OwnerInstaller {
         catch (RuntimeException unavailable) { return "unavailable"; }
     }
 
+    private static String digestHex(MessageDigest hash) {
+        StringBuilder value = new StringBuilder();
+        for (byte b : hash.digest()) value.append(String.format(Locale.ROOT, "%02x", b & 255));
+        return value.toString();
+    }
+    private static void verifyPreparedBytes(File apk, String expectedHash) throws Exception {
+        if (expectedHash == null || !expectedHash.matches("[0-9a-f]{64}"))
+            throw new IOException("Verified APK checksum missing. Rebuild before installing; the installed version was not changed.");
+        MessageDigest hash = MessageDigest.getInstance("SHA-256");
+        try (InputStream input = new FileInputStream(apk)) {
+            byte[] buffer = new byte[65536]; int count;
+            while ((count = input.read(buffer)) != -1) hash.update(buffer, 0, count);
+        }
+        if (!expectedHash.equals(digestHex(hash)))
+            throw new IOException("Owner APK output drift: checksum differs. Rebuild before installing; the installed version was not changed.");
+    }
+
     public static synchronized void install(Context app, File apk, String expectedHash, String expectedPackage, long expectedVersion) throws Exception {
         if (busy(app)) throw new IOException("An installation is already pending");
         PackageManager manager = app.getPackageManager();
@@ -164,8 +181,11 @@ public final class OwnerInstaller {
             long newVersion = version(next);
             if (newVersion <= oldVersion) throw new IOException("Update version must increase");
             if (!Arrays.equals(current.signatures, next.signatures))
-                throw new IOException("Owner signing key differs. Retain the original key; never uninstall to update or roll back.");
+                throw new IOException("Owner signing key differs. The installed version was not changed. Restore the original key; never uninstall to update or roll back.");
         }
+        // Reject corrupt bytes before profile preparation or creation of a
+        // package session; keep the streamed hash below to catch later drift.
+        verifyPreparedBytes(apk, expectedHash);
         diagnostic(app, "prepare", null, false);
         if (OwnerAlphaInstall.PACKAGE.equals(next.packageName)) {
             try { OwnerAlphaInstall.prepare(app, apk, expectedHash, next, current); }
@@ -200,9 +220,7 @@ public final class OwnerInstaller {
                 while ((count = input.read(buffer)) != -1) {
                     hash.update(buffer, 0, count); output.write(buffer, 0, count);
                 }
-                StringBuilder actual = new StringBuilder();
-                for (byte value : hash.digest()) actual.append(String.format(Locale.ROOT, "%02x", value & 255));
-                if (!actual.toString().equals(expectedHash)) throw new IOException("Owner APK output drift");
+                if (!expectedHash.equals(digestHex(hash))) throw new IOException("Owner APK output drift");
                 diagnostic(app, "write-complete", null, false);
                 diagnostic(app, "fsync-start", null, false);
                 session.fsync(output);

@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-11-26 UTC. This laboratory is not a finished port. Evidence lives in
+Updated 2026-11-27 UTC. This laboratory is not a finished port. Evidence lives in
 [the journal](docs/PORTING_JOURNAL.md) and [index](docs/JOURNAL_INDEX.md);
 [J1–J1177 are frozen](docs/history/journal-J1-J1177/JOURNAL_INDEX.md).
 Named APK hashes are protected by the pruner.
@@ -11,9 +11,9 @@ Named APK hashes are protected by the pruner.
 | --- | --- |
 | Input and toolchain | Accepted Steam 25475991; Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan. Pins: `environment/toolchain.json`. |
 | Compatibility reference (P1) | Lab APK `9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`, source `6c12b506`. Match behaviour, content, visuals and performance as closely as possible; structural/gameplay checks stay strict, byte equality is diagnostic. |
-| Latest device-verified APK | Lab APK `f9cfbafd21a627934da1062fa62eea2381d3259f545dcf03b2b9ebceba1f7a6d`, source `1a1bfd8d`, verified the live equipment-barrel lock binding during assisted Distant Roost play (J1503). Converted APK `20726b61542cc5d08ece1b1030a7512a5b05fafd995f4baa7b364ac817ca608a`, source `538d1f1c`, reached the original-catalog survivor menu (J1476). Converted ordinary stage play and End Run remain open. |
-| Installed now (last recorded) | Main Nova: the lab APK above on adopted storage, stopped with the display asleep. J1476 records the last converted package observation on adopted storage. |
-| Runtime source since those APKs | Main carries the verified equipment-lock repair. The lab evidence build also contains private audio instrumentation. The converted APK predates native results cleanup, settings interaction, HUD presentation and the verified lab gameplay fixes. |
+| Latest device-verified APK | Lab APK `2b26289f0b5697b7a7b1e40ad59118c41cf667ae6c667e9799b75b603208205d`, source `72199696`, verified the native Gold Shores boss reward and return in assisted play. Converted APK `20726b61542cc5d08ece1b1030a7512a5b05fafd995f4baa7b364ac817ca608a`, source `538d1f1c`, reached the original-catalog survivor menu (J1476). Converted ordinary stage play and End Run remain open. |
+| Installed now (last recorded) | Secondary Nova: the Gold Shores APK, stopped with the display asleep. J1476 records the last converted package observation on adopted storage. |
+| Runtime source since those APKs | Main carries the verified equipment-lock repair. The Gold evidence APK was built from the private owner baseline. The converted APK predates native results cleanup, settings interaction, HUD presentation and the verified lab gameplay fixes. |
 | Converter | Android emitted all 290,498 records of the strict whole-game bundle request. The output hash matches the host run (J1478). Unity typed load and playable APK integration of this specific bundle remain open. |
 | Installer | [#241](https://github.com/danielbuva/ror2-android-port/pull/241) ships authorized synthetic prompts and readable live status. [#417](https://github.com/danielbuva/ror2-android-port/pull/417) qualifies visible installer permission and consent. Check for updates, same-key update/rollback and real profile retention still need complete phone qualification. |
 
@@ -68,7 +68,9 @@ source `f94c0c30`.
 
 Retained lab checkpoints: J1500 full Wwise bank roster
 `56840f9b2c1a4921ae6ee7ac8b594604b587b477435da28fcc7b5cad6d46ac57`,
-source `0f35c164`, and Huntress/Acrid, Mercenary and Sky Meadow verification
+source `0f35c164`, J1503 assisted Distant Roost equipment-barrel lock
+`f9cfbafd21a627934da1062fa62eea2381d3259f545dcf03b2b9ebceba1f7a6d`,
+source `1a1bfd8d`, and Huntress/Acrid, Mercenary and Sky Meadow verification
 `954762f99f172761afe8d45308c5cd764f4556047aba1e1fe44147dd04d81b5c`,
 source `12e4f205`.
 

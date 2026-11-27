@@ -655,7 +655,7 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
     if source["input_id"] != input_id or source["source_catalog_sha256"] != policy["source_catalog_sha256"]:
         raise ValueError("catalog projection source identity differs")
 
-    paths = {path.casefold(): path for build in builds for path in build["assetNames"]}
+    paths = {path.casefold() for build in builds for path in build["assetNames"]}
     excluded = set(policy["exclusions"])
     remaps = policy["remaps"]
     known = {row["id"] for row in source["locations"]}
@@ -668,20 +668,21 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
             continue
         selector = str(location)
         if selector in remaps:
-            path = paths.get(remaps[selector].casefold())
-            if path is None:
+            path = remaps[selector]
+            if path.casefold() not in paths:
                 raise ValueError("catalog projection remap has no produced owner: " + selector)
             mapped[selector] = path
             continue
-        original_key = original.casefold()
-        candidates = {original_key}
-        if original_key.startswith("assets/"):
-            candidates.add("assets/wholegame/" + original_key.removeprefix("assets/"))
-        matches = {candidate for candidate in candidates if candidate in paths}
+        # UnityFS container names can be lowercased. Runtime locations retain
+        # the source spelling even when the produced owner matches by casefold.
+        candidates = {original}
+        if original.casefold().startswith("assets/"):
+            candidates.add("Assets/WholeGame/" + original.split("/", 1)[1])
+        matches = {candidate for candidate in candidates if candidate.casefold() in paths}
         if len(matches) > 1:
             raise ValueError("catalog projection has ambiguous produced owners: " + selector)
         if matches:
-            mapped[selector] = paths[matches.pop()]
+            mapped[selector] = matches.pop()
     if not remaps.keys() <= mapped.keys():
         raise ValueError("catalog projection remap must select an asset location")
 
@@ -701,10 +702,10 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
             keys.append(dict(row, locations=selected))
     mesh_subobjects = []
     for row in policy["mesh_subobjects"]:
-        path = row["path"].casefold()
-        if path not in paths:
+        path = row["path"]
+        if path.casefold() not in paths:
             raise ValueError("catalog projection mesh alias has no produced owner: " + row["key"])
-        mapped[path] = paths[path]
+        mapped[path] = path
         mesh_subobjects.append(dict(source=path, key=row["key"], type=row["type"]))
     closure = dict(
         input_id=input_id,

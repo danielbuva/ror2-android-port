@@ -63,6 +63,7 @@ NON_TEMPERATURE_ZONES = {
 }
 THERMAL_INTERVAL_SECONDS = 0.25
 THERMAL_MAX_GAP_SECONDS = 5
+SOC_CEILING_CELSIUS = 90
 THERMAL_GAP_ERROR = "Thermal sample gap exceeded five seconds"
 BATCH_DEADLINE_SECONDS = 3 * 60 * 60
 
@@ -140,9 +141,11 @@ class _GameThermalOwner:
     cooldown before a new stage requires at most 50 C, battery at most 35 C.
     """
 
-    def __init__(self, device, expected, trace, deadline, *, charge_override=CHARGE_OVERRIDE):
+    def __init__(self, device, expected, trace, deadline, *, charge_override=CHARGE_OVERRIDE, enforce_soc_ceiling=False):
         self.device, self.expected, self.trace, self.deadline = device, expected, trace, deadline
         self.charge_override = charge_override
+        self.enforce_soc_ceiling = enforce_soc_ceiling
+        self.soc_celsius = None
         self.stop = threading.Event()
         self.sample_stop = threading.Event()
         self.thread = None
@@ -245,6 +248,14 @@ class _GameThermalOwner:
                 if line.split()[0].lower().startswith(("cpu", "gpu")) and line.split()[1] != "UNREADABLE" and int(line.split()[1]) > -30000
             ]
             processor_peak = max(processors)
+            if self.enforce_soc_ceiling:
+                self.soc_celsius = processor_peak
+                for line in text.splitlines():
+                    name, raw, *_ = line.split()
+                    name = name.lower()
+                    if (name == "soc" or name.startswith(("soc-", "soc_"))) and raw != "UNREADABLE":
+                        self.soc_celsius = max(self.soc_celsius, int(raw) / 1000)
+                observation["soc_celsius"] = self.soc_celsius
             if not all_zones:
                 if self.previous_above_80 and gap <= 1:
                     self.time_above_80_seconds += gap
@@ -252,6 +263,8 @@ class _GameThermalOwner:
                 self.peak_cpu_gpu_celsius = max(processor_peak, self.peak_cpu_gpu_celsius or processor_peak)
             observation.update(time_above_80_seconds=self.time_above_80_seconds, peak_cpu_gpu_celsius=self.peak_cpu_gpu_celsius)
             if not all_zones:
+                if self.enforce_soc_ceiling and self.soc_celsius >= SOC_CEILING_CELSIUS:
+                    raise RuntimeError(f"SoC thermal ceiling reached {SOC_CEILING_CELSIUS} C")
                 if gap > THERMAL_MAX_GAP_SECONDS:
                     raise RuntimeError(THERMAL_GAP_ERROR)
                 if gap > 1:
@@ -332,7 +345,11 @@ class _GameThermalOwner:
                 time.sleep(30)
                 continue
             charging_since = None
-            if maximum <= 50 and max(self.battery["celsius"], self.battery_zone_celsius) <= 35:
+            if (
+                maximum <= 50
+                and max(self.battery["celsius"], self.battery_zone_celsius) <= 35
+                and (self.soc_celsius is None or self.soc_celsius < SOC_CEILING_CELSIUS)
+            ):
                 self.admission_battery = self.battery.copy()
                 break
             time.sleep(THERMAL_INTERVAL_SECONDS)
@@ -482,9 +499,8 @@ def _sleep_awakened():
 
 
 def _prune(root):
-    result = subprocess.run(
-        [sys.executable, str(root / "scripts/prune-generated.py"), "--apply", "--work-dir", str(root / "work")], capture_output=True, text=True
-    )
+    pruner = Path(__file__).resolve().parents[1] / "prune-generated.py"
+    result = subprocess.run([sys.executable, str(pruner), "--apply", "--aggressive", "--work-dir", str(root / "work")], capture_output=True, text=True)
     if result.returncode:
         raise RuntimeError("Canonical generated-output pruning failed: " + result.stderr[-1000:])
 

@@ -240,8 +240,8 @@ def extend_selection(owner, member, required, selected, types, routes, extension
     required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
 
 
-def original_identities(owner, path, source_files=None, *, destinations=None):
-    """Reverse original body selectors, SDK Shader leaves and MonoScript remaps."""
+def original_identities(owner, path, source_files=None, *, destinations=None, generated=None, relocations=None, shader_dependencies=None):
+    """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
 
     def add(record, source):
@@ -269,6 +269,32 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
                 else:
                     add(record, ("sdk", "Resources/unity_builtin_extra", row["sdk_shader"]))
             return result
+        if "shader_links" in profile:
+            shader_records = [(row["original"], row["outputs"]) for row in profile["records"]]
+            if shader_dependencies is not None:
+                sdk = "sdk", "Resources/unity_builtin_extra"
+                links = {tuple(link["to"]): (*sdk, link["sdk_shader"]) for link in profile["shader_links"]}
+                for row in profile["records"]:
+                    routes = links
+                    if "fallback_original" in row:
+                        routes = {tuple(link["to"]): tuple(link["original"][key] for key in ("path", "member", "path_id")) for link in row["fallback_original"]}
+                    source = tuple(row["original"][key] for key in ("path", "member", "path_id"))
+                    for output in row["outputs"]:
+                        record = tuple(output[key] for key in ("bundle", "member", "path_id"))
+                        shader_dependencies[record, source] = routes
+        elif "shaders" in profile and "source" in profile and "template_inputs" in profile:
+            shader_records = [(dict(profile["source"], path_id=row["path_id"]), row["outputs"]) for row in profile["shaders"]]
+        elif "source_type" in profile and "compiler_sdk" in profile and "materials" in profile:
+            shader_records = [(profile["source_type"], profile["outputs"])]
+        else:
+            shader_records = None
+        if shader_records is not None:
+            for source, outputs in shader_records:
+                if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
+                    raise ValueError("original source file pins disagree")
+                for target in outputs:
+                    add((target["bundle"], target["member"], target["path_id"]), (source["path"], source["member"], source["path_id"]))
+            return result
         if "original_sources" in profile:
             originals = profile["original_sources"]
             for row in profile["records"]:
@@ -287,10 +313,23 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
                     if source_files.setdefault(source["path"], digest) != digest:
                         raise ValueError("original source file pins disagree")
             for row in profile["objects"]:
+                record = bundle["name"], bundle["member"], row["path_id"]
+                if row.get("generate") == "DefaultMaterial":
+                    declaration = dict(kind="sdk_material", class_id=21)
+                elif row.get("fieldless_script_record") is True:
+                    declaration = dict(kind="fieldless_component", class_id=114)
+                elif "record" in row and "script_identity" in row and "source" not in row:
+                    declaration = dict(kind="current_script", class_id=115, identity=row["script_identity"])
+                else:
+                    declaration = None
+                if declaration is not None:
+                    if generated is not None:
+                        generated[record] = declaration
+                    continue
                 source = row.get("source", row.get("properties_hash", {}).get("behaviour"))
                 if source is not None:
                     original = profile["sources"][source[0]]
-                    add((bundle["name"], bundle["member"], row["path_id"]), (original["path"], original["member"], source[1]))
+                    add(record, (original["path"], original["member"], source[1]))
             return result
         bundles = profile["bundles"]
     for bundle in bundles:
@@ -300,7 +339,11 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
             for kind in ("objects", "meshes", "textures", "avatars"):
                 for row in member.get(kind, []):
                     for target in row["outputs"]:
-                        add((target["bundle"], target["member"], target["path_id"]), (bundle["path"], member["name"], row["path_id"]))
+                        record = target["bundle"], target["member"], target["path_id"]
+                        source = bundle["path"], member["name"], row["path_id"]
+                        add(record, source)
+                        if relocations is not None and (references := target.get("transform", {}).get("references")):
+                            relocations[record, source] = {reference["offset"]: reference for reference in references}
     return result
 
 
@@ -384,17 +427,36 @@ def prepare(owner, inputs, output):
         if logical in providers and providers[logical] != directory:
             raise ValueError("ambiguous supplier provider")
         providers[logical] = directory
-        profiles[name] = original_identities(owner, paths["profile"], source_files)
-        suppliers[name] = SimpleNamespace(paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]))
+        generated, relocations, shader_dependencies = {}, {}, {}
+        profiles[name] = original_identities(
+            owner, paths["profile"], source_files, generated=generated, relocations=relocations, shader_dependencies=shader_dependencies
+        )
+        suppliers[name] = SimpleNamespace(
+            paths=paths,
+            types=types,
+            provider=logical,
+            profile_sha=owner.O.B.sha(paths["profile"]),
+            generated=generated,
+            relocations=relocations,
+            shader_dependencies=shader_dependencies,
+        )
     producer = owner.ProducerRecords(providers)
     bindings, sources = {}, {}
     for row in policy_rows(pins, policy["bindings"]):
         destination = tuple(row["destination"])
         if destination[:2] != member or destination in bindings or not destination[2]:
             raise ValueError("duplicate or foreign emitted destination")
-        if row["supplier"] not in suppliers:
+        supplier = suppliers.get(row["supplier"])
+        if supplier is None:
             raise ValueError("unknown binding supplier")
-        candidates = profiles[row["supplier"]].get(tuple(row["record_source"]), set())
+        record = tuple(row["record_source"])
+        if "generated" in row:
+            declaration = supplier.generated.get(record)
+            if declaration is None or declaration["kind"] != row["generated"] or "source" in row or not row.get("pointer_namespace"):
+                raise ValueError("generated binding requires a declared producer and pointer namespace")
+            bindings[destination] = row
+            continue
+        candidates = profiles[row["supplier"]].get(record, set())
         source = tuple(row["source"]) if "source" in row else next(iter(candidates)) if len(candidates) == 1 else None
         if source is None or source not in candidates:
             raise ValueError("original body source absent or ambiguous")
@@ -498,7 +560,7 @@ def prepare(owner, inputs, output):
                 staged.add(row["bundle"], pin)
             normalized_staged.append(normalized)
 
-        def source_target(source, metadata, pointer):
+        def source_target(source, metadata, pointer, owner_field, checked_destination):
             fid, pid = pointer
             if not 0 <= fid <= len(metadata["externals"]):
                 raise ValueError("source pointer outside member table")
@@ -506,8 +568,10 @@ def prepare(owner, inputs, output):
             if target_member.startswith("archive:/"):
                 target_member = target_member.rsplit("/", 1)[-1]
             candidates = external_sources.get((target_member, pid), ()) if fid else sources.get((source[0], target_member, pid), ())
+            if checked_destination in candidates:
+                return checked_destination
             if len(candidates) != 1:
-                raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer)))
+                raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer, owner_field)))
             return next(iter(candidates))
 
         def read(target):
@@ -529,12 +593,21 @@ def prepare(owner, inputs, output):
                 if actual != row:
                     raise ValueError("supplier record changed")
                 identity = row.get("source_produced", {}).get("script_identity")
-                if binding["source"][:2] == ["sdk", "Resources/unity_builtin_extra"]:
+                provenance = {key: binding[key] for key in ("source", "generated") if key in binding}
+                if "generated" in binding:
+                    declaration = supplier.generated[tuple(binding["record_source"])]
+                    if declaration["class_id"] != typ["class_id"]:
+                        raise ValueError("generated supplier class differs from its declaration")
+                    provenance["pointer_namespace"] = binding["pointer_namespace"]
+                    if "identity" in declaration:
+                        owner.O.current_script_identity(body, typ["class_id"], declaration["identity"])
+                        provenance["current_registry_identity"] = declaration["identity"]
+                elif binding["source"][:2] == ["sdk", "Resources/unity_builtin_extra"]:
                     if identity is not None or typ["class_id"] != 48 or not typ.get("tree") or owner.pointers(body, typ, {}):
                         raise ValueError("SDK supplier requires a typed Shader without pointers")
                 else:
                     original_body, original_type, _ = original(binding["source"])
-                if identity is not None:
+                if "source" in provenance and identity is not None:
                     if not original_type.get("tree") or original_type["dependencies"]:
                         raise ValueError("registry MonoScript requires an original leaf layout and verified identity")
                     expected_type = (
@@ -548,7 +621,7 @@ def prepare(owner, inputs, output):
                         raise ValueError("original registry MonoScript layout contains pointers")
                     typ = original_type
                 value = descriptor(
-                    target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, source=binding["source"]
+                    target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, **provenance
                 )
                 if "resource" in row:
                     value["resource"] = row["resource"]
@@ -568,15 +641,25 @@ def prepare(owner, inputs, output):
         for group in asset_groups:
             pending.extend((*member, pid) for pid in group["roots"])
             pending.extend(tuple(target) for target in group.get("preload_roots", []))
+        parsed = owner.ParsedTrees()
         while pending:
             target = pending.pop()
             if target in selected:
                 continue
             value, body, typ = read(target)
             selected[target] = value
-            fields = owner.pointers(body, typ, {})
+            fields = sorted(owner.pointer_fields(body, typ, parsed))
+            binding = bindings.get(target, {})
+            source = value.get("source")
+            references = {}
+            shader_dependencies = None
+            if source is not None:
+                supplier = suppliers[binding["supplier"]]
+                selector = tuple(binding["record_source"]), tuple(source)
+                references = supplier.relocations.get(selector, {})
+                shader_dependencies = supplier.shader_dependencies.get(selector)
             edges = []
-            for field, pointer in sorted(fields.items()):
+            for field, offset, pointer in fields:
                 if not pointer[1]:
                     continue
                 key = target, field
@@ -587,16 +670,41 @@ def prepare(owner, inputs, output):
                     endpoint = tuple(override["target"])
                     used.add(key)
                 elif target[:2] == member:
-                    namespace = bindings[target].get("pointer_namespace")
+                    namespace = binding.get("pointer_namespace")
                     if namespace is not None:
                         fid, pid = pointer
                         if not 0 <= fid < len(namespace):
                             raise ValueError("produced pointer outside declared member table")
                         endpoint = (*namespace[fid], pid)
+                    elif typ["class_id"] == 48 and field[0] == "m_Dependencies" and shader_dependencies is not None:
+                        dependency = shader_dependencies.get(pointer)
+                        if dependency is None:
+                            raise ValueError(f"Shader dependency missing from producer recipe: {target} {field} {pointer}")
+                        if not pointer[0] and dependency[0] == "sdk":
+                            endpoint = (*member, pointer[1])
+                        else:
+                            candidates = sources.get(dependency, ())
+                            if len(candidates) != 1:
+                                raise ValueError(f"Shader dependency endpoint absent or ambiguous: {target} {field} {dependency}")
+                            (endpoint,) = candidates
+                        if read(endpoint)[0]["class_id"] != 48:
+                            raise ValueError(f"Shader dependency endpoint type differs: {target} {field} {endpoint}")
                     else:
-                        source = value["source"]
-                        _, _, metadata = original(source)
-                        endpoint = source_target(source, metadata, pointer)
+                        reference = references.get(offset)
+                        # The producer checked the input bytes before applying
+                        # this patch. Here the final type identifies its PPtr.
+                        relocated = reference is not None and tuple(reference["to"]) == pointer
+                        producer_target = None
+                        if relocated and not pointer[0] and tuple(binding["record_source"][:2]) == member:
+                            producer_target = (*member, pointer[1])
+                        if "generated" in bindings.get(producer_target, {}):
+                            # The checked producer patch explicitly names a generated record
+                            # in this member, which has no original-file selector.
+                            endpoint = producer_target
+                        else:
+                            _, _, metadata = original(source)
+                            original_pointer = tuple(reference["from"]) if relocated else pointer
+                            endpoint = source_target(source, metadata, original_pointer, key, producer_target)
                 else:
                     endpoint = staged.target(target[1], pointer)
                 read(endpoint)
@@ -653,8 +761,9 @@ def prepare(owner, inputs, output):
             pack["blob"].extend(revised)
             pack["rows"].append(row)
             pack["types"].append(owner.O.json_layout(typ))
-            pack["witnesses"].append(dict(destination=list(target), source=value["source"], fields=routes[target]))
-            selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record", "source")})
+            provenance = {key: value[key] for key in ("source", "generated", "pointer_namespace", "current_registry_identity") if key in value}
+            pack["witnesses"].append(dict(destination=list(target), fields=routes[target], **provenance))
+            selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record")}, **provenance)
             if "resource" in value:
                 selected[target]["resource"] = value["resource"]
             selected[target]["provider"] = str(directory)
@@ -688,7 +797,7 @@ def prepare(owner, inputs, output):
                     pins.add(directory / filename)
         original_properties, null_sources = {}, []
         for target, value in selected.items():
-            if target[:2] != member or value["class_id"] != 114:
+            if target[:2] != member or value["class_id"] != 114 or "generated" in value:
                 continue
             source = value["source"]
             body, original_type, metadata = original(source)
@@ -764,7 +873,7 @@ def prepare(owner, inputs, output):
             for pair in canonical["pairs"]:
                 duplicate, endpoint = tuple(pair["duplicate"]), tuple(pair["canonical"])
                 value = selected[duplicate]
-                if set(donor_sources.get(endpoint, ())) != {tuple(value["source"])}:
+                if "source" not in value or set(donor_sources.get(endpoint, ())) != {tuple(value["source"])}:
                     raise ValueError("canonical donor original body identity differs")
                 if endpoint[:2] != (donor["name"], donor["member"]):
                     raise ValueError("canonical endpoint belongs to a different donor")

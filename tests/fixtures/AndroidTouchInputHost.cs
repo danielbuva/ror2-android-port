@@ -105,6 +105,40 @@ static class AndroidTouchInputHost
         inverted.LookTouch(new Vector2(100, 100), 0);
         Check(inverted.report.touchFrames == 1 && inverted.poses == 1, "invalid viewport does not move camera");
     }
+    static void CameraAim()
+    {
+        var view = new CameraFixture();
+        view.camera.ray = new Ray(Vector3.back, Vector3.forward);
+        view.body.inputBank.aimOrigin = Vector3.up;
+        var child = new CameraFixture.Collider();
+        child.transform.parent = view.body.transform;
+        var detached = new CameraFixture.Collider
+        {
+            hurtBox = new CameraFixture.HurtBox { healthComponent = view.body.healthComponent },
+        };
+        var enemy = new CameraFixture.Collider
+        {
+            hurtBox = new CameraFixture.HurtBox { healthComponent = new CameraFixture.HealthComponent() },
+        };
+        var farHit = new CameraFixture.RaycastHit(20, 19, new CameraFixture.Collider());
+        var enemyHit = new CameraFixture.RaycastHit(10, 9, enemy);
+        var childHit = new CameraFixture.RaycastHit(1, 0, child);
+        var ownHit = new CameraFixture.RaycastHit(2, 1, detached);
+        CameraFixture.Physics.supplied = new[] { farHit, childHit, enemyHit, ownHit };
+        Check(view.Aim() == (enemyHit.point - view.body.inputBank.aimOrigin).normalized,
+            "aim uses nearest eligible hit from native aim origin");
+        Check(view.report.rayAim && view.report.aimPoint == enemyHit.point && view.report.detachedOwnHurtBoxRejections == 1,
+            "camera report records selected external point and detached self-hit rejection");
+        Check(view.camera.viewport == new Vector3(.5f, .5f, 0) && CameraFixture.Physics.distance == 500 &&
+            CameraFixture.Physics.mask == (CameraFixture.LayerIndex.world.mask | CameraFixture.LayerIndex.entityPrecise.mask) &&
+            CameraFixture.Physics.triggers == QueryTriggerInteraction.Ignore,
+            "aim ray uses the center reticle and existing layer, trigger and range policy");
+
+        CameraFixture.Physics.supplied = new[] { childHit, ownHit };
+        var fallback = view.camera.ray.GetPoint(500);
+        Check(view.Aim() == (fallback - view.body.inputBank.aimOrigin).normalized && view.report.aimPoint == fallback,
+            "self-only hits use the same no-target fallback");
+    }
     static void GuiOwnership()
     {
         var input = Ready();
@@ -199,6 +233,7 @@ static class AndroidTouchInputHost
             case "suspension": Suspension(); break;
             case "cancellation": Cancellation(); break;
             case "camera-delta": CameraDelta(); break;
+            case "camera-aim": CameraAim(); break;
             case "gui-ownership": GuiOwnership(); break;
             case "bank-witness": BankWitness(); break;
             case "jump-cancel-before-fixed": JumpCancelBeforeFixed(); break;
@@ -206,4 +241,94 @@ static class AndroidTouchInputHost
         }
         Console.WriteLine(args[0] + ": PASS");
     }
+}
+
+public sealed class AndroidOfflineSettings
+{
+    public sealed class Values { public float lookSensitivity = 1; public bool invertY; }
+    public static Values current = new Values();
+}
+
+public sealed partial class CameraFixture
+{
+    public sealed class Report
+    {
+        public int touchFrames, lookFrames, detachedOwnHurtBoxRejections;
+        public bool rayAim;
+        public Vector3 direction, aimPoint;
+    }
+    public sealed class Camera
+    {
+        public Ray ray;
+        public Vector3 viewport;
+        public Ray ViewportPointToRay(Vector3 point) { viewport = point; return ray; }
+    }
+    public sealed class Transform
+    {
+        public Transform parent;
+        public bool IsChildOf(Transform owner) => this == owner || (parent != null && parent.IsChildOf(owner));
+    }
+    public sealed class HealthComponent
+    {
+        public static implicit operator bool(HealthComponent value) => value != null;
+    }
+    public sealed class CharacterBody
+    {
+        public readonly Transform transform = new Transform();
+        public readonly HealthComponent healthComponent = new HealthComponent();
+        public readonly InputBank inputBank = new InputBank();
+    }
+    public sealed class InputBank { public Vector3 aimOrigin; }
+    public sealed class HurtBox { public HealthComponent healthComponent; }
+    public sealed class Collider
+    {
+        public readonly Transform transform = new Transform();
+        public HurtBox hurtBox;
+        public static implicit operator bool(Collider value) => value != null;
+        public bool TryGetComponent<T>(out T component) where T : class
+        {
+            component = hurtBox as T;
+            return component != null;
+        }
+    }
+    public struct RaycastHit
+    {
+        public readonly Collider collider;
+        public readonly float distance;
+        public readonly Vector3 point;
+        public RaycastHit(float distance, float z, Collider collider)
+        {
+            this.distance = distance;
+            this.collider = collider;
+            point = Vector3.forward * z;
+        }
+    }
+    public sealed class LayerIndex
+    {
+        public static readonly LayerIndex world = new LayerIndex { mask = 4 };
+        public static readonly LayerIndex entityPrecise = new LayerIndex { mask = 128 };
+        public int mask;
+    }
+    public static class Physics
+    {
+        public static RaycastHit[] supplied;
+        public static float distance;
+        public static int mask;
+        public static QueryTriggerInteraction triggers;
+        public static int RaycastNonAlloc(Ray ray, RaycastHit[] hits, float range, int layers, QueryTriggerInteraction query)
+        {
+            distance = range;
+            mask = layers;
+            triggers = query;
+            supplied.CopyTo(hits, 0);
+            return supplied.Length;
+        }
+    }
+    public readonly Camera camera = new Camera();
+    public readonly CharacterBody body = new CharacterBody();
+    public readonly Report report = new Report();
+    readonly RaycastHit[] hits = new RaycastHit[64];
+    public float yaw, pitch;
+    public int poses;
+    void Place() { poses++; }
 }

@@ -6,6 +6,166 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1532 — Exclude detached player HurtBoxes from touch aim
+
+2026-11-27. The camera ray skips native HurtBoxes owned by the playable
+body's HealthComponent, including those on its detached model.
+Assisted Artificer play on Distant Roost recorded 1,510 rejections at
+sample 30. The reticle target moved from about 8.06 m to 12.11 m from the
+camera. Native aim and state aim aligned with the selected target. Paired
+video shows the orange flame without the vertical streaks.
+Native authority and server callbacks paired for four Fire Bolts, one
+Nano-Bomb and one Flamethrower. All skill machines returned to Idle.
+APK SHA-256 `5d0909595ad139bb5f56c1cd9c8b7386350a4e90b0ed702ba2a836086572b637` (source `c8639826`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-touch-aim-main-nova/`.
+SoC peaked at 90 °C with 12.705 s above 80 °C. Cleanup and OLED sleep passed.
+The black card around the Nano-Bomb cast and Fire Bolt strips remain open.
+
+## J1531 — Restore Artificer charge and flame materials
+
+2026-11-27. The body visual owner submits the native Nano-Bomb charge and
+Flamethrower prefabs to the existing material owner before instantiation.
+Paired assisted Roost video shows the opaque charge quad clear and gray flame
+particles render orange. Live flame particles and trails use queue 3000.
+Authority and server recorded four Fire Bolts, one Nano-Bomb and one
+Flamethrower. All skill machines returned to Idle.
+APK SHA-256 `7c0604803b4b5354afc9a4c4cd09bb0796f4bd330975320cd857c61039334ba9` (source `de15ec0b`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-cast-effects-main-nova/`.
+Launch peaked at 91.9 °C, with 11.102 s above 80 °C and battery at 32 °C.
+Adopted placement, scratch removal and OLED sleep passed. Host pruning was
+completed separately. The upward flame and bomb release flash remain open.
+## J1530 — Restore converted Sandy shrine scripts for native Goolake entry
+
+2026-11-27. The source record producer binds three Sandy shrine behaviours
+to canonical MonoScripts in the existing Commando donor. The assisted Plains
+exit reached the verified Abandoned Aqueduct scene with original population
+active and 15.21 s of live authority after entry. All 26 template clone pairs
+completed, including the four Sandy shrines. No missing-script warnings appeared.
+APK SHA-256 `f253da007ce68cd24271540dc958a07a21ce7a0f494274590b5243b1cd5b9b14` (runtime `fda0dd4a`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v44-canonical-scripts/v44-native-goolake-transition/`.
+Launch SoC peaked at 88.4 °C, with 21.31 s above 80 °C and a 30 °C start battery.
+Final snapshot was 41.20 FPS. Adopted placement, scratch removal and OLED sleep
+passed. Magenta terrain, a decal shader error and unassisted play remain open.
+## J1529 — Qualify external SAF validation and import resume
+
+2026-11-27. Android DocumentsUI and its external storage provider passed picker
+Back, distinct unknown and known-unsupported refusals for the legitimate older
+cohort, and refusal of an incomplete folder and a case-aliased ZIP.
+Cancellation at 8,734,246 bytes removed partials and kept 42 hash-verified
+files. The supported folder resumed without reselection after force-stop.
+Folder and ZIP each verified 2,749 files after reopening the persisted grant.
+Staged source hashes stayed unchanged. APK admission stayed blocked.
+Installer APK SHA-256 `a1f4916fb9ab6550cc1d6c53f930396821e4df0d8c7356b4707c432f3078612b` (source `fcd34184`).
+Evidence under `work/coordination/alpha-packaging-acceptance/run-u3j6166c/`.
+Thermal sampling passed at 80.4 °C peak CPU/GPU and 30 °C starting battery.
+Owned scratch removal and OLED sleep passed. Build/install cancellation and
+the full phone-only play and update flow remain open.
+
+## J1527 — Restore transparency to the native Engineer shield
+
+2026-11-27. The native shield template enters the existing effect material
+owner before instantiation. Assisted Distant Roost variant samples 18 and 36
+show terrain and enemies through the deployed dome. The live center and edge
+both use transparent queue 3000. Sample 36 retains the guard, all four native
+skill callbacks on authority and server, two owned turrets, 33 owner projectile
+and 106 turret damage events. It recorded 49.97 FPS. Cleanup and OLED sleep passed.
+APK SHA-256 `b785cddcb3580191cd77095d6f3859ae812e0b618d9c3114209680b5fae67cd3` (source `ef3770fa`).
+Evidence `work/coordination/gameplay-coverage-20261126/engi-roost-native-material-census-nova-b/sample-36/`.
+The legacy 85 °C cutoff ended the run after capture at 88.4 °C peak with
+2.02 s above 80 °C. Separate white quads remain unattributed.
+
+## J1526 — Restore Artificer additive gestures and default skin
+
+2026-11-27. The build restores the source gauntlet and hand reference
+bindings. The direct survivor path loads the selected skin before native
+model detachment and retains all three movement caches. The exact editor
+matches all 132 sampled poses across 4,752 components. Assisted Distant Roost
+video shows the body and cape, alternating casts, bomb release and recovery.
+Native callbacks count four Fire Bolts, one Nano-Bomb and one Flamethrower.
+Artificer moved 22.30 m, and the weapon states returned to Idle.
+APK SHA-256 `855502045ddbbdf2d2c66031ea959bd411e5d9a7f527b4f6b7b008a5b13b05ca` (source `b283e7d5`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/artificer-native-skin-main-nova/`.
+Launch trace peaked at 89.6 °C, with 4.185 s above 80 °C and battery at
+27 °C. Adopted placement, scratch cleanup and OLED sleep passed.
+Existing attack effect artifacts obscure parts of the Flamethrower loop.
+
+## J1525 — Measure two-worker native compilation on Android
+
+2026-11-27. The opt-in native compiler uses two workers and keeps serial as
+the default. On Thor both widths compiled all 826 units from one conversion.
+Compile wall time fell from 7,050.364 to 3,559.947 s. Stripped IL2CPP matched,
+SHA-256 `0b6bfe34196b2d584deea75566029844479505d2235e5d04b8575762e708f027`.
+Global metadata matched and both used the same Burst output. 825 intermediate
+objects matched. Peak CPU/GPU rose from 66.1 to 69.2 °C during compilation.
+The overall run completed with no thermal pauses. Device cleanup passed.
+Evidence under `work/coordination/alpha-record-pass-thor-20261126/paired-native-662/debug-path-control/run/`.
+APK assembly, installation and play remain open.
+
+## J1524 — Restore converted Goolake's native Mesh references
+
+2026-11-27. Pack five source Mesh records into Goolake's dependency donor and
+bind the pack to the consuming scene in the signed release graph.
+APK SHA-256 `c9ba5d61f96daee12aca90a59624aee7966fab827091398287b5d72222e52fc6` (runtime `0ffee31b`, producer `05031afa`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v41-catalog-spelling/v41-native-goolake-transition/`.
+The assisted native Plains exit activated Goolake with 2,048 renderers and
+320 mesh colliders. The strict geometry gate reported zero missing Mesh
+references. SoC peaked at 89.6 °C with 7.50 s above 80 °C and a 35 °C start
+battery. Adopted placement, scratch removal and OLED sleep passed.
+Native destination population, sustained play and Razorwire pickup remain open.
+## J1523 — Capture Commando's natural-hit flinch and recovery
+
+2026-11-27. Shared device sessions can retain a bounded gameplay MP4 after
+menu Start. The Distant Roost video and same-process reports show a living
+110/110 baseline, native incoming damage and recovery with assists off.
+At 23.58 s the HUD drops from 29 to 5. Commando raises both pistols and
+returns to his resting pose by 24.92 s, alive before the later defeat.
+APK SHA-256 `5cf5902ecfbed68952f0adff986f666206617af2accfa6e1b8ae4aa3bd7967d9` (source `1b9b993e`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/commando-real-hit-main-nova-video/`
+contains the video, `real-hit-pose-health.png`, PID-bound Unity logs and terminal receipt.
+Adopted placement, scratch removal, OLED sleep and lease release passed.
+One 1.007 s gap invalidated the thermal trace for qualification.
+Other survivors' additive aim and gesture audit remains open.
+
+## J1522 — Retire the native Siren boss at End Run
+
+2026-11-27. Capture the source boss with HLAPI's invalid minion-owner ID so
+the native death event authorizes retirement of its exact server identity.
+APK SHA-256 `8d61bcc60d70820310373a83dcb12a8bb1c8745cbff452de26850da95346836a` (source `250ef2af`).
+Evidence: `work/coordination/gameplay-coverage-20261126/siren-native-retirement-fix-nova-b/`.
+Sample 168 records native defeat and reward droplet 148 at 59.96 FPS (16.68 ms).
+The same session's completed report records boss 146 naturally retired,
+both owners disposed, 12 eggs retired and 42 toggle targets restored.
+The runner stopped after cleanup at 90.4 °C SoC, with 11.13 s above 80 °C
+and a 35 °C battery. Scratch removal, OLED sleep and lease release passed.
+Ordinary player input and matched PC rendering remain open.
+
+## J1521 — Complete the assisted converted Titanic Plains teleporter exit
+
+2026-11-27. The assisted driver chooses the charged native teleporter for exit.
+The converted Commando run defeated the boss, collected the reward and
+completed native transport with one counted clear. Nine of ten repaired
+pickup and enemy skin preload roots completed typed Android loads.
+APK SHA-256 `16b243d8ccf7747d7b3d70444510fe558fcb381c486b91e44fabb8e44b8173d8` (source `0ffee31b`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v39-preload-exit/v39-native-goolake-transition/`.
+Plains ran 56.39 s at 57.62 FPS by frame count. SoC peaked at 85.6 °C
+with 9.62 s above 80 °C and a 31 °C start battery. Adopted placement,
+scratch removal and OLED sleep passed. Live Goolake entry and the unrequested
+Red Whip GameObject preload remain open.
+
+## J1520 — Restore the native Gold Shores boss reward
+
+2026-11-27. Gold Shores regenerates the native reward selector before mission
+activation. Assisted input targets the scripted boss through its native squad.
+APK SHA-256 `2b26289f0b5697b7a7b1e40ad59118c41cf667ae6c667e9799b75b603208205d` (source `72199696`).
+Evidence under `work/coordination/gameplay-coverage-20261126/gold-native-reward-selector-nova-b-shared-adb/`.
+Sample 260 shows the selector recover from zero to one pickup. Sample 400
+shows all seven beacons active, native boss defeat and `TitanGoldDuringTP`
+droplet 303. Sample 410 shows the grounded native return to `foggyswamp`.
+Screenshots and Unity logs are retained. The low-load snapshots were 57.95 FPS
+at defeat and 58.95 FPS on return. SoC peaked at 88.0 °C with 71.25 s above
+80 °C. Battery was 30–35 °C. Scratch removal, OLED sleep and lease release
+passed. Ordinary player input and matched PC rendering remain open.
+
 ## J1519 — Bind direct-selected survivor Animators before native locomotion
 
 2026-11-26. Bind source controllers and avatars before native main-state entry.

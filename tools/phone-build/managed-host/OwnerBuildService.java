@@ -11,8 +11,10 @@ public final class OwnerBuildService extends Service {
     public static final String PREFERENCES = "owner-phone-flow";
     private static final int NOTIFICATION = 119;
     private static final String CHANNEL = "owner-local-build";
+    private static final String IMPORT_CANCELLED = "Import cancelled. Verified files retained; resume when ready.";
     private static volatile boolean running;
     private static volatile boolean pending;
+    private static volatile boolean liveControls;
     private volatile String importControl = "continue";
     private volatile boolean destroyed;
     private Thread thread;
@@ -27,6 +29,7 @@ public final class OwnerBuildService extends Service {
         handler.postDelayed(this, 1000);
     } };
     public static boolean isRunning() { return running || pending; }
+    static boolean hasLiveControls() { return running && liveControls; }
     public static String action(Context app) { return app.getSharedPreferences(PREFERENCES, 0).getString("action", ""); }
     public static synchronized void launch(Context app, String action) {
         if (running || pending) return;
@@ -62,7 +65,7 @@ public final class OwnerBuildService extends Service {
         Notification.Builder builder = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL) : new Notification.Builder(this);
         builder.setSmallIcon(android.R.drawable.stat_sys_download).setContentTitle("Owner game installer")
             .setContentText(detail).setContentIntent(open).setOngoing(true).setOnlyAlertOnce(true);
-        if (!"install".equals(action(this)) && !OwnerInstaller.busy(this)) builder.addAction(new Notification.Action.Builder(null, "Pause", command("pause", 1)).build())
+        if (hasLiveControls() && !OwnerInstaller.busy(this) && !OwnerAlphaInstall.pending(this)) builder.addAction(new Notification.Action.Builder(null, "Pause", command("pause", 1)).build())
             .addAction(new Notification.Action.Builder(null, "Resume", command("resume", 2)).build())
             .addAction(new Notification.Action.Builder(null, "Cancel", command("cancel", 3)).build());
         return builder.build();
@@ -71,8 +74,10 @@ public final class OwnerBuildService extends Service {
         final String action = intent == null ? "" : intent.getAction();
         if (action != null && action.startsWith("control-")) {
             if (running) {
-                if (OwnerInstaller.busy(this)) return START_NOT_STICKY;
-                importControl = action.substring(8);
+                synchronized (this) {
+                    if (!hasLiveControls() || OwnerInstaller.busy(this) || OwnerAlphaInstall.pending(this)) return START_NOT_STICKY;
+                    importControl = action.substring(8);
+                }
                 if ("cancel".equals(importControl)) { if (inputAccess != null) inputAccess.cancel(); if (worker != null) worker.cancel(); }
                 try { ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/update-control.json"), new JSONObject().put("id", java.util.UUID.randomUUID().toString()).put("action", importControl)); }
                 catch (Exception error) { ToolHostActivity.updateStatus(this, "ERROR", "Could not retain control: " + error.getMessage()); }
@@ -96,6 +101,8 @@ public final class OwnerBuildService extends Service {
         }
         // This foreground service is started only by an explicit visible UI action. Never auto-install after boot.
         running = true; destroyed = false; importControl = "continue";
+        // Only import and supervised update work can honor pause/resume/cancel.
+        liveControls = OwnerUpdateState.resumableAction(action);
         try {
             getSharedPreferences(PREFERENCES, 0).edit().putString("action", action).putBoolean("interrupted", true).commit();
             startForeground(NOTIFICATION, notification());
@@ -113,6 +120,8 @@ public final class OwnerBuildService extends Service {
                     }
                     else {
                         worker = new ToolHostActivity.Worker(getApplicationContext()); worker.executeUpdate(action);
+                        // A ready build may hand off to Android; worker controls no longer apply.
+                        synchronized (OwnerBuildService.this) { liveControls = false; }
                         File status = new File(getFilesDir(), "owner-input/update-state.json");
                         if ("cancel".equals(importControl)) {
                             // A worker can finish publication while cancellation is arriving.
@@ -128,10 +137,17 @@ public final class OwnerBuildService extends Service {
                     }
                 } catch (Exception error) {
                     if ("import".equals(action)) {
-                        try { ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", (error instanceof InterruptedIOException || destroyed || "cancel".equals(importControl)) ? "CANCELLED" : "ERROR").put("message", error.getMessage())); }
+                        boolean stopped = destroyed || "cancel".equals(importControl);
+                        boolean cancelled = stopped || error instanceof InterruptedIOException;
+                        String message = stopped ? IMPORT_CANCELLED : error.getMessage();
+                        try {
+                            ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"),
+                                new JSONObject().put("state", cancelled ? "CANCELLED" : "ERROR").put("message", message));
+                        }
                         catch (Exception ignored) { }
                     } else ToolHostActivity.updateStatus(OwnerBuildService.this, "ERROR", error.getMessage());
                 } finally {
+                    liveControls = false;
                     getSharedPreferences(PREFERENCES, 0).edit().putBoolean("interrupted", destroyed).commit();
                     handler.post(new Runnable() { public void run() { finishService(); } });
                 }
@@ -178,7 +194,7 @@ public final class OwnerBuildService extends Service {
                     if (!"PAUSED".equals(current.optString("state"))) ToolHostActivity.writeJson(OwnerBuildService.this, state, current.put("state", "PAUSED").put("message", "Import paused. Verified files are retained."));
                     Thread.sleep(250);
                 }
-                if (destroyed || "cancel".equals(importControl)) throw new InterruptedIOException("Import cancelled. Verified files retained; resume when ready.");
+                if (destroyed || "cancel".equals(importControl)) throw new InterruptedIOException(IMPORT_CANCELLED);
             }
             public void progress(String path, long complete, long total) throws Exception {
                 long now = SystemClock.elapsedRealtime();
@@ -194,7 +210,7 @@ public final class OwnerBuildService extends Service {
         }, inputAccess);
     }
     private void finishService() {
-        running = false; pending = false;
+        liveControls = false; running = false; pending = false;
         handler.removeCallbacks(refresh);
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         stopForeground(true); stopSelf();

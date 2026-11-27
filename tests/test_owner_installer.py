@@ -95,11 +95,11 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
     "android/content/pm/PackageInstaller.java": """package android.content.pm; import java.io.*; import android.content.*;
         public class PackageInstaller {public static final String EXTRA_STATUS="status",EXTRA_STATUS_MESSAGE="message",EXTRA_SESSION_ID="session";
         public static final int STATUS_FAILURE=1,STATUS_SUCCESS=0,STATUS_PENDING_USER_ACTION=-1;
-        public SessionParams params; public Session session=new Session(); public int created; public boolean abandoned,fail; public SessionInfo info=new SessionInfo();
+        public SessionParams params; public Session session=new Session(); public Runnable beforeOpen; public int created; public boolean abandoned,fail; public SessionInfo info=new SessionInfo();
         public SessionInfo getSessionInfo(int id){return info;}
         public static class SessionInfo {public boolean sealed=true; public boolean isSealed(){return sealed;}}
         public int createSession(SessionParams p){created++;params=p;return 7;} public Session openSession(int id) throws IOException {
-        if(fail)throw new IOException("open failed");return session;} public void abandonSession(int id){abandoned=true;}
+        if(fail)throw new IOException("open failed");if(beforeOpen!=null)beforeOpen.run();return session;} public void abandonSession(int id){abandoned=true;}
         public static class SessionParams {public static final int MODE_FULL_INSTALL=1,USER_ACTION_NOT_REQUIRED=2;
         public int action,mode; public String name; public long size; public SessionParams(int m){mode=m;}
         public void setAppPackageName(String n){name=n;} public void setSize(long s){size=s;} public void setRequireUserAction(int a){action=a;}}
@@ -206,7 +206,7 @@ public class Harness {
         check(ToolHostActivity.receiverEvents.get(ToolHostActivity.receiverEvents.size()-1).equals("entry"));
         Build.VERSION.SDK_INT=30;c=update();OwnerInstaller.install(c,apk,hash);check(c.manager.installer.params.action==0);Build.VERSION.SDK_INT=33;
         c=update();c.manager.next.versionCode=1;refusal(c,apk,hash,"version");check(c.manager.installer.params==null);
-        c=update();c.manager.next.signatures=new android.content.pm.Signature[]{new android.content.pm.Signature("lost-key")};refusal(c,apk,hash,"signing key");check(c.manager.installer.params==null);
+        c=update();c.manager.next.signatures=new android.content.pm.Signature[]{new android.content.pm.Signature("lost-key")};refusal(c,apk,hash,"signing key differs. The installed version was not changed.");check(c.manager.installer.created==0 && c.manager.current.versionCode==1);
         c=new Context();c.prefs.failCommit=1;refusal(c,apk,hash,"retain installation identity");
         check(c.manager.installer.abandoned&&!c.manager.installer.session.committed);
         c=new Context();c.prefs.failCommit=2;OwnerInstaller.install(c,apk,hash);
@@ -215,7 +215,13 @@ public class Harness {
             try{OwnerInstaller.install(c,apk,hash);throw new AssertionError();}catch(IOException expected){check(expected.getMessage().contains("already pending"));}
             check(c.manager.installer.created==1);
         }
-        c=new Context();refusal(c,apk,"wrong","drift");check(c.manager.installer.abandoned);
+        c=new Context();refusal(c,apk,"wrong","checksum missing");check(c.manager.installer.created==0&&!c.manager.installer.abandoned);
+        c=update();refusal(c,apk,hash.replaceFirst("^.",hash.charAt(0)=='0'?"1":"0"),"drift");
+        check(c.manager.installer.created==0 && c.manager.current.versionCode==1 && !c.manager.installer.abandoned);
+        c=update();c.manager.installer.beforeOpen=()->{try{Files.write(apk.toPath(),new byte[]{0});}catch(IOException e){throw new RuntimeException(e);}};
+        refusal(c,apk,hash,"drift");
+        check(c.manager.installer.created==1 && c.manager.installer.abandoned && c.manager.current.versionCode==1);
+        Files.write(apk.toPath(),bytes);
         c=new Context();c.manager.installer.fail=true;refusal(c,apk,hash,"open failed");check(c.manager.installer.abandoned);
         c=new Context();c.manager.installer.session.writeFail=true;refusal(c,apk,hash,"write failed");check(c.manager.installer.abandoned);
         c=new Context();c.manager.installer.session.syncFail=true;refusal(c,apk,hash,"sync failed");check(c.manager.installer.abandoned);
@@ -331,17 +337,20 @@ public class Harness {
             OwnerUpdateState fresh=new OwnerUpdateState();fresh.observe(phase,"journey");
             boolean active=phase.equals("VALIDATING")||phase.equals("IMPORTING")||phase.equals("BUILDING")||phase.equals("PAUSED");
             boolean consent=phase.equals("AWAITING_CONFIRMATION"),recovery=phase.equals("RECOVERY_REQUIRED");
-            OwnerUpdateState.Screen screen=fresh.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true);
+            OwnerUpdateState.Screen screen=fresh.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true,active);
             check(screen.install==phase.equals("READY"));check(screen.recover==recovery);
             check(screen.retry==phase.equals("ERROR"));check(screen.build==phase.equals("IMPORTED"));
             if(phase.equals("ERROR"))check(!screen.resume);
             if(consent||recovery)check(!screen.resume&&!screen.cancel&&!screen.build&&!screen.install);
             OwnerUpdateState recreated=new OwnerUpdateState();recreated.observe(phase,"journey");
-            check(recreated.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true).text.equals(screen.text));
+            check(recreated.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true,active).text.equals(screen.text));
         }
-        retryModel.observe("ERROR","import failed");check(!retryModel.screen(false,false,false,true,"ERROR",false,true).build);
-        check(!retryModel.screen(false,false,true,true,"IMPORTED",true,true).resume);
-        retryModel.observe("INTERRUPTED","stopped");check(retryModel.screen(false,false,false,true,"",false,true).text.contains("may continue to Android installation"));
+        retryModel.observe("ERROR","import failed");check(!retryModel.screen(false,false,false,true,"ERROR",false,true,false).build);
+        check(!retryModel.screen(false,false,true,true,"IMPORTED",true,true,false).resume);
+        retryModel.observe("INTERRUPTED","stopped");check(retryModel.screen(false,false,false,true,"",false,true,false).text.contains("may continue to Android installation"));
+        retryModel.observe("INSTALLING","Android handoff");
+        OwnerUpdateState.Screen handoff=retryModel.screen(true,false,false,true,"",false,true,false);
+        check(!handoff.pause&&!handoff.resume&&!handoff.cancel&&!handoff.install);
         check(!OwnerUpdateState.resumableAction("install"));check(OwnerUpdateState.resumableAction("release-build"));
         check(OwnerUpdateState.backgroundDetail(true,true,"running",false,false,"").contains("foreground service"));
         check(OwnerUpdateState.backgroundDetail(true,true,"paused",true,false,"").contains("Paused by you"));
