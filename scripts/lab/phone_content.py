@@ -387,7 +387,7 @@ def run_editor(project, *, build=False, ambient=False):
         if probes:
             ((_, kind),) = probes
             assets = request.get("assets", [])
-            counts = (1, 2)
+            counts = (1, 2, 3) if kind == "Shader" else (1, 2)
             if len(assets) not in counts or any(asset["type"] != kind or asset.get("subasset") for asset in assets) or request.get("dependencies"):
                 raise RuntimeError(f"Shader probe requires {counts} {kind} addresses in a standalone bundle")
             shader_bundle = project / "Assets/StreamingAssets/phone-shader.bundle"
