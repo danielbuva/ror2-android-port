@@ -8,6 +8,7 @@ import errno
 import fcntl
 import functools
 import hashlib
+import http.client
 import importlib.util
 import io
 import json
@@ -18,6 +19,7 @@ import shutil
 import stat
 import sys
 import tempfile
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -124,18 +126,30 @@ class GitHubTransport:
 def receive(transport, url, destination, limit):
     """Stream to a caller-owned stream; interrupted or oversized data never commits."""
     count, digest = 0, hashlib.sha256()
-    with transport.open(url) as source:
+    try:
+        source = transport.open(url)
+    except urllib.error.HTTPError as error:
+        raise OSError("The release server could not provide the requested file. The installed version was not changed.") from error
+    except (OSError, http.client.HTTPException) as error:
+        raise OSError("The release connection was offline or interrupted. Check your network and retry. The installed version was not changed.") from error
+    with source:
         length = source.headers.get("Content-Length")
         if length is not None and (not length.isdecimal() or int(length) > limit):
             raise ValueError("release download exceeds size limit")
-        while data := source.read(65536):
+        while True:
+            try:
+                data = source.read(65536)
+            except (OSError, http.client.HTTPException) as error:
+                raise OSError("Release download interrupted. Retry on a stable connection. The installed version was not changed.") from error
+            if not data:
+                break
             count += len(data)
             if count > limit:
                 raise ValueError("release download exceeds size limit")
             destination.write(data)
             digest.update(data)
         if length is not None and count != int(length):
-            raise ValueError("incomplete release download")
+            raise OSError("Release download interrupted before all bytes arrived. Retry on a stable connection. The installed version was not changed.")
     return count, digest.hexdigest()
 
 
@@ -257,7 +271,7 @@ def acquire(candidate, root, transport, emit):
         with os.fdopen(handle, "wb") as stream:
             size, digest = receive(transport, candidate["bundle"]["url"], stream, MAX_BUNDLE)
         if size != candidate["bundle"]["bytes"] or digest != release["bundle_sha256"]:
-            raise ValueError("public tools download size/hash differs")
+            raise ValueError("Public tools download size/hash differs from the signed release. Retry the download. The installed version was not changed.")
         emit("VERIFYING", "Verifying every public recipe and producer.")
         # Fresh extraction even for repeated attempts; no mutable cached code is trusted.
         destination = root / ("verified-" + next(tempfile._get_candidate_names()))
