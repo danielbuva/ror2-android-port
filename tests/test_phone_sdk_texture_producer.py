@@ -308,6 +308,27 @@ class SdkTextureTests(unittest.TestCase):
             result = subprocess.run([str(self.decoder), "4", "4"], input=data, capture_output=True, timeout=10)
             self.assertNotEqual(result.returncode, 0)
 
+    def test_source_bc7_etc_preserves_original_mips_and_packed_normals(self):
+        colours = (bytes((17, 31, 73, 255)), bytes((25, 127, 47, 129)))
+        source = b"".join(mode6(colour) for colour in colours)
+        sdk = {"pixels": str(self.decoder)}
+        with patch.object(T, "sdk_encode_rgba", side_effect=[b"A" * 16, b"B" * 16]) as encode:
+            self.assertEqual(T.source_bc_etc(source, 4, 4, 25, 2, False, sdk, self.alpha), b"A" * 16 + b"B" * 16)
+        self.assertEqual([call.args[0] for call in encode.call_args_list], [colour * 16 for colour in colours])
+        run_native = subprocess.run
+
+        def encode_normal(command, **kwargs):
+            if command[0] == str(self.decoder):
+                return run_native(command, **kwargs)
+            self.assertEqual(command, [str(self.alpha), "4", "4", "normal"])
+            self.assertEqual(kwargs["input"], T.normal_rgb(colours[1] * 16))
+            return subprocess.CompletedProcess(command, 0, b"N" * 8)
+
+        with patch.object(T.subprocess, "run", side_effect=encode_normal):
+            self.assertEqual(T.source_bc_etc(source[16:], 2, 2, 25, 1, True, sdk, self.alpha), b"N" * 8)
+        with self.assertRaisesRegex(ValueError, "source BC mip chain extent"):
+            T.source_bc_etc(source[:-1], 4, 4, 25, 2, False, sdk, self.alpha)
+
     def test_native_bc3_matches_byte_palette_alpha_and_cropping(self):
         import struct
 

@@ -11,6 +11,7 @@ using RoR2.Audio;
 using RoR2.Networking;
 using RoR2.Projectile;
 using EntityStates.Mage.Weapon;
+using EntityStates.Treebot.Weapon;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.AddressableAssets;
@@ -137,14 +138,31 @@ public sealed partial class PortSession
         public int frame;
         public float worldSeconds, realSeconds;
         public string secondaryState;
-        public List<MageBombReleaseRoot> roots = new List<MageBombReleaseRoot>();
+        public List<NativeEffectTraceRoot> roots = new List<NativeEffectTraceRoot>();
     }
     [Serializable]
-    public class MageBombReleaseRoot
+    public class NativeEffectTraceRoot
     {
         public int instanceId;
         public string role, name;
         public ObjectiveRendererObservation[] renderers;
+    }
+    [Serializable]
+    public sealed class TreebotDisperseReport
+    {
+        public int releaseFrame, releaseEffectIndex = -1;
+        public float chargeRealSeconds, releaseRealSeconds;
+        public string releaseEffect, error;
+        public bool completed;
+        public List<TreebotDisperseFrame> chargeFrames = new List<TreebotDisperseFrame>();
+        public List<TreebotDisperseFrame> releaseFrames = new List<TreebotDisperseFrame>();
+    }
+    [Serializable]
+    public sealed class TreebotDisperseFrame
+    {
+        public int frame;
+        public float worldSeconds, realSeconds;
+        public List<NativeEffectTraceRoot> roots = new List<NativeEffectTraceRoot>();
     }
     [Serializable]
     public class WorldReport
@@ -153,6 +171,7 @@ public sealed partial class PortSession
         public int nativeEffectSourceRenderers, nativeEffectSourceMaterials;
         public ObjectiveRendererObservation[] nativeEffectViews;
         public MageBombReleaseReport mageBombRelease;
+        public TreebotDisperseReport treebotDisperse;
 
         public NovaThirdPersonView.Report camera;
         public WorldEquipmentReport equipment;
@@ -511,6 +530,8 @@ public sealed partial class PortSession
         SurvivorSkillObserver survivorSkills;
         SurvivorCombatOutputObserver survivorCombatOutputs;
         EffectIndex mageBombMuzzle, mageBombImpact, mageBombExplosion, mageBombBlastImpact;
+        FieldInfo treebotChargeEffectField;
+        EffectIndex treebotReleaseEffect;
         SirenEggDiagnosticInput sirenEggDiagnosticInput;
         EngineerNativeOutputObserver engiNativeOutputs;
         SurvivorSkillInputCoverage skillInputCoverage;
@@ -2244,10 +2265,10 @@ public sealed partial class PortSession
                     var explosion = projectile ? projectile.GetComponent<ProjectileImpactExplosion>() : null;
                     report.projectile = projectile ? projectile.name : null;
                     report.projectileIndex = projectile ? ProjectileCatalog.GetProjectileIndex(projectile) : -1;
-                    mageBombMuzzle = RecordMageEffect(release.muzzleflashEffectPrefab, out report.muzzle);
-                    mageBombImpact = RecordMageEffect(explosion ? explosion.impactEffect : null, out report.impact);
-                    mageBombExplosion = RecordMageEffect(explosion ? explosion.explosionEffect : null, out report.explosion);
-                    mageBombBlastImpact = RecordMageEffect(explosion ? explosion.blastImpactEffect : null, out report.blastImpact);
+                    mageBombMuzzle = RecordNativeEffect(release.muzzleflashEffectPrefab, out report.muzzle);
+                    mageBombImpact = RecordNativeEffect(explosion ? explosion.impactEffect : null, out report.impact);
+                    mageBombExplosion = RecordNativeEffect(explosion ? explosion.explosionEffect : null, out report.explosion);
+                    mageBombBlastImpact = RecordNativeEffect(explosion ? explosion.blastImpactEffect : null, out report.blastImpact);
                     Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null,
                                     "lab-mage-bomb-release frame={0} worldSeconds={1:F3} realSeconds={2:F3}", Time.frameCount, elapsed,
                                     realSeconds);
@@ -2267,9 +2288,9 @@ public sealed partial class PortSession
                     if (!projectile || projectile.owner != player.gameObject || report.projectileIndex < 0 ||
                         projectile.catalogIndex != report.projectileIndex)
                         continue;
-                    sample.roots.Add(ObserveMageBombRoot(projectile.gameObject, "projectile"));
+                    sample.roots.Add(ObserveNativeEffectRoot(projectile.gameObject, "projectile"));
                     if (projectile.ghost)
-                        sample.roots.Add(ObserveMageBombRoot(projectile.ghost.gameObject, "ghost"));
+                        sample.roots.Add(ObserveNativeEffectRoot(projectile.ghost.gameObject, "ghost"));
                 }
                 foreach (var effect in UnityEngine.Object.FindObjectsOfType<EffectComponent>())
                 {
@@ -2277,9 +2298,9 @@ public sealed partial class PortSession
                     if (index == EffectIndex.Invalid)
                         continue;
                     if (index == mageBombMuzzle)
-                        sample.roots.Add(ObserveMageBombRoot(effect.gameObject, "muzzle"));
+                        sample.roots.Add(ObserveNativeEffectRoot(effect.gameObject, "muzzle"));
                     else if (index == mageBombImpact || index == mageBombExplosion || index == mageBombBlastImpact)
-                        sample.roots.Add(ObserveMageBombRoot(effect.gameObject, "impact"));
+                        sample.roots.Add(ObserveNativeEffectRoot(effect.gameObject, "impact"));
                 }
                 report.frames.Add(sample);
             }
@@ -2290,16 +2311,99 @@ public sealed partial class PortSession
             }
         }
 
-        static EffectIndex RecordMageEffect(GameObject prefab, out string name)
+        void ObserveTreebotDisperse(CharacterBody player, float elapsed)
+        {
+            var report = coordinator.r.world.treebotDisperse;
+            if (report != null && report.completed)
+                return;
+            var utility = player.skillLocator ? player.skillLocator.utility : null;
+            var state = utility && utility.stateMachine ? utility.stateMachine.state : null;
+            if (report == null)
+            {
+                if (!(state is ChargeSonicBoom) && !(state is FireSonicBoom))
+                    return;
+                coordinator.r.world.treebotDisperse = report = new TreebotDisperseReport();
+            }
+
+            try
+            {
+                float realSeconds = Time.realtimeSinceStartup;
+                if (report.releaseFrame == 0 && state is ChargeSonicBoom charge)
+                {
+                    if (report.chargeFrames.Count == 0)
+                    {
+                        report.chargeRealSeconds = realSeconds;
+                        treebotChargeEffectField = typeof(ChargeSonicBoom).GetField("chargeEffect", BindingFlags.Instance | BindingFlags.NonPublic);
+                        if (treebotChargeEffectField == null)
+                            throw new MissingFieldException(typeof(ChargeSonicBoom).FullName, "chargeEffect");
+                        LogTreebotDispersePhase("charge", elapsed, realSeconds);
+                    }
+                    if (report.chargeFrames.Count == 120 || realSeconds - report.chargeRealSeconds >= 1.25f)
+                        return;
+                    var chargeSample = new TreebotDisperseFrame { frame = Time.frameCount, worldSeconds = elapsed,
+                                                                 realSeconds = realSeconds };
+                    var root = (GameObject)treebotChargeEffectField.GetValue(charge);
+                    if (root && root.activeInHierarchy)
+                        chargeSample.roots.Add(ObserveNativeEffectRoot(root, "charge"));
+                    report.chargeFrames.Add(chargeSample);
+                    return;
+                }
+
+                if (report.releaseFrame == 0)
+                {
+                    if (!(state is FireSonicBoom release))
+                        return;
+                    report.releaseFrame = Time.frameCount;
+                    report.releaseRealSeconds = realSeconds;
+                    treebotReleaseEffect = RecordNativeEffect(release.fireEffectPrefab?.gameObject, out report.releaseEffect);
+                    report.releaseEffectIndex = (int)treebotReleaseEffect;
+                    LogTreebotDispersePhase("release", elapsed, realSeconds);
+                }
+                if (realSeconds - report.releaseRealSeconds >= 1.25f || report.releaseFrames.Count == 120)
+                {
+                    report.completed = true;
+                    coordinator.Save();
+                    return;
+                }
+                var sample = new TreebotDisperseFrame { frame = Time.frameCount, worldSeconds = elapsed, realSeconds = realSeconds };
+                if (treebotReleaseEffect != EffectIndex.Invalid)
+                {
+                    foreach (var effect in UnityEngine.Object.FindObjectsOfType<EffectComponent>())
+                    {
+                        if (effect.effectIndex != treebotReleaseEffect)
+                            continue;
+                        var owner = effect.effectData?.rootObject;
+                        if (!owner || owner == player.gameObject)
+                            sample.roots.Add(ObserveNativeEffectRoot(effect.gameObject, "release"));
+                    }
+                }
+                report.releaseFrames.Add(sample);
+            }
+            catch (Exception error)
+            {
+                report.error = error.GetBaseException().Message;
+                report.completed = true;
+                coordinator.Save();
+            }
+        }
+
+        static void LogTreebotDispersePhase(string phase, float elapsed, float realSeconds)
+        {
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null,
+                            "lab-treebot-disperse phase={0} frame={1} worldSeconds={2:F3} realSeconds={3:F3}",
+                            phase, Time.frameCount, elapsed, realSeconds);
+        }
+
+        static EffectIndex RecordNativeEffect(GameObject prefab, out string name)
         {
             name = prefab ? prefab.name : null;
             return prefab ? EffectCatalog.FindEffectIndexFromPrefab(prefab) : EffectIndex.Invalid;
         }
 
-        MageBombReleaseRoot ObserveMageBombRoot(GameObject root, string role)
+        NativeEffectTraceRoot ObserveNativeEffectRoot(GameObject root, string role)
         {
             var surfaceObserver = coordinator.GetTeleporterWorldSession();
-            return new MageBombReleaseRoot { instanceId = root.GetInstanceID(), role = role, name = root.name,
+            return new NativeEffectTraceRoot { instanceId = root.GetInstanceID(), role = role, name = root.name,
                                              renderers = root.GetComponentsInChildren<Renderer>()
                                                              .Where(renderer => renderer.enabled)
                                                              .Select(renderer => surfaceObserver.ObserveOwnedSurface(renderer, false))
@@ -2344,6 +2448,8 @@ public sealed partial class PortSession
             coordinator.r.performance.clientUpdateMs += PortSession.PerformanceMs(performancePart);
             if (coordinator.r.diagnosticMageBombRelease)
                 ObserveMageBombRelease(player, elapsed);
+            if (coordinator.r.detailedVisualDiagnostics)
+                ObserveTreebotDisperse(player, elapsed);
             performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             coordinator.Check(coordinator.activeBodyClient.isConnected && player.networkIdentity.hasAuthority &&
                                   player.networkIdentity.clientAuthorityOwner == coordinator.activeBodyOwner &&

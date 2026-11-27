@@ -720,14 +720,14 @@ array contains `source` triples (PC-relative bundle path, member, PathID),
 checks the witness against the standalone type identity and pins any sibling
 `.resS` streams read by the profile.
 
-Use `--source-bc3` or `--source-bc1` on the same discovery command to
-select missing BC3 or BC1 Texture2Ds. BC1 colour uses ETC1 RGB and requires
-opaque texels, including the original block padding. Use a pinned ETC helper
-and pass `--comparison diagnostic`. For BC1, pin the native decoder with
-`--pixels-codec` and `--pixels-codec-sha256`. The encoder comparison's pinned
-SDK descriptor supplies the decoder too and is required for BC3. The producer
-retains the source hashes, checks output extents and records actual output
-hashes for the original mip transcode.
+Use `--source-bc1`, `--source-bc3` or `--source-bc7` on the same discovery
+command to select missing Texture2Ds by their original format. BC1 colour
+uses ETC1 RGB and requires opaque texels, including original block padding.
+Use a pinned ETC helper and pass `--comparison diagnostic`. For BC1, pin the
+native decoder with `--pixels-codec` and `--pixels-codec-sha256`. BC3 and BC7
+use the encoder comparison's pinned SDK descriptor, which also supplies the
+decoder. The producer retains source hashes, checks output extents and
+records actual output hashes for the original mip transcode.
 
 The producer copies original raw pixel/mip bytes, decodes BC1 top mips to RGB,
 extends transparent RGB with fixed cardinal Manhattan jump flooding, or applies

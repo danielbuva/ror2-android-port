@@ -28,7 +28,8 @@ def module(name):
 BUNDLE = module("unity_bundle")
 MESH = module("mesh_produce")
 O = module("object_produce")
-SOURCE_BC_ETC_FORMATS = {"source-bc1-etc": 10, "source-bc3-etc": 12}
+SOURCE_BC_ETC_FORMATS = {"source-bc1-etc": 10, "source-bc3-etc": 12, "source-bc7-etc": 25}
+CUBE_NATIVE_PIXEL_BYTES = {1: 1, 3: 3, 17: 8}
 
 
 @contextmanager
@@ -288,7 +289,7 @@ def body_output(body, fields, pixels, target, operation):
         usage = struct.unpack("<i", field(body, fields, "m_LightmapFormat"))[0]
         if source_bc_etc_format == 10 and usage not in (0, 6):
             raise ValueError("unqualified source BC1 colour usage")
-        normal = source_bc_etc_format == 12 and usage == 3
+        normal = source_bc_etc_format in (12, 25) and usage == 3
         original_mips = struct.unpack("<i", field(body, fields, "m_MipCount"))[0]
         original_colour_space = struct.unpack("<i", field(body, fields, "m_ColorSpace"))[0]
         original_alpha_optional = bool(field(body, fields, "m_IsAlphaChannelOptional")[0])
@@ -404,7 +405,7 @@ def source_bc_extents(pixel_bytes, width, height, fmt, mips):
         or not 0 < height <= 8192
         or type(mips) is not int
         or not 1 <= mips <= max(width, height).bit_length()
-        or fmt not in (10, 12)
+        or fmt not in SOURCE_BC_ETC_FORMATS.values()
     ):
         raise ValueError("unqualified source BC mip chain")
     extents = [(max(1, width >> mip), max(1, height >> mip)) for mip in range(mips)]
@@ -436,7 +437,7 @@ def source_bc_etc(pixels, width, height, fmt, mips, normal, sdk, etc_codec):
         # BC blocks already store the padding texels in their final rows and columns.
         encoded_width, encoded_height = (w + 3) & ~3, (h + 3) & ~3
         rgba = source_rgba(pixels[offset : offset + size], encoded_width, encoded_height, fmt, sdk)
-        if fmt == 12 and not normal:
+        if fmt in (12, 25) and not normal:
             output.extend(sdk_encode_rgba(rgba, encoded_width, encoded_height, sdk, etc_codec))
         else:
             if fmt == 10:
@@ -532,8 +533,18 @@ def cube_mips(pixels, body, selected, sdk, etc_codec):
     return b"".join(parts)
 
 
+def native_cube_stride(width, height, fmt, mips):
+    if type(width) is not int or width != height or not 0 < width <= 8192 or width & (width - 1) or not 1 <= mips <= width.bit_length():
+        raise ValueError("unqualified preserved cubemap dimensions/mips")
+    if fmt == 24:
+        return sum(((max(1, width >> mip) + 3) // 4) ** 2 * 16 for mip in range(mips))
+    if fmt not in CUBE_NATIVE_PIXEL_BYTES:
+        raise ValueError("unqualified preserved cubemap format")
+    return CUBE_NATIVE_PIXEL_BYTES[fmt] * sum(max(1, width >> mip) ** 2 for mip in range(mips))
+
+
 def preserve_cube_mips(pixels, body, selected):
-    """Retain original HDR face/mip bytes; never regenerate or quantize them.
+    """Retain original face/mip bytes without filtering or quantizing them.
 
     BC6H requires native device support. RGBAHalf is the lossless decoded form;
     this operation does not choose a format or assert platform capability.
@@ -543,11 +554,7 @@ def preserve_cube_mips(pixels, body, selected):
     fmt = struct.unpack("<i", field(body, fields, "m_TextureFormat"))[0]
     mips = struct.unpack("<i", field(body, fields, "m_MipCount"))[0]
     stride = struct.unpack("<I", field(body, fields, "m_CompleteImageSize"))[0]
-    if type(width) is not int or width != height or not 0 < width <= 8192 or width & (width - 1) or not 1 <= mips <= width.bit_length():
-        raise ValueError("unqualified preserved cubemap dimensions/mips")
-    if fmt not in (17, 24):
-        raise ValueError("unqualified preserved HDR cubemap format")
-    expected = sum(((max(1, width >> mip) + 3) // 4) ** 2 * 16 if fmt == 24 else max(1, width >> mip) ** 2 * 8 for mip in range(mips))
+    expected = native_cube_stride(width, height, fmt, mips)
     if stride != expected or len(pixels) != stride * 6:
         raise ValueError("preserved cubemap must contain six complete source mip chains")
     return pixels
@@ -580,7 +587,7 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
         if source_bc_etc_format is not None:
             if fmt != source_bc_etc_format or sdk is None or etc_codec is None:
                 raise ValueError("matching source BC format and pinned ETC tools required")
-            normal = fmt == 12 and struct.unpack("<i", field(body, selected["fields"], "m_LightmapFormat"))[0] == 3
+            normal = fmt in (12, 25) and struct.unpack("<i", field(body, selected["fields"], "m_LightmapFormat"))[0] == 3
             return source_bc_etc(pixels, selected["width"], selected["height"], fmt, mips, normal, sdk, etc_codec)
         return source_rgba_mips(pixels, selected["width"], selected["height"], fmt, mips, sdk)
     if operation in {"sdk-rgba", "sdk-rgba-mips"}:
@@ -779,7 +786,7 @@ def produce(
     pc = pc.resolve(strict=True)
     witnesses = texture_witnesses(pc, profile.get("schema_witnesses", []))
     operations = {texture["operation"] for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]}
-    needs_sdk = bool(operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", "source-bc3-etc"})
+    needs_sdk = bool(operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", "source-bc3-etc", "source-bc7-etc"})
     sdk = sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) if needs_sdk or sdk_toolchain is not None or sdk_toolchain_sha256 is not None else None
     if ("source-bc1-etc" in operations and sdk is None) or pixels_codec is not None or pixels_codec_sha256 is not None:
         if pixels_codec is None or pixels_codec_sha256 is None:

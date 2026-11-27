@@ -17,6 +17,19 @@ APK SHA-256 `34f8908c75e493d6b683af45ae18d55bd3b990033243c298376ff99b622e2003`
 in `whole-game-scopes-device-01/terminal.done.json`.
 Peak SoC was 48.9 °C with 0 s above 80 °C. Fixture removal, OLED sleep and
 lease release passed. Camera integration and whole-game coverage remain open.
+## J1547 — Recover REX Disperse charge materials
+
+2026-11-27. The original body visual owner prepares the native Disperse
+charge prefab before it is instantiated. In assisted seed-3 Titanic Plains,
+one Utility tap produced one authority and one server callback. All 11 charge
+samples showed the recovered Glow at queue 3000 and recovered distortion.
+The same-process video shows the opaque charge card clear and visible green
+and purple release particles. Release-material and PC visual parity are open.
+APK SHA-256 `0b8d9a8990ee717bcfb8e433586ffcdb1a545724ea244db39ec4cccbe301b072` (source `ed6d7805`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/rex-disperse-charge-main-nova/`
+contains the native log, paired capture assessment and terminal receipt.
+SoC peaked at 81.6 °C with 0.317 s above 80 °C and 29 °C battery.
+Adopted placement, scratch cleanup, OLED sleep and lease release passed.
 
 ## J1546 — Verify signed Histogram conversion on Android
 
