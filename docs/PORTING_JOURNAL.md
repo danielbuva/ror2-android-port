@@ -5186,7 +5186,7 @@ Evidence is under `work/coordination/gameplay-coverage-20261126/` in
 `queue-nova/`, `queue-nova-b/` and `queue-thor/` terminal receipts.
 Interactive Thor qualification is still blocked on Screen-2 control.
 
-## J1573 — Batch SDK ETC2 colour encoding per mip on Android
+## J1571 — Batch SDK ETC2 colour encoding per mip on Android
 
 2026-11-27. The pinned SDK adapter reuses one process per ETC2 colour mip.
 On Nova B, 12 original BC3 textures with 72 mips produced all four matching
