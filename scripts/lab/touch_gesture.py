@@ -105,7 +105,7 @@ def compile_tool(source=None):
     return destination / "classes.dex"
 
 
-def owned_display_zero_focus(text, package=PACKAGE):
+def owned_display_zero_focus(text, package=PACKAGE, *, activity=None):
     """Require the owned window on display 0, never a second-screen match."""
     displays = list(re.finditer(r"^  Display: mDisplayId=([0-9]+)\b", text, re.M))
     primary = [index for index, match in enumerate(displays) if match[1] == "0"]
@@ -114,7 +114,8 @@ def owned_display_zero_focus(text, package=PACKAGE):
     index = primary[0]
     block = text[displays[index].end() : displays[index + 1].start() if index + 1 < len(displays) else len(text)]
     focus = re.findall(r"^  mCurrentFocus=(.*)$", block, re.M)
-    return len(focus) == 1 and re.fullmatch(r"Window\{[^\n]*\s" + re.escape(package) + r"/[^\n]*\}", focus[0]) is not None
+    component = re.escape(activity) if activity is not None else r"[^\n]*"
+    return len(focus) == 1 and re.fullmatch(r"Window\{[^\n]*\s" + re.escape(package) + "/" + component + r"\}", focus[0]) is not None
 
 
 def run(target, expected_apk_sha256=None, *, device=None):
