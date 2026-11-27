@@ -5091,3 +5091,16 @@ in `outline-instancing-binding-device-02/terminal.done.json`.
 Peak SoC was 57.7 °C, with 0 s above 80 °C and a 28 °C admission battery.
 Fixture removal, OLED sleep and lease release passed. Larger batches and
 canonical game integration remain open.
+
+## J1564 — Run signed Outline shader translation on Android
+
+2026-11-27. The disposable Android toolhost verified the signed producer bundle,
+translated the original Outline Vulkan programs and emitted the same native
+object pack that passed the J1562 draw. Object pack SHA-256
+`de6ad6a4d16fd58eb98b7e21480b38018f22e3cbaf588452d6e812ed6221089e`.
+Toolhost APK SHA-256 `334c8bcdd1de1c1c24a57165747e3a9885c350c868c982c0a719dbbeb2d6a662`.
+The producer took 12.3 s with 87.6 MiB peak child RSS and 7.3 MiB net
+stage storage. Peak CPU/GPU was 65.3 °C with 0 s above 80 °C.
+The runner removed the toolhost and put the display to sleep.
+Evidence `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/signed-outline-device-02/terminal.done.json`.
+Canonical converted gameplay and the remaining graphics shader families stay open.

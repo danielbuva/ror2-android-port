@@ -1,0 +1,48 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -70,8 +70,12 @@
+ # Currently the only deliverables for these platforms are
+ # libraries (either STATIC or SHARED).
+ #
+ # Furthermore testing is equally problematic.
+ if (IOS OR ANDROID)
+-    set(ENABLE_GLSLANG_BINARIES OFF)
++    if(IOS OR NOT ROR2_ANDROID_GLSLANG_CLI)
++        set(ENABLE_GLSLANG_BINARIES OFF)
++    else()
++        add_compile_definitions(ROR2_ANDROID_GLSLANG_CLI)
++    endif()
+     set(GLSLANG_TESTS_DEFAULT OFF)
+ endif()
+--- a/StandAlone/StandAlone.cpp
++++ b/StandAlone/StandAlone.cpp
+@@ -1619,8 +1619,10 @@
+                 spvOptions.compileOnly = compileOnly;
+                 spvOptions.compilerSignature = "glslang";
+                 spvOptions.commandLineArguments = CommandLineArguments.c_str();
++#if !defined(ROR2_ANDROID_GLSLANG_CLI)
+                 std::error_code currentPathError;
+                 const std::string currentWorkingDirectory = std::filesystem::current_path(currentPathError).string();
+                 if (!currentPathError)
+                     spvOptions.currentWorkingDirectory = currentWorkingDirectory.c_str();
++#endif
+                 glslang::GlslangToSpv(*intermediate, spirv, &logger, &spvOptions);
+--- a/glslang/Include/InfoSink.h
++++ b/glslang/Include/InfoSink.h
+@@ -109,14 +109,14 @@
+         if(loc.getFilename() == nullptr && shaderFileName != nullptr && absolute) {
+-        #if defined(__cpp_lib_filesystem)
++        #if defined(__cpp_lib_filesystem) && !defined(ROR2_ANDROID_GLSLANG_CLI)
+             append(std::filesystem::absolute(shaderFileName).string());
+         #else
+             append(shaderFileName);
+         #endif
+         } else {
+             std::string location = loc.getStringNameOrNum(false);
+             if (absolute) {
+-        #if defined(__cpp_lib_filesystem)
++        #if defined(__cpp_lib_filesystem) && !defined(ROR2_ANDROID_GLSLANG_CLI)
+                 append(std::filesystem::absolute(location).string());
+         #else
+                 append(location);
+         #endif
