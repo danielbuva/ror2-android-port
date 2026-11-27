@@ -236,6 +236,9 @@ and its `globalgamemanagers.assets` output. Whole-game original record and
 texture selector profiles use `record_produce.py` and `texture_produce.py`.
 Their original path, member and path ID select the source body before the
 release graph binds the resulting typed pack to a preload destination.
+The canonical native roster profile uses the same record producer for
+selected prefab hierarchy and component records. It retains checked source
+component-array and PPtr edits for the reconciled GameObjects.
 The producers close their source readers and retain the pack and receipt
 for preparation. Full member closure and typed load remain separate gates.
 Null-script witnesses pin the original body, and SDK resource members
