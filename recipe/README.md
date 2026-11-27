@@ -7098,6 +7098,21 @@ and authored record identities. Original bodies and generated packs stay local.
 | --- | --- |
 | `owner-whole-game-v30-original-native-records.jsonl.gz` | `12fc40399cece246488f785ad2202f38588cb1ab127336b56f63ddeba44f2893` |
 
+## Whole-game display native records (2026-11-27)
+
+`owner-whole-game-display-native-records.json` selects 2,266 records from
+235 original PC bundles. The existing record producer copies the original
+bodies into a typed pack for whole-game preparation. Preparation still
+resolves every outgoing pointer against the final bundle members.
+
+The provenance, privacy, licensing and sensitive-content review found only
+original source selectors, class IDs, size and hash pins, and authored output
+identities. Game content and generated packs stay in ignored local storage.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-display-native-records.json` | `f1eeb8a7725b6ccc7a5e3a8f73eababdc4625d79013c7c137eefde50427182a2` |
+
 ## V30 reciprocal prefab records (2026-11-26)
 
 `owner-whole-game-v30-reciprocal-records.json` supplies 3,162 records from
