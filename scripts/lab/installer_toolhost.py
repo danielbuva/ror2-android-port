@@ -19,6 +19,7 @@ KEY_FILES = ("owner.p12", "password")
 MANAGED = Path("tools/phone-build/managed-host")
 SIGNER = Path("tools/phone-build/owner-apk/build_owner_apk.py")
 REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "dev")
+HOST_TOOL_PROFILE = "recipe/owner-app-host-tools.json"
 RUNTIME_INPUTS = (
     MANAGED / "stage.py",
     MANAGED / "build_fixture.py",
@@ -30,10 +31,8 @@ RUNTIME_INPUTS = (
     MANAGED.parent / "native-host/NativeToolHost.c",
     MANAGED.parent / "native-host/Hello.cs",
     "tools/phone-build/owner-code/GnuToolAdapter.c",
-    "recipe/owner-app-host-tools.json",
     "recipe/owner-public-tools.json",
     "environment/toolchain.json",
-    "scripts/env.sh",
 )
 
 
@@ -97,6 +96,22 @@ def backup_signing_key(keys, java, expected, fetch):
 
 def git(checkout, *args):
     return subprocess.check_output(["git", "-C", checkout, *args]).decode().strip()
+
+
+def verify_runtime_inputs(checkout, base_commit, version, staging):
+    git(checkout, "diff", "--quiet", base_commit, version, "--", *RUNTIME_INPUTS)
+    base = json.loads(git(checkout, "show", f"{base_commit}:{HOST_TOOL_PROFILE}"))
+    current = staging.load_metadata()
+    # Each pinned repo asset is replaced during assembly; the Android runtime is retained.
+    base.pop("public_profile_source_hashes")
+    pins = current.pop("public_profile_source_hashes")
+    if base != current:
+        raise ValueError("retained Android tool profile differs")
+    tracked = set(git(checkout, "ls-tree", "-rz", "--name-only", version, "--", *REPO_ASSETS).split("\0"))
+    for name, expected in pins.items():
+        path = checkout / name
+        if name not in tracked or path != path.resolve() or digest(path) != expected:
+            raise ValueError("public fixture source differs: " + name)
 
 
 def base_receipt(base):
@@ -173,7 +188,8 @@ def build(checkout, base, zipalign, check=False):
     base = base.resolve()
     receipt, native_hashes = base_receipt(base)
     git(checkout, "diff", "--quiet", "HEAD", "--", *REPO_ASSETS)
-    git(checkout, "diff", "--quiet", receipt["source_commit"], version, "--", *RUNTIME_INPUTS)
+    staging = load_module("toolhost_staging", checkout / MANAGED / "stage.py")
+    verify_runtime_inputs(checkout, receipt["source_commit"], version, staging)
     java = Path(os.environ["JAVA_HOME"]) / "bin/java"
     sdk = Path(os.environ["ANDROID_HOME"])
     tools = sdk / "build-tools/34.0.0"
@@ -184,7 +200,6 @@ def build(checkout, base, zipalign, check=False):
         return
     if (cache / version).exists():
         raise ValueError("installer-test output already exists for this commit")
-    staging = load_module("toolhost_staging", checkout / MANAGED / "stage.py")
     signer = load_module("toolhost_signing", checkout / SIGNER)
     android = sdk / "platforms/android-33/android.jar"
     with tempfile.TemporaryDirectory(prefix=".installer-build-", dir=cache) as directory:
