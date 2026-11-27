@@ -536,6 +536,9 @@ def play_from_bootstrap(device, thermal, pid, output, reference=None):
         from PIL import Image
 
         size, pixels = load_bootstrap_play_image(reference)
+        # The retained Ready screen was uniformly dimmed to 70% intensity.
+        # A one-level allowance covers framebuffer rounding on that dimmed path.
+        dimmed_pixels = pixels.translate(bytes((7 * value + 5) // 10 for value in range(256)))
         x1, y1, x2, y2 = reference["bounds"]
     deadline = time.monotonic() + 240
     try:
@@ -548,9 +551,11 @@ def play_from_bootstrap(device, thermal, pid, output, reference=None):
                 if owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), device.package):
                     frame = subprocess.run(device.base + ["exec-out", "screencap", "-p"], capture_output=True, check=True, timeout=5).stdout
                     with Image.open(BytesIO(frame), formats=["PNG"]) as screen:
-                        if screen.size == size and screen.crop(reference["bounds"]).convert("RGB").tobytes() == pixels:
-                            (output / "bootstrap-play.png").write_bytes(frame)
-                            break
+                        if screen.size == size:
+                            observed = screen.crop(reference["bounds"]).convert("RGB").tobytes()
+                            if observed == pixels or all(abs(actual - expected) <= 1 for actual, expected in zip(observed, dimmed_pixels, strict=True)):
+                                (output / "bootstrap-play.png").write_bytes(frame)
+                                break
                 time.sleep(2)
                 continue
             dump = device.sh("uiautomator", "dump", path, check=False, timeout=20)

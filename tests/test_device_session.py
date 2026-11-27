@@ -495,9 +495,11 @@ class DeviceSessionTests(unittest.TestCase):
     def test_bootstrap_play_reference_waits_for_label_at_matching_viewport(self):
         from PIL import Image, ImageDraw
 
-        def screen(label, size=(128, 96)):
+        def screen(label, size=(128, 96), *, dimmed=False):
             frame = Image.new("RGB", size, "gold")
             ImageDraw.Draw(frame).text((40, 51), label, fill="black")
+            if dimmed:
+                frame = frame.point(lambda value: (7 * value) // 10)
             buffer = BytesIO()
             frame.save(buffer, format="PNG")
             return buffer.getvalue()
@@ -522,16 +524,17 @@ class DeviceSessionTests(unittest.TestCase):
         device = mock.Mock(package=request["package"], base=["adb", "-s", "synthetic-device"])
         device.sh.return_value = "7"
         thermal = mock.Mock(error=None)
-        frames = [mock.Mock(stdout=image) for image in (screen("Pause"), screen("Play", (140, 96)), ready)]
+        dimmed_ready = screen("Play", dimmed=True)
+        frames = [mock.Mock(stdout=image) for image in (screen("Pause"), screen("Pause", dimmed=True), screen("Play", (140, 96)), dimmed_ready)]
         with (
             mock.patch.object(runner.subprocess, "run", side_effect=frames) as capture,
             mock.patch.object(runner.time, "sleep"),
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
         ):
             runner.play_from_bootstrap(device, thermal, "7", self.output, request["bootstrap_play_reference"])
-        self.assertEqual(capture.call_count, 3)
+        self.assertEqual(capture.call_count, 4)
         self.assertEqual([call.args for call in device.sh.call_args_list if call.args[0] == "input"], [("input", "-d", "0", "tap", "52", "56")])
-        self.assertEqual((self.output / "bootstrap-play.png").read_bytes(), ready)
+        self.assertEqual((self.output / "bootstrap-play.png").read_bytes(), dimmed_ready)
         self.assertEqual(json.loads((self.output / "bootstrap-play.json").read_text())["observed_by"], "screenshot")
 
     def test_combat_capture_is_opt_in_for_native_lab_launch(self):
