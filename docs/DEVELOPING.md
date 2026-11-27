@@ -227,6 +227,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action whole-game-scoreboard` | Current host census: scan all serialized members of a pinned APK and its payload. --target REQUEST.json writes the stable class and device scoreboard. |
 | `./dev prototype --action source-camera-program-bundle` | Current host supplier: compile the input-qualified source-camera graphics/compute candidate into an isolated Android/Vulkan bundle; --target REQUEST.json names a fresh ignored output. Phone production and device loadability remain separate gates. |
 | `./dev prototype --action phone-texture-fixture` | Experimental desktop oracle: stage a fresh SDK-only project for nine authored texture imports. No game inputs, player build or device action. |
 | `./dev prototype --action phone-texture-check` | Experimental desktop oracle: check explicit --target PROJECT with the exact editor under the primary mutex; retain all raw authored mip levels. Never a phone-production input. |

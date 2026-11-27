@@ -2145,3 +2145,31 @@ file aliases and checks actual bodies/native metadata. SDK members enter the
 serialized external table, not AssetBundle dependencies. Managed preparation
 derives original script properties and null-script body witnesses; emission
 still requires the existing pinned current registry, CLR providers and SDK.
+
+## Whole-game scoreboard
+
+Run `./dev prototype --action whole-game-scoreboard --target REQUEST.json` after
+assembly and again when the shared runner has device evidence for the same APK.
+The request uses `schema: whole-game-scoreboard-request-v1`, `output` (an ignored
+JSON path), and `candidate` with an `apk` `{path, sha256}` pin. Owner APKs
+discover their payload from the embedded index. A lab APK with an external
+payload also supplies `external_payload` with `directory` and a `receipt`
+`{path, sha256}` pin from its build. The receipt binds the complete payload
+inventory to the APK. `reference` accepts the same shape as `candidate`.
+`original_audit` optionally pins the 11 November copy-and-renumber audit
+summary, which is reported with its original scope and owner counts.
+`device_receipts` optionally pins a list of shared-runner `terminal.done.json`
+files. The command reads the accompanying phase markers and matches their
+process IDs against the APK-bound launch record.
+
+The output `whole-game-scoreboard-v1` lists numeric Unity class IDs and owners.
+For a comparison, keys are runtime artifact, serialized member, object path ID
+and class ID. `exact` counts equal serialized bodies and type and reference
+metadata. `approximate` counts shared identities with observed serialized
+differences. `missing` counts reference identities absent from the candidate.
+`unverified` counts candidate identities without a reference match, including
+all records in a census without a reference. The comparison covers serialized
+objects. Streamed bytes and runtime fidelity have their own checks. The
+original-source audit is a separate table with its original C/R/D/U buckets.
+Device phase results remain `unobserved` until an exact-APK receipt provides
+evidence.
