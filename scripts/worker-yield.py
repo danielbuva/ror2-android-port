@@ -28,7 +28,7 @@ Budget: Codex usage is capped per week, so worker count is ultimately set by
 spend. Put the owner's chosen daily spend (millions of weighted tokens) in
 `<orchestrator>/budget-daily`. The report compares the active workers' recent
 daily spend with it and lists who to park, worst cost per PR first, to fit.
-Without that file it only reports quota failures and asks for a budget.
+Without that file (the owner's default: use all tokens) token cost alone parks nobody.
 """
 
 import argparse
@@ -223,8 +223,8 @@ def report(orchestrator, days, merged=None, now=None):
     daily = sum(last_day[name] for name in active)
     if budget is None:
         out.append(
-            f"Active workers spent {daily / 1e6:.0f}M in the last 24 h. Set budget-daily to the spend the owner "
-            "accepts; until then size the set by the verdicts and device contention alone."
+            f"Active workers spent {daily / 1e6:.0f}M in the last 24 h. No budget-daily is set, so token cost "
+            "alone parks nobody: size the set by the verdicts and device contention."
         )
     elif daily > budget:
         over = daily - budget
