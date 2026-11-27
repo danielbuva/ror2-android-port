@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using RoR2;
+using RoR2.AsyncManagement;
 using RoR2.ContentManagement;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -68,17 +69,27 @@ namespace UnityEngine.AddressableAssets
         }
     }
 }
+namespace RoR2.AsyncManagement
+{
+    public class EntityStateGameObject
+    {
+        public AssetReference addressableReference;
+        public GameObject directReference;
+    }
+}
+namespace EntityStates.BeetleQueenMonster
+{
+    public static class FireSpit
+    {
+        public static EntityStateGameObject projectilePrefab;
+    }
+}
 namespace EntityStates.Croco
 {
     public class Slash
     {
-        public class SwingReference
-        {
-            public AssetReference addressableReference;
-            public GameObject directReference;
-        }
         public static GameObject configuredNormal;
-        public static SwingReference comboFinisherSwingEffectPrefab;
+        public static EntityStateGameObject comboFinisherSwingEffectPrefab;
         public GameObject swingEffectPrefab = configuredNormal;
     }
 }
@@ -190,7 +201,15 @@ namespace RoR2.ContentManagement
         }
     }
 }
-namespace RoR2.Projectile { public class ProjectileController : UnityEngine.Object { public GameObject ghostPrefab; } }
+namespace RoR2.Projectile
+{
+    public class ProjectileController : UnityEngine.Object { public GameObject ghostPrefab; }
+    public class ProjectileExplosion : UnityEngine.Object
+    {
+        public bool fireChildren;
+        public GameObject childrenProjectilePrefab;
+    }
+}
 public static class PortSession
 {
     public static FieldInfo RewardField(Type type, string name) => type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
@@ -327,11 +346,26 @@ static class Fixture
         WholeCatalogComposed.mercNormal = new GameObject { components = new[] { mercNormal } };
         WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { mercFinisher } };
         EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
-        EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab = new EntityStates.Croco.Slash.SwingReference {
+        EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab = new EntityStateGameObject {
             addressableReference = new AssetReference { RuntimeKey = "native-finisher" },
             directReference = new GameObject { components = new[] { fallback } }
         };
         var operation = new AsyncOperationHandle<GameObject> { Result = new GameObject { components = new[] { finisher } } };
+        var queenGas = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
+        var queenSpittle = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
+        var queenAcid = new GameObject { components = new[] {
+            new RoR2.Projectile.ProjectileController {
+                ghostPrefab = new GameObject { components = new[] { queenGas, queenSpittle } }
+            }
+        } };
+        var queenSpit = new GameObject { components = new[] {
+            new RoR2.Projectile.ProjectileExplosion { fireChildren = true, childrenProjectilePrefab = queenAcid }
+        } };
+        var queenReference = new EntityStateGameObject {
+            addressableReference = new AssetReference { RuntimeKey = "native-queen-spit" }
+        };
+        EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab = queenReference;
+        var queenOperation = new AsyncOperationHandle<GameObject> { Result = queenSpit };
         Addressables.operation = operation;
         var session = new SourceSession();
         var unavailable = new List<string>();
@@ -355,12 +389,24 @@ static class Fixture
                   session.worldLootSourceMaterials[renderer][0] == original,
                   "direct native effect did not preserve source render state before instantiation");
         }
-        operation.Status = AsyncOperationStatus.Succeeded;
-        Check(!prepare.MoveNext() && unavailable.Count == 0 && finisher.sharedMaterials[0] != original,
-              "native finisher source should be prepared after loading");
         Check((string)Addressables.requestedKey == "native-finisher" && session.ownedOriginalVisualHandles[0] == operation &&
-              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 7,
-              "native address and source ownership must be preserved");
+              fallback.sharedMaterials[0] == original, "native finisher address and ownership must be preserved");
+        operation.Status = AsyncOperationStatus.Succeeded;
+        Addressables.operation = queenOperation;
+        Check(prepare.MoveNext() && finisher.sharedMaterials[0] != original &&
+              queenGas.sharedMaterials[0] == original && queenSpittle.sharedMaterials[0] == original,
+              "native finisher should be prepared while the Queen projectile loads");
+        Check((string)Addressables.requestedKey == "native-queen-spit" &&
+              session.ownedOriginalVisualHandles[1] == queenOperation,
+              "native Queen projectile address and ownership must be preserved");
+        queenOperation.Status = AsyncOperationStatus.Succeeded;
+        Check(!prepare.MoveNext() && unavailable.Count == 0 &&
+              EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab == queenReference &&
+              session.worldLootSourceMaterials.Count == 9, "Queen preparation must retain native state configuration");
+        foreach (var renderer in new[] { queenGas, queenSpittle })
+            Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
+                  session.worldLootSourceMaterials[renderer][0] == original,
+                  "Queen acid child ghost must inherit the prepared material and retain its original slot for teardown");
     }
     static void CheckIntersectionEffectAdmission()
     {

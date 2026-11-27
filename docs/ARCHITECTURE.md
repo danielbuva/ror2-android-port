@@ -8359,6 +8359,15 @@ clear and gather modules pass Vulkan 1.0 validation. The Android Vulkan
 fixture clears all 256 bins and gathers all 256 solid-red pixels into the
 highest bin using those original kernels. Other compute shapes remain open.
 
+The signed release graph accepts `owner-compute-shader-translation-v1` packs
+as explicit bundle suppliers. The Histogram profile binds the original PC
+record and destination, and `shader_translate.py` verifies the installed
+translator and validator before producing its typed pack receipt. Managed-host
+`build_shader_tools.py` builds the two ARM64 API 24 native executables from
+pinned public archives and retains corresponding source, notices and relink
+materials. The existing native provider plan stages the executables. Android
+execution of the signed producer remains open.
+
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
 produced Android body through the pack receipt and type table. Shader fallback
@@ -8556,6 +8565,10 @@ material values for missing properties. The original material rows are retained.
 prefabs through the owned content loader before the native state configuration
 populates the GroundLight fields. Native GroundLight selects and spawns each
 effect. The native effect owner restores the prefabs' material slots at teardown.
+The same session retains the projectile at Beetle Queen's configured FireSpit
+address. The native effect owner follows the explosion's enabled child projectile
+reference and prepares both detached ghosts before the director spawns enemies.
+Teardown restores the original material slots.
 `IntegratedWorldSession` sends the owned Engineer shield template through the
 same presentation owner before native deployment. The center and edge renderers
 inherit the prepared materials, and world teardown restores the template slots.
