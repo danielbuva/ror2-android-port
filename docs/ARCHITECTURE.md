@@ -97,6 +97,14 @@ Existing stage and run cleanup own teardown. On a return to the offline menu,
 `IntegratedWorldSession` starts the next session without the direct-stage launch
 selector or its assistance. The device runner still owns removing the selector.
 
+On ordinary Start, the converted player reads `generated-android-data` from
+the verified payload as its release bundle manifest. `StageGeometrySession`
+retains the native `sgStage1` choices whose geometry bundles are declared there,
+preserving their order and relative weights. It unloads the manifest after
+filtering and consumes the existing single stage RNG draw. An unreadable
+manifest, an empty eligible scope or a failed selected bundle load stops Start.
+The lab package continues to use the full eligible native selection.
+
 `ActiveClientSession` checks each native SkillLocator cache against that
 identity's ordered GenericSkill components and cached NetworkIdentity before
 initial serialization. The minimum skill count applies to the controlled body.
@@ -1420,6 +1428,12 @@ row; recovery checks the ordered persisted prefix before truncating uncommitted
 tails and continuing. Initial/final receipts are replaced atomically. Host
 SIGKILL recovery qualifies this contract; Android crash recovery remains open
 after J1123. SDK colour bands run sequentially.
+`texture_compare.py` provides the host comparison for this owner. It verifies
+the reference APK, payload and source selectors, compares complete texture
+chains and bodies, and writes a new private receipt. The public etcpak bridge
+supplies test encodings through the same source preprocessing path. The
+[comparison setup](../tools/phone-build/accepted-output/README.md#compare-texture-encoders-on-the-host)
+uses the lab Python environment and explicit native tool paths.
 The same owner derives full-chain RGBA through `sdk-rgba-mips` and audited
 `recipe/owner-rgba-mip-textures.json`; source top-level decode, transparency
 extension, continuous float mip filtering and per-level SDK/public encoding

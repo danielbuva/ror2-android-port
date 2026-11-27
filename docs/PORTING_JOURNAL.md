@@ -6,7 +6,7 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
-## J1533 — Activate the native Commencement mission on entry
+## J1534 — Activate the native Commencement mission on entry
 
 2026-11-26. The lab verifies the 730-component Moon2 scene contract,
 binds director cards to owned templates and keeps native loot setup on entry.
@@ -19,6 +19,20 @@ includes the `sample-36/` screenshot, log and report (46.69 FPS, 21.42 ms).
 The next segment hit 86.4 °C after 2.88 s above 80 °C. Admission battery
 was 30 °C. `terminal.done.json` confirms scratch cleanup, OLED sleep and lease
 release. Owner traversal, Mithrix, escape and matched PC rendering remain open.
+## J1533 — Admit shipped first stages on converted ordinary Start
+
+2026-11-27. The staged converter qualifies material texture and shader preloads.
+The converted player filters the native starting group by its release manifest
+before the single stage draw. Ordinary Start gave Commando authority in Titanic
+Plains. Touch input moved him 37.23 m and fired 31 primary shots. The native loss
+report persisted and reloaded. The gameplay camera context admitted Wwise output,
+with 487,296 nonzero finite PCM samples captured after authority skill use.
+APK SHA-256 `548f0ea61455fea60575294529c073b2717b361772bf10a3cd470560f2b121a4` (runtime `917db0b6`).
+Evidence: `work/coordination/p1-scenes-w/staged-start-v46/v46-ordinary-play-end-run/`.
+SoC peaked at 88.8 °C with 2.364 s above 80 °C. Battery held 31 °C.
+Adopted placement, scratch removal, OLED sleep and lease release passed.
+Death preempted End Run. Render parity, physical audibility and raw frame pacing remain open.
+
 ## J1532 — Exclude detached player HurtBoxes from touch aim
 
 2026-11-27. The camera ray skips native HurtBoxes owned by the playable
