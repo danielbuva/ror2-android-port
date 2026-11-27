@@ -5537,7 +5537,7 @@ match J850; complete whole-game bundle and phone/runtime acceptance remain open.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-material-compute-records.json` | `578cd86236afa06d1df29ad4ecba50e86e0e2487702bd2c65ceb057e3ae146a2` |
+| `owner-whole-game-material-compute-records.json` at J1274 | `578cd86236afa06d1df29ad4ecba50e86e0e2487702bd2c65ceb057e3ae146a2` |
 
 Audit: minimum original bundle/member/object selectors, hashes, checked pointer
 relationships and existing named import policies only. The 130 materials retain
@@ -5973,7 +5973,7 @@ raw-exact. Complete-file, phone production and install/update gates remain open.
 
 ### Whole-game catalog-witnessed materials (J1293)
 
-`owner-whole-game-material-compute-records.json` SHA-256:
+`owner-whole-game-material-compute-records.json` at J1293 had SHA-256
 `2a8face247ee9a9b5480de17751bd075e89541393eafaae83bc4ad3f741cb9f7`.
 
 Audit: two original material selectors extend the existing record owner. Original
@@ -5987,6 +5987,22 @@ property/blend fields rather than exporter defaults; no upstream code is copied.
 Both persisted records (2,856 bytes) match J850 raw-exact; 11 other witnessed
 materials still differ after existing policies and are excluded. Complete bundle,
 phone production, gameplay and install/update acceptance remain open.
+
+### Cloud Intersection Remap Material bindings
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-material-compute-records.json` | `40919399f50e2324ccbd5fba1548a8cae0c1dc226b810d086e8bde141ec7ec10` |
+
+Audit date 2026-11-27. This profile and
+`owner-whole-game-source-records-10.json` relocate 17 original class-21
+Shader pointers to the canonical Cloud Intersection Remap record. Existing
+texture routes and every nonpointer byte, including both keyword arrays,
+are preserved. Pinned AssetRipper collection lookup informed the member
+resolution, and the original arrays govern keywords as in J367. Unity
+2021.3.45f2 verified 17 Shader links and 50 texture links in the isolated
+fixture. Only source selectors, checked pointers and output hashes are
+published. Source records, keyword payloads and generated bundles stay local.
 
 ### Whole-game original MeshFilter ownership (J1296)
 
@@ -7129,7 +7145,7 @@ packs stay local. The selectors include no private paths or account data.
 | `owner-whole-game-residual-native-records.jsonl.gz` | `8c693a507cc59b5a496e7f3ec09c786dfd7a631afe5e2fedf7341d08069059a2` |
 | `owner-whole-game-source-managed-records.json` | `12be41c98a67ca9e856afa792dfe0316cbd42a7ca8b852155aef8ca2bdf62722` |
 | `owner-whole-game-source-native-records.jsonl.gz` | `d3427f02de4139f54426cfd923663ff04a0da511b4c1aab21424d9906cc17c86` |
-| `owner-whole-game-source-records-10.json` | `b12e40ea85cd8eb5fe0220834e6a56cd875ba57608498ca3f6e0c12c0b8abeda` |
+| `owner-whole-game-source-records-10.json` | `d468966c6287b6cb1f3631626172b886724f00b05faba97af6420c6c80419fe3` |
 | `owner-whole-game-source-records-11.json` | `0cd7618b3d2e6dad1c2c7e4987e8f782a4577003f0234ba4c3caefb78f41a33f` |
 | `owner-whole-game-source-records-12.json` | `d13481d00496c5d2fff3de93bd8c0424b61b3f3b81c11cc945e8a83ab3b6bd8b` |
 | `owner-whole-game-source-records-13.json` | `ac28a286b0bd14d190946d2c0c78b66c9990b64d873f76a774b0dbc4aa2e055f` |

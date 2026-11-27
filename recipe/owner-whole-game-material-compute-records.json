@@ -2029,7 +2029,7 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "path_id": 8875105506351547021,
                   "bytes": 1576,
-                  "sha256": "2537366699f98a0646ccafaf1a628bf1b19dcef32a9a8beb41624826856088b7",
+                  "sha256": "ab45b21465b1e96898d3224642f8f32477a4f72706b8fbee47bd5cb931ad04f1",
                   "transform": {
                     "references": [
                       {
@@ -2039,8 +2039,8 @@
                           -15541403510422607
                         ],
                         "to": [
-                          1,
-                          8281260860232448021
+                          0,
+                          -15541403510422607
                         ]
                       },
                       {
@@ -2087,8 +2087,7 @@
                           -2629586115866571961
                         ]
                       }
-                    ],
-                    "keyword_policy": "dummy-shader-sort-invalid"
+                    ]
                   },
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
                 }
@@ -3465,7 +3464,7 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "path_id": -7616014983731887985,
                   "bytes": 1572,
-                  "sha256": "f9d7489539cd55b2fa30b6d85070619554face79569dfa2a68221c44a77baf89",
+                  "sha256": "e0754b9d354bd24ec27fbdea8d5c230b86b0aff00bd27f35dfdf96e31e3c4af0",
                   "transform": {
                     "references": [
                       {
@@ -3475,8 +3474,8 @@
                           -15541403510422607
                         ],
                         "to": [
-                          1,
-                          8281260860232448021
+                          0,
+                          -15541403510422607
                         ]
                       },
                       {
@@ -3512,8 +3511,7 @@
                           -2125897013090015351
                         ]
                       }
-                    ],
-                    "keyword_policy": "dummy-shader-sort-invalid"
+                    ]
                   },
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
                 }
@@ -3529,7 +3527,7 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "path_id": -3497985911208197802,
                   "bytes": 1580,
-                  "sha256": "ea42548a04ce3289b116a17042a8cc11ac7d45c8f7edf828042aab300263f56e",
+                  "sha256": "08825e004a3cb170193cec04fe49fb8dc1492bb61d4acf1e9010625b85614a7f",
                   "transform": {
                     "references": [
                       {
@@ -3539,8 +3537,8 @@
                           -15541403510422607
                         ],
                         "to": [
-                          1,
-                          8281260860232448021
+                          0,
+                          -15541403510422607
                         ]
                       },
                       {
@@ -3587,8 +3585,7 @@
                           911604453973046061
                         ]
                       }
-                    ],
-                    "keyword_policy": "dummy-shader-sort-invalid"
+                    ]
                   },
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
                 }
@@ -4592,7 +4589,7 @@
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "path_id": 2962090480819671980,
                   "bytes": 1580,
-                  "sha256": "6059a0bdf12d998a40475003ff69816cc7c72961e3d3eff87484a195afb89a44",
+                  "sha256": "73fd05f3241d16fe0e02dc2dcd46149f4c61f2431f6560ac56cf0c8799d635c9",
                   "transform": {
                     "references": [
                       {
@@ -4602,8 +4599,8 @@
                           -15541403510422607
                         ],
                         "to": [
-                          1,
-                          8281260860232448021
+                          0,
+                          -15541403510422607
                         ]
                       },
                       {
@@ -4639,8 +4636,7 @@
                           -2125897013090015351
                         ]
                       }
-                    ],
-                    "keyword_policy": "dummy-shader-sort-invalid"
+                    ]
                   },
                   "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
                 }
