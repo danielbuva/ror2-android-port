@@ -2769,6 +2769,17 @@ Provenance, privacy, licensing and sensitive-content review completed 2026-11-27
 | --- | --- |
 | `owner-cloud-intersection-graphics-translation.json` | `28da3f8dfb441d3f621bdccfe5b15622f34f5b83c4e7bed345ef731afed0fa80` |
 
+The Cloud Remap profile selects the original Shader and its source-linked
+Legacy Transparent/VertexLit fallback. It pins only source identities, hashes
+and canonical destinations. The signed graphics translator reuses the pinned
+public tools. Original programs, translated bodies and device evidence stay
+local. Provenance, privacy, licensing and sensitive-content review completed
+2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-cloud-remap-graphics-translation.json` | `59fe8c20139b0b1763f13e4eb84f4cd3c45b2e67f8d93c5a8839410878c045c1` |
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP

@@ -88,7 +88,15 @@ class TranslatedShaderPack(unittest.TestCase):
 
         source_passes = [source_pass("first"), source_pass("second")]
         keywords = ["ALT"]
-        source = {"m_ParsedForm": {"m_SubShaders": [{"m_Passes": source_passes}], "m_KeywordNames": keywords}, "m_Dependencies": [], "compressedBlob": []}
+        source = {
+            "m_ParsedForm": {
+                "m_SubShaders": [{"m_Passes": source_passes}],
+                "m_KeywordNames": keywords,
+                "m_FallbackName": "Witness/Fallback",
+            },
+            "m_Dependencies": [{"m_FileID": 1, "m_PathID": -42}],
+            "compressedBlob": [],
+        }
         original = deepcopy(source)
         variants_by_pass = [[variant("red", []), variant("green", keywords)], [variant("red", []), variant("blue", keywords)]]
         with (
@@ -108,6 +116,8 @@ class TranslatedShaderPack(unittest.TestCase):
         raw = lz4.block.decompress(bytes(result["compressedBlob"]), uncompressed_size=result["decompressedLengths"][0][0])
         result_passes = result["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]
         self.assertEqual(result["platforms"], [18])
+        self.assertEqual(result["m_Dependencies"], original["m_Dependencies"])
+        self.assertEqual(result["m_ParsedForm"]["m_FallbackName"], original["m_ParsedForm"]["m_FallbackName"])
         self.assertEqual(struct.unpack_from("<I", raw)[0], 6)
         for target, original_pass, variants in zip(result_passes, source_passes, variants_by_pass):
             local, _, programs, parameters = N.variant_records(variants, keywords)

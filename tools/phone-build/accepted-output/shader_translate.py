@@ -169,8 +169,8 @@ def translate_tree(original, directory, tools):
 
     form = original["m_ParsedForm"]
     passes = [shader_pass for subshader in form["m_SubShaders"] for shader_pass in subshader["m_Passes"]]
-    if original["m_Dependencies"] or not passes or any(p["m_Type"] != 0 or p["m_ProgramMask"] != 6 for p in passes):
-        raise ValueError("translation requires ordinary vertex/fragment passes and no external Shader dependencies")
+    if not passes or any(p["m_Type"] != 0 or p["m_ProgramMask"] != 6 for p in passes):
+        raise ValueError("translation requires ordinary vertex/fragment passes")
     source, records, dxbc = read_segments(original, bytes(original["compressedBlob"]))
     groups = []
     for ordinal, shader_pass in enumerate(passes):
@@ -181,6 +181,8 @@ def translate_tree(original, directory, tools):
         variants = translate_pass(original, shader_pass, source, records, dxbc, pass_directory, tools)
         groups.append(shader.variant_records(variants, form["m_KeywordNames"]))
     raw, packed = shader.merge_variant_records(groups)
+    # Bundle preparation resolves these source dependency pointers against the
+    # typed supplier bindings when it relocates the Shader.
     tree = shader.deepcopy(original)
     targets = (shader_pass for subshader in tree["m_ParsedForm"]["m_SubShaders"] for shader_pass in subshader["m_Passes"])
     for target, (pass_raw, _, _, _), (table, programs, parameters) in zip(targets, groups, packed):
