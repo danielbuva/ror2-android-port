@@ -173,8 +173,9 @@ public sealed class ContentFixture : MonoBehaviour
             material.SetFloat("_TrueAlpha", 1);
             material.SetFloat("_PatternPixelSize", 1);
             material.SetFloat("_PatternStrength", 0);
-            material.SetFloat("_ExternalAlpha", 0);
-            material.SetFloat("_LightenFactor", 1);
+            // Let the main texture drive the ramp coordinate at full alpha.
+            material.SetFloat("_ExternalAlpha", 1);
+            material.SetFloat("_LightenFactor", 0);
             material.SetVector("_TextureSampleAdd", Vector4.zero);
             material.SetTexture("_OverlayTex", Texture2D.whiteTexture);
             material.SetTexture("_RemapRamp", ramp);
