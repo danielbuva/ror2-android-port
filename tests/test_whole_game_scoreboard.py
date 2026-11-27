@@ -114,10 +114,56 @@ class WholeGameScoreboardTests(unittest.TestCase):
             self.assertEqual(result["totals"], dict(exact=2, approximate=1, missing=1, unverified=1))
             self.assertEqual(result["files"]["candidate"], dict(bundles=1, bundle_members=1, player_members=1))
             self.assertEqual(
-                result["device"], dict(launch="passed", menu="unobserved", first_stage="passed", stage_transition="unobserved", stages=["fixture"])
+                result["device"],
+                dict(launch="passed", menu="unobserved", first_stage="passed", stage_transition="unobserved", stages=["fixture"], **{"return": "unobserved"}),
             )
             self.assertEqual([row["owner"] for row in result["classes"]], ["p1-textures", "p1-scenes-w"])
-            terminal.write_text(json.dumps(dict(apk_sha256=pin(reference)["sha256"])))
+            census = root / "census.json"
+            S.write(census, dict(result, device=S.device_observations([], result["apk_sha256"])))
+            candidate.unlink()
+            reference.unlink()
+            request = dict(schema=request["schema"], census=pin(census), device_receipts=request["device_receipts"])
+            self.assertEqual(S.build(request), result)
+            terminal.write_text(json.dumps(dict(apk_sha256=result["reference_apk_sha256"])))
             request["device_receipts"] = [pin(terminal)]
             with self.assertRaisesRegex(ValueError, "different build"):
                 S.build(request)
+
+    def test_installed_alpha_return_joins_only_the_signed_attempt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            apk_sha256 = "a" * 64
+            terminal = root / "terminal.done.json"
+            receipt = dict(
+                mode="installed-alpha",
+                apk_sha256=apk_sha256,
+                process_checkpoints=[dict(phase="launch", verified_launch_pid="123")],
+                installed_release={"attempt": "signed"},
+                tour=dict(attempt="signed", pid="123", phase="completed", bootstrap_play=True, native_title="unobserved", returned=True),
+            )
+            terminal.write_text(json.dumps(receipt))
+            marker = dict(pid=123, attempt="signed", id="body-state-spawn-state-auto-player", session=4)
+            for filename, report in (
+                ("start-menu.json", dict(marker, phase="offline-start-menu")),
+                ("world-start.json", dict(marker, phase="integrated-world-playing", world={"ready": True}, stage={"scene": "fixture"})),
+                ("completed-session.json", dict(marker, cleanup=True, success=True, settings={"sessionAbandoned": True})),
+                ("returned-menu.json", dict(marker, phase="offline-start-menu", session=5)),
+            ):
+                (root / filename).write_text(json.dumps(report))
+            result = S.device_observations([pin(terminal)], apk_sha256)
+            self.assertEqual(result["launch"], "passed")
+            self.assertEqual(result["return"], "passed")
+            self.assertEqual(result["alpha_tours"][0]["native_title"], "unobserved")
+            (root / "returned-menu.json").write_text(json.dumps(dict(marker, phase="offline-start-menu", session=5, attempt="previous")))
+            receipt["first_failure"] = "fixture cleanup failure"
+            terminal.write_text(json.dumps(receipt))
+            result = S.device_observations([pin(terminal)], apk_sha256)
+            self.assertEqual(result["return"], "unobserved")
+            self.assertEqual(result["alpha_tours"][0]["first_failure"], "fixture cleanup failure")
+
+            receipt["tour"]["attempt"] = "previous"
+            terminal.write_text(json.dumps(receipt))
+            result = S.device_observations([pin(terminal)], apk_sha256)
+            self.assertEqual(result["launch"], "unobserved")
+            self.assertEqual(result["menu"], "unobserved")
+            self.assertEqual(result["first_stage"], "unobserved")

@@ -168,8 +168,15 @@ class StagedUpdate(FolderImport):
 
         output = self.installer.DIAGNOSTICS.directory / (name + "-play")
         output.mkdir()
-        result = {"admission": phone.thermal.between_sessions(cool_start=True), "keyguard": {}}
+        result = dict(
+            success=False,
+            mode=INSTALLED_ALPHA,
+            apk_sha256=device.installed["apk_sha256"],
+            installed_release=device.installed,
+            keyguard={},
+        )
         try:
+            result["admission"] = phone.thermal.between_sessions(cool_start=True)
             prepare_launch(device, result["keyguard"])
             run_workload(
                 device,
@@ -177,7 +184,7 @@ class StagedUpdate(FolderImport):
                 {"mode": INSTALLED_ALPHA, "duration_seconds": min(phone.timeout, 600), "retain_native_loss": name == "baseline" and not self.nightly},
                 output,
                 result,
-                start_attempt=self.pair[name]["attempt"],
+                start_attempt=result["installed_release"]["attempt"],
             )
             if name == "update":
                 menu = json.loads((output / "start-menu.json").read_bytes())
@@ -188,8 +195,12 @@ class StagedUpdate(FolderImport):
                     and profile.get("reconciledRuns") == 0,
                     "staged-updated-game-did-not-load-retained-native-state",
                 )
+            result["success"] = True
+        except BaseException as error:
+            result["first_failure"] = str(error) or type(error).__name__
+            raise
         finally:
-            save(output / "tour.json", result)
+            save(output / "terminal.done.json", result)
             if not phone.thermal.cancelled.is_set():
                 phone.require_owned_installer()
                 self.require(phone.package_hash(self.installer.GAME) == device.installed["apk_sha256"], "staged-play-ownership-changed")

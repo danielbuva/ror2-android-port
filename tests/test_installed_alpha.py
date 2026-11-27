@@ -226,6 +226,35 @@ class InstalledAlphaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "staged"):
             installed_alpha.validate_selection(installed_alpha.PACKAGE, self.installer, self.installer_sha, self.source_sha, staged=True)
 
+    def test_staged_play_writes_bound_terminal_receipt_even_on_failure(self):
+        staged = staged_alpha_update.StagedUpdate.__new__(staged_alpha_update.StagedUpdate)
+        self.device.installed = dict(apk_sha256=self.game_sha, attempt="signed-attempt")
+        phone = Mock(timeout=60)
+        phone.thermal.between_sessions.return_value = {}
+        phone.thermal.cancelled.is_set.return_value = False
+        phone.package_hash.return_value = self.game_sha
+        for failure in (None, RuntimeError("first stage timed out")):
+            with self.subTest(failure=failure):
+                directory = Path(tempfile.mkdtemp(dir=self.root))
+                staged.installer = Mock(GAME=installed_alpha.PACKAGE)
+                staged.installer.DIAGNOSTICS.directory = directory
+                staged.require = Mock()
+                with (
+                    patch("device_session.prepare_launch"),
+                    patch("device_session.run_workload", side_effect=failure) as run,
+                ):
+                    if failure is None:
+                        staged.play(phone, self.device, "baseline")
+                    else:
+                        with self.assertRaisesRegex(RuntimeError, "first stage timed out"):
+                            staged.play(phone, self.device, "baseline")
+                receipt = json.loads((directory / "baseline-play/terminal.done.json").read_text())
+                self.assertEqual(receipt["apk_sha256"], self.game_sha)
+                self.assertEqual(receipt["installed_release"]["attempt"], run.call_args.kwargs["start_attempt"])
+                self.assertEqual(receipt["mode"], "installed-alpha")
+                self.assertEqual(receipt["success"], failure is None)
+                self.assertEqual(receipt.get("first_failure"), str(failure) if failure else None)
+
     def test_staged_update_binds_entry_coverage_and_producer_execution(self):
         receipt = {
             "incremental": {
