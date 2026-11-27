@@ -393,10 +393,11 @@ class Graph:
             bindings = []
             if operations & {"rgb-jpeg", "dxt1-rgb-jpeg"} or any(texture["operation"] in {"etc1", "etc1-mips"} and texture["jpeg"] for texture in textures):
                 bindings.append("jpeg_codec")
-            source_bc_etc = {"source-bc1-etc", "source-bc3-etc"}
+            source_bc_sdk = {"source-bc3-etc", "source-bc7-etc"}
+            source_bc_etc = {"source-bc1-etc", *source_bc_sdk}
             if operations & {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *source_bc_etc}:
                 bindings.append("etc_codec")
-            if operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", "source-bc3-etc"}:
+            if operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *source_bc_sdk}:
                 bindings.append("sdk_toolchain")
             elif "source-bc1-etc" in operations:
                 bindings.append("pixels_codec")

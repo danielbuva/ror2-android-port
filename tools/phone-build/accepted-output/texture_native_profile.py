@@ -33,7 +33,7 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     if source_operation:
         if cube or fmt != texture.SOURCE_BC_ETC_FORMATS[source_operation] or (fmt == 10 and usage not in (0, 6)):
             return None
-    elif fmt not in ((17, 24) if cube else NATIVE_2D_PIXEL_BYTES):
+    elif fmt not in (texture.CUBE_NATIVE_PIXEL_BYTES.keys() | {24} if cube else NATIVE_2D_PIXEL_BYTES):
         return None
     width, height, mips = map(integer, ("m_Width", "m_Height", "m_MipCount"))
     image_count = integer("m_ImageCount")
@@ -63,8 +63,9 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
             return None
         expected = stride
     elif cube:
-        expected = sum(((max(1, width >> level) + 3) // 4) ** 2 * 16 if fmt == 24 else max(1, width >> level) ** 2 * 8 for level in range(mips))
-        if width != height or width > 8192 or width & (width - 1):
+        try:
+            expected = texture.native_cube_stride(width, height, fmt, mips)
+        except ValueError:
             return None
     else:
         expected = NATIVE_2D_PIXEL_BYTES[fmt] * sum(max(1, width >> level) * max(1, height >> level) for level in range(mips))
@@ -107,7 +108,7 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     if cube or source_operation:
         target.update(mips=mips, colour_space=integer("m_ColorSpace"))
     if source_operation:
-        normal = fmt == 12 and usage == 3
+        normal = fmt in (12, 25) and usage == 3
         target_bytes = expected // 2 if normal else expected
         target.update(sha256=None, pixel_sha256=None, pixel_bytes=target_bytes)
         if normal:
@@ -187,6 +188,7 @@ if __name__ == "__main__":
     compression = parser.add_mutually_exclusive_group()
     compression.add_argument("--source-bc1", action="store_const", dest="source_operation", const="source-bc1-etc", help="select BC1 colour originals for ETC1")
     compression.add_argument("--source-bc3", action="store_const", dest="source_operation", const="source-bc3-etc", help="select BC3 originals for Android ETC")
+    compression.add_argument("--source-bc7", action="store_const", dest="source_operation", const="source-bc7-etc", help="select BC7 originals for Android ETC")
     args = parser.parse_args()
     pc = args.pc.resolve(strict=True)
     if args.output.resolve().is_relative_to(pc):

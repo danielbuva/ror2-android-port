@@ -60,6 +60,17 @@ class PreservedCubemapTests(unittest.TestCase):
         body, fields = cube_body(pixels, fmt=17, stride=168)
         self.assertEqual(T.preserve_cube_mips(pixels, body, dict(width=4, height=4, fields=fields)), pixels)
 
+    def test_native_alpha8_and_rgb24_preserve_six_complete_face_chains(self):
+        for fmt, channels in ((1, 1), (3, 3)):
+            with self.subTest(fmt=fmt):
+                stride = channels * (16 + 4 + 1)
+                pixels = b"".join(bytes([face]) * stride for face in range(6))
+                body, fields = cube_body(pixels, fmt=fmt, stride=stride)
+                selected = dict(width=4, height=4, fields=fields)
+                self.assertEqual(T.preserve_cube_mips(pixels, body, selected), pixels)
+                with self.assertRaisesRegex(ValueError, "six complete source mip chains"):
+                    T.preserve_cube_mips(pixels[:-stride], body, selected)
+
     def test_source_chain_and_format_mismatch_are_rejected(self):
         for width, height, fmt, mips, stride, size in (
             (4, 4, 24, 3, 48, 287),
