@@ -17,6 +17,19 @@ The assisted native Plains exit activated Goolake with 2,048 renderers and
 references. SoC peaked at 89.6 °C with 7.50 s above 80 °C and a 35 °C start
 battery. Adopted placement, scratch removal and OLED sleep passed.
 Native destination population, sustained play and Razorwire pickup remain open.
+## J1523 — Capture Commando's natural-hit flinch and recovery
+
+2026-11-27. Shared device sessions can retain a bounded gameplay MP4 after
+menu Start. The Distant Roost video and same-process reports show a living
+110/110 baseline, native incoming damage and recovery with assists off.
+At 23.58 s the HUD drops from 29 to 5. Commando raises both pistols and
+returns to his resting pose by 24.92 s, alive before the later defeat.
+APK SHA-256 `5cf5902ecfbed68952f0adff986f666206617af2accfa6e1b8ae4aa3bd7967d9` (source `1b9b993e`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/commando-real-hit-main-nova-video/`
+contains the video, `real-hit-pose-health.png`, PID-bound Unity logs and terminal receipt.
+Adopted placement, scratch removal, OLED sleep and lease release passed.
+One 1.007 s gap invalidated the thermal trace for qualification.
+Other survivors' additive aim and gesture audit remains open.
 
 ## J1522 — Retire the native Siren boss at End Run
 

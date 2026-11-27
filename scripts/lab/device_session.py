@@ -9,7 +9,7 @@ lease atomically; it never waits for a peer, publishes, or grants itself a slot.
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager, ExitStack
+from contextlib import contextmanager, ExitStack, nullcontext
 from functools import partial
 import hashlib
 from io import BytesIO
@@ -70,6 +70,7 @@ def load_request(path, serial=None):
         "stage_transition",
         "capture_golem_attacks",
         "capture_titan_indicator",
+        "capture_video",
         "enforce_soc_ceiling",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
@@ -128,6 +129,7 @@ def load_request(path, serial=None):
             "start_from_menu",
             "capture_golem_attacks",
             "capture_titan_indicator",
+            "capture_video",
             "require_high_refresh",
         }:
             raise ValueError("Owner unplugged workload uses physical play and its dedicated recorder")
@@ -137,6 +139,7 @@ def load_request(path, serial=None):
         "start_from_menu",
         "capture_golem_attacks",
         "capture_titan_indicator",
+        "capture_video",
         "enforce_soc_ceiling",
     ):
         if name in value and type(value[name]) is not bool:
@@ -167,6 +170,8 @@ def load_request(path, serial=None):
     for name in ("capture_golem_attacks", "capture_titan_indicator"):
         if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
             raise ValueError(name + " requires the native lab launch workload")
+    if value.get("capture_video") and (not value.get("start_from_menu") or "stage_transition" in value or value["duration_seconds"] > 180):
+        raise ValueError("capture_video requires a timed menu Start observation of at most 180 seconds")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
@@ -675,6 +680,43 @@ def capture_combat_events(device, thermal, pid, output, pattern):
                 save(output / "events.json", events)
 
 
+@contextmanager
+def capture_launch_video(device, thermal, pid, output, duration, result):
+    from device import remove_device_file, retain_device_file
+    from touch_gesture import owned_display_zero_focus
+
+    def require_owned_display():
+        if device.sh("pidof", device.package, check=False) != pid or not owned_display_zero_focus(
+            device.sh("dumpsys", "window", "displays", timeout=5), device.package
+        ):
+            raise RuntimeError("Gameplay recording requires the owned process on display zero")
+
+    require_owned_display()
+    nonce = uuid4().hex
+    name = "launch-video-" + nonce + ".mp4"
+    remote = device.read_receipt("runtime.json")["persistentDataPath"] + "/" + name
+    with ThreadPoolExecutor(max_workers=1) as worker:
+        began = time.time()
+        recording = worker.submit(device.sh, "screenrecord", "--bit-rate", "5000000", "--time-limit", str(duration), remote, timeout=duration + 10)
+        try:
+            yield
+            recording.result()
+            if thermal.error:
+                raise RuntimeError(thermal.error)
+            require_owned_display()
+            digest = retain_device_file(device, remote, output / name, result["device_cleanup"])
+            result["video"] = dict(file=name, sha256=digest, pid=int(pid), dispatched_epoch=began, duration_requested_seconds=duration)
+        except BaseException:
+            try:
+                if not recording.done():
+                    # Match only this recorder's command and unique output path.
+                    device.sh("pkill", "-INT", "-f", r"^(/system/bin/)?screenrecord .*launch-video-" + nonce + "[.]mp4$", check=False, timeout=5)
+            finally:
+                worker.shutdown(wait=True)
+                remove_device_file(device, remote, result["device_cleanup"], missing_ok=True)
+            raise
+
+
 def exception_log_size(device, path):
     # LabDiagnostics appends JSONL across launches. Stat the file while idle.
     return int(device.sh("sh", "-c", 'if [ -e "$1" ]; then stat -c %s -- "$1"; else printf 0; fi', "sh", path))
@@ -1180,48 +1222,50 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
             raise RuntimeError("Stage transition check did not start in " + route["from"])
         runtime = device.read_receipt("runtime.json")["persistentDataPath"]
         report_path = runtime + "/movement-batch-" + report_id + ".json"
-    began = time.monotonic()
-    next_capture = 0
-    scheduled = iter(enumerate(request.get("input_schedule", [])))
-    pending = next(scheduled, None)
-    while True:
-        if thermal.cancelled.is_set():
-            raise RuntimeError(thermal.error)
-        elapsed = time.monotonic() - began
-        if device.sh("pidof", device.package, check=False).strip() != pid:
-            raise RuntimeError("Owned process exited or changed")
-        while pending is not None and elapsed >= pending[1]["at_seconds"]:
-            import touch_gesture
+    video = capture_launch_video(device, thermal, pid, output, request["duration_seconds"], result) if request.get("capture_video") else nullcontext()
+    with video:
+        began = time.monotonic()
+        next_capture = 0
+        scheduled = iter(enumerate(request.get("input_schedule", [])))
+        pending = next(scheduled, None)
+        while True:
+            if thermal.cancelled.is_set():
+                raise RuntimeError(thermal.error)
+            elapsed = time.monotonic() - began
+            if device.sh("pidof", device.package, check=False).strip() != pid:
+                raise RuntimeError("Owned process exited or changed")
+            while pending is not None and elapsed >= pending[1]["at_seconds"]:
+                import touch_gesture
 
-            index, item = pending
-            inputs = dict(json.loads(Path(item["script"]).read_text()), pid=pid)
-            input_path = output / ("scheduled-input-" + str(index) + ".json")
-            save(input_path, inputs)
-            observed = touch_gesture.run(input_path, request["apk_sha256"], device=device)
-            result.setdefault("scheduled_inputs", []).append(dict(at_seconds=item["at_seconds"], dispatched_seconds=elapsed, result=observed))
-            pending = next(scheduled, None)
-            elapsed = time.monotonic() - began
-        if elapsed >= next_capture:
-            capture(device, output / ("sample-" + str(int(elapsed))), pid)
-            next_capture += request.get("capture_interval_seconds", 60)
-        if route:
-            report = _read_json(device, report_path)
-            elapsed = time.monotonic() - began
-            if (
-                elapsed <= request["duration_seconds"]
-                and matches_run(report, pid, world["attempt"], world["session"], report_id=report_id)
-                and stage_transition_ready(report, route)
-            ):
-                save(output / "stage-transition.json", report)
-                result["stage_transition"] = dict(route)
-                break
-        if elapsed >= request["duration_seconds"]:
+                index, item = pending
+                inputs = dict(json.loads(Path(item["script"]).read_text()), pid=pid)
+                input_path = output / ("scheduled-input-" + str(index) + ".json")
+                save(input_path, inputs)
+                observed = touch_gesture.run(input_path, request["apk_sha256"], device=device)
+                result.setdefault("scheduled_inputs", []).append(dict(at_seconds=item["at_seconds"], dispatched_seconds=elapsed, result=observed))
+                pending = next(scheduled, None)
+                elapsed = time.monotonic() - began
+            if elapsed >= next_capture:
+                capture(device, output / ("sample-" + str(int(elapsed))), pid)
+                next_capture += request.get("capture_interval_seconds", 60)
             if route:
-                raise RuntimeError("Stage transition deadline for " + route["to"])
-            break
-        time.sleep(0.5)
-    capture(device, output / "final", pid)
-    result["observed_seconds"] = time.monotonic() - began
+                report = _read_json(device, report_path)
+                elapsed = time.monotonic() - began
+                if (
+                    elapsed <= request["duration_seconds"]
+                    and matches_run(report, pid, world["attempt"], world["session"], report_id=report_id)
+                    and stage_transition_ready(report, route)
+                ):
+                    save(output / "stage-transition.json", report)
+                    result["stage_transition"] = dict(route)
+                    break
+            if elapsed >= request["duration_seconds"]:
+                if route:
+                    raise RuntimeError("Stage transition deadline for " + route["to"])
+                break
+            time.sleep(0.5)
+        capture(device, output / "final", pid)
+        result["observed_seconds"] = time.monotonic() - began
 
 
 def stage_transition_ready(report, route):

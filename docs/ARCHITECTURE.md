@@ -3447,8 +3447,11 @@ still match the previous sync receipt. Failed transfers remove their partial fil
 After stopping the app, the runner copies new or updated lab reports and frame
 traces to the host, verifies their hashes, then removes those device copies.
 Launch mode retains screenshots (default 60 seconds, configurable with
-`capture_interval_seconds`), logs, runtime reports and performance snapshots;
-sustained mode delegates to the existing sustained-session owner, using
+`capture_interval_seconds`), logs, runtime reports and performance snapshots.
+Timed menu Start requests can set `capture_video` to retain a display-zero MP4
+from world admission for up to 180 seconds. The shared runner binds the file to
+the owned PID, verifies its hash and removes the device copy before going idle.
+Sustained mode delegates to the existing sustained-session owner, using
 `capture_interval_seconds` for observations (default five seconds). Observations
 follow elapsed-time boundaries and retain available CPU/GPU clocks and limits,
 thermal cooling-device states, skin temperatures and opt-in diagnostic
