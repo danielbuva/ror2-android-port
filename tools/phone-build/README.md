@@ -152,6 +152,14 @@ does not establish in-game lighting, visuals or device acceptance. As in the
 pinned EditorKit typed lookup and R2API handle lifecycle prior art, a container
 load alone is insufficient evidence for a requested asset and its lifetime.
 
+For an isolated texture comparison, use `./dev prototype --action
+phone-texture-readback --target REQUEST.json`. Use the same bundle pins as for
+the native content check, and add `"texture_mip":{"mip":1,"face":0}` to each
+Texture2D asset or select a Unity `CubemapFace` index from 0 through 5 for a
+Cubemap. The editor samples that level at its native dimensions and writes
+`texture-<asset-index>.rgba` in bottom-up RGBA8 order. The receipt records the
+mip, face, dimensions, format, graphics backend, color space and readback hash.
+
 To check texture producer coverage against current PC originals, pass
 `texture_catalog.py` a JSON request with `pc` (install root), `data` (relative
 player data directory), and `suppliers` (ordered `profile` and `receipt` pins

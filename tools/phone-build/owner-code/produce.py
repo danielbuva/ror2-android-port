@@ -276,6 +276,7 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
         "pause_clock",
         "measure_jobs",
         "audio_members",
+        "wwise_build",
         pcm_option,
     } != {
         "owner_work",
@@ -296,6 +297,8 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
     work, sdk = native.canonical(request["owner_work"]), native.canonical(request["sdk_install"])
     target, source_root, target_sha = target_inputs(request["target"]) if "target" in request else (None, None, None)
     signed_audio = "audio_members" in request
+    if "wwise_build" in request and (not signed_audio or target is not None):
+        raise ValueError("Wwise production receipt requires signed current-source audio")
     if target is None and not signed_audio and work != (ROOT / "work").resolve():
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
@@ -332,7 +335,14 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
             )
         else:
             providers = managed_owner.run(
-                work, sdk, source_inputs, output / "managed-production", signed_audio=signed_audio, android_tools=android_tools, pcm_after_skill=pcm_after_skill
+                work,
+                sdk,
+                source_inputs,
+                output / "managed-production",
+                signed_audio=signed_audio,
+                android_tools=android_tools,
+                pcm_after_skill=pcm_after_skill,
+                wwise_build=request.get("wwise_build"),
             )
         if signed_audio:
             verify_audio_members(output / "managed-production", request["audio_members"])

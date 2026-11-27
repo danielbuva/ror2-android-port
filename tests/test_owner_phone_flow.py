@@ -262,7 +262,7 @@ public class CheckDiagnosticHarness {
         self.assertEqual(service.attrib[android + "name"], ".OwnerBuildService")
         self.assertEqual(service.attrib[android + "exported"], "false")
         self.assertEqual(service.attrib[android + "stopWithTask"], "false")
-        self.assertEqual(manifest.attrib[android + "versionCode"], "5")
+        self.assertEqual(manifest.attrib[android + "versionCode"], "6")
         permissions = {row.attrib[android + "name"] for row in manifest.findall("uses-permission")}
         self.assertTrue({"android.permission.FOREGROUND_SERVICE", "android.permission.WAKE_LOCK"} <= permissions)
         self.assertNotIn("android.permission.RECEIVE_BOOT_COMPLETED", permissions)

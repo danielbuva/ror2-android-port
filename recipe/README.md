@@ -1,5 +1,12 @@
 # Build recipes
 
+2026-11-27 source-pin refresh audit. The changes bind current tracked shader
+helpers, project layout and supplier profiles by SHA-256 and update the sizes of
+two authored inputs. Provenance, privacy, licensing and sensitive-content review
+covered these public file bindings. Original input and produced record hashes
+retain their recorded identities. Audit tables below describe the revisions
+reviewed in their respective entries.
+
 `owner-whole-game-generated-objects.json` supplies four typed records for
 canonical bundle preparation. It selects the permitted SDK default material,
 the current authored projectile adapter script, and the original fieldless
@@ -9,7 +16,7 @@ relationships and hashes. Serialized bodies, SDK files and receipts stay local.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-generated-objects.json` | `709fed8319241c17d538d1617043253b6d73a070c1f6bcd84bdce2ff07002191` |
+| `owner-whole-game-generated-objects.json` | `1aaeb19e4ac6c599e550c1794190e7eb21dbf8322a073e6f4f58e85d7bd2df9a` |
 
 The objective-support recipe follows the staged canonical bundle for five
 references to camera parameters, materials, a pickup effect and a physics
@@ -188,7 +195,7 @@ No clear recipe boundary violations or unresolved publication findings remain.
 | `owner-objective-support-objects.json` | SDK EventSystem policy, script identity and supplier pins | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
 | `owner-outro-whole-objects.json` | Existing source-produced supplier hash references | `0b3707206ccb85b269b4ffb7fdbc2281e29996f6102b823b1a5f3a8e4939f5b7` |
 | `owner-player-menu.json` | 591 path/type/object IDs and 20 external provider identities | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
-| `owner-player-phases.json` | Five source profiles, original scene environment selection and complete output filename sets | `5bc7616b527bf3780f3996e102476eb6a691dfe6e054a4d29803f968688f637f` |
+| `owner-player-phases.json` | Five source profiles, original scene environment selection and complete output filename sets | `2e56c908cccca82f5e5a21ccd539addd3940d7326e4fc41c3fa4aa55f8f4a0f2` |
 | `owner-promorailgunner-whole-objects.json` | Existing source-produced supplier hash references | `465ee55dcb13fd58aaeacb0aec4e620756444822c43e4eaaccb8547e08dd3509` |
 | `owner-promovoidsurvivor-source-lighting-objects.json` | Existing source-produced supplier hash references | `3a3f55032bc988f25fca554416d433ee2c9d1860a2649f79c475ea30a161013a` |
 | `owner-satellitescene-whole-objects.json` | Existing source-produced supplier hash references | `80531ba46512543942b88c586f2c31700e39ae5cda3cb4d43dc292603123e676` |
@@ -199,16 +206,16 @@ No clear recipe boundary violations or unresolved publication findings remain.
 | `owner-whole-game-bundle-tree-records.jsonl.gz` | Four added Tree/WindAsset identity relationships | `d4151bf43fee3a6512203eb3a346bcdb986e54665984fc1deacc976adac2f302` |
 | `owner-whole-scene-postprocess-shader-remap.json` | 24 source-produced shader identity remaps | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |
 | `owner-whole-scene-standard-shader-remap.json` | Two source-produced shader identity remaps | `367d8fc933e722d167036230a28446879695703d10859d202ae71f25433e10da` |
-| `shader-catalog-overrides.json` | Authored generator/recipe pins | `243dfe6408cac7039da558903737453a039d61f99ae0027e3f5833088f0aa940` |
+| `shader-catalog-overrides.json` | Authored generator/recipe pins | `039e8d9690924db4350e55867cc9f85970b69963a2cec8506f6d7af5066c8b5e` |
 | `shader-postprocessing-uber-candidate.json` | Public package selectors and camera program contracts | `948b003b521e440ab6b087093c715624bb0073acb04c8df13056272aa8503805` |
-| `shader-translucent-candidate.json` | Authored shader helper source pin | `a90b71eaa2b429ac1a3a12e3023c1ebd9a98b367818d3cdd79649a811c1f8d7b` |
+| `shader-translucent-candidate.json` | Authored shader helper source pin | `2fe3a7ac8adf4905ae6364b9f073ca2e2b8e46b7407303b5ac2327d7eaf748e8` |
 
 ## Audit record
 
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-sdk-job-inputs.json` | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
-| `owner-player-phases.json` | `5bc7616b527bf3780f3996e102476eb6a691dfe6e054a4d29803f968688f637f` |
+| `owner-player-phases.json` | `2e56c908cccca82f5e5a21ccd539addd3940d7326e4fc41c3fa4aa55f8f4a0f2` |
 
 `owner-player-phases.json` declares the five existing source phase recipe hashes
 and their complete output filename sets (including UUID5 Sprite/texture names).
@@ -2738,6 +2745,51 @@ routing. Programs, translated bodies and device evidence stay local.
 | --- | --- |
 | `owner-histogram-compute-translation.json` | `237d60bfb5624afc874cf152a6ea785f9b9afea6077b185023cf19526d404d50` |
 | `owner-camera-compute-translation.json` | `b089d2fc030cef076d780d1c0e293c69eeed5c4573462011be9406ce39f75716` |
+| `owner-outline-graphics-translation.json` | `7f8f26c6396caffa96751e12dae1d5bd25d69c59fe8bc94248c2fcdfe12037d0` |
+
+`owner-outline-graphics-translation.json` selects the original Outline shader
+for the canonical bundle.
+The graphics backend adds pinned SMOL-V, Khronos SPIRV-Cross and Khronos
+glslang to the DXBC translator and SPIR-V validator. The tracked glslang patch
+enables its standalone CLI with diagnostic paths compatible with the pinned
+Unity NDK. The recipe contains only
+source selectors, hashes and output routing. The builder retains the public
+source packages, patch and notices. Dependent recipes refresh the authored
+segment-reader hash and its downstream recipe pins. Game programs, translated
+bodies and device records stay local. Provenance, privacy, licensing and
+sensitive-content audit completed 2026-11-27.
+
+The Cloud Intersection Remap profile selects the original Shader leaf and
+its canonical destination. It reuses the signed graphics translator and its
+pinned public tools. The recipe contains source selectors, hashes and output
+routing. Source programs, translated bodies and raw device records stay local.
+Provenance, privacy, licensing and sensitive-content review completed 2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-cloud-intersection-graphics-translation.json` | `28da3f8dfb441d3f621bdccfe5b15622f34f5b83c4e7bed345ef731afed0fa80` |
+
+The multipass graphics profile selects the original PaintHeight,
+Cutout/VertexLit and TerrainLayerUtils shaders. It supplies source identities,
+hashes and canonical destinations to the existing signed graphics translator.
+The translator uses the pinned public toolchain and the shared shader record
+writer. Game programs, translated bodies and raw evidence stay local.
+Provenance, privacy, licensing and sensitive-content review completed 2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-multipass-graphics-translation.json` | `8ff591da12ae3f76a4e4a81945c2e165d6bfdde3d1d8e364fd585a011bc042d8` |
+
+The Cloud Remap profile selects the original Shader and its source-linked
+Legacy Transparent/VertexLit fallback. It pins only source identities, hashes
+and canonical destinations. The signed graphics translator reuses the pinned
+public tools. Original programs, translated bodies and device evidence stay
+local. Provenance, privacy, licensing and sensitive-content review completed
+2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-cloud-remap-graphics-translation.json` | `59fe8c20139b0b1763f13e4eb84f4cd3c45b2e67f8d93c5a8839410878c045c1` |
 
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
@@ -5438,7 +5490,7 @@ graph differences remain explicit; full phone/runtime acceptance remains open.
 | --- | --- | --- | --- |
 | `owner-default-scene.json` | Original native record selectors, probe stream pin, public Lab scene policy and exact SDK/source pins. | Identifiers, hashes and authored configuration only; audit below, 2026-11-18. | `player_scene.py`; native lighting/load qualification remains open. |
 
-Profile SHA-256: `b4868bb94edbab5d74a9faa2129053fe9bfbf2a42247f2f4eb85ec31890917d8`.
+Profile SHA-256: `5df3328f6aca7b7246bcb1df503589f317e3b9d2417df91c33d915e7952b41eb`.
 This profile names the minimum original native suppliers and the public camera,
 light and primitive policy. Built-in tag numbers and Cube identity are read from
 the supplied SDK; local object IDs follow independent construction order. Native
@@ -6234,6 +6286,22 @@ hashes. Protected bodies, dependency binaries and local paths stay local.
 Pinned AssetRipper `AssetCollection.TryGetAsset` informed the external
 member lookup. Unity 2021.3.45f2 loaded and unloaded all eight Materials
 in the isolated fixture and verified eight Shader and 33 texture bindings.
+
+### Whole-game Mire Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-mire-native-material-records.json` | `5e24dc046ea17fd59d4cf88c2fa58651fbe3736aa507c0a9b411e97e5e7626f8` |
+
+Audit date 2026-11-27. The recipe selects nine Mire and Access Codes Node
+Materials from the legitimate Steam input. It publishes source paths,
+record and member IDs, sizes and hashes. Material bodies, dependency
+bytes and local paths stay in ignored storage. The pinned AssetRipper
+PPtr and Material extensions informed member and saved texture lookup.
+The isolated fixture verified that all nine emitted records differ
+from the original bodies only at their 47 relocated pointers. Unity
+2021.3.45f2 checked nine Shader bindings and 38 saved texture bindings
+and unloaded the bundles. Release integration and rendered output remain open.
 
 ### Whole-game Standard fallback keyword registration (J1306)
 
@@ -7121,7 +7189,7 @@ serialized bodies, account data or private paths in the recipe.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-source-registry.json` | `16e11437f0a0eeeb98730bec6a8caf72792c99fbab6ca81c135583bfc70c5511` |
+| `owner-whole-game-source-registry.json` | `f8a69b337a53241c1cb75b04f83e76ffdca9da3d83598d86ac947311e57404e8` |
 
 ## Whole-game original record and texture selectors (2026-11-18)
 
@@ -7360,7 +7428,7 @@ local.
 | `owner-whole-game-v30-platform-textures.json` | `1a5d2211dfc0241073c67cba051d678b9c708284c4ae9f57e67353d4785800a3` |
 | `owner-whole-game-v30-platform-meshes.json` | `2efcf8ea3c576f56583d1e0cc7beada333a1010d3a044dbbac95185833072d24` |
 | `owner-whole-game-v30-platform-materials.json` | `6f0d6d5e48e5c6652d3ef0655ac9132f00c878279f1b3ece8132555422b1cd0b` |
-| `owner-whole-game-v30-platform-registry.json` | `5a31a73de342d61a63d8cab3276c33afed68da97385fcf579739ebdc1f4e29ec` |
+| `owner-whole-game-v30-platform-registry.json` | `b36c01b0bf39f177ab92692ba2828267f3a7d52be133cf1c06ce9da94b0838ba` |
 
 ## Commando Animate Alpha Shader (2026-11-27)
 
@@ -7378,7 +7446,7 @@ test captures stay local.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-commando-ui-animate-alpha.json` | `b01e622885c0e04124b35d6aeeb30e6caa1b580fbcb56f4927cfdbde6eb378d4` |
+| `owner-commando-ui-animate-alpha.json` | `0f25067ee9cc94627be2c3799c22a65f92e2abf7b694ca7d92ffb5270de9f45b` |
 
 ## Current-script bundle comparison (2026-11-04)
 
@@ -7570,8 +7638,21 @@ middleware, original files and outputs stay local.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-code-job-inputs.json` | `6a9db9c77118f96c2d064c4696a95160092e47303dca2e8d4217aef4ac389714` |
+| `owner-code-job-inputs.json` | `07c1476269c8c25aa07a56f234a9cd8628a0374c0c801180d048012dd1ee5f59` |
 | `owner-burst-job-inputs.json` | `3a4d0dbbdfbc8dcd7d170322c58e95333cc941e9d8155a92db980bfec9adcac8` |
+
+Audit 2026-11-27. `owner-wwise-native.json` pins the stock and transformed
+Wwise source hashes and carries only authored diagnostic insertions.
+`tools/phone-build/owner-code/wwise-native/` contains the five authored bridge,
+ring and monitor files from the J794, J918 and J950 lineage. A manual review
+of header dependencies and a comparison against 474 stock source files
+found no copied vendor implementation in those files. The compiler lists
+the licensed archive and translation-unit inputs. Licensed sources, composed
+files, libraries and private compiler evidence stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-wwise-native.json` | `28507d75b01e22aed72df58c269225e769febb2bd95fd8a3badec0ab0eac7892` |
 
 Audit 2026-11-26. `owner-v30-bundle-shader-leaves.json` uses original game
 bundle selectors and the acquired Unity SDK to compile three Shader leaves.
@@ -7710,3 +7791,41 @@ pack data or private paths are included. Producer output stays under ignored
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-canonical-native-roster-records.jsonl.gz` | `f20a75d8b362e4f3e39c6da4963c7260de0a8232057af23d524808e649863994` |
+
+## Nest FBX native records (2026-11-27)
+
+`owner-nest-fbx-native-records.json` supplies 253 original native records
+for 42 Nest FBX groups through `record_produce.py`. The existing Mesh and
+shader recipes supply their remaining native records. Unity 2021.3.45f2
+loaded and unloaded 84 typed GameObject and Mesh requests for the scoped
+bundle. Release admission still requires preserving source preload order.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative original bundle selectors, source and destination object IDs,
+class IDs, sizes and hashes. The producer reads original serialized bodies
+from the user's installation and writes the pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-nest-fbx-native-records.json` | `00330558b4b1fad6131bd4d34dfb3d1dba7699f835ea963457d97e005b7c8545` |
+
+## Sad1 and Fungal native Material records (2026-11-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sad1-signed-cloud-material-records.json` | `1ba50768746c41a8a3bfa1e9f26bd2dd39bb675bd01895620f18036d41ebadda` |
+| `owner-whole-game-fungal-native-material-records.json` | `5702d6ad798294ef684a6a268cc1c7486d7fc597258813a4e410bf7fd46328b4` |
+| `owner-whole-game-fungal-signed-cloud-material-records.json` | `cd860a89009a2389c890bf7fe155f7ee6249273f23f51eef1cd5604959f41ed5` |
+
+The shared record producer reads 28 Sad1 and 24 Fungal Material bodies from
+the official PC input. The emitted bodies preserve their original type
+trees and fields outside PPtr relocation. Unity 2021.3.45f2 loaded and
+unloaded all three fixtures and checked 52 Shader and 183 Texture2D
+bindings. Five Fungal Materials use existing Standard or Triplanar
+Shader stand-ins. One Fungal texture binding uses the BC1-to-ETC supplier.
+Canonical release integration and Android draws remain open.
+
+The review covered source and destination selectors, class IDs, sizes
+and hashes, following the pinned AssetRipper member and saved-property
+lookup. Serialized bodies, generated packs and local paths stay under
+ignored `work/`.

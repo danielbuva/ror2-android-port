@@ -27,17 +27,54 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
-    def test_direct_compute_job_binds_original_record_and_installed_tools(self):
-        path = ROOT / "recipe/owner-histogram-compute-translation.json"
+    @classmethod
+    def setUpClass(cls):
+        cls.root_recipe_digests = {}
+
+    def root_graph(self, phases=None):
+        # The checkout recipes are read-only here. Share only their initial
+        # identity scan; each graph still reads/verifies its selected profile
+        # bytes and builds fresh jobs. Mutable synthetic repos use plain Graph.
+        digest = G.digest
+        recipe = ROOT / "recipe"
+
+        def initial_digest(path):
+            if path.parent != recipe:
+                return digest(path)
+            if path not in self.root_recipe_digests:
+                self.root_recipe_digests[path] = digest(path)
+            return self.root_recipe_digests[path]
+
+        with mock.patch.object(G, "digest", initial_digest):
+            return G.Graph(ROOT, {}, phases)
+
+    def test_direct_shader_jobs_bind_original_records_and_installed_tools(self):
+        compute = ("libshader-dxbc.so", "libspirv-val.so")
+        graphics = (*compute, "libshader-smolv.so", "libspirv-cross.so", "libglslang.so")
+        for profile, tools in (
+            ("owner-histogram-compute-translation.json", compute),
+            ("owner-outline-graphics-translation.json", graphics),
+            ("owner-cloud-intersection-graphics-translation.json", graphics),
+            ("owner-multipass-graphics-translation.json", graphics),
+            ("owner-cloud-remap-graphics-translation.json", graphics),
+        ):
+            with self.subTest(profile=profile):
+                self.check_direct_shader_job(profile, tools)
+
+    def check_direct_shader_job(self, profile, tools):
+        path = ROOT / "recipe" / profile
         pin = G.digest(path)
-        (record,) = json.loads(path.read_bytes())["typed_records"]
-        destination = [record["output"][key] for key in ("bundle", "member", "path_id")]
-        source = [record["source"][key] for key in ("path", "member", "path_id")]
-        graph = G.Graph(ROOT, {})
-        row = dict(destination=destination, source=source, record_source=destination, record="a" * 64)
-        bindings = graph.bundle_bindings([row], *destination[:2], source_profiles=[pin])
+        rows = []
+        for record in json.loads(path.read_bytes())["typed_records"]:
+            destination = [record["output"][key] for key in ("bundle", "member", "path_id")]
+            source = [record["source"][key] for key in ("path", "member", "path_id")]
+            rows.append(dict(destination=destination, source=source, record_source=destination, record="a" * 64))
+        graph = self.root_graph()
+        bindings = graph.bundle_bindings(rows, *rows[0]["destination"][:2], source_profiles=[pin])
         self.assertEqual(bindings["unresolved"], [])
-        self.assertEqual(bindings["bindings"][0]["supplier"], pin)
+        self.assertEqual([row["source"] for row in bindings["bindings"]], [row["source"] for row in rows])
+        self.assertEqual([row["supplier"] for row in bindings["bindings"]], [pin] * len(rows))
+        self.assertEqual(len(bindings["suppliers"]), 1)
         name = "recipe/jobs/" + path.name
         job = graph.jobs[name]
         self.assertIn(job["script"], J.PRODUCERS)
@@ -53,7 +90,7 @@ class ReleaseGraphTests(unittest.TestCase):
             dispatch.jobs_root = native / "work/jobs"
             dispatch.descriptors = graph.jobs
             expected = {}
-            for tool in ("libshader-dxbc.so", "libspirv-val.so"):
+            for tool in tools:
                 binary = native / tool
                 binary.write_text(tool)
                 expected[f"native_sha256:{tool}"] = G.digest(binary)
@@ -69,7 +106,7 @@ class ReleaseGraphTests(unittest.TestCase):
             original = [source[key] for key in ("path", "member", "path_id")] if source else ["sdk", "Resources/unity_builtin_extra", row["sdk_shader"]]
             rows.append(dict(destination=destination, source=original, record_source=destination, record="a" * 64))
 
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         graph.conversion = graph.code_conversion("recipe/owner-code-job-inputs.json")
         bindings = graph.bundle_bindings(rows, *rows[0]["destination"][:2], source_profiles=[pin])
         self.assertEqual(bindings["unresolved"], [])
@@ -95,7 +132,7 @@ class ReleaseGraphTests(unittest.TestCase):
                     source = [original["path"], original["member"], row["source_path_id"]]
                     rows.append(dict(destination=destination, source=source, record_source=destination, record="a" * 64))
 
-                graph = G.Graph(ROOT, {})
+                graph = self.root_graph()
                 graph.conversion = graph.code_conversion("recipe/owner-code-job-inputs.json")
                 bindings = graph.bundle_bindings(rows, *rows[0]["destination"][:2], source_profiles=[pin])
                 self.assertEqual(bindings["unresolved"], [])
@@ -107,7 +144,7 @@ class ReleaseGraphTests(unittest.TestCase):
                 self.assertEqual(job["arguments"][job["arguments"].index("--camera-package") + 1], archive)
 
     def test_install_plan_reports_unbound_producer_inputs(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         producer, dependency = "recipe/jobs/fixture.json", "recipe/jobs/dependency.json"
         graph.jobs[producer] = {
             "script": "fixture.py",
@@ -124,6 +161,29 @@ class ReleaseGraphTests(unittest.TestCase):
                 {"entries": {"payload/fixture": {"job": producer}}}, required_inputs="recipe/input.json", workspace_bytes=0, bindings={"pc": "."}
             )
 
+    def test_owner_code_uses_admitted_sdk_and_provider_roots(self):
+        graph = G.Graph(ROOT, {})
+        graph.conversion = graph.code_conversion("recipe/owner-code-job-inputs.json")
+        native = graph.native_code("recipe/owner-native-job-inputs.json", graph.conversion)
+        code_job = graph.jobs[graph.conversion]
+        native_job = graph.jobs[native]
+        bindings = {"sdk_install": "acquired/sdk", "code_providers": "acquired/providers"}
+        with tempfile.TemporaryDirectory() as directory:
+            dispatcher = object.__new__(J.Dispatcher)
+            dispatcher.inputs = Path(directory).resolve()
+            dispatcher.repo = dispatcher.runtime = dispatcher.installed_runtime = dispatcher.native = dispatcher.inputs
+            dispatcher.config = {"bindings": bindings}
+            output = dispatcher.inputs / "work/jobs/attempt"
+            for root in bindings.values():
+                (dispatcher.inputs / root).mkdir(parents=True)
+            sdk = str(dispatcher.inputs / bindings["sdk_install"])
+            self.assertEqual(dispatcher.expand(code_job["request"]["sdk_install"], code_job, output, None), sdk)
+            self.assertEqual(dispatcher.expand(native_job["request"]["sdk_install"], native_job, output, None), sdk)
+            self.assertEqual(dispatcher.expand(graph.sdk_contents(), code_job, output, None), sdk + "/Unity.app/Contents")
+            for path in code_job["request"]["source_inputs"].values():
+                expanded = Path(dispatcher.expand(path, code_job, output, None))
+                self.assertTrue(expanded.is_relative_to(dispatcher.inputs / bindings["code_providers"]))
+
     def test_staged_phone_entry_points_run_without_a_checkout(self):
         with tempfile.TemporaryDirectory() as temporary:
             app = Path(temporary).resolve()
@@ -134,7 +194,7 @@ class ReleaseGraphTests(unittest.TestCase):
             for directory in (cwd, native, inputs / "game", inputs / "sdk", inputs / "work/inventory"):
                 directory.mkdir(parents=True)
 
-            graph = G.Graph(ROOT, {})
+            graph = self.root_graph()
             paths = graph.current_code_sources(signed_audio=True)
             self.assertFalse({"AGENTS.md", "PORTING_STATE.md"} & set(paths))
             self.assertIn("recipe/native-view-camera-transform.json", paths)
@@ -587,7 +647,7 @@ class ReleaseGraphTests(unittest.TestCase):
             )
 
     def test_scene_record_suppliers_close_published_consumers(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         for scene, supplier, count in (
             ("artifactworld01", "artifactworld01-native-records", 6),
             ("champrush", "champrush-director-records", 2),
@@ -604,7 +664,7 @@ class ReleaseGraphTests(unittest.TestCase):
                 self.assertIn("payload/whole-scene-" + scene, graph.jobs[name]["outputs"])
 
     def test_player_defaults_use_android_player_without_changing_shader_sdk(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         name = graph.build(G.digest(ROOT / "recipe/owner-player-data.json"))
         arguments = graph.jobs[name]["arguments"]
         self.assertEqual(arguments[arguments.index("--sdk") + 1], "${input:sdk_contents}/../../PlaybackEngines/AndroidPlayer")
@@ -614,7 +674,7 @@ class ReleaseGraphTests(unittest.TestCase):
                 self.assertEqual(args[args.index("--sdk") + 1], "${input:sdk}")
 
     def test_barrier_job_binds_legacy_sdk_and_current_output_policy(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         barrier = graph.build(G.digest(ROOT / "recipe/owner-barrier-shaders.json"))
         args = graph.jobs[barrier]["arguments"]
         self.assertEqual(args[args.index("--legacy-sdk") + 1], "${input:legacy_sdk}")
@@ -625,7 +685,7 @@ class ReleaseGraphTests(unittest.TestCase):
                 self.assertEqual(job["arguments"][job["arguments"].index("--comparison") + 1], "diagnostic")
 
     def test_object_sdk_profile_keeps_application_relative_resource_root(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         name = graph.build(G.digest(ROOT / "recipe/owner-objective-support-objects.json"))
         arguments = graph.jobs[name]["arguments"]
         root = arguments[arguments.index("--sdk") + 1]
@@ -634,7 +694,7 @@ class ReleaseGraphTests(unittest.TestCase):
         self.assertTrue(profile["sdk"]["path"].startswith("Contents/Resources/"))
 
     def test_final_object_layout_and_record_types_are_declared_artifacts(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         graph.build(G.digest(ROOT / "recipe/owner-commando-objects.json"))
         graph.build(G.digest(ROOT / "recipe/owner-whole-game-source-records.json"))
         shader_job = graph.build(G.digest(ROOT / "recipe/owner-player-shaders.json"))
@@ -662,7 +722,7 @@ class ReleaseGraphTests(unittest.TestCase):
         self.assertIn("record_produce", seen)
 
     def test_sprite_cohorts_bind_native_witness_and_standard_pack_artifacts(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         for cohort in (1, 2, 3):
             profile = ROOT / f"recipe/owner-commando-native-sprites-{cohort}.json"
             pin = G.digest(profile)
@@ -675,13 +735,13 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl", "types": "types.json"})
 
     def test_fallback_shader_job_binds_pinned_public_templates(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         name = graph.build(G.digest(ROOT / "recipe/owner-commando-fallback-shaders.json"))
         arguments = graph.jobs[name]["arguments"]
         self.assertEqual(arguments[arguments.index("--asset-ripper") + 1], "${input:asset_ripper}")
 
     def test_fresh_shader_jobs_bind_acquired_templates_and_cache_witnesses(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         graph.conversion = "recipe/jobs/code.json"
         graph.jobs[graph.conversion] = {"request": {"sdk_install": "${inputs}/acquired/sdk"}}
         for filename, flag, embedded in (
@@ -735,7 +795,7 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertIn(G.LEGACY_SHADER_SDK + "/" + member, job["cache_witnesses"])
 
     def test_texture_jobs_bind_required_pinned_tools(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         for profile, bindings in (
             ("rgb", {"jpeg_codec", "etc_codec"}),
             ("uncompressed", {"jpeg_codec"}),
@@ -776,7 +836,7 @@ class ReleaseGraphTests(unittest.TestCase):
                 path.write_text(name)
                 guest_files[name] = G.digest(path)
 
-            graph = G.Graph(ROOT, {})
+            graph = self.root_graph()
             graph.conversion = "recipe/jobs/owner-code.json"
             names = {key: graph.build(G.digest(ROOT / f"recipe/owner-{key}-textures.json")) for key in ("uncompressed", "alpha", "rgb-mip", "rgba")}
             jpeg, etc, sdk = (graph.jobs[names[key]] for key in ("uncompressed", "alpha", "rgb-mip"))
@@ -861,7 +921,7 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertNotIn("request", job)
 
     def test_player_shader_suppliers_keep_serialized_and_nested_pack_contracts(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         player_path = ROOT / "recipe/owner-player-data.json"
         shader_path = ROOT / "recipe/owner-player-shaders.json"
         remap = graph.build(G.digest(ROOT / "recipe/owner-presentation-reused-records.json"))
@@ -890,7 +950,7 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertTrue(set(row["recipe_files"]) <= set(index["files"]) | set(graph.jobs))
 
     def test_complete_player_phases_declare_media_and_sign_policy(self):
-        graph = G.Graph(ROOT, {}, "recipe/owner-player-phases.json")
+        graph = self.root_graph("recipe/owner-player-phases.json")
         index = graph.compile(["recipe/owner-player-data.json", "recipe/owner-player-shaders.json"])
         player = "recipe/jobs/owner-player-data.json"
         job = graph.jobs[player]
@@ -1013,18 +1073,25 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(value) if isinstance(value, dict) else value)
 
-            for name in (*G.INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so"):
+            for name in (*G.INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so", "libc++_shared.so"):
                 write(native / name, "installed tool fixture " + name)
             write(runtime / "data-hashes.json", {"clang/21/include/header.h": "fixture v1"})
             original = inputs / "import/files/Data/source.txt"
             write(original, "owned fixture")
+            stock = original.parent / "wwise-stock/stock-input"
+            ndk = original.parent / "wwise-ndk/sysroot/target-input"
+            write(stock, "licensed stock fixture")
+            write(ndk, "target SDK fixture")
             input_manifest = "recipe/inputs.json"
             write(
                 repo / input_manifest,
                 {
                     "schema": 1,
                     "game_version": "synthetic-v1",
-                    "files": [{"path": "Data/source.txt", "bytes": original.stat().st_size, "sha256": G.digest(original)}],
+                    "files": [
+                        {"path": p.relative_to(inputs / "import/files").as_posix(), "bytes": p.stat().st_size, "sha256": G.digest(p)}
+                        for p in (original, stock, ndk)
+                    ],
                 },
             )
             authored = repo / "tools/unity/Fixture.cs"
@@ -1180,7 +1247,12 @@ if 'audio_members' in request:
     (stage / 'stage-receipt.json').write_text(json.dumps({'inventory': pin(source)}))
     supplied = managed / 'supplied-sdk'
     supplied.mkdir()
-    (supplied / 'libAkSoundEngine.so').write_bytes(b'local licensed library fixture')
+    receipt_pin = request['wwise_build']
+    receipt_bytes = pathlib.Path(receipt_pin['path']).read_bytes()
+    assert pin(receipt_bytes)['sha256'] == receipt_pin['sha256'] and len(receipt_bytes) == receipt_pin['bytes']
+    library = pathlib.Path(request['source_inputs']['wwise_native']).read_bytes()
+    assert json.loads(receipt_bytes)['library'] == pin(library)
+    (supplied / 'libAkSoundEngine.so').write_bytes(library)
     burst = frame.parent.parent / 'burst'
     burst.mkdir()
     (burst / 'lib_burst_generated.so').write_bytes(pathlib.Path(request['burst_tools']['runtime']).read_bytes())
@@ -1303,6 +1375,7 @@ if 'resource_dir' in tools:
             admission, plan = load("install_inputs"), load("install_flow")
             code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
             package_job = "recipe/jobs/owner-package-inputs.json"
+            wwise = "recipe/jobs/owner-wwise-native.json"
             progress = []
             audio_layout = root / "private-stage-receipt.json"
             write(
@@ -1329,7 +1402,10 @@ if 'resource_dir' in tools:
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
-                graph.attach_install_plan(index, required_inputs=input_manifest, workspace_bytes=0, bindings={"original": "Data/source.txt", "pc": "."})
+                bindings = {"original": "Data/source.txt", "pc": "."}
+                if current:
+                    bindings.update(wwise_stock="Data/wwise-stock", wwise_ndk_root="Data/wwise-ndk")
+                graph.attach_install_plan(index, required_inputs=input_manifest, workspace_bytes=0, bindings=bindings)
                 if current:
                     self.assertIn("tools/wwise-android-abi/generate.py", graph.jobs[code]["source_files"])
                     self.assertIn("recipe/original-audio-owner-sources.json", graph.jobs[code]["source_files"])
@@ -1346,10 +1422,12 @@ if 'resource_dir' in tools:
                     self.assertNotIn("recipe/jobs/owner-burst-code.json", graph.jobs)
                     self.assertNotIn(str(audio_layout), json.dumps(graph.jobs[code]))
                     self.assertNotIn("private authoring witness", json.dumps(graph.jobs[code]))
+                    self.assertIn("tools/phone-build/owner-code/wwise-native/PcmReadbackRingV1.h", graph.jobs[wwise]["source_files"])
+                    self.assertNotIn("tools/phone-build/owner-code/produce.py", graph.jobs[wwise]["source_files"])
                 else:
                     self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
                     self.assertNotIn(package_job, graph.jobs[player]["needs"])
-                self.assertEqual(graph.jobs[code]["needs"], [package_job])
+                self.assertEqual(graph.jobs[code]["needs"], [package_job, wwise] if current else [package_job])
                 self.assertIn("recipe/runtime-sources.json", graph.jobs[player]["source_files"])
                 self.assertEqual(graph.jobs[witness]["needs"], [code, player])
                 release = {
@@ -1367,7 +1445,8 @@ if 'resource_dir' in tools:
                 )
                 self.assertEqual(
                     plan.validate_plan(index["install_plan"], index, dispatcher.descriptor),
-                    {package_job: "assembly", code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"},
+                    {package_job: "assembly", code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"}
+                    | ({wwise: "assembly"} if current else {}),
                 )
                 dispatcher.execute(bundle)
                 dispatcher.execute(native_job)
@@ -1458,8 +1537,30 @@ if 'resource_dir' in tools:
             )
             self.assertEqual(completions[-5:], [(code, False), (player, False), (witness, False), (bundle, False), (native_job, False)])
 
-            for path in G.Graph(ROOT, {}).current_code_sources(signed_audio=True):
+            for path in self.root_graph().current_code_sources(signed_audio=True):
                 write(repo / path, (ROOT / path).read_text())
+            fixture_graph = G.Graph(repo, {})
+            fixture_graph.wwise_native()
+            for path in fixture_graph.public_files[wwise]:
+                if not (repo / path).exists():
+                    write(repo / path, (ROOT / path).read_text())
+            write(
+                producer_root / "wwise_native.py",
+                """import argparse, hashlib, json, pathlib
+parser = argparse.ArgumentParser()
+for name in ('stock', 'sysroot', 'clang', 'linker', 'resource-dir', 'output'):
+    parser.add_argument('--' + name, required=True, type=pathlib.Path)
+args = parser.parse_args()
+assert args.clang.name == 'libclang.so' and args.linker.name == 'lib-ld.lld-.so'
+assert args.resource_dir.parts[-2:] == ('clang', '21')
+library = (args.stock / 'stock-input').read_bytes() + (args.sysroot / 'target-input').read_bytes()
+args.output.mkdir()
+(args.output / 'libAkSoundEngine.so').write_bytes(library)
+(args.output / 'result.json').write_text(json.dumps({
+    'success': True, 'library': {'sha256': hashlib.sha256(library).hexdigest(), 'bytes': len(library)},
+}))
+""",
+            )
             request = json.loads((repo / code_request).read_text())
             with self.assertRaisesRegex(ValueError, "audio-bearing code"):
                 G.Graph(repo, {}).compile([], code_request=code_request, native_request=native_request, audio_stage_receipt=audio_layout)
@@ -1485,6 +1586,7 @@ if 'resource_dir' in tools:
             progress.clear()
             build(current=True)
             self.assertIn((code, False), progress)
+            self.assertIn((wwise, True), progress)
             write(burst_runtime, "Burst fixture v2")
             self.assertEqual(build(current=True)["rebuilt"], ["apk/lib/arm64-v8a/lib_burst_generated.so"])
             write(runtime / "data-hashes.json", {"clang/21/include/header.h": "fixture v2"})
@@ -1492,6 +1594,7 @@ if 'resource_dir' in tools:
             self.assertFalse(build(current=True)["rebuilt"])
             self.assertIn((code, False), progress)
             self.assertIn((native_job, False), progress)
+            self.assertIn((wwise, False), progress)
 
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):
@@ -1762,7 +1865,7 @@ android.mkdir(parents=True)
             self.assertEqual((root / "0-unity_app_guid").read_bytes(), (root / "1-unity_app_guid").read_bytes())
 
     def test_compressed_hierarchy_suppliers_are_signed_without_expansion(self):
-        graph = G.Graph(ROOT, {})
+        graph = self.root_graph()
         for path in sorted((ROOT / "recipe").glob("owner-*.jsonl.gz")):
             job = graph.build(G.digest(path))
             self.assertEqual(graph.jobs[job]["script"], G.PREFIX + "record_produce.py")

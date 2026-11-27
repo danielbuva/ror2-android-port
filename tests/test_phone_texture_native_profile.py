@@ -67,7 +67,8 @@ class TextureNativeProfileTests(unittest.TestCase):
             witnesses.write_text(json.dumps([dict(source=[source.name, "CAB-test", 6], class_id=28, sha256=sha256(source.read_bytes()).hexdigest())]))
             profile_path = root / "profile.json"
             subprocess.run(
-                [sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--schema-witnesses", str(witnesses), "--output", str(profile_path)], check=True
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--schema-witnesses", str(witnesses), "--output", str(profile_path)],
+                check=True,
             )
             profile = json.loads(profile_path.read_bytes())
             self.assertEqual([item["resources"] for item in profile["bundles"]], [{}, {resource.name: sha256(resource.read_bytes()).hexdigest()}])
@@ -127,6 +128,7 @@ class TextureNativeProfileTests(unittest.TestCase):
                         ("CAB-test", serialized(clean, schema, path_id=6, class_id=28), 4),
                         ("CAB-blob", serialized(custom, schema, path_id=7, class_id=28), 4),
                         ("CAB-normal", serialized(normal, schema, path_id=8, class_id=28), 4),
+                        ("CAB-normal-covered", serialized(normal, schema, path_id=8, class_id=28), 4),
                         ("CAB-colour", serialized(colour, schema, path_id=9, class_id=28), 4),
                         *((f"CAB-native-{fmt}", serialized(body, schema, path_id=fmt, class_id=28), 4) for fmt, (body, _) in native_colours.items()),
                     ]
@@ -145,9 +147,13 @@ class TextureNativeProfileTests(unittest.TestCase):
                         ("CAB-native-4", 4),
                     )
                 )
+                + json.dumps(dict(source=[source.name, "CAB-normal-covered", 8], status="exact", record_source=["ignored.bundle", "CAB-other", 8]))
+                + "\n"
             )
             output = root / "profile.json"
-            result = subprocess.run([sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--output", str(output)], capture_output=True, text=True)
+            result = subprocess.run(
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--output", str(output)], capture_output=True, text=True
+            )
             self.assertEqual(result.returncode, 0, result.stderr)
             profile = json.loads(output.read_text())
             members = profile["bundles"][0]["members"]
@@ -164,7 +170,7 @@ class TextureNativeProfileTests(unittest.TestCase):
             self.assertEqual((target["sha256"], target["pixel_sha256"]), (sha256(clean).hexdigest(), sha256(pixels).hexdigest()))
             output = root / "bc3.json"
             result = subprocess.run(
-                [sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--source-bc3", "--output", str(output)], capture_output=True, text=True
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--source-bc3", "--output", str(output)], capture_output=True, text=True
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             members = json.loads(output.read_text())["bundles"][0]["members"]
@@ -175,9 +181,18 @@ class TextureNativeProfileTests(unittest.TestCase):
             target = record["outputs"][0]
             self.assertEqual((target["sha256"], target["pixel_sha256"]), (None, None))
             self.assertEqual((target["bytes"], target["pixel_bytes"], target["usage"], target["alpha_optional"]), (len(normal) - 16, 16, 4, True))
+            output = root / "all-bc3.json"
+            subprocess.run(
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--source-bc3", "--all-originals", "--output", str(output)],
+                check=True,
+            )
+            originals = json.loads(output.read_text())["bundles"][0]["members"]
+            self.assertEqual([member["name"] for member in originals], ["CAB-normal", "CAB-normal-covered"])
+            self.assertEqual(originals[0], members[0])
+            self.assertEqual(originals[1]["textures"][0]["sha256"], record["sha256"])
             output = root / "bc1.json"
             result = subprocess.run(
-                [sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--source-bc1", "--output", str(output)], capture_output=True, text=True
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--source-bc1", "--output", str(output)], capture_output=True, text=True
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             members = json.loads(output.read_text())["bundles"][0]["members"]

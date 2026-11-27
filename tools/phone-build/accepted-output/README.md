@@ -704,7 +704,7 @@ pins original bodies and pixels and keeps their names and metadata intact,
 including original Alpha8 and RGBA32 zero-pixel placeholders.
 
 ```sh
-python3 -B tools/phone-build/accepted-output/texture_native_profile.py \
+python3 -I -S -B tools/phone-build/accepted-output/texture_native_profile.py \
   ORIGINAL_PC_ROOT texture-graph/coverage.jsonl --output NEW_PRIVATE_PROFILE
 python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
   --profile NEW_PRIVATE_PROFILE --profile-sha256 PROFILE_SHA256 \
@@ -713,6 +713,10 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
 
 Feed the profile and pack receipt back into the texture readback request.
 Android GPU support and canonical package integration remain separate checks.
+
+Use `--all-originals` when producing profiles for a fresh conversion from a
+pinned PC identity ledger. It takes each row's original `source` identity
+regardless of a previous fixture's coverage status.
 
 Add `--schema-witnesses FILE` to include standalone player records. The JSON
 array contains `source` triples (PC-relative bundle path, member, PathID),

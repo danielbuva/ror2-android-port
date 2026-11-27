@@ -740,7 +740,7 @@ def texture_resume(output, profile, pins):
     ):
         raise ValueError("unknown texture checkpoint output")
     previous = json.loads((output / "result.json").read_text())
-    pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256", "comparison"}
+    pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256", "pixels_codec_sha256", "comparison"}
     if {k: previous[k] for k in pin_names if k in previous} != {k: pins[k] for k in pin_names if k in pins}:
         raise ValueError("texture checkpoint input/profile/tool drift")
     targets = iter(target for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"] for target in texture["outputs"])

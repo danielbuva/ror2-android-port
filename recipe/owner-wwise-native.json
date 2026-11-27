@@ -1,0 +1,15 @@
+{
+  "callback_serializer": {
+    "stock_sha256": "ef93e1dec420580dc30d67646bb539c9024bf0ed18485258f7ce595c0d82fc24",
+    "output_sha256": "66208d4c0670e5cdf4cfd312f3cf533f0126e8b94315f925be0f4967ec16c2db",
+    "declarations": "\nextern \"C\" void WwiseDiag_RecordMonitor(AkUInt32 in_uErrorCode, AkUInt32 in_uErrorLevel,\n                                         AkPlayingID in_playingID, AkGameObjectID in_gameObjID,\n                                         const AkOSChar* in_pszError);\nextern \"C\" AkUInt32 WwiseDiag_MonitorIsArmed();\nextern \"C\" void WwiseDiag_SetManagedMonitorLevel(AkUInt32 in_uErrorLevel);\nextern \"C\" int32_t WwiseDiag_ShouldSerializeMonitor(AkUInt32 in_uErrorLevel);\n",
+    "monitor_scope": "\t// The native diagnostic remains installed through SoundEngine::Term and\n\t// callback-manager Term. The owner disarms only after this method returns.\n\tif (!WwiseDiag_MonitorIsArmed())\n",
+    "record_monitor": "\t\t// Count before the serializer-init guard; this records without queue allocation.\n\t\tWwiseDiag_RecordMonitor(static_cast<AkUInt32>(in_eErrorCode),\n                                static_cast<AkUInt32>(in_eErrorLevel),\n                                in_playingID, in_gameObjID, in_pszError);\n",
+    "when_armed": "\t\t\tWwiseDiag_ShouldSerializeMonitor(static_cast<AkUInt32>(in_eErrorLevel)))\n",
+    "monitor_level": "\tWwiseDiag_SetManagedMonitorLevel(in_uErrorLevel);\n\t// Keep the same callback installed while the native diagnostic is armed.\n\tconst AkUInt32 monitorErrorLevel = WwiseDiag_MonitorIsArmed()\n\t\t? static_cast<AkUInt32>(AK::Monitor::ErrorLevel_All) : in_uErrorLevel;\n"
+  },
+  "engine_stubs": {
+    "stock_sha256": "00cecffe47757042cd8767ce6c58b6e9053d7e221eebedfe68321881213b90c7",
+    "output_sha256": "d8d75e04bcd00fc6c8ab3b282c873ed6b4da994f6b2fa8ee9fc443d6a09c0dd8"
+  }
+}

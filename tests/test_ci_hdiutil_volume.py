@@ -125,6 +125,7 @@ class HdiutilVolumeTests(unittest.TestCase):
                     self.assertEqual(helper.main(), 1)
                 self.assertEqual([call.args[0][1] for call in run.call_args_list], phases)
                 self.assertIn(message, stderr.getvalue())
+                self.assertFalse((self.root / "attach.pending").exists())
 
 
 if __name__ == "__main__":

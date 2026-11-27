@@ -18,7 +18,7 @@ import uuid
 PROFILE = "authored-unity-builtin-references-v1"
 SOURCE = "scripts/lab/phone_unity_compile.py"
 FIXTURE = "tools/phone-build/ContentFixture.cs"
-FIXTURE_SHA = "53389ea961819b17697ed4f10c0d887db75bb847800586e2967d211f8b772750"
+FIXTURE_SHA = "8e3932e8ccb823b17216ddc9fdec12d9d3c49d9a98025d04fc6059c4cd16515d"
 SOURCES = (SOURCE, "scripts/lab/phone_managed_compile.py", "scripts/lab/phone_module_policy.py", FIXTURE)
 GROUPS = {
     "PlaybackEngines/AndroidPlayer/Variations/il2cpp/Managed": 64,
@@ -29,7 +29,11 @@ GROUPS = {
 }
 REFERENCE_SHA = "5ed7d9fffe181c489ad8bbce79bbc9d35eafdbbad23e65a613391a8711dd951a"
 PACKAGE_SHA = "f921be2dc22b03528b429772228b229bac2af92b483e0103a4124b121c13f58f"
-MANIFEST = {"dependencies": {"com.unity.modules." + name: "1.0.0" for name in ("androidjni", "assetbundle", "jsonserialize", "unitywebrequest")}}
+MANIFEST = {
+    "dependencies": {
+        "com.unity.modules." + name: "1.0.0" for name in ("androidjni", "assetbundle", "jsonserialize", "unitywebrequest", "unitywebrequestassetbundle")
+    }
+}
 SUPPORT_SHA = {
     "phone_managed_compile": "ab8693a0a8854c315cd745c6552b77714ecbbd5b31705b06e902560111784efb",
     "phone_module_policy": "6d2b830b437e417530d41ab96fee3a2572247ea3752083dee7d10533229e0649",

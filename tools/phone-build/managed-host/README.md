@@ -148,6 +148,26 @@ and public transform runtime configurations. Native providers enter only the
 PackageManager library directory; input game/SDK/target sources are separate
 caller-owned app data. SDK/tool acquisition rights remain separate from hosting.
 
+For native Clang caching, supply the following ARM64 packages from the
+[Termux main repository](https://packages.termux.dev/apt/termux-main/pool/main/).
+Verify each archive before extracting the provider and verify the extracted
+ELF before adding it to the private backend plan.
+
+| Package below `pool/main/` | Archive SHA-256 | Native provider and SHA-256 |
+| --- | --- | --- |
+| `c/ccache/ccache_4.14.3_aarch64.deb` | `3b133bb448768fb256d53811c8712457314d927c55de0249668d62a5d2124401` | `usr/bin/ccache` · `07b6f502526067d2f570484afec803242b4011ca36653d41dd86fd5f3e6e5b33` |
+| `f/fmt/fmt_1:12.2.1_aarch64.deb` | `562111c110ef5b8ebdfd0688c8d63c890aa255e0091567d2fabbe86f49a0b537` | `usr/lib/libfmt.so` · `997f94d81413e5ec382902944f09661814a5d5b1d9b8a5549c06130ef5645c66` |
+| `lib/hiredis/libhiredis_1.5.1_aarch64.deb` | `d55cd230363ef09a30786f61265cc611f450deec73a6b439c0859d2772056725` | `usr/lib/libhiredis.so` · `0c869801699ad85fe99d951c177a3b43d68849ef6c903a3a6e9d0b50bf70f3fa` |
+| `x/xxhash/xxhash_0.8.4_aarch64.deb` | `e747c95589d887156db013c7d198a83fc539315bb6ac52f0e6e204eb740443c6` | `usr/lib/libxxhash.so.0.8.4` · `c6bd49d3b0341c518f9a2b8e1e62390177618ea6a0ddbb253d90476d0426b71d` |
+
+Include `libccache.so`, `libfmt.so`, `libhiredis.so` and
+`libccache_xxhash.so` in `natives`, alongside the toolhost's existing
+`libandroid-spawn.so`, `libc++_shared.so` and `libzstd.so.1` providers.
+Map `native-links/ccache` to `libccache.so` and
+`native-links/libxxhash.so.0` to `libccache_xxhash.so` in `links`.
+Retain the package license notices. Toolhost removal clears its app-private
+cache along with the rest of its data.
+
 For the signed owner backend, build the Python wheelhouse on the host. Use
 cibuildwheel 4.3.4, the Python `build` package and a separate Android SDK with
 NDK 27.3.13750724 installed. The wheel producer uses CPython 3.14.8, ARM64
@@ -233,6 +253,18 @@ pack for bundle assembly.
 The builder applies `vkd3d-structured-srv.patch` to the pinned vkd3d source
 and includes it in `public-sources`. Apply the same patch at the archive root
 before rebuilding the vkd3d libraries for relinking.
+
+For the signed graphics profile, pass `--graphics` and add these archives to
+the same source directory. Stage all five `natives` rows from the receipt.
+The builder keeps the additional upstream notices and the glslang Android CLI
+patch with the public source archives. The patch enables the tool and keeps
+diagnostic paths compatible with the pinned Unity NDK.
+
+| Filename | Source |
+| --- | --- |
+| `smol-v.tar.gz` | [SMOL-V source revision](https://codeload.github.com/aras-p/smol-v/tar.gz/55000efe742f56d8b51223b9ea7775a8f0501881) |
+| `spirv-cross.tar.gz` | [SPIRV-Cross Vulkan SDK 1.4.363.0](https://codeload.github.com/KhronosGroup/SPIRV-Cross/tar.gz/refs/tags/vulkan-sdk-1.4.363.0) |
+| `glslang.tar.gz` | [glslang 16.6.0](https://codeload.github.com/KhronosGroup/glslang/tar.gz/refs/tags/16.6.0) |
 
 The muxer keeps CoreLib in the selected framework's verified data directory via
 the public hostfxr runtime-property API. For .NET 10 it uses the public

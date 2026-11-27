@@ -58,6 +58,15 @@ TEXTURE_NATIVE = {
     "pixels_codec": "libtexture-pixels.so",
 }
 COMPUTE_NATIVE = {"dxbc": "libshader-dxbc.so", "spirv_val": "libspirv-val.so"}
+SHADER_NATIVE = {
+    "owner-compute-shader-translation-v1": COMPUTE_NATIVE,
+    "owner-graphics-shader-translation-v1": {
+        **COMPUTE_NATIVE,
+        "smolv": "libshader-smolv.so",
+        "spirv_cross": "libspirv-cross.so",
+        "glslang": "libglslang.so",
+    },
+}
 PIXEL_DECODER = "libtexture-pixels.so"
 TEXTURE_GUEST = "${installed_runtime}/texture-sdk/"
 TEXTURE_GUEST_LIB = "linux/lib/x86_64-linux-gnu/"
@@ -98,7 +107,7 @@ def owner(profile):
         return "bundle_endpoints"
     if profile.get("schema") == "owner-bundle-preload-release-v1":
         return "bundle_preload"
-    if profile.get("schema") == "owner-compute-shader-translation-v1":
+    if profile.get("schema") in SHADER_NATIVE:
         return "shader_translate"
     if "project_assemblies" in profile and "outputs" in profile:
         return "player_data"
@@ -340,7 +349,7 @@ class Graph:
                 "profile": {"path": "${repo}/" + path, "sha256": pin, "bytes": (self.repo / path).stat().st_size},
                 "tools": {
                     name: {"path": "${native}/" + installed, "sha256": "${native_sha256:" + installed + "}", "bytes": "${native_bytes:" + installed + "}"}
-                    for name, installed in COMPUTE_NATIVE.items()
+                    for name, installed in SHADER_NATIVE[profile["schema"]].items()
                 },
             }
         if producer == "shader_produce":
@@ -1050,6 +1059,7 @@ class Graph:
         name = "recipe/jobs/owner-code-conversion.json"
         cache_witnesses = request.pop("cache_witnesses", [])
         outputs = {}
+        needs = [self.package_inputs] if self.package_inputs else []
         if audio_stage_receipt is not None:
             if "target" in request:
                 raise ValueError("audio packaging requires the current audio-bearing code producer")
@@ -1069,6 +1079,10 @@ class Graph:
                 raise ValueError("canonical Wwise stage membership required")
             members = sorted([*banks, *media])
             request["source_inputs"].pop("decoder", None)
+            wwise = self.wwise_native()
+            request["source_inputs"]["wwise_native"] = self.artifact_pin(wwise, "library")["path"]
+            request["wwise_build"] = self.artifact_pin(wwise, "receipt")
+            needs.append(wwise)
             request["source_inputs"]["dotnet"] = "${native}/" + INSTALLED_CODE_TOOLS["dotnet"]
             request["android_tools"] = {name: "${native}/" + path for name, path in INSTALLED_CODE_TOOLS.items()}
             request["android_tools"]["resource_dir"] = "${installed_runtime}/clang/21"
@@ -1086,7 +1100,7 @@ class Graph:
             "script": "tools/phone-build/owner-code/produce.py",
             "arguments": ["${request}", "--stop-after-conversion"],
             "request": request,
-            "needs": [self.package_inputs] if self.package_inputs else [],
+            "needs": needs,
             "outputs": outputs,
             "artifacts": {
                 "receipt": "backend/converter/result.json",
@@ -1098,6 +1112,50 @@ class Graph:
             self.jobs[name]["cache_witnesses"] = cache_witnesses
         self.profile_files[name] = request_path
         self.public_files[name] = paths
+        self.job_profiles[name] = {}
+        return name
+
+    def wwise_native(self):
+        name = "recipe/jobs/owner-wwise-native.json"
+        script = "tools/phone-build/owner-code/wwise_native.py"
+        self.jobs[name] = {
+            "schema": 1,
+            "script": script,
+            "arguments": [
+                "--stock",
+                "${input:wwise_stock}",
+                "--sysroot",
+                "${input:wwise_ndk_root}/sysroot",
+                "--clang",
+                "${native}/libclang.so",
+                "--linker",
+                "${native}/lib-ld.lld-.so",
+                "--resource-dir",
+                "${installed_runtime}/clang/21",
+                "--output",
+                "${output}",
+            ],
+            "needs": [],
+            "outputs": {},
+            "artifacts": {"library": "libAkSoundEngine.so", "receipt": "result.json"},
+            "cache_witnesses": ["${native}/libclang.so", "${native}/lib-ld.lld-.so", "${native}/libc++_shared.so", "${installed_runtime}/data-hashes.json"],
+        }
+        self.public_files[name] = [
+            "recipe/owner-wwise-native.json",
+            "recipe/wwise-android-abi.json",
+            "tools/wwise-android-abi/generate.py",
+            "tools/phone-build/owner-code/native.py",
+            *(
+                "tools/phone-build/owner-code/wwise-native/" + file
+                for file in (
+                    "PcmReadbackRingV1.cpp",
+                    "PcmReadbackRingV1.h",
+                    "WwiseManagedDiagBridge.cpp",
+                    "monitor_capture_core.h",
+                    "monitor_control_contract.h",
+                )
+            ),
+        ]
         self.job_profiles[name] = {}
         return name
 
@@ -1418,6 +1476,8 @@ class Graph:
                 job["source_files"] = [name, job["script"]]
             elif name == self.package_inputs:
                 job["source_files"] = [name, PACKAGE_PRODUCER, PACKAGE_POLICY]
+            elif job["script"] == "tools/phone-build/owner-code/wwise_native.py":
+                job["source_files"] = sorted({name, job["script"], *self.public_files[name]})
             else:
                 closure = self.entry(name)
                 job["source_files"] = sorted(set(closure["recipe_files"]) | set(closure["producer_files"]))

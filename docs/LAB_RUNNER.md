@@ -261,11 +261,18 @@ The lab runner stages its two Unity readers automatically.
 
 ## Current local emission request
 
-After obtaining the orchestrator's device grant, use the same runner locally:
+Submit a new headless converter job to the shared device FIFO:
 
 ```
 source scripts/env.sh
 .local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --dry-run
+.local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --workstream <name> --queue --detach
+```
+
+The detached job prints the absolute terminal receipt path. The existing
+grant-based invocation also supports retained emission recovery:
+
+```
 .local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --workstream <name>
 ```
 
@@ -286,6 +293,14 @@ The ignored JSON config has exactly these fields:
 The manifest's `files` maps relative staged paths to `source`, `bytes` and
 `sha256`. Include the public producer closure beneath `repo/`; this operation
 executes the tracked `phone_runner.py` and `bundle_preload.py` there.
+
+For `operation: signed-artifact`, replace `expected_records` with
+`expected_artifacts`, a map from signed job artifact labels to objects with
+`sha256` and `bytes`. In the staged producer request, set `artifacts` to the
+same labels, for example `["index", "objects", "resources", "types"]` for a
+texture pack. The phone runs the signed job once and returns the selected
+hashes and sizes in `signed_artifact.json`. Existing single-artifact requests
+use `expected_sha256` and `artifact`.
 
 Android record emission explicitly uses `--workers 1`: the packaged Python has
 no `_multiprocessing` extension. The operation's `record_workers` records this

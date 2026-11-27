@@ -1817,16 +1817,17 @@ The fixed-target registry retains its explicit package inventory, including
 the TestRunner and MCP importers. Without a fixed target, the graph signs the
 current runtime and audio producer sources and passes the compiler's package
 directory and its `packages/inputs.json` receipt to the player registry. The
-registry pins the selected sources and importer metadata. The current audio
-compiler still needs its macOS SDK tools and checkout work root. The package
+registry pins the selected sources and importer metadata. Historical desktop
+audio production uses its macOS SDK tools and checkout work root. The package
 owner removes temporary extraction files and retains the selected inputs and
 terminal receipt.
 The optional `--audio-stage-receipt` reads relative member names from a private
-authoring stage. The current conversion job checks those names against its new
-local audio receipt and exposes the receipt, banks, streamed media and licensed
-ARM64 library as signed APK entries. The native job consumes that same conversion,
-so the packaged receipt and compiled runtime pin share one owner. Android audio
-production and playback remain open.
+authoring stage. A cached assembly-stage Wwise job rebuilds the ARM64 library
+with installed Clang and LLD from signed acquired stock and NDK target files.
+The current managed conversion revalidates the Wwise receipt and ELF, pins the
+library in the compiled runtime request, and exposes that same library and the
+verified local bank cohort as APK entries. The player native job consumes that
+managed conversion. Android execution and audio playback remain open.
 When a public bundle index exceeds the installer's 4 MiB limit, the publisher
 writes shared dependency closures once. Installer 4 or later expands their
 references for the existing signed dependency checks and retains the compact
@@ -2133,6 +2134,10 @@ are checked before new private output setup and again at termination. The
 owner keeps commands, tool logs, object receipts and terminal state; failures
 retain their output. [Setup and teardown](../tools/phone-build/owner-code/README.md)
 cover source-frame expansion, input immutability, child cleanup and capacity.
+The native owner wraps Clang compile jobs with ccache when a verified toolhost
+alias or the host Homebrew executable is available. Each platform owns a
+bounded private cache outside the job output. The native plan, object receipts,
+linker and stripper retain their existing contracts.
 There is no shared project, Editor, device or current game-build consumer.
 J1063 qualifies the complete source-input host command through native execution.
 Independent content/Burst/shader production, licensed native input production
@@ -2144,6 +2149,17 @@ NDK tools, obtains one actual compiler/linker child command from the unchanged
 Clang driver, and invokes it without a global Linux execution handler. Original
 SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
 fallback; whole-player Linux app hosting and runtime parity are separate gates.
+
+`tools/phone-build/owner-code/wwise_native.py` builds the Android Wwise player
+library from the owner's licensed stock integration, SDK archives, and NDK
+r25c target files. The authored diagnostic code and
+`recipe/owner-wwise-native.json` reconstruct the two modified source files in
+the private output after checking their stock hashes. Clang and LLD link the
+result directly. The resulting receipt records the ELF hash, exact export
+roster digest, dependencies and load alignment. The signed graph runs the same
+owner in the assembly stage and passes its hash-bound receipt and library to
+managed production. Host cross-compilation has passed. Android execution
+remains open.
 
 `owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
 invocation over freshly produced managed assemblies. The existing public Burst
@@ -2474,6 +2490,18 @@ materials, shaders, textures, sprites and supported native asset roots): snapsho
 and hash the explicit request, load every address with its exact engine type, record the
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
+The separate `phone-texture-readback` action stages an isolated editor project
+via `phone_texture_readback.py`. `TextureMipSampling.cs` point-samples an
+explicit Texture2D mip or Cubemap face and mip through `TextureMipFixture.shader`,
+writes a private RGBA8 readback and releases the temporary rendering objects.
+The host checks the sample identity, extent and hash alongside the typed-load
+receipt.
+The experimental `phone-texture-readback-build` action checks authored pixel
+controls and uses the same sampler in an isolated Vulkan IL2CPP player.
+`TextureMipPlayer.cs` loads the hash-pinned standalone bundle from the fixture
+APK, writes samples to app external storage and unloads the bundle. The shared
+device session's `texture-readback` mode binds the sample receipt to the fixture
+PID, verifies and removes the raw files, then uninstalls the fixture.
 The editor reports native AnimatorController roots as
 `UnityEditor.Animations.AnimatorController`; their original Addressables
 locations use `UnityEngine.RuntimeAnimatorController`.
@@ -2486,6 +2514,11 @@ For the Animate Alpha Vulkan diagnostic, set `ROR2_PHONE_SHADER_DRAW=1` on
 address. The builder embeds the checked bundle in the disposable fixture APK.
 `ContentFixture.cs` draws two ramp inputs offscreen and reports the center
 pixels, graphics backend and result through `PHONE_SHADER_DRAW`.
+The same draw fixture takes the original-derived Cloud Intersection Remap
+shader as a standalone input. It checks the directional pass with transparent
+and opaque masks through a point-sampled ramp, two translated instances and
+an untouched gap. The fixture restores the camera and keyword globals and
+releases its temporary render resources.
 `ROR2_PHONE_SHADER_COMPUTE=1` uses the same fixture with a standalone bundle
 containing Histogram or the Waveform and Vectorscope pair. The Vulkan player
 seeds the diagnostic buffers, dispatches each source clear and gather kernel
@@ -2979,7 +3012,7 @@ no build consumer normalizes away that evidence.
 `phone_unity_compile.py` owns a separate current experimental compilation of
 the public `ContentFixture.cs` Unity API fixture. It stages pinned SDK compiler,
 target managed modules, standard-library references, builtin package metadata
-and the authored four-package manifest. It reuses `phone_module_policy.py` to
+and the authored five-package manifest. It reuses `phone_module_policy.py` to
 derive references on the selected host, excluding package-disabled modules;
 captured Bee response files and editor reports are comparison evidence only.
 The standalone runner verifies its authored sibling helpers before importing
@@ -3229,6 +3262,8 @@ The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
 | --- | --- | --- |
+| pins | `check` | current |
+| pins | `refresh` | current |
 | build-hook-pins | `check` (default) | current |
 | build-hook-pins | `refresh` | current |
 | editor | `open` | current |
@@ -3268,6 +3303,18 @@ querying a device. Labels live with existing CLI owners; dispatch is unchanged.
 
 ## Build pipeline
 
+`scripts/lab/source_pins.py` owns `./dev pins check` and `./dev pins refresh`.
+It resolves public recipe and profile hashes from tracked files, following
+dependencies through producer sources, embedded build-hook bindings and other
+profiles. Digest-only supplier selectors use tracked recipe identities from
+the current tree or the applicable Git base. `--show-external` lists recipes
+with SHA fields that still need their original input or produced-byte witness.
+Historical manifests and signed or retained receipts keep their recorded identities.
+The pre-push hook checks the outgoing commit before launching local CI. It
+refreshes eligible files on the checked-out outgoing branch and stops the push
+so the author can review and commit the changes. Staged or unstaged edits to
+the affected files take precedence and require an explicit refresh.
+
 Historical `input-update-check` uses `scripts/lab/historical_receipts.py` to
 resolve an explicitly registered, hash-pinned optional-guard receipt against the
 preserved original assembly before inventory/probe work. This support owner has
@@ -3278,6 +3325,12 @@ audio identity/closure receipts and teleport catalog queries before their
 historical staging pipelines. Their selections are recorded in preparation
 receipts; source-byte and runtime acceptance checks are unchanged. Registration
 contracts are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-scene-runtime-evidence).
+
+`scripts/worker-yield.py` (current) sizes the orchestrated worker set. It reads
+the ignored `.local/orchestrator` logs, status lines, device grants and parks plus
+squash merges on `origin/main`, and reports per workstream tokens, merged PRs,
+cost per PR, device grants and a KEEP/WATCH/PARK verdict, with quota, budget
+(`budget-daily`) and device-contention notes (AGENTS.md "Working speed").
 
 `scripts/prune-generated.py` (current) discards rebuildable build outputs under
 `work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
@@ -3323,6 +3376,14 @@ The shared device runner calls the pruner from its own checkout and passes the
 canonical work directory explicitly.
 The ledger distinguishes logical candidate bytes from the signed change in
 volume-available bytes measured by `df`, which includes concurrent host activity.
+`--dedupe` plans only APFS cloning across canonical `work/` and
+`.local/build-lanes/`. It matches regular files of at least 64 MiB by size and
+full SHA-256, then atomically replaces each later copy with a verified clone of
+the first copy. It preserves destination mode, timestamps, ACLs and extended
+attributes. Immutable history, symlinks, open files and files modified in the
+last 30 minutes are skipped. Byte-identical copies inside `.prune-keep` trees
+are eligible. The standalone mode measures the volume change from cloning;
+`--aggressive` includes cloning after ordinary cleanup.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
@@ -3331,6 +3392,16 @@ requires that merged baseline and resolved conflict markers; `--dry-run` writes
 nothing. It retains no process state, closes Git/file readers at exit and leaves
 journal/index edits for manual reference review and staging. It neither fetches
 nor commits. `tests/test_journal_renumber.py` covers ownership and refusal cases.
+
+For a clean checked-out topic containing fetched `origin/main`,
+`scripts/journal-pre-push.py` (support) uses the same renumber and index owners.
+It reads the outgoing commit, computes heading dates against its history,
+and creates a forward-only local commit limited to the two journal paths if
+they need repair. The hook stops that push because Git captured the old tip;
+the next push validates the exact new tip. No temporary file or state survives
+the check. Dirty worktrees and ambiguous journal content are not repaired.
+`tests/test_journal_pre_push.py` exercises the real hook and remote ref update
+against a disposable local Git remote.
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh exact-commit checkout. The hook uses
@@ -3350,21 +3421,19 @@ create/attach CLI, killing and reaping only its own timed-out caller. Ordinary
 setup failure uses the existing temporary-directory fallback.
 `scripts/ci-scratch.py` supervises each CI shell in a separate process group,
 records its owner PID and child group, and performs synchronous cleanup after
-ordinary completion (exit 0–127). This relies on CI's synchronous child contract:
-check/cache helpers and test fixtures must join their work before returning.
-PID/group checks are additional removal vetoes, not proof that arbitrary detached
-descendants are gone. INT/TERM/HUP terminate the owned group but preserve uncertain
-descendant state. Startup recovery considers only same-user, recorded, ordinarily
-completed dead-owner `ci-local.*` directories older than 30 minutes. Live groups,
-missing ownership records, aliases and concurrent cleanup locks refuse removal.
-SIGKILL and other abnormal exits leave durable uncertainty: age alone never
-clears it. These runs require owner reconciliation; automatic SIGKILL recovery
-is not claimed.
+success, failure or a catchable signal. INT, TERM and HUP stop the owned
+group. The host runner reaps its separate test worker sessions on TERM.
+CI startup and `prune-generated.py --apply --aggressive` use the same sweep
+for same-user, recorded dead-owner `ci-local.*` directories under `TMPDIR`
+older than 30 minutes. The sweep skips active owners or groups, open files,
+missing records, aliases and concurrent cleanup locks. Linux without
+`lsof` limits the sweep to ordinarily completed runs.
 On macOS, current `hdiutil info -plist` must identify the exact owned image before
-device-based detach (with a forced fallback). An interrupted attachment retains
-an explicit pending marker: empty inventory does not prove the service cannot
-attach later. Pending attachments, uncertain mappings, remaining mounts or failed
-detach preserve scratch. Linux checks mountinfo, including same-device bind mounts,
+device-based detach. `lsof` checks the scratch paths and each owned mount.
+The immediate owner can use a forced-detach fallback for its own idle volume.
+An interrupted attach with no observed mount retains its pending marker for
+reconciliation. An uncertain mapping, remaining mount or failed detach reports
+the preserved scratch directory. Linux checks mountinfo, including same-device bind mounts,
 and removes only scratch without an image. Original verification exit status is
 retained. Cleanup never opens an editor or uses a lab device.
 
@@ -3560,11 +3629,20 @@ package; no parser or third-party implementation is vendored into the lab/player
 
 `scripts/lab/device_session.py` owns the current shared device lifecycle via
 `./dev device-session --request <private JSON> --device SERIAL --dry-run` and
-`--detach`. Use the serial from the workstream's queue grant for both commands.
+`--detach`. Add `--queue` to both commands to submit directly to the device
+FIFO. Without it, use the serial from the workstream's dispatcher grant.
 Portable requests can omit `serial` and `adopted_install`. Existing requests
 can embed `serial` and assert adopted-only placement with `adopted_install: true`.
-The dispatcher grants a device. The child takes the canonical atomic lease
-before ADB and sources the pinned environment. If discovery fails before the
+`scripts/lab/device_queue.py` owns ordering for detached jobs and legacy
+workstream rows in the canonical `devqueue/<serial>.queue`. It serializes
+head transitions per device and advances a cursor so shell appends remain
+intact. The local dispatcher calls
+`python3 scripts/lab/device_queue.py --dispatch ORCHESTRATOR_DIR` in place of
+its queue loop and uses the emitted serial/workstream pairs to notify legacy
+grantees. This activation enables detached jobs to claim their own turn.
+Legacy reservations block later jobs until taken and released or expired.
+The child sources the pinned environment and takes the canonical atomic lease
+before ADB. If discovery fails before the
 device context opens, the runner releases its lease and writes a failed receipt.
 Once a device context opens,
 the runner requires verified idle cleanup before releasing the lease.
@@ -6710,13 +6788,14 @@ same-cohort conversion, Burst and IL2CPP jobs to `owner-apk/release_jobs.py`.
 It compares the dispatcher readback hashes with the producer receipts and
 requires the entire compile plan before the runner collects evidence and
 removes owned scratch.
-Signed artifact requests use the same envelope and dispatcher to qualify one
-declared producer artifact from a release. The managed-host stage includes
+Signed artifact requests use the same envelope and dispatcher to qualify
+selected artifacts in a single execution of their release job. The managed-host
+stage includes
 `owner-code/GnuToolAdapter.c` so the toolhost builder can package the QEMU
-bridge for signed texture fixtures. The runner checks the selected
-artifact hash, collects the producer and thermal receipts, and removes the
-owned input and output files. The artifact itself stays on the device until
-cleanup.
+bridge for signed texture fixtures. The runner compares the requested hashes
+and sizes with the dispatcher's readback, collects the producer and thermal
+receipts, and removes owned input and output files. Artifacts stay on the
+device until cleanup.
 
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
@@ -8107,6 +8186,12 @@ original member references to Shader and texture providers. The isolated
 fixture checks the typed bindings and unloads the Material bundle and its
 dependencies after the check.
 
+`recipe/owner-whole-game-mire-native-material-records.json` uses the same
+producer and preparation owners for nine Mire and Access Codes Node
+Materials. It supplies two of the Material destinations referenced by
+the Mire Clip cohort. The isolated fixture validates the original
+Material fields and Shader and texture links before bundle teardown.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
@@ -8147,6 +8232,12 @@ reuses dummy sorting and published Shader/texture relationships. Setup requires
 pinned original/SDK roots and fresh output; scoped readers close on process exit
 and receipts persist. Twelve records are host raw-exact to J850. This adds no
 runtime owner; complete bundle and phone production remain open.
+
+The Sad1 and Fungal Material profiles for signed Cloud Remap, together with
+the Fungal native Material profile, select 52 original class-21 bodies through
+`record_produce.py`. Bundle preparation resolves the saved Shader and Texture2D
+pointers against the signed Shader and existing texture suppliers. The exact
+editor fixture checks the bindings and unloads its bundles after each cohort.
 
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
@@ -8430,6 +8521,10 @@ both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform wi
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
 linked envelope. It feeds source layouts through the existing
 `shader_produce.py` parameter writer and emits a typed replacement pack.
+For shaders with ordinary vertex and fragment passes, the translator retains
+subshader and pass order and render state. The shared record writer merges
+the per-pass Vulkan tables and relocates their program and parameter indices
+into the Shader's compressed blob.
 The profile run closes the body stream and pins its index, type table and
 object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
@@ -8443,7 +8538,9 @@ The graphics linker assigns distinct vertex and fragment uniform bindings and
 preserves the native Unity instancing buffer names. When both stages consume
 `UnityDrawCallInfo`, they share its binding with both stage flags. The Android
 Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
-instances. Cloud material draws and whole-game coverage remain open.
+instances. It also draws Cloud Intersection Remap with the directional plain
+and instanced variants and depth fade disabled. Cloud native Material draws
+and whole-game coverage remain open.
 The ComputeShader path preserves the source kernel and workgroup tables and
 writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
 then read-only textures and structured buffers, then writable buffers and 2D,
@@ -8477,6 +8574,18 @@ opts into Vulkan storage-buffer loads for those inputs. The existing native
 provider plan stages the executables. The shared
 runner verified the signed Histogram producer on Android. Its output hash
 matched the object dispatched in the Vulkan fixture.
+
+The signed `owner-graphics-shader-translation-v1` profiles route the original
+Outline, Cloud Intersection Remap, PaintHeight, Cutout/VertexLit,
+TerrainLayerUtils, Cloud Remap and its VertexLit fallback to their canonical
+bundle identities. The translator keeps the original Shader fallback name
+and dependency pointers. Bundle preparation resolves those pointers through
+the original source identities of the bound typed suppliers.
+The translator binds SMOL-V encoding,
+SPIRV-Cross and glslang alongside DXBC translation and SPIR-V validation.
+The managed-host builder builds five Android executables and retains their
+public source and notices. The producer checks their hashes before and after
+translation and includes them in the typed pack receipt.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
@@ -8545,6 +8654,13 @@ feeds the original Transform, MeshFilter, MeshRenderer and Material bodies to
 `record_produce.py`. Canonical bundle preparation relocates their PPtrs using
 the original serialized file and PathID, including the two same-PathID
 Materials from distinct files.
+
+The Nest FBX roster feeds original GameObject, Transform, MeshFilter,
+MeshRenderer and Material records to `record_produce.py`. The scoped
+bundle graph joins them to the existing Mesh and built-in shader suppliers.
+The exact-editor fixture loads each advertised GameObject and Mesh and
+unloads the bundle. The source preload sequence remains a release graph
+admission requirement for this cohort.
 
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
@@ -8640,10 +8756,12 @@ Device aim, firing and hit-reaction presentation remain separate checks.
 `./dev editor --target lab --action enemy-material-audit` inventory. It reads
 native-provider body/projectile candidates and the prepared session's registered
 effect prefabs, including inactive renderer slots, Billboard materials, particle
-meshes and trails. It also resolves the Titan pre-fist projectile's addressed
-ghost and the Vagrant default skin's addressed body material, and inspects the
-direct Mercenary Expose and Acrid disease impact effects. The audit selects
-recovered resources from saved source keywords, as the runtime owner does.
+meshes and trails. It resolves the Titan pre-fist and Fire Bolt projectile ghost
+addresses and the Vagrant default skin's addressed body material. Fire Bolt's
+native configuration supplies the projectile through an inert state. The audit
+also inspects the direct Mercenary Expose and Acrid disease impact effects. It
+records exposed blend operands and selects recovered resources from saved source
+keywords, as the runtime owner does.
 Setup requires the prepared lab project and generated catalog. The private
 editor receipt records typed bindings and resource coverage. Android rendering
 and pixel attribution require matched captures.
