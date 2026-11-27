@@ -157,7 +157,7 @@ class EmissionTests(unittest.TestCase):
         self.assertIn("staged input hash differs", json.loads(receipt.read_bytes())["first_failure"])
         self.assertEqual(source.read_text(), "authored")
 
-    def test_converter_stage_streams_exactly_pinned_inputs_to_owned_scratch(self):
+    def test_converter_stage_streams_exactly_pinned_inputs_to_fresh_toolhost(self):
         def pin(source):
             return dict(source=str(source), bytes=source.stat().st_size, sha256=EMISSION.digest(source))
 
@@ -177,7 +177,7 @@ class EmissionTests(unittest.TestCase):
         )
         manifest = Path(self.request["manifest"]["path"])
         self.request.pop("expected_records")
-        self.request.update(operation=EMISSION.CONVERTER_STAGE, request="stage.json", retained_tool_sha256=self.request["tool_apk"]["sha256"])
+        self.request.update(operation=EMISSION.CONVERTER_STAGE, request="stage.json")
 
         def configure(staged):
             EMISSION.write(manifest, {"files": {"stage.json": pin(descriptor), **staged}})
@@ -186,7 +186,7 @@ class EmissionTests(unittest.TestCase):
 
         profile_key, bundle_key = "inputs/fixture/profile.json", "inputs/fixture/game data/source.bundle"
         staged = {profile_key: pin(profile), bundle_key: pin(bundle)}
-        for invalid in ({profile_key: pin(profile)}, {**staged, "inputs/other.bundle": pin(bundle)}, {**staged, bundle_key: pin(profile)}):
+        for invalid in ({}, {profile_key: pin(profile)}, {**staged, "inputs/other.bundle": pin(bundle)}, {**staged, bundle_key: pin(profile)}):
             with self.subTest(invalid=invalid):
                 configure(invalid)
                 with self.assertRaisesRegex(ValueError, "converter-stage-staged-inputs-must-match-descriptor-pins"):
@@ -194,14 +194,20 @@ class EmissionTests(unittest.TestCase):
 
         configure(staged)
         self.phone.occupied.return_value = True
+        self.assertEqual(self.run_request()["error"], "emission-preexisting-package")
+        self.phone.install.assert_not_called()
+        self.phone.remove_owned_installer.assert_not_called()
+        self.phone.occupied.return_value = False
         self.collected = dict(stage=dict(success=True), thermal={})
         result = self.run_request()
         self.assertTrue(result["success"], result)
+        self.assertTrue(result["owned_app_removed"])
         state = json.loads((self.output / "device-state.json").read_bytes())
         (producer,) = self.phone.transport.start_detached.call_args.args
         self.assertIn(state["remote"] + "/inputs", producer)
         self.assertEqual(result["transfer_bytes"], sum(row["bytes"] for row in [pin(descriptor), *staged.values()]))
-        self.phone.shell.assert_any_call("run-as", INSTALLER.PACKAGE, "rm", "-rf", state["remote"], label="emission-retained-scratch-cleanup")
+        self.phone.install.assert_called_once_with(Path(self.request["tool_apk"]["path"]))
+        self.phone.remove_owned_installer.assert_called_once_with()
 
     def test_explicit_restage_replaces_only_confirmed_terminal_owned_inputs(self):
         self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
