@@ -15,6 +15,7 @@ from phone_bundle import VERSION, make_bundle
 NATIVE_CONTENT_TYPES = frozenset(
     (
         "LightingSettings",
+        "OcclusionCullingData",
         "Mesh",
         "Avatar",
         "AnimationClip",
@@ -229,10 +230,13 @@ def validate_native_content(attempt, commit):
     if not isinstance(rows, list) or len(rows) != len(request["assets"]):
         raise RuntimeError("Native-content typed asset count mismatch")
     for asset, row in zip(request["assets"], rows, strict=True):
+        expected_type = asset["type"]
+        if expected_type != "OcclusionCullingData":
+            expected_type = "UnityEngine." + expected_type
         if (
             row.get("name") != asset["name"]
             or row.get("type") != asset["type"]
-            or row.get("loaded_type") != "UnityEngine." + asset["type"]
+            or row.get("loaded_type") != expected_type
             or not isinstance(row.get("loaded_name"), str)
             or (asset.get("subasset") and (row.get("subasset") != asset["subasset"] or row.get("loaded_name") != asset["subasset"]))
         ):

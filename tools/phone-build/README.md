@@ -133,8 +133,9 @@ Supported exact types are `LightingSettings`, `Mesh`, `Avatar`, `AnimationClip`,
 An optional `subasset` name selects an exact named result of
 `LoadAssetWithSubAssets` at the given address and type.
 The fixture resolves the SDK's internal `SpeedTreeWindAsset` type from the
-Terrain module. The exact SDK has no managed `OcclusionCullingData` type; its
-native reference is checked through the loaded scene. Replace `assets` with
+Terrain module. For `OcclusionCullingData`, the fixture verifies the native
+class name returned by the editor after loading the record as a Unity object.
+The scene check also verifies the native occlusion reference. Replace `assets` with
 the exact `scene` path and pin `dependencies` in load order. The default
 `loadMode` is `Additive`. Set `loadMode` to `Single` to check whether loading
 the scene on its own changes Umbra data size. The runner snapshots the request
