@@ -55,6 +55,7 @@ class ReleaseGraphTests(unittest.TestCase):
             ("owner-histogram-compute-translation.json", compute),
             ("owner-outline-graphics-translation.json", graphics),
             ("owner-cloud-intersection-graphics-translation.json", graphics),
+            ("owner-multipass-graphics-translation.json", graphics),
         ):
             with self.subTest(profile=profile):
                 self.check_direct_shader_job(profile, tools)
@@ -62,14 +63,17 @@ class ReleaseGraphTests(unittest.TestCase):
     def check_direct_shader_job(self, profile, tools):
         path = ROOT / "recipe" / profile
         pin = G.digest(path)
-        (record,) = json.loads(path.read_bytes())["typed_records"]
-        destination = [record["output"][key] for key in ("bundle", "member", "path_id")]
-        source = [record["source"][key] for key in ("path", "member", "path_id")]
+        rows = []
+        for record in json.loads(path.read_bytes())["typed_records"]:
+            destination = [record["output"][key] for key in ("bundle", "member", "path_id")]
+            source = [record["source"][key] for key in ("path", "member", "path_id")]
+            rows.append(dict(destination=destination, source=source, record_source=destination, record="a" * 64))
         graph = self.root_graph()
-        row = dict(destination=destination, source=source, record_source=destination, record="a" * 64)
-        bindings = graph.bundle_bindings([row], *destination[:2], source_profiles=[pin])
+        bindings = graph.bundle_bindings(rows, *rows[0]["destination"][:2], source_profiles=[pin])
         self.assertEqual(bindings["unresolved"], [])
-        self.assertEqual(bindings["bindings"][0]["supplier"], pin)
+        self.assertEqual([row["source"] for row in bindings["bindings"]], [row["source"] for row in rows])
+        self.assertEqual([row["supplier"] for row in bindings["bindings"]], [pin] * len(rows))
+        self.assertEqual(len(bindings["suppliers"]), 1)
         name = "recipe/jobs/" + path.name
         job = graph.jobs[name]
         self.assertIn(job["script"], J.PRODUCERS)

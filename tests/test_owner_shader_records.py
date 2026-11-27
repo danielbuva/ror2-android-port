@@ -55,6 +55,74 @@ class CompilerHosting(unittest.TestCase):
 
 
 class TranslatedShaderPack(unittest.TestCase):
+    def test_multipass_translation_preserves_pass_state_and_relocates_both_indices(self):
+        from copy import deepcopy
+        import tempfile
+
+        import lz4.block
+
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_segments
+            import shader_translate as translator
+
+        def source_pass(name):
+            return {
+                "m_Type": 0,
+                "m_ProgramMask": 6,
+                "m_State": {"m_Name": name, "zWrite": name == "first"},
+                "m_SerializedKeywordStateMask": [0],
+                "progVertex": {},
+                "progFragment": {"m_CommonParameters": {"m_TextureParams": [1]}},
+            }
+
+        def variant(value, keyword):
+            return {
+                "keywords": keyword,
+                "requirements": 33,
+                "compilation": {
+                    "data": value.encode(),
+                    "gpu_program_type": 25,
+                    "reflection": ["cb: Draw 16 1", f"const: {value} 0 0 0 1 4 0", "cbbind: Draw 5"],
+                },
+            }
+
+        source_passes = [source_pass("first"), source_pass("second")]
+        keywords = ["ALT"]
+        source = {"m_ParsedForm": {"m_SubShaders": [{"m_Passes": source_passes}], "m_KeywordNames": keywords}, "m_Dependencies": [], "compressedBlob": []}
+        original = deepcopy(source)
+        variants_by_pass = [[variant("red", []), variant("green", keywords)], [variant("red", []), variant("blue", keywords)]]
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(shader_segments, "read_segments", return_value=(b"", [], {})) as read,
+            patch.object(translator, "translate_pass", side_effect=variants_by_pass) as translate,
+        ):
+            result = translator.translate_tree(source, Path(directory), {})
+        read.assert_called_once_with(source, b"")
+        self.assertEqual([call.args[1] for call in translate.call_args_list], source_passes)
+        self.assertEqual(source, original)
+
+        def record(raw, index):
+            start, size, _ = struct.unpack_from("<3I", raw, 4 + index * 12)
+            return raw[start : start + size]
+
+        raw = lz4.block.decompress(bytes(result["compressedBlob"]), uncompressed_size=result["decompressedLengths"][0][0])
+        result_passes = result["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]
+        self.assertEqual(result["platforms"], [18])
+        self.assertEqual(struct.unpack_from("<I", raw)[0], 6)
+        for target, original_pass, variants in zip(result_passes, source_passes, variants_by_pass):
+            local, _, programs, parameters = N.variant_records(variants, keywords)
+            self.assertEqual(target["m_State"], original_pass["m_State"])
+            self.assertEqual(target["m_SerializedKeywordStateMask"], [0])
+            self.assertEqual(target["m_Platforms"], [18])
+            self.assertEqual(target["m_EditorDataHash"], [{f"bytes[{index}]": byte for index, byte in enumerate(N.spooky(local))}])
+            self.assertEqual(target["progFragment"]["m_PlayerSubPrograms"], [])
+            vertex = target["progVertex"]
+            for tier in range(3):
+                self.assertEqual(
+                    [record(raw, p["m_BlobIndex"]) for p in vertex["m_PlayerSubPrograms"][tier]], [record(local, p["m_BlobIndex"]) for p in programs]
+                )
+                self.assertEqual([record(raw, i) for i in vertex["m_ParameterBlobIndices"][tier]], [record(local, i) for i in parameters])
+
     def test_vertex_preserves_native_structure_array_and_member_offsets(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
             import shader_translate as translator
