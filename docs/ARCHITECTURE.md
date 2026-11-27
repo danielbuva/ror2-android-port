@@ -8384,7 +8384,10 @@ workgroup tables, remaps storage, constants and sampler-free 2D image bindings,
 and writes bare Vulkan SPIR-V into the native kernel. The original histogram
 clear and gather modules pass Vulkan 1.0 validation. The Android Vulkan
 fixture clears all 256 bins and gathers all 256 solid-red pixels into the
-highest bin using those original kernels. Other compute shapes remain open.
+highest bin using those original kernels. The same fixture dispatched the
+original Waveform and Vectorscope kernels from a shared bundle and matched
+their complete clear and gather readbacks. Runtime camera integration and
+other compute resource shapes remain open.
 
 The signed release graph accepts `owner-compute-shader-translation-v1` packs
 as explicit bundle suppliers. The Histogram profile binds the original PC

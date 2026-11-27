@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1549 — Dispatch original camera scopes on Android Vulkan
+
+2026-11-27. The exact Unity Android fixture loaded the translated Waveform
+and Vectorscope from one bundle. All four original kernels dispatched. Each
+clear removed every sentinel. The flat-red gather matched all Waveform
+components and placed all 256 Vectorscope samples in bin 198.
+APK SHA-256 `34f8908c75e493d6b683af45ae18d55bd3b990033243c298376ff99b622e2003`
+(source `d3e827b4`). Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-scopes-device-01/terminal.done.json`.
+Peak SoC was 48.9 °C with 0 s above 80 °C. Fixture removal, OLED sleep and
+lease release passed. Camera integration and whole-game coverage remain open.
+
 ## J1546 — Verify signed Histogram conversion on Android
 
 2026-11-27. The shared toolhost runner verified the signed release and original
