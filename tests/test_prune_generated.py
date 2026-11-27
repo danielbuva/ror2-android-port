@@ -39,6 +39,70 @@ class PruneGeneratedTests(unittest.TestCase):
         prune.ROOT = self.root
         (self.root / "PORTING_STATE.md").write_text("Latest APK `" + PROTECTED + "`\n")
 
+    def test_duplicate_plan_checks_bytes_and_filters_unsafe_candidates(self):
+        self.work.mkdir()
+        lanes = self.root / ".local/build-lanes"
+        lanes.mkdir(parents=True)
+        keep = self.work / "kept"
+        keep.mkdir()
+        (keep / ".prune-keep").touch()
+        history = self.work / "retired-storage"
+        history.mkdir()
+        source = lanes / "original"
+        duplicate = keep / "duplicate"
+        unequal = self.work / "unequal"
+        opened = self.work / "opened"
+        excluded = self.work / "excluded"
+        for path in (source, duplicate, unequal, opened, excluded, history / "immutable"):
+            path.write_bytes(b"other" if path == unequal else b"match")
+            age(path)
+        (self.work / "recent").write_bytes(b"match")
+        (self.work / "symbolic").symlink_to(source)
+        info = opened.stat()
+        with (
+            patch.object(prune.sys, "platform", "darwin"),
+            patch.object(prune, "DEDUPE_MIN_SIZE", 5),
+            patch.object(prune, "apfs_allocation", return_value=(4096, 1)),
+            patch.object(prune, "open_inodes", return_value={(info.st_dev, info.st_ino)}),
+        ):
+            plan = prune.duplicate_plan(self.work, [excluded])
+        self.assertEqual([(item["source"], item["path"], item["sha256"]) for item in plan], [(source, duplicate, prune.sha256(source))])
+
+    @unittest.skipUnless(sys.platform == "darwin", "APFS clone requires macOS")
+    def test_apfs_clone_preserves_duplicate_bytes_and_metadata_and_skips_open_target(self):
+        self.work.mkdir()
+        if prune.apfs_allocation(self.work) is None:
+            self.skipTest("test workspace is not on APFS")
+        source, target = (self.work / name for name in ("a", "b"))
+        for path in (source, target):
+            with path.open("wb") as stream:
+                for _ in range(64):
+                    stream.write(b"x" * (1 << 20))
+        subprocess.run(["xattr", "-w", "org.lab.source", "first", source], check=True)
+        subprocess.run(["xattr", "-w", "org.lab.target", "second", target], check=True)
+        target.chmod(0o640)
+        age(source)
+        age(target)
+        original = target.stat()
+        plan = prune.duplicate_plan(self.work)
+        self.assertEqual(len(plan), 1)
+        with target.open("rb"):
+            self.assertEqual(prune.duplicate_plan(self.work), [])
+            prune.clone_duplicate(plan[0])
+        self.assertEqual(plan[0].pop("skipped", None), "source or target open by a process", plan[0])
+        self.assertEqual(target.stat().st_ino, original.st_ino)
+        prune.clone_duplicate(plan[0])
+        self.assertEqual(plan[0].get("action"), "cloned", plan[0])
+        current = target.stat()
+        self.assertNotEqual(current.st_ino, original.st_ino)
+        for field in ("st_mode", "st_mtime_ns", "st_atime_ns", "st_birthtime"):
+            self.assertEqual(getattr(current, field), getattr(original, field), field)
+        self.assertEqual(subprocess.check_output(["xattr", "-p", "org.lab.target", target]).strip(), b"second")
+        self.assertNotIn(b"org.lab.source", subprocess.check_output(["xattr", target]))
+        self.assertEqual(prune.sha256(target), plan[0]["sha256"])
+        self.assertEqual(prune.apfs_allocation(target)[0], 0)
+        self.assertEqual(prune.duplicate_plan(self.work), [])
+
     def cache_entry(self, key, apk_hash):
         entry = self.work / "build-cache" / key
         (entry / "payload").mkdir(parents=True)
