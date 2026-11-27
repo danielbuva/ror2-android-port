@@ -36,6 +36,7 @@ class PruneGeneratedTests(unittest.TestCase):
         self.root = Path(self.temporary.name).resolve()
         self.work = self.root / "work"
         self.addCleanup(self.temporary.cleanup)
+        self.sweep_ci_scratch = self.enterContext(patch.object(prune, "sweep_ci_scratch"))
         prune.ROOT = self.root
         (self.root / "PORTING_STATE.md").write_text("Latest APK `" + PROTECTED + "`\n")
 
@@ -164,6 +165,7 @@ class PruneGeneratedTests(unittest.TestCase):
         with patch.object(prune, "volume_available", side_effect=[1000, 2024]):
             report = prune.apply(planner.items, self.work, self.work / "cleanup-analysis/ledger.json", aggressive=True)
         self.assertEqual(report["volume_available_delta_bytes"], 1024)
+        self.sweep_ci_scratch.assert_called_once_with()
         self.assertTrue((installed / "old.apk").is_file())
         self.assertEqual(planner.items[0]["skipped"], "APK became pinned after planning")
 
