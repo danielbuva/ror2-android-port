@@ -1877,6 +1877,12 @@ local signed fixture server, actual UI/session assertions and owned cleanup.
 The fixture checks that one changed output rebuilds, the unchanged producer is
 reused, the profile and settings survive, and the next check reports the installed
 release is current. Its toolhost and generated binaries/keys stay in the lab.
+Its host-only `--preflight-alpha-update` mode verifies both local alpha release
+graphs against the hash-pinned installer's packaged publisher trust. The
+`installed_alpha` verifier checks their assembly plans and signed runtime
+attempts, and the update owner reports the changed, removed and unchanged
+output dependencies in ascending publisher version order. Device cache reuse
+and native profile retention require the installed game.
 `scripts/lab-alpha-packaging.py` extends that owner with synthetic package issuance,
 installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending
