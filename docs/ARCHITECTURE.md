@@ -8354,6 +8354,13 @@ texture state; particle renderers also report all meshes. The existing screen
 coverage ordering and 128-view limit remain: this is a sampled attribution tool,
 not proof that every prefab rendered. Session teardown discards the report with
 the other objective observations; it never changes materials or simulation.
+`IntegratedWorldSession` also owns the opt-in `diagnosticMageBombRelease`
+trace. It samples the first native Nano-Bomb charge-to-throw transition at
+end of frame and follows the configured projectile, its detached ghost and the
+configured muzzle and impact effects by catalog identity. It retains camera
+projected screen bounds and material slots for up to 1.25 seconds or 120 frames.
+The report belongs to the current world and holds only observations. Projected
+bounds and effect identity identify candidates for comparison with the video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
