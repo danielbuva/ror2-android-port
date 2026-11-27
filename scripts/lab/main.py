@@ -7,6 +7,11 @@ if len(sys.argv) > 1 and sys.argv[1] == "pins":
 
     sys.exit(main(sys.argv[2:]))
 
+if len(sys.argv) > 1 and sys.argv[1] == "publish":
+    from publish import main
+
+    sys.exit(main(sys.argv[2:]))
+
 if len(sys.argv) > 1 and sys.argv[1] == "converter-stage":
     from lab_runner import converter_stage
 
@@ -54,6 +59,7 @@ p = argparse.ArgumentParser(
   export-project: current
   preflight: current
   pins: current
+  publish: current
   build-hook-pins: current
   check-baseline: current
   build: current
@@ -93,6 +99,7 @@ p.add_argument(
         "export-project",
         "preflight",
         "pins",
+        "publish",
         "build-hook-pins",
         "check-baseline",
         "build",

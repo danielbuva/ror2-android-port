@@ -1,9 +1,9 @@
 import hashlib
 import importlib.util
+import json
 import os
 import runpy
 import struct
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -80,14 +80,24 @@ class WwiseAndroidAbiTests(unittest.TestCase):
         owner_code = ROOT / "tools/phone-build/owner-code"
         spec = importlib.util.spec_from_file_location("test_wwise_native", owner_code / "wwise_native.py")
         producer = importlib.util.module_from_spec(spec)
-        with patch.object(sys, "path", [str(owner_code), *sys.path]):
-            spec.loader.exec_module(producer)
+        spec.loader.exec_module(producer)
         exports = hashlib.sha256(b"public_data\npublic_fn\nweak_fn").hexdigest()
         needed = sorted(producer.DEPENDENCIES)
         with tempfile.TemporaryDirectory() as directory, patch.object(producer, "EXPORTS_SHA256", exports):
             library = Path(directory) / "libAkSoundEngine.so"
             library.write_bytes(linked_fixture(needed, 16384))
-            self.assertEqual(producer.audit_library(library)["exports"], 3)
+            audit = producer.audit_library(library)
+            self.assertEqual(audit["exports"], 3)
+            receipt = Path(directory) / "result.json"
+            receipt.write_text(json.dumps({"schema": 1, "success": True, "library": audit, "overlay_sha256": producer.native.sha(producer.POLICY)}))
+            pin = {"path": str(receipt.resolve()), "sha256": producer.native.sha(receipt), "bytes": receipt.stat().st_size}
+            self.assertEqual(producer.verify_build(library, pin), audit["sha256"])
+            library.write_bytes(library.read_bytes() + b"changed bytes")
+            with self.assertRaisesRegex(ValueError, "successful producer receipt"):
+                producer.verify_build(library, pin)
+            receipt.write_text("{}")
+            with self.assertRaisesRegex(ValueError, "dependency pin"):
+                producer.verify_build(library, pin)
             library.write_bytes(linked_fixture(needed[:-1], 16384))
             with self.assertRaisesRegex(ValueError, "dependencies or SONAME"):
                 producer.audit_library(library)

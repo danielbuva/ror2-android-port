@@ -2780,6 +2780,27 @@ Provenance, privacy, licensing and sensitive-content review completed 2026-11-27
 | --- | --- |
 | `owner-multipass-graphics-translation.json` | `8ff591da12ae3f76a4e4a81945c2e165d6bfdde3d1d8e364fd585a011bc042d8` |
 
+The Cloud Remap profile selects the original Shader and its source-linked
+Legacy Transparent/VertexLit fallback. It pins only source identities, hashes
+and canonical destinations. The signed graphics translator reuses the pinned
+public tools. Original programs, translated bodies and device evidence stay
+local. Provenance, privacy, licensing and sensitive-content review completed
+2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-cloud-remap-graphics-translation.json` | `59fe8c20139b0b1763f13e4eb84f4cd3c45b2e67f8d93c5a8839410878c045c1` |
+
+The Terrain detail graphics profile selects two original WavingDoublePass
+Shader records for the signed graphics translator. It reuses the Terrain detail
+source pins and destinations. It contains only provenance and routing metadata.
+Original programs, translated bodies and raw evidence stay local. Provenance,
+privacy, licensing and sensitive-content review completed 2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-terrain-detail-graphics-translation.json` | `188503c1e3ea62346ad84f614174720990d62785a26297da1ee92f424df0ace6` |
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP
@@ -6292,6 +6313,25 @@ from the original bodies only at their 47 relocated pointers. Unity
 2021.3.45f2 checked nine Shader bindings and 38 saved texture bindings
 and unloaded the bundles. Release integration and rendered output remain open.
 
+### Whole-game Sad1 Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sad1-native-material-records.json` | `58c9714d6ec255146f2f8d1b5d217a1aeb957e52d9e41db2e5b54e718624386d` |
+
+Audit date 2026-11-27. The recipe selects 33 Material records referenced by
+the Sad1 scene from six original Steam bundles. It publishes only source
+paths, IDs, sizes, and hashes. The shared record producer reads the
+Material bodies from the user's installation. The AssetRipper PPtr and
+Material extensions informed member and saved texture lookup.
+
+The 33 emitted bodies match the original type trees and differ only at
+PPtr fields. Unity 2021.3.45f2 loaded all 33 Materials, checked 33 Shader
+and 232 saved texture bindings, and unloaded the fixture. The referenced
+Texture2D outputs come from existing RGB and ETC1 suppliers. Generated
+content and local evidence stay ignored. Release integration and
+rendered output remain pending.
+
 ### Whole-game Standard fallback keyword registration (J1306)
 
 | Recipe | SHA-256 |
@@ -7797,3 +7837,24 @@ from the user's installation and writes the pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-nest-fbx-native-records.json` | `00330558b4b1fad6131bd4d34dfb3d1dba7699f835ea963457d97e005b7c8545` |
+
+## Sad1 and Fungal native Material records (2026-11-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sad1-signed-cloud-material-records.json` | `1ba50768746c41a8a3bfa1e9f26bd2dd39bb675bd01895620f18036d41ebadda` |
+| `owner-whole-game-fungal-native-material-records.json` | `5702d6ad798294ef684a6a268cc1c7486d7fc597258813a4e410bf7fd46328b4` |
+| `owner-whole-game-fungal-signed-cloud-material-records.json` | `cd860a89009a2389c890bf7fe155f7ee6249273f23f51eef1cd5604959f41ed5` |
+
+The shared record producer reads 28 Sad1 and 24 Fungal Material bodies from
+the official PC input. The emitted bodies preserve their original type
+trees and fields outside PPtr relocation. Unity 2021.3.45f2 loaded and
+unloaded all three fixtures and checked 52 Shader and 183 Texture2D
+bindings. Five Fungal Materials use existing Standard or Triplanar
+Shader stand-ins. One Fungal texture binding uses the BC1-to-ETC supplier.
+Canonical release integration and Android draws remain open.
+
+The review covered source and destination selectors, class IDs, sizes
+and hashes, following the pinned AssetRipper member and saved-property
+lookup. Serialized bodies, generated packs and local paths stay under
+ignored `work/`.

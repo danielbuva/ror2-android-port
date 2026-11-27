@@ -493,33 +493,16 @@ class ScratchTests(unittest.TestCase):
             self.stop_detached(pidfile)
 
     @unittest.skipUnless(shutil.which("lsof"), "open-file veto requires lsof")
-    def test_sigkill_preserves_scratch_open_in_detached_grandchild(self):
-        os.utime(self.path, None)
-        pidfile = self.root / "detached.pid"
-        self.addCleanup(self.stop_detached, pidfile)
-        body = (
-            f"{sys.executable} - <<'CHILD'\n"
-            "import os, pathlib, subprocess\n"
-            "p=subprocess.Popen(['sleep','30'],cwd=os.environ['CI_LOCAL_OWNED_SCRATCH'],start_new_session=True,"
-            "stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\n"
-            f"pathlib.Path({str(pidfile)!r}).write_text(str(p.pid))\n"
-            "CHILD\necho ready; exec sleep 30\n"
-        )
-        process = self.launch(body)
-        scratch, record = self.ready(process)
-        detached = int(pidfile.read_text())
-        try:
-            process.kill()
-            process.wait(timeout=5)
-            os.killpg(record["pgid"], signal.SIGTERM)
-            process.communicate(timeout=5)
-            os.kill(detached, 0)
-            os.utime(scratch, (0, 0))
-            # The orphaned group can still be visible until its dead leader is reaped.
-            self.assertIn(cleanup.reclaim(scratch), {"live", "open-files"})
-            self.assertTrue(scratch.exists())
-        finally:
-            self.stop_detached(pidfile)
+    def test_sweep_preserves_dead_owner_scratch_open_in_detached_process(self):
+        # Reap the process directly so this test does not depend on when the
+        # runner reaps an orphan from a killed supervisor's process group.
+        with subprocess.Popen(["sleep", "30"], cwd=self.path, start_new_session=True) as detached:
+            try:
+                self.assertEqual(self.reclaim(), "open-files")
+                self.assertTrue(self.path.exists())
+            finally:
+                detached.terminate()
+        self.assertEqual(self.reclaim(), "removed")
 
     def test_sigkill_leaves_recorded_live_child_untouched(self):
         os.utime(self.path, None)

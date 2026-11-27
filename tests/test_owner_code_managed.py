@@ -33,6 +33,7 @@ class OwnerCodeManagedTests(unittest.TestCase):
                         "passive_pcm_capture_music_output_requested": not deferred,
                         "passive_pcm_capture_after_authority_skill_requested": deferred,
                         "owner_work": None,
+                        "built_native_sha256": None,
                     },
                 )
 
