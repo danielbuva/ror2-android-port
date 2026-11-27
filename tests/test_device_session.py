@@ -1832,7 +1832,13 @@ class DeviceSessionTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 snapshots = iter([initial, after])
                 target = mock.Mock()
-                target.sh.side_effect = lambda command, *args, **kwargs: next(snapshots) if command == "cat" else ""
+
+                def shell(command, *args, **kwargs):
+                    if command == "uiautomator":
+                        return "UI hierchary dumped to: " + args[-1]
+                    return next(snapshots) if command == "cat" else ""
+
+                target.sh.side_effect = shell
                 record = {}
                 runtime = "/sdcard/Android/data/dev.ror2lab.arm64/files"
                 if failure:
@@ -1848,6 +1854,32 @@ class DeviceSessionTests(unittest.TestCase):
                 self.assertEqual(len(dumps), len(expected))
                 self.assertTrue(all(path.startswith(runtime + "/lab-usb-chooser-") for path in dumps))
                 self.assertEqual([call.args[2] for call in commands if call.args[0] == "rm"], dumps)
+
+    def test_usb_chooser_retries_a_dump_that_produced_no_hierarchy(self):
+        runtime = "/sdcard/Android/data/dev.ror2lab.arm64/files"
+        for available in (True, False):
+            with self.subTest(available=available):
+                target = mock.Mock()
+                dump_attempts = iter((False, available, False))
+
+                def shell(command, *args, **kwargs):
+                    if command == "uiautomator" and next(dump_attempts):
+                        return "UI hierchary dumped to: " + args[-1]
+                    if command == "cat":
+                        return '<hierarchy><node text="Launcher"/></hierarchy>'
+                    return ""
+
+                target.sh.side_effect = shell
+                record = {}
+                with mock.patch.object(runner.time, "sleep"):
+                    if available:
+                        runner.dismiss_usb_chooser(target, runtime, record)
+                    else:
+                        with self.assertRaisesRegex(RuntimeError, "no accessibility hierarchy"):
+                            runner.dismiss_usb_chooser(target, runtime, record)
+                self.assertEqual(record, {"visible": False} if available else {})
+                commands = [call.args[0] for call in target.sh.call_args_list]
+                self.assertEqual(commands, ["uiautomator", "uiautomator"] + (["cat"] if available else ["uiautomator"]) + ["rm"])
 
     def test_converted_launch_resolves_bootstrap_instead_of_unity_activity(self):
         target = mock.Mock(package="dev.ror2lab.converted")

@@ -563,10 +563,16 @@ def usb_chooser_visible(device, runtime):
     # accessibility window and keep its temporary dump on the runtime volume.
     scratch = runtime + "/lab-usb-chooser-" + uuid4().hex + ".xml"
     try:
-        device.sh("uiautomator", "dump", scratch, timeout=15)
-        hierarchy = ElementTree.fromstring(device.sh("cat", scratch))
-        labels = {node.get("text", "").casefold() for node in hierarchy.iter("node")}
-        return {"use usb for", "no data transfer", "file transfer", "cancel"} <= labels
+        for attempt in range(3):
+            dump = device.sh("uiautomator", "dump", scratch, timeout=15)
+            # A null root or idle timeout can exit successfully without XML.
+            if dump.endswith("dumped to: " + scratch):
+                hierarchy = ElementTree.fromstring(device.sh("cat", scratch))
+                labels = {node.get("text", "").casefold() for node in hierarchy.iter("node")}
+                return {"use usb for", "no data transfer", "file transfer", "cancel"} <= labels
+            if attempt < 2:
+                time.sleep(1)
+        raise RuntimeError("USB chooser visibility unavailable: no accessibility hierarchy after three attempts")
     finally:
         device.sh("rm", "-f", scratch)
 
