@@ -369,16 +369,18 @@ def module(name):
 O, A = module("object_produce"), module("record_produce")
 
 
-def pointers(body, typ, schemas):
+def pointer_fields(body, typ, schemas):
     key = typ["tree"]
     if key not in schemas:
         schemas[key] = A.SCHEMA.type_tree(io.BytesIO(key))
     spans = A.fields(body, schemas[key])[1]
-    return {
-        path: struct.unpack_from("<iq", body, start)
-        for path, (start, end) in spans.items()
-        if end - start == 12 and path + ("m_FileID",) in spans and path + ("m_PathID",) in spans
-    }
+    for path, (start, end) in spans.items():
+        if end - start == 12 and path + ("m_FileID",) in spans and path + ("m_PathID",) in spans:
+            yield path, start, struct.unpack_from("<iq", body, start)
+
+
+def pointers(body, typ, schemas):
+    return {path: pointer for path, _, pointer in pointer_fields(body, typ, schemas)}
 
 
 def full_type_key(typ):
@@ -2137,9 +2139,15 @@ def qualify_closed_local(native, member, records, closure, consumer, read, schem
             raise ValueError(f"Closed local record signed script differs: {pid}")
 
     _, layout, objects = native.members[consumer_member]
-    script_id = C.S.md4("".join(consumer["identity"]).encode())
-    matches = [pid for pid, row in objects.items() if layout["types"][row["type_id"]].get("script_id") == script_id]
-    (pid,) = matches
+    if set(consumer) == {"member", "identity"}:
+        script_id = C.S.md4("".join(consumer["identity"]).encode())
+        (pid,) = (pid for pid, row in objects.items() if layout["types"][row["type_id"]].get("script_id") == script_id)
+    elif set(consumer) == {"member", "path_id", "class_id"}:
+        pid = consumer["path_id"]
+        if pid not in objects or layout["types"][objects[pid]["type_id"]]["class_id"] != consumer["class_id"]:
+            raise ValueError("Closed local record native consumer differs")
+    else:
+        raise ValueError("Closed local records require a typed consumer")
     _, typ, body = native.record(consumer_member, (0, pid))
     fields = pointers(body, typ, schemas)
     roots = []

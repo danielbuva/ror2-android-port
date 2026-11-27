@@ -154,6 +154,37 @@ class BundlePreloadTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "script differs"):
             list(P.append_closed_local_types(layout, records, managed, {}))
 
+    def test_closed_local_scene_consumer_checks_native_class_and_pointer(self):
+        M = P.module("bundle_manifest")
+        field = "m_OcclusionCullingData"
+        tree = M.S._tree(
+            [
+                dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1)
+                for kind, name, size, level in (
+                    ("OcclusionCullingSettings", "Base", -1, 0),
+                    ("PPtr<OcclusionCullingData>", field, 12, 1),
+                    ("int", "m_FileID", 4, 2),
+                    ("SInt64", "m_PathID", 8, 2),
+                )
+            ]
+        )
+        settings = dict(class_id=29, tree=tree)
+        data_tree = M.S._tree([dict(type="OcclusionCullingData", name="Base", size=0, level=0, meta=0, flags=0, version=1)])
+        records = {7: (b"", dict(class_id=363, tree=data_tree))}
+        consumer = dict(member="BuildPlayer-scene", path_id=10, class_id=29)
+        scene = dict(types=[settings], externals=[dict(path="archive:/CAB-donor/CAB-donor")])
+        native = Node(
+            members={consumer["member"]: (None, scene, {10: dict(type_id=0)})},
+            record=lambda *_: (consumer["member"], settings, struct.pack("<iq", 1, 7)),
+        )
+        witness = dict(managed_bindings={}, external_endpoints=[], scene_roots={field: [1, 7]})
+        self.assertEqual(P.qualify_closed_local(native, "CAB-donor", records, witness, consumer, None, {}), [7])
+        with self.assertRaisesRegex(ValueError, "native consumer differs"):
+            P.qualify_closed_local(native, "CAB-donor", records, witness, dict(consumer, class_id=114), None, {})
+        witness["scene_roots"][field] = [1, 8]
+        with self.assertRaisesRegex(ValueError, "consumer route differs"):
+            P.qualify_closed_local(native, "CAB-donor", records, witness, consumer, None, {})
+
     def test_expose_local_assets_supplies_an_external_mesh_without_a_catalog_root(self):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 
