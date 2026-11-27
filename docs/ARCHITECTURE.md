@@ -1424,7 +1424,12 @@ read each original mip, including the texels stored in its boundary blocks.
 Both write ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for
 packed A/G normal maps. They use the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
-use the same codec pins and output checks. `texture_native_profile.py` selects
+use the same codec pins and output checks. SDK toolchains built by
+`build_texture_sdk.py` advertise `batch_bands`. The pipe adapter initializes the
+SDK once per mip and reuses bounded buffers for the existing colour bands. The
+producer verifies the complete extent before interleaving EAC alpha. Toolchain
+manifests without the capability invoke the SDK once per band.
+`texture_native_profile.py` selects
 original Alpha8, RGB24, RGBA32, ARGB32, native Cubemap, BC1, BC3 and BC7 records
 from the PC texture coverage ledger. The same selector and producer support
 standalone player records. They pin the original serialized file, any sibling resource
