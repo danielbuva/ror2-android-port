@@ -5029,3 +5029,16 @@ Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665
 The runner removed its disposable package and released the lease.
 Evidence `work/coordination/p1-textures/phone-crunch-bc7-1127/signed-device/terminal.done.json`.
 Canonical conversion integration and in-game visuals remain open.
+
+## J1561 — Dispatch original ambient occlusion downsampling on Android Vulkan
+
+2026-11-27. The exact Unity fixture loaded original-derived
+MultiScaleVODownsample2 and dispatched its regular and MSAA kernels.
+The binary ramp matched 160 regular and 320 MSAA components across the
+depth planes and tiled atlases. APK SHA-256
+`e6a10a0f7b12c322017df20f7f7a5fe70c7228d173734401aea71b8a3df3f0bb`
+(source `9d6d94e9`). Evidence is under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-storage-image/ao-downsample2-device-01/terminal.done.json`.
+Peak SoC was 56.1 °C, with 0 s above 80 °C and a 29 °C admission battery.
+Fixture removal, OLED sleep and lease release passed. Camera integration
+and in-game ambient occlusion remain open.

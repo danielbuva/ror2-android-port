@@ -8430,13 +8430,16 @@ their complete clear and gather readbacks. The volume fixture dispatched the
 two original Texture3DLerp kernels and the two SDK controls against ARGBHalf
 3D targets and matched every component. The exposure fixture matched the
 weighted ExposureHistogram bins and the fixed and progressive AutoExposure
-RFloat results. Runtime camera integration and MultiScaleVO downsample
-dispatch remain open.
+RFloat results. The AO fixture dispatched MultiScaleVODownsample2's regular
+and MSAA kernels and matched the source ramp across their depth planes and
+tiled atlases. Runtime camera integration remains open.
 
 The signed release graph accepts `owner-compute-shader-translation-v1` packs
-as explicit bundle suppliers. The Histogram profile binds the original PC
-record and destination, and `shader_translate.py` verifies the installed
-translator and validator before producing its typed pack receipt. Managed-host
+as explicit bundle suppliers. The Histogram and camera ComputeShader profiles
+bind the original PC records to their canonical destinations. The camera
+profile selects eleven leaves from the current input. `shader_translate.py`
+verifies the installed translator and validator before producing its typed
+pack receipt. Managed-host
 `build_shader_tools.py` builds the two ARM64 API 24 native executables from
 pinned public archives and retains corresponding source, notices and relink
 materials. It applies and retains the vkd3d patch for read-only structured
