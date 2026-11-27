@@ -40,7 +40,7 @@ class BundlePreparationTests(unittest.TestCase):
         reference = dict(offset=4, **{"from": [0, 10], "to": [0, 20]})
         schemas = {}
         fields = list(P.pointer_fields(output_body, typ, schemas))
-        qualify = P.module("bundle_prepare").qualify_sprite_relocations
+        qualify = P.module("bundle_prepare").qualify_layout_relocations
         self.assertEqual(qualify(P, (source_body, typ, None), fields, [reference], schemas), {8: reference})
         with self.assertRaisesRegex(ValueError, "source PPtr differs"):
             qualify(P, (source_body, typ, None), fields, [dict(reference, offset=8)], schemas)
@@ -55,6 +55,49 @@ class BundlePreparationTests(unittest.TestCase):
             relocations = {}
             P.module("bundle_prepare").original_identities(P, path, sprite_relocations=relocations)
             self.assertEqual(relocations, {(("content", "CAB-content", 9), ("original.bundle", "CAB-source", 7)): [reference]})
+
+    def test_clip_relocations_follow_original_binding_order_and_offsets(self):
+        manifest = P.module("bundle_manifest")
+        node = manifest.S._node
+        typ = dict(
+            class_id=74,
+            tree=manifest.S._tree(
+                [
+                    node("AnimationClip", "Base", -1, level=0),
+                    node("AnimationClipBindingConstant", "m_ClipBindingConstant", -1, level=1),
+                    node("vector", "genericBindings", -1, level=2),
+                    node("Array", "Array", -1, level=3, flags=1),
+                    node("int", "size", 4, level=4),
+                    node("GenericBinding", "data", 12, level=4),
+                    node("PPtr<MonoScript>", "script", 12, level=5),
+                    node("int", "m_FileID", 4, level=6),
+                    node("SInt64", "m_PathID", 8, level=6),
+                ]
+            ),
+        )
+        source_body = struct.pack("<iiqiq", 2, 1, 10, 1, 11)
+        output_body = struct.pack("<iiqiq", 2, 0, 21, 1, 10)
+        reference = dict(offset=16, **{"from": [1, 11], "to": [0, 21]})
+        schemas = {}
+        fields = list(P.pointer_fields(output_body, typ, schemas))
+        prepare = P.module("bundle_prepare")
+        original = source_body, typ, None
+        self.assertEqual(prepare.qualify_layout_relocations(P, original, fields, [reference], schemas, [1, 0]), {4: reference})
+        with self.assertRaisesRegex(ValueError, "output PPtr differs"):
+            prepare.qualify_layout_relocations(P, original, fields, [reference], schemas, [0, 1])
+        with self.assertRaisesRegex(ValueError, "source PPtr differs"):
+            prepare.qualify_layout_relocations(P, original, fields, [dict(reference, offset=4)], schemas, [1, 0])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "clip.json"
+            output = dict(bundle="content", member="CAB-content", path_id=9, transform=dict(references=[reference], layout=dict(binding_order=[1, 0])))
+            member = dict(name="CAB-source", objects=[dict(path_id=7, class_id=74, outputs=[output])])
+            path.write_text(json.dumps(dict(bundles=[dict(path="original.bundle", sha256="b" * 64, members=[member])])))
+            relocations, orders = {}, {}
+            prepare.original_identities(P, path, relocations=relocations, clip_binding_orders=orders)
+            key = ("content", "CAB-content", 9), ("original.bundle", "CAB-source", 7)
+            self.assertEqual(relocations, {key: {16: reference}})
+            self.assertEqual(orders, {key: [1, 0]})
 
     def test_mesh_duplicate_requires_inline_data_and_identical_typed_bodies(self):
         sample = [("Mesh", "Base", -1, 0), ("StreamingInfo", "m_StreamData", -1, 1)]
