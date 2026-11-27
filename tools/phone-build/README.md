@@ -138,7 +138,10 @@ class name returned by the editor after loading the record as a Unity object.
 The scene check also verifies the native occlusion reference. Replace `assets` with
 the exact `scene` path and pin `dependencies` in load order. The default
 `loadMode` is `Additive`. Set `loadMode` to `Single` to check whether loading
-the scene on its own changes Umbra data size. The runner snapshots the request
+the scene on its own changes Umbra data size. The optional
+`expectedBakedReflectionCubemaps` list checks the complete set of resolved baked
+probe Cubemaps. Each entry has a `width`, `mipCount` and Unity texture `format`.
+The runner snapshots the request
 beside the oracle. `native-content-check.json`
 records each actual native name/type and verifies destruction after
 `Unload(true)`; failures persist and fail the check. Host validation binds the

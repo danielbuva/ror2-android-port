@@ -7777,6 +7777,14 @@ slots with checked local MeshRenderer remaps. `record_produce.py` and
 visibility record at the scene's existing whole-game data alias. A typed scene
 load needs that record in the canonical supplier bundle.
 
+The staged Blackbeach and Golemplains object profiles take a record pack from
+the existing `texture_produce.py` owner using
+`recipe/owner-start-scene-baked-reflections.json`. The texture owner preserves
+original BC6H mip data in the scene bundle resource member, and the object owner
+restores each original baked ReflectionProbe link to its local Cubemap. The
+same Android-target editor fixture loads and unloads the scenes and checks the
+resolved Cubemap widths, mip counts and native formats.
+
 Voidraid complete scene selections extend the existing object/Shader owners
 through `recipe/owner-voidraid-whole-objects.json` and matching post-processing
 and Standard profiles. Original component/GameObject dependencies retain their

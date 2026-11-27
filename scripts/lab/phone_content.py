@@ -139,6 +139,8 @@ def native_content_request(path):
             raise RuntimeError("Native scene requires an exact scene path")
         if request.get("loadMode", "Additive") not in ("Additive", "Single"):
             raise RuntimeError("Native scene loadMode must be Additive or Single")
+        if "expectedBakedReflectionCubemaps" in request and baked_reflection_cubemaps(request["expectedBakedReflectionCubemaps"]) is None:
+            raise RuntimeError("Native scene expectedBakedReflectionCubemaps requires Cubemap widths, mip counts and formats")
         return request
     assets = request["assets"]
     if not isinstance(assets, list) or not assets:
@@ -172,6 +174,25 @@ def validate_native_scene(report, request, commit):
         or report.get("roots", 0) <= 0
     ):
         raise RuntimeError("Exact-editor native scene contract failed")
+    if "expectedBakedReflectionCubemaps" in request and baked_reflection_cubemaps(report.get("bakedReflectionCubemaps")) != baked_reflection_cubemaps(
+        request["expectedBakedReflectionCubemaps"]
+    ):
+        raise RuntimeError("Exact-editor native scene baked ReflectionProbe contract failed")
+
+
+def baked_reflection_cubemaps(rows):
+    if not isinstance(rows, list) or any(
+        not isinstance(row, dict)
+        or type(row.get("width")) is not int
+        or row["width"] <= 0
+        or type(row.get("mipCount")) is not int
+        or row["mipCount"] <= 0
+        or not isinstance(row.get("format"), str)
+        or not row["format"]
+        for row in rows
+    ):
+        return None
+    return sorted((row["width"], row["mipCount"], row["format"]) for row in rows)
 
 
 def material_references(value):
