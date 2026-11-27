@@ -5291,11 +5291,16 @@ For native team area indicators on these roots, the session prepares the
 intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
 startup selects a team entry. The original table is restored with the effect
 callbacks before world cleanup destroys the owned copies.
+The same owner prepares `OmniEffect` particle overrides before native Start
+selects a radius group and assigns its material. It restores the original
+override references with the renderer and trail sources.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
 for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, which
-instantiate their prefabs directly. It holds the Acrid
+instantiate their prefabs directly. Artificer's configured Nano-Bomb projectile
+also enters this owner so the projectile controller's detached ghost takes the
+same material recovery path. It holds the Acrid
 finisher's typed provider lease through the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
@@ -8399,6 +8404,13 @@ texture state; particle renderers also report all meshes. The existing screen
 coverage ordering and 128-view limit remain: this is a sampled attribution tool,
 not proof that every prefab rendered. Session teardown discards the report with
 the other objective observations; it never changes materials or simulation.
+`IntegratedWorldSession` also owns the opt-in `diagnosticMageBombRelease`
+trace. It samples the first native Nano-Bomb charge-to-throw transition at
+end of frame and follows the configured projectile, its detached ghost and the
+configured muzzle and impact effects by catalog identity. It retains camera
+projected screen bounds and material slots for up to 1.25 seconds or 120 frames.
+The report belongs to the current world and holds only observations. Projected
+bounds and effect identity identify candidates for comparison with the video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
@@ -8416,6 +8428,18 @@ the existing five-second report cadence. The latest `NovaReport` sample records
 the display camera, renderer state, projected bounds, mesh and first shared
 material. The sample holds no Unity references and works with native skin
 diagnostics disabled.
+
+The integrated lab route can request a same-frame presentation capture with
+`frameCaptureScene` and `frameCaptureRunSeconds` in its session selector.
+`NovaInputBoundary` arms `AndroidPresentationCamera` on the lab view. It samples
+the camera source and the composited screen in the same Unity frame within
+12 s of the requested native run stopwatch, at most 48 times. The existing
+private camera report retains the first pair of 160 × 90 PNGs, camera and target
+state, and the collider from the view's own obstruction cast. The first sample
+with at least 5% flat mid-gray replaces that pair and ends sampling. The camera
+releases capture textures at teardown. The collider describes camera placement,
+and the PNGs can localize a presentation stage. Identifying a draw requires
+pixel-event evidence.
 
 
 ## Host-only owner layout models
