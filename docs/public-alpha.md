@@ -236,6 +236,12 @@ the battery was −1,017 mW. The sampled clock limits and cooling states leave
 throttling onset unestablished. The 30-minute unplugged energy test is
 **deferred by owner** as of 2026-11-18. Keep phones plugged in for all runs.
 
+The [2026-11-27 Secondary Nova capture](performance-game.md#secondary-nova-sustained-combat)
+recorded 30 minutes of plugged-in assisted combat. Whole and covered-tail means
+were 59.311 and 59.410 FPS, with 14 and 2 frames above 50 ms, respectively.
+Both means were below 60 FPS. Ordinary play, matched PC visuals and per-device
+budgets remain open.
+
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
 provide bounded device evidence; complete converter and sustained-game profiles
@@ -303,6 +309,10 @@ thermal sampling policy; proposed performance budgets do not change those limits
       observes the actual writer stop after pending-file creation, retains the
       prior primary and checks two cold Starts for one application of the native
       loss with unchanged settings.
+- [x] Recover an injected ENOSPC during the live native profile save.
+      The app retained both profile generations and settings after persisting
+      the loss report. Two cold Starts reconciled one loss, then zero.
+      [Device evidence](PORTING_JOURNAL.md#j1538--recover-a-native-profile-save-after-injected-enospc).
 - [ ] Complete physical storage failure and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)
