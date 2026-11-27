@@ -22,9 +22,9 @@ commit if an old candidate is ever needed again.
 
 Defaults to a dry-run plan; --apply deletes and writes a ledger.
 --dedupe scans only for verified APFS clones of duplicate files at least 64 MiB
-and 30 minutes old. --aggressive includes dedupe after retiring stand-alone APKs
-and compressing evidence. It uses a 48-hour minimum for APKs and evidence,
-preserves immutable history, and measures volume free space on apply.
+and 30 minutes old. --aggressive retires stand-alone APKs and compresses
+evidence. It uses a 48-hour minimum for APKs and evidence, preserves immutable
+history, and measures volume free space on apply.
 --supersede OLD --by NEW marks a physical generated run as replaced by the
 latest direct result.json or *.done.json with success=true. After 24 hours,
 unchanged receipt-bound markers let generated outputs ignore historical manifest
@@ -1011,7 +1011,7 @@ def main():
     parser.add_argument("--keep-sha256", action="append", default=[], help="Additional APK SHA-256 to protect")
     parser.add_argument("--apply", action="store_true", help="Apply changes (default: print the plan only)")
     parser.add_argument("--dedupe", action="store_true", help="Clone byte-identical large files on APFS")
-    parser.add_argument("--aggressive", action="store_true", help="Retire old unpinned APKs, compress old evidence and deduplicate")
+    parser.add_argument("--aggressive", action="store_true", help="Retire old unpinned APKs and compress old evidence")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--supersede", metavar="OLD", help="Mark a generated run/version as replaced; no deletion")
     parser.add_argument("--by", metavar="NEW", help="Replacement run with a passing receipt")
@@ -1048,7 +1048,6 @@ def run(args, work):
         protected_state(work, args.keep_sha256, authoritative=True),
         aggressive=args.aggressive,
     )
-    dedupe = args.dedupe or args.aggressive
     if not args.dedupe or args.aggressive:
         planner.build_cache()
         planner.lab_build()
@@ -1060,20 +1059,20 @@ def run(args, work):
         if args.aggressive:
             planner.rebuild_outputs()
             planner.aggressive_files()
-    if dedupe and not args.apply:
+    if args.dedupe and not args.apply:
         planner.items.extend(duplicate_plan(work, (item["path"] for item in planner.items)))
     measurements = {}
     if args.apply:
         stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
         prefix = "aggressive-" if args.aggressive else "dedupe-" if args.dedupe else ""
         ledger = work / "cleanup-analysis" / f"{prefix}prune-{stamp}-{uuid.uuid4().hex[:8]}.json"
-        measurements = apply(planner.items, work, ledger, aggressive=args.aggressive, dedupe=dedupe, extra_hashes=args.keep_sha256) or {}
+        measurements = apply(planner.items, work, ledger, aggressive=args.aggressive, dedupe=args.dedupe, extra_hashes=args.keep_sha256) or {}
         measurements["ledger"] = str(ledger.relative_to(ROOT))
     total = sum(i["bytes"] for i in planner.items)
     summary = {
         "mode": "apply" if args.apply else "plan",
         "aggressive": args.aggressive,
-        "dedupe": dedupe,
+        "dedupe": args.dedupe,
         "protected_hashes": len(hashes),
         "cache_protected_hashes": len(planner.cache_hashes),
         "cache_protected_keys": len(planner.cache_keys),
