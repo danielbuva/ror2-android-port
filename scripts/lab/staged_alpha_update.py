@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path, PurePosixPath
+import tarfile
 import time
 
 from alpha_acquisition import FolderImport, GIB, IMPORT, cohort, stage_folder
@@ -20,6 +21,18 @@ CASES = (
     "staged-up-to-date",
 )
 NIGHTLY_CASES = ("signed-source-import", "staged-baseline-install", "nightly-baseline-tour")
+
+
+def acquired_sources(inventories, root, inputs):
+    inventory = inventories[0]
+    if any(other != inventory for other in inventories[1:]):
+        raise ValueError("staged update pair must use the same signed acquired-tool inventory")
+    if bool(inventory) != (root is not None):
+        raise ValueError("staged request must supply an acquired_source only for signed acquired tools")
+    if not inventory:
+        return {}
+    source = Path(root).resolve(strict=True)
+    return {name: (inputs.verify_acquired(source, name, pin), pin) for name, pin in inventory.items()}
 
 
 def verify_incremental(receipt, source, changed, unchanged, attempts, require):
@@ -64,6 +77,9 @@ class StagedUpdate(FolderImport):
         installer.require_installer_manifest(manifest, version)
         owner = release_tools()
         importer = owner.module("staged_update_importer", owner.HERE / "game_import.py")
+        inputs = owner.module("staged_update_inputs", owner.HERE / "install_inputs.py")
+        self.acquired = acquired_sources([self.pair[name].get("acquired_inputs", {}) for name in names], request.get("acquired_source"), inputs)
+        self.acquired_bytes = sum(pin["bytes"] for _, pin in self.acquired.values())
         self.current = cohort(request["current_inventory"], None if nightly else request["current_source"], importer)
         self.inputs = {}
         for name in self.directories:
@@ -91,6 +107,7 @@ class StagedUpdate(FolderImport):
             20 * GIB
             + 2 * self.apk.stat().st_size
             + (size if self.nightly else 2 * size)
+            + self.acquired_bytes
             + max(self.pair[name]["input_plan"]["workspace_bytes"] + files["public-tools.zip"].stat().st_size for name, files in self.releases.items())
         )
         phone.storage()
@@ -103,6 +120,22 @@ class StagedUpdate(FolderImport):
         self.owned_stage = True
         stage_folder(phone, source, hashes, self.stage_target)
         self.verify_tree(phone, self.stage_target, hashes)
+
+    def stage_acquired(self, phone):
+        package = self.installer.PACKAGE
+        root = "files/owner-input"
+        phone.require_owned_installer()
+        phone.storage()
+        phone.shell("run-as", package, "mkdir", "-p", root, label="staged-acquired-directory")
+        phone.shell("run-as", package, "test", "!", "-e", root + "/acquired", label="staged-acquired-must-be-fresh")
+        with phone.transport.extract_tar(["run-as", package, "tar", "-xf", "-", "-C", root], label="staged-acquired-transfer", timeout=1200) as archive:
+            for name, (source, pin) in self.acquired.items():
+                info = tarfile.TarInfo(name)
+                info.mode = 0o700 if source.stat().st_mode & 0o111 else 0o600
+                info.size = pin["bytes"]
+                with source.open("rb") as stream:
+                    archive.addfile(info, stream)
+        self.verify_tree(phone, root + "/acquired", {name.removeprefix("acquired/"): pin["sha256"] for name, (_, pin) in self.acquired.items()}, private=True)
 
     def import_originals(self, phone):
         phone.tap("Prepare signed installation plan")
@@ -265,6 +298,9 @@ class StagedUpdate(FolderImport):
             phone.install(self.apk)
             phone.require_owned_installer()
             self.require(phone.installer_hash == self.apk_hash, "staged-installer-changed")
+        if self.acquired:
+            with stage("staged-acquired-tools"):
+                self.stage_acquired(phone)
         phone.install_consent_label = self.game_label
         with installer.server() as service:
             baseline = self.pair["baseline"]["publisher_version_code"]

@@ -5,10 +5,13 @@ host process is not evidence that a remote mutation failed. Only explicitly
 idempotent commands may be retried, and only after a negative POSIX return code.
 """
 
+from contextlib import contextmanager
 import re
 import secrets
 import shlex
 import subprocess
+import tarfile
+import threading
 import time
 from pathlib import Path
 
@@ -101,6 +104,32 @@ class AdbTransport:
         if result.returncode:
             raise AdbError("adb-command-failed")
         return result.stdout
+
+    @contextmanager
+    def extract_tar(self, command, *, label, timeout=600):
+        """Send a tar stream to one owned destination without a host archive."""
+        argv = [self.adb, "-s", self.serial, "shell", shlex.join(command)]
+        with subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) as process:
+            deadline = threading.Timer(timeout, process.kill)
+            deadline.start()
+            try:
+                with tarfile.open(fileobj=process.stdin, mode="w|", format=tarfile.GNU_FORMAT) as archive:
+                    yield archive
+                process.stdin.close()
+                code = process.wait()
+                self.record(label, returncode=code)
+                if code:
+                    raise AdbError("adb-tar-extraction-failed")
+            except BrokenPipeError:
+                raise AdbError("adb-tar-stream-interrupted") from None
+            finally:
+                deadline.cancel()
+                if process.poll() is None:
+                    process.kill()
+                try:
+                    process.stdin.close()
+                except BrokenPipeError:
+                    pass
 
     def install(self, apk, volume, *, reconcile, label="adb-install", timeout=600):
         """Install once with remote status, then verify exact caller-owned identity.

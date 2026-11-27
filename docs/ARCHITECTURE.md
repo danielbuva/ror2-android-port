@@ -1924,7 +1924,12 @@ removes staging and disposes of the fresh installer through the existing
 cleanup owner.
 `scripts/lab/staged_alpha_update.py` uses the same Downloads and picker owner,
 installer and session observers for a local signed release pair. It checks the
-installed manifest diff before allowing reconstruction. The build receipt
+installed manifest diff before allowing reconstruction. An optional signed
+`acquired_inputs` inventory pins the locally acquired SDK and compiler files.
+The runner streams the selected tools into the fresh installer and verifies the
+device copy. `owner-apk/install_inputs.py` admits that private tool tree separately
+from the game import and includes both inventories in the installed input identity.
+The build receipt
 records APK entry reuse and producer cache hits separately. The device tour
 creates native save data, verifies its hashes while the game is stopped before
 and after PackageInstaller replacement, and checks it loads in the updated game.

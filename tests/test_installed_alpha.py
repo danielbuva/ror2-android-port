@@ -282,6 +282,26 @@ class InstalledAlphaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "staged-rebuild-entry-coverage"):
             staged_alpha_update.verify_incremental(receipt, source, changed, unchanged, 1, require)
 
+    def test_staged_acquired_source_pins_one_tool_cohort_for_both_releases(self):
+        inputs = self.owner.module("test_acquired_input_selection", self.owner.HERE / "install_inputs.py")
+        name = "acquired/compiler.txt"
+        source = self.root / name
+        source.parent.mkdir()
+        data = b"fixture compiler"
+        source.write_bytes(data)
+        tool = {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        pin = {name: tool}
+        select = staged_alpha_update.acquired_sources
+        self.assertEqual(select([pin, pin], self.root, inputs), {name: (source.resolve(), tool)})
+        self.assertEqual(select([{}, {}], None, inputs), {})
+        with self.assertRaisesRegex(ValueError, "same signed acquired-tool inventory"):
+            select([pin, {}], self.root, inputs)
+        with self.assertRaisesRegex(ValueError, "must supply an acquired_source"):
+            select([pin, pin], None, inputs)
+        source.write_bytes(b"changed compiler")
+        with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
+            select([pin, pin], self.root, inputs)
+
     def test_nightly_census_joins_play_failure_without_pulling_the_apk(self):
         module_path = Path(installed_alpha.__file__).with_name("whole_game_scoreboard.py")
         spec = importlib.util.spec_from_file_location("lab_scoreboard_fixture", module_path)

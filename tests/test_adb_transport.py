@@ -1,10 +1,12 @@
 """Host-only fake ADB: authored temporary text, no device/server/APK inputs."""
 
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
+import tarfile
 import tempfile
 import time
 import unittest
@@ -102,6 +104,17 @@ class TransportTests(unittest.TestCase):
 
     def calls(self):
         return [json.loads(row) for row in (self.root / "calls.jsonl").read_text().splitlines()]
+
+    def test_streams_tar_members_and_reports_remote_extraction_failure(self):
+        data = b"synthetic tool\x00\xff"
+        with self.adb.extract_tar(["tar", "-xf", "-", "-C", str(self.root / "remote")], label="transfer") as archive:
+            info = tarfile.TarInfo("acquired/fixture.bin")
+            info.size = len(data)
+            archive.addfile(info, io.BytesIO(data))
+        self.assertEqual((self.root / "remote/acquired/fixture.bin").read_bytes(), data)
+        self.assertEqual(self.records[-1][1]["returncode"], 0)
+        with self.assertRaisesRegex(ADB.AdbError, "adb-tar-extraction-failed"), self.adb.extract_tar(["false"], label="transfer"):
+            pass
 
     def test_retries_signal_killed_read_only_and_keeps_each_diagnostic(self):
         self.configure(mode="signal")

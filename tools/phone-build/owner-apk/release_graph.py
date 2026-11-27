@@ -1306,7 +1306,7 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in policies}}
         return name
 
-    def attach_install_plan(self, index, *, required_inputs, workspace_bytes, bindings):
+    def attach_install_plan(self, index, *, required_inputs, workspace_bytes, bindings, acquired_inputs=None):
         """Assign producers to the earliest install stage that has their inputs."""
 
         def load(name):
@@ -1343,12 +1343,16 @@ class Graph:
             "configuration": {"bindings": bindings},
             "stages": [{"id": stage, "title": stage.title(), "jobs": production.get(stage, [])} for stage in flow.STAGES],
         }
-        files = index["files"].keys() | self.jobs.keys() | {required_inputs}
+        manifests = [required_inputs]
+        if acquired_inputs is not None:
+            plan["acquired_inputs"] = acquired_inputs
+            manifests.append(acquired_inputs)
+        files = index["files"].keys() | self.jobs.keys() | set(manifests)
         admission.validate_plan(plan, files)
-        manifest = admission.UPDATES.within(self.repo, required_inputs, exists=True)
-        admission.input_description(plan, admission.UPDATES.public().load_json(manifest.read_bytes()))
+        pins = {name: digest(admission.UPDATES.within(self.repo, name, exists=True)) for name in manifests}
+        admission.read_plan({"install_plan": plan, "files": dict.fromkeys(files) | pins}, self.repo)
         flow.validate_plan(plan, {**index, "files": files}, self.jobs.__getitem__)
-        index["files"][required_inputs] = digest(manifest)
+        index["files"].update(pins)
         index["install_plan"] = plan
 
     def compile(
@@ -1446,7 +1450,7 @@ def main():
     parser.add_argument("--package-archives", action="store_true", help="prepare compile-selected sources from owner Unity package archives before conversion")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
-    parser.add_argument("--install-plan", type=Path, help="JSON with required_inputs, workspace_bytes and original input bindings")
+    parser.add_argument("--install-plan", type=Path, help="JSON with required_inputs, workspace_bytes, bindings and optional acquired_inputs inventory")
     parser.add_argument("--output", type=Path, required=True, help="new public job staging root; overlay into a release source checkout")
     args = parser.parse_args()
     graph = Graph(args.repo, json.loads(args.extra_arguments.read_text()) if args.extra_arguments else {}, args.player_phases)
