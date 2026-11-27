@@ -8179,6 +8179,12 @@ original member references to Shader and texture providers. The isolated
 fixture checks the typed bindings and unloads the Material bundle and its
 dependencies after the check.
 
+`recipe/owner-whole-game-mire-native-material-records.json` uses the same
+producer and preparation owners for nine Mire and Access Codes Node
+Materials. It supplies two of the Material destinations referenced by
+the Mire Clip cohort. The isolated fixture validates the original
+Material fields and Shader and texture links before bundle teardown.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
