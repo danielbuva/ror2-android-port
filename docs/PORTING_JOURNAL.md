@@ -5116,3 +5116,15 @@ in `intersection-vulkan-draw-device-01/terminal.done.json`.
 Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
 The runner removed the fixture, slept the OLED and released the lease.
 Linked native Materials and depth-fade rendering remain open.
+
+## J1567 — Run signed Cloud Intersection Remap translation on Android
+
+2026-11-27. The signed Android graphics producer emitted the original-derived
+Cloud Intersection Remap pack used in the J1565 Vulkan draw. Object SHA-256
+`25a6fd529a61b5ea840ee30e104d70f6069ce82a4c6e3ba472b35a0c2e931869`.
+Toolhost APK SHA-256 `334c8bcdd1de1c1c24a57165747e3a9885c350c868c982c0a719dbbeb2d6a662`.
+The producer took 29.1 s with 88 MiB peak child RSS and 9.7 MiB net stage
+storage. Peak CPU/GPU was 63.7 °C with 0 s above 80 °C.
+The runner removed the disposable toolhost and released the lease.
+Evidence `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/signed-cloud-device-02/terminal.done.json`.
+Linked gameplay and depth-fade rendering remain open.
