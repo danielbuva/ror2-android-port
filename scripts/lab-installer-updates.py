@@ -77,6 +77,8 @@ class FlowMetrics:
         "in-place-update",
         "verify-profile-settings",
         "check-up-to-date",
+    )
+    STAGED_STAGES = (
         "signed-source-import",
         "baseline-play",
         "updated-play",
@@ -124,7 +126,7 @@ class FlowMetrics:
 
     @contextmanager
     def stage(self, name):
-        if name not in self.STAGES or self.current is not None:
+        if name not in self.STAGES + self.STAGED_STAGES or self.current is not None:
             raise Failure("phone-flow-stage-contract")
         row = {"stage": name, "started": time.monotonic(), "times": [], "ends": [], "samples": [], "completed": False, "sample_limit_reached": False}
         self.current = row
