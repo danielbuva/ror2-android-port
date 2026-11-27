@@ -73,11 +73,37 @@ class TranslatedShaderPack(unittest.TestCase):
         native = parameter_layout(source, structured=True)["buffers"][1]
         rows, descriptors = translator.stage_parameters({"buffers": [dict(native, slot=4)], "textures": []}, vertex=True)
         self.assertEqual(descriptors, ["cbv", "4", "1", "6"])
+        rows, descriptors = translator.stage_parameters({"buffers": [dict(native, slot=0)], "textures": []}, vertex=True, vertex_binding_base=3)
+        self.assertEqual(descriptors, ["cbv", "0", "1", "3"])
+        self.assertEqual(N.reflection(rows)["bindings"], [{"name": "vs_Draw", "index": 0x04010003}])
         expected = dict(record["buffers"][0], name="vs_Draw")
         self.assertEqual(N.reflection(rows)["buffers"], [expected])
         invalid = source.replace(N.words(0, 2, 128, 2), N.words(32, 2, 128, 2))
         with self.assertRaisesRegex(RuntimeError, "exceeds native buffer"):
             parameter_layout(invalid, structured=True)
+
+    def test_instancing_preserves_native_names_and_links_draw_call_binding(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+
+        buffers = [
+            dict(name="UnityDrawCallInfo", slot=1, size=16, variables=[]),
+            dict(name="UnityInstancing_PerDraw0", slot=2, size=256, variables=[]),
+        ]
+        layout = {"buffers": buffers, "textures": []}
+        vertex, vertex_descriptors = translator.stage_parameters(layout, True, vertex_binding_base=3, shared_draw_call=1)
+        fragment, fragment_descriptors = translator.stage_parameters({**layout, "buffers": buffers[:1]}, False, shared_draw_call=1)
+        self.assertEqual(vertex_descriptors, ["cbv", "1", "1", "1", "cbv", "2", "1", "5"])
+        self.assertEqual(fragment_descriptors, ["cbv", "1", "1", "1"])
+        self.assertEqual(
+            vertex + fragment,
+            [
+                "cb: UnityInstancing_PerDraw0 256 0",
+                "cbbind: UnityInstancing_PerDraw0 67174405",
+                "cb: UnityDrawCallInfo 8 0",
+                "cbbind: UnityDrawCallInfo 201392129",
+            ],
+        )
 
     def test_fragment_uses_independent_sampler_registers_and_native_variant_shape(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
