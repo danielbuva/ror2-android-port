@@ -134,17 +134,25 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
         for entry in entries:
             index = entry["m_BlobIndex"]
             record, program = records[index], dxbc[index]
+            keywords = tuple(record["keywords"])
+            if keywords in stages[stage]:
+                raise ValueError(f"duplicate {stage} source keyword variant: {keywords}")
             layout = selected_layout(original, raw, record, structured=True)
-            stages[stage][tuple(record["keywords"])] = (index, program, layout, entry["m_ShaderRequirements"])
+            stages[stage][keywords] = (index, program, layout, entry["m_ShaderRequirements"])
 
     vertices, fragments = stages["progVertex"], stages["progFragment"]
-    if not vertices or vertices.keys() != fragments.keys():
+    fragment_keys = {keywords: keywords for keywords in vertices}
+    # Terrain forward passes keep VERTEXLIGHT_ON in the vertex table only.
+    # Use the matching original fragment while retaining the full vertex key.
+    if vertices.keys() != fragments.keys() and all("VERTEXLIGHT_ON" not in keywords for keywords in fragments):
+        fragment_keys = {keywords: tuple(key for key in keywords if key != "VERTEXLIGHT_ON") for keywords in vertices}
+    if not vertices or set(fragment_keys.values()) != fragments.keys():
         raise ValueError("Vulkan translation requires paired source keyword variants")
     fragment_slots = (buffer["slot"] for _, _, layout, _ in fragments.values() for buffer in layout["buffers"])
     vertex_binding_base = max(2, max(fragment_slots, default=-1) + 1)
     variants = []
     for keywords, vertex_stage in vertices.items():
-        fragment_stage = fragments[keywords]
+        fragment_stage = fragments[fragment_keys[keywords]]
         vertex_draw_call = next((buffer for buffer in vertex_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
         fragment_draw_call = next((buffer for buffer in fragment_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
         shared_draw_call = fragment_draw_call["slot"] if vertex_draw_call and fragment_draw_call else None

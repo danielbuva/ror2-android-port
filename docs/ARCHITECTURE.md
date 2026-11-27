@@ -8520,6 +8520,9 @@ For shaders with ordinary vertex and fragment passes, the translator retains
 subshader and pass order and render state. The shared record writer merges
 the per-pass Vulkan tables and relocates their program and parameter indices
 into the Shader's compressed blob.
+Terrain detail forward passes pair each full vertex keyword set with its
+original fragment after dropping the vertex-only `VERTEXLIGHT_ON` from the
+lookup. The linked program keeps the full vertex key and both requirements.
 The profile run closes the body stream and pins its index, type table and
 object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
