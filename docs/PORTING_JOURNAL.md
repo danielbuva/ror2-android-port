@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1552 — Recover REX Mortar aim and projectile materials
+
+2026-11-27. The original body visual owner prepares REX's configured
+Mortar endpoint and projectile sphere with their source alpha and additive
+blends. An assisted Titanic Plains Secondary recorded one authority and
+one server activation and returned to native main. Live aim and projectile
+renders used recovered variants 100 and 105/111 at queue 3000. Paired video
+shows both gray fills clear while the aim rim, charge and burst remain.
+APK SHA-256 `45c2481c10ef58c2464ed89e12ea82f15283cd919f1facc95885c7c530cc730d` (source `4a302d74`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/rex-mortar-indicators-main-nova/`.
+Adopted cleanup and OLED sleep passed. SoC peaked at 95.1 °C for one
+sample, battery stayed at 30 °C, and the maximum launch gap was 0.411 s.
+The magenta impact disk's live material attribution and PC parity remain open.
+
 ## J1550 — Reuse unchanged producer outputs on Android updates
 
 2026-11-27. The signed synthetic alpha update on Nova B rebuilt one payload

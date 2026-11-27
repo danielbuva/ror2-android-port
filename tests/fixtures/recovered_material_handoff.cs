@@ -464,7 +464,7 @@ static class Fixture
         queenOperation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 &&
               EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab == queenReference &&
-              session.worldLootSourceMaterials.Count == 12, "Queen preparation must retain native state configuration");
+              session.worldLootSourceMaterials.Count == 14, "Queen preparation must retain native state configuration");
         foreach (var renderer in new[] { queenGas, queenSpittle })
             Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
                   session.worldLootSourceMaterials[renderer][0] == original,
