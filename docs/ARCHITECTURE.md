@@ -8179,13 +8179,15 @@ packages the Android executables. Phone execution remains open.
 
 The existing `record_produce.py` native owner also preserves source release
 LightingSettings and OcclusionCullingData. It parses the complete pointer-free
-source schema, checks native type identity and persists unchanged record bodies;
-it does not synthesize editor-only bake settings or renderer/portal tables.
+source schema, checks native type identity and persists unchanged record bodies.
+`recipe/owner-whole-game-occlusion-records.json` supplies 19 shared bundle aliases
+used by the scene consumers. The Goolake alias has a separate source profile.
 Setup requires pinned source bundles and a fresh record pack; scoped readers
 close on exit and receipts persist. Authored host fixtures cover both native
 shapes. A source-derived 22-asset LightingSettings bundle passed typed exact-editor
-load and unload. Occlusion native-load, complete bundle and device acceptance
-remain open.
+load and unload. The exact-editor fixture checks the native class name for
+OcclusionCullingData because the SDK exposes it as a Unity object. Complete
+bundle and device acceptance remain open.
 
 Release-graph Texture jobs bind the public JPEG/ETC codecs and native SDK texture
 toolchain required by their source operations. Dynamic file hashes enter the

@@ -7519,6 +7519,7 @@ The original scene GUID, data pointer alias and portal table are retained.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-goolake-occlusion-record.json` | `03aaaa541245bc93ad33e61329a21f407451edfe2c2fb3f0bb37cf26cfde52dd` |
+| `owner-whole-game-occlusion-records.json` | `7f987156a19e11e8623c70feb4ea32c14ee0b0e7a75ecee34328616018ef1937` |
 
 The Goolake record profile selects the current original native class 363 and
 its existing whole-game destination. A 2026-11-27 provenance, privacy, license
@@ -7526,3 +7527,9 @@ and sensitive-content review found only the necessary asset selectors, native
 identity, output extent and hash pins. The producer reads the visibility data
 from the owner’s PC installation. The recipe contains no bake data, type tree,
 program bytes, private paths or identifiers.
+
+The whole-game profile adds 19 original class 363 records at the shared
+bundle identities used by existing scenes. The 2026-11-27 audit matched
+each destination to one PC source body and checked the class schema, byte
+extent and absence of PPtrs. The same provenance, privacy, license and
+sensitive-content review applies to this profile.
