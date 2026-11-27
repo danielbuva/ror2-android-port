@@ -5388,11 +5388,12 @@ override references with the renderer and trail sources.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
-for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, which
-instantiate their prefabs directly. Artificer's configured Nano-Bomb projectile
+for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, and
+REX's Disperse charge, which instantiate or pool their prefabs directly.
+Artificer's configured Nano-Bomb projectile
 also enters this owner so the projectile controller's detached ghost takes the
-same material recovery path. It holds the Acrid
-finisher's typed provider lease through the run. Integrated world cleanup restores
+same material recovery path. It holds native addressable provider leases through
+the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
 The detailed renderer report reads VagrantMesh's effective slot properties from
