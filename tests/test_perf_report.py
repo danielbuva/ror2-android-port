@@ -33,6 +33,23 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def test_five_minute_bins_pair_runtime_and_temperature_by_utc(self):
+        session, _ = fixture()
+        origin = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        samples = []
+        thermal = []
+        for index, (host, utc, fps, cpu) in enumerate(((0, 0, 60, 55000), (299, 300, 30, 85000), (600, 599, 32, 87000))):
+            timestamp = (origin + timedelta(seconds=utc)).isoformat()
+            samples.append(dict(session["samples"][index], host_seconds=host, snapshot_utc=timestamp, fps=fps))
+            thermal.append(dict(utc=timestamp, admission=False, all_zones_raw=f"cpu-0\t{cpu}"))
+        report = perf.analyze(dict(session, samples=samples), thermal)
+        self.assertEqual(
+            [(row["start_seconds"], row["samples"], row["fps"], row["cpu_c"]) for row in report["bins"]],
+            [(0, 1, 60, 55), (300, 2, 31, 86)],
+        )
+        self.assertEqual(report["observed_seconds"], 600)
+        self.assertEqual(report["final_ten_minutes"]["observed_seconds"], 600)
+
     def test_enemy_count_bins_keep_observed_zero_distinct_from_missing(self):
         session, _ = fixture()
         origin = datetime(2026, 1, 1, tzinfo=timezone.utc)
