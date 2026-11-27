@@ -47,6 +47,11 @@ class TextureNativeProfileTests(unittest.TestCase):
         bc3_pixels = bytes(range(32))
         normal = vector(b"Normal", 6) + struct.pack("<8i", 12, 4, 2, 2, 1, 2, len(bc3_pixels), 3) + bytes(12)
         normal += vector(bc3_pixels, len(bc3_pixels)) + bytes(16)
+        native_colours = {}
+        for fmt, channels in ((3, 3), (4, 4)):
+            source_pixels = bytes(range(10 * channels))
+            native_header = vector(b"Native", 6) + struct.pack("<8i", fmt, 4, 2, 2, 1, 2, len(source_pixels), 6) + bytes(12)
+            native_colours[fmt] = (native_header + vector(source_pixels, len(source_pixels)) + bytes(16), source_pixels)
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -59,6 +64,7 @@ class TextureNativeProfileTests(unittest.TestCase):
                         ("CAB-test", serialized(clean, schema, path_id=6, class_id=28), 4),
                         ("CAB-blob", serialized(custom, schema, path_id=7, class_id=28), 4),
                         ("CAB-normal", serialized(normal, schema, path_id=8, class_id=28), 4),
+                        *((f"CAB-native-{fmt}", serialized(body, schema, path_id=fmt, class_id=28), 4) for fmt, (body, _) in native_colours.items()),
                     ]
                 )
             )
@@ -66,7 +72,7 @@ class TextureNativeProfileTests(unittest.TestCase):
             coverage.write_text(
                 "".join(
                     json.dumps(dict(source=[source.name, member, identity], status="missing")) + "\n"
-                    for member, identity in (("CAB-test", 6), ("CAB-blob", 7), ("CAB-normal", 8))
+                    for member, identity in (("CAB-test", 6), ("CAB-blob", 7), ("CAB-normal", 8), ("CAB-native-3", 3), ("CAB-native-4", 4))
                 )
             )
             output = root / "profile.json"
@@ -74,8 +80,14 @@ class TextureNativeProfileTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             profile = json.loads(output.read_text())
             members = profile["bundles"][0]["members"]
-            self.assertEqual([member["name"] for member in members], ["CAB-test"])
-            record = members[0]["textures"][0]
+            self.assertEqual([member["name"] for member in members], ["CAB-native-3", "CAB-native-4", "CAB-test"])
+            for member in members[:2]:
+                record = member["textures"][0]
+                body, source_pixels = native_colours[record["path_id"]]
+                self.assertEqual(record["operation"], "copy")
+                target = record["outputs"][0]
+                self.assertEqual((target["sha256"], target["pixel_sha256"]), (sha256(body).hexdigest(), sha256(source_pixels).hexdigest()))
+            record = members[2]["textures"][0]
             self.assertEqual((record["operation"], record["path_id"]), ("copy", 6))
             target = record["outputs"][0]
             self.assertEqual((target["sha256"], target["pixel_sha256"]), (sha256(clean).hexdigest(), sha256(pixels).hexdigest()))

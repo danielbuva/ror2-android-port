@@ -12,6 +12,9 @@ import bundle_preload as preload
 import texture_produce as texture
 
 
+NATIVE_2D_PIXEL_BYTES = {1: 1, 3: 3, 4: 4}
+
+
 def texture_record(bundle, body, typ, position, identity, relative, member, trees, source_bc3):
     tree = typ["tree"]
     if tree not in trees:
@@ -28,7 +31,7 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     cube = typ["class_id"] == 89
     if source_bc3 and (cube or fmt != 12):
         return None
-    if not source_bc3 and fmt not in ((17, 24) if cube else (1,)):
+    if not source_bc3 and fmt not in ((17, 24) if cube else NATIVE_2D_PIXEL_BYTES):
         return None
     width, height, mips = map(integer, ("m_Width", "m_Height", "m_MipCount"))
     if min(width, height) < 1 or not 1 <= mips <= max(width, height).bit_length():
@@ -58,7 +61,7 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
         if width != height or width > 8192 or width & (width - 1):
             return None
     else:
-        expected = sum(max(1, width >> level) * max(1, height >> level) for level in range(mips))
+        expected = NATIVE_2D_PIXEL_BYTES[fmt] * sum(max(1, width >> level) * max(1, height >> level) for level in range(mips))
     if stride != expected or (size or image_size) != expected * faces:
         return None
 
