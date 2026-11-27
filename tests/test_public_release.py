@@ -329,6 +329,14 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
                 self.assertEqual(index["files"][name], digest)
                 self.assertEqual(PUBLIC.RELEASE.digest(verified / name), digest)
 
+    def test_wwise_build_requires_the_installer_with_the_new_producer(self):
+        job = PUBLIC.WWISE_NATIVE_JOB
+        index = {"schema": 1, "files": {job: "a" * 64}, "entries": {}}
+        release = dict(release_body(), entries={}, minimum_installer_version=5)
+        with self.assertRaisesRegex(ValueError, "requires installer version 6"):
+            PUBLIC.validate_bundle_index(index, release)
+        PUBLIC.validate_bundle_index(index, dict(release, minimum_installer_version=6))
+
     def test_same_installer_verifies_a_later_reviewed_unity_revision(self):
         name = "smoke/Assets/Bootstrap.unity"
         file = self.root / name

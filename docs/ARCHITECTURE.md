@@ -1812,16 +1812,17 @@ The fixed-target registry retains its explicit package inventory, including
 the TestRunner and MCP importers. Without a fixed target, the graph signs the
 current runtime and audio producer sources and passes the compiler's package
 directory and its `packages/inputs.json` receipt to the player registry. The
-registry pins the selected sources and importer metadata. The current audio
-compiler still needs its macOS SDK tools and checkout work root. The package
+registry pins the selected sources and importer metadata. Historical desktop
+audio production uses its macOS SDK tools and checkout work root. The package
 owner removes temporary extraction files and retains the selected inputs and
 terminal receipt.
 The optional `--audio-stage-receipt` reads relative member names from a private
-authoring stage. The current conversion job checks those names against its new
-local audio receipt and exposes the receipt, banks, streamed media and licensed
-ARM64 library as signed APK entries. The native job consumes that same conversion,
-so the packaged receipt and compiled runtime pin share one owner. Android audio
-production and playback remain open.
+authoring stage. A cached assembly-stage Wwise job rebuilds the ARM64 library
+with installed Clang and LLD from signed acquired stock and NDK target files.
+The current managed conversion revalidates the Wwise receipt and ELF, pins the
+library in the compiled runtime request, and exposes that same library and the
+verified local bank cohort as APK entries. The player native job consumes that
+managed conversion. Android execution and audio playback remain open.
 When a public bundle index exceeds the installer's 4 MiB limit, the publisher
 writes shared dependency closures once. Installer 4 or later expands their
 references for the existing signed dependency checks and retains the compact
@@ -2150,9 +2151,10 @@ r25c target files. The authored diagnostic code and
 `recipe/owner-wwise-native.json` reconstruct the two modified source files in
 the private output after checking their stock hashes. Clang and LLD link the
 result directly. The resulting receipt records the ELF hash, exact export
-roster digest, dependencies and load alignment. This standalone producer has
-passed host cross-compilation. Signed release dispatch and Android execution
-are separate gates.
+roster digest, dependencies and load alignment. The signed graph runs the same
+owner in the assembly stage and passes its hash-bound receipt and library to
+managed production. Host cross-compilation has passed. Android execution
+remains open.
 
 `owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
 invocation over freshly produced managed assemblies. The existing public Burst

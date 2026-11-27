@@ -6,7 +6,7 @@
 #include <limits>
 #include <type_traits>
 #include "monitor_capture_core.h"
-#include "PcmReadbackRingV1.hpp"
+#include "PcmReadbackRingV1.h"
 
 static_assert(std::is_same<AkOutputDeviceID, AkUInt64>::value,
               "Wwise output-device identity type changed; review bridge ABI");
