@@ -118,7 +118,7 @@ class PhoneFlowTests(unittest.TestCase):
         metrics = LAB.FlowMetrics(phone)
         with patch.object(metrics, "INTERVAL", 0.01):
             with self.assertRaisesRegex(LAB.Failure, "original-stage-error"):
-                with metrics.stage("baseline-reconstruction"):
+                with metrics.stage("baseline-reconstruct-and-install"):
                     self.assertTrue(observed.wait(2), "periodic observation never ran")
                     raise LAB.Failure("original-stage-error")
         self.assertTrue(workers)
@@ -137,7 +137,7 @@ class PhoneFlowTests(unittest.TestCase):
         ]
         metrics = LAB.FlowMetrics(phone)
         with patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]):
-            with metrics.stage("baseline-reconstruction"):
+            with metrics.stage("baseline-reconstruct-and-install"):
                 for clock[0] in (10, 20):
                     metrics.sample()
                 clock[0] = 30
@@ -167,14 +167,14 @@ class PhoneFlowTests(unittest.TestCase):
         phone.flow_observation.return_value = {"installer": {"pss_bytes": 7}}
         metrics = LAB.FlowMetrics(phone)
         with patch.object(metrics, "MAX_SAMPLES", 2), patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]):
-            with metrics.stage("baseline-reconstruction"):
+            with metrics.stage("baseline-reconstruct-and-install"):
                 clock[0] = 10
                 metrics.sample()
                 clock[0] = 20
                 metrics.sample()
                 clock[0] = 30
             phone.flow_observation.return_value = {"installer": {"pss_bytes": 99}}
-            with metrics.stage("baseline-install"):
+            with metrics.stage("seed-retention-witness"):
                 clock[0] = 35
         first, second = metrics.report(include_samples=True)["stages"]
         self.assertTrue(first["sample_limit_reached"])
@@ -257,30 +257,42 @@ class PhoneFlowTests(unittest.TestCase):
         phone.flow_observation.side_effect = RuntimeError("private telemetry error")
         metrics = LAB.FlowMetrics(phone)
         with self.assertRaisesRegex(LAB.Failure, "^installer-update-error$"):
-            with metrics.stage("baseline-install"):
+            with metrics.stage("seed-retention-witness"):
                 raise LAB.Failure("installer-update-error")
         report = metrics.report()
         self.assertFalse(report["stages"][0]["completed"])
         self.assertIsNone(report["stages"][0]["packages"]["installer"]["sampled_max_pss_bytes"])
         self.assertNotIn("private", json.dumps(report))
 
-    def test_phone_flow_orders_all_stages_and_stops_after_forward_retention(self):
+    def test_phone_flow_orders_all_stages_and_stops_after_checking_current(self):
         phone = Mock()
         phone.occupied.return_value = False
         phone.flow_observation.return_value = {}
-        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/></hierarchy>')
+        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/><node text="The installed game is up to date."/></hierarchy>')
         phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}]
+        phone.read.side_effect = lambda name: {"rebuilt": [LAB.UPDATE_ENTRY], "reused": ["apk/stable"]} if name == "update-state.json" else {"sha256": "second"}
+        phone.check.return_value = {"installed_manifest_known": True, "changed_entries": [LAB.UPDATE_ENTRY], "removed_entries": []}
+        phone.producer_attempt_count.side_effect = [2, 3]
         phone.attach_mock(Mock(), "passed")
         releases = {n: {"release.json": LAB.encoded({"version": "synthetic"})} for n in (1, 2)}
         phases = []
         phone.allow_visible_install_permission.side_effect = lambda: phases.append(LAB.CURRENT_PHASE)
-        with patch.object(LAB, "prepare_artifacts", return_value=(Mock(), {}, b"key", releases, releases[2])):
+        inputs = {"apk/stable": b"stable", LAB.UPDATE_ENTRY: b"changes"}
+        with patch.object(LAB, "prepare_artifacts", return_value=(Mock(), inputs, b"key", releases, releases[2])):
             LAB.acceptance(phone, {}, Path("unused"), phone.passed, qualify_install_prompts=True, phone_flow=True)
         self.assertEqual([r["stage"] for r in phone.flow_metrics.report()["stages"]], list(LAB.FlowMetrics.STAGES))
+        self.assertEqual([r["stage"] for r in phone.flow_metrics.report()["stages"]][2:4], ["visible-install-permission", "baseline-reconstruct-and-install"])
         self.assertEqual(phases, ["baseline-N-install"])
+        calls = [(c[0], c.args, c.kwargs) for c in phone.mock_calls]
+        permission = calls.index(("allow_visible_install_permission", (), {}))
+        build = calls.index(("tap", ("Reconstruct and install verified game",), {}))
+        baseline_consent = calls.index(("installed", (1,), {"require_pending_prompt": True}))
+        self.assertLess(permission, build)
+        self.assertLess(build, baseline_consent)
+        phone.wait_state.assert_not_called()
         self.assertEqual(phone.installed.call_count, 2)
         self.assertEqual(phone.retention_witness.call_args.args, ("verify", {"sha256": "second"}))
-        self.assertEqual([c.args[0] for c in phone.passed.call_args_list], [*LAB.PROMPT_CASES, *LAB.CASES[:2], "synthetic-phone-flow"])
+        self.assertEqual([c.args[0] for c in phone.passed.call_args_list], [*LAB.PROMPT_CASES, *LAB.UPDATE_CASES, "synthetic-phone-flow"])
         phone.await_install_permission.assert_not_called()
 
     def test_new_flow_mode_never_pregrants_and_cannot_run_inspection(self):

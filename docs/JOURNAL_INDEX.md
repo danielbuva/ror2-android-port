@@ -334,3 +334,33 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1498](PORTING_JOURNAL.md#j1498--restore-the-original-collision-policy-in-the-converted-apk) | 2026-11-18 | Restore the original collision policy in the converted APK | 2026-11-18. |
 | [J1499](PORTING_JOURNAL.md#j1499--restore-mercenarys-native-normal-slash-material) | 2026-11-18 | Restore Mercenary's native normal slash material | 2026-11-18. |
 | [J1500](PORTING_JOURNAL.md#j1500--package-the-complete-accepted-wwise-bank-roster) | 2026-11-18 | Package the complete accepted Wwise bank roster | 2026-11-18. |
+| [J1501](PORTING_JOURNAL.md#j1501--speed-up-checked-unityfs-lz4-decoding-on-android) | 2026-11-26 | Speed up checked UnityFS LZ4 decoding on Android | 2026-11-26. |
+| [J1502](PORTING_JOURNAL.md#j1502--stage-the-phone-toolhost-python-dependencies) | 2026-11-26 | Stage the phone toolhost Python dependencies | 2026-11-26. |
+| [J1503](PORTING_JOURNAL.md#j1503--restore-live-equipment-barrel-lock-materials) | 2026-11-26 | Restore live equipment-barrel lock materials | 2026-11-26. |
+| [J1504](PORTING_JOURNAL.md#j1504--reuse-required-route-pointer-validation-during-record-emission) | 2026-11-26 | Reuse required-route pointer validation during record emission | 2026-11-26. |
+| [J1505](PORTING_JOURNAL.md#j1505--reach-titanic-plains-from-the-staged-converted-apk) | 2026-11-26 | Reach Titanic Plains from the staged converted APK | 2026-11-26. |
+| [J1506](PORTING_JOURNAL.md#j1506--restore-commando-pistol-event-playback-through-the-source-bank) | 2026-11-26 | Restore Commando pistol event playback through the source bank | 2026-11-26. |
+| [J1507](PORTING_JOURNAL.md#j1507--convert-signed-release-managed-code-on-android) | 2026-11-26 | Convert signed-release managed code on Android | 2026-11-26. |
+| [J1508](PORTING_JOURNAL.md#j1508--start-original-wwise-banks-in-the-staged-converted-player) | 2026-11-26 | Start original Wwise banks in the staged converted player | 2026-11-26. |
+| [J1509](PORTING_JOURNAL.md#j1509--restore-original-base-survivor-bank-attachments) | 2026-11-26 | Restore original base-survivor bank attachments | 2026-11-26. |
+| [J1510](PORTING_JOURNAL.md#j1510--observe-huntress-primary-audio-on-the-native-emitter) | 2026-11-26 | Observe Huntress primary audio on the native emitter | 2026-11-26. |
+| [J1511](PORTING_JOURNAL.md#j1511--return-to-the-native-menu-after-end-run-in-the-converted-player) | 2026-11-26 | Return to the native menu after End Run in the converted player | 2026-11-26. |
+| [J1512](PORTING_JOURNAL.md#j1512--build-signed-release-il2cpp-and-burst-on-android) | 2026-11-26 | Build signed-release IL2CPP and Burst on Android | 2026-11-26. |
+| [J1514](PORTING_JOURNAL.md#j1514--restore-huntress-additive-gesture-reference-poses) | 2026-11-26 | Restore Huntress additive gesture reference poses | 2026-11-26. |
+| [J1515](PORTING_JOURNAL.md#j1515--restore-captain-additive-gesture-reference-poses) | 2026-11-26 | Restore Captain additive gesture reference poses | 2026-11-26. |
+| [J1516](PORTING_JOURNAL.md#j1516--restore-bandit-additive-gestures-and-sidearm-locomotion) | 2026-11-26 | Restore Bandit additive gestures and sidearm locomotion | 2026-11-26. |
+| [J1517](PORTING_JOURNAL.md#j1517--recover-the-assisted-gold-shrine-to-teleporter-route) | 2026-11-26 | Recover the assisted Gold shrine-to-teleporter route | 2026-11-26. |
+| [J1518](PORTING_JOURNAL.md#j1518--observe-the-native-siren-boss-and-restore-its-reward-drop) | 2026-11-26 | Observe the native Siren boss and restore its reward drop | 2026-11-26. |
+| [J1519](PORTING_JOURNAL.md#j1519--bind-direct-selected-survivor-animators-before-native-locomotion) | 2026-11-26 | Bind direct-selected survivor Animators before native locomotion | 2026-11-26. |
+| [J1520](PORTING_JOURNAL.md#j1520--restore-the-native-gold-shores-boss-reward) | 2026-11-26 | Restore the native Gold Shores boss reward | 2026-11-27. |
+| [J1521](PORTING_JOURNAL.md#j1521--complete-the-assisted-converted-titanic-plains-teleporter-exit) | 2026-11-26 | Complete the assisted converted Titanic Plains teleporter exit | 2026-11-27. |
+| [J1522](PORTING_JOURNAL.md#j1522--retire-the-native-siren-boss-at-end-run) | 2026-11-26 | Retire the native Siren boss at End Run | 2026-11-27. |
+| [J1523](PORTING_JOURNAL.md#j1523--capture-commandos-natural-hit-flinch-and-recovery) | 2026-11-26 | Capture Commando's natural-hit flinch and recovery | 2026-11-27. |
+| [J1524](PORTING_JOURNAL.md#j1524--restore-converted-goolakes-native-mesh-references) | 2026-11-26 | Restore converted Goolake's native Mesh references | 2026-11-27. |
+| [J1525](PORTING_JOURNAL.md#j1525--measure-two-worker-native-compilation-on-android) | 2026-11-26 | Measure two-worker native compilation on Android | 2026-11-27. |
+| [J1526](PORTING_JOURNAL.md#j1526--restore-artificer-additive-gestures-and-default-skin) | 2026-11-26 | Restore Artificer additive gestures and default skin | 2026-11-27. |
+| [J1527](PORTING_JOURNAL.md#j1527--restore-transparency-to-the-native-engineer-shield) | 2026-11-27 | Restore transparency to the native Engineer shield | 2026-11-27. |
+| [J1529](PORTING_JOURNAL.md#j1529--qualify-external-saf-validation-and-import-resume) | 2026-11-27 | Qualify external SAF validation and import resume | 2026-11-27. |
+| [J1530](PORTING_JOURNAL.md#j1530--restore-converted-sandy-shrine-scripts-for-native-goolake-entry) | 2026-11-27 | Restore converted Sandy shrine scripts for native Goolake entry | 2026-11-27. |
+| [J1531](PORTING_JOURNAL.md#j1531--restore-artificer-charge-and-flame-materials) | 2026-11-27 | Restore Artificer charge and flame materials | 2026-11-27. |
+| [J1532](PORTING_JOURNAL.md#j1532--exclude-detached-player-hurtboxes-from-touch-aim) | 2026-11-27 | Exclude detached player HurtBoxes from touch aim | 2026-11-27. |

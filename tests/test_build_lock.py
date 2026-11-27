@@ -126,7 +126,7 @@ class HostBuildLockTests(unittest.TestCase):
                 build.editor("lab", "minimal-build")
             child.assert_not_called()
 
-    def test_editor_open_isolates_bundled_adb_without_changing_lab_environment(self):
+    def test_editor_open_uses_shared_adb_without_changing_lab_environment(self):
         import build
         from types import SimpleNamespace
 
@@ -142,14 +142,18 @@ class HostBuildLockTests(unittest.TestCase):
                 patch.object(build, "lane_config", return_value={}),
                 patch.object(build, "run", return_value=SimpleNamespace(stdout=b"")),
                 patch.object(build.subprocess, "Popen", return_value=SimpleNamespace(pid=123)) as launch,
-                patch.dict(os.environ, {"UNITY_EDITOR": "/pinned/Unity", "ANDROID_ADB_SERVER_PORT": "5037"}),
+                patch.dict(os.environ, {"UNITY_EDITOR": "/pinned/Unity", "ANDROID_ADB_SERVER_PORT": "5038", "ADB_SERVER_SOCKET": "tcp:5038"}),
             ):
                 result = json.loads(build.editor("lab", "open"))
                 self.assertTrue(result["started"])
                 env = launch.call_args.kwargs["env"]
-                self.assertEqual(env["ANDROID_ADB_SERVER_PORT"], "5038")
+                self.assertEqual(env["ANDROID_ADB_SERVER_PORT"], "5037")
+                self.assertEqual(env["ADB_SERVER_SOCKET"], "tcp:127.0.0.1:5037")
+                self.assertEqual(env["ANDROID_SDK_HOME"], str(work.parent / ".local/android-user"))
                 self.assertEqual(env["ANDROID_USER_HOME"], str(work.parent / ".local/android-user/.android"))
-                self.assertEqual(os.environ["ANDROID_ADB_SERVER_PORT"], "5037")
+                self.assertEqual(env["GRADLE_USER_HOME"], str(root / ".local/gradle"))
+                self.assertEqual(os.environ["ANDROID_ADB_SERVER_PORT"], "5038")
+                self.assertEqual(os.environ["ADB_SERVER_SOCKET"], "tcp:5038")
 
     def test_presentation_dispatch_requires_coordinator_and_handoff(self):
         import build

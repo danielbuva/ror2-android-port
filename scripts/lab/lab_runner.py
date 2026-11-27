@@ -96,11 +96,16 @@ def sanitize(text, secrets=()):
     return text
 
 
-def battery_refusal(level, current_now, temp_tenths):
-    """The user's battery rule: no run above 85 %, while charging at >= 80 %, or when the battery is warm."""
-    if level > 85:
+def battery_refusal(level, current_now, temp_tenths, charge_override=False):
+    """The user's battery rule: no run above 85 %, while charging at >= 80 %, or when the battery is warm.
+
+    ``charge_override`` is the owner's explicit choice (``battery_charge_override`` in the ignored
+    ``work/config/lab-runner.json``) to run plugged-in devices above the charge limit; the
+    temperature rule always applies.
+    """
+    if not charge_override and level > 85:
         return f"battery at {level} % (> 85 %)"
-    if level >= 80 and current_now > 0:
+    if not charge_override and level >= 80 and current_now > 0:
         return "battery is actually charging at >= 80 %"
     if temp_tenths > 350:
         return f"battery at {temp_tenths / 10:.1f} C (> 35 C)"
@@ -108,7 +113,7 @@ def battery_refusal(level, current_now, temp_tenths):
 
 
 class Runner:
-    def __init__(self, repo, env):
+    def __init__(self, repo, env, *, strict_battery=False):
         self.repo = Path(repo).resolve()
         self.env = env
         self.run_id = env.get("LAB_RUN_ID", str(int(time.time())))
@@ -118,6 +123,8 @@ class Runner:
         config = self.repo / "work/config/lab-runner.json"
         self.config = json.loads(config.read_text()) if config.is_file() else {}
         self.devices = self.config.get("devices", {})
+        self.strict_battery = strict_battery
+        self.charge_override = not strict_battery and bool(self.config.get("battery_charge_override", False))
         self.adb = shutil.which("adb", path="/opt/homebrew/bin") or "adb"
         self.leases = self.repo / ".local/orchestrator/leases"
         self.resume_state = None
@@ -141,6 +148,10 @@ class Runner:
 
     def run(self, argv, cwd, timeout=JOB_TIMEOUT, extra_env=None):
         env = dict(os.environ, **(extra_env or {}))
+        if self.charge_override:
+            env["LAB_BATTERY_CHARGE_OVERRIDE"] = "1"  # child device tools honour the owner's choice
+        elif self.strict_battery:
+            env.pop("LAB_BATTERY_CHARGE_OVERRIDE", None)
         env.pop("GH_TOKEN", None)  # lab jobs never see the workflow token
         with self.log.open("a") as log:
             log.write(f"$ {shlex.join(argv)}\n")
@@ -199,14 +210,12 @@ class Runner:
         if not grant.is_file() or grant.read_text().strip() != workstream:
             raise CommandError("local packaging device grant required")
 
-    def stop_unity_adb(self, checkout):
-        if self.run([self.adb, "kill-server"], checkout, timeout=15, extra_env={"ANDROID_ADB_SERVER_PORT": "5038"}):
-            raise CommandError("could not stop Unity ADB server")
-
-    def admit_battery(self, serial):
+    def admit_battery(self, serial, *, heavy=False):
         for sample in range(3):
             level, current, temperature = self.battery(serial)
-            refusal = battery_refusal(level, current, temperature)
+            if heavy and level < 30:
+                return f"battery at {level} % (< 30 % for phone producers)"
+            refusal = battery_refusal(level, current, temperature, self.charge_override)
             if level > 85 or temperature > 350 or not refusal:
                 return refusal
             if sample != 2:
@@ -256,7 +265,9 @@ class Runner:
         for alias, serial in sorted(self.devices.items()):
             try:
                 level, current, temp = self.battery(serial)
-                rows.append(f"{alias}: battery {level} %, {temp / 10:.1f} C, current {current}; {battery_refusal(level, current, temp) or 'admitted'}")
+                rows.append(
+                    f"{alias}: battery {level} %, {temp / 10:.1f} C, current {current}; {battery_refusal(level, current, temp, self.charge_override) or 'admitted'}"
+                )
             except Exception as error:  # an unreachable device is a status, not a failure
                 rows.append(f"{alias}: unreachable ({type(error).__name__})")
         return "\n".join(rows)
@@ -277,10 +288,10 @@ class Runner:
                 if workstream:
                     self.require_grant(serial, workstream)
                     lease = self.take_lease(request["device"], serial, workstream=workstream)
-                    self.stop_unity_adb(checkout)
                 else:
                     lease = self.take_lease(request["device"], serial)
-                refusal = None if self.reattached else self.admit_battery(serial)
+                heavy = request["job"] == "toolhost" or "--emission-request" in request["args"]
+                refusal = None if self.reattached else self.admit_battery(serial, heavy=heavy)
                 if refusal:
                     raise CommandError(f"device {request['device']} not admitted: {refusal}")
             py = str(checkout / ".local/lab-venv/bin/python")
@@ -328,7 +339,7 @@ class Runner:
                         shutil.rmtree(lease, ignore_errors=True)
             if local_checkout is None:
                 self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
-            self.run([sys.executable, "scripts/prune-generated.py", "--apply"], self.repo, timeout=1800)
+            self.run([sys.executable, "scripts/prune-generated.py", "--apply", "--aggressive"], local_checkout or self.repo, timeout=1800)
 
 
 def toolhost_summary(out):
@@ -352,7 +363,7 @@ def installer_signer_source(output):
     return remote, receipt["signer_sha256"]
 
 
-def retain_installer_signer(runner, checkout, device, workstream, output):
+def retain_installer_signer(runner, device, workstream, output):
     """Copy only the existing installer-test signer while the granted Thor is leased."""
     remote, certificate = installer_signer_source(output)
     spec = importlib.util.spec_from_file_location("lab_installer_toolhost", Path(__file__).with_name("installer_toolhost.py"))
@@ -362,7 +373,6 @@ def retain_installer_signer(runner, checkout, device, workstream, output):
     runner.require_grant(serial, workstream)
     lease = runner.take_lease(device, serial, workstream=workstream)
     try:
-        runner.stop_unity_adb(checkout)
 
         def fetch(name, stream):
             command = [runner.adb, "-s", serial, "exec-out", "cat", remote + "/" + name]
@@ -414,6 +424,11 @@ def local_packaging(path, *, dry_run=False, detach=False):
             command["args"].extend(["--acquisition-request", str(Path(path).resolve())])
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
+            if operation == "packaging" and "toolhost_source_commit" in request:
+                source_commit = request["toolhost_source_commit"]
+                if not isinstance(source_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", source_commit):
+                    raise CommandError("packaging fixture requires a full cached source commit")
+                command["args"].extend(["--toolhost-source-commit", source_commit])
         toolhosts = repo / "work/coordination/lab-runner/toolhost"
         inputs = request.get("toolhost_inputs") if build_toolhost else None
         if inputs is not None:
@@ -489,7 +504,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
             (output / ".prune-keep").touch()
             result["toolhost"] = toolhost_summary(output)
         elif cached_signer is not None:
-            retain_installer_signer(runner, checkout, device, workstream, output)
+            retain_installer_signer(runner, device, workstream, output)
             result["signing_key_backed_up"] = True
             code = 0
         elif build_toolhost:
@@ -504,7 +519,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
                 (output / ".prune-keep").touch()
                 result["toolhost"] = summary.splitlines()[0]
                 if retain_signer:
-                    retain_installer_signer(runner, checkout, device, workstream, output)
+                    retain_installer_signer(runner, device, workstream, output)
                     result["signing_key_backed_up"] = True
         else:
             code, _ = runner.execute(command, local_checkout=checkout, workstream=workstream)
@@ -524,7 +539,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
     return int(not result["success"])
 
 
-def local_emission(path, *, dry_run=False, resume=False, restage=False, workstream=None):
+def local_emission(path, *, dry_run=False, resume=False, restage=False, workstream=None, strict_battery=False):
     """Private request entry point; same script/worktree/lease owner as /lab."""
     request = json.loads(Path(path).read_bytes())
     configuration = request["runner"]
@@ -540,7 +555,7 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
         print(json.dumps(dict(success=True, dry_run=True, files=len(files))))
         return 0
     result = dict(success=False)
-    runner = Runner(repo, {})
+    runner = Runner(repo, {}, strict_battery=strict_battery or request.get("operation") == "converter-stage")
     if resume or restage:
         runner.resume_state = done.parent / "device-state.json"
 
@@ -582,6 +597,42 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
             signal.signal(number, handler)
         print("WAITING done-file " + str(done), flush=True)
     return 0 if result["success"] else 1
+
+
+def converter_stage(argv):
+    import argparse
+
+    from toolhost_emission import prepare_stage
+
+    parser = argparse.ArgumentParser(description="Current lab action: run a converter stage against existing toolhost inputs")
+    parser.add_argument("stage", help="Hyphenated stem of an existing converter producer")
+    parser.add_argument("--request", type=Path, required=True)
+    parser.add_argument("--workstream", required=True, help="Dispatcher device grant owner")
+    parser.add_argument("--dry-run", action="store_true", help="Validate and repin current producer paths without contacting a device")
+    args = parser.parse_args(argv)
+    done = None
+    try:
+        done = Path(json.loads(args.request.read_bytes())["done_file"])
+        path = prepare_stage(args.request, Path.cwd(), args.stage, dry_run=args.dry_run)
+        if path is None:
+            return 0
+        return local_emission(path, workstream=args.workstream)
+    except (KeyError, OSError, ValueError, subprocess.SubprocessError) as error:
+        if (
+            not args.dry_run
+            and done
+            and done.is_absolute()
+            and done == done.resolve()
+            and done.is_relative_to((Path.cwd() / "work").resolve())
+            and not done.exists()
+        ):
+            from toolhost_emission import write
+
+            write(done, dict(success=False, first_failure=str(error)))
+            print("WAITING done-file " + str(done), flush=True)
+        else:
+            print(str(error), file=sys.stderr)
+        return 1
 
 
 def main(env=os.environ):
@@ -634,6 +685,7 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(description="Current shared device runner: pinned bundle emission or signed-code conversion")
         parser.add_argument("--emission-request", required=True)
         parser.add_argument("--workstream", help="Require this dispatcher grant before taking the device lease")
+        parser.add_argument("--strict-battery", action="store_true", help="Apply standard charge limits even when a local override is configured")
         mode = parser.add_mutually_exclusive_group()
         mode.add_argument("--dry-run", action="store_true")
         mode.add_argument("--resume-emission", action="store_true")
@@ -652,6 +704,7 @@ if __name__ == "__main__":
                 resume=arguments.resume_emission,
                 restage=arguments.restage_emission,
                 workstream=arguments.workstream,
+                strict_battery=arguments.strict_battery,
             )
         )
     sys.exit(main())

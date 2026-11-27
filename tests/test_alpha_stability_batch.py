@@ -27,6 +27,16 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.lease = self.root / ".local/orchestrator/leases" / SERIAL
         self.args = dict(device_serial=SERIAL, expected_apk_sha256=HASH, canonical_root=self.root, done_file=self.done)
 
+    def test_prune_uses_runner_checkout_script_with_canonical_work(self):
+        pruner = Path(batch.__file__).resolve().parents[1] / "prune-generated.py"
+        with mock.patch.object(batch.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as run:
+            batch._prune(self.root)
+        run.assert_called_once_with(
+            [sys.executable, str(pruner), "--apply", "--aggressive", "--work-dir", str(self.root / "work")],
+            capture_output=True,
+            text=True,
+        )
+
     def test_host_capture_admission_uses_output_estimate_plus_margin(self):
         for free_gib in (28, 29, 96):
             with self.subTest(free_gib=free_gib), mock.patch.object(batch.shutil, "disk_usage", return_value=SimpleNamespace(free=free_gib * 1024**3)):
@@ -397,6 +407,17 @@ class GameThermalOwnerTests(unittest.TestCase):
             self.owner.sample()
         self.device.cmd.assert_called_once_with("shell", "cat /thermal_zone0/temp && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=5)
         self.assertEqual(json.loads(self.owner.trace.read_text())["error"], "Thermal sample gap exceeded five seconds")
+
+    def test_optional_soc_ceiling_stops_at_the_first_hot_runtime_sample(self):
+        self.owner.enforce_soc_ceiling = True
+        self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp"), ("soc-0", "/thermal_zone1/temp")]
+        self.device.cmd.return_value = self.runtime_reply("85200\n89999")
+        self.owner.sample()
+        for raw in ("90000\n80000", "80000\n90000"):
+            self.device.cmd.return_value = self.runtime_reply(raw)
+            with self.assertRaisesRegex(RuntimeError, "SoC thermal ceiling reached 90 C"):
+                self.owner.sample()
+        self.assertEqual(json.loads(self.owner.trace.read_text().splitlines()[-1])["soc_celsius"], 90)
 
     def test_slow_admission_discovers_paths_then_runtime_uses_one_cat(self):
         self.device.display.return_value = True

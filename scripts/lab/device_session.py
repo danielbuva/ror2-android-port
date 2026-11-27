@@ -9,9 +9,10 @@ lease atomically; it never waits for a peer, publishes, or grants itself a slot.
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager, ExitStack
+from contextlib import contextmanager, ExitStack, nullcontext
 from functools import partial
 import hashlib
+from io import BytesIO
 import json
 import os
 from pathlib import Path
@@ -55,6 +56,7 @@ def load_request(path, serial=None):
         "cooldown_seconds",
         "mode",
         "input_script",
+        "bootstrap_play_reference",
         "input_schedule",
         "input_mapping",
         "selection",
@@ -65,9 +67,12 @@ def load_request(path, serial=None):
         "capture_interval_seconds",
         "pacing_diagnostics",
         "start_from_menu",
+        "stage_transition",
         "capture_golem_attacks",
         "capture_titan_indicator",
         "dismiss_usb_chooser",
+        "capture_video",
+        "enforce_soc_ceiling",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -125,20 +130,62 @@ def load_request(path, serial=None):
             "start_from_menu",
             "capture_golem_attacks",
             "capture_titan_indicator",
+            "capture_video",
             "require_high_refresh",
         }:
             raise ValueError("Owner unplugged workload uses physical play and its dedicated recorder")
-    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks", "capture_titan_indicator", "dismiss_usb_chooser"):
+    for name in (
+        "require_high_refresh",
+        "pacing_diagnostics",
+        "start_from_menu",
+        "capture_golem_attacks",
+        "capture_titan_indicator",
+        "dismiss_usb_chooser",
+        "capture_video",
+        "enforce_soc_ceiling",
+    ):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
         raise ValueError("start_from_menu requires the launch workload")
+    if "stage_transition" in value:
+        route = value["stage_transition"]
+        if (
+            not value.get("start_from_menu")
+            or not isinstance(route, dict)
+            or set(route) != {"from", "to"}
+            or any(not isinstance(scene, str) or not re.fullmatch(r"[a-z][a-z0-9_-]*", scene) for scene in route.values())
+            or route["from"] == route["to"]
+        ):
+            raise ValueError("stage_transition requires menu Start and two distinct catalog scene names, from and to")
+    if "bootstrap_play_reference" in value:
+        if value["package"] != "dev.ror2lab.converted" or not value.get("start_from_menu") or "input_script" in value:
+            raise ValueError("bootstrap_play_reference requires converted menu Start without a startup script")
+        reference = value["bootstrap_play_reference"]
+        if not isinstance(reference, dict) or set(reference) != {"png", "bounds"}:
+            raise ValueError("Bootstrap Play reference requires png and bounds")
+        image_path = (path.parent / reference["png"]).resolve(strict=True)
+        if not image_path.is_relative_to(root / "work"):
+            raise ValueError("Bootstrap Play reference must be a private screenshot under work/")
+        reference["png"] = str(image_path)
+        load_bootstrap_play_image(reference)
     for name in ("capture_golem_attacks", "capture_titan_indicator"):
         if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
             raise ValueError(name + " requires the native lab launch workload")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
+    if value.get("capture_video"):
+        from session_cleanup_check import SPINE_ID
+
+        selection = value.get("selection", {})
+        direct_survivor = (
+            value["package"] == "dev.ror2lab.arm64"
+            and selection.get("developerSurvivorOverride") is True
+            and selection.get("id") in (SPINE_ID, SPINE_ID.removesuffix("-bringup"))
+        )
+        if value["mode"] != "launch" or not (value.get("start_from_menu") or direct_survivor) or "stage_transition" in value or value["duration_seconds"] > 180:
+            raise ValueError("capture_video requires menu Start or a direct lab survivor observation of at most 180 seconds")
     if value["mode"] == "sustained":
         selection = value.get("selection", {})
         if selection.keys() - {"detailedVisualDiagnostics"} or type(selection.get("detailedVisualDiagnostics", False)) is not bool:
@@ -179,7 +226,7 @@ def load_request(path, serial=None):
     if "prior_receipt" in value:
         read_ownership_receipt(value["prior_receipt"], value["serial"], value["package"])
     mapping = checked_mapping(value) if "input_mapping" in value else None
-    if value.get("start_from_menu"):
+    if value.get("start_from_menu") or value.get("capture_video"):
         from device import PACKAGE, validate_apk_identity
         from device_context import receipt_directory, validate_receipt_directory
         from installed_attempt import attempt_from_installed
@@ -195,7 +242,7 @@ def load_request(path, serial=None):
             read_ownership_receipt(receipt, value["serial"], value["package"])
         attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(value)
         if "selection" in value and value["selection"].get("attempt") != attempt:
-            raise ValueError("Menu Start selector attempt must match the APK's embedded attempt: " + attempt)
+            raise ValueError("Gameplay observation selector attempt must match the APK's embedded attempt: " + attempt)
     return value
 
 
@@ -483,6 +530,7 @@ def launch(device, thermal, *, process_checks):
     else:
         result = _launch_converted(device, thermal)
     check_lab_processes(device, process_checks, "launch", result["pid"])
+    process_checks[-1]["verified_launch_pid"] = str(result["pid"])
     return result
 
 
@@ -503,6 +551,86 @@ def _launch_converted(device, thermal):
     if thermal.error:
         raise RuntimeError(thermal.error)
     return dict(pid=pid, launch=result, activity=component)
+
+
+def load_bootstrap_play_image(reference):
+    from PIL import Image
+
+    bounds = reference["bounds"]
+    with Image.open(reference["png"], formats=["PNG"]) as screen:
+        if not isinstance(bounds, list) or len(bounds) != 4 or any(type(edge) is not int for edge in bounds):
+            raise ValueError("Bootstrap Play bounds must be four pixel coordinates")
+        x1, y1, x2, y2 = bounds
+        if not (0 <= x1 < x2 <= screen.width and 0 <= y1 < y2 <= screen.height):
+            raise ValueError("Bootstrap Play bounds must be inside the reference screenshot")
+        return screen.size, screen.crop(bounds).convert("RGB").tobytes()
+
+
+def play_from_bootstrap(device, thermal, pid, output, reference=None):
+    """Wait for the owner bootstrap's enabled Play button on display zero."""
+    from touch_gesture import owned_display_zero_focus
+
+    path = "/sdcard/.ror2lab-bootstrap-" + uuid4().hex + ".xml" if reference is None else None
+    if reference is not None:
+        from PIL import Image
+
+        size, pixels = load_bootstrap_play_image(reference)
+        # The retained Ready screen was uniformly dimmed to 70% intensity.
+        # A one-level allowance covers framebuffer rounding on that dimmed path.
+        dimmed_pixels = pixels.translate(bytes((7 * value + 5) // 10 for value in range(256)))
+        x1, y1, x2, y2 = reference["bounds"]
+    deadline = time.monotonic() + 240
+    try:
+        while time.monotonic() < deadline:
+            if thermal.error:
+                raise RuntimeError(thermal.error)
+            if device.sh("pidof", device.package, check=False).strip() != pid:
+                raise RuntimeError("Owned process changed during bootstrap preparation")
+            if reference is not None:
+                if owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), device.package):
+                    frame = subprocess.run(device.base + ["exec-out", "screencap", "-p"], capture_output=True, check=True, timeout=5).stdout
+                    with Image.open(BytesIO(frame), formats=["PNG"]) as screen:
+                        if screen.size == size:
+                            observed = screen.crop(reference["bounds"]).convert("RGB").tobytes()
+                            if observed == pixels or all(abs(actual - expected) <= 1 for actual, expected in zip(observed, dimmed_pixels, strict=True)):
+                                (output / "bootstrap-play.png").write_bytes(frame)
+                                break
+                time.sleep(2)
+                continue
+            dump = device.sh("uiautomator", "dump", path, check=False, timeout=20)
+            # A null root or idle timeout can exit successfully without writing XML.
+            if dump.endswith("dumped to: " + path):
+                hierarchy = ElementTree.fromstring(device.sh("cat", path, timeout=5))
+                buttons = [
+                    node
+                    for node in hierarchy.iter("node")
+                    if node.get("package") == device.package
+                    and node.get("class") == "android.widget.Button"
+                    and node.get("enabled") == "true"
+                    and "Play" in (node.get("text"), node.get("content-desc"))
+                ]
+                if len(buttons) == 1:
+                    bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", buttons[0].get("bounds", ""))
+                    if bounds:
+                        x1, y1, x2, y2 = map(int, bounds.groups())
+                        if x2 > x1 and y2 > y1:
+                            break
+            time.sleep(1)
+        else:
+            raise RuntimeError("Owner bootstrap Play button unavailable before launch deadline")
+    finally:
+        if path is not None:
+            device.sh("rm", "-f", path, timeout=5)
+
+    if thermal.error:
+        raise RuntimeError(thermal.error)
+    if device.sh("pidof", device.package, check=False).strip() != pid:
+        raise RuntimeError("Owned process changed before bootstrap Play")
+    if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), device.package):
+        raise RuntimeError("Owned display-zero focus absent before bootstrap Play")
+    x, y = (x1 + x2) // 2, (y1 + y2) // 2
+    device.sh("input", "-d", "0", "tap", str(x), str(y), timeout=5)
+    save(output / "bootstrap-play.json", dict(pid=pid, bounds=[x1, y1, x2, y2], tap=[x, y], observed_by="screenshot" if reference else "accessibility"))
 
 
 def capture(device, output, pid):
@@ -584,6 +712,43 @@ def capture_combat_events(device, thermal, pid, output, pattern):
                     raise RuntimeError(f"Combat log stream ended before observation completed ({early_exit})")
             finally:
                 save(output / "events.json", events)
+
+
+@contextmanager
+def capture_launch_video(device, thermal, pid, output, duration, result):
+    from device import remove_device_file, retain_device_file
+    from touch_gesture import owned_display_zero_focus
+
+    def require_owned_display():
+        if device.sh("pidof", device.package, check=False) != pid or not owned_display_zero_focus(
+            device.sh("dumpsys", "window", "displays", timeout=5), device.package
+        ):
+            raise RuntimeError("Gameplay recording requires the owned process on display zero")
+
+    require_owned_display()
+    nonce = uuid4().hex
+    name = "launch-video-" + nonce + ".mp4"
+    remote = device.read_receipt("runtime.json")["persistentDataPath"] + "/" + name
+    with ThreadPoolExecutor(max_workers=1) as worker:
+        began = time.time()
+        recording = worker.submit(device.sh, "screenrecord", "--bit-rate", "5000000", "--time-limit", str(duration), remote, timeout=duration + 10)
+        try:
+            yield
+            recording.result()
+            if thermal.error:
+                raise RuntimeError(thermal.error)
+            require_owned_display()
+            digest = retain_device_file(device, remote, output / name, result["device_cleanup"])
+            result["video"] = dict(file=name, sha256=digest, pid=int(pid), dispatched_epoch=began, duration_requested_seconds=duration)
+        except BaseException:
+            try:
+                if not recording.done():
+                    # Match only this recorder's command and unique output path.
+                    device.sh("pkill", "-INT", "-f", r"^(/system/bin/)?screenrecord .*launch-video-" + nonce + "[.]mp4$", check=False, timeout=5)
+            finally:
+                worker.shutdown(wait=True)
+                remove_device_file(device, remote, result["device_cleanup"], missing_ok=True)
+            raise
 
 
 def exception_log_size(device, path):
@@ -854,10 +1019,15 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
         coordinates = menu_start_coordinates(menu)
         if coordinates is None:
             raise RuntimeError("Current native menu Start geometry unavailable")
+        device.collect("screenshot", output)
         x, y = coordinates
         device.sh("input", "-d", "0", "tap", str(x), str(y), timeout=5)
     else:
         device.sh("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+    return wait_for_world_start(device, thermal, pid, output, report_id=report_id, attempt=menu["attempt"])
+
+
+def wait_for_world_start(device, thermal, pid, output, *, report_id, attempt):
     world = wait_for_settings_report(
         device,
         thermal,
@@ -865,7 +1035,7 @@ def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=N
         lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True,
         timeout=240,
         report_id=report_id,
-        attempt=menu["attempt"],
+        attempt=attempt,
     )
     save(output / "world-start.json", world)
     return world
@@ -1045,6 +1215,12 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
+    if request.get("start_from_menu") and "input_script" not in request:
+        reference = request.get("bootstrap_play_reference")
+        if launched.get("activity") == device.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity":
+            play_from_bootstrap(device, thermal, pid, output, reference)
+        elif reference is not None:
+            raise RuntimeError("Bootstrap Play reference requires the resolved owner launcher")
     with ExitStack() as captures:
         if request.get("capture_golem_attacks"):
             captures.enter_context(capture_combat_events(device, thermal, pid, output / "golem-attacks", GOLEM_ATTACK))
@@ -1054,17 +1230,21 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
 
 
 def observe_launch(device, thermal, request, output, result, pid, *, start_attempt=None):
+    route = request.get("stage_transition")
     if "input_script" in request:
         import touch_gesture
 
         inputs = dict(json.loads(Path(request["input_script"]).read_text()), pid=pid)
         save(output / "input.json", inputs)
         result["input"] = touch_gesture.run(output / "input.json", request["apk_sha256"], device=device)
-    if request.get("start_from_menu"):
+    if request.get("start_from_menu") or request.get("capture_video"):
         from session_cleanup_check import SPINE_ID
 
-        report_id = SPINE_ID.removesuffix("-bringup") if device.package == "dev.ror2lab.converted" else SPINE_ID
-        start_from_menu(
+        plain_id = SPINE_ID.removesuffix("-bringup")
+        selected_id = request.get("selection", {}).get("id")
+        report_id = selected_id if selected_id in (SPINE_ID, plain_id) else plain_id if device.package == "dev.ror2lab.converted" else SPINE_ID
+    if request.get("start_from_menu"):
+        world = start_from_menu(
             device,
             thermal,
             pid,
@@ -1074,35 +1254,84 @@ def observe_launch(device, thermal, request, output, result, pid, *, start_attem
             tap_start=True,
             attempt=start_attempt,
         )
-    began = time.monotonic()
-    next_capture = 0
-    scheduled = iter(enumerate(request.get("input_schedule", [])))
-    pending = next(scheduled, None)
-    while True:
-        if thermal.cancelled.is_set():
-            raise RuntimeError(thermal.error)
-        elapsed = time.monotonic() - began
-        if device.sh("pidof", device.package, check=False).strip() != pid:
-            raise RuntimeError("Owned process exited or changed")
-        while pending is not None and elapsed >= pending[1]["at_seconds"]:
-            import touch_gesture
+    elif request.get("capture_video"):
+        wait_for_world_start(device, thermal, pid, output, report_id=report_id, attempt=start_attempt)
+    if route:
+        from session_cleanup_check import _read_json, matches_run
 
-            index, item = pending
-            inputs = dict(json.loads(Path(item["script"]).read_text()), pid=pid)
-            input_path = output / ("scheduled-input-" + str(index) + ".json")
-            save(input_path, inputs)
-            observed = touch_gesture.run(input_path, request["apk_sha256"], device=device)
-            result.setdefault("scheduled_inputs", []).append(dict(at_seconds=item["at_seconds"], dispatched_seconds=elapsed, result=observed))
-            pending = next(scheduled, None)
+        if world.get("stage", {}).get("scene") != route["from"] or world.get("stageProgress", {}).get("transitions") != 0:
+            raise RuntimeError("Stage transition check did not start in " + route["from"])
+        runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+        report_path = runtime + "/movement-batch-" + report_id + ".json"
+    video = capture_launch_video(device, thermal, pid, output, request["duration_seconds"], result) if request.get("capture_video") else nullcontext()
+    with video:
+        began = time.monotonic()
+        next_capture = 0
+        scheduled = iter(enumerate(request.get("input_schedule", [])))
+        pending = next(scheduled, None)
+        while True:
+            if thermal.cancelled.is_set():
+                raise RuntimeError(thermal.error)
             elapsed = time.monotonic() - began
-        if elapsed >= next_capture:
-            capture(device, output / ("sample-" + str(int(elapsed))), pid)
-            next_capture += request.get("capture_interval_seconds", 60)
-        if elapsed >= request["duration_seconds"]:
-            break
-        time.sleep(0.5)
-    capture(device, output / "final", pid)
-    result["observed_seconds"] = time.monotonic() - began
+            if device.sh("pidof", device.package, check=False).strip() != pid:
+                raise RuntimeError("Owned process exited or changed")
+            while pending is not None and elapsed >= pending[1]["at_seconds"]:
+                import touch_gesture
+
+                index, item = pending
+                inputs = dict(json.loads(Path(item["script"]).read_text()), pid=pid)
+                input_path = output / ("scheduled-input-" + str(index) + ".json")
+                save(input_path, inputs)
+                observed = touch_gesture.run(input_path, request["apk_sha256"], device=device)
+                result.setdefault("scheduled_inputs", []).append(dict(at_seconds=item["at_seconds"], dispatched_seconds=elapsed, result=observed))
+                pending = next(scheduled, None)
+                elapsed = time.monotonic() - began
+            if elapsed >= next_capture:
+                capture(device, output / ("sample-" + str(int(elapsed))), pid)
+                next_capture += request.get("capture_interval_seconds", 60)
+            if route:
+                report = _read_json(device, report_path)
+                elapsed = time.monotonic() - began
+                if (
+                    elapsed <= request["duration_seconds"]
+                    and matches_run(report, pid, world["attempt"], world["session"], report_id=report_id)
+                    and stage_transition_ready(report, route)
+                ):
+                    save(output / "stage-transition.json", report)
+                    result["stage_transition"] = dict(route)
+                    break
+            if elapsed >= request["duration_seconds"]:
+                if route:
+                    raise RuntimeError("Stage transition deadline for " + route["to"])
+                break
+            time.sleep(0.5)
+        capture(device, output / "final", pid)
+        result["observed_seconds"] = time.monotonic() - began
+
+
+def stage_transition_ready(report, route):
+    from baseline import STAGE_WORLD_SECONDS, stage_world_seconds
+
+    progress = report.get("stageProgress") or {}
+    failure = report.get("firstFailure") or report.get("error") or progress.get("error")
+    if failure:
+        raise RuntimeError("Native stage transition failed: " + str(failure))
+    transitions = progress.get("transitions")
+    if transitions == 0:
+        return False
+    if transitions != 1 or progress.get("transporting") or progress.get("requested") != route["to"]:
+        raise RuntimeError("Expected one completed transition to " + route["to"])
+    if (
+        report.get("stage", {}).get("scene") != route["to"]
+        or progress.get("actualScene") != route["to"]
+        or progress.get("actualSceneDef") != route["to"]
+        or progress.get("activeSceneVerified") is not True
+    ):
+        raise RuntimeError("Native destination scene does not match " + route["to"])
+    # The native transport owner increments transitions after verifying run,
+    # master, body, authority, money, experience, inventory and stage count.
+    age = stage_world_seconds(report)
+    return report.get("phase") == "integrated-world-playing" and report.get("world", {}).get("ready") is True and age is not None and age >= STAGE_WORLD_SECONDS
 
 
 def observe_pacing(device, output, pid, snapshot):
@@ -1169,6 +1398,7 @@ def execute(request):
     exception_log = None
     initial_exception_bytes = None
     active_hash = None
+    initial_hash_pending = False
     started = time.monotonic()
     prior_selectors = command_selectors()
     try:
@@ -1177,16 +1407,15 @@ def execute(request):
         if result["host_storage"]["free_bytes"] < 21 * 1024**3:
             raise RuntimeError("Host capture output plus 20 GiB margin unavailable")
         lease.acquire()
-        subprocess.run(
-            ["/opt/homebrew/bin/adb", "kill-server"], env=dict(os.environ, ANDROID_ADB_SERVER_PORT="5038"), check=True, capture_output=True, timeout=30
-        )
         set_command_selector(request["serial"], None)
         device = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
         reset_other_lab(request, lease, result.setdefault("initial_lab_reset", {}), cleanup)
         if device.exists():
             if not device.receipt("installed.json").exists() and "prior_receipt" in request:
                 adopt_receipt(device, request["prior_receipt"])
+            initial_hash_pending = True
             active_hash = verify_owned(device)["apk_sha256"]
+            initial_hash_pending = False
         payload = payload_files(request)
         payload_size = sum(path.stat().st_size for path in payload)
         reserve = apk.stat().st_size + payload_size + DEVICE_RESERVE_BYTES
@@ -1236,7 +1465,7 @@ def execute(request):
         initial_scratch = diagnostic_scratch(device, runtime)
         mapping = checked_mapping(request) if "input_mapping" in request else None
         start_attempt = None
-        if request.get("start_from_menu"):
+        if request.get("start_from_menu") or request.get("capture_video"):
             # APK inspection can starve the in-process thermal sampler. A checked
             # mapping already binds its attempt to the installed APK hash.
             start_attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(device.owned())
@@ -1255,7 +1484,13 @@ def execute(request):
             if json.loads(device.sh("cat", remote)) != payload:
                 raise RuntimeError("Uploaded config differs: " + name)
         # Each invocation starts its own cooldown budget here, never a caller's clock.
-        thermal = _GameThermalOwner(device, active_hash, output / "thermal.jsonl", time.monotonic() + request["cooldown_seconds"])
+        thermal = _GameThermalOwner(
+            device,
+            active_hash,
+            output / "thermal.jsonl",
+            time.monotonic() + request["cooldown_seconds"],
+            enforce_soc_ceiling=request.get("enforce_soc_ceiling", False),
+        )
         thermal.phase = "cooldown"
         thermal.cool()
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600
@@ -1308,8 +1543,12 @@ def execute(request):
 
             if device and active_hash:
                 try:
-                    pid = device.sh("pidof", device.package, check=False).strip()
-                    if pid.isdecimal():
+                    pid = next(
+                        (checkpoint["verified_launch_pid"] for checkpoint in reversed(result["process_checkpoints"]) if "verified_launch_pid" in checkpoint),
+                        None,
+                    )
+                    if pid is not None:
+                        lease.require()
                         capture(device, output / "terminal-capture", pid)
                 except BaseException:
                     result["capture_error"] = traceback.format_exc()
@@ -1321,8 +1560,11 @@ def execute(request):
                     try:
                         thermal.finish()
                     except RuntimeError:
-                        if not thermal.error or any(thread and thread.is_alive() for thread in (thermal.thread, thermal.stopper)):
+                        if any(thread and thread.is_alive() for thread in (thermal.thread, thermal.stopper)):
                             raise
+                        # The following owned stop and independent idle readback
+                        # still have to succeed before this lease can be released.
+                        result["thermal_finish_error"] = traceback.format_exc()
                         result["success"] = False
 
                 clean("thermal", finish_thermal)
@@ -1332,6 +1574,11 @@ def execute(request):
                     time_above80_seconds=thermal.time_above_80_seconds,
                     admission_battery=thermal.admission_battery,
                 )
+            if initial_hash_pending:
+                # An interrupted preinstall hash can still permit verified cleanup.
+                installed = clean("initial-ownership", lambda: verify_owned(device))
+                if installed:
+                    active_hash = installed["apk_sha256"]
             if device and active_hash:
 
                 def stop():
@@ -1377,7 +1624,7 @@ def execute(request):
                 clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {}), cleanup))
                 clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {}), cleanup))
 
-            if device and (active_hash or "install_recovery" in result):
+            if device:
 
                 def terminal():
                     independent = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
@@ -1387,7 +1634,7 @@ def execute(request):
                         elif not independent.exists():
                             result["terminal_readback"] = dict(installed=False)
                         else:
-                            raise RuntimeError("Package appeared without verified ownership after signature recovery")
+                            raise RuntimeError("Package present without verified ownership at terminal readback")
                         result["storage_final"] = independent.storage()
                     finally:
                         if not independent.display(False):
@@ -1395,12 +1642,12 @@ def execute(request):
                     result["terminal_readback"]["oled_asleep"] = True
 
                 clean("terminal", terminal)
-            elif device:
-                clean("sleep", lambda: device.display(False))
             result["cleanup_errors"] = cleanup_errors
             if cleanup_errors or not result.get("terminal_readback"):
                 result["success"] = False
-            else:
+            # Discovery only reads ADB inventory. Before it succeeds, there is
+            # no device state from this run to verify or restore.
+            if not cleanup_errors and (device is None or result.get("terminal_readback")):
                 clean("lease-release", lease.release)
                 result["lease_released"] = not lease.acquired
         try:

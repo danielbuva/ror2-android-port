@@ -57,7 +57,7 @@ class DutyCycleTests(unittest.TestCase):
 
     def test_soc_ceiling_uses_hottest_zone_and_strict_resume(self):
         policy = runner.ThermalDutyCycle("thor")
-        for tick, (soc, expected) in enumerate(((84.9, None), (85, signal.SIGSTOP), (92, None), (70, None), (69.9, signal.SIGCONT))):
+        for tick, (soc, expected) in enumerate(((89.9, None), (90, signal.SIGSTOP), (92, None), (70, None), (69.9, signal.SIGCONT))):
             self.assertEqual(policy.observe({**zones(cpu=65), "soc0": ("soc", 62), "soc1": ("soc", soc)}, tick * 0.25), expected)
         receipt = policy.receipt(1)
         self.assertEqual(receipt["ceiling_pauses"], 1)
@@ -67,7 +67,7 @@ class DutyCycleTests(unittest.TestCase):
 
     def test_ceiling_cooldown_preserves_cpu_duty_cycle(self):
         policy = runner.ThermalDutyCycle()
-        self.assertEqual(policy.observe({**zones(cpu=76), "soc0": ("soc", 85)}, 0), signal.SIGSTOP)
+        self.assertEqual(policy.observe({**zones(cpu=76), "soc0": ("soc", 90)}, 0), signal.SIGSTOP)
         self.assertIsNone(policy.observe({**zones(cpu=68), "soc0": ("soc", 69.9)}, 0.25))
         self.assertEqual(policy.observe(zones(cpu=55), 0.5), signal.SIGCONT)
         self.assertEqual(policy.receipt(0.5)["ceiling_pause_seconds"], 0.25)
@@ -90,7 +90,7 @@ class DutyCycleTests(unittest.TestCase):
                 result = runner.run(
                     ["producer"],
                     receipt,
-                    sensor=lambda: {**zones(), "soc0": ("soc", 45 if tick[0] == 0 else 85)},
+                    sensor=lambda: {**zones(), "soc0": ("soc", 45 if tick[0] == 0 else 90)},
                     clock=lambda: tick[0],
                     wait=wait,
                 )
@@ -106,9 +106,11 @@ class DutyCycleTests(unittest.TestCase):
     def test_fake_sensor_supervises_command_and_records_pauses(self):
         with tempfile.TemporaryDirectory() as temporary:
             receipt = Path(temporary) / "receipt.json"
+            trace = Path(temporary) / "resources.jsonl"
             child = Mock(returncode=None)
             child.poll.side_effect = [None, None, 0]
             family = Mock()
+            family.sampled_rss_bytes.return_value = 4096
             tick = [0.0]
 
             def wait(seconds):
@@ -121,8 +123,9 @@ class DutyCycleTests(unittest.TestCase):
                 patch.object(runner, "efficiency_cpus", return_value={0, 1}),
                 patch.object(runner.subprocess, "Popen", return_value=child) as spawn,
                 patch.object(runner, "Family", return_value=family),
+                patch.object(runner.os, "statvfs", return_value=Mock(f_bavail=100, f_frsize=4096)),
             ):
-                result = runner.run(["producer"], receipt, sensor=sample, clock=lambda: tick[0], wait=wait)
+                result = runner.run(["producer"], receipt, sensor=sample, clock=lambda: tick[0], wait=wait, samples=trace)
             self.assertTrue(result["success"])
             self.assertEqual(result["pause_seconds"], 0.25)
             self.assertEqual([row.args[0] for row in family.send.call_args_list], [signal.SIGSTOP, signal.SIGCONT, signal.SIGKILL])
@@ -131,6 +134,13 @@ class DutyCycleTests(unittest.TestCase):
             self.assertEqual(json.loads(receipt.read_text()), result)
             self.assertEqual(json.loads(Path(str(receipt) + ".pause.json").read_text()), {"paused_seconds": 0.25, "paused_at": None})
             self.assertEqual(spawn.call_args.kwargs["env"]["ROR2LAB_BUILD_PAUSE_CLOCK"], str(Path(str(receipt) + ".pause.json").resolve()))
+            rows = [json.loads(line) for line in trace.read_text().splitlines()]
+            self.assertEqual([row["boottime_seconds"] for row in rows], [0, 0.25, 0.5])
+            self.assertEqual([row["paused"] for row in rows], [False, True, False])
+            self.assertEqual([row["cpu_celsius"] for row in rows], [45, 70, 55])
+            self.assertEqual(rows[0]["process_tree_rss_bytes"], 4096)
+            self.assertEqual(rows[0]["volume_available_bytes"], 409600)
+            self.assertNotIn("process_tree_rss_bytes", rows[1])
 
     def test_cancelled_paused_work_is_killed_without_resume(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -228,6 +238,9 @@ class DutyCycleTests(unittest.TestCase):
             self.assertEqual({row.args[0] for row in kill.call_args_list}, {100, 101, 102})
             live[102] = (1, 120)  # PID reused by unrelated process.
             kill.reset_mock()
+            fields = {pid: ["0"] * 19 + [str(row[1]), "0", "10"] for pid, row in live.items()}
+            with patch.object(runner, "stat_fields", side_effect=fields.get), patch.object(runner.os, "sysconf", return_value=4096):
+                self.assertEqual(family.sampled_rss_bytes(), 20 * 4096)
             family.send(signal.SIGKILL)
             self.assertNotIn(102, {row.args[0] for row in kill.call_args_list})
 

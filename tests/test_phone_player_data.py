@@ -608,6 +608,37 @@ class PlayerDataTests(unittest.TestCase):
         self.assertEqual((self.output / (P.TARGET + name)).read_bytes(), self.generated[name])
         self.assertEqual(result["files"][P.TARGET + name]["sha256"], hashlib.sha256(self.generated[name]).hexdigest())
 
+    def test_current_metadata_registers_compiled_authored_runtime_assemblies(self):
+        request = self.root / "current-code.json"
+        request.write_text("{}")
+        managed = self.root / "managed"
+        managed.mkdir()
+        projects = [name for name in self.projects if name != P.MCP_ASSEMBLY] + list(P.AUTHORED_RUNTIME_ASSEMBLIES)
+        providers = managed / "providers.json"
+        providers.write_text(json.dumps(dict.fromkeys(projects + ["mscorlib.dll"], {})))
+        (managed / "result.json").write_text(json.dumps({"success": True, "providers_sha256": P.sha(providers)}))
+
+        result = P.produce(
+            self.profile_path,
+            self.profile_hash,
+            self.pc,
+            self.sdk,
+            self.converter,
+            self.receipt_hash,
+            self.output,
+            code_request=request,
+            managed_production=managed,
+        )
+        name = "ScriptingAssemblies.json"
+        scripting = self.output / (P.TARGET + name)
+        self.assertEqual(json.loads(scripting.read_text()), {"names": ["UnityEngine.CoreModule.dll"] + projects, "types": [2] + [16] * len(projects)})
+        self.assertEqual(result["files"][P.TARGET + name]["sha256"], P.sha(scripting))
+        self.assertFalse(result["metadata_comparison"][name])
+        self.assertTrue(result["metadata_comparison"]["RuntimeInitializeOnLoads.json"])
+        providers.write_text("{}")
+        with self.assertRaisesRegex(ValueError, "player-data bytes differ: providers.json"):
+            P.source_metadata(self.profile, self.pc, managed)
+
     def test_registry_evidence_binds_same_final_body_and_current_schemas(self):
         selected, _, _, _, _ = script_properties_fixture(self.root, self.pc)
         bundle = P.OBJECTS.B.Bundle(self.pc / selected["script_properties"]["path"])

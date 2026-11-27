@@ -86,11 +86,12 @@ public sealed class NovaDiagnosticDisplay : IDisposable
                 UnityEngine.Object.DestroyImmediate(component);
         }
     }
-    public static void PrepareCommandoAnimationBeforeSpawn(Transform model, RuntimeAnimatorController controller, Avatar avatar)
+    public static void PrepareAnimationBeforeSpawn(Transform model, RuntimeAnimatorController controller, Avatar avatar, bool sourceSelected,
+                                                   AndroidNativeSourceSkinLifecycle skinOwner = null)
     {
         // The body is still inactive. Isolate the same callbacks as the display
         // before allowing Unity to initialize the model on body activation.
-        IsolateModelCallbacks(model, false, null);
+        IsolateModelCallbacks(model, sourceSelected, skinOwner);
         foreach (var collider in model.GetComponentsInChildren<Collider>(true))
             collider.enabled = false;
         var animator = model.GetComponent<Animator>();
@@ -166,7 +167,8 @@ public sealed class NovaDiagnosticDisplay : IDisposable
                                  RoR2.CharacterBody aimingBody = null, string sourceSurvivor = null,
                                  bool nativeSourceSkinLifecycleDiagnostic = false, RoR2.CharacterBody selectedBody = null,
                                  AndroidNativeSourceSkinLifecycle.Report nativeSourceSkinReport = null,
-                                 UnityEngine.SceneManagement.Scene sourceStageScene = default)
+                                 UnityEngine.SceneManagement.Scene sourceStageScene = default,
+                                 AndroidNativeSourceSkinLifecycle preparedSkin = null)
     {
         actualModel = actual;
         bool sourceSelected = !string.IsNullOrEmpty(sourceSurvivor);
@@ -182,7 +184,9 @@ public sealed class NovaDiagnosticDisplay : IDisposable
             copy = Copy(model, root.transform, map);
         else
         {
-            if (sourceSkinReport != null)
+            if (preparedSkin)
+                nativeSourceSkinLifecycle = preparedSkin;
+            else if (sourceSkinReport != null)
                 nativeSourceSkinLifecycle = AndroidNativeSourceSkinLifecycle.PrepareInactive(
                     model.gameObject, selectedBody, sourceSkinReport, useCharacterModelCallbacks: sourceSkinLifecycleDiagnostic);
             IsolateModelCallbacks(model, sourceSelected, nativeSourceSkinLifecycle, sourceSkinLifecycleDiagnostic);
@@ -222,6 +226,11 @@ public sealed class NovaDiagnosticDisplay : IDisposable
                 {
                     if (!sources[i])
                         continue;
+                    if (preparedSkin && preparedSkin.OwnsMaterial(sources[i]))
+                    {
+                        copies[i] = sources[i];
+                        continue;
+                    }
                     copies[i] = new Material(sources[i]);
                     AndroidMaterialPresentation.Apply(sources[i], copies[i]);
                     ownedSurvivorMaterials.Add(copies[i]);
@@ -280,10 +289,8 @@ public sealed class NovaDiagnosticDisplay : IDisposable
             nativeAnimator = animator;
             if (sourceSelected && !nativeSourceSkinLifecycle)
             {
-                var rootPath = "Assets/WholeGame/RoR2/Base/Characters/" + sourceSurvivor + "/";
-                animator.runtimeAnimatorController =
-                    WholeCatalogComposed.LoadOwnedContent<RuntimeAnimatorController>(rootPath + "anim" + sourceSurvivor + ".controller");
-                animator.avatar = WholeCatalogComposed.LoadOwnedContent<Avatar>(rootPath + "mdl" + sourceSurvivor + "Avatar.asset");
+                if (!animator.runtimeAnimatorController || !animator.avatar || !animator.isInitialized)
+                    throw new Exception("Original survivor animation binding unavailable after spawn");
             }
             else if (!sourceSelected)
             {
@@ -299,7 +306,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             }
-            animator.enabled = !nativeSourceSkinLifecycle;
+            animator.enabled = preparedSkin || !nativeSourceSkinLifecycle;
             if (aimingBody)
             {
                 nativeAim = model.GetComponent<RoR2.AimAnimator>();

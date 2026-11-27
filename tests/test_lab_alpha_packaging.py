@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("tested_alpha_packaging", ROOT / "scripts/lab-alpha-packaging.py")
@@ -45,6 +46,14 @@ def bound(version=1, publisher=1, purpose="update", prior=None):
 
 
 class AlphaPackagingTests(unittest.TestCase):
+    def test_acquisition_sleeps_displays_on_picker_failure(self):
+        device = Mock(display_awakened=True)
+        phone = Mock(thermal=Mock(device=device))
+        with self.assertRaisesRegex(RuntimeError, "picker failed"), A.Phone.active_display(phone):
+            self.assertEqual(device.display.call_args.args, (True,))
+            raise RuntimeError("picker failed")
+        self.assertEqual([call.args for call in device.display.call_args_list], [(True,), (False,)])
+
     def test_acquisition_publishes_one_use_control_and_waits_for_matching_ack(self):
         command = {"action": "cancel", "id": "current"}
         phone = Mock(timeout=10)
@@ -85,14 +94,42 @@ class AlphaPackagingTests(unittest.TestCase):
                 ACQUISITION.hash_listing(corrupt)
 
     def test_acquisition_requires_the_persisted_document_and_source_kind(self):
-        provider = "content://dev.ror2lab.installertest.acquisition"
-        tree = f'<map><string name="source_kind">tree</string><string name="source_uri">{provider}/tree/Lab%2FSupported</string></map>'
-        archive = tree.replace(">tree<", ">zip<").replace("/tree/", "/document/").replace("Supported<", "Supported.zip<")
-        self.assertTrue(ACQUISITION.selected_document(tree, "tree", "Lab/Supported"))
-        self.assertTrue(ACQUISITION.selected_document(archive, "zip", "Lab/Supported.zip"))
-        self.assertFalse(ACQUISITION.selected_document(tree, "zip", "Lab/Supported.zip"))
-        self.assertFalse(ACQUISITION.selected_document(archive, "zip", "Lab/Older.zip"))
-        self.assertFalse(ACQUISITION.selected_document(tree.replace("installertest.acquisition", "other"), "tree", "Lab/Supported"))
+        folder = "Download/Lab/Supported"
+        provider = "content://com.android.externalstorage.documents"
+        tree = f'<map><string name="source_kind">tree</string><string name="source_uri">{provider}/tree/primary%3ADownload%2FLab%2FSupported</string></map>'
+        archive = tree.replace(">tree<", ">zip<").replace("/tree/", "/document/").replace("Supported<", "Archive%2FSupported.zip<")
+        self.assertTrue(ACQUISITION.selected_document(tree, "tree", folder))
+        self.assertTrue(ACQUISITION.selected_document(archive, "zip", "Download/Lab/Archive/Supported.zip"))
+        self.assertFalse(ACQUISITION.selected_document(tree, "zip", folder))
+        for unexpected in ("dev.ror2lab.installertest.acquisition", "com.android.providers.downloads.documents"):
+            self.assertFalse(ACQUISITION.selected_document(tree.replace(ACQUISITION.EXTERNAL_PROVIDER, unexpected), "tree", folder))
+        self.assertFalse(ACQUISITION.selected_document(tree.replace("primary", "other"), "tree", folder))
+
+    def test_acquisition_picks_exact_enabled_document_in_focused_package(self):
+        package = ACQUISITION.DOCUMENTS[0]
+        tree = ET.fromstring(
+            f'<hierarchy><node package="{package}">'
+            f'<node package="{package}" resource-id="{package}:id/title" text="Supported.zip.bak" enabled="true" />'
+            '<node package="other" resource-id="android:id/title" text="Supported.zip" enabled="true" />'
+            f'<node package="{package}" resource-id="android:id/title" text="Supported.zip" enabled="true" />'
+            "</node></hierarchy>"
+        )
+        self.assertIs(ACQUISITION.picker_node(tree, "Supported.zip", ids=("title",)), list(tree.iter("node"))[-1])
+
+    def test_acquisition_waits_for_mid_copy_before_cancellation(self):
+        acquisition = ACQUISITION.Acquisition.__new__(ACQUISITION.Acquisition)
+        acquisition.require = A.require
+        phone = Mock(timeout=10)
+        partial = {"state": "IMPORTING", "completed": 500, "total": 1000}
+        phone.read.side_effect = [
+            {"state": "VALIDATING", "completed": 500, "total": 1000},
+            {"state": "IMPORTING", "completed": 0, "total": 1000},
+            {"state": "IMPORTING", "completed": 1000, "total": 1000},
+            partial,
+        ]
+        with patch.object(ACQUISITION.time, "sleep"):
+            self.assertEqual(acquisition.wait_import(phone, "COPYING"), partial)
+        self.assertEqual(phone.read.call_count, 4)
 
     def test_thermal_cancellation_refuses_more_acceptance_commands(self):
         phone = A.Phone("synthetic-test-device", 20)
@@ -104,6 +141,50 @@ class AlphaPackagingTests(unittest.TestCase):
             execute.assert_not_called()
             phone.thermal = None
             self.assertEqual(phone.execute("example", label="cleanup-command"), "available")
+
+    def test_display_is_acquired_before_launch_and_restored_after_failure(self):
+        phone = A.Phone("synthetic-test-device", 20)
+        calls = []
+        device = Mock(display_awakened=False)
+
+        def set_display(awake):
+            calls.append(awake)
+            device.display_awakened = awake
+            return True
+
+        class Thermal:
+            def __init__(self, selected, *args):
+                self.device = selected
+                self.admission_battery = self.peak_cpu_gpu_celsius = self.time_above_80_seconds = self.error = None
+
+            def cool(self):
+                pass
+
+            def start(self):
+                pass
+
+            def finish(self):
+                calls.append("finish")
+
+        def launch(**kwargs):
+            calls.append("launch")
+            self.assertTrue(device.display_awakened)
+
+        device.display.side_effect = set_display
+        with (
+            patch("sys.path", [str(ROOT / "scripts/lab"), *A.sys.path]),
+            patch("alpha_stability_batch._GameThermalOwner", Thermal),
+            patch("device.Device", return_value=device),
+            patch.object(A.INSTALLER, "DIAGNOSTICS", Mock(directory=ROOT)),
+            patch.object(A.INSTALLER.Phone, "start", side_effect=launch),
+            self.assertRaisesRegex(A.INSTALLER.Failure, "fixture failure"),
+            phone.observe_thermal(),
+        ):
+            phone.start()
+            phone.start(repeat_notification_denial=True)
+            raise A.INSTALLER.Failure("fixture failure")
+
+        self.assertEqual(calls, [True, "launch", "launch", False, "finish"])
 
     def test_installed_identity_and_complete_binding(self):
         receipt, ledger = bound()
@@ -196,14 +277,15 @@ class AlphaPackagingTests(unittest.TestCase):
         self.assertIn("FAIL install-prompt-mode-conflict", output.getvalue())
 
     def test_prompt_mode_delegates_and_accepts_only_explicit_prompt_cases(self):
-        def accept(phone, config, temporary, passed, *, qualify_install_prompts):
+        def accept(phone, config, temporary, passed, *, qualify_install_prompts, record_metrics):
             self.assertTrue(qualify_install_prompts)
+            self.assertTrue(record_metrics)
             for case in A.INSTALLER.PROMPT_CASES:
                 passed(case)
 
         with (
             patch.dict("os.environ", {"LAB_DEVICE_SERIAL": "synthetic-test-device"}),
-            patch.object(A.INSTALLER, "PrivateDiagnostics"),
+            patch.object(A.INSTALLER, "PrivateDiagnostics") as diagnostics,
             patch.object(A.INSTALLER, "read_context", return_value={}),
             patch.object(A, "Phone") as phone,
             patch.object(A, "compile_import_harness", return_value=b"synthetic-dex"),
@@ -213,11 +295,13 @@ class AlphaPackagingTests(unittest.TestCase):
             patch("sys.stdout", new_callable=io.StringIO) as output,
         ):
             phone.return_value.cleanup.return_value = "verified-absent"
+            phone.return_value.flow_metrics.report.return_value = {"stages": []}
             self.assertEqual(A.main(["--qualify-install-prompts"]), 0)
         phone.assert_called_once_with("synthetic-test-device", 1200, allow_test_installs=False)
         for case in A.INSTALLER.PROMPT_CASES:
             self.assertIn("PASS " + case, output.getvalue())
         phone.return_value.cleanup.assert_called_once_with()
+        diagnostics.return_value.write.assert_called_once_with("phone-flow-metrics.json", b'{"stages":[]}\n')
 
     def test_cold_restart_checks_ledger_and_installed_hash(self):
         first = bound()

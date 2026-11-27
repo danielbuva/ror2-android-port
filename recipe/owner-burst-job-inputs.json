@@ -1,0 +1,47 @@
+{
+  "output": "${output}",
+  "linux_tools": {
+    "qemu": "${native}/libqemu-x86_64.so",
+    "clang": "${inputs}/acquired/burst/native-linux/bin/clang9",
+    "linker": "${inputs}/acquired/burst/native-linux/bin/ld.bfd",
+    "objcopy": "${inputs}/acquired/burst/native-linux/bin/objcopy9",
+    "loader_root": "${inputs}/acquired/android-sdk/linux",
+    "library_dirs": [
+      "${inputs}/acquired/burst/native-linux/lib64",
+      "${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu"
+    ]
+  },
+  "burst_tools": {
+    "command": [
+      "${native}/libqemu-x86_64.so",
+      "-L",
+      "${inputs}/acquired/android-sdk/linux",
+      "-E",
+      "LD_LIBRARY_PATH=${inputs}/acquired/burst/runtime:${inputs}/acquired/burst/mono/usr/lib:${inputs}/acquired/burst/mono/usr/lib/x86_64-linux-gnu:${inputs}/acquired/burst/mono/lib/x86_64-linux-gnu:${inputs}/acquired/burst/native-linux/lib64:${inputs}/acquired/android-sdk/linux/lib/x86_64-linux-gnu",
+      "-E",
+      "LD_PRELOAD=${installed_runtime}/gnu/libgnu-tool-adapter.so",
+      "-E",
+      "MONO_CFG_DIR=${inputs}/acquired/burst/mono/etc",
+      "-E",
+      "MONO_PATH=${inputs}/acquired/burst/mono/usr/lib/mono/4.5:${inputs}/acquired/burst/mono/usr/lib/mono/4.5/Facades",
+      "-E",
+      "ROR2_GNU_RUNNER=${native}/libqemu-x86_64.so",
+      "-E",
+      "ROR2_GNU_LOADER_ROOT=${inputs}/acquired/android-sdk/linux",
+      "-E",
+      "ROR2_GNU_NATIVE_LIBRARY_PATH=${native}:${installed_runtime}/native-links",
+      "${inputs}/acquired/burst/mono/usr/bin/mono-sgen"
+    ],
+    "runtime": "${inputs}/acquired/burst/runtime"
+  },
+  "cache_witnesses": [
+    "${native}/libqemu-x86_64.so",
+    "${installed_runtime}/gnu/libgnu-tool-adapter.so",
+    "${inputs}/acquired/burst/mono/usr/bin/mono-sgen",
+    "${inputs}/acquired/burst/native-linux/bin/clang9",
+    "${inputs}/acquired/burst/native-linux/bin/ld.bfd",
+    "${inputs}/acquired/burst/native-linux/bin/objcopy9",
+    "${inputs}/acquired/burst/runtime/bcl.exe",
+    "${inputs}/acquired/burst/runtime/libburst-llvm-15.so"
+  ]
+}

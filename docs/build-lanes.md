@@ -73,7 +73,7 @@ receipts under canonical `work/coordination/build-lanes/`, then deletes
 the checkout/work clone. Published artifacts remain. Persistent locks live
 outside deleted lanes so removal/recreation cannot split contenders. The pruner
 uses this same teardown for old stopped lanes; active/recent lanes are retained.
-Creation and teardown record free space; every build requires at least 100 GiB
+Creation and teardown record free space. Full builds require at least 100 GiB
 free. APFS logical sizes do not represent extra physical allocation.
 
 ## Iteration bundle compression

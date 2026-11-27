@@ -5,6 +5,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import subprocess
 import struct
 import uuid
@@ -25,7 +26,9 @@ NATIVE_CONTENT_TYPES = frozenset(
         "GameObject",
         "AvatarMask",
         "PhysicMaterial",
+        "SpeedTreeWindAsset",
         "AnimatorOverrideController",
+        "AssetBundleManifest",
     )
 )
 
@@ -34,6 +37,7 @@ SOURCES = {
     "NativeScriptSchemaFixture.cs": "Assets",
     "ContentFixtureBuilder.cs": "Assets/Editor",
     "ContentFixtureLinkerCapture.cs": "Assets/Editor",
+    "ContentFixtureSceneCheck.cs": "Assets/Editor",
 }
 
 
@@ -57,7 +61,7 @@ def stage(destination, *, ambient=False):
         (folder / name).write_bytes(source.read_bytes())
     (destination / "Packages").mkdir()
     (destination / "Packages/manifest.json").write_text(
-        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0"}}\n'
+        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.terrain":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0"}}\n'
     )
     (destination / "ProjectSettings").mkdir()
     (destination / "ProjectSettings/ProjectVersion.txt").write_text(
@@ -106,28 +110,99 @@ def validate_oracle(report):
 
 
 def native_content_request(path):
-    """Validate an explicit bundle request before starting the exact editor."""
+    """Validate a bundle request and use the same file paths in Unity and Python."""
     path = Path(path)
     if not path.is_absolute():
         raise RuntimeError("Absolute native-content request required")
     request = json.loads(path.read_text())
-    bundle = Path(request["path"])
+    dependencies = request.get("dependencies", [])
+    if not isinstance(dependencies, list):
+        raise RuntimeError("Native-content dependencies must be an ordered list")
+    paths = set()
+    for pin in [request, *dependencies]:
+        bundle = Path(pin["path"])
+        if not bundle.is_absolute() or not bundle.is_file():
+            raise RuntimeError("Native-content bundle needs an existing absolute path")
+        resolved = bundle.resolve()
+        if resolved in paths:
+            raise RuntimeError("Native-content bundle path duplicated")
+        paths.add(resolved)
+        with resolved.open("rb") as stream:
+            actual_hash = hashlib.file_digest(stream, "sha256").hexdigest()
+        if actual_hash != pin["sha256"]:
+            raise RuntimeError("Native-content bundle SHA-256 mismatch")
+        pin["path"] = str(resolved)
+    if "scene" in request:
+        scene = request["scene"]
+        if "assets" in request or not isinstance(scene, str) or not scene.endswith(".unity"):
+            raise RuntimeError("Native scene requires an exact scene path")
+        if request.get("loadMode", "Additive") not in ("Additive", "Single"):
+            raise RuntimeError("Native scene loadMode must be Additive or Single")
+        return request
     assets = request["assets"]
-    if not bundle.is_absolute() or not bundle.is_file():
-        raise RuntimeError("Native-content bundle needs an existing absolute path")
-    with bundle.open("rb") as stream:
-        actual_hash = hashlib.file_digest(stream, "sha256").hexdigest()
-    if actual_hash != request["sha256"]:
-        raise RuntimeError("Native-content bundle SHA-256 mismatch")
     if not isinstance(assets, list) or not assets:
         raise RuntimeError("Native-content request needs typed assets")
-    names = set()
+    identities = set()
     for asset in assets:
-        name = asset.get("name")
-        if not isinstance(name, str) or not name or name in names or asset.get("type") not in NATIVE_CONTENT_TYPES:
+        name, asset_type, subasset = asset.get("name"), asset.get("type"), asset.get("subasset", "")
+        if not isinstance(name, str) or not name or asset_type not in NATIVE_CONTENT_TYPES or not isinstance(subasset, str):
             raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
-        names.add(name)
+        identity = (name, asset_type, subasset)
+        if identity in identities:
+            raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
+        identities.add(identity)
+        if "material" in asset and (asset["type"] != "Material" or not material_references(asset["material"])):
+            raise RuntimeError("Native-content Material needs expected shader and saved texture references")
+        if "manifest" in asset and (asset["type"] != "AssetBundleManifest" or not manifest_entries(asset["manifest"])):
+            raise RuntimeError("Native-content AssetBundleManifest needs expected bundle hashes and dependencies")
     return request
+
+
+def validate_native_scene(report, request, commit):
+    if (
+        report.get("unity") != VERSION
+        or report.get("sourceCommit") != commit
+        or report.get("bundleSha256") != request["sha256"]
+        or report.get("scenePath") != request["scene"]
+        or report.get("loadMode", "Additive") != request.get("loadMode", "Additive")
+        or not report.get("occlusionDataResolved")
+        or not report.get("unloaded")
+        or report.get("failure")
+        or report.get("roots", 0) <= 0
+    ):
+        raise RuntimeError("Exact-editor native scene contract failed")
+
+
+def material_references(value):
+    if not isinstance(value, dict) or not isinstance(value.get("shader"), str) or not value["shader"]:
+        return None
+    textures = value.get("textures")
+    if not isinstance(textures, list) or any(
+        not isinstance(row, dict) or any(not isinstance(row.get(key), str) or not row[key] for key in ("property", "texture")) for row in textures
+    ):
+        return None
+    return value["shader"], sorted((row["property"], row["texture"]) for row in textures)
+
+
+def manifest_entries(rows):
+    if not isinstance(rows, list):
+        return None
+    entries = []
+    for row in rows:
+        if not isinstance(row, dict):
+            return None
+        name, digest, dependencies = row.get("name"), row.get("hash"), row.get("dependencies")
+        if (
+            not isinstance(name, str)
+            or not name
+            or not isinstance(digest, str)
+            or not re.fullmatch(r"[0-9a-f]{32}", digest)
+            or not isinstance(dependencies, list)
+            or any(not isinstance(dep, str) or not dep for dep in dependencies)
+        ):
+            return None
+        entries.append((name, digest, sorted(dependencies)))
+    return sorted(entries)
 
 
 def validate_native_content(attempt, commit):
@@ -140,13 +215,16 @@ def validate_native_content(attempt, commit):
         "unity": VERSION,
         "source_commit": commit,
         "request_sha256": hashlib.sha256(request_path.read_bytes()).hexdigest(),
-        "path": str(Path(request["path"]).resolve()),
+        "path": request["path"],
         "sha256": request["sha256"],
         "count": len(request["assets"]),
         "unloaded": True,
     }
     if report.get("failure") or any(report.get(key) != value for key, value in expected.items()) or report.get("unloaded") is not True:
         raise RuntimeError("Native-content identity/count/unload contract failed")
+    dependencies = [{"path": pin["path"], "sha256": pin["sha256"]} for pin in request.get("dependencies", [])]
+    if report.get("dependencies", []) != dependencies:
+        raise RuntimeError("Native-content loaded dependencies mismatch")
     rows = report.get("assets")
     if not isinstance(rows, list) or len(rows) != len(request["assets"]):
         raise RuntimeError("Native-content typed asset count mismatch")
@@ -156,8 +234,13 @@ def validate_native_content(attempt, commit):
             or row.get("type") != asset["type"]
             or row.get("loaded_type") != "UnityEngine." + asset["type"]
             or not isinstance(row.get("loaded_name"), str)
+            or (asset.get("subasset") and (row.get("subasset") != asset["subasset"] or row.get("loaded_name") != asset["subasset"]))
         ):
             raise RuntimeError("Native-content typed load mismatch")
+        if "material" in asset and material_references(row.get("material")) != material_references(asset["material"]):
+            raise RuntimeError("Native-content Material shader or saved texture mismatch: " + asset["name"])
+        if "manifest" in asset and manifest_entries(row.get("manifest")) != manifest_entries(asset["manifest"]):
+            raise RuntimeError("Native-content AssetBundleManifest bundles, hashes or dependencies mismatch: " + asset["name"])
     return report
 
 
@@ -220,7 +303,7 @@ def validate_linker_capture(attempt, commit):
 
 def run_editor(project, *, build=False, ambient=False):
     """Use only the generated fixture and the primary checkout's build mutex."""
-    from build_lock import host_build_lock
+    from build_lock import host_build_lock, unity_editor_env
     from common import ROOT, WORK
 
     project = Path(project).resolve()
@@ -250,9 +333,9 @@ def run_editor(project, *, build=False, ambient=False):
     attempt.mkdir(exist_ok=False)
     log = attempt / "editor.log"
     method = "AmbientSkyFixture.Begin" if ambient else "ContentFixtureBuilder.Build" if build else "ContentFixtureBuilder.Check"
-    env = dict(os.environ)
-    env["ANDROID_ADB_SERVER_PORT"] = "5038"
+    env = unity_editor_env()
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
+    scene_check = False
     if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
         if ambient:
             raise RuntimeError("Native-content typed loads require the content fixture")
@@ -260,6 +343,11 @@ def run_editor(project, *, build=False, ambient=False):
         request_path = attempt / "native-content-request.json"
         request_path.write_text(json.dumps(request, indent=2) + "\n")
         env["ROR2_PHONE_NATIVE_CONTENT_CHECK"] = str(request_path)
+        scene_check = "scene" in request
+        if scene_check:
+            if build:
+                raise RuntimeError("Native scene check requires Play Mode without a player build")
+            method = "ContentFixtureBuilder.BeginSceneCheck"
     if ambient:
         env["ROR2_AMBIENT_CAPTURE"] = str(attempt)
     env["ROR2_PHONE_BUILD_SOURCE"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -270,7 +358,7 @@ def run_editor(project, *, build=False, ambient=False):
     args = [
         env["UNITY_EDITOR"],
         "-batchmode",
-        *([] if ambient else ["-nographics", "-quit"]),
+        *([] if ambient or scene_check else ["-nographics", "-quit"]),
         "-projectPath",
         str(project),
         "-buildTarget",
@@ -290,9 +378,12 @@ def run_editor(project, *, build=False, ambient=False):
     native_content = None
     try:
         oracle = json.loads((attempt / "oracle.json").read_text())
-        (validate_ambient_oracle if ambient else validate_oracle)(oracle)
-        if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
-            native_content = validate_native_content(attempt, env["ROR2_PHONE_BUILD_SOURCE"])
+        if scene_check:
+            validate_native_scene(oracle, request, env["ROR2_PHONE_BUILD_SOURCE"])
+        else:
+            (validate_ambient_oracle if ambient else validate_oracle)(oracle)
+            if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
+                native_content = validate_native_content(attempt, env["ROR2_PHONE_BUILD_SOURCE"])
         if ambient and result.returncode == 0:
             ambient_capture = validate_ambient_capture(attempt)
         if build and result.returncode == 0:

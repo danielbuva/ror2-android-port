@@ -122,6 +122,8 @@ public sealed partial class PortSession
     void OnGUI()
     {
         ConsumeTouchGameplayGuiEvent();
+        if (DrawTouchLayoutEditor())
+            return;
         if (DrawOfflineSettings())
             return;
         if (DrawOfflineStart())
@@ -289,10 +291,10 @@ public sealed partial class PortSession
             if (nativeSourceSkinRequested)
                 coordinator.Check(spine && cfg.integratedWorld && sourceSurvivor != null,
                                   "Native source skin lifecycle request requires an integrated run and an actual source-selected player model");
-            // These source models leave their body meshes unbound until ModelSkinController.Start.
-            bool bindSelectedSkin = nativeSourceSkinRequested || (spine && (sourceSurvivor == "Huntress" || sourceSurvivor == "Croco"));
+            bool bindSelectedSkin = coordinator.UsesNativeSelectedSkin(sourceSurvivor);
             if (bindSelectedSkin)
-                coordinator.r.nova.nativeSourceSkinLifecycle = new AndroidNativeSourceSkinLifecycle.Report { requested = true };
+                coordinator.r.nova.nativeSourceSkinLifecycle = coordinator.preSpawnSkin.report ??
+                    new AndroidNativeSourceSkinLifecycle.Report { requested = true };
             NovaInputBridge.Mapping mapping = null;
             if (physicalInputAvailable)
             {
@@ -373,7 +375,7 @@ public sealed partial class PortSession
                                                     coordinator.obstacle, spine, cfg.originalAimPresentation ? body : null,
                                                     sourceSurvivor,
                                                     nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle,
-                                                    coordinator.stageGeometryScene);
+                                                    coordinator.stageGeometryScene, coordinator.preSpawnSkin.owner);
                 if (bindSelectedSkin)
                 {
                     float assetDeadline = Time.realtimeSinceStartup + 15f;
@@ -397,6 +399,7 @@ public sealed partial class PortSession
                                       "Original Animator did not initialize after native selected controller/avatar readiness");
                     display.EnableNativeAimAfterAnimatorReady();
                 }
+                coordinator.RevealPreparedSourceModel();
                 coordinator.r.framePacing = display.presentationCameraReport;
                 if (coordinator.r.rawFrameTimesRequested && display.presentationCamera)
                     display.presentationCamera.BeginRawFrameCapture();
@@ -459,6 +462,8 @@ public sealed partial class PortSession
                     coordinator.worldView = display.thirdPerson;
                     coordinator.r.world.camera = coordinator.worldView.report;
                 }
+                if (commandoPrimaryDiagnostic)
+                    coordinator.AttachPrimaryPostObserver(body);
                 bridge = body.gameObject.AddComponent<NovaInputBridge>();
                 bridge.bank = bank;
                 bridge.mapping = mapping;
@@ -485,6 +490,7 @@ public sealed partial class PortSession
                 if (spine)
                 {
                     bridge.touchControls = new AndroidTouchInput();
+                    coordinator.ApplyTouchLayout(bridge.touchControls);
                     coordinator.r.nova.touch = bridge.touchControls.report;
                 }
                 coordinator.r.nova.originalInputConsumer = true;

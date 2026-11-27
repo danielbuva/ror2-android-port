@@ -56,9 +56,10 @@ EXPECTED["post-audio-native-music-results-r23-1ced"] = {
 EXPECTED["post-audio-native-music-results-lightning-r3-1ced"] = {
     "input": "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
     "api": "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b",
-    "output": "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c",
+    "output": "324fa10f959cdbceed69ebcea5f847a5cdafcfe6891b7805849e80cd72a34ee7",
 }
 RESTORE_ONLY = {
+    ("post-audio-native-music-results-lightning-r3-1ced", "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c"),
     ("default-game-3124", "d5fc522e83cb6f6f6845b2a8b7e5de28011031fe2f3b54c0716c52db9679c65c"),
     ("post-audio-r4-1034-api-d540", "e4aeeb5acb7b81922a0a6603d01c1d407c57e9b00852b5e15ef70838e1961e5b"),
     ("post-audio-point-sound-6f96-api-d540", "2ae5d92a652d69c7e6fd471448af203d52be3ef9350743a91fc84a5bd2bc1384"),
@@ -141,6 +142,7 @@ class NativeViewCameraR6ProfileTests(unittest.TestCase):
         active_outputs = {row["output_sha256"] for row in pins["profiles"].values()}
         self.assertTrue(active_outputs.isdisjoint(output for _, output in RESTORE_ONLY))
         for key, value in (
+            ("lightning_r3_camera_pre_commando_observer", "15a92aa6f513e2271ce7240c33a205b0376fff37200089987f0cb54944c3382c"),
             ("camera_default_previous_restore_only", "236fab2c616b1a017971c316437ec1a9fa9f6b3999563263d4a8ab689a1e59b6"),
             (
                 "camera_after_audio_previous_restore_only",

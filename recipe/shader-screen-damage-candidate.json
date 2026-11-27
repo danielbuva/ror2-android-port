@@ -43,7 +43,7 @@
       }
     ]
   },
-  "stable_output": "generated-shader-candidates/screen-damage-r1/{input_id}",
+  "stable_output": "generated-shader-candidates/screen-damage-r2/{input_id}",
   "target": "screen-damage",
   "tools": {
     "d3dasm": {
@@ -57,8 +57,8 @@
       "revision": "c7f069701227dcb800a01bd93e42f8001b7543e7"
     },
     "shader_deferred_sha256": "dc1b81f1e012de8dd9da7cedddc2d62b7ac76cb564ac00cf262e55815b3b11c4",
-    "shader_segments_sha256": "2cba875459a7ea35f9f0279696569fd05a6429c9f4b206ad331d5b723dca4872",
-    "shader_source_sha256": "f6b78e8ca9862e40e1443198939b3d288d90d6ed3e40270680fedbadb662e1aa",
+    "shader_segments_sha256": "914dbee65a172770325df03b269999bc6100469b91eb7e731f0957ad35383be7",
+    "shader_source_sha256": "3c768c15f29f312347f2e99b0e3ddf8612207db8023f220dcb52c5d51218212a",
     "shader_metadata_sha256": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318"
   }
 }

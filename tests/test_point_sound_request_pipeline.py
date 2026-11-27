@@ -260,7 +260,10 @@ class RequestPipelineTests(unittest.TestCase):
             self.assertEqual(request["request_id"], validated["request"]["request_id"])
             self.assertEqual(120, validated["streamed_media_count"])
             media_rows.assert_called_once_with(
-                stage_doc, bank_index_sha256=expected["current_bank_index_sha256"], init_receipt_sha256=expected["init_adaptation_receipt_sha256"]
+                stage_doc,
+                accepted_inventory_sha256=inventory_sha if explicit else None,
+                bank_index_sha256=expected["current_bank_index_sha256"],
+                init_receipt_sha256=expected["init_adaptation_receipt_sha256"],
             )
             generated_pin = work / "generated-pin.cs"
             emitted = generator.emit(request_path, contract_path, stage_path, generated_pin, **owner)
@@ -345,7 +348,7 @@ class RequestPipelineTests(unittest.TestCase):
             receipt_path = work / "stage-receipt.json"
             receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
             runtime.source_plan = lambda *args, **kwargs: (plan, startup_names)
-            runtime.streamed_media_rows = lambda value, **kwargs: value["streamed_media"]
+            runtime.streamed_media_rows = mock.Mock(return_value=media_rows)
             output = work / "generated/StagePin.cs"
             result = runtime.generate(receipt_path, stage_root, output, prefab, bank_index, init_file, init_receipt)
             self.assertEqual("work/generated/StagePin.cs", result["output"])
@@ -366,6 +369,12 @@ class RequestPipelineTests(unittest.TestCase):
             receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
             owner = runtime.generate(receipt_path, stage_root, owner_output, prefab, bank_index, init_file, init_receipt, owner_work=work)
             self.assertEqual((owner["bank_count"], owner["streamed_media_count"]), (153, 120))
+            runtime.streamed_media_rows.assert_called_with(
+                receipt,
+                accepted_inventory_sha256=inventory_sha,
+                bank_index_sha256=runtime.OWNER_BANK_INDEX_SHA256,
+                init_receipt_sha256=init_receipt_sha,
+            )
             self.assertNotEqual(owner["receipt_sha256"], result["receipt_sha256"])
             receipt["current_bank_index_sha256"] = runtime.BANK_INDEX_SHA256
             receipt["init_adaptation_receipt_sha256"] = runtime.INIT_RECEIPT_SHA256

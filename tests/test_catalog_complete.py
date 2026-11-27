@@ -124,6 +124,27 @@ class CatalogCompletionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "incomplete serialized object"):
             compare.pointers(body + bytes(4), root)
 
+        child = mesh.Node(1, 0, "string", "childName", -1, 0)
+        child.children = [mesh.Node(2, 1, "Array", "Array", -1, 0x4000)]
+        child.children[0].children = [mesh.Node(3, 0, "int", "size", 4, 0), mesh.Node(3, 0, "char", "data", 1, 0)]
+        record = mesh.Node(0, 0, "ItemDisplayRule", "Base", -1, 0)
+        rule_type = mesh.Node(1, 0, "int", "ruleType", 4, 0)
+        angles = mesh.Node(1, 0, "Vector3f", "localAngles", 12, 0)
+        angles.children = [mesh.Node(2, 0, "float", name, 4, 0) for name in ("x", "y", "z")]
+        record.children = [child, element, rule_type, angles]
+        with patch.object(mesh, "type_tree", return_value=record):
+            root, _ = compare.schema(b"display-field-fixture")
+        display = {}
+        transform = struct.pack("<3f", 0, 90, 180)
+        self.assertEqual(compare.pointers(struct.pack("<I3sxiqi", 3, b"Gun", 1, 7, 1) + transform, root, display), {("data",): (1, 7)})
+        self.assertEqual(display, {("childName",): "Gun", ("ruleType",): "01000000", ("localAngles",): transform.hex()})
+
+        failures = [dict(check="child", rule=0, follower=None, address="child-only"), dict(check="follower", rule=0, address="follower")]
+        failures.extend([dict(rule=0, follower=None, address="legacy"), dict(rule=0, follower="loaded", address="legacy-child")])
+        self.assertEqual(compare.missing_display_addresses(dict(failures=failures)), {"follower", "legacy"})
+        with self.assertRaisesRegex(ValueError, "has no address"):
+            compare.missing_display_addresses(dict(failures=[dict(check="follower", address=None)]))
+
         catalog = compare.Catalog.__new__(compare.Catalog)
         catalog.members = {"base": (None, {"externals": [{"path": "archive:/other/CAB"}]}, {8: {}}), "CAB": (None, {}, {7: {}})}
         self.assertEqual(catalog.endpoint("base", (1, 7)), ("CAB", 7))
@@ -145,15 +166,16 @@ class CatalogCompletionTests(unittest.TestCase):
             evidence = dict(complete=True, bodies=2, masters=1, metadataSha256=pin(metadata)["sha256"], bundles={"fixture": "digest"}, failures=[])
             receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence)))
             request = dict(bundles={"fixture": dict(sha256="digest")})
-            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, None))
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, None, None))
             with self.assertRaisesRegex(ValueError, "bundle pins differ"):
                 compare.typed_catalog_identity(receipt, dict(bundles={}), apk)
             definitions = dict(sourceMetadataSha256="original")
-            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence, definitionIdentity=definitions)))
+            displays = dict(complete=True, bodies=[dict(path="body", groups=1)], prefabs=1, failures=[])
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence, definitionIdentity=definitions, displayIdentity=displays)))
             with self.assertRaisesRegex(ValueError, "definition source metadata differs"):
                 compare.typed_catalog_identity(receipt, request, apk)
             request["source_additions"] = dict(metadata=dict(sha256="original"))
-            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, definitions))
+            self.assertEqual(compare.typed_catalog_identity(receipt, request, apk), (evidence, definitions, displays))
             receipt.write_text(json.dumps(dict(masterBodyIdentity=dict(evidence, metadataSha256="wrong"))))
             with self.assertRaisesRegex(ValueError, "metadata differs"):
                 compare.typed_catalog_identity(receipt, request, apk)
@@ -450,7 +472,7 @@ class CatalogCompletionTests(unittest.TestCase):
             projection = dict(
                 schema="owner-catalog-projection-v1",
                 source_catalog_sha256="catalog-hash",
-                remaps={"1": "assetbundlemanifest"},
+                remaps={"1": "AssetBundleManifest"},
                 exclusions=[2],
                 provider_roots=[1],
                 runtime_roots=[],
@@ -463,13 +485,50 @@ class CatalogCompletionTests(unittest.TestCase):
             result = C.produce(path, root / "output")
             self.assertEqual(result["checks"]["locations"], 1)
             emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
-            self.assertEqual(emitted["locations"], [dict(staged, primaryKey="authored", root=True, bundle="generated-android-data")])
+            self.assertEqual(
+                emitted["locations"],
+                [dict(staged, path="AssetBundleManifest", primaryKey="authored", root=True, bundle="generated-android-data")],
+            )
             self.assertEqual(emitted["keys"], [dict(key="alias", keyType="System.String", locations=[1])])
             policy.write_text(json.dumps(dict(projection, source_catalog_sha256="other")))
             request["projection"]["policy"] = pin(policy)
             path.write_text(json.dumps(request))
             with self.assertRaisesRegex(ValueError, "catalog projection source identity differs"):
                 C.produce(path, root / "other")
+
+    def test_projection_appends_selected_aliases_in_source_order_and_preserves_root_keys(self):
+        locations = [dict(id=i, internalId=f"Assets/Item{i}.asset", type="UnityEngine.GameObject", primaryKey=str(i)) for i in range(1, 6)]
+        mesh_path = "Assets/WholeGame/SomeMesh.fbx"
+        mesh_key = "SomeMesh.fbx[trunk]"
+        source = dict(
+            input_id="source",
+            source_catalog_sha256="catalog-hash",
+            locations=locations,
+            keys=[dict(key="aliases", locations=[4, 1, 3, 2]), dict(key="roots", locations=[3, 1, 5, 2])],
+            providers=[],
+        )
+        policy = dict(
+            schema="owner-catalog-projection-v1",
+            source_catalog_sha256="catalog-hash",
+            remaps={},
+            exclusions=[],
+            provider_roots=[1],
+            runtime_roots=[],
+            extra_roots=[5],
+            mesh_subobjects=[dict(path=mesh_path, key=mesh_key, type="UnityEngine.Mesh")],
+            append_locations=[3, 4, 5],
+        )
+        builds = [dict(assetNames=[f"assets/wholegame/item{i}.asset" for i in range(1, 6)] + [mesh_path.casefold()])]
+        with patch.object(sys, "path", [str(ROOT / "scripts/lab"), *sys.path]):
+            result = C.project_source_catalog(source, policy, builds, input_id="source", attempt="startup")
+            self.assertEqual([row["path"] for row in result["locations"]], [f"Assets/WholeGame/Item{i}.asset" for i in range(1, 6)] + [mesh_path])
+            self.assertEqual(
+                result["keys"], [dict(key="aliases", locations=[1, 2, 4, 3]), source["keys"][1], dict(key=mesh_key, keyType="System.String", locations=[6])]
+            )
+            self.assertEqual(result["roots"], [1, 5])
+            for invalid in ([3, 3], [6]):
+                with self.assertRaisesRegex(ValueError, "catalog projection append selection differs"):
+                    C.project_source_catalog(source, dict(policy, append_locations=invalid), builds, input_id="source", attempt="startup")
 
     def test_player_resource_is_pinned_and_loaded_for_pointer_resolution(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -518,9 +577,11 @@ class CatalogCompletionTests(unittest.TestCase):
                 )
             )
             request["source_additions"] = dict(metadata=pin(source), locations=[2])
+            request["required_routes"] = [dict(key="ghost-guid", type=original["type"], location=2)]
             path.write_text(json.dumps(request))
             result = C.produce(path, root / "output")
             self.assertEqual(result["checks"]["locations"], 2)
+            self.assertEqual(result["checks"]["required_routes"], 1)
             emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
             self.assertEqual([(row["id"], row["bundle"]) for row in emitted["locations"]], [(1, "generated-android-data"), (2, "generated-android-data")])
             self.assertEqual([(row["key"], row["locations"]) for row in emitted["keys"]], [("group", [1, 2]), ("ghost-guid", [2])])
@@ -528,6 +589,26 @@ class CatalogCompletionTests(unittest.TestCase):
             path.write_text(json.dumps(request))
             with self.assertRaisesRegex(ValueError, "location selection differs"):
                 C.produce(path, root / "missing")
+
+    def test_required_routes_reject_missing_wrong_and_ambiguous_typed_endpoints(self):
+        shader = "UnityEngine.Shader, UnityEngine.CoreModule"
+        metadata = dict(
+            locations=[dict(id=1, type=shader), dict(id=2, type="UnityEngine.Material, UnityEngine.CoreModule"), dict(id=3, type=shader)],
+            keys=[
+                dict(key="camera", locations=[2, 1]),
+                dict(key="number", keyType="System.Int32", locations=[1]),
+                dict(key="ambiguous", keyType="System.String", locations=[1, 3]),
+            ],
+        )
+        C.validate_required_routes(metadata, [dict(key="camera", type=shader, location=1)])
+        for key, location, expected in (
+            ("missing", 1, "found \\[\\]"),
+            ("number", 1, "found \\[\\]"),
+            ("camera", 2, "found \\[1\\]"),
+            ("ambiguous", 1, "found \\[1, 3\\]"),
+        ):
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, expected):
+                C.validate_required_routes(metadata, [dict(key=key, type=shader, location=location)])
 
     def test_source_root_additions_restore_catalog_membership_and_alias_order(self):
         identity = dict(input_id="fixture", source_catalog_sha256="source-catalog", providers=["provider"])

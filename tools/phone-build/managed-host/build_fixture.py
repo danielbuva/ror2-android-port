@@ -58,7 +58,32 @@ try:
     staging.validate_update_network(extra)
     assets = out / "assets"
     assets.mkdir()
-    receipt["inputs"].update(staging.stage_python_wheels(extra, plan["python_wheels"], assets / "python/lib/player-packages"))
+    wheel_natives = {}
+    wheel_links = {}
+    receipt["inputs"].update(
+        staging.stage_python_wheels(
+            extra,
+            staging.python_wheel_pins(plan, extra),
+            assets / "python/lib/player-packages",
+            native_directory=out / "python-wheel-natives",
+            native_files=wheel_natives,
+            links=wheel_links,
+        )
+    )
+    if extra and "python_wheels" in extra:
+        wheelhouse = Path(extra["python_wheels"])
+        for name, expected in plan["python_notices"].items():
+            notice = wheelhouse / name
+            if sha(notice) != expected:
+                raise ValueError("Python wheel notice drift: " + name)
+            copy(notice, assets / "notices/python-wheels" / name)
+        for name, expected in plan["python_android_distribution"]["extensions"].items():
+            extension = wheelhouse / name
+            if sha(extension) != expected:
+                raise ValueError("Android Python extension drift: " + name)
+            provider = "libpyext_" + name.split(".", 1)[0] + ".so"
+            wheel_natives[provider] = extension
+            wheel_links["python/lib/python3.14/lib-dynload/" + name] = provider
     receipt["inputs"].update(staging.stage_texture_sdk_guest(extra, plan["texture_sdk_guest"], assets / "texture-sdk"))
     binary = out / "libtoolhost.so"
     run(
@@ -222,11 +247,16 @@ try:
             copy(p, assets / "python/lib/python3.14" / p.relative_to(toolroot / "python/usr/lib/python3.14"))
     copy(toolroot / "python/usr/lib/python3.14/LICENSE.txt", assets / "notices/Python-LICENSE.txt")
     copy(source / "run_profile.py", assets / "run_profile.py")
+    copy(source / "check_python.py", assets / "check_python.py")
+    (assets / "python-import-plan.json").write_text(json.dumps({"python_imports": plan["python_imports"]}, sort_keys=True) + "\n")
     copy(source / "release-trust.json", assets / "release-trust.json")
     for p in (source / "repo").rglob("*"):
         if p.is_file():
             copy(p, assets / "repo" / p.relative_to(source / "repo"))
-    (assets / "python-links.json").write_text(json.dumps(plan["links"], sort_keys=True) + "\n")
+    if wheel_natives.keys() & native_files.keys() or wheel_links.keys() & plan["links"].keys():
+        raise ValueError("Python wheel native provider or link collides with the toolhost")
+    native_files.update(wheel_natives)
+    (assets / "python-links.json").write_text(json.dumps(plan["links"] | wheel_links, sort_keys=True) + "\n")
     archive_source = Path(sys.argv[4]).resolve(strict=True)
     public = json.loads((source / "repo/recipe/owner-public-tools.json").read_text())
     for row in public["artifacts"]:

@@ -12,6 +12,7 @@ using Mono.Cecil.Cil;
 // pinned RoR2.dll; the full closure scanner must consume that result afterward.
 internal static class NativeViewCameraCecilTransform
 {
+    const string CommandoObserverInput = "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523";
     static readonly HashSet<string> ExpectedInputs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         // Exact outputs of the current accepted input migration and the frozen
@@ -23,7 +24,7 @@ internal static class NativeViewCameraCecilTransform
         "6f96ed83bf6358b9aecc4cdf866d424caf04af9abd34ad368c8db271d27c15cc",
         "27340ed60dbfe77f66fa394d028b597d3e4613ee8ea405416c061766fb226eef", // exact observer output from 6f96
         "a6385e3166d3950944da8a08f145d7e9be602571a6a75b4afb18279801f44311", // exact native music-return observer output from 6f96
-        "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523", // R3 point-sound plus exact music-return observer output
+        CommandoObserverInput, // R3 point-sound plus exact music-return observer output
     };
 
     static string Sha256(string path)
@@ -77,7 +78,7 @@ internal static class NativeViewCameraCecilTransform
 
     static TypeDefinition CopyMarkerType(ModuleDefinition target, TypeDefinition source)
     {
-        if (source.FullName != "RoR2.AndroidNativeSourceViewOnlyRigMarker" || source.NestedTypes.Count != 0 ||
+        if (source.NestedTypes.Count != 0 ||
             source.Interfaces.Count != 0 || source.HasProperties || source.HasEvents)
             throw new InvalidOperationException("marker helper type shape changed");
         if (target.GetType(source.FullName) != null)
@@ -167,6 +168,29 @@ internal static class NativeViewCameraCecilTransform
             }
         }
         return type;
+    }
+    static void AddCommandoPostObserver(ModuleDefinition target, TypeDefinition marker)
+    {
+        var pistol = FindType(target, "EntityStates.Commando.CommandoWeapon.FirePistol2");
+        var fire = FindOne(pistol.Methods, m => m.HasBody && !m.IsStatic && m.Name == "FireBullet" &&
+            m.ReturnType.FullName == "System.Void" && m.Parameters.Count == 1 &&
+            m.Parameters[0].ParameterType.FullName == "System.String", "Commando FireBullet");
+        var post = fire.Body.Instructions.Single(i => i.OpCode == OpCodes.Call &&
+            i.Operand is MethodReference m && m.FullName ==
+                "System.UInt32 RoR2.Util::PlaySound(System.String,UnityEngine.GameObject)");
+        if (post.Next == null || post.Next.OpCode != OpCodes.Pop)
+            throw new InvalidOperationException("Commando FireBullet must discard the original PlaySound return");
+        var record = FindOne(marker.Methods, m => m.IsStatic && m.FullName ==
+            "System.Void RoR2.AndroidCommandoPostObserver::Record(System.UInt32,System.Object)", "Commando post observer");
+        var emitter = new VariableDefinition(((MethodReference)post.Operand).Parameters[1].ParameterType);
+        fire.Body.Variables.Add(emitter);
+        var il = fire.Body.GetILProcessor();
+        var originalPop = post.Next;
+        il.InsertBefore(post, il.Create(OpCodes.Dup));
+        il.InsertBefore(post, il.Create(OpCodes.Stloc, emitter));
+        il.InsertBefore(originalPop, il.Create(OpCodes.Dup));
+        il.InsertBefore(originalPop, il.Create(OpCodes.Ldloc, emitter));
+        il.InsertBefore(originalPop, il.Create(OpCodes.Call, record));
     }
 
     static void AddGuard(ModuleDefinition target, TypeDefinition marker)
@@ -356,11 +380,33 @@ internal static class NativeViewCameraCecilTransform
             var marker = CopyMarkerType(target, sourceMarker);
             AddGuard(target, marker);
             AddSceneCameraConsoleGuard(target, marker);
+            if (actual == CommandoObserverInput)
+                AddCommandoPostObserver(target, CopyMarkerType(target, FindType(helper, "RoR2.AndroidCommandoPostObserver")));
             target.Write(output);
         }
     }
     public static int Main(string[] args)
     {
+        if (args.Length == 5 && args[0] == "commando-post-only")
+        {
+            var input = args[1];
+            var helper = args[2];
+            var output = args[3];
+            if (File.Exists(output) || Sha256(input) != CommandoObserverInput)
+                throw new InvalidOperationException("Commando observer requires the exact music-observed input and a new output");
+            using (var resolver = new DefaultAssemblyResolver())
+            {
+                resolver.AddSearchDirectory(Path.GetFullPath(args[4]));
+                var readers = new ReaderParameters { AssemblyResolver = resolver };
+                using (var target = ModuleDefinition.ReadModule(input, readers))
+                using (var marker = ModuleDefinition.ReadModule(helper, readers))
+                {
+                    AddCommandoPostObserver(target, CopyMarkerType(target, FindType(marker, "RoR2.AndroidCommandoPostObserver")));
+                    target.Write(output);
+                }
+            }
+            return 0;
+        }
         if (args.Length < 5) return 2;
         Transform(args[0], args[1], args[2], args[3], args[4], args.Skip(5).ToArray());
         return 0;

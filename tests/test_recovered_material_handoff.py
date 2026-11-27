@@ -37,6 +37,7 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
         source += "\n".join(
             source_method(stage, declaration)
             for declaration in (
+                "static IEnumerable<GameObject> EquipmentLockRoots(",
                 "public void PresentRegisteredNativeEffects(",
                 "void StopPresentingNativeEffectReferences(",
                 "void PrepareNativeTeamAreaMaterials(",
@@ -46,7 +47,8 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
         visuals = (ROOT / "tools/unity/runtime/catalog/OriginalBodyVisualBoundary.cs").read_text()
         for name in ("MercNormalSwingVisualPath", "MercFinisherVisualPath"):
             source += "\n" + next(line for line in visuals.splitlines() if f"const string {name}" in line) + "\n"
-        source += "\n" + source_method(visuals, "IEnumerator PrepareNativeSwingEffects(")
+        source += "\n" + source_method(visuals, "IEnumerator PrepareDirectNativeEffects(")
+        source += "\n" + source_method(visuals, "void PresentConfiguredNativeEffect(")
         source += "\n}\n"
         with tempfile.TemporaryDirectory() as temporary:
             scratch = Path(temporary)

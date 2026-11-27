@@ -43,6 +43,21 @@ AnimatorState:
         with self.assertRaisesRegex(RuntimeError, "Unresolved native additive state"):
             additive_clip_guids(controller.replace("m_Motion: {fileID: 5}", "m_Motion: {fileID: 6}"))
 
+    def test_additive_discovery_preserves_motions_moved_to_the_synced_layer(self):
+        controller = """--- !u!91 &1
+AnimatorController:
+  m_AnimatorLayers:
+  - serializedVersion: 5
+    m_Name: Gesture, Override
+    m_Motions:
+    - serializedVersion: 2
+      m_State: {fileID: 4}
+      m_Motion: {fileID: 7400000, guid: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, type: 2}
+    m_BlendingMode: 0
+"""
+        self.assertEqual(additive_clip_guids(controller), set())
+        self.assertEqual(additive_clip_guids(controller, override_layer="Gesture, Override"), {"a" * 32})
+
     def test_reference_pose_preserves_native_value_order_and_checked_paths(self):
         path = "Rig/Arm"
         bindings = [dict(path=zlib.crc32(path.encode()), attribute=attribute, typeID=4) for attribute in (1, 3, 4)]
@@ -67,6 +82,22 @@ AnimatorState:
         )
         plain = reference_curves(tree, "    path: " + path + "\n    classID: 4\n")
         self.assertEqual(reference_curves(tree, "    path: Rig/Long Bone/Long Bone\n      Chip\n    classID: 4\n"), plain)
+
+    def test_reference_pose_keeps_named_animator_parameter_in_native_stream_order(self):
+        parameter = "Skill.active"
+        path = "Rig/Arm"
+        binding = dict(path=0, attribute=zlib.crc32(parameter.encode()), typeID=95, customType=0)
+        tree = dict(
+            m_MuscleClip=dict(m_ValueArrayReferencePose=[0.5, 1, 2, 3]),
+            m_ClipBindingConstant=dict(genericBindings=[binding, dict(path=zlib.crc32(path.encode()), attribute=1, typeID=4)]),
+        )
+        exported = "    path: Rig/Arm\n  m_FloatCurves:\n  - curve:\n    attribute: Skill.active\n    path:\n    classID: 95\n  m_PPtrCurves: []\n"
+        curves = reference_curves(tree, exported)
+        self.assertEqual(curves[0], dict(path="", property=parameter, value=0.5, animator=True))
+        self.assertEqual([curve["value"] for curve in curves[1:]], [1, 2, 3])
+        self.assertIsNone(reference_curves(tree, exported.replace(parameter, "Other.active")))
+        binding["customType"] = 1
+        self.assertIsNone(reference_curves(tree, exported))
 
     def test_repairs_only_original_animator_parameter_hashes(self):
         with tempfile.TemporaryDirectory() as temporary:

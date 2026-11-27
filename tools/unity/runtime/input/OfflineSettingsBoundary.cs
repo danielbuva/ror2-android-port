@@ -53,8 +53,10 @@ public sealed partial class PortSession
     }
     void CleanupOfflineSettingsPause()
     {
+        CloseTouchLayoutEditor();
         offlineSettingsSession?.Dispose();
     }
+    bool HasSavedTouchEditorRequest => offlineSettingsSession != null && offlineSettingsSession.HasSavedTouchEditorRequest;
     bool SaveOfflineSettings()
     {
         return offlineSettingsSession != null && offlineSettingsSession.Save();
@@ -91,6 +93,8 @@ public sealed partial class PortSession
         string rebindError;
         float offlineSettingsTimeScale;
         bool writeObserverStarted;
+        bool savedTouchEditorRequest;
+        public bool HasSavedTouchEditorRequest => savedTouchEditorRequest;
         public OfflineSettingsSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -107,6 +111,7 @@ public sealed partial class PortSession
                                   "Settings failure injection requires a lab purpose");
                 coordinator.offlineSettings.ArmSaveFailure(diagnostic.settingsSaveFailure);
             }
+            savedTouchEditorRequest = coordinator.offlineSettings.values.touchLayoutEditor;
             AndroidOfflineSettings.current = coordinator.offlineSettings.values;
             coordinator.ApplyOfflineDisplayPreference();
             coordinator.offlineDifficulty = (DifficultyIndex)coordinator.offlineSettings.values.offlineDifficulty;
@@ -157,7 +162,10 @@ public sealed partial class PortSession
             rebindVisible = false;
             rebind = null;
             if (!show)
+            {
+                coordinator.offlineSettings.values.touchLayoutEditor = savedTouchEditorRequest;
                 feedback.Close();
+            }
             if (show && coordinator.worldPause && coordinator.worldPlayer && coordinator.worldPlayer.healthComponent.alive)
             {
                 coordinator.Check(PauseStopController.instance && !PauseStopController.instance.isPaused && Time.timeScale > 0,
@@ -204,6 +212,7 @@ public sealed partial class PortSession
             coordinator.r.settings.persisted = saved;
             if (saved)
             {
+                savedTouchEditorRequest = coordinator.offlineSettings.values.touchLayoutEditor;
                 AndroidOfflineSettings.current = coordinator.offlineSettings.values;
                 coordinator.ApplyOfflineDisplayPreference();
                 coordinator.r.settings.saves++;
@@ -212,10 +221,19 @@ public sealed partial class PortSession
             coordinator.Save();
             return saved;
         }
-        bool CanRebind()
+        bool CanRebind(string[] names)
         {
-            return coordinator.offlineSettingsPaused && coordinator.r.nova != null &&
-                   coordinator.r.nova.physicalInputAvailable && coordinator.r.nova.mapping != null;
+            return Application.isFocused && coordinator.offlineSettingsPaused && coordinator.r.nova != null &&
+                   coordinator.r.nova.physicalInputAvailable && coordinator.r.nova.mapping != null &&
+                   NovaInputBridge.ControllerPresence.Matches(names, NovaInputBridge.MeasuredControllerName);
+        }
+        public void CancelRebindCapture()
+        {
+            if (!rebindVisible)
+                return;
+            rebind = null;
+            rebindError = "Capture unavailable. Reconnect the measured controller and return to the game.";
+            Observe();
         }
         public void ObserveControllerInput()
         {
@@ -223,14 +241,14 @@ public sealed partial class PortSession
             // buttons. Raw sampling uses realtime while the native run stays paused.
             if (rebindVisible)
             {
-                if (!CanRebind() || !Application.isFocused)
-                {
-                    rebind = null;
-                    rebindError = "Capture cancelled. Reconnect and choose an action again.";
-                }
+                var names = UnityEngine.Input.GetJoystickNames();
+                if (!CanRebind(names))
+                    CancelRebindCapture();
                 else if (rebind != null)
-                    rebind.Observe(UnityEngine.Input.GetJoystickNames(), NovaInputBridge.ReadRaw(), Time.realtimeSinceStartup);
-                Observe();
+                {
+                    rebind.Observe(names, NovaInputBridge.ReadRaw(), Time.realtimeSinceStartup);
+                    Observe();
+                }
                 return;
             }
             if (coordinator.offlineSettings == null || coordinator.r == null || !coordinator.r.freePlay ||
@@ -340,8 +358,9 @@ public sealed partial class PortSession
                     GUI.Box(new Rect(Screen.width * .5f - 240, 60, 480, 50), coordinator.r.settings.error);
                 return false;
             }
-            GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 220, 480, 560),
-                    coordinator.UsesTouchUi()
+            var touchUi = coordinator.UsesTouchUi();
+            GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 220, 480, touchUi ? 590 : 560),
+                    touchUi
                         ? "Android offline settings · touch controls"
                         : "Android offline input settings · B back · A save");
             var x = Screen.width * .5f - 210;
@@ -358,9 +377,13 @@ public sealed partial class PortSession
             coordinator.offlineSettings.values.highRefreshRate =
                 GUI.Toggle(new Rect(x, y + 174, 420, 30), coordinator.offlineSettings.values.highRefreshRate,
                            "High refresh rate (applies on Save)");
+            if (touchUi)
+                coordinator.offlineSettings.values.touchLayoutEditor =
+                    GUI.Toggle(new Rect(x, y + 495, 420, 45), coordinator.offlineSettings.values.touchLayoutEditor, "Edit touch controls layout");
             if (GUI.Button(new Rect(x, y + 215, 200, 45), "Save and close"))
             {
-                if (Save())
+                if (Save() && !(touchUi && coordinator.offlineSettings.values.touchLayoutEditor &&
+                                (coordinator.offlineSettingsPaused || coordinator.offlineStartVisible)))
                     Show(false);
             }
             if (GUI.Button(new Rect(x + 220, y + 215, 200, 45), "Resume"))
@@ -396,7 +419,7 @@ public sealed partial class PortSession
                 coordinator.Save();
                 return true;
             }
-            if (CanRebind() && GUI.Button(new Rect(x, y + 446, 420, 45), "Rebind controller buttons"))
+            if (CanRebind(UnityEngine.Input.GetJoystickNames()) && GUI.Button(new Rect(x, y + 446, 420, 45), "Rebind controller buttons"))
             {
                 rebindVisible = true;
                 coordinator.r.settings.rebindSavedForNextSession = false;
@@ -466,7 +489,9 @@ public sealed partial class PortSession
             var x = Screen.width * .5f - 260;
             var y = Screen.height * .5f - 210;
             GUI.Box(new Rect(x, y, 520, 420), "Controller buttons · paused");
-            if (rebind == null)
+            if (!CanRebind(UnityEngine.Input.GetJoystickNames()))
+                CancelRebindCapture();
+            else if (rebind == null)
             {
                 GUI.Label(new Rect(x + 20, y + 35, 480, 55),
                           "Choose an action. Changes apply next session.\nAxes and action availability stay unchanged.");

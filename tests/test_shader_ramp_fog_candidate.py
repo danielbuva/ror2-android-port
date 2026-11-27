@@ -54,13 +54,13 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             module = load_isolated_module(root)
             self.assertEqual(module.RECIPE_PATH, root.resolve() / "recipe/shader-ramp-fog-candidate.json")
             self.assertEqual(module.RECIPE["target"], "ramp-fog")
-            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r5/{input_id}")
+            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r6/{input_id}")
             self.assertFalse(module.RECIPE["generation_limits"]["unity_compiled"])
             helper_hash = hashlib.sha256((INTEGRATION / "scripts/lab/shader_deferred.py").read_bytes()).hexdigest()
             self.assertEqual(module.RECIPE["tools"]["shader_deferred_sha256"], helper_hash)
             metadata_hash = hashlib.sha256((INTEGRATION / "scripts/lab/shader_metadata.py").read_bytes()).hexdigest()
             self.assertEqual(module.RECIPE["tools"]["shader_metadata_sha256"], metadata_hash)
-            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r5/{input_id}")
+            self.assertEqual(module.RECIPE["stable_output"], "generated-shader-candidates/ramp-fog-r6/{input_id}")
 
     def test_shared_metadata_drift_refuses_before_native_tools(self) -> None:
         with tempfile.TemporaryDirectory(prefix="ramp-fog-metadata-pin-") as temp:
@@ -76,7 +76,7 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             work.mkdir()
             module = load_isolated_module(Path(temp) / "repo")
             output = module.output_path(work, module.SOURCE["input_id"])
-            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog-r5" / module.SOURCE["input_id"])
+            self.assertEqual(output, work.resolve() / "generated-shader-candidates/ramp-fog-r6" / module.SOURCE["input_id"])
             with self.assertRaisesRegex(RuntimeError, "fixed native post-process recipe"):
                 module.output_path(work, "another-input")
             module.RECIPE["stable_output"] = "../outside/{input_id}"
@@ -215,7 +215,7 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
             work = Path(temp) / "work"
             self.assertEqual(
                 module.output_path(work, source["input_id"], recipe=recipe),
-                work.resolve() / "generated-shader-candidates/screen-damage-r1" / source["input_id"],
+                work.resolve() / "generated-shader-candidates/screen-damage-r2" / source["input_id"],
             )
             # Authored bytes exercise identity checking without copying game programs.
             blob = b"authored native-program fixture"
@@ -235,17 +235,19 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
                 module.generate(work, root, target="unknown")
             self.assertFalse(work.exists())
 
-    def test_sobel_buffer_keeps_separate_fragment_parameter_record(self):
-        with tempfile.TemporaryDirectory(prefix="sobel-records-") as temp:
+    def test_recipes_keep_separate_fragment_parameter_record(self):
+        with tempfile.TemporaryDirectory(prefix="single-pass-records-") as temp:
             module = load_isolated_module(Path(temp))
-            source = json.loads((INTEGRATION / "recipe/shader-sobel-buffer-candidate.json").read_text())["source"]
-            blob = b"authored Sobel topology fixture"
-            source["serialized_blob_sha256"] = hashlib.sha256(blob).hexdigest()
-            tree = {"platforms": source["platform_codes"], "m_ParsedForm": {"m_Name": source["shader_name"], "m_SubShaders": [{"m_Passes": [{}]}]}}
-            records = json.loads(json.dumps(source["records"]))
-            module.validate_tree(tree, blob, records, {1: b"authored vertex", 3: b"authored fragment"}, source=source)
-            with self.assertRaisesRegex(RuntimeError, "program indices"):
-                module.validate_tree(tree, blob, records, {1: b"authored vertex", 2: b"incorrect fragment"}, source=source)
+            for target in ("sobel-buffer", "vision-limit"):
+                with self.subTest(target=target):
+                    source = json.loads((INTEGRATION / f"recipe/shader-{target}-candidate.json").read_text())["source"]
+                    blob = b"authored single-pass topology fixture"
+                    source["serialized_blob_sha256"] = hashlib.sha256(blob).hexdigest()
+                    tree = {"platforms": source["platform_codes"], "m_ParsedForm": {"m_Name": source["shader_name"], "m_SubShaders": [{"m_Passes": [{}]}]}}
+                    records = json.loads(json.dumps(source["records"]))
+                    module.validate_tree(tree, blob, records, {1: b"authored vertex", 3: b"authored fragment"}, source=source)
+                    with self.assertRaisesRegex(RuntimeError, "program indices"):
+                        module.validate_tree(tree, blob, records, {1: b"authored vertex", 2: b"incorrect fragment"}, source=source)
 
     def test_action_is_current_and_describes_qualification_limits(self) -> None:
         spec = importlib.util.spec_from_file_location("ramp_fog_actions", INTEGRATION / "scripts/lab/actions.py")
@@ -261,7 +263,12 @@ class ShaderRampFogCandidateTests(unittest.TestCase):
         import io
         from types import SimpleNamespace
 
-        for requested, expected in (("lab", "ramp-fog"), ("sobel-buffer", "sobel-buffer"), ("sobel-outline", "sobel-outline")):
+        for requested, expected in (
+            ("lab", "ramp-fog"),
+            ("sobel-buffer", "sobel-buffer"),
+            ("sobel-outline", "sobel-outline"),
+            ("vision-limit", "vision-limit"),
+        ):
             calls = []
 
             def generate(*, target):

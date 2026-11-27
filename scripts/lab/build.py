@@ -5,6 +5,7 @@ from build_lock import (
     assert_build_unblocked,
     assert_host_build_lock_held,
     host_build_lock,
+    unity_editor_env,
 )
 import re
 import shutil
@@ -179,14 +180,10 @@ def editor(target="lab", action="inspect"):
             if any(c.startswith(os.environ["UNITY_EDITOR"] + " ") and " -projectPath " + str(project) + " " in c for c in commands):
                 return "Editor already open; inspect MCP connectivity with ./dev editor --target " + target
             android_home = (WORK.parent if target == "lab" else ROOT) / ".local/android-user"
-            env = os.environ.copy()
-            env.update(
-                {
-                    "ANDROID_ADB_SERVER_PORT": "5038",
-                    "ANDROID_SDK_HOME": str(android_home),
-                    "ANDROID_USER_HOME": str(android_home / ".android"),
-                    "GRADLE_USER_HOME": str(ROOT / ".local/gradle"),
-                }
+            env = unity_editor_env(
+                ANDROID_SDK_HOME=str(android_home),
+                ANDROID_USER_HOME=str(android_home / ".android"),
+                GRADLE_USER_HOME=str(ROOT / ".local/gradle"),
             )
             lane = lane_config()
             if lane:
@@ -244,6 +241,10 @@ def editor(target="lab", action="inspect"):
                     raise RuntimeError("Stage the current committed runtime through a build before this editor fixture: " + owner)
             copy_catalog_asset(ROOT / "tools/catalog" / fixture, WORK / "lab-project/Assets/Editor" / fixture)
             if action == "commando-animation-host":
+                from animation_bindings import stage_additive_reference_poses
+                from composition_io import StageIO
+
+                stage_additive_reference_poses(StageIO())
                 copy_catalog_asset(ROOT / "tools/catalog/WholeCatalogBuild.cs", WORK / "lab-project/Assets/Editor/WholeCatalogBuild.cs")
             editor("lab", "refresh")
         env = os.environ.copy()
@@ -391,12 +392,29 @@ def validate_runtime_source_membership(project, *, retire_previous=False):
 
 
 def whole_payload_inputs(project):
-    return {
+    from native_view_camera_build_hook import API_RELATIVE, CAMERA_STAGE_RELATIVE, GAME_RELATIVE, HASHES, STAGE_SCHEMA
+
+    files = {
         str(p.relative_to(project)): sha(p)
         for folder in ["Assets", "Packages", "ProjectSettings"]
         for p in (project / folder).rglob("*")
         if p.is_file() and str(p.relative_to(project)) not in WHOLE_PLAYER_INPUTS and not str(p.relative_to(project)).startswith("Assets/Editor/")
     }
+    # The Cecil verifier proves that this exact transition adds only a static
+    # diagnostic delegate and instructions at one call site. All other game
+    # module changes still invalidate bundle reuse.
+    game = GAME_RELATIVE.as_posix()
+    if files.get(game) == HASHES["lightning_r3_native_result_camera_output"]:
+        stage = read(project / CAMERA_STAGE_RELATIVE)
+        if (
+            stage.get("schema") == STAGE_SCHEMA
+            and stage.get("profile") == "post-audio-native-music-results-lightning-r3-1ced"
+            and stage.get("input_sha256") == HASHES["lightning_r3_native_result_observed_game"]
+            and stage.get("api_sha256") == files.get(API_RELATIVE.as_posix()) == HASHES["pcm_composed_api"]
+            and stage.get("output_sha256") == files[game]
+        ):
+            files[game] = HASHES["lightning_r3_camera_pre_commando_observer"]
+    return files
 
 
 def freeze_whole_payload(project, result, receipt=None):
@@ -643,7 +661,7 @@ def build_cache_key(project, api, android_symbols="none"):
 def restage_lane_sources():
     """Select authored inputs before a private lane editor can import them."""
     from composition_io import StageIO
-    from project_input_rebuild import stage_editor_inputs
+    from rebuild import relative_path
     from whole_catalog import BUILD_EDITOR_SOURCES, stage_editor_sources, stage_runtime_sources
     from original_game_audio_build_hook import restage_authored_for_lane
 
@@ -665,8 +683,10 @@ def restage_lane_sources():
     names = runtime_sources()
     expected = {"Assets/LabLoadingScene/" + Path(name).name for name in names}
     expected.update("Assets/LabLoadingScene/" + name for name in WHOLE_GENERATED_RUNTIME_SOURCES)
-    expected.update("Assets/Editor/" + name for name in BUILD_EDITOR_SOURCES)
-    expected.update(row["path"] for row in read(RECIPE / "project-inputs.json")["editors"])
+    current_editors = {"Assets/Editor/" + name for name in BUILD_EDITOR_SOURCES}
+    expected.update(current_editors)
+    baseline_editors = [row for row in read(RECIPE / "project-inputs.json")["editors"] if row["path"] not in current_editors]
+    expected.update(row["path"] for row in baseline_editors)
     expected.update(str(p.relative_to(ROOT / "android")) for p in (ROOT / "android/Assets/Editor").rglob("*.cs"))
     unexpected = sorted(
         p for folder in ("Assets/Editor", "Assets/LabLoadingScene") for p in (project / folder).rglob("*.cs") if str(p.relative_to(project)) not in expected
@@ -723,7 +743,14 @@ def restage_lane_sources():
     io = StageIO(WORK)
     stage_runtime_sources(io, names)
     stage_editor_sources(io)
-    stage_editor_inputs(io)
+    for row in baseline_editors:
+        relative_path(row["path"])
+        base, relative = (RECIPE, row["template"]) if "template" in row else (ROOT, row["source_path"])
+        relative_path(relative)
+        source = base / relative
+        if not source.resolve().is_relative_to(base.resolve()) or sha(source) != row["sha256"]:
+            raise RuntimeError(f"Pinned lane baseline editor source drift: {row['path']}")
+        io.apply(project / row["path"], copy=source)
     stage_android_assets(project, io)
     # The ordinary audio owner selects/compiles the lane's recipe generation.
     # Its authored-only mode leaves banks, game assemblies and assets untouched.

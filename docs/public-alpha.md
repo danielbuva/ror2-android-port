@@ -75,14 +75,14 @@ host contracts from installed-alpha acceptance.
       verifies interrupted profile recovery and cold starts on the lab build.
       The production alpha still needs native save retention through update and
       rollback, interruption, cold launch and owner key recovery.
-- [ ] Phone-qualify folder/ZIP validation, cancellation and honest supported/unknown
+- [x] Phone-qualify folder/ZIP validation, cancellation and honest supported/unknown
       version refusal with legitimate input cohorts and actual SAF providers
       ([acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)).
-      [The acquisition fixture](PORTING_JOURNAL.md#j1488--verify-android-folder-and-zip-acquisition-through-the-installer)
-      covers system picker Back, both version refusals, cancellation during
-      validation and hash-verified folder/ZIP imports on Nova B. The owner route
-      still needs selection from an external provider and persisted URI reopen
-      across app UIDs.
+      Android's external storage provider passed picker Back, both version
+      refusals, malformed-input refusal and mid-copy cancellation. The installer
+      resumed the folder import after force-stop and reopened the selected ZIP
+      after force-stop. Both imports and the unchanged source copies passed
+      hash verification. [Device evidence](PORTING_JOURNAL.md#j1529--qualify-external-saf-validation-and-import-resume).
       Keep source installations read-only; account downloads and Steam Cloud deferred.
 
 Laboratory capacity, placement and runtime-backing receipts in
@@ -173,8 +173,12 @@ the priority; these gates must pass before any public release.
       without an explicit, documented user decision.
 
 The [Thor bundle replay](PORTING_JOURNAL.md#j1494--overlap-android-bundle-encoding-and-verification)
-measures the strict whole-game bundle producer. End-to-end converter budgets
-still need measurements across import, APK assembly and installation.
+measures the strict whole-game bundle producer. The [paired Thor decoder
+benchmark](PORTING_JOURNAL.md#j1501--speed-up-checked-unityfs-lz4-decoding-on-android)
+halved decoder CPU time on the retained pre-#630 bundle, and a
+27-record current-input pair confirmed identical output after cold emission.
+Full current-input production and end-to-end budgets across import, APK
+assembly and installation still need measurements.
 
 Game baseline and attribution plan: [retained sustained report](performance-game.md),
 qualified as host-only in [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report).
@@ -229,7 +233,8 @@ The [2026-11-17 Main Nova run](performance-game.md#120-hz-battery-and-clock-obse
 observed 3 percentage points of battery discharge in 30 minutes with the 120 Hz
 preference enabled and external power connected throughout. Mean signed power at
 the battery was −1,017 mW. The sampled clock limits and cooling states leave
-throttling onset unestablished. The unplugged energy budget remains open.
+throttling onset unestablished. The 30-minute unplugged energy test is
+**deferred by owner** as of 2026-11-18. Keep phones plugged in for all runs.
 
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
@@ -247,7 +252,7 @@ the Main Nova's 120 Hz capacity, including frame pacing, after clearing that flo
 
 | Device | Sustained workload | Proposed pacing budget | Energy/thermal budget |
 | --- | --- | --- | --- |
-| Main Nova, 120 Hz panel | 30 minutes of representative ordinary play, each supported stage | Mean >=60 FPS; raw frame p50 <=16.67 ms, p95 <=33.334 ms, p99 <=50 ms; >50 ms frames <=1% | Establish unplugged energy baseline; propose <=10 battery percentage points per 30 minutes, pending measurement. Record temperature/exposure and clock limits; heat alone is not failure. |
+| Main Nova, 120 Hz panel | 30 minutes of representative ordinary play, each supported stage | Mean >=60 FPS; raw frame p50 <=16.67 ms, p95 <=33.334 ms, p99 <=50 ms; >50 ms frames <=1% | Unplugged energy baseline deferred by owner. Record temperature, exposure and clock limits during plugged runs. |
 | Ayn Thor, top panel only | Same workload, native display mode recorded | Start with the same 60 FPS/pacing targets; no retained comparable game trace, so qualification stays open | Measure drain and thermal exposure independently; do not transfer Nova results. |
 
 Other hardware needs its own measured baseline before support. For every device,

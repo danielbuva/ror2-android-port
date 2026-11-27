@@ -789,6 +789,23 @@ class StageTests(unittest.TestCase):
 
 
 class StageTests(StageTests):
+    def test_streamed_media_receipt_accepts_independently_pinned_relocated_inventory(self):
+        with self.temporary_directory() as temp:
+            root = Path(temp)
+            _, _, receipt_path = write_set(root, True)
+            receipt = json.loads(receipt_path.read_text())
+            inventory = root / "relocated-inventory.json"
+            inventory.write_text(json.dumps({"input_id": receipt["accepted_input_id"], "mtime_ns": 10}))
+            inventory_sha = stage_module.sha256(inventory)
+            receipt["accepted_inventory_sha256"] = inventory_sha
+
+            self.assertEqual(receipt["streamed_media"], stage_module.validate_streamed_media_rows(receipt, accepted_inventory_sha256=inventory_sha))
+            with self.assertRaisesRegex(ValueError, "accepted_inventory_sha256"):
+                stage_module.validate_streamed_media_rows(receipt)
+            inventory.write_text(json.dumps({"input_id": receipt["accepted_input_id"], "mtime_ns": 11}))
+            with self.assertRaisesRegex(ValueError, "accepted_inventory_sha256"):
+                stage_module.validate_streamed_media_rows(receipt, accepted_inventory_sha256=stage_module.sha256(inventory))
+
     def test_historical_r23_stage_receipt_pin_is_preserved_separately_from_unbound_r2_pin(self):
         self.assertEqual("8fe02400a7ab0905ae21b728e702d7ef2c4dcf8646f77f631682a81bda0ab88c", stage_module.LINEAGE["stage_receipt_sha256"])
         with self.temporary_directory() as temp:

@@ -16,6 +16,26 @@ SPEC.loader.exec_module(MANAGED)
 
 
 class OwnerCodeManagedTests(unittest.TestCase):
+    def test_skill_deferred_pcm_selects_main_output_in_the_audio_request(self):
+        for deferred in (False, True):
+            with (
+                self.subTest(deferred=deferred),
+                tempfile.TemporaryDirectory() as temporary,
+                patch.object(MANAGED.audio, "generate_request_contract", side_effect=RuntimeError("request boundary")) as generate,
+            ):
+                root = Path(temporary)
+                with self.assertRaisesRegex(RuntimeError, "request boundary"):
+                    MANAGED.audio_assemblies(root, root, {"wwise_native": root / "native"}, {}, root, root, root, root, {}, {}, pcm_after_skill=deferred)
+                self.assertEqual(
+                    generate.call_args.kwargs,
+                    {
+                        "passive_pcm_capture_requested": True,
+                        "passive_pcm_capture_music_output_requested": not deferred,
+                        "passive_pcm_capture_after_authority_skill_requested": deferred,
+                        "owner_work": None,
+                    },
+                )
+
     def test_nested_python_uses_the_embedded_android_host_abi(self):
         native = "/installed/lib/arm64/"
         runtime = "/private/runtime/python"
@@ -43,6 +63,11 @@ class OwnerCodeManagedTests(unittest.TestCase):
                 compiler = MANAGED.SdkCompiler(sdk, launcher, root)
                 with patch.object(subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as run:
                     compiler.compile(assembly, [source], [reference], ["-target:library"])
+                receipt = assembly.with_suffix(".compile.process.json")
+                timing = json.loads(receipt.read_text())
+                self.assertEqual(timing["exit_code"], 0)
+                self.assertGreaterEqual(timing["seconds"], 0)
+                self.assertGreaterEqual(timing["ended_boottime_seconds"], timing["started_boottime_seconds"])
                 runtime = json.loads(compiler.runtime_config.read_text())
                 self.assertEqual(runtime["runtimeOptions"]["framework"]["version"], "8.0.32")
                 rsp = assembly.with_suffix(".rsp")
@@ -53,6 +78,13 @@ class OwnerCodeManagedTests(unittest.TestCase):
                 response = rsp.read_text().splitlines()
                 self.assertIn("-r:" + json.dumps(str(reference)), response)
                 self.assertIn(json.dumps(str(source)), response)
+                with patch.object(subprocess, "run", side_effect=subprocess.TimeoutExpired("compiler", 180)):
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        compiler.compile(assembly, [source], [reference], ["-target:library"])
+                timing = json.loads(receipt.read_text())
+                self.assertIsNone(timing["exit_code"])
+                self.assertGreaterEqual(timing["seconds"], 0)
+                self.assertGreaterEqual(timing["ended_boottime_seconds"], timing["started_boottime_seconds"])
                 compiler_path.write_bytes(b"changed fixture")
                 with self.assertRaisesRegex(ValueError, "Pinned SDK Roslyn"):
                     compiler.verify()
@@ -67,10 +99,10 @@ class OwnerCodeManagedTests(unittest.TestCase):
             root = Path(temporary)
             with patch.object(MANAGED.phone_unity_compile, "references", side_effect=ReferencesReached):
                 with self.assertRaises(ReferencesReached):
-                    MANAGED.gameplay(root, root, {}, root, {}, None, root, {}, [root] * 3, [root] * 14)
+                    MANAGED.gameplay(root, root, {}, root, {}, root, {}, [root] * 3, [root] * 14)
                 (root / "gameplay").rmdir()
                 with self.assertRaisesRegex(ValueError, "source membership changed"):
-                    MANAGED.gameplay(root, root, {}, root, {}, None, root, {}, [], [root] * 14)
+                    MANAGED.gameplay(root, root, {}, root, {}, root, {}, [], [root] * 14)
 
     def test_fixed_target_uses_staged_paths_and_case_insensitive_source_order(self):
         public = [Path(n) for n in ("TeleportMaterialBoundary.cs", "TeleporterWorldBoundary.cs", "ActiveClientBoundary.cs", "LabDiagnostics.cs")]

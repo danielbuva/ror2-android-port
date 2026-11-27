@@ -148,15 +148,27 @@ and public transform runtime configurations. Native providers enter only the
 PackageManager library directory; input game/SDK/target sources are separate
 caller-owned app data. SDK/tool acquisition rights remain separate from hosting.
 
-For signed builds with the player registry, set `python_wheels` in that same
-backend configuration to the directory containing the pinned
-`dnfile-0.18.0-py3-none-any.whl` and `pefile-2024.8.26-py3-none-any.whl`. Supply
-the Android `mmap.cpython-314-aarch64-linux-android.so` provider as
-`libpyext_mmap.so` and map `python/lib/python3.14/lib-dynload/mmap.cpython-314-aarch64-linux-android.so`
-to it. The builder validates the public wheel hashes, retains their license
-files and verifies installed data and native libraries through the existing
-receipts. [dnfile release files](https://pypi.org/project/dnfile/0.18.0/#files)
-[pefile release files](https://pypi.org/project/pefile/2024.8.26/#files)
+For the signed owner backend, build the Python wheelhouse on the host. Use
+cibuildwheel 4.3.4, the Python `build` package and a separate Android SDK with
+NDK 27.3.13750724 installed. The wheel producer uses CPython 3.14.8, ARM64
+and API 24, with pinned PyPI sources, IJG JPEG source and the CPython Android
+extensions used by the wheel imports.
+
+```sh
+python3 tools/phone-build/managed-host/build_python_wheels.py \
+  --sdk "$WHEEL_SDK" --output work/rebuild/toolhost-wheelhouse
+```
+
+Set `python_wheels` in the backend configuration to the wheelhouse directory
+and `python_built_wheels` to the contents of its `built-wheel-hashes.json`.
+Supply the Android `mmap.cpython-314-aarch64-linux-android.so` provider as
+`libpyext_mmap.so` and link it at
+`python/lib/python3.14/lib-dynload/mmap.cpython-314-aarch64-linux-android.so`.
+The builder checks the wheel hashes, retains the notices and stages extensions
+in the APK's native library directory. `check_python.py` imports the staged
+phone entry points and release producers in an isolated interpreter using the
+import plan from `recipe/owner-app-host-tools.json`. This software is based
+in part on the work of the Independent JPEG Group.
 
 For signed texture jobs, add the outputs of
 `build_texture_jpeg.py`, `build_texture_etc.py` and `build_texture_sdk.py`
@@ -301,7 +313,9 @@ native copy fragments are discarded automatically.
 `OwnerBuildService` owns the worker independently of Activity recreation and task
 removal, with an ongoing foreground notification and a partial wake lock during
 local work. Pause/resume/cancel feed the existing thermal supervisor; user pause
-never pauses its sensor loop or overrides its cooling decision. Provider cancel
+never pauses its sensor loop or overrides its cooling decision. These controls
+stop when work hands off to Android installation and do not apply to profile
+verification or recovery. Provider cancel
 uses `CancellationSignal` and closes the active source stream. Battery admission
 retains the documented caller rule (at most 35 C and 85%, no charging at or above
 80%); the supervisor's thermal limits are unchanged. The screen displays signed

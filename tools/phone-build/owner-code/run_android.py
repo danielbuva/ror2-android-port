@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import resource
+import shutil
 import sys
 import time
 
@@ -146,12 +147,109 @@ def texture_job(request, inputs, runtime, installed, native):
     return owner.produce(path(repo, selection["profile"]), selection["profile_sha256"], path(inputs, selection["pc"]), output, **options)
 
 
+def prepare_inventory(inputs, native):
+    work, game = inputs / "work", inputs / "game"
+    inventory_path = work / "inventory/files.json"
+    inventory = json.loads(inventory_path.read_text())
+    for row in inventory["files"]:
+        path = game / native.relative(row["path"])
+        stats = path.stat()
+        if native.sha(path) != row["sha256"] or stats.st_size != row["size"]:
+            raise ValueError("copied original game input differs")
+        row["mtime_ns"] = stats.st_mtime_ns
+    inventory_path.write_text(json.dumps(inventory) + "\n")
+    (work / "config").mkdir(exist_ok=True)
+    (work / "config/local.json").write_text(json.dumps({"game_path": str(game)}) + "\n")
+
+
+def signed_native_job(request, inputs, runtime, installed, native):
+    """Qualify signed conversion, Burst and native jobs in one phone attempt."""
+    owner = runtime / "repo/tools/phone-build/owner-apk"
+    spec = importlib.util.spec_from_file_location("android_signed_native_jobs", owner / "release_jobs.py")
+    jobs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(jobs)
+    updates = jobs.UPDATES
+    publisher = updates.public()
+    envelope = publisher.load_json(updates.within(inputs, request["envelope"], exists=True).read_bytes())
+    key = updates.within(inputs, request["public_key"], exists=True).read_bytes()
+    release = publisher.verify_envelope(envelope, {request["key_id"]: key})
+    identity = updates.input_identity(inputs, {})
+    prepare_inventory(inputs, native)
+
+    output = updates.within(inputs / "work", request["output"])
+    output.mkdir(mode=0o700)
+    started = time.monotonic()
+    free = shutil.disk_usage(output).free
+    result = {"success": False}
+    try:
+        repo = output / "verified-repo"
+        bundle = updates.within(inputs, request["bundle"], exists=True)
+        index = updates.extract_bundle(bundle, repo, release)
+        dispatcher = jobs.Dispatcher(repo, index, release, inputs, runtime, installed, {}, identity)
+        library = "apk/lib/arm64-v8a/libil2cpp.so"
+        metadata = "apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"
+        burst = "apk/lib/arm64-v8a/lib_burst_generated.so"
+        native_job = index["entries"][library]["job"]
+        conversion_job = index["entries"][burst]["job"]
+        descriptor = dispatcher.descriptor(native_job)
+        if index["entries"][metadata]["job"] != native_job or conversion_job not in descriptor.get("needs", []):
+            raise ValueError("signed native and Burst entries require the same conversion cohort")
+        built = dispatcher.execute(native_job)
+        conversion = publisher.load_json((dispatcher.completed[conversion_job] / "result.json").read_bytes())
+        product = publisher.load_json((built / "result.json").read_bytes())
+        if (
+            conversion.get("success") is not True
+            or conversion.get("phase") != "converted-native-planned"
+            or conversion.get("upstream_managed_generation_qualified") is not True
+        ):
+            raise ValueError("signed managed conversion did not qualify")
+        if (
+            product.get("success") is not True
+            or product.get("phase") != "native-built"
+            or product["planned_compile_tasks"] <= 0
+            or product["compile_tasks"] + product.get("reused_compile_tasks", 0) != product["planned_compile_tasks"]
+        ):
+            raise ValueError("signed native compile cohort incomplete")
+        digests = {entry: dispatcher.output_sha256(entry) for entry in (library, metadata, burst)}
+        if (digests[library], digests[metadata]) != (product["library_sha256"], product["metadata_sha256"]):
+            raise ValueError("signed native output readback differs from producer receipt")
+        burst_record = conversion["backend"]["burst"]
+        if burst_record.get("success") is not True or digests[burst] != burst_record["library_sha256"]:
+            raise ValueError("signed Burst output readback differs from producer receipt")
+        if updates.input_identity(inputs, {}) != identity:
+            raise ValueError("signed native input identity changed")
+        result.update(
+            success=True,
+            phase=product["phase"],
+            managed_providers=conversion["managed_providers"],
+            burst=burst_record,
+            native=product,
+            output_sha256=digests,
+            bundle_sha256=release["bundle_sha256"],
+        )
+    finally:
+        result["measurements"] = dict(
+            wall_seconds=time.monotonic() - started,
+            children_peak_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss * 1024,
+            free_bytes_before=free,
+            free_bytes_after=shutil.disk_usage(output).free,
+        )
+        native.write(output / "result.json", result)
+    return result
+
+
 def run(request_file, runtime, installed):
     request_file, runtime, installed = (Path(p).resolve(strict=True) for p in (request_file, runtime, installed))
     inputs = request_file.parent
     spec = importlib.util.spec_from_file_location("android_owner_backend", runtime / "repo/tools/phone-build/owner-code/produce.py")
     backend = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(backend)
+    request = json.loads(request_file.read_text())
+    if set(request) == {"bundle", "envelope", "public_key", "key_id", "output"}:
+        os.environ["TMPDIR"] = str(runtime / "tmp")
+        Path(os.environ["TMPDIR"]).mkdir(exist_ok=True)
+        print(json.dumps(signed_native_job(request, inputs, runtime, installed, backend.native)), flush=True)
+        return
     before = json.loads((inputs / "input-hashes.json").read_text())
 
     def check_inputs():
@@ -161,7 +259,6 @@ def run(request_file, runtime, installed):
                 raise ValueError("Android owner input drift: " + name)
 
     check_inputs()
-    request = json.loads(request_file.read_text())
     if set(request) == {"textures", "output"}:
         result = texture_job(request, inputs, runtime, installed, backend.native)
         check_inputs()
@@ -189,18 +286,10 @@ def run(request_file, runtime, installed):
         {"resume", "target", "output"},
     ):
         raise ValueError("explicit managed providers or fixed-target source inputs and new output required")
-    work, sdk, game = [inputs / name for name in ("work", "sdk", "game")]
-    inventory = json.loads((work / "inventory/files.json").read_text())
-    for row in inventory["files"]:
-        path = game / backend.native.relative(row["path"])
-        if backend.native.sha(path) != row["sha256"] or path.stat().st_size != row["size"]:
-            raise ValueError("copied original game input differs")
-        row["mtime_ns"] = path.stat().st_mtime_ns
+    work, sdk = inputs / "work", inputs / "sdk"
     # Copy timestamps may differ. Preserve the reviewed path/content identity;
     # record this private copy's stats only after checking every original hash.
-    (work / "inventory/files.json").write_text(json.dumps(inventory) + "\n")
-    (work / "config").mkdir(exist_ok=True)
-    (work / "config/local.json").write_text(json.dumps({"game_path": str(game)}) + "\n")
+    prepare_inventory(inputs, backend.native)
     tools = {
         name: str(installed / filename)
         for name, filename in {"dotnet": "libdotnetmuxer.so", "clang": "libclang.so", "linker": "lib-ld.lld-.so", "objcopy": "libobjcopy.so"}.items()
@@ -278,7 +367,13 @@ def run(request_file, runtime, installed):
             raise ValueError("explicit GNU Mono/Burst providers and Linux tools required")
         mono, compiler = [inputs / backend.native.relative(supplied[name]) for name in ("mono", "runtime")]
         linux = production["linux_tools"]
-        libraries = [str(compiler), str(mono / "usr/lib"), str(mono / "usr/lib/x86_64-linux-gnu"), *linux["library_dirs"]]
+        libraries = [
+            str(compiler),
+            str(mono / "usr/lib"),
+            str(mono / "usr/lib/x86_64-linux-gnu"),
+            str(mono / "lib/x86_64-linux-gnu"),
+            *linux["library_dirs"],
+        ]
         command = [linux["qemu"], "-L", linux["loader_root"]]
         for value in [
             "LD_LIBRARY_PATH=" + ":".join(libraries),

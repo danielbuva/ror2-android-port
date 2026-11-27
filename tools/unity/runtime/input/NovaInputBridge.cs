@@ -222,9 +222,10 @@ public sealed class NovaInputBridge : MonoBehaviour
                 throw new ArgumentException("Measured controller name required", nameof(name));
             expectedName = name;
         }
-        public bool Matches(string[] names)
+        public bool Matches(string[] names) => Matches(names, expectedName);
+        public static bool Matches(string[] names, string expectedName)
         {
-            if (names == null || names.Length == 0 || names[0] != expectedName)
+            if (string.IsNullOrEmpty(expectedName) || names == null || names.Length == 0 || names[0] != expectedName)
                 return false;
             for (int i = 1; i < names.Length; i++)
                 if (!string.IsNullOrEmpty(names[i]))
@@ -438,7 +439,7 @@ public sealed class NovaInputBridge : MonoBehaviour
                    ? Vector2.zero
                    : v / n * Mathf.Min(1, (n - AndroidOfflineSettings.current.deadzone) / (1 - AndroidOfflineSettings.current.deadzone));
     }
-    static bool NeutralSample(Raw raw, Mapping map)
+    internal static bool NeutralSample(Raw raw, Mapping map)
     {
         for (int i = 0; i < raw.buttons.Length; i++)
             if (raw.buttons[i])

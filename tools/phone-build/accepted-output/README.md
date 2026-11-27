@@ -1602,7 +1602,7 @@ kernel sensors and sustained thermal behaviour remain device gates.
 
 The supervisor pauses the owned process group and independently sessioned
 codec/compiler descendants at CPU/GPU >= 70 C, resuming only when all readable
-CPU/GPU zones are <= 55 C. Any readable CPU, GPU or SoC zone at >= 85 C also
+CPU/GPU zones are <= 55 C. Any readable CPU, GPU or SoC zone at >= 90 C also
 pauses the whole family until the hottest zone falls below 70 C. If this
 ceiling holds for 15 min, the supervisor kills the paused family. PID/start
 identities protect descendant signals. Before startup, taskset restricts the
@@ -1737,9 +1737,12 @@ source-lab Standard/post-processing profiles. Explicit current PC/SDK roots,
 pinned profiles/tools, receipt-pinned source-produced media/Shader packs and a
 separate output directory set up production; process exit tears down each
 producer while local receipts persist. The existing member-aware writer exposes
-`payload/golemplains-source-lab`. All 10,828 persisted objects, both serialized
-members and the compressed bundle are host raw-exact against J850. No runtime
-owner is added; phone production, installation and original scene behavior remain open.
+`payload/golemplains-source-lab`. The Plains, Blackbeach and Goolake object
+profiles preserve the source occlusion renderer slot order and null entries.
+Checked remaps resolve occupied slots to staged MeshRenderers. The Goolake
+record producer profile supplies its native visibility record for assembly into
+the whole-game dependency. The streamed scene fixture checks typed scene load
+and teardown with explicit dependency bundle pins.
 
 Skymeadow complete source-scene selections extend the existing object/Shader
 owners through `recipe/owner-skymeadow-source-objects.json` and the source-lab
@@ -2128,7 +2131,9 @@ pairs. Source identity and body/type witnesses are derived from those pins.
 For a retained supplier with already-relocated PPtrs, a binding's explicit
 `pointer_namespace` lists `[bundle, member]` pairs, starting with the local
 member and then each external slot. Ordinary suppliers resolve through their
-original member tables. Preparation preserves supplier record identities through
+original member tables. A checked local producer patch can choose an emitted
+alias when that alias is bound to the same original endpoint. Preparation
+preserves supplier record identities through
 retained lineage while relocating only qualified PPtr fields. It refuses missing
 bodies, conflicting source destinations, stale type tables and mismatching or
 unused overrides. Preparation is host qualification support; signed dispatch and

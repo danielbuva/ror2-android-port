@@ -19,7 +19,7 @@ class AdmissionPending(RuntimeError):
     """Valid sensors require more idle cooling before producer startup."""
 
 
-SOC_PAUSE_CELSIUS = 85
+SOC_PAUSE_CELSIUS = 90
 SOC_RESUME_BELOW_CELSIUS = 70
 SOC_PAUSE_TIMEOUT_SECONDS = 900
 
@@ -79,7 +79,7 @@ class ThermalDutyCycle:
             if any(value > (35 if kind == "battery" else 50) for kind, value in zones.values() if kind != "soc"):
                 raise AdmissionPending("thermal admission requires CPU/GPU/skin <= 50 C and battery <= 35 C")
             if hottest >= SOC_PAUSE_CELSIUS:
-                raise AdmissionPending("thermal admission requires SoC below 85 C")
+                raise AdmissionPending("thermal admission requires SoC below 90 C")
             return None
 
         if self.ceiling_since is None and hottest >= SOC_PAUSE_CELSIUS:
@@ -157,12 +157,16 @@ def efficiency_cpus(root=Path("/sys/devices/system/cpu")):
     return set(sorted(cpu for cpu in allowed if capacities[cpu] == minimum)[:2])
 
 
-def identity(pid):
+def stat_fields(pid):
     try:
-        fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
-        return int(fields[1]), int(fields[19])  # parent, immutable start ticks
+        return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
     except (FileNotFoundError, ProcessLookupError, PermissionError):
         return None
+
+
+def identity(pid):
+    fields = stat_fields(pid)
+    return (int(fields[1]), int(fields[19])) if fields is not None else None  # parent, immutable start ticks
 
 
 class Family:
@@ -183,6 +187,14 @@ class Family:
             if not added:
                 break
             self.members.update(added)
+
+    def sampled_rss_bytes(self):
+        pages = []
+        for pid, recorded in self.members.items():
+            fields = stat_fields(pid)
+            if recorded is not None and fields is not None and int(fields[19]) == recorded[1]:
+                pages.append(int(fields[21]))
+        return sum(pages) * os.sysconf("SC_PAGE_SIZE") if pages else None
 
     def send(self, number):
         self.discover()
@@ -214,7 +226,18 @@ def boot_clock():
 
 
 def run(
-    command, receipt, *, profile="nova", timeout=86400, sensor=read_zones, clock=boot_clock, wait=time.sleep, cancelled=lambda: False, control=None, status=None
+    command,
+    receipt,
+    *,
+    profile="nova",
+    timeout=86400,
+    sensor=read_zones,
+    clock=boot_clock,
+    wait=time.sleep,
+    cancelled=lambda: False,
+    control=None,
+    status=None,
+    samples=None,
 ):
     policy = ThermalDutyCycle(profile)
     started = clock()
@@ -223,6 +246,8 @@ def run(
     pause_clock = Path(str(receipt) + ".pause.json")
     manual_paused, stopped_since, stopped_seconds = False, None, 0.0
     control_id = None
+    trace = None
+    next_resources_at = started
 
     def atomic(path, value):
         path = Path(path)
@@ -255,6 +280,18 @@ def run(
         value = dict(paused_seconds=stopped_seconds, paused_at=stopped_since)
         atomic(pause_clock, value)
 
+    def trace_sample(tick, zones, paused):
+        nonlocal next_resources_at
+        value = dict(boottime_seconds=tick, paused=paused)
+        for kind in ("cpu", "gpu", "soc", "battery", "skin"):
+            value[kind + "_celsius"] = max((temperature for observed, temperature in zones.values() if observed == kind), default=None)
+        if tick >= next_resources_at:
+            next_resources_at = tick + 1
+            fs = os.statvfs(Path(samples).parent)
+            value.update(process_tree_rss_bytes=family.sampled_rss_bytes(), volume_available_bytes=fs.f_bavail * fs.f_frsize)
+        trace.write(json.dumps(value, allow_nan=False) + "\n")
+        trace.flush()
+
     def report(zones, state):
         if status is not None:
             value = dict(
@@ -278,6 +315,11 @@ def run(
     try:
         if not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("positive finite wall deadline required")
+        if samples is not None:
+            try:
+                trace = Path(samples).open("x")
+            except OSError as error:
+                result["resource_trace_error"] = str(error)
         while True:
             tick = clock()
             if cancelled():
@@ -330,6 +372,11 @@ def run(
             # Refresh STOP for independently sessioned descendants while paused.
             elif should_stop:
                 family.send(signal.SIGSTOP)
+            if trace is not None and "resource_trace_error" not in result:
+                try:
+                    trace_sample(tick, zones, should_stop)
+                except OSError as error:
+                    result["resource_trace_error"] = str(error)
             report(zones, "paused" if should_stop else "running")
             if child.poll() is not None:
                 result["returncode"] = child.returncode
@@ -348,6 +395,11 @@ def run(
                 child.wait(timeout=5)
             except BaseException as error:
                 result.update(success=False, cleanup_error=str(error))
+        if trace is not None:
+            try:
+                trace.close()
+            except OSError as error:
+                result["resource_trace_error"] = str(error)
         result.update(policy.receipt(clock()), seconds=clock() - started)
         report(zones, "complete" if result["success"] else "cancelled" if result.get("error") == "producer cancelled" else "failed")
         Path(receipt).write_text(json.dumps(result, indent=2) + "\n")
@@ -361,6 +413,7 @@ def main():
     parser.add_argument("--timeout", type=float, default=86400)
     parser.add_argument("--control", help="private atomic pause/resume/cancel command JSON")
     parser.add_argument("--status", help="private live telemetry JSON for the installer")
+    parser.add_argument("--samples", type=Path, help="private BOOTTIME temperature and resource JSONL on the producer volume")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
@@ -380,6 +433,7 @@ def main():
             cancelled=lambda: bool(stopped),
             control=args.control,
             status=args.status,
+            samples=args.samples,
         )["success"]
         else 1
     )

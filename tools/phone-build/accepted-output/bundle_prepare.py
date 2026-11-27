@@ -5,11 +5,106 @@ Only measured PPtr fields are rewritten; the existing emitter remains responsibl
 for final structural, managed and persisted-object qualification.
 """
 
+from collections import Counter
 from contextlib import ExitStack
 import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
+
+
+def record_descriptor(owner, types, target, body, typ, **extra):
+    full = owner.full_type_key(typ)
+    types[full] = owner.O.json_layout(typ)
+    return dict(
+        destination=list(target),
+        bytes=len(body),
+        sha256=hashlib.sha256(body).hexdigest(),
+        class_id=typ["class_id"],
+        native_type_hash=typ["hash"].hex(),
+        schema=hashlib.sha256(typ["tree"]).hexdigest(),
+        full_type=full,
+        edges=[list(edge) for edge in sorted(set(owner.pointers(body, typ, {}).values()))],
+        **extra,
+    )
+
+
+def prepare_endpoints(owner, inputs, output):
+    """Recover the staged half of an emission request from pinned final files."""
+    inputs, output = Path(inputs).resolve(strict=True), Path(output).resolve()
+    E = owner.module("bundle_endpoints")
+    pins = E.InputPins(inputs.parent, owner)
+    request = json.loads(pins.add(inputs).read_bytes())
+    if request["schema"] != "owner-bundle-preload-inputs-v1":
+        raise ValueError("unsupported bundle preload input contract")
+    if "input_paths" in request:
+        pins.relocate(request["input_paths"])
+    member = request["bundle"], request["member"]
+    routes = owner.json_rows(pins.pin(request["routes"]))
+    groups = pins.read(request["required"])["asset_groups"]
+    targets = {tuple(edge["target"]) for row in routes for edge in row["edges"] if tuple(edge["target"][:2]) != member}
+    if "extension" in request:
+        extension = pins.read(request["extension"])
+        groups += extension["asset_groups"]
+        targets.update(tuple(edge["target"]) for edge in extension["field_routes"])
+    targets.update(tuple(target) for group in groups for target in group.get("preload_roots", ()))
+
+    selected, types = {}, {}
+    with ExitStack() as stack:
+        staged = E.FinalMembers(owner, selected, types)
+        stack.callback(staged.close)
+        staged.declare_member(*member)
+        for row in request["staged"]:
+            pin = dict(row["file"], path=str(pins.pin(row["file"])))
+            if row["bundle"] != "sdk":
+                staged.add(row["bundle"], pin)
+                continue
+            leaves = pins.read(row["leaves"]) if "leaves" in row else []
+            full = pins.read(row["full"]) if "full" in row else []
+            for witness in leaves + full:
+                target = tuple(witness["destination"])
+                if selected.setdefault(target, witness) != witness:
+                    raise ValueError("conflicting staged SDK witness")
+                if types.setdefault(witness["full_type"], witness["type_layout"]) != witness["type_layout"]:
+                    raise ValueError("conflicting staged SDK layout")
+            staged.add_sdk(pin, row["member"], leaves)
+            staged.qualify_sdk_full(row["member"], full, provider_paths={witness["provider"]: pin["path"] for witness in full})
+
+        visited = set()
+        pending = [target for target in targets if target[:2] != member]
+        while pending:
+            target = pending.pop()
+            if target in visited:
+                continue
+            visited.add(target)
+            if target in selected:
+                value, _, _ = staged.record(target)
+            else:
+                bundle, name, pid = target
+                if staged.member_bundles.get(name) != bundle:
+                    raise ValueError("staged endpoint owner differs")
+                _, typ, body = staged.members.record(name, (0, pid))
+                typ = owner.qualified_final_type(body, typ, staged.members.members[name][1]["scripts"], typ)
+                value = selected[target] = record_descriptor(owner, types, target, body, typ)
+            for pointer in value["edges"]:
+                if not pointer[1]:
+                    continue
+                endpoint = staged.target(target[1], pointer)
+                if endpoint[:2] != member:
+                    pending.append(endpoint)
+        pins.check()
+
+    output.mkdir(parents=True, exist_ok=False)
+    endpoints, schemas = output / "endpoints.jsonl", output / "schemas.json"
+    with endpoints.open("x") as stream:
+        for target in sorted(selected):
+            stream.write(json.dumps(selected[target], sort_keys=True) + "\n")
+    schemas.write_text(json.dumps(types, sort_keys=True) + "\n")
+    result = dict(success=True, records=len(selected), reachable=len(visited))
+    for key, path in (("endpoints", endpoints), ("schemas", schemas)):
+        result[key] = dict(path=str(path), bytes=path.stat().st_size, sha256=owner.O.B.sha(path))
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
 
 
 def requalify_relocation(owner, inputs, output):
@@ -145,8 +240,8 @@ def extend_selection(owner, member, required, selected, types, routes, extension
     required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
 
 
-def original_identities(owner, path, source_files=None, *, destinations=None):
-    """Reverse body-producing profile selectors, never schema-only type_source."""
+def original_identities(owner, path, source_files=None, *, destinations=None, generated=None, relocations=None, shader_dependencies=None):
+    """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
 
     def add(record, source):
@@ -157,6 +252,59 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
         bundles = owner.A.profile_bundles(path)
     else:
         profile = json.loads(path.read_bytes())
+        if "typed_records" in profile:
+            for row in profile["typed_records"]:
+                output = row["output"]
+                record = output["bundle"], output["member"], output["path_id"]
+                if "source" in row:
+                    source = row["source"]
+                    if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
+                        raise ValueError("original source file pins disagree")
+                    add(record, (source["path"], source["member"], source["path_id"]))
+                elif "camera_compute" in row or "camera_shader" in row:
+                    source = profile["source_type"]
+                    if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
+                        raise ValueError("original source file pins disagree")
+                    add(record, (source["path"], source["member"], row["source_path_id"]))
+                else:
+                    add(record, ("sdk", "Resources/unity_builtin_extra", row["sdk_shader"]))
+            return result
+        if "shader_links" in profile:
+            shader_records = [(row["original"], row["outputs"]) for row in profile["records"]]
+            if shader_dependencies is not None:
+                sdk = "sdk", "Resources/unity_builtin_extra"
+                links = {tuple(link["to"]): (*sdk, link["sdk_shader"]) for link in profile["shader_links"]}
+                for row in profile["records"]:
+                    routes = links
+                    if "fallback_original" in row:
+                        routes = {tuple(link["to"]): tuple(link["original"][key] for key in ("path", "member", "path_id")) for link in row["fallback_original"]}
+                    source = tuple(row["original"][key] for key in ("path", "member", "path_id"))
+                    for output in row["outputs"]:
+                        record = tuple(output[key] for key in ("bundle", "member", "path_id"))
+                        shader_dependencies[record, source] = routes
+        elif "shaders" in profile and "source" in profile and "template_inputs" in profile:
+            shader_records = [(dict(profile["source"], path_id=row["path_id"]), row["outputs"]) for row in profile["shaders"]]
+        elif "source_type" in profile and "compiler_sdk" in profile and "materials" in profile:
+            shader_records = [(profile["source_type"], profile["outputs"])]
+        else:
+            shader_records = None
+        if shader_records is not None:
+            for source, outputs in shader_records:
+                if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
+                    raise ValueError("original source file pins disagree")
+                for target in outputs:
+                    add((target["bundle"], target["member"], target["path_id"]), (source["path"], source["member"], source["path_id"]))
+            return result
+        if "original_sources" in profile:
+            originals = profile["original_sources"]
+            for row in profile["records"]:
+                source = row.get("original", ())
+                if row["class_id"] != 115 or not row.get("script_identity") or len(source) != 3 or source[0] not in originals:
+                    raise ValueError("registry remap requires a pinned original MonoScript identity")
+                if source_files is not None and source_files.setdefault(source[0], originals[source[0]]) != originals[source[0]]:
+                    raise ValueError("original source file pins disagree")
+                add(tuple(row["destination"]), source)
+            return result
         if "bundles" not in profile:
             bundle = profile["bundle"]
             if source_files is not None:
@@ -165,10 +313,23 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
                     if source_files.setdefault(source["path"], digest) != digest:
                         raise ValueError("original source file pins disagree")
             for row in profile["objects"]:
+                record = bundle["name"], bundle["member"], row["path_id"]
+                if row.get("generate") == "DefaultMaterial":
+                    declaration = dict(kind="sdk_material", class_id=21)
+                elif row.get("fieldless_script_record") is True:
+                    declaration = dict(kind="fieldless_component", class_id=114)
+                elif "record" in row and "script_identity" in row and "source" not in row:
+                    declaration = dict(kind="current_script", class_id=115, identity=row["script_identity"])
+                else:
+                    declaration = None
+                if declaration is not None:
+                    if generated is not None:
+                        generated[record] = declaration
+                    continue
                 source = row.get("source", row.get("properties_hash", {}).get("behaviour"))
                 if source is not None:
                     original = profile["sources"][source[0]]
-                    add((bundle["name"], bundle["member"], row["path_id"]), (original["path"], original["member"], source[1]))
+                    add(record, (original["path"], original["member"], source[1]))
             return result
         bundles = profile["bundles"]
     for bundle in bundles:
@@ -178,7 +339,11 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
             for kind in ("objects", "meshes", "textures", "avatars"):
                 for row in member.get(kind, []):
                     for target in row["outputs"]:
-                        add((target["bundle"], target["member"], target["path_id"]), (bundle["path"], member["name"], row["path_id"]))
+                        record = target["bundle"], target["member"], target["path_id"]
+                        source = bundle["path"], member["name"], row["path_id"]
+                        add(record, source)
+                        if relocations is not None and (references := target.get("transform", {}).get("references")):
+                            relocations[record, source] = {reference["offset"]: reference for reference in references}
     return result
 
 
@@ -199,6 +364,20 @@ def canonical_record_sources(owner, canonical, paths, destinations):
             raise ValueError("Canonical record profile does not supply any requested alias")
         sources.update(original_identities(owner, path, destinations=by_producer.pop(digest)))
     return sources
+
+
+def policy_rows(pins, table):
+    """Read inline rows or concatenate individually pinned selection shards."""
+    if isinstance(table, list):
+        yield from table
+        return
+    if not isinstance(table, dict) or set(table) != {"shards"} or not isinstance(table["shards"], list) or not table["shards"]:
+        raise ValueError("bundle policy table requires inline rows or pinned shards")
+    for pin in table["shards"]:
+        rows = pins.read(pin)
+        if not isinstance(rows, list):
+            raise ValueError("bundle policy shard must contain a row list")
+        yield from rows
 
 
 def prepare(owner, inputs, output):
@@ -248,23 +427,42 @@ def prepare(owner, inputs, output):
         if logical in providers and providers[logical] != directory:
             raise ValueError("ambiguous supplier provider")
         providers[logical] = directory
-        profiles[name] = original_identities(owner, paths["profile"], source_files)
-        suppliers[name] = SimpleNamespace(paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]))
+        generated, relocations, shader_dependencies = {}, {}, {}
+        profiles[name] = original_identities(
+            owner, paths["profile"], source_files, generated=generated, relocations=relocations, shader_dependencies=shader_dependencies
+        )
+        suppliers[name] = SimpleNamespace(
+            paths=paths,
+            types=types,
+            provider=logical,
+            profile_sha=owner.O.B.sha(paths["profile"]),
+            generated=generated,
+            relocations=relocations,
+            shader_dependencies=shader_dependencies,
+        )
     producer = owner.ProducerRecords(providers)
     bindings, sources = {}, {}
-    for row in policy["bindings"]:
+    for row in policy_rows(pins, policy["bindings"]):
         destination = tuple(row["destination"])
         if destination[:2] != member or destination in bindings or not destination[2]:
             raise ValueError("duplicate or foreign emitted destination")
-        if row["supplier"] not in suppliers:
+        supplier = suppliers.get(row["supplier"])
+        if supplier is None:
             raise ValueError("unknown binding supplier")
-        candidates = profiles[row["supplier"]].get(tuple(row["record_source"]), set())
+        record = tuple(row["record_source"])
+        if "generated" in row:
+            declaration = supplier.generated.get(record)
+            if declaration is None or declaration["kind"] != row["generated"] or "source" in row or not row.get("pointer_namespace"):
+                raise ValueError("generated binding requires a declared producer and pointer namespace")
+            bindings[destination] = row
+            continue
+        candidates = profiles[row["supplier"]].get(record, set())
         source = tuple(row["source"]) if "source" in row else next(iter(candidates)) if len(candidates) == 1 else None
         if source is None or source not in candidates:
             raise ValueError("original body source absent or ambiguous")
         bindings[destination] = dict(row, source=list(source))
         sources.setdefault(source, set()).add(destination)
-    for row in policy.get("staged_bindings", []):
+    for row in policy_rows(pins, policy.get("staged_bindings", [])):
         sources.setdefault(tuple(row["source"]), set()).add(tuple(row["destination"]))
     external_sources, source_files_by_member = {}, {}
     for (path, source_member, pid), destinations in sources.items():
@@ -273,7 +471,7 @@ def prepare(owner, inputs, output):
         external_sources[key] = destinations if existing is None else existing | destinations
         source_files_by_member.setdefault(source_member, set()).add(path)
     overrides = {}
-    for row in policy.get("field_routes", []):
+    for row in policy_rows(pins, policy.get("field_routes", [])):
         key = tuple(row["owner"]), tuple(row["field"])
         if key in overrides:
             raise ValueError("duplicate exceptional field route")
@@ -290,19 +488,7 @@ def prepare(owner, inputs, output):
         return {key: bytes.fromhex(item) if key in ("tree", "hash", "script_id") else item for key, item in value.items()}
 
     def descriptor(target, body, typ, **extra):
-        full = owner.full_type_key(typ)
-        types[full] = owner.O.json_layout(typ)
-        return dict(
-            destination=list(target),
-            bytes=len(body),
-            sha256=hashlib.sha256(body).hexdigest(),
-            class_id=typ["class_id"],
-            native_type_hash=typ["hash"].hex(),
-            schema=hashlib.sha256(typ["tree"]).hexdigest(),
-            full_type=full,
-            edges=[list(edge) for edge in sorted(set(owner.pointers(body, typ, {}).values()))],
-            **extra,
-        )
+        return record_descriptor(owner, types, target, body, typ, **extra)
 
     with ExitStack() as stack:
         originals = {}
@@ -335,6 +521,30 @@ def prepare(owner, inputs, output):
             if row["bundle"] == "sdk":
                 leaves = pins.read(row["leaves"]) if "leaves" in row else []
                 full = pins.read(row["full"]) if "full" in row else []
+                if "source_types" in row:
+                    if "full" in row or "leaves" in row:
+                        raise ValueError("SDK source types cannot be combined with retained witnesses")
+                    name = row["member"]
+                    staged.add_sdk(pin, name)
+                    for selector in normalized.pop("source_types"):
+                        source, source_sha = selector["source"], selector["sha256"]
+                        if source_files.setdefault(source[0], source_sha) != source_sha:
+                            raise ValueError("original source file pins disagree")
+                        _, typ, _ = original(source)
+                        pid = selector["path_id"]
+                        _, _, body = staged.members.record(name, (0, pid))
+                        full.append(
+                            descriptor(
+                                ("sdk", name, pid),
+                                body,
+                                typ,
+                                provider="sdk/" + name,
+                                provider_kind="serialized_file",
+                                provider_file_sha256=pin["sha256"],
+                                type_layout=owner.O.json_layout(typ),
+                            )
+                        )
+                    normalized["full"] = write(f"sdk-{Path(name).name}-source-types.json", full)
                 for witness in leaves + full:
                     target = tuple(witness["destination"])
                     if target in staged_descriptors and staged_descriptors[target] != witness:
@@ -342,14 +552,15 @@ def prepare(owner, inputs, output):
                     staged_descriptors[target] = witness
                     types[witness["full_type"]] = witness["type_layout"]
                     providers[witness["provider"]] = Path(pin["path"])
-                staged.add_sdk(pin, row["member"], leaves)
+                if "source_types" not in row:
+                    staged.add_sdk(pin, row["member"], leaves)
                 if full:
                     staged.qualify_sdk_full(row["member"], full, provider_paths=providers)
             else:
                 staged.add(row["bundle"], pin)
             normalized_staged.append(normalized)
 
-        def source_target(source, metadata, pointer):
+        def source_target(source, metadata, pointer, owner_field, checked_destination):
             fid, pid = pointer
             if not 0 <= fid <= len(metadata["externals"]):
                 raise ValueError("source pointer outside member table")
@@ -357,8 +568,10 @@ def prepare(owner, inputs, output):
             if target_member.startswith("archive:/"):
                 target_member = target_member.rsplit("/", 1)[-1]
             candidates = external_sources.get((target_member, pid), ()) if fid else sources.get((source[0], target_member, pid), ())
+            if checked_destination in candidates:
+                return checked_destination
             if len(candidates) != 1:
-                raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer)))
+                raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer, owner_field)))
             return next(iter(candidates))
 
         def read(target):
@@ -379,12 +592,39 @@ def prepare(owner, inputs, output):
                 actual, body = producer.record(value)
                 if actual != row:
                     raise ValueError("supplier record changed")
+                identity = row.get("source_produced", {}).get("script_identity")
+                provenance = {key: binding[key] for key in ("source", "generated") if key in binding}
+                if "generated" in binding:
+                    declaration = supplier.generated[tuple(binding["record_source"])]
+                    if declaration["class_id"] != typ["class_id"]:
+                        raise ValueError("generated supplier class differs from its declaration")
+                    provenance["pointer_namespace"] = binding["pointer_namespace"]
+                    if "identity" in declaration:
+                        owner.O.current_script_identity(body, typ["class_id"], declaration["identity"])
+                        provenance["current_registry_identity"] = declaration["identity"]
+                elif binding["source"][:2] == ["sdk", "Resources/unity_builtin_extra"]:
+                    if identity is not None or typ["class_id"] != 48 or not typ.get("tree") or owner.pointers(body, typ, {}):
+                        raise ValueError("SDK supplier requires a typed Shader without pointers")
+                else:
+                    original_body, original_type, _ = original(binding["source"])
+                if "source" in provenance and identity is not None:
+                    if not original_type.get("tree") or original_type["dependencies"]:
+                        raise ValueError("registry MonoScript requires an original leaf layout and verified identity")
+                    expected_type = (
+                        original_type if "tree" in typ else {key: value for key, value in original_type.items() if key not in {"tree", "dependencies"}}
+                    )
+                    if typ != expected_type:
+                        raise ValueError("registry MonoScript native type differs from original")
+                    owner.O.current_script_identity(original_body, original_type["class_id"], identity)
+                    owner.O.current_script_identity(body, typ["class_id"], identity)
+                    if owner.pointers(original_body, original_type, {}):
+                        raise ValueError("original registry MonoScript layout contains pointers")
+                    typ = original_type
                 value = descriptor(
-                    target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, source=binding["source"]
+                    target, body, typ, provider=supplier.provider, record_source=binding["record_source"], record=supplier.profile_sha, **provenance
                 )
                 if "resource" in row:
                     value["resource"] = row["resource"]
-                original(binding["source"])
             else:
                 if target in staged_descriptors:
                     value, body, typ = staged.record(target)
@@ -397,18 +637,29 @@ def prepare(owner, inputs, output):
             return value, body, typ
 
         pending = []
-        for group in policy["asset_groups"]:
+        asset_groups = list(policy_rows(pins, policy["asset_groups"]))
+        for group in asset_groups:
             pending.extend((*member, pid) for pid in group["roots"])
             pending.extend(tuple(target) for target in group.get("preload_roots", []))
+        parsed = owner.ParsedTrees()
         while pending:
             target = pending.pop()
             if target in selected:
                 continue
             value, body, typ = read(target)
             selected[target] = value
-            fields = owner.pointers(body, typ, {})
+            fields = sorted(owner.pointer_fields(body, typ, parsed))
+            binding = bindings.get(target, {})
+            source = value.get("source")
+            references = {}
+            shader_dependencies = None
+            if source is not None:
+                supplier = suppliers[binding["supplier"]]
+                selector = tuple(binding["record_source"]), tuple(source)
+                references = supplier.relocations.get(selector, {})
+                shader_dependencies = supplier.shader_dependencies.get(selector)
             edges = []
-            for field, pointer in sorted(fields.items()):
+            for field, offset, pointer in fields:
                 if not pointer[1]:
                     continue
                 key = target, field
@@ -419,16 +670,41 @@ def prepare(owner, inputs, output):
                     endpoint = tuple(override["target"])
                     used.add(key)
                 elif target[:2] == member:
-                    namespace = bindings[target].get("pointer_namespace")
+                    namespace = binding.get("pointer_namespace")
                     if namespace is not None:
                         fid, pid = pointer
                         if not 0 <= fid < len(namespace):
                             raise ValueError("produced pointer outside declared member table")
                         endpoint = (*namespace[fid], pid)
+                    elif typ["class_id"] == 48 and field[0] == "m_Dependencies" and shader_dependencies is not None:
+                        dependency = shader_dependencies.get(pointer)
+                        if dependency is None:
+                            raise ValueError(f"Shader dependency missing from producer recipe: {target} {field} {pointer}")
+                        if not pointer[0] and dependency[0] == "sdk":
+                            endpoint = (*member, pointer[1])
+                        else:
+                            candidates = sources.get(dependency, ())
+                            if len(candidates) != 1:
+                                raise ValueError(f"Shader dependency endpoint absent or ambiguous: {target} {field} {dependency}")
+                            (endpoint,) = candidates
+                        if read(endpoint)[0]["class_id"] != 48:
+                            raise ValueError(f"Shader dependency endpoint type differs: {target} {field} {endpoint}")
                     else:
-                        source = value["source"]
-                        _, _, metadata = original(source)
-                        endpoint = source_target(source, metadata, pointer)
+                        reference = references.get(offset)
+                        # The producer checked the input bytes before applying
+                        # this patch. Here the final type identifies its PPtr.
+                        relocated = reference is not None and tuple(reference["to"]) == pointer
+                        producer_target = None
+                        if relocated and not pointer[0] and tuple(binding["record_source"][:2]) == member:
+                            producer_target = (*member, pointer[1])
+                        if "generated" in bindings.get(producer_target, {}):
+                            # The checked producer patch explicitly names a generated record
+                            # in this member, which has no original-file selector.
+                            endpoint = producer_target
+                        else:
+                            _, _, metadata = original(source)
+                            original_pointer = tuple(reference["from"]) if relocated else pointer
+                            endpoint = source_target(source, metadata, original_pointer, key, producer_target)
                 else:
                     endpoint = staged.target(target[1], pointer)
                 read(endpoint)
@@ -454,22 +730,24 @@ def prepare(owner, inputs, output):
             pins.pin(canonical["bundle"])
             donor = canonical_profile["bundle"]
             externals = sorted(set(externals) | {donor["member"]})
-        # Persist one retained pack per supplier; record keys and lineage remain
-        # unchanged even when unrelated sources share the same numeric path ID.
+        # Keep each supplier key unique within a relocation pack. Aliases may
+        # apply different routes to the same body but keep its lineage key.
         retained = {}
+        occurrences = Counter()
         for target in sorted(selected):
             if target[:2] != member:
                 continue
             value, body, typ = raw_records[target]
             supplier_name = bindings[target]["supplier"]
-            pack = retained.setdefault(supplier_name, dict(blob=bytearray(), rows=[], record_keys=set(), witnesses=[], types=[]))
             targets = {tuple(edge["field"]): tuple(edge["target"]) for edge in routes[target]}
             revised = owner.relocate_pointer_fields(value, body, typ, targets, externals)
-            # ProducerRecords uses the same record key throughout the lineage.
             record_key = tuple(value["record_source"])
-            if record_key in pack["record_keys"]:
-                raise ValueError("one supplier record maps to multiple emitted bodies")
-            pack["record_keys"].add(record_key)
+            occurrence_key = supplier_name, record_key
+            pack_key = supplier_name, occurrences[occurrence_key]
+            occurrences[occurrence_key] += 1
+            if pack_key not in retained:
+                retained[pack_key] = (output / f"retained-{len(retained)}", dict(blob=bytearray(), rows=[], witnesses=[], types=[]))
+            directory, pack = retained[pack_key]
             prior, _ = producer.record(value)
             row = dict(
                 prior,
@@ -483,15 +761,15 @@ def prepare(owner, inputs, output):
             pack["blob"].extend(revised)
             pack["rows"].append(row)
             pack["types"].append(owner.O.json_layout(typ))
-            pack["witnesses"].append(dict(destination=list(target), source=value["source"], fields=routes[target]))
-            selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record", "source")})
+            provenance = {key: value[key] for key in ("source", "generated", "pointer_namespace", "current_registry_identity") if key in value}
+            pack["witnesses"].append(dict(destination=list(target), fields=routes[target], **provenance))
+            selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record")}, **provenance)
             if "resource" in value:
                 selected[target]["resource"] = value["resource"]
-            selected[target]["provider"] = str(output / ("retained-" + str(list(suppliers).index(supplier_name))))
+            selected[target]["provider"] = str(directory)
             fields = owner.pointers(revised, typ, {})
             routes[target] = [dict(edge, pointer=list(fields[tuple(edge["field"])])) for edge in routes[target]]
-        for name, pack in retained.items():
-            directory = output / ("retained-" + str(list(suppliers).index(name)))
+        for (name, _), (directory, pack) in retained.items():
             directory.mkdir()
             (directory / "objects.bin").write_bytes(pack["blob"])
             for filename, rows in (("index.jsonl", pack["rows"]), ("witnesses.jsonl", pack["witnesses"])):
@@ -519,7 +797,7 @@ def prepare(owner, inputs, output):
                     pins.add(directory / filename)
         original_properties, null_sources = {}, []
         for target, value in selected.items():
-            if target[:2] != member or value["class_id"] != 114:
+            if target[:2] != member or value["class_id"] != 114 or "generated" in value:
                 continue
             source = value["source"]
             body, original_type, metadata = original(source)
@@ -561,8 +839,8 @@ def prepare(owner, inputs, output):
             path_ids=sorted(key[2] for key in selected if key[:2] == member),
             externals=externals,
             dependencies=sorted({key[0] for key in selected if key[:2] != member and key[0] != "sdk"} | ({donor["name"]} if canonical else set())),
-            asset_groups=policy["asset_groups"],
-            assets=policy["assets"],
+            asset_groups=asset_groups,
+            assets=list(policy_rows(pins, policy["assets"])),
         )
         managed = dict(request["managed_inputs"])
         for key, pin in managed.items():
@@ -595,7 +873,7 @@ def prepare(owner, inputs, output):
             for pair in canonical["pairs"]:
                 duplicate, endpoint = tuple(pair["duplicate"]), tuple(pair["canonical"])
                 value = selected[duplicate]
-                if set(donor_sources.get(endpoint, ())) != {tuple(value["source"])}:
+                if "source" not in value or set(donor_sources.get(endpoint, ())) != {tuple(value["source"])}:
                     raise ValueError("canonical donor original body identity differs")
                 if endpoint[:2] != (donor["name"], donor["member"]):
                     raise ValueError("canonical endpoint belongs to a different donor")

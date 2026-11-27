@@ -44,6 +44,7 @@ class BundleManifestTests(unittest.TestCase):
         data = M.build(facts())
         self.assertEqual(data, M.build(dict(reversed(list(facts().items())))))
         env = UnityPy.load(data)
+        self.assertTrue(all(obj.serialized_type.node is not None for obj in env.objects))
         objects = {obj.type.value: obj.read_typetree() for obj in env.objects}
         manifest = objects[290]
         names = dict(manifest["AssetBundleNames"])

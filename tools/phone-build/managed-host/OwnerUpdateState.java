@@ -32,6 +32,11 @@ public final class OwnerUpdateState {
         if (total <= 0 || completed < 0 || completed > total) return "progress unavailable";
         return completed + "/" + total;
     }
+    /** Never imply a comparison against an installed release without its matching receipt. */
+    public static String releaseChanges(boolean installedKnown, int changed, int removed) {
+        if (!installedKnown || changed < 0 || removed < 0) return "Installed release comparison unavailable.";
+        return "Changed outputs: " + changed + "; removed: " + removed;
+    }
     public static String failureDetail(String stage, String reason) {
         return "First failure: " + stage + " — " + reason + ". Retry revalidates retained work; this is not installation success.";
     }
@@ -45,15 +50,15 @@ public final class OwnerUpdateState {
         public final boolean check, build, install, prepare, selectInputs, importInputs, pause, resume, cancel, retry, recover, rollback;
         public final String text;
         private Screen(OwnerUpdateState model, boolean running, boolean installing, boolean pendingRecovery,
-                       boolean inputsAvailable, String importState, boolean rollbackAvailable, boolean resumable) {
+                       boolean inputsAvailable, String importState, boolean rollbackAvailable, boolean resumable, boolean liveControls) {
             boolean idle = !running && !installing && !pendingRecovery;
             check = idle && model.canCheck();
             build = idle && (model.canBuild() || "IMPORTED".equals(importState));
             install = idle && model.canInstall();
             prepare = idle; selectInputs = idle; importInputs = idle && inputsAvailable;
-            pause = running && !installing && !pendingRecovery;
+            pause = running && liveControls && !installing && !pendingRecovery;
             cancel = pause;
-            resume = !installing && !pendingRecovery && (running || (resumable &&
+            resume = !installing && !pendingRecovery && (running ? liveControls : (resumable &&
                 (model.phase == Phase.PAUSED || model.phase == Phase.INTERRUPTED || model.phase == Phase.CANCELLED)));
             retry = idle && model.phase == Phase.ERROR && resumable;
             recover = !running && !installing && pendingRecovery;
@@ -68,9 +73,13 @@ public final class OwnerUpdateState {
         }
     }
     public Screen screen(boolean running, boolean installing, boolean pendingRecovery, boolean inputsAvailable,
-                         String importState, boolean rollbackAvailable, boolean resumable) {
-        return new Screen(this, running, installing, pendingRecovery, inputsAvailable, importState, rollbackAvailable, resumable);
+                         String importState, boolean rollbackAvailable, boolean resumable, boolean liveControls) {
+        return new Screen(this, running, installing, pendingRecovery, inputsAvailable, importState, rollbackAvailable, resumable, liveControls);
     }
+    static boolean requiresInstallPermission(String action) {
+        return "release-build".equals(action) || "release-rollback".equals(action) || "install".equals(action);
+    }
+
     public static boolean resumableAction(String action) {
         return "import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)
             || "install-prepare".equals(action) || "release-check".equals(action);

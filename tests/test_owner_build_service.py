@@ -24,7 +24,7 @@ public void removeCallbacks(Runnable r){queue.remove(r);} }""",
     "android/content/IntentFilter.java": "package android.content;public class IntentFilter {public IntentFilter(String s){}}",
     "android/content/Intent.java": """package android.content;public class Intent {public static String ACTION_BATTERY_CHANGED="battery";String action;public Intent(){}public Intent(Context c,Class<?> k){}public Intent setAction(String a){action=a;return this;}public String getAction(){return action;}public int getIntExtra(String k,int d){return k.equals("temperature")?250:k.equals("level")?50:k.equals("scale")?100:3;}}""",
     "android/content/SharedPreferences.java": """package android.content;import java.util.*;public class SharedPreferences {public Map<String,Object> data=new HashMap<>();public String getString(String k,String d){return (String)data.getOrDefault(k,d);}public Editor edit(){return new Editor();}public class Editor {public Editor putString(String k,String v){data.put(k,v);return this;}public Editor putBoolean(String k,boolean v){data.put(k,v);return this;}public boolean commit(){return true;}}}""",
-    "android/content/pm/PackageManager.java": "package android.content.pm;public class PackageManager {public boolean canRequestPackageInstalls(){return true;}}",
+    "android/content/pm/PackageManager.java": "package android.content.pm;public class PackageManager {public static boolean permission=true;public boolean canRequestPackageInstalls(){return permission;}}",
     "android/content/Context.java": """package android.content;import java.io.*;import android.app.*;import android.os.*;public class Context {
 public static String NOTIFICATION_SERVICE="notification",POWER_SERVICE="power";public static File root;public static int starts;public static boolean launchFail;
 public static SharedPreferences prefs=new SharedPreferences();public final PowerManager power=new PowerManager();
@@ -32,13 +32,13 @@ public SharedPreferences getSharedPreferences(String n,int m){return prefs;}publ
 public void startService(Intent i){if(launchFail)throw new IllegalStateException("launch failed");starts++;}public void startForegroundService(Intent i){startService(i);}
 public File getFilesDir(){return root;}public String getPackageName(){return "synthetic";}public Context getApplicationContext(){return this;}
 public android.content.pm.PackageManager getPackageManager(){return new android.content.pm.PackageManager();}public Intent registerReceiver(Object o,IntentFilter f){return new Intent();}}""",
-    "android/app/Service.java": """package android.app;import android.content.*;import android.os.*;public class Service extends Context {public static int START_NOT_STICKY=2;public int stops;public boolean foreground,foregroundFail;
+    "android/app/Service.java": """package android.app;import android.content.*;import android.os.*;public class Service extends Context {public static int START_NOT_STICKY=2;public int stops;public Notification lastNotification;public boolean foreground,foregroundFail;
 public IBinder onBind(Intent i){return null;}public void onCreate(){}public void onDestroy(){}public int onStartCommand(Intent i,int f,int id){return 2;}
-public void startForeground(int id,Notification n){if(foregroundFail)throw new IllegalStateException("foreground failed");foreground=true;}public void stopForeground(boolean b){foreground=false;}public void stopSelf(){stops++;}public void stopSelf(int n){stops++;}}""",
+public void startForeground(int id,Notification n){if(foregroundFail)throw new IllegalStateException("foreground failed");lastNotification=n;foreground=true;}public void stopForeground(boolean b){foreground=false;}public void stopSelf(){stops++;}public void stopSelf(int n){stops++;}}""",
     "android/app/NotificationChannel.java": "package android.app;public class NotificationChannel {public NotificationChannel(String a,String b,int c){}}",
     "android/app/NotificationManager.java": "package android.app;public class NotificationManager {public static int IMPORTANCE_LOW=1;public void notify(int n,Notification x){}public void createNotificationChannel(NotificationChannel c){}}",
     "android/app/PendingIntent.java": """package android.app;import android.content.*;public class PendingIntent {public static int FLAG_UPDATE_CURRENT=1,FLAG_IMMUTABLE=2;public static PendingIntent getService(Context c,int n,Intent i,int f){return new PendingIntent();}public static PendingIntent getActivity(Context c,int n,Intent i,int f){return new PendingIntent();}}""",
-    "android/app/Notification.java": """package android.app;import android.content.*;public class Notification {public static class Builder {public Builder(Context c){}public Builder(Context c,String s){}public Builder setSmallIcon(int x){return this;}public Builder setContentTitle(String s){return this;}public Builder setContentText(String s){return this;}public Builder setContentIntent(PendingIntent p){return this;}public Builder setOngoing(boolean b){return this;}public Builder setOnlyAlertOnce(boolean b){return this;}public Builder addAction(Action a){return this;}public Notification build(){return new Notification();}}public static class Action {public static class Builder {public Builder(Object a,String b,PendingIntent c){}public Action build(){return new Action();}}}}""",
+    "android/app/Notification.java": """package android.app;import android.content.*;public class Notification {public int actions;public static class Builder {final Notification notification=new Notification();public Builder(Context c){}public Builder(Context c,String s){}public Builder setSmallIcon(int x){return this;}public Builder setContentTitle(String s){return this;}public Builder setContentText(String s){return this;}public Builder setContentIntent(PendingIntent p){return this;}public Builder setOngoing(boolean b){return this;}public Builder setOnlyAlertOnce(boolean b){return this;}public Builder addAction(Action a){notification.actions++;return this;}public Notification build(){return notification;}}public static class Action {public static class Builder {public Builder(Object a,String b,PendingIntent c){}public Action build(){return new Action();}}}}""",
     "org/json/JSONObject.java": """package org.json;import java.util.*;public class JSONObject {Map<String,Object> data=new HashMap<>();public JSONObject put(String k,Object v){data.put(k,v);return this;}public String optString(String k){return optString(k,"");}public String optString(String k,String d){return String.valueOf(data.getOrDefault(k,d));}}""",
     PACKAGE
     + "OwnerInstaller.java": """package dev.ror2lab.phonebuildhostfixture;import android.content.*;public class OwnerInstaller {public static boolean busy;public static int verifies;public static boolean busy(Context c){return busy;}public static String state(Context c){return "AWAITING_CONFIRMATION";}public static void finishVerification(Context c){verifies++;busy=false;}public static void recoverProfiles(Context c){verifies++;OwnerAlphaInstall.pending=false;}}""",
@@ -46,11 +46,27 @@ public void startForeground(int id,Notification n){if(foregroundFail)throw new I
     + "OwnerAlphaInstall.java": "package dev.ror2lab.phonebuildhostfixture;import android.content.*;public class OwnerAlphaInstall {public static boolean pending;public static boolean pending(Context c){return pending;}}",
     PACKAGE
     + "OwnerInputImport.java": "package dev.ror2lab.phonebuildhostfixture;public class OwnerInputImport {public interface Observer {void checkpoint() throws Exception;void progress(String p,long c,long t) throws Exception;}}",
-    PACKAGE
-    + "OwnerInputSource.java": """package dev.ror2lab.phonebuildhostfixture;import android.content.*;public class OwnerInputSource {public static class Access {public void cancel(){}}public static void run(Context c,OwnerInputImport.Observer o,Access a)throws Exception{o.checkpoint();}}""",
+    PACKAGE + "OwnerInputSource.java": """package dev.ror2lab.phonebuildhostfixture;
+import android.content.*;import java.io.*;import java.util.concurrent.*;
+public class OwnerInputSource {
+    public static CountDownLatch reading;
+    public static class Access {
+        private final CountDownLatch closed=new CountDownLatch(1);
+        public void cancel(){closed.countDown();}
+    }
+    public static void run(Context c,OwnerInputImport.Observer observer,Access access)throws Exception {
+        observer.checkpoint();
+        if(reading==null)throw new IOException("provider unavailable");
+        reading.countDown();
+        if(!access.closed.await(5,TimeUnit.SECONDS))throw new IOException("provider read did not close");
+        throw new InterruptedIOException("read interrupted");
+    }
+}""",
     PACKAGE
     + "ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;import android.content.*;import java.io.*;import java.util.concurrent.*;import org.json.*;public class ToolHostActivity {
-public static String backgroundProgress(Context c){return "synthetic thermal state";}public static String status;public static int controls,installs;public static JSONObject readJson(File f){return new JSONObject().put("state",status);}public static void writeJson(Context c,File f,JSONObject j){controls++;}public static void updateStatus(Context c,String s,String m){status=s;}public static void installPrepared(Context c){installs++;}
+public static String backgroundProgress(Context c){return "synthetic thermal state";}public static String status;public static int controls,installs;public static CountDownLatch installEntered,installRelease;public static JSONObject importState;public static JSONObject readJson(File f){return new JSONObject().put("state",status);}
+public static void writeJson(Context c,File f,JSONObject j){if(f.getName().equals("import-state.json"))importState=j;else controls++;}
+public static void updateStatus(Context c,String s,String m){status=s;}public static void installPrepared(Context c)throws Exception{installs++;if(installEntered!=null){installEntered.countDown();installRelease.await();}}
 public static class Worker {public static volatile int executions,cancels;public static CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1);Context context;public Worker(Context c){context=c;}public void executeUpdate(String a)throws Exception {executions++;entered.countDown();release.await();if("release-build".equals(a)){File f=new File(context.getFilesDir(),"owner-input/update-state.json");f.getParentFile().mkdirs();f.createNewFile();status="READY";}}public void cancel(){cancels++;}}}""",
 }
 HARNESS = r"""
@@ -63,12 +79,18 @@ public static void main(String[] args)throws Exception {
 Context.root=new File(args[0]);Context.root.mkdirs();Context c=new Context();
 Context.launchFail=true;try{OwnerBuildService.launch(c,"release-check");throw new AssertionError();}catch(IllegalStateException ok){}check(!OwnerBuildService.isRunning());Context.launchFail=false;
 OwnerBuildService.launch(c,"release-check");OwnerBuildService.launch(c,"release-check");check(Context.starts==1&&OwnerBuildService.isRunning());
-OwnerBuildService service=new OwnerBuildService();service.onCreate();service.onStartCommand(action("release-check"),0,1);check(ToolHostActivity.Worker.entered.await(5,TimeUnit.SECONDS));
+OwnerBuildService service=new OwnerBuildService();service.onCreate();service.onStartCommand(action("release-check"),0,1);check(ToolHostActivity.Worker.entered.await(5,TimeUnit.SECONDS));check(service.lastNotification.actions==3);
 service.onStartCommand(action("release-check"),0,2);OwnerBuildService.launch(c,"release-build");check(ToolHostActivity.Worker.executions==1&&Context.starts==1);
 OwnerInstaller.busy=true;service.onStartCommand(action("control-cancel"),0,3);check(ToolHostActivity.Worker.cancels==0&&ToolHostActivity.controls==0);OwnerInstaller.busy=false;
 service.onStartCommand(action("control-cancel"),0,4);check(ToolHostActivity.Worker.cancels==1);service.onDestroy();check(!service.power.lock.isHeld());
 ToolHostActivity.Worker.release.countDown();finish();check(!service.foreground);check(Boolean.TRUE.equals(Context.prefs.data.get("interrupted")));
 OwnerBuildService recreated=new OwnerBuildService();recreated.onCreate();recreated.onStartCommand(null,0,5);check(!OwnerBuildService.isRunning()&&ToolHostActivity.Worker.executions==1);
+android.content.pm.PackageManager.permission=false;
+for(String blocked:new String[]{"release-build","release-rollback","install"}) {
+    recreated.onStartCommand(action(blocked),0,6);
+    check(!OwnerBuildService.isRunning()&&ToolHostActivity.Worker.executions==1&&"ERROR".equals(ToolHostActivity.status));
+}
+android.content.pm.PackageManager.permission=true;
 OwnerAlphaInstall.pending=true;recreated.onStartCommand(action("release-build"),0,6);check(!OwnerBuildService.isRunning()&&ToolHostActivity.Worker.executions==1);
 recreated.onStartCommand(action("profile-recover"),0,7);finish();check(OwnerInstaller.verifies==1&&!OwnerAlphaInstall.pending);
 OwnerBuildService failed=new OwnerBuildService();failed.foregroundFail=true;try{failed.onStartCommand(action("release-check"),0,8);}catch(IllegalStateException ok){}check(!OwnerBuildService.isRunning());check(!failed.power.lock.isHeld());
@@ -78,6 +100,39 @@ OwnerBuildService late=new OwnerBuildService();late.onStartCommand(action("relea
 late.onStartCommand(action("control-cancel"),0,11);ToolHostActivity.Worker.release.countDown();finish();
 check("CANCELLED".equals(ToolHostActivity.status)&&ToolHostActivity.installs==0);
 OwnerBuildService resumed=new OwnerBuildService();resumed.onStartCommand(action("release-build"),0,12);finish();check(ToolHostActivity.installs==1);
+ToolHostActivity.installEntered=new CountDownLatch(1);ToolHostActivity.installRelease=new CountDownLatch(1);
+OwnerBuildService installing=new OwnerBuildService();installing.onStartCommand(action("install"),0,13);
+check(ToolHostActivity.installEntered.await(5,TimeUnit.SECONDS));
+try {
+    int priorControls=ToolHostActivity.controls;
+    installing.onStartCommand(action("control-pause"),0,14);
+    installing.onStartCommand(action("control-cancel"),0,15);
+    check(ToolHostActivity.controls==priorControls);
+    check(installing.lastNotification.actions==0);
+} finally {ToolHostActivity.installRelease.countDown();finish();}
+check(ToolHostActivity.installs==2);
+ToolHostActivity.installEntered=new CountDownLatch(1);ToolHostActivity.installRelease=new CountDownLatch(1);
+OwnerBuildService handoff=new OwnerBuildService();handoff.onStartCommand(action("release-build"),0,16);
+check(ToolHostActivity.installEntered.await(5,TimeUnit.SECONDS));
+try {
+    int priorControls=ToolHostActivity.controls;
+    handoff.onStartCommand(action("control-cancel"),0,17);
+    check(ToolHostActivity.controls==priorControls);
+} finally {ToolHostActivity.installRelease.countDown();finish();}
+check(ToolHostActivity.installs==3);
+OwnerInputSource.reading=new CountDownLatch(1);
+OwnerBuildService importer=new OwnerBuildService();
+importer.onStartCommand(action("import"),0,18);
+check(OwnerInputSource.reading.await(5,TimeUnit.SECONDS));
+importer.onStartCommand(action("control-cancel"),0,19);
+finish();
+check("CANCELLED".equals(ToolHostActivity.importState.optString("state")));
+check(ToolHostActivity.importState.optString("message").contains("Verified files retained"));
+OwnerInputSource.reading=null;
+importer.onStartCommand(action("import"),0,20);
+finish();
+check("ERROR".equals(ToolHostActivity.importState.optString("state")));
+check("provider unavailable".equals(ToolHostActivity.importState.optString("message")));
 System.out.println("single-flight lifecycle PASS");
 }}
 """
@@ -100,7 +155,12 @@ class OwnerBuildServiceTests(unittest.TestCase):
                 paths.append(str(path))
             harness = root / "Harness.java"
             harness.write_text(HARNESS)
-            compiled = subprocess.run([*compile_command, "-d", str(root), *paths, str(SOURCE), str(harness)], capture_output=True, text=True, timeout=30)
+            compiled = subprocess.run(
+                [*compile_command, "-d", str(root), *paths, str(SOURCE), str(SOURCE.with_name("OwnerUpdateState.java")), str(harness)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             run = subprocess.run([java, "-cp", str(root), "Harness", str(root / "files")], capture_output=True, text=True, timeout=20)
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)

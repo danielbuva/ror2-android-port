@@ -187,6 +187,17 @@ class DetourContract {
         self.assertIn("NavigationRecoveryPolicy.ObjectiveRecovery(", route)
         self.assertIn("|| stalled ||\n                               objectiveRecovery", route)
 
+    def test_new_objective_clears_the_previous_terrain_recovery_window(self):
+        source = (SOURCE.parent / "world/IntegratedWorldBoundary.cs").read_text()
+        route = declaration(source, "public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 destination,")
+        reset = (
+            "if (worldNavigationHasProgress && Vector3.Distance(destination, worldNavigationProgressDestination) > 2) "
+            "coordinator.worldTerrainRecoveryUntil = -100;"
+        )
+        # The Gold shrine-to-teleporter handoff must let the new graph request
+        # run before any old recovery window can override its waypoint.
+        self.assertIn(reset, " ".join(route.split("if (graph && needsRoute)", 1)[0].split()))
+
     def test_owner_policy_and_recorder_execute_under_pinned_host_compiler(self):
         if not MONO.is_file() or not CSC.is_file():
             self.skipTest("Pinned Unity Mono/Roslyn host compiler unavailable")

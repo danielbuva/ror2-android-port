@@ -36,10 +36,12 @@ build trusts) there, so a later `script` job can install that build and sign syn
 
 ## Current local packaging request
 
-Use the installer APK and receipt cached for the checkout's commit. Keep the
-cache pinned with `.prune-keep` until qualification finishes. An ignored JSON
-request names the canonical `repo`, linked `checkout`, configured `device`
-alias, granted `workstream` and new absolute `done_file` under canonical `work/`.
+Use the installer APK and receipt cached for the checkout's commit. A packaging
+request can set `toolhost_source_commit` to reuse a verified earlier fixture when
+the embedded installer inputs match. Keep the cache pinned with `.prune-keep`
+until qualification finishes. An ignored JSON request names the canonical
+`repo`, linked `checkout`, configured `device` alias, granted `workstream` and
+new absolute `done_file` under canonical `work/`.
 
 ```
 source scripts/env.sh
@@ -51,8 +53,10 @@ Dry-run verifies the cached installer and prepares the synthetic fixtures withou
 accessing the device. The detached runner checks the grant before taking the
 lease, then invokes the existing package and signing acceptance. The shared
 thermal monitor verifies cool-start admission and records the run's thermal
-trace. The runner retains installed receipts, versions and hashes before
-disposing of the owned fixtures.
+trace. The shared display owner wakes only the authorized display at the first
+installer launch and verifies sleep and mode restoration after the UI flow.
+The runner retains installed receipts, versions and hashes before disposing of
+the owned fixtures.
 The terminal receipt links the private log after cleanup and pruning.
 To prepare the APK, use a separate request with `"operation": "toolhost"`,
 `"device": "thor"` and a Thor grant. This calls the configured toolhost builder,
@@ -74,9 +78,10 @@ source scripts/env.sh
 ```
 
 This compiles the current Java and manifest, packages the tracked installer
-sources, and verifies every retained runtime asset and Android library.
+sources and verifies every retained runtime asset and Android library.
 The build refuses changed native/runtime inputs and records the base commit
-and hash next to the new APK. The rebuilt APK is cached by the checkout commit.
+and hash next to the new APK. The repack verifies current authored source pins
+against the tracked files it embeds and caches the APK by checkout commit.
 An explicitly staged Android build can also seed this rebuild. Use its
 request-keyed cache directory. For an older receipt without source and signer
 fields, replay its original packaging request against the original checkout with
@@ -91,11 +96,15 @@ current inventory. The second also recognizes the older inventory for refusal.
 An optional `toolhost_source_commit` selects a previously built cache entry.
 The acquisition runner checks its stage/build receipts and requires matching
 installer runtime sources and the disposable APK's document fixture. The dry-run
-checks the catalogs and source shape. The detached run stages a temporary ZIP and
-two folders under the fresh installer's external files. A private one-use command
-invokes the normal buttons in the debuggable installer-test package. The run sends
-Back to the system picker and uses the fixture's Android document grants to qualify
-folder and ZIP imports. It then removes its owned files and installer.
+checks the catalogs and source shape. The detached run stages the cohorts and
+invalid controls in a scoped Downloads directory. A private one-use command
+invokes the normal buttons in the debuggable installer-test package. Android's
+system picker grants read access through the external storage provider. The
+shared display owner verifies top-panel-only use on Thor and restores its prior
+mode when the picker tests end. The run restarts the installer before importing
+the supported selections, verifies a mid-copy cancellation and resumed import,
+and hashes staged files before and after acquisition. It then removes its owned
+files and installer.
 
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
@@ -111,6 +120,51 @@ shared lease covers transfer, supervised Android build and scratch cleanup.
 The terminal receipt identifies a verified APK cached by commit and request
 pins. A missing terminal device status retains the lease and the private
 detached handle for reconciliation.
+
+## Run a converter stage on the phone
+
+`./dev converter-stage <producer> --request <config.json> --workstream <name>`
+runs a registered content producer against files already staged in the retained
+toolhost. Use the producer's filename stem with hyphens, for example
+`bundle-preload`, `mesh-produce`, or `texture-produce`. Run with `--dry-run`
+before queuing the phone. Run the live command detached once the dispatcher
+grants the phone. The shared runner checks the installed toolhost hash, grant,
+battery and storage, and owns thermal supervision and cleanup.
+
+Use the emission config below with `"operation": "converter-stage"`,
+`"request": "stage.json"`, and the required `retained_tool_sha256`. Omit
+`expected_records`. Its manifest maps `stage.json` to the host descriptor
+pin and lists any additional producer dependencies as `repo/<tracked path>`
+keys. The action pins all producer paths to the calling checkout's clean
+commit, adds the selected script and the runner's support files, and writes a
+new manifest beside the terminal receipt. The retained toolhost supplies the
+Python runtime. The current runner accepts internal-only toolhost staging.
+
+An example descriptor for a prepared bundle request is:
+
+```json
+{
+  "producer": "tools/phone-build/accepted-output/bundle_preload.py",
+  "input_root": "prepared-input",
+  "input_pins": {"inputs.json": "<sha256 of the staged request>"},
+  "arguments": ["--inputs", {"inputs": "inputs.json"}, "--output", {"output": "."}],
+  "artifacts": {"bundle": "<produced bundle name>"}
+}
+```
+
+`input_root` is relative to the retained toolhost's `files/owner-input`.
+Pass the stage's read-only input files under `inputs` and its generated files
+under `output`. Path arguments also accept `repo`, `native`, and `runtime`.
+Use `.` for the root itself. Artifact paths and the optional `scoreboard`
+path are relative to the output root. A producer's own structural checks still
+run. Bundle preload runs with one record worker on Android.
+
+The terminal directory receives JSON receipts, artifact hashes, and the
+optional scoreboard. Every attempt gets fresh device scratch, which is removed
+after the terminal result. Staged inputs and the installed toolhost are preserved.
+If the device disconnects during production, use the generated
+`*.request.json` with a fresh terminal filename in the same directory and
+resume its retained handle through `--emission-request ... --resume-emission`.
 
 ## Current local emission request
 
@@ -128,6 +182,7 @@ The ignored JSON config has exactly these fields:
 | --- | --- |
 | `runner` | `repo` canonical checkout path, `ref` fetchable branch/commit, `device` configured alias |
 | `tool_apk`, `manifest` | Each has an absolute `path` and `sha256` |
+| `retained_tool_sha256` | Optional exact hash of the already-installed bundle toolhost, matching `tool_apk.sha256` |
 | `request` | Relative staged request path for `bundle_preload.py --inputs` |
 | `done_file` | New absolute terminal JSON path under canonical `work/` |
 | `expected_records` | Positive expected native record count |
@@ -147,13 +202,32 @@ checkpoints are the same in both modes.
 
 The operation streams the pinned APK's Python runtime and pinned inputs without
 host archive copies.
+With the retained toolhost pin, each fresh request discovers the installed
+runtime path and creates a fresh staging root and cache. After collecting
+terminal evidence it removes that root and preserves the installed toolhost.
+Use a separate terminal directory for each cold run. Resume applies only to an
+unconfirmed handle in this mode.
 Dry-run validates pins without device access. Live execution with `--workstream`
-verifies the named grant, takes the lease and stops Unity's ADB server before
-device admission. Use the same workstream to reattach to a retained lease.
+verifies the named grant and takes the lease before device admission. Use the
+same workstream to reattach to a retained lease. Pass `--strict-battery` when
+seeding inputs for a converter stage to apply the same charge limits as replay.
 Execution uses the standard fresh checkout, cooldown, package-identity,
 storage and display owners.
 The current runtime staging supports configured internal-only devices; adopted
 storage is refused without an internal-storage fallback.
+
+For a paired UnityFS decoder benchmark, set `operation` to `bundle-decode`
+and replace `expected_records` with `expected_blocks` and
+`expected_decoded_sha256`. The latter pins the SHA-256 of the concatenated
+decoded blocks in bundle order. Both pins include raw blocks. Set `request`
+to the staged bundle path and provide the exact
+`retained_tool_sha256`. The manifest includes `baseline-unity_bundle.py` from
+the baseline revision and the candidate's tracked `bundle_decode_benchmark.py`,
+`unity_bundle.py` and `phone_runner.py` under
+`repo/tools/phone-build/accepted-output/`. The supervised child decodes each
+block with both versions in alternating order and requires equal bytes. Only
+the receipt is written. It records per-decoder CPU time, elapsed time and peak
+RSS. The runner retains the thermal trace and removes the staged inputs.
 
 Before a new producer qualification, repin the existing manifest explicitly:
 
@@ -210,6 +284,23 @@ logs and app-owned crash files to the private run directory. Failed runs also
 capture Android's crash buffer and package exit history. If transfer fails,
 the runner retains its exact handle and scratch for `--resume-emission`.
 After a confirmed result, use a fresh request directory for another attempt.
+
+### Signed native qualification
+
+Use `"operation": "signed-native"` with `expected_managed_providers`. The pinned
+private request selects `bundle`, `envelope`, `public_key`, `key_id` and an
+`output` relative to its private `work/` directory. The public source bundle
+must select the Burst library, IL2CPP library and matching metadata. Generate
+its jobs with the owner code, Burst and native token requests and the staged
+audio roster. Stage the SDK, original, package and GNU tool inputs beside the
+request. Pin the accepted inventory in the transfer manifest and keep mutable
+inventory and configuration files out of `input-hashes.json`.
+
+The runner verifies the envelope and source bundle, then dispatches the
+conversion and native jobs under the same thermal supervisor. The terminal
+receipt records managed provider and compile counts, readback hashes for all
+three native outputs, and resource measurements. The runner captures the
+receipts and cleans the attempt's scratch after a confirmed result.
 
 ## Safety model
 

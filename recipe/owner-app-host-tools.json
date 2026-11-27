@@ -180,31 +180,118 @@
     }
   ],
   "public_profile_source_hashes": {
-    "recipe/assembly-transforms.json": "f6ed66e4cc324f7888a270b601882710d5f9f7d60da38068540d6121d031265b",
+    "recipe/assembly-transforms.json": "c6b53d9d38bc42c36c261915f5e28beee346d3bb0bb7bc4747d3cc3d6ad900ac",
     "recipe/owner-public-tools.json": "1f4b333652fbb38174f8e2f7c54366369171b543789a4fbfe54fd8db4cc2fec1",
-    "scripts/lab/assembly_transforms.py": "9e30fa8771789a6b5a47cb81231aba38219cb13ce1ed74d7a8c88700f3843ec4",
+    "scripts/lab/assembly_transforms.py": "623d0660bdda6fa716c766f48ce7493743bebb418c48b12a3ba1516115b72db4",
     "scripts/lab/common.py": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55",
     "scripts/lab/public_transform_tools.py": "f79c9cb79a56f6bd8d41b3fcaf4d47d456a3b052db0f3d47340d47bb607394d9",
     "tools/assembly-transforms/AssemblyProbe.csproj": "72af7a71d7476ab4633780e2f76b54de5aaacbc202e5b26dd0780633986f330e",
     "tools/assembly-transforms/AudioGuard.cs": "ac5d6dd4e08786d54346bc14c69f640785e04f98d8a104da9c39c86c6a00ffd6",
     "tools/assembly-transforms/CatalogContract.cs": "5c9ec3e42209d7f1cf1f7cbc18e2ff61c16e314363b3fc9135fc77c8747e1da4",
     "tools/assembly-transforms/CatalogNames.cs": "ff18bcf18c58de1e5a2113bcfb35b02d98b1c33db80e7345bd077daea6ace682",
+    "tools/assembly-transforms/CommandoPostObserverMarker.cs": "971caade316b7a8d7e1c975185ca82458dcc9b0bc6eff34c02e44151dabb11e5",
     "tools/assembly-transforms/MigrationSurface.cs": "771f9ecb44b76328b135eecb3539a611ffc3f8ab3fff7213494865e84d7a56af",
     "tools/assembly-transforms/MusicOutputObserverCecilTransform.cs": "c94e64eda96e1d969087272d0684ce1a809a00b2e18eed30e35a0a5825a77b95",
     "tools/assembly-transforms/MusicOutputObserverCecilTransform.csproj": "bfca91b1984488e25dd1849433c319c1288fff37630b0279c6684cec140a012b",
-    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "612e1f374e6381e48aec33e902505953e47d1f4df765df646ea02284c7d16598",
+    "tools/assembly-transforms/NativeViewCameraCecilTransform.cs": "737672b281b3872b32fe171c7264e62096866a41538c33355682bf37463d72ce",
+    "tools/assembly-transforms/NativeViewCameraCecilTransform.csproj": "1b36ba11f2a6783bcb2990c59f470448b5f34547a4fc09a48ba47bf10f5e4de6",
     "tools/assembly-transforms/OptionalPresentationGuard.cs": "a78d5d453bfe7d78a2df3b2040ff3ca09f22ef6ef9dd9047be751b5ed6e962f0",
     "tools/assembly-transforms/Program.cs": "f4fd626746cd6a2a970e3a543a62ce1f487587c5ce10bf356a3611e4c5d6bf28",
     "tools/assembly-transforms/RewiredContract.cs": "ed300e3f88ed25823d05ef9ab22e732d9d37d6dee0e5968e837c50ec63c8b8f3",
     "tools/assembly-transforms/Slice.cs": "6d25f9bf0c8f8f4107708d32d0275fb728ffe06de81ec1fdee7fcb32962bf494",
-    "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs": "f9047828a437fc650dbc30e68c81585a80b3f38ed87cc81427b32314b6cf9b91",
+    "tools/assembly-transforms/VerifyNativeViewCameraTransform.cs": "9ea24c13453d5753bcb46f4efe09b705d7ab7498c4cd51039046998f9588caaa",
     "tools/assembly-transforms/WwiseUnavailable.cs": "81ebaa69b8c40a19c2068dfcb856ceffe67a0b3d4be8852936ffcbedb8486ba3",
     "tools/owner-build/PublicProviderWitness.cs": "d3cd2fe4d237774dde69470b7f45cb10872d99f66b73bab60550d11731520ce0",
     "tools/owner-build/licenses/Roslyn-LICENSE.txt": "ae48df11a335dc1a615f4f938b69cba73bcf4485c4f97af49b38efb0f216353b"
   },
   "python_version": "3.14.8",
+  "python_android_distribution": {
+    "url": "https://www.python.org/ftp/python/3.14.8/python-3.14.8-aarch64-linux-android.tar.gz",
+    "sha256": "11324313957da3736f44e90257304d288864321a4dd376ed0cc35a54eacf9a33",
+    "extensions": {
+      "_asyncio.cpython-314-aarch64-linux-android.so": "e7ca5c385033af6acd877615b544cdfc2c72dd96b221e0fa8055b80f2f6b7edb",
+      "_ctypes.cpython-314-aarch64-linux-android.so": "dabc48bcfaac67c285f171595915e964d9e1be0e323b31ba40e12c10d5827f2d",
+      "_queue.cpython-314-aarch64-linux-android.so": "ded4f84ab893a47edab6a4d5f2db4213c9c1356937b741043e5465783556a64c"
+    }
+  },
+  "python_imports": {
+    "entries": [
+      "run_profile.py",
+      "repo/scripts/lab/phone_apk.py",
+      "repo/scripts/lab/public_transform_tools.py",
+      "repo/tools/phone-build/accepted-output/bundle_decode_benchmark.py",
+      "repo/tools/phone-build/accepted-output/bundle_preload.py",
+      "repo/tools/phone-build/accepted-output/phone_runner.py",
+      "repo/tools/phone-build/accepted-output/sdk_package.py",
+      "repo/tools/phone-build/accepted-output/texture_produce.py",
+      "repo/tools/phone-build/accepted-output/unity_bundle.py",
+      "repo/tools/phone-build/owner-apk/build_owner_apk.py",
+      "repo/tools/phone-build/owner-apk/updates.py",
+      "repo/tools/phone-build/owner-code/managed.py",
+      "repo/tools/phone-build/owner-code/produce.py",
+      "repo/tools/phone-build/owner-code/run_android.py"
+    ],
+    "entry_paths": {
+      "repo/scripts/lab/public_transform_tools.py": "repo/scripts/lab"
+    },
+    "release_dispatcher": "repo/tools/phone-build/owner-apk/release_jobs.py",
+    "stdlib_modules": ["_asyncio", "_queue", "ctypes", "resource"],
+    "modules": [
+      "PIL._imaging",
+      "UnityPy",
+      "archspec.cpu",
+      "astc_encoder",
+      "attrs",
+      "brotli",
+      "dnfile",
+      "etcpak",
+      "fsspec",
+      "lz4.frame",
+      "pefile",
+      "texture2ddecoder",
+      "tpk_ar",
+      "yaml"
+    ]
+  },
+  "python_notices": {
+    "IJG-README.txt": "6783159a601b23fb42abbcc9e7f57b89a23ddf39cfa862c364844580520a7b43"
+  },
+  "python_source_wheels": {
+    "astc_encoder_py-0.1.12": {
+      "sha256": "03759ac32804cae32bc238e72f94c5ba27e228507df00816b741f7961f1184f9"
+    },
+    "brotli-1.2.0": {
+      "sha256": "e310f77e41941c13340a95976fe66a8a95b01e783d430eeaf7a2f87e0a57dd0a"
+    },
+    "etcpak-0.9.15": {
+      "sha256": "fe09e32d8aa75b8163832428c3d6df65a51b2b7e0237292c10c1224ca5728a43"
+    },
+    "lz4-4.4.5": {
+      "sha256": "5f0b9e53c1e82e88c10d7c180069363980136b9d7a8306c4dca4f760d60c39f0"
+    },
+    "pillow-12.3.0": {
+      "sha256": "3b8182a766685eaa002637e28b4ec8d6b18819a0c71f579bf0dbaa5830297cce"
+    },
+    "pyyaml-6.0.3": {
+      "pure": true,
+      "sha256": "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f"
+    },
+    "texture2ddecoder-1.0.6": {
+      "sha256": "88f04d8951018ac13b8dacd07e57e8adad4a6f1cfe5509646e8a1020346a81ca"
+    },
+    "tpk_ar-0.2.4": {
+      "pure": true,
+      "sha256": "d64897e5a0bcddd58e8a7d4dd922f372da984a0f98bc3b460ec869aab906ee78"
+    },
+    "unitypy-1.25.3": {
+      "sha256": "41b3e830a04469dfabeadc097f59ba7008e289864604728e1ad623c22d7c30dc"
+    }
+  },
   "python_wheels": {
+    "archspec-0.2.6-py3-none-any.whl": "22463371fe8e9fa92fa144bf320cb445373a99f2ca6a5914c890e0c0b7816f8f",
+    "attrs-26.1.0-py3-none-any.whl": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309",
     "dnfile-0.18.0-py3-none-any.whl": "7579fe2d6bb1d854aa154929c309fbf34e70b622053a043a51d42f079fad1772",
+    "fsspec-2026.7.0-py3-none-any.whl": "b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279",
     "pefile-2024.8.26-py3-none-any.whl": "76f8b485dcd3b1bb8166f1128d395fa3d87af26360c2358fb75b80019b957c6f"
   },
   "schema": 1,

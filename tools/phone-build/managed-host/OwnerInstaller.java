@@ -18,6 +18,29 @@ import java.util.Locale;
 /** Installs a completed owner build without uninstalling or touching game data. */
 public final class OwnerInstaller {
     public static final String STATUS = "owner-install";
+    // The framework-owned intent is process-local and handled on the main thread.
+    // Persist only session/status; never serialize or manufacture a consent intent.
+    private static String confirmationSession;
+    private static Intent pendingConfirmation;
+    private static boolean confirmationOpened;
+
+    static boolean hasConfirmation(Context app) {
+        return pendingConfirmation != null && !confirmationOpened && "AWAITING_CONFIRMATION".equals(state(app))
+            && confirmationSession.equals(app.getSharedPreferences(STATUS, 0).getString("session", ""));
+    }
+
+    static void openConfirmation(Context activity) {
+        if (!hasConfirmation(activity)) return;
+        try {
+            activity.startActivity(pendingConfirmation);
+        } catch (RuntimeException unavailable) {
+            status(activity, "AWAITING_CONFIRMATION", "Android confirmation could not open. Tap Open Android install confirmation to retry the existing session.");
+            return;
+        }
+        confirmationOpened = true;
+        pendingConfirmation = null;
+        status(activity, "AWAITING_CONFIRMATION", "Complete the Android install confirmation, then return here.");
+    }
 
     public static String state(Context app) {
         return app.getSharedPreferences(STATUS, 0).getString("state", "IDLE");
@@ -29,6 +52,9 @@ public final class OwnerInstaller {
 
     public static void clearTerminalStatus(Context app) {
         if (busy(app) || OwnerAlphaInstall.pending(app)) throw new IllegalStateException("Installation or profile recovery is pending");
+        confirmationSession = null;
+        pendingConfirmation = null;
+        confirmationOpened = false;
         app.getSharedPreferences(STATUS, 0).edit().putString("state", "IDLE").putString("status", "").putString("session", "").commit();
     }
 
@@ -121,6 +147,23 @@ public final class OwnerInstaller {
         catch (RuntimeException unavailable) { return "unavailable"; }
     }
 
+    private static String digestHex(MessageDigest hash) {
+        StringBuilder value = new StringBuilder();
+        for (byte b : hash.digest()) value.append(String.format(Locale.ROOT, "%02x", b & 255));
+        return value.toString();
+    }
+    private static void verifyPreparedBytes(File apk, String expectedHash) throws Exception {
+        if (expectedHash == null || !expectedHash.matches("[0-9a-f]{64}"))
+            throw new IOException("Verified APK checksum missing. Rebuild before installing; the installed version was not changed.");
+        MessageDigest hash = MessageDigest.getInstance("SHA-256");
+        try (InputStream input = new FileInputStream(apk)) {
+            byte[] buffer = new byte[65536]; int count;
+            while ((count = input.read(buffer)) != -1) hash.update(buffer, 0, count);
+        }
+        if (!expectedHash.equals(digestHex(hash)))
+            throw new IOException("Owner APK output drift: checksum differs. Rebuild before installing; the installed version was not changed.");
+    }
+
     public static synchronized void install(Context app, File apk, String expectedHash, String expectedPackage, long expectedVersion) throws Exception {
         if (busy(app)) throw new IOException("An installation is already pending");
         PackageManager manager = app.getPackageManager();
@@ -138,8 +181,11 @@ public final class OwnerInstaller {
             long newVersion = version(next);
             if (newVersion <= oldVersion) throw new IOException("Update version must increase");
             if (!Arrays.equals(current.signatures, next.signatures))
-                throw new IOException("Owner signing key differs. Retain the original key; never uninstall to update or roll back.");
+                throw new IOException("Owner signing key differs. The installed version was not changed. Restore the original key; never uninstall to update or roll back.");
         }
+        // Reject corrupt bytes before profile preparation or creation of a
+        // package session; keep the streamed hash below to catch later drift.
+        verifyPreparedBytes(apk, expectedHash);
         diagnostic(app, "prepare", null, false);
         if (OwnerAlphaInstall.PACKAGE.equals(next.packageName)) {
             try { OwnerAlphaInstall.prepare(app, apk, expectedHash, next, current); }
@@ -174,9 +220,7 @@ public final class OwnerInstaller {
                 while ((count = input.read(buffer)) != -1) {
                     hash.update(buffer, 0, count); output.write(buffer, 0, count);
                 }
-                StringBuilder actual = new StringBuilder();
-                for (byte value : hash.digest()) actual.append(String.format(Locale.ROOT, "%02x", value & 255));
-                if (!actual.toString().equals(expectedHash)) throw new IOException("Owner APK output drift");
+                if (!expectedHash.equals(digestHex(hash))) throw new IOException("Owner APK output drift");
                 diagnostic(app, "write-complete", null, false);
                 diagnostic(app, "fsync-start", null, false);
                 session.fsync(output);
@@ -237,13 +281,30 @@ public final class OwnerInstaller {
             diagnostic(app, null, code == PackageInstaller.STATUS_PENDING_USER_ACTION ? "pending-user-action" : code == PackageInstaller.STATUS_SUCCESS ? "success" : code == PackageInstaller.STATUS_FAILURE ? "failure" : "unknown", matches);
             if (!matches) return;
             if (code == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                if (!"INSTALLING".equals(state(app)) && !"AWAITING_CONFIRMATION".equals(state(app))) return;
+                if (!session.equals(confirmationSession)) {
+                    confirmationSession = session;
+                    pendingConfirmation = null;
+                    confirmationOpened = false;
+                }
+                if (confirmationOpened) return;
                 Intent confirmation = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-                if (confirmation == null) { status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; the existing install session is retained. No second session will be created."); return; }
-                status(app, "AWAITING_CONFIRMATION", "Confirm installation in Android, then return here.");
-                confirmation.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                try { app.startActivity(confirmation); }
-                catch (RuntimeException error) { status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; existing session retained: " + error.getMessage()); }
-            } else if (code == PackageInstaller.STATUS_SUCCESS) {
+                if (confirmation != null) pendingConfirmation = confirmation;
+                if (pendingConfirmation == null) {
+                    status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; the existing install session is retained. No second session will be created.");
+                    return;
+                }
+                status(app, "AWAITING_CONFIRMATION", "Android confirmation required. If the prompt is not visible, return to the installer and tap Open Android install confirmation.");
+                ToolHostActivity visible = ToolHostActivity.activeForConfirmation();
+                if (visible != null) openConfirmation(visible);
+                // Otherwise the ongoing build notification returns the owner here.
+                // A visible button also works when notifications are disabled.
+                return;
+            }
+            confirmationSession = null;
+            pendingConfirmation = null;
+            confirmationOpened = false;
+            if (code == PackageInstaller.STATUS_SUCCESS) {
                 if (OwnerAlphaInstall.pending(app)) {
                     status(app, "VERIFYING_PROFILE", "Verifying installed identity and retained profiles/settings…");
                     if (!OwnerBuildService.isRunning()) OwnerBuildService.launch(app, "install-verify");

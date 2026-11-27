@@ -119,7 +119,9 @@ class PackageAssembliesTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "failed"):
                 PRODUCER.invoke([sys.executable, "-c", "print('independent failure witness');raise SystemExit(7)"], "failure", root)
             self.assertIn("independent failure witness", (root / "failure.log").read_text())
-            self.assertEqual(json.loads((root / "failure.process.json").read_text())["exit_code"], 7)
+            receipt = json.loads((root / "failure.process.json").read_text())
+            self.assertEqual(receipt["exit_code"], 7)
+            self.assertLessEqual(receipt["started_boottime_seconds"], receipt["ended_boottime_seconds"])
 
 
 if __name__ == "__main__":

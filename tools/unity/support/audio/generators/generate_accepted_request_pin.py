@@ -127,7 +127,7 @@ def validate_input_contract(path: Path, *, owner_work: Path | None = None) -> st
     return hashlib.sha256(raw).hexdigest()
 
 
-def streamed_media_rows(receipt: dict, *, bank_index_sha256: str, init_receipt_sha256: str) -> list[dict]:
+def streamed_media_rows(receipt: dict, *, accepted_inventory_sha256: str | None, bank_index_sha256: str, init_receipt_sha256: str) -> list[dict]:
     validator_path = ROOT / "scripts/lab/original_game_audio_stage.py"
     spec = importlib.util.spec_from_file_location("original_audio_stage_validator", validator_path)
     if spec is None or spec.loader is None:
@@ -137,7 +137,7 @@ def streamed_media_rows(receipt: dict, *, bank_index_sha256: str, init_receipt_s
     validator = getattr(module, "validate_streamed_media_rows", None)
     if not callable(validator):
         raise ValueError("shared streamed-media receipt validator unavailable")
-    rows = validator(receipt, bank_index_sha256=bank_index_sha256, init_receipt_sha256=init_receipt_sha256)
+    rows = validator(receipt, accepted_inventory_sha256=accepted_inventory_sha256, bank_index_sha256=bank_index_sha256, init_receipt_sha256=init_receipt_sha256)
     if not isinstance(rows, list) or len(rows) != 120:
         raise ValueError("R2 receipt must validate exactly 120 streamed media rows")
     return rows
@@ -209,11 +209,13 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner
     ):
         raise ValueError("stage receipt is outside the accepted 153-bank runtime contract")
     inventory_path = checked_work_file(work / "inventory/files.json", "owner inventory", work)
-    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    inventory_raw = inventory_path.read_bytes()
+    inventory = json.loads(inventory_raw)
+    inventory_sha = hashlib.sha256(inventory_raw).hexdigest()
     if (
         inventory.get("input_id") != pins["accepted_input_id"]
         or inventory.get("hash_mode") != "full"
-        or stage.get("accepted_inventory_sha256") != sha_file(inventory_path)
+        or stage.get("accepted_inventory_sha256") != inventory_sha
     ):
         raise ValueError("stage receipt does not bind the current full accepted inventory")
     for key in (
@@ -252,7 +254,12 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner
         names.add(name)
     if not found_init or len(names) < 153:
         raise ValueError("stage receipt must bind the 153 startup bank names plus Init")
-    media_rows = streamed_media_rows(stage, bank_index_sha256=pins["current_bank_index_sha256"], init_receipt_sha256=pins["init_adaptation_receipt_sha256"])
+    media_rows = streamed_media_rows(
+        stage,
+        accepted_inventory_sha256=inventory_sha if owner_work is not None else None,
+        bank_index_sha256=pins["current_bank_index_sha256"],
+        init_receipt_sha256=pins["init_adaptation_receipt_sha256"],
+    )
     if len(media_rows) != 120:
         raise ValueError("stage receipt must validate exactly 120 streamed media rows")
     if any(not set(row["referenced_by"]).issubset(names) for row in media_rows):

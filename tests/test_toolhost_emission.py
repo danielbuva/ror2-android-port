@@ -22,6 +22,10 @@ SPEC = importlib.util.spec_from_file_location("emission_installer_fixture", ROOT
 INSTALLER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(INSTALLER)
 
+STAGE_SPEC = importlib.util.spec_from_file_location("phone_stage_fixture", ROOT / EMISSION.STAGE_OWNER)
+STAGE = importlib.util.module_from_spec(STAGE_SPEC)
+STAGE_SPEC.loader.exec_module(STAGE)
+
 
 class EmissionTests(unittest.TestCase):
     def setUp(self):
@@ -89,6 +93,68 @@ class EmissionTests(unittest.TestCase):
             if self.collected is not None:
                 stack.enter_context(patch.object(EMISSION, "collect", return_value=self.collected))
             return EMISSION.execute(self.path, INSTALLER, resume=resume, restage=restage)
+
+    def test_converter_stage_uses_retained_input_and_only_collects_json(self):
+        manifest = Path(self.request["manifest"]["path"])
+        files = json.loads(manifest.read_text())["files"]
+        EMISSION.write(manifest, {"files": {"stage.json": files["request.json"]}})
+        self.request.pop("expected_records")
+        self.request.update(
+            operation=EMISSION.CONVERTER_STAGE,
+            request="stage.json",
+            retained_tool_sha256=self.request["tool_apk"]["sha256"],
+            manifest=dict(path=str(manifest), sha256=EMISSION.digest(manifest)),
+        )
+        EMISSION.write(self.path, self.request)
+        self.phone.occupied.return_value = True
+        self.collected = dict(stage=dict(success=True, artifacts=dict(bundle=dict(sha256="a" * 64))), thermal={})
+        with patch.object(EMISSION, "collect_evidence") as evidence:
+            result = self.run_request()
+        self.assertTrue(result["success"], result)
+        self.assertTrue(result["retained_tool_preserved"])
+        evidence.assert_not_called()
+        (producer,) = self.phone.transport.start_detached.call_args.args
+        self.assertIn("/data/user/0/dev.ror2lab.installertest/files/owner-input", producer)
+        self.assertEqual(result["transfer_bytes"], files["request.json"]["bytes"])
+        self.phone.install.assert_not_called()
+
+    def test_converter_stage_hashes_device_artifact_and_keeps_input(self):
+        inputs = self.root / "owner-input/staged"
+        inputs.mkdir(parents=True)
+        source = inputs / "inputs.json"
+        source.write_text("authored")
+        producer = next(name for name in STAGE.PRODUCERS if name.endswith("/bundle_preload.py"))
+        repo = self.root / "repo"
+        script = repo / producer
+        script.parent.mkdir(parents=True)
+        script.write_text(
+            "import sys\nfrom pathlib import Path\n"
+            "assert sys.argv[-2:] == ['--workers', '1']\n"
+            "output = Path(sys.argv[4])\n"
+            "output.mkdir()\n"
+            "(output / 'bundle').write_bytes(Path(sys.argv[2]).read_bytes())\n"
+            "(output / 'scoreboard.json').write_text('{\"verified\": 1}')\n"
+        )
+        descriptor = dict(
+            producer=producer,
+            input_root="staged",
+            input_pins={"inputs.json": EMISSION.digest(source)},
+            arguments=["--inputs", {"inputs": "inputs.json"}, "--output", {"output": "."}],
+            artifacts={"bundle": "bundle"},
+            scoreboard="scoreboard.json",
+        )
+        EMISSION.write(self.path, descriptor)
+        receipt = self.output / "stage.json"
+        stage = STAGE.load_stage(self.path)
+        args = (stage, repo, inputs.parent, self.output / "artifacts", repo, repo, [sys.executable], receipt)
+        self.assertEqual(STAGE.run(*args), 0)
+        result = json.loads(receipt.read_text())
+        self.assertEqual(result["artifacts"]["bundle"], dict(sha256=EMISSION.digest(source), bytes=8))
+        self.assertEqual(json.loads((self.output / "scoreboard.json").read_bytes()), {"verified": 1})
+        stage["input_pins"]["inputs.json"] = "a" * 64
+        self.assertEqual(STAGE.run(*args), 1)
+        self.assertIn("staged input hash differs", json.loads(receipt.read_bytes())["first_failure"])
+        self.assertEqual(source.read_text(), "authored")
 
     def test_explicit_restage_replaces_only_confirmed_terminal_owned_inputs(self):
         self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
@@ -191,9 +257,53 @@ class EmissionTests(unittest.TestCase):
         self.phone.cleanup.assert_not_called()
         command = self.phone.transport.start_detached.call_args.args[0]
         self.assertTrue(any(part.endswith("/owner-code/run_android.py") for part in command))
+        self.assertNotIn("--samples", command)
         self.assertTrue(any(part.startswith("ROR2LAB_BUILD_HOSTFXR=") and part.endswith("/libhostfxr10.so") for part in command))
         self.assertTrue(any(part.startswith("ROR2LAB_BUILD_DOTNET_ROOT=") and part.endswith("/runtime/dotnet") for part in command))
         self.assertEqual(self.run_request(resume=True)["error"], "signed-code-resume-requires-active-handle")
+
+    def test_signed_code_receipt_preserves_staged_code_request(self):
+        request = self.output / "code.json"
+        original = b'{"audio_members":["Init.bnk"]}\n'
+        request.write_bytes(original)
+        self.phone.execute.side_effect = (
+            lambda *args, label, **kwargs: subprocess.CompletedProcess([], 0, b'{"success":true}', b"")
+            if label == "emission-code"
+            else subprocess.CompletedProcess([], 1, b"", b"")
+        )
+
+        state = {"remote": "/remote", "attempt": "attempt"}
+        self.assertEqual(EMISSION.collect(self.phone, state, self.output, code_output="work/signed-code"), {"code": {"success": True}})
+        self.assertEqual(request.read_bytes(), original)
+        self.assertEqual(json.loads((self.output / "code-result.json").read_bytes()), {"success": True})
+
+    def test_signed_native_requires_pinned_bundle_and_completed_native_receipt(self):
+        self.signed_request()
+        manifest_path = Path(self.request["manifest"]["path"])
+        manifest = json.loads(manifest_path.read_bytes())
+        self.request["operation"] = "signed-native"
+        contract = dict(bundle="bundle.zip", envelope="release.json", public_key="publisher.pem", key_id="fixture", output="native")
+        for name, value in (("request.json", json.dumps(contract)), ("release.json", "{}"), ("publisher.pem", "fixture")):
+            source = self.root / ("staged-" + name)
+            source.write_text(value)
+            manifest["files"][name] = dict(source=str(source), bytes=source.stat().st_size, sha256=EMISSION.digest(source))
+
+        def save():
+            manifest_path.write_text(json.dumps(manifest))
+            self.request["manifest"]["sha256"] = EMISSION.digest(manifest_path)
+            self.path.write_text(json.dumps(self.request))
+
+        save()
+        with self.assertRaisesRegex(ValueError, "signed-code-staged-input-contract"):
+            EMISSION.load_request(self.path)
+        bundle = self.root / "bundle.zip"
+        bundle.write_bytes(b"synthetic bundle")
+        manifest["files"]["bundle.zip"] = dict(source=str(bundle), bytes=bundle.stat().st_size, sha256=EMISSION.digest(bundle))
+        save()
+        self.collected = dict(native_release=dict(success=True, phase="native-built", managed_providers=332), thermal={})
+        result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["owned_app_removed"])
 
     def test_signed_code_keeps_unknown_handle_for_exact_reattachment(self):
         self.signed_request()
@@ -209,22 +319,37 @@ class EmissionTests(unittest.TestCase):
 
     def test_signed_code_retains_nested_raw_managed_failure_before_cleanup(self):
         self.signed_request()
+        self.request["profile_resources"] = True
+        self.path.write_text(json.dumps(self.request))
         self.collected = None
         self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
         self.phone.adb, self.phone.serial = "/synthetic/adb", "synthetic-device"
         managed = Path("work/conversion/managed-production")
         artifacts = {
             managed / "logs/raw-managed.stderr.log": b"compiler startup\n" * 1024 + b"compiler failure\n",
-            managed / "logs/raw-managed.process.json": b'{"returncode":139}',
+            managed / "logs/raw-managed.process.json": (
+                b'{"exit_code":139,"started_boottime_seconds":24.9,"ended_boottime_seconds":26.1,"paused_seconds":0.5}'
+            ),
             managed / "raw/adapter logs/compile.log": b"authored nested log\n",
+            managed / "packages/Fixture.compile.process.json": b'{"exit_code":0,"started_boottime_seconds":25.1,"ended_boottime_seconds":25.9}',
+            managed / "gameplay/gameplay.postprocess.process.json": b'{"exit_code":0,"seconds":2}',
             managed / "raw/tombstone_01": b"authored app tombstone\n",
+            managed / "raw/tombstone_01.pb": b"authored binary tombstone fixture\n",
+            managed / "raw/hs_err_pid123.txt": b"authored process report\n",
         }
+        assembly = managed / "raw/ordinary/original/UnityEngine.CrashReportingModule.dll"
         remote_fixture = self.root / "remote"
-        for path, data in artifacts.items():
+        for path, data in {**artifacts, assembly: b"authored assembly fixture"}.items():
             target = remote_fixture / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
         real_run = subprocess.run
+        trace = (
+            b'{"boottime_seconds":25,"paused":false,"cpu_celsius":64,"process_tree_rss_bytes":4096,"volume_available_bytes":1000}\n'
+            b'{"boottime_seconds":25.5,"paused":true,"cpu_celsius":72,"gpu_celsius":68}\n'
+            b'{"boottime_seconds":26,"paused":false,"cpu_celsius":65,"process_tree_rss_bytes":9000,"volume_available_bytes":800}\n'
+            b'{"boottime_seconds":26.25,"paused":false,"cpu_celsius":75}\n'
+        )
 
         def read_remote(*args, **kwargs):
             label = kwargs["label"]
@@ -238,6 +363,9 @@ class EmissionTests(unittest.TestCase):
             command = shlex.split(args[1])
             if label == "emission-evidence-list":
                 self.assertEqual(command[:4], ["run-as", INSTALLER.PACKAGE, "sh", "-c"])
+                attempt = remote_fixture / command[7]
+                attempt.mkdir()
+                (attempt / EMISSION.RESOURCE_TRACE).write_bytes(trace)
                 return real_run(["sh", "-c", command[4], command[5], remote_fixture, *command[7:]], capture_output=True, check=True)
             if command[-1].endswith("/work/conversion/managed-production/result.json"):
                 return subprocess.CompletedProcess([], 0, b'{"phase":"raw-managed","success":false}', b"")
@@ -247,13 +375,16 @@ class EmissionTests(unittest.TestCase):
             self.assertEqual(argv[:-1], ["/synthetic/adb", "-s", "synthetic-device", "shell", "-T"])
             command = shlex.split(argv[-1])
             self.assertEqual(command[:-1], ["run-as", INSTALLER.PACKAGE, "cat"])
-            path = Path(command[-1].split("/work/conversion/", 1)[1])
-            stdout.write((remote_fixture / "work/conversion" / path).read_bytes())
+            path = Path(command[-1].split("/owner-input/", 1)[1])
+            stdout.write((remote_fixture.joinpath(*path.parts[1:])).read_bytes())
             return subprocess.CompletedProcess(argv, 0, None, b"")
 
         def check_evidence():
             for path, data in artifacts.items():
                 self.assertEqual((self.output / "logs/producer" / path).read_bytes(), data)
+            self.assertFalse((self.output / "logs/producer" / assembly).exists())
+            state = json.loads((self.output / "device-state.json").read_text())
+            self.assertEqual((self.output / "logs/producer" / state["attempt"] / EMISSION.RESOURCE_TRACE).read_bytes(), trace)
             self.assertEqual((self.output / "logs/crash/crash.log").read_bytes(), b"authored Android crash report")
             self.assertEqual((self.output / "logs/crash/exit-info.txt").read_bytes(), b"authored exit info")
             self.assertEqual((self.output / "logs/crash/tombstone-access.txt").read_bytes(), b"Permission denied")
@@ -265,6 +396,23 @@ class EmissionTests(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["managed"]["phase"], "raw-managed")
         self.assertTrue(result["owned_app_removed"])
+        profile = json.loads((self.output / result["phase_resource_summary"]).read_bytes())
+        self.assertEqual(profile["samples"], 4)
+        self.assertEqual(profile["unclocked_process_receipts"], ["managed-production/gameplay/gameplay.postprocess.process.json"])
+        parent, compiler = profile["stages"]
+        self.assertEqual(parent["exit_code"], 139)
+        self.assertAlmostEqual(parent["boottime_elapsed_seconds"], 1.2)
+        self.assertEqual(parent["observed_pause_seconds"], 0.5)
+        self.assertEqual((parent["samples"], parent["paused_samples"], parent["resource_samples"]), (3, 1, 2))
+        self.assertEqual(parent["sampled_peak_celsius"], dict(cpu=72, gpu=68, soc=None, battery=None, skin=None))
+        self.assertEqual(parent["sampled_process_tree_rss_peak_bytes"], 9000)
+        self.assertEqual(parent["sampled_volume_available_bytes"], dict(first=1000, minimum=800, last=800))
+        self.assertEqual((compiler["samples"], compiler["paused_samples"], compiler["resource_samples"]), (1, 1, 0))
+        self.assertAlmostEqual(compiler["largest_sample_gap_seconds"], 0.4)
+        self.assertIsNone(compiler["sampled_process_tree_rss_peak_bytes"])
+        self.assertEqual(compiler["sampled_volume_available_bytes"], dict(first=None, minimum=None, last=None))
+        command = self.phone.transport.start_detached.call_args.args[0]
+        self.assertTrue(command[command.index("--samples") + 1].endswith("/" + EMISSION.RESOURCE_TRACE))
         self.phone.remove_owned_installer.assert_called_once()
 
     def test_signed_code_keeps_scratch_if_evidence_capture_fails(self):
@@ -338,6 +486,39 @@ class EmissionTests(unittest.TestCase):
         command = self.phone.transport.start_detached.call_args.args[0]
         producer = command[command.index("--") + 1 :]
         self.assertEqual(producer[producer.index("--workers") + 1], "1")
+
+    def test_cold_bundle_uses_retained_tool_and_cleans_only_its_fresh_stage(self):
+        self.request["retained_tool_sha256"] = self.request["tool_apk"]["sha256"]
+        self.path.write_text(json.dumps(self.request))
+        self.phone.occupied.return_value = True
+        result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["retained_tool_preserved"])
+        state = json.loads((self.output / "device-state.json").read_bytes())
+        self.assertTrue(state["retained_tool"])
+        self.assertEqual(state["native"], "/data/app/synthetic/lib/arm64")
+        command = self.phone.transport.start_detached.call_args.args[0]
+        self.assertEqual(command[command.index("--cache") + 1], state["remote"] + "/cache")
+        self.phone.shell.assert_any_call("run-as", INSTALLER.PACKAGE, "rm", "-rf", state["remote"], label="emission-retained-scratch-cleanup")
+        self.assertEqual(self.run_request(resume=True)["error"], "emission-retained-tool-requires-fresh-request")
+        self.phone.transport.start_detached.assert_called_once()
+        self.phone.transport.install.assert_not_called()
+        self.phone.install.assert_not_called()
+        self.phone.remove_owned_installer.assert_not_called()
+
+    def test_cold_bundle_retained_tool_requires_the_exact_installed_apk(self):
+        self.request["retained_tool_sha256"] = "c" * 64
+        self.path.write_text(json.dumps(self.request))
+        self.assertEqual(self.run_request()["error"], "emission-bundle-retained-tool-must-match-apk")
+        self.request["retained_tool_sha256"] = self.request["tool_apk"]["sha256"]
+        self.path.write_text(json.dumps(self.request))
+        self.assertEqual(self.run_request()["error"], "emission-retained-tool-not-installed")
+        self.phone.occupied.return_value = True
+        self.phone.package_hash.return_value = "c" * 64
+        self.assertEqual(self.run_request()["error"], "emission-preexisting-package")
+        self.phone.transport.start_detached.assert_not_called()
+        self.phone.transport.install.assert_not_called()
+        self.phone.install.assert_not_called()
 
     def test_exact_cli_dry_run_validates_pins_without_device_or_terminal(self):
         observed = subprocess.run(
@@ -463,6 +644,35 @@ runpy.run_path(sys.argv[0], run_name="__main__")
         self.assertEqual(result["error"], "emission-input-pin")
         self.device.storage.assert_not_called()
         self.assertFalse(json.loads((self.output / "terminal.operation.json").read_bytes())["success"])
+
+    def test_decode_requires_expected_block_count_and_digest_under_retained_tool(self):
+        expected = "b" * 64
+        self.request.pop("expected_records")
+        self.request.update(
+            operation="bundle-decode",
+            expected_blocks=3,
+            expected_decoded_sha256=expected,
+            retained_tool_sha256=self.request["tool_apk"]["sha256"],
+        )
+        manifest = Path(self.request["manifest"]["path"])
+        files = json.loads(manifest.read_bytes())["files"]
+        files.update(dict.fromkeys(EMISSION.DECODE_FILES, files["request.json"]))
+        manifest.write_text(json.dumps(dict(files=files)))
+        self.request["manifest"]["sha256"] = EMISSION.digest(manifest)
+        self.path.write_text(json.dumps(self.request))
+        self.phone.occupied.return_value = True
+        self.collected = dict(decode=dict(blocks=3, decoded_sha256=expected), thermal={})
+        result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertTrue(result["retained_tool_preserved"])
+        self.assertFalse(result["device_accepted"])
+        self.assertIn(
+            str(Path("repo/tools/phone-build/accepted-output/bundle_decode_benchmark.py")), " ".join(self.phone.transport.start_detached.call_args.args[0])
+        )
+        self.phone.install.assert_not_called()
+
+        self.collected["decode"]["decoded_sha256"] = "c" * 64
+        self.assertFalse(self.run_request()["success"])
 
     def test_adopted_staging_refuses_internal_fallback(self):
         self.device.storage.return_value = dict(mode="adopted")

@@ -1346,6 +1346,7 @@ public sealed partial class PortSession
                     "Assets/WholeGame/RoR2/Base/Characters/Engi/Projectiles/EngiBubbleShield/EngiBubbleShield.prefab");
                 coordinator.Check(template && !template.scene.IsValid(), "Engineer shield source must be the owned catalog template");
                 engiShieldGuard = EngiShieldHitGuardTemplateLease.Acquire(template);
+                coordinator.GetTeleporterWorldSession().PresentNativeEffectSource(template);
                 coordinator.r.world.engiShieldGuardPrepared = true;
             }
             PrepareEarlyHurtCaches(player);
@@ -2211,6 +2212,7 @@ public sealed partial class PortSession
             // The observer retains its one-second baseline internally; calling
             // the owner each world update only services explicitly armed windows.
             survivorCombatOutputs?.Sample(elapsed);
+            survivorSkills?.SamplePrimarySourcePlayback();
             long performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             if (worldClientUpdate == null)
                 worldClientUpdate = (Action)Delegate.CreateDelegate(
@@ -2644,6 +2646,10 @@ public sealed partial class PortSession
                 }
                 return;
             }
+            // A charged native teleporter takes priority over further diagnostic shopping.
+            if (coordinator.r.teleporterLoop && coordinator.worldTeleporter && coordinator.worldTeleporter.isCharged &&
+                coordinator.ObjectiveWorldStimulus(player, bridge, elapsed))
+                return;
             // Native placement spreads barrels across the map. Diagnostic input can shop
             // as soon as earned money permits; clearing every barrel is not a game rule.
             if (coordinator.r.liveCatalogs != null && coordinator.worldObjective == 0)
@@ -2859,6 +2865,10 @@ public sealed partial class PortSession
                 worldElevatedApproachActive = false;
             var routeDestination = worldElevatedApproachActive ? worldElevatedApproachDestination : destination;
             coordinator.r.world.navigationElevatedApproachActive = worldElevatedApproachActive;
+            // A recovery window belongs to the objective that stalled. After a
+            // purchase, give the new native route a chance before sampling terrain.
+            if (worldNavigationHasProgress && Vector3.Distance(destination, worldNavigationProgressDestination) > 2)
+                coordinator.worldTerrainRecoveryUntil = -100;
             // Players may sprint while travelling. Let original input/stat callbacks supply
             // the actual speed used by the next source path request, including earned items.
             if (moon || elapsed < coordinator.worldTerrainRecoveryUntil)

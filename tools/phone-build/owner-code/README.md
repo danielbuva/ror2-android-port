@@ -205,7 +205,7 @@ decompiled source folder, exported asset, captured graph or historical run is
 an input to this mode. The qualified target is the current diagnostic player
 configuration; this is not accepted-APK byte parity or a new runtime selection.
 
-The request has exactly `owner_work`, `sdk_install`, `source_inputs`, and new
+The request requires `owner_work`, `sdk_install`, `source_inputs`, and a new
 private `output`. This mode currently requires this checkout's canonical `work`
 root, because existing strict audio contracts and the archived Init tool use
 that layout. Owner inventory/configuration and original game files must already
@@ -237,6 +237,16 @@ uses unchanged lower-level audio contract/pin generators and compilers; derives
 maps from the actual original catalog/IL and freshly decompiles the selected 14
 support sources; then compiles/post-processes all 145 gameplay sources. The three
 runtime request/stage/project admissions remain intact. No fake project is used.
+
+The raw managed producer applies the existing view-only camera transform to
+the music-observed game assembly. The converted `RoR2.dll` contains the camera
+marker and both camera guards alongside the Commando post observer. The camera
+rig remains under the existing opt-in diagnostic owner.
+
+For current-source diagnostic builds, set
+`passive_pcm_capture_after_authority_skill_requested` to `true` to capture
+MainOutput after the first authority skill. Omit the field or set it to `false`
+for startup capture on the music output.
 
 The signed audio roster selects explicit-workspace bank staging. The current
 Init producer reads the original bank from the admitted inventory and writes
@@ -301,6 +311,15 @@ empty data. J1102 qualifies both decoded execution models and an authored
 fragment-only arithmetic change, with raw host/phone payload parity. Original
 shader recovery and serialized content assembly remain separate content gates.
 
+`Connection.preprocess_compute` resolves kernel declarations, keyword axes,
+requirements and dependencies from a `.compute` source. Give both compute
+commands the full source filename so relative includes resolve. Pass the
+preprocessed source, kernel defines and variant requirements to
+`Connection.compile_compute`. It returns diagnostics and the SDK binary for
+one Vulkan kernel variant. The pinned macOS compiler emitted all 35 kernels
+in the 12 camera ComputeShader sources. Native class-72 serialization and
+Android validation remain open.
+
 ## Fixed-target Burst and completed-object relinking
 
 The combined backend optionally accepts `burst_tools: {"command": [EXPLICIT_HOST,
@@ -339,7 +358,10 @@ without hiding a host library or mutating the retained run. The Android request
 uses `relink` with explicit completed objects, converter receipt/hash, source
 frames/compression and metadata, plus `target`, `linux_tools` and new `output`.
 
-A failed native output in phase `compiling` can instead be supplied as `resume`.
+A failed native output in phase `compiling` can be supplied as `resume`.
+Phase `stripping` also allows resume when every object has a complete receipt.
+The new attempt relinks and strips those objects, then checks the live inputs
+again before issuing a successful output receipt.
 The owner validates the same original/SDK/converter/tool providers, compile
 plan, and the contiguous completed job-receipt prefix before creating a
 new output. It hard-links only hash-validated completed objects, or copies and
@@ -366,6 +388,18 @@ covered by a supplied resume prefix, and skips linking and stripping. Success is
 complete compilation. Use the same Android `resume` request and providers to
 measure representative expensive units before choosing the continuation
 budget. Process receipts retain each selected unit's timings.
+
+The native request defaults to one compiler worker. Set `compile_workers`
+to `2` in a fresh native request, including the native job in a signed
+release graph, to measure two simultaneous compiler jobs with the shared
+runner. The linker uses the same object order. A failed concurrent build
+publishes the contiguous completed prefix for a serial resume. A direct
+native request can also pair the same `measure_jobs` selection in two
+outputs with one and two workers. Compare the per-object hashes and BOOTTIME
+process windows with fixed compiler inputs and CPU affinity. These requests
+retain `logs/compile-objects.json` through shared-runner cleanup. Android Clang
+normalizes the job output path in debug information so linker build IDs can
+match across job directories. Runtime source-location macros keep their values.
 
 `compile_timeout_seconds` sets the per-translation-unit budget (default 3,600
 seconds). Choose a generous multiple of the largest unit's measured active phone

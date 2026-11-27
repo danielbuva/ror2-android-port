@@ -616,19 +616,46 @@ def include_source_locations(metadata, source, location_ids):
     return result
 
 
+def validate_required_routes(metadata, required):
+    """Check exact typed string routes in the final catalog projection."""
+    if not isinstance(required, list):
+        raise ValueError("required catalog routes must be a list")
+    types = {row["id"]: row["type"] for row in metadata["locations"]}
+    keys = {}
+    for row in metadata["keys"]:
+        if row.get("keyType", "System.String") == "System.String":
+            keys.setdefault(row["key"], []).extend(row["locations"])
+    failures = []
+    for route in required:
+        if (
+            not isinstance(route, dict)
+            or set(route) != {"key", "type", "location"}
+            or not all(isinstance(route[field], str) and route[field] for field in ("key", "type"))
+            or type(route["location"]) is not int
+        ):
+            raise ValueError("required catalog route must specify a string key, exact type and integer location")
+        key, expected, location = route["key"], route["type"], route["location"]
+        candidates = [candidate for candidate in keys.get(key, []) if types.get(candidate) == expected]
+        if candidates != [location]:
+            failures.append(f"{key} ({expected} at {location}, found {candidates})")
+    if failures:
+        raise ValueError("required catalog routes differ: " + "; ".join(failures))
+
+
 def project_source_catalog(source, policy, builds, *, input_id, attempt):
     """Select source locations by the produced asset paths and explicit relocations."""
     from whole_catalog import integration_metadata
 
     if (
-        set(policy) != {"schema", "source_catalog_sha256", "remaps", "exclusions", "provider_roots", "runtime_roots", "extra_roots", "mesh_subobjects"}
+        set(policy) - {"append_locations"}
+        != {"schema", "source_catalog_sha256", "remaps", "exclusions", "provider_roots", "runtime_roots", "extra_roots", "mesh_subobjects"}
         or policy["schema"] != "owner-catalog-projection-v1"
     ):
         raise ValueError("unsupported catalog projection policy")
     if source["input_id"] != input_id or source["source_catalog_sha256"] != policy["source_catalog_sha256"]:
         raise ValueError("catalog projection source identity differs")
 
-    paths = {path.casefold(): path for build in builds for path in build["assetNames"]}
+    paths = {path.casefold() for build in builds for path in build["assetNames"]}
     excluded = set(policy["exclusions"])
     remaps = policy["remaps"]
     known = {row["id"] for row in source["locations"]}
@@ -641,35 +668,44 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
             continue
         selector = str(location)
         if selector in remaps:
-            path = paths.get(remaps[selector].casefold())
-            if path is None:
+            path = remaps[selector]
+            if path.casefold() not in paths:
                 raise ValueError("catalog projection remap has no produced owner: " + selector)
             mapped[selector] = path
             continue
-        original_key = original.casefold()
-        candidates = {original_key}
-        if original_key.startswith("assets/"):
-            candidates.add("assets/wholegame/" + original_key.removeprefix("assets/"))
-        matches = {candidate for candidate in candidates if candidate in paths}
+        # UnityFS container names can be lowercased. Runtime locations retain
+        # the source spelling even when the produced owner matches by casefold.
+        candidates = {original}
+        if original.casefold().startswith("assets/"):
+            candidates.add("Assets/WholeGame/" + original.split("/", 1)[1])
+        matches = {candidate for candidate in candidates if candidate.casefold() in paths}
         if len(matches) > 1:
             raise ValueError("catalog projection has ambiguous produced owners: " + selector)
         if matches:
-            mapped[selector] = paths[matches.pop()]
+            mapped[selector] = matches.pop()
     if not remaps.keys() <= mapped.keys():
         raise ValueError("catalog projection remap must select an asset location")
 
     location_ids = {int(selector) for selector in mapped}
+    append_locations = policy.get("append_locations", [])
+    appended = set(append_locations)
+    if len(appended) != len(append_locations) or not appended <= location_ids:
+        raise ValueError("catalog projection append selection differs")
+    appended_roots = appended.intersection(policy["provider_roots"] + policy["runtime_roots"] + policy["extra_roots"])
     keys = []
     for row in source["keys"]:
         selected = [location for location in row["locations"] if location in location_ids]
         if selected:
+            # Staged aliases came last unless the key also introduced a root.
+            if appended and appended_roots.isdisjoint(selected):
+                selected.sort(key=appended.__contains__)
             keys.append(dict(row, locations=selected))
     mesh_subobjects = []
     for row in policy["mesh_subobjects"]:
-        path = row["path"].casefold()
-        if path not in paths:
+        path = row["path"]
+        if path.casefold() not in paths:
             raise ValueError("catalog projection mesh alias has no produced owner: " + row["key"])
-        mapped[path] = paths[path]
+        mapped[path] = path
         mesh_subobjects.append(dict(source=path, key=row["key"], type=row["type"]))
     closure = dict(
         input_id=input_id,
@@ -716,7 +752,7 @@ def produce(inputs, output, player_apk=None):
     request_bytes = inputs.read_bytes()
     request = json.loads(request_bytes)
     common = {"schema", "profiles", "bundles", "registry", "input_id", "attempt"}
-    mode = set(request) - common - {"resources", "source_additions"}
+    mode = set(request) - common - {"resources", "source_additions", "required_routes"}
     if mode not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
         raise ValueError("unsupported catalog completion input contract")
     pins = {}
@@ -753,6 +789,8 @@ def produce(inputs, output, player_apk=None):
             raise ValueError("unsupported catalog addition contract")
         source = json.loads(pinned(additions["metadata"]).read_bytes())
         metadata = include_source_locations(metadata, source, additions["locations"])
+    if "required_routes" in request:
+        validate_required_routes(metadata, request["required_routes"])
     files = {name: pinned(row) for name, row in request["bundles"].items()}
     registry = pinned(request["registry"])
     resources = {name: pinned(row) for name, row in request.get("resources", {}).items()}
@@ -781,6 +819,8 @@ def produce(inputs, output, player_apk=None):
         facts = produced_bundle_metadata(files)
         checks = validate_locations(metadata, members, "@runtime-registry")
         raw = integration_catalog(metadata, facts, bundle_names=names)
+    if "required_routes" in request:
+        checks["required_routes"] = len(request["required_routes"])
     if inputs.read_bytes() != request_bytes or any(dict(bytes=path.stat().st_size, sha256=W.B.sha(path)) != pin for path, pin in pins.items()):
         raise ValueError("catalog inputs changed during production")
     output = Path(output)

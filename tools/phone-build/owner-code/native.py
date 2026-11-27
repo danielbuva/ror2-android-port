@@ -5,7 +5,8 @@ build graph, project, SDK modification, download, Editor or device operation.
 """
 
 import argparse
-from contextlib import ExitStack
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack, contextmanager, nullcontext
 import gzip
 import hashlib
 import json
@@ -18,6 +19,7 @@ import signal
 import struct
 import subprocess
 import sys
+from threading import Event
 import time
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -228,7 +230,7 @@ def linux_driver_arguments(argv, sdk, tools):
     ]
 
 
-def linux_invoke(argv, output, name, sdk, tools, *, env, link=False, timeout=3600, pause_clock=None):
+def linux_invoke(argv, output, name, sdk, tools, *, env, link=False, timeout=3600, pause_clock=None, cancelled=None):
     """Run the unchanged driver's actual cc1/BFD command under QEMU.
 
     Android cannot exec a Linux child through binfmt_misc. Ask the original
@@ -236,7 +238,14 @@ def linux_invoke(argv, output, name, sdk, tools, *, env, link=False, timeout=360
     policy, optimization, source or target library is substituted.
     """
     prefix = linux_prefix(tools)
-    invoke([*prefix, tools["clang"], "-###", *linux_driver_arguments(argv, sdk, tools)], output, name + "-driver", env=env, pause_clock=pause_clock)
+    invoke(
+        [*prefix, tools["clang"], "-###", *linux_driver_arguments(argv, sdk, tools)],
+        output,
+        name + "-driver",
+        env=env,
+        pause_clock=pause_clock,
+        cancelled=cancelled,
+    )
     rendered = (output / "logs" / (name + "-driver.log")).read_text()
     commands = [shlex.split(line) for line in rendered.splitlines() if line.lstrip().startswith('"')]
     if len(commands) != 1:
@@ -248,7 +257,7 @@ def linux_invoke(argv, output, name, sdk, tools, *, env, link=False, timeout=360
         command[0] = tools["linker"]
     elif command[:2] != [tools["clang"], "-cc1"]:
         raise ValueError("Linux NDK driver did not select its cc1 compiler")
-    invoke([*prefix, *command], output, name, env=env, timeout=timeout, pause_clock=pause_clock)
+    invoke([*prefix, *command], output, name, env=env, timeout=timeout, pause_clock=pause_clock, cancelled=cancelled)
 
 
 def burst_ndk(sdk, tools, output):
@@ -330,6 +339,9 @@ def plan(profile, sdk, output, android_tools=None):
         argv = [str(sdk / profile["compiler"]), *arguments(profile["arguments"][item["arguments"]], roots, source=source, obj=obj)]
         if android_tools:
             argv = android_command(argv, sdk, android_tools)
+            # LLD hashes debug info before stripping. Keep job roots out of
+            # that build ID without rewriting runtime source-location macros.
+            argv.append(f"-fdebug-prefix-map={output}=.")
         jobs.append({"source": str(source), "output": str(obj), "kind": kind, "argv": argv})
     link = [str(sdk / profile["compiler"]), *arguments(profile["link"], roots, library=output / "libil2cpp.unstripped.so")]
     if android_tools:
@@ -338,7 +350,7 @@ def plan(profile, sdk, output, android_tools=None):
     linked = [v for v in link if v.endswith(".o")]
     if len(linked) != len(objects) or set(linked) != set(objects) or len(set(objects)) != len(objects):
         raise ValueError("compile/link object closure differs")
-    return {"schema": 1, "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
+    return {"schema": 1, "sdk": str(sdk), "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
 
 
 def elapsed_clock():
@@ -360,12 +372,14 @@ def paused_seconds(path):
     return now, total + (now - at if at is not None else 0)
 
 
-def wait_active(child, timeout, pause_clock, record):
+def wait_active(child, timeout, pause_clock, record, cancelled=None):
     """Guard owns STOP/CONT; its independent clock survives a stopped parent."""
-    started, initial_pause = paused_seconds(pause_clock)
+    started, initial_pause = paused_seconds(pause_clock) if pause_clock else (elapsed_clock(), 0)
     prior_pause = initial_pause
     while True:
-        now, paused = paused_seconds(pause_clock)
+        if cancelled is not None and cancelled.is_set():
+            raise InterruptedError("native measurement cancelled")
+        now, paused = paused_seconds(pause_clock) if pause_clock else (elapsed_clock(), 0)
         if paused + 0.000001 < prior_pause or paused - initial_pause > now - started + 0.01:
             raise ValueError("pause clock reset or exceeds elapsed time")
         prior_pause = paused
@@ -382,21 +396,33 @@ def wait_active(child, timeout, pause_clock, record):
             pass
 
 
-def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600, pause_clock=None):
-    started = time.monotonic()
-    record = {"argv": argv, "exit_code": None, "timeout_seconds": timeout}
-
+@contextmanager
+def native_interrupts():
     def interrupted(signum, frame):
         raise KeyboardInterrupt("native tool interrupted")
 
     previous = {}
     try:
+        for signum in (signal.SIGTERM, signal.SIGINT):
+            previous[signum] = signal.signal(signum, interrupted)
+        yield
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
+
+
+def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600, pause_clock=None, cancelled=None):
+    started = time.monotonic()
+    record = {"argv": argv, "exit_code": None, "timeout_seconds": timeout, "started_boottime_seconds": elapsed_clock()}
+
+    try:
         supervisor_clock = os.environ.get("ROR2LAB_BUILD_PAUSE_CLOCK")
         if supervisor_clock:
             pause_clock = canonical(supervisor_clock)
-        for signum in (signal.SIGTERM, signal.SIGINT):
-            previous[signum] = signal.signal(signum, interrupted)
         with ExitStack() as stack:
+            stack.enter_context(native_interrupts() if cancelled is None else nullcontext())
+            if cancelled is not None and cancelled.is_set():
+                raise InterruptedError("native measurement cancelled")
             log = stack.enter_context((output / "logs" / (name + ".log")).open("xb"))
             errors = stack.enter_context((output / "logs" / (name + ".stderr.log")).open("xb")) if separate_stderr else subprocess.STDOUT
             child = subprocess.Popen(
@@ -408,7 +434,10 @@ def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600,
                 start_new_session=True,
             )
             try:
-                record["exit_code"] = wait_active(child, timeout, pause_clock, record) if pause_clock else child.wait(timeout=timeout)
+                if pause_clock or cancelled is not None:
+                    record["exit_code"] = wait_active(child, timeout, pause_clock, record, cancelled)
+                else:
+                    record["exit_code"] = child.wait(timeout=timeout)
             except BaseException:
                 if child.poll() is None:
                     os.killpg(child.pid, signal.SIGKILL)
@@ -417,9 +446,8 @@ def invoke(argv, output, name, *, env=None, separate_stderr=False, timeout=3600,
         if record["exit_code"] != 0:
             raise RuntimeError("native stage failed: " + name)
     finally:
-        for signum, handler in previous.items():
-            signal.signal(signum, handler)
         record["seconds"] = time.monotonic() - started
+        record["ended_boottime_seconds"] = elapsed_clock()
         write(output / "logs" / (name + ".process.json"), record)
 
 
@@ -445,14 +473,17 @@ def lump_source(members):
 
 
 def compiled_jobs(folder, current, profile, sdk, inputs, *, resume=False):
-    """Validate retained object receipts before relinking or continuing a failure."""
+    """Validate retained object receipts before relinking or resuming native production."""
     old = json.loads((folder / "plan.json").read_text())
     previous = json.loads((folder / "inputs.json").read_text())
     result = json.loads((folder / "result.json").read_text())
     count = result.get("compile_tasks", 0) + result.get("reused_compile_tasks", 0)
     if resume:
-        if result.get("success") is not False or result.get("phase") != "compiling" or not 0 <= count < len(current["jobs"]):
-            raise ValueError("failed original compilation with a receipt prefix required for resume")
+        phase = result.get("phase")
+        prefix = phase == "compiling" and 0 <= count < len(current["jobs"])
+        complete = phase == "stripping" and count == len(current["jobs"])
+        if result.get("success") is not False or not (prefix or complete):
+            raise ValueError("failed native production with completed object receipts required for resume")
     elif result.get("success") is not True or result.get("phase") != "native-built" or count != len(current["jobs"]):
         raise ValueError("complete original compilation required for relinking")
     if result.get("input_id") != profile["input_id"]:
@@ -470,10 +501,13 @@ def compiled_jobs(folder, current, profile, sdk, inputs, *, resume=False):
     source_state = lambda rows: {name: {k: v for k, v in row.items() if k != "path"} for name, row in rows.items()}
     if source_state(previous["sources"]) != source_state(inputs["sources"]):
         raise ValueError("compiled converter source cohort differs")
-    compiler = "/" + profile["compiler"]
-    if not old["jobs"][0]["argv"][0].endswith(compiler):
-        raise ValueError("compiled SDK command binding differs")
-    old_sdk = old["jobs"][0]["argv"][0][: -len(compiler)]
+    old_sdk = old.get("sdk")
+    if old_sdk is None:
+        # Older SDK-native and Linux plans recorded the SDK driver in argv.
+        compiler = "/" + profile["compiler"]
+        if not old["jobs"][0]["argv"][0].endswith(compiler):
+            raise ValueError("compiled SDK command binding differs")
+        old_sdk = old["jobs"][0]["argv"][0][: -len(compiler)]
     old_output = str(Path(old["library"]).parent)
     output = str(Path(current["library"]).parent)
 
@@ -531,6 +565,7 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
         "compile_timeout_seconds",
         "pause_clock",
         "measure_jobs",
+        "compile_workers",
     } != required or not isinstance(request["sources_compressed"], bool):
         raise ValueError("explicit native request fields required")
     work, sdk, receipt, sources, metadata = [canonical(request[n]) for n in ("owner_work", "sdk_install", "converter_receipt", "sources", "metadata")]
@@ -573,8 +608,13 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
         or plan_only
     ):
         raise ValueError("nonempty unique valid measurement job indexes required; no plan-only measurement")
+    compile_workers = request.get("compile_workers", 1)
+    if type(compile_workers) is not int or compile_workers not in (1, 2):
+        raise ValueError("native compile_workers must be one or two")
+    if compile_workers == 2 and (plan_only or (measured is None and ("compiled" in request or "resume" in request))):
+        raise ValueError("two native compile workers require a fresh compilation or selected measurement")
     if "compiled" in request and "resume" in request:
-        raise ValueError("select completed relink or failed compilation resume")
+        raise ValueError("select completed relink or failed native production resume")
     timeout = request.get("compile_timeout_seconds", 3600)
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("positive active compile timeout required")
@@ -601,8 +641,39 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
     }
     if measured is not None:
         result["measured_jobs"] = measured
+    if "compile_workers" in request:
+        result["compile_workers"] = compile_workers
     if compiled:
         result.update(**{"resume" if resuming else "compiled": str(compiled)}, reused_compile_tasks=0)
+
+    def compile_job(index, job, cancelled=None):
+        if cancelled is not None and cancelled.is_set():
+            raise InterruptedError("native measurement cancelled")
+        if shutil.disk_usage(output).free < RESERVE:
+            raise RuntimeError("native compilation reserve unavailable; outputs retained")
+        source = Path(job["source"])
+        if job["kind"] == "generated":
+            expand(providers[source.name], source)
+        before = sha(source)
+        options = dict(env=environment, timeout=timeout, pause_clock=pause_clock, cancelled=cancelled)
+        if linux_tools:
+            linux_invoke(job["argv"], output, str(index), sdk, linux_tools, **options)
+        else:
+            invoke(job["argv"], output, str(index), **options)
+        if sha(source) != before:
+            raise ValueError("native input changed during compilation")
+        obj = Path(job["output"])
+        row = {"source_sha256": before, "output_sha256": sha(obj), "bytes": obj.stat().st_size}
+        if cancelled is not None and job["kind"] == "generated":
+            source.unlink()
+        return index, job, row
+
+    def complete(index, job, row, *, parallel=False):
+        write(output / "job-results" / (str(index) + ".json"), row)
+        result["compile_tasks"] += 1
+        if not parallel and job["kind"] == "generated":
+            Path(job["source"]).unlink()
+
     try:
         for name in ("tmp", "logs", "objects", "cpp", "lumps", "job-results"):
             (output / name).mkdir()
@@ -614,7 +685,19 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
             Path(target).write_text(lump_source(members))
         if not plan_only:
             result["phase"] = "compiling"
-            for index, job in enumerate(value["jobs"]):
+            if compile_workers == 2:
+                cancelled = Event()
+                indexes = range(len(value["jobs"])) if measured is None else sorted(measured)
+                jobs = [value["jobs"][index] for index in indexes]
+                with native_interrupts(), ThreadPoolExecutor(max_workers=compile_workers) as pool:
+                    try:
+                        # Publish only the contiguous plan prefix for resume.
+                        for job_result in pool.map(lambda index, job: compile_job(index, job, cancelled), indexes, jobs):
+                            complete(*job_result, parallel=True)
+                    finally:
+                        cancelled.set()
+            serial_jobs = [] if compile_workers == 2 else enumerate(value["jobs"])
+            for index, job in serial_jobs:
                 if measured is not None and index not in measured:
                     continue
                 if measured is None and reused is not None and index < len(reused):
@@ -632,23 +715,11 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
                     write(output / "job-results" / (str(index) + ".json"), row)
                     result["reused_compile_tasks"] += 1
                     continue
-                if shutil.disk_usage(output).free < RESERVE:
-                    raise RuntimeError("native compilation reserve unavailable; outputs retained")
-                source = Path(job["source"])
-                if job["kind"] == "generated":
-                    expand(providers[source.name], source)
-                before = sha(source)
-                if linux_tools:
-                    linux_invoke(job["argv"], output, str(index), sdk, linux_tools, env=environment, timeout=timeout, pause_clock=pause_clock)
-                else:
-                    invoke(job["argv"], output, str(index), env=environment, timeout=timeout, pause_clock=pause_clock)
-                if sha(source) != before:
-                    raise ValueError("native input changed during compilation")
-                obj = Path(job["output"])
-                write(output / "job-results" / (str(index) + ".json"), {"source_sha256": before, "output_sha256": sha(obj), "bytes": obj.stat().st_size})
-                result["compile_tasks"] += 1
-                if job["kind"] == "generated":
-                    source.unlink()
+                complete(*compile_job(index, job))
+            if measured is not None or "compile_workers" in request:
+                indexes = range(len(value["jobs"])) if measured is None else sorted(measured)
+                receipts = output / "job-results"
+                write(output / "logs" / "compile-objects.json", {str(i): json.loads((receipts / f"{i}.json").read_text()) for i in indexes})
             if measured is None:
                 size = sum(Path(j["output"]).stat().st_size for j in value["jobs"])
                 if shutil.disk_usage(output).free < size + 1536 * 1024**2:

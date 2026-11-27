@@ -10,6 +10,7 @@ import shutil
 import zipfile
 
 from common import RECIPE, ROOT, now, read, run, sha, write
+from build_lock import unity_editor_env
 
 
 def refuse_open_editors(destination, work):
@@ -187,9 +188,7 @@ def execute_build(destination, work, api):
         request_id = now()
         write(scratch / "build-request.json", dict(request_id=request_id, api=api, reusePayload=False))
         (scratch / "graphics-api.txt").write_text(api)
-        env = os.environ.copy()
-        env.update(
-            ANDROID_ADB_SERVER_PORT="5038",
+        env = unity_editor_env(
             ANDROID_SDK_HOME=str(scratch / "android-user"),
             ANDROID_USER_HOME=str(scratch / "android-user/.android"),
             GRADLE_USER_HOME=str(scratch / "gradle"),
