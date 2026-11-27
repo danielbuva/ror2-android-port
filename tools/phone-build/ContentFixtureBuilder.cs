@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 // One-shot exact-editor oracle/fixture; never used by the game build.
-public static class ContentFixtureBuilder
+public static partial class ContentFixtureBuilder
 {
     [Serializable] public sealed class BuildReceipt { public string unity; public string source_commit; public string build_report_guid; }
     static string Output(string name) { return Path.GetFullPath(Path.Combine(Application.dataPath, "../..", name)); }

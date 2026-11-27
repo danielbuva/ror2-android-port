@@ -2363,7 +2363,15 @@ The request may pin dependency bundles in load order. The fixture opens them
 before loading root assets and unloads the full set in reverse order. An
 explicit Material expectation checks the loaded shader name and each saved
 non-null texture property and object name against the receipt.
-This is desktop loadability evidence; device appearance/playability remains open.
+For a streamed scene, the same request pins the bundle and dependencies and
+specifies the exact path in `scene`.
+`ContentFixtureSceneCheck.cs` enters Play Mode in the isolated project, loads
+the bundle additively, selects the scene and reads native occlusion settings.
+It records loaded roots, MeshRenderer counts, the resolved data reference
+and Umbra sizes around activation, then unloads the scene and its bundles.
+The editor exposes the data reference. Serialized scene checks cover the
+release renderer table. Android culling, appearance and gameplay require
+device evidence.
 
 `bundle_preload.emit_closed_native` optionally caches transformed records and
 ordered preload groups in a private SQLite file. Record keys bind source bodies,
