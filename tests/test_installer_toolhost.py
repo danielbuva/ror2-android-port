@@ -75,12 +75,28 @@ class InstallerToolhostTest(unittest.TestCase):
                 fixture.backup_signing_key(keys, None, "certificate", wrong_fetch)
                 wrong_fetch.assert_not_called()
 
+    def test_explicit_trust_keeps_release_identity_and_validates_publisher_keys(self):
+        retained = dict(repository="owner/project", application_id="dev.ror2lab.alpha", keys={})
+        configured = dict(retained, keys={"staged": "public key"})
+        source = mock.Mock()
+        public = fixture.load_module("tested_repack_public_release", ROOT / fixture.SIGNER.with_name("public_release.py"))
+        with mock.patch.object(fixture, "load_module", return_value=public), mock.patch.object(public, "public_numbers") as parse_key:
+            source.read_bytes.return_value = json.dumps(configured).encode()
+            self.assertEqual(json.loads(fixture.provisioned_trust(ROOT, source, retained)), configured)
+            parse_key.assert_called_once_with("public key")
+            for invalid in (dict(configured, application_id="other.package"), dict(configured, repository="other/project"), retained):
+                source.read_bytes.return_value = json.dumps(invalid).encode()
+                with self.assertRaisesRegex(ValueError, "retained repository and application"):
+                    fixture.provisioned_trust(ROOT, source, retained)
+
     def test_assembly_rebuilds_authored_members_and_verifies_retained_runtime(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             original, dex, tracked = (root / name for name in ("base.apk", "classes.dex", "tracked"))
             dex.write_bytes(b"new dex")
             tracked.write_bytes(b"new source")
+            trust = root / "trust.json"
+            trust.write_bytes(b"staged public trust")
             runtime_hash = hashlib.sha256(b"runtime").hexdigest()
             asset_hash = hashlib.sha256(b"data").hexdigest()
             with zipfile.ZipFile(original, "w") as apk:
@@ -90,8 +106,9 @@ class InstallerToolhostTest(unittest.TestCase):
                 apk.writestr("lib/arm64-v8a/libtest.so", b"runtime")
                 apk.writestr("assets/data", b"data")
                 apk.writestr("assets/repo/removed", b"old source")
-                apk.writestr("assets/data-hashes.json", json.dumps({"data": asset_hash, "repo/removed": "old"}))
-            source = {"assets/repo/tracked": tracked}
+                apk.writestr(fixture.RELEASE_TRUST, b"old trust")
+                apk.writestr("assets/data-hashes.json", json.dumps({"data": asset_hash, "repo/removed": "old", "release-trust.json": "old trust"}))
+            source = {"assets/repo/tracked": tracked, fixture.RELEASE_TRUST: trust}
 
             def obsolete(name):
                 return name.startswith("META-INF/")
@@ -103,11 +120,20 @@ class InstallerToolhostTest(unittest.TestCase):
             with zipfile.ZipFile(output) as apk:
                 self.assertEqual(
                     set(apk.namelist()),
-                    {"AndroidManifest.xml", "classes.dex", "lib/arm64-v8a/libtest.so", "assets/data", "assets/repo/tracked", "assets/data-hashes.json"},
+                    {
+                        "AndroidManifest.xml",
+                        "classes.dex",
+                        "lib/arm64-v8a/libtest.so",
+                        "assets/data",
+                        "assets/repo/tracked",
+                        "assets/data-hashes.json",
+                        fixture.RELEASE_TRUST,
+                    },
                 )
                 self.assertEqual(apk.read("classes.dex"), b"new dex")
                 self.assertEqual(apk.read("AndroidManifest.xml"), b"new manifest")
                 self.assertEqual(apk.read("lib/arm64-v8a/libtest.so"), b"runtime")
                 self.assertEqual(apk.read("assets/repo/tracked"), b"new source")
+                self.assertEqual(apk.read(fixture.RELEASE_TRUST), trust.read_bytes())
                 self.assertEqual(json.loads(apk.read("assets/data-hashes.json")), hashes)
-                self.assertEqual(hashes, {"data": asset_hash, "repo/tracked": hashlib.sha256(b"new source").hexdigest()})
+                self.assertEqual(hashes, {"data": asset_hash, "repo/tracked": fixture.digest(tracked), "release-trust.json": fixture.digest(trust)})

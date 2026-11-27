@@ -23,7 +23,7 @@ static void words(unsigned char *out, unsigned int first, unsigned int second) {
     }
 }
 
-static int uncrunch(long width, long height, bool bc3) {
+static int uncrunch(long width, long height, bool bc3, bool all_mips = false) {
     std::vector<unsigned char> input;
     unsigned char chunk[65536];
     while (size_t count = std::fread(chunk, 1, sizeof(chunk), stdin)) {
@@ -36,17 +36,32 @@ static int uncrunch(long width, long height, bool bc3) {
         info.m_width != width || info.m_height != height || info.m_faces != 1 ||
         !info.m_levels || info.m_levels > 14 ||
         info.m_format != (bc3 ? cCRNFmtDXT5 : cCRNFmtDXT1)) return 65;
-    size_t pitch = ((width + 3) / 4) * (bc3 ? 16 : 8);
-    size_t size = pitch * ((height + 3) / 4);
-    if (size > 64 * 1024 * 1024) return 65;
-    std::vector<unsigned char> output(size);
+    const unsigned levels = all_mips ? info.m_levels : 1;
+    std::vector<size_t> pitches, sizes;
+    size_t total = 0;
+    for (unsigned level = 0; level < levels; level++) {
+        crnd::crn_level_info mip;
+        if (!crnd::crnd_get_level_info(input.data(), input.size(), level, &mip)) return 65;
+        const size_t pitch = mip.m_blocks_x * mip.m_bytes_per_block;
+        const size_t size = pitch * mip.m_blocks_y;
+        total += size;
+        if (total > 64 * 1024 * 1024) return 65;
+        pitches.push_back(pitch);
+        sizes.push_back(size);
+    }
+    std::vector<unsigned char> output(total);
     auto context = crnd::crnd_unpack_begin(input.data(), input.size());
     if (!context) return 67;
-    void *destination = output.data();
-    bool ok = crnd::crnd_unpack_level(context, &destination, size, pitch, 0);
+    bool ok = true;
+    size_t offset = 0;
+    for (unsigned level = 0; level < levels && ok; level++) {
+        void *destination = output.data() + offset;
+        ok = crnd::crnd_unpack_level(context, &destination, sizes[level], pitches[level], level);
+        offset += sizes[level];
+    }
     crnd::crnd_unpack_end(context);
     if (!ok) return 67;
-    return std::fwrite(output.data(), 1, size, stdout) == size && !std::fflush(stdout) ? 0 : 68;
+    return std::fwrite(output.data(), 1, total, stdout) == total && !std::fflush(stdout) ? 0 : 68;
 }
 
 int main(int argc, char **argv) {
@@ -60,6 +75,7 @@ int main(int argc, char **argv) {
     if (*end || height < 1 || height > 8192) return 65;
     if (!std::strcmp(argv[3], "uncrunch-bc1")) return uncrunch(width, height, false);
     if (!std::strcmp(argv[3], "uncrunch-bc3")) return uncrunch(width, height, true);
+    if (!std::strcmp(argv[3], "uncrunch-bc3-mips")) return uncrunch(width, height, true, true);
     bool alpha = !std::strcmp(argv[3], "alpha8"), normal = !std::strcmp(argv[3], "normal");
     if (!alpha && !normal && std::strcmp(argv[3], "rgb")) return 65;
     if (width < 4 || height < 4 || width % 4 || height % 4 ||

@@ -291,7 +291,7 @@ class SdkTextureTests(unittest.TestCase):
         )
         self.assertEqual(compilation.returncode, 0, compilation.stderr.decode(errors="replace"))
         for width, height, data in ((0, 4, b""), (4, 8193, b""), (4, 4, b""), (4, 4, b"Hx" + bytes(200)), (1, 3, bytes(range(73)))):
-            for mode in ("uncrunch-bc1", "uncrunch-bc3"):
+            for mode in ("uncrunch-bc1", "uncrunch-bc3", "uncrunch-bc3-mips"):
                 result = subprocess.run([str(tool), str(width), str(height), mode], input=data, capture_output=True, timeout=10)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(result.stdout, b"")
@@ -307,6 +307,37 @@ class SdkTextureTests(unittest.TestCase):
         for data in (b"", mode6(colours[0])[:-1], mode6(colours[0]) + b"x"):
             result = subprocess.run([str(self.decoder), "4", "4"], input=data, capture_output=True, timeout=10)
             self.assertNotEqual(result.returncode, 0)
+
+    def test_crunch_uses_each_original_bc3_level(self):
+        crunch = b"authored fake Crunch container"
+        body, fields = authored_body("Texture", len(crunch), 29, crunch, {"offset": 0, "size": 0, "path": ""})
+        fields["m_MipCount"] = [len(body), 4]
+        body += struct.pack("<i", 2)
+        selected = dict(
+            width=4,
+            height=4,
+            fields=fields,
+            operation="source-bc3-crunch-etc",
+            pixels=dict(member=None, offset=fields["image data"][0] + 4, bytes=len(crunch), sha256=digest(crunch)),
+        )
+        block = bytes((255, 0)) + bytes(6)
+        decoded = block + struct.pack("<HHI", 0xF800, 0, 0) + block + struct.pack("<HHI", 0x07E0, 0, 0)
+        native = subprocess.run
+
+        def run(command, **kwargs):
+            if command[0] == str(self.decoder):
+                return native(command, **kwargs)
+            self.assertEqual(command, [str(self.alpha), "4", "4", "uncrunch-bc3-mips"])
+            self.assertEqual(kwargs["input"], crunch)
+            return subprocess.CompletedProcess(command, 0, decoded, b"")
+
+        sdk = {"pixels": str(self.decoder)}
+        with patch.object(T.subprocess, "run", side_effect=run), patch.object(T, "sdk_encode_rgba", side_effect=[b"A" * 16, b"B" * 16]) as encoder:
+            self.assertEqual(T.pixels_input(None, body, selected, etc_codec=self.alpha, sdk=sdk), b"A" * 16 + b"B" * 16)
+            self.assertEqual([call.args[0] for call in encoder.call_args_list], [bytes((255, 0, 0, 255)) * 16, bytes((0, 255, 0, 255)) * 16])
+        decoded = decoded[:-16]
+        with patch.object(T.subprocess, "run", side_effect=run), self.assertRaisesRegex(ValueError, "mip chain extent differs"):
+            T.pixels_input(None, body, selected, etc_codec=self.alpha, sdk=sdk)
 
     def test_source_bc7_etc_preserves_original_mips_and_packed_normals(self):
         colours = (bytes((17, 31, 73, 255)), bytes((25, 127, 47, 129)))
