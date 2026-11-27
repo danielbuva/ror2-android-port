@@ -16,6 +16,14 @@ public static partial class ContentFixtureBuilder
         public NativeContentBundle[] dependencies;
         public string scene;
         public string loadMode;
+        public BakedReflectionCubemap[] expectedBakedReflectionCubemaps;
+    }
+
+    [Serializable] sealed class BakedReflectionCubemap
+    {
+        public int width;
+        public int mipCount;
+        public string format;
     }
 
     [Serializable] sealed class SceneCheckReport
@@ -31,6 +39,7 @@ public static partial class ContentFixtureBuilder
         public int umbraBeforeLoad;
         public int umbraBeforeActivation;
         public int umbraAfterActivation;
+        public BakedReflectionCubemap[] bakedReflectionCubemaps;
         public bool unloaded;
         public string failure;
     }
@@ -137,6 +146,29 @@ public static partial class ContentFixtureBuilder
         if (SceneManager.GetActiveScene() != streamedScene && !SceneManager.SetActiveScene(streamedScene))
             throw new Exception("Unity could not activate the pinned scene");
         sceneReport.umbraAfterActivation = StaticOcclusionCulling.umbraDataSize;
+        if (sceneRequest.expectedBakedReflectionCubemaps != null)
+        {
+            var cubemaps = new List<BakedReflectionCubemap>();
+            foreach (var root in roots)
+            {
+                foreach (var probe in root.GetComponentsInChildren<ReflectionProbe>(true))
+                {
+                    if (probe.mode != UnityEngine.Rendering.ReflectionProbeMode.Baked)
+                        continue;
+                    var texture = probe.bakedTexture;
+                    if (!texture)
+                        continue;
+                    if (!(texture is Cubemap cubemap))
+                        throw new Exception("Baked ReflectionProbe did not resolve a Cubemap");
+                    cubemaps.Add(new BakedReflectionCubemap {
+                        width = cubemap.width,
+                        mipCount = cubemap.mipmapCount,
+                        format = cubemap.format.ToString(),
+                    });
+                }
+            }
+            sceneReport.bakedReflectionCubemaps = cubemaps.ToArray();
+        }
 
         // The editor's class 29 view exposes the data reference. The release
         // renderer table is checked separately in the serialized scene.

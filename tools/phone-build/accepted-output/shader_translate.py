@@ -52,27 +52,43 @@ def stage_parameters(layout, vertex):
     """Route source-layout resources to the linked pass's descriptor sets."""
     stage_flag = 0x04000000 if vertex else 0x08000000
     rows, descriptors = [], []
+
+    def constant_row(name, variable):
+        return (
+            f"const: {name} {variable['offset']} {variable['type']} {int(variable['matrix'])} {variable['rows']} {variable['columns']} {variable['array_size']}"
+        )
+
     for buffer in layout["buffers"]:
         slot = buffer["slot"] + (2 if vertex else 0)
         name = ("vs_" if vertex else "fs_") + buffer["name"]
         variables = buffer["variables"]
         rows.append(f"cb: {name} {buffer['size']} {len(variables)}")
-        for variable in variables:
-            rows.append(
-                f"const: {variable['name']} {variable['offset']} {variable['type']} {int(variable['matrix'])} "
-                f"{variable['rows']} {variable['columns']} {variable['array_size']}"
-            )
+        rows.extend(constant_row(variable["name"], variable) for variable in variables)
+        for structure in buffer.get("structures", []):
+            name_prefix = structure["name"]
+            rows.append(f"const: {name_prefix} {structure['offset']} 0 2 {structure['stride']} 0 {structure['array_size']}")
+            rows.extend(constant_row(f"{name_prefix}.{variable['name']}", variable) for variable in structure["variables"])
         rows.append(f"cbbind: {name} {stage_flag | 0x10000 | slot}")
         descriptors.extend(("cbv", str(buffer["slot"]), "1", str(slot)))
-    for texture in layout["textures"]:
-        # The measured UI pass uses three separate 2D images and samplers.
+    textures = layout["textures"]
+    image_base = max(3, 1 + max((texture["sampler"] for texture in textures), default=-1))
+    bound_samplers = set()
+    for texture in textures:
         source_slot = texture["slot"]
         sampler = texture["sampler"]
-        if vertex or texture["dimension"] != 2 or texture["multisampled"] or source_slot not in range(3) or sampler < 0:
-            raise ValueError("unqualified Vulkan UI texture binding")
-        image_slot = source_slot + 3
-        descriptors.extend(("texture", str(source_slot), "0", str(image_slot), "sampler", str(sampler), "0", str(source_slot)))
-        rows.append(f"texbind: {texture['name']} {stage_flag | image_slot} {stage_flag | source_slot} 0 2")
+        dimension = texture["dimension"]
+        multisampled = texture.get("multisampled", False)
+        if dimension is None:
+            # The native variant texture binding packs the dimension above its MSAA bit.
+            dimension, multisampled = divmod(texture["native_texture_descriptor"], 2)
+        if vertex or dimension not in (2, 4) or multisampled or source_slot < 0 or sampler < 0:
+            raise ValueError("unqualified Vulkan texture binding")
+        image_slot = image_base + source_slot
+        descriptors.extend(("texture", str(source_slot), "0", str(image_slot)))
+        if sampler not in bound_samplers:
+            descriptors.extend(("sampler", str(sampler), "0", str(sampler)))
+            bound_samplers.add(sampler)
+        rows.append(f"texbind: {texture['name']} {stage_flag | image_slot} {stage_flag | sampler} 0 {dimension}")
     return rows, descriptors
 
 
@@ -103,7 +119,7 @@ def translate_tree(original, directory, tools):
         for entry in entries:
             index = entry["m_BlobIndex"]
             record, program = records[index], dxbc[index]
-            layout = selected_layout(original, raw, record)
+            layout = selected_layout(original, raw, record, structured=True)
             rows, descriptors = stage_parameters(layout, vertex)
             if vertex:
                 rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))

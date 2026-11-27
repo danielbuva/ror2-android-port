@@ -291,9 +291,11 @@ public sealed class AndroidOfflineProfile
             recovery += "-migrated-v1";
         }
     }
-    void ReplacePrimary(Generation next)
+    void ReplacePrimary(Generation next, bool injectWriteFailure = false)
     {
         var pending = primary + ".pending";
+        if (injectWriteFailure)
+            throw new IOException("ENOSPC: injected profile write failure");
         Write(pending, next);
         Read(pending);
         if (File.Exists(primary))
@@ -356,7 +358,7 @@ public sealed class AndroidOfflineProfile
         profile.canSave = true;
         Save();
     }
-    void Commit(UserProfile candidate, IEnumerable<string> ids)
+    void Commit(UserProfile candidate, IEnumerable<string> ids, bool injectWriteFailure = false)
     {
         var unlocks = ProfileUnlocks(candidate);
         var next = Encode(candidate, ids, generation == null ? initialBaseline : generation.baselineRuns);
@@ -372,7 +374,7 @@ public sealed class AndroidOfflineProfile
             throw new InvalidDataException("Native Android profile XML round trip differs");
         if (!SameUnlocks(unlocks, ProfileUnlocks(roundTrip)))
             throw new InvalidOperationException("Original profile unlock identity changed during commit");
-        ReplacePrimary(next);
+        ReplacePrimary(next, injectWriteFailure);
         profile = candidate;
         profile.canSave = true;
         profile.saveRequestPending = false;
@@ -404,7 +406,7 @@ public sealed class AndroidOfflineProfile
         var id = run.ToString("N");
         return !generation.baselineRuns.Contains(id) && !generation.appliedRuns.Contains(id);
     }
-    public bool ApplyResult(Guid run, StatSheet delta)
+    public bool ApplyResult(Guid run, StatSheet delta, bool injectWriteFailure = false)
     {
         if (run == Guid.Empty || delta == null)
             throw new ArgumentException("Genuine run identity/statistics required");
@@ -415,7 +417,7 @@ public sealed class AndroidOfflineProfile
         candidate.canSave = false;
         candidate.ApplyDeltaStatSheet(delta);
         progression?.Invoke(candidate);
-        Commit(candidate, generation.appliedRuns.Concat(new[] { id }));
+        Commit(candidate, generation.appliedRuns.Concat(new[] { id }), injectWriteFailure);
         return true;
     }
     public bool DiscoverPickup(PickupIndex pickup)

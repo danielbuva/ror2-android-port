@@ -1407,7 +1407,12 @@ decoding, raw copying, fixed source-coordinate color extension and public
 JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
 original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
 colour space and usage. It checks source extents and preserves metadata rather
-than generating replacement mip levels. `build_texture_jpeg.py` owns
+than generating replacement mip levels. `texture_native_profile.py` selects
+original Alpha8 and HDR Cubemap records from the PC texture coverage ledger.
+It checks native schemas, platform data, references and complete mip extents,
+then writes a private profile for the producer's existing copy operations.
+The producer's setup, stream checks and output ownership apply to these packs.
+`build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
 an explicit compiler; `texture_jpeg.c` owns bounded stdin/stdout processing.
 New private output, source/tool admission, bounded compiler/codec children,
@@ -1469,6 +1474,12 @@ supply 75 original BC6H Cubemaps for staged scene probes. The texture pack
 retains each complete chain and exposes its typed body and stream for bundle
 assembly. The scene owner binds original probe pointers to the emitted
 records and qualifies in-game rendering.
+`texture_catalog.py` owns the host coverage fixture for original Texture2D and
+Cubemap identities. It joins the current PC census to receipt-pinned texture
+packs and writes the record graph and coverage ledger. The native bundle
+emitter materializes the graph for exact-editor typed load and unload. The
+fixture's addresses and PathIDs are local to that bundle. The canonical graph
+owner supplies the gameplay endpoints.
 Complete original-lighting alternatives for Promo and Snowy Forest use
 `owner-<stage>-source-lighting-objects.json` and the corresponding texture,
 shader and (Promo only) Timeline recipes. The existing object owner emits
@@ -1866,6 +1877,12 @@ local signed fixture server, actual UI/session assertions and owned cleanup.
 The fixture checks that one changed output rebuilds, the unchanged producer is
 reused, the profile and settings survive, and the next check reports the installed
 release is current. Its toolhost and generated binaries/keys stay in the lab.
+Its host-only `--preflight-alpha-update` mode verifies both local alpha release
+graphs against the hash-pinned installer's packaged publisher trust. The
+`installed_alpha` verifier checks their assembly plans and signed runtime
+attempts, and the update owner reports the changed, removed and unchanged
+output dependencies in ascending publisher version order. Device cache reuse
+and native profile retention require the installed game.
 `scripts/lab-alpha-packaging.py` extends that owner with synthetic package issuance,
 installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending
@@ -3138,7 +3155,13 @@ default and unknown-name fallback. The listing action itself is current.
 `./dev pc-reference` is the current host recorder for stock Steam PC captures.
 `scripts/lab/pc_reference.py` owns the separate CrossOver clone, launch and
 capture manifest. `tools/pc-reference/Recorder.cs` owns its isolated profile,
-local run, camera and capture lifecycle. See the [PC reference recorder](../tools/pc-reference/README.md).
+local run, camera and capture lifecycle. `GrappleObservation.cs` supplies
+the Loader test input and records the stock hook and motor at fixed ticks.
+`ProjectileObservation.cs` records the stock skill, owned projectile and native
+damage for projectile comparison steps. `FrameBurst.cs` captures rendered frames
+around the cast for timestamped video.
+`tools/pc-reference/compare.py` pairs a hashed PC frame with a selected
+Android capture. See the [PC reference recorder](../tools/pc-reference/README.md).
 The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
@@ -3247,7 +3270,13 @@ journal/index edits for manual reference review and staging. It neither fetches
 nor commits. `tests/test_journal_renumber.py` covers ownership and refusal cases.
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
-`scripts/ci-local.sh` in a fresh exact-commit checkout. `scripts/ci-local-cache.py`
+`scripts/ci-local.sh` in a fresh exact-commit checkout. The hook uses
+`scripts/ci-test-impact.py` to trace Python imports, source references and
+explicit test inputs from the pushed diff. `scripts/host-tests.py` discovers the
+whole suite and runs the selected modules with the smoke set. An unmapped change,
+check infrastructure change or discovery error runs the full suite. Ruff and
+repository audits run on every push. Manual local CI and GitHub run all modules.
+`scripts/ci-local-cache.py`
 owns a locked Git-object store and interpreter/requirements-keyed dependency
 cache under Git-private `ci-cache/`; no working tree, result or lab output is
 reused. Per-run checkout/index/config and test scratch remain disposable. Linux
@@ -3869,6 +3898,13 @@ binds the separate writer and observer, retains pending evidence by hash, and
 checks two cold world Starts for one reconciliation and unchanged settings.
 Native replay supersedes the pending generation. Cleanup stops the package and
 clears the attempt's request and witness files.
+
+The same runner owns `profile-save-failure`. It selects ordinary Start with
+an attempt-bound lab request, and `AndroidProfileBoundary` consumes the fault
+at the native result commit. `AndroidOfflineProfile` raises an injected write
+error before creating the pending file. The runner verifies the live writer,
+durable native XML and ledger, and retained profile and settings before stopping
+the process. It clears the selector and reuses the two cold reconciliation checks.
 
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
@@ -7832,6 +7868,14 @@ slots with checked local MeshRenderer remaps. `record_produce.py` and
 visibility record at the scene's existing whole-game data alias. A typed scene
 load needs that record in the canonical supplier bundle.
 
+The staged Blackbeach and Golemplains object profiles take a record pack from
+the existing `texture_produce.py` owner using
+`recipe/owner-start-scene-baked-reflections.json`. The texture owner preserves
+original BC6H mip data in the scene bundle resource member, and the object owner
+restores each original baked ReflectionProbe link to its local Cubemap. The
+same Android-target editor fixture loads and unloads the scenes and checks the
+resolved Cubemap widths, mip counts and native formats.
+
 Voidraid complete scene selections extend the existing object/Shader owners
 through `recipe/owner-voidraid-whole-objects.json` and matching post-processing
 and Standard profiles. Original component/GameObject dependencies retain their
@@ -8298,11 +8342,17 @@ object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
 matched the two ramp endpoint pixels from the SDK control. The fixture
 owns the temporary draw resources and the shared runner owns package removal
-and display sleep. The ComputeShader path preserves the source kernel and
+and display sleep. The graphics path maps independent and shared sampler
+registers for 2D and cube images. It preserves per-variant structured
+constant arrays, member offsets and strides through the same native parameter
+writer. Unity typed-loaded the additional texture and instancing variants.
+Their device draw and whole-game coverage remain open.
+The ComputeShader path preserves the source kernel and
 workgroup tables, remaps storage, constants and sampler-free 2D image bindings,
 and writes bare Vulkan SPIR-V into the native kernel. The original histogram
-clear and gather modules pass Vulkan 1.0 validation. ComputeShader player
-dispatch and whole-game coverage remain open.
+clear and gather modules pass Vulkan 1.0 validation. The Android Vulkan
+fixture clears all 256 bins and gathers all 256 solid-red pixels into the
+highest bin using those original kernels. Other compute shapes remain open.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
@@ -8505,6 +8555,10 @@ material values for missing properties. The original material rows are retained.
 prefabs through the owned content loader before the native state configuration
 populates the GroundLight fields. Native GroundLight selects and spawns each
 effect. The native effect owner restores the prefabs' material slots at teardown.
+The same session retains the projectile at Beetle Queen's configured FireSpit
+address. The native effect owner follows the explosion's enabled child projectile
+reference and prepares both detached ghosts before the director spawns enemies.
+Teardown restores the original material slots.
 `IntegratedWorldSession` sends the owned Engineer shield template through the
 same presentation owner before native deployment. The center and edge renderers
 inherit the prepared materials, and world teardown restores the template slots.

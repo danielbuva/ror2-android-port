@@ -138,7 +138,10 @@ class name returned by the editor after loading the record as a Unity object.
 The scene check also verifies the native occlusion reference. Replace `assets` with
 the exact `scene` path and pin `dependencies` in load order. The default
 `loadMode` is `Additive`. Set `loadMode` to `Single` to check whether loading
-the scene on its own changes Umbra data size. The runner snapshots the request
+the scene on its own changes Umbra data size. The optional
+`expectedBakedReflectionCubemaps` list checks the complete set of resolved baked
+probe Cubemaps. Each entry has a `width`, `mipCount` and Unity texture `format`.
+The runner snapshots the request
 beside the oracle. `native-content-check.json`
 records each actual native name/type and verifies destruction after
 `Unload(true)`; failures persist and fail the check. Host validation binds the
@@ -146,6 +149,26 @@ request, bundle hash and complete typed count. This desktop loadability check
 does not establish in-game lighting, visuals or device acceptance. As in the
 pinned EditorKit typed lookup and R2API handle lifecycle prior art, a container
 load alone is insufficient evidence for a requested asset and its lifetime.
+
+To check texture producer coverage against current PC originals, pass
+`texture_catalog.py` a JSON request with `pc` (install root), `data` (relative
+player data directory), and `suppliers` (ordered `profile` and `receipt` pins
+with `path`, `bytes` and `sha256`). The first matching original bundle, member
+and object wins.
+
+```sh
+python3 -B tools/phone-build/accepted-output/texture_catalog.py request.json --output texture-graph
+python3 -I -S tools/phone-build/accepted-output/bundle_preload.py \
+  --graph texture-graph --schema texture-graph/schemas.json --output texture-fixture \
+  --bundle source-texture-catalog --member CAB-f05917d43bafd07cc371ad817060c6ad
+```
+
+Use the emitted `request.json` with `phone-content-check` above. The graph's
+`coverage.jsonl` enumerates original bundle and player identities. Its
+`done.json` counts exact and approximate matches to producer recipe hashes
+before stream relocation, plus originals without a matching supplied route.
+Typed load qualifies the emitted fixture independently of the canonical APK
+scoreboard and leaves visual and device qualification open.
 
 `phone-wrapper-oracle` is separate current **desktop verification** support.
 Its explicit request is either `{"operation":"stage"}` or
