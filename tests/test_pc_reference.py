@@ -67,6 +67,31 @@ class PcReferenceTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "another installation"):
                 pc_reference.prepare_clone(source, drive)
 
+    def test_projectile_plan_and_manifest_require_target_trace_and_clip(self):
+        plan = json.loads((ROOT / "tools/pc-reference/plans/artificer-fire-bolt.json").read_text())
+        scenario = pc_reference.load_plan(plan)[0]
+        spawn, cast = scenario["steps"]
+        result = {"steps": [{"id": step["id"], "timeline": [{"frame": "frame.png"}]} for step in (spawn, cast)]}
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory).resolve()
+            (output / "audio-events.jsonl").touch()
+            for step in (spawn, cast):
+                folder = output / step["id"]
+                folder.mkdir()
+                (folder / "frame.png").touch()
+                (folder / "state.json").touch()
+            folder = output / cast["id"]
+            with self.assertRaisesRegex(RuntimeError, "projectile-trace.json"):
+                pc_reference.capture_files(output, scenario, result)
+            (folder / "projectile-trace.json").touch()
+            with self.assertRaisesRegex(RuntimeError, "projectile.mp4"):
+                pc_reference.capture_files(output, scenario, result)
+            (folder / "projectile.mp4").touch()
+            self.assertIn(f"{cast['id']}/projectile.mp4", pc_reference.capture_files(output, scenario, result))
+        cast["observeProjectileHitOn"] = "unspawned"
+        with self.assertRaisesRegex(ValueError, "earlier target spawn"):
+            pc_reference.load_plan(plan)
+
     def test_no_signed_in_account_from_empty_or_logged_out_registry(self):
         self.assertFalse(pc_reference.positive_steam_account(""))
         self.assertFalse(pc_reference.positive_steam_account("    ActiveUser    REG_DWORD    0x0"))

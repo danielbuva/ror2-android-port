@@ -202,6 +202,7 @@ def load_plan(plan):
             raise ValueError("Scenario seed must be a decimal string in the unsigned 64-bit range")
         if not scenario.get("scene") or not scenario.get("body"):
             raise ValueError("Scenario requires an expected scene and survivor body")
+        spawned = set()
         for step in scenario["steps"]:
             if step.get("action") not in ACTIONS:
                 raise ValueError("Step requires a supported action")
@@ -209,23 +210,41 @@ def load_plan(plan):
                 hold, window = step.get("holdSeconds"), step.get("recordSeconds")
                 if not all(type(value) in (int, float) and math.isfinite(value) for value in (hold, window)) or not 0 < hold < window:
                     raise ValueError("Grapple requires a recording window longer than the positive hold")
+            if "observeProjectileHitOn" in step:
+                target, window, aim = step["observeProjectileHitOn"], step.get("recordSeconds"), step.get("aimDirection")
+                if (
+                    step["action"] != "skill"
+                    or step.get("subject", "player") != "player"
+                    or step.get("value") not in ("primary", "secondary", "utility", "special")
+                    or not isinstance(target, str)
+                    or target not in spawned
+                    or type(window) not in (int, float)
+                    or not 0 < window <= 2
+                    or not isinstance(aim, list)
+                    or len(aim) != 3
+                    or not all(type(value) in (int, float) and math.isfinite(value) for value in aim)
+                    or not any(aim)
+                ):
+                    raise ValueError("Projectile capture requires a player skill, earlier target spawn, aim direction and up to two seconds")
+            if step["action"] == "spawn" and isinstance(step.get("subject"), str):
+                spawned.add(step["subject"])
     return scenarios
 
 
-def encode_grapple_video(folder, timeline, ffmpeg):
+def encode_capture_video(folder, timeline, ffmpeg, clip):
     if len(timeline) < 2 or any(not FRAME.fullmatch(frame["frame"]) for frame in timeline):
-        raise RuntimeError("Grapple video requires a valid PNG timeline")
+        raise RuntimeError("Capture video requires a valid PNG timeline")
     lines = ["ffconcat version 1.0"]
     for frame, next_frame in zip(timeline, timeline[1:]):
         duration = next_frame["seconds"] - frame["seconds"]
         if not math.isfinite(duration) or duration <= 0:
-            raise RuntimeError("Grapple frame timestamps must increase")
-        lines.extend((f"file {frame['frame']}", f"duration {duration:.6f}"))
-    lines.append(f"file {timeline[-1]['frame']}")
+            raise RuntimeError("Capture frame timestamps must increase")
+        lines.extend((f"file {frame['frame']}", "option framerate 1000", f"duration {duration:.6f}"))
+    lines.extend((f"file {timeline[-1]['frame']}", "option framerate 1000"))
     receipt = folder / "video.ffconcat"
     receipt.write_text("\n".join(lines) + "\n", encoding="utf-8")
     subprocess.run(
-        [ffmpeg, "-nostdin", "-v", "error", "-f", "concat", "-i", receipt, "-c:v", "libx264", "-pix_fmt", "yuv420p", "grapple.mp4"],
+        [ffmpeg, "-nostdin", "-v", "error", "-f", "concat", "-safe", "0", "-i", receipt, "-fps_mode", "vfr", "-c:v", "libx264", "-pix_fmt", "yuv420p", clip],
         cwd=folder,
         timeout=60,
         check=True,
@@ -245,6 +264,8 @@ def capture_files(output, scenario, result):
         files.extend(f"{folder}/{frame['frame']}" for frame in step["timeline"][1:])
         if planned.get("action") == "grapple":
             files.extend((f"{folder}/grapple-ticks.jsonl", f"{folder}/grapple.mp4"))
+        if planned.get("observeProjectileHitOn"):
+            files.extend((f"{folder}/projectile-trace.json", f"{folder}/projectile.mp4"))
     artifacts = {}
     for name in files:
         path = (output / name).resolve()
@@ -257,8 +278,8 @@ def capture_files(output, scenario, result):
 def run_plan(args, clone, identity, command, plan, scenarios):
     check_capture_host(command)
     ffmpeg = shutil.which("ffmpeg")
-    if not ffmpeg and any(step["action"] == "grapple" for scenario in scenarios for step in scenario["steps"]):
-        raise RuntimeError("Loader video capture requires ffmpeg")
+    if not ffmpeg and any(step["action"] == "grapple" or step.get("observeProjectileHitOn") for scenario in scenarios for step in scenario["steps"]):
+        raise RuntimeError("Reference video capture requires ffmpeg")
     root = Path(tempfile.mkdtemp(prefix=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-"), dir=LOCAL))
     write(root / "plan.json", plan)
     manifest = {"schema_version": 1, "status": "running", "platform": "crossover-d3d11", **identity, "scenarios": []}
@@ -309,8 +330,13 @@ def run_plan(args, clone, identity, command, plan, scenarios):
                 raise RuntimeError(result.get("error") or f"{scenario['id']} exited with code {process.returncode}")
             for step in result["steps"]:
                 if step.get("grapple_ticks"):
-                    encode_grapple_video(output / step["id"], step["timeline"], ffmpeg)
-                    step["video"] = f"{step['id']}/grapple.mp4"
+                    clip = "grapple.mp4"
+                elif step.get("projectile_trace"):
+                    clip = "projectile.mp4"
+                else:
+                    continue
+                encode_capture_video(output / step["id"], step["timeline"], ffmpeg, clip)
+                step["video"] = f"{step['id']}/{clip}"
             manifest["scenarios"][-1]["sha256"] = capture_files(output, scenario, result)
         manifest["status"] = "passed"
     except BaseException as error:

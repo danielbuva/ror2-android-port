@@ -12,6 +12,7 @@ the game before starting a capture.
 ./dev pc-reference tools/pc-reference/plans/gameplay.json --scenario roost
 ./dev pc-reference tools/pc-reference/plans/gameplay.json
 ./dev pc-reference tools/pc-reference/plans/loader-roost.json
+./dev pc-reference tools/pc-reference/plans/artificer-fire-bolt.json
 ```
 
 Preparation uses an APFS clone inside the same bottle. Stock Steam performs
@@ -41,6 +42,16 @@ A step can reuse the preceding camera or supply a new position
 and yaw/pitch. `aimAt` takes a spawned actor's alias or `player`.
 `settleSeconds` delays a shot or specifies an assisted move's duration.
 `recordSeconds` adds timestamped PNGs after the first frame.
+
+The Artificer plan uses the native first-stage route to Distant Roost variant
+with seed 3, a fixed camera and aim direction, and an assisted Beetle spawn.
+The recorder activates the stock primary once. The projectile step starts
+recording before the cast, retains one PNG per rendered frame during its short
+window, and encodes `projectile.mp4` at the observed timestamps. The 60 FPS
+setting is a target. `projectile-trace.json` records cast pose and aim, owned
+projectile identity and positions, and native damage against the planned
+Beetle or another victim. Compare observed contact and crit with the Android
+trace when qualifying a match.
 
 The command prints its private run directory. The manifest records the Steam
 build, managed assembly digest and scenario results. Steps carry lossless

@@ -40,6 +40,7 @@
               "frame": {"type": "string"},
               "state": {"type": "string"},
               "grapple_ticks": {"type": ["string", "null"]},
+              "projectile_trace": {"type": ["string", "null"]},
               "video": {"type": "string"},
               "timeline": {
                 "type": "array", "minItems": 1,

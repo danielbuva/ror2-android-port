@@ -41,6 +41,7 @@ namespace Ror2Lab.Reference
         public string value;
         public string machine;
         public string aimAt;
+        public string observeProjectileHitOn;
         public bool freezeAi;
         public bool relativeToPlayer;
         public float settleSeconds;
@@ -49,6 +50,7 @@ namespace Ror2Lab.Reference
         public float[] player;
         public float[] position;
         public float[] aim;
+        public float[] aimDirection;
         public CaptureView view;
 
         public static Vector3 Vector(float[] xyz)

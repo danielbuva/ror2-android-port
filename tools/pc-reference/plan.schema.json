@@ -45,6 +45,7 @@
         "value": {"type": "string"},
         "machine": {"type": "string"},
         "aimAt": {"type": "string"},
+        "observeProjectileHitOn": {"type": "string", "minLength": 1, "description": "Earlier spawned target for a stock player skill. Records all rendered frames and native damage within a window of at most two seconds."},
         "freezeAi": {"type": "boolean"},
         "relativeToPlayer": {"type": "boolean"},
         "settleSeconds": {"type": "number", "minimum": 0},
@@ -53,6 +54,7 @@
         "player": {"$ref": "#/$defs/vector"},
         "position": {"$ref": "#/$defs/vector"},
         "aim": {"$ref": "#/$defs/vector"},
+        "aimDirection": {"$ref": "#/$defs/vector"},
         "view": {
           "type": "object",
           "required": ["position", "yaw", "pitch"],
@@ -64,8 +66,23 @@
           }
         }
       },
-      "if": {"properties": {"action": {"const": "grapple"}}},
-      "then": {"required": ["holdSeconds", "recordSeconds"]}
+      "allOf": [
+        {
+          "if": {"properties": {"action": {"const": "grapple"}}},
+          "then": {"required": ["holdSeconds", "recordSeconds"]}
+        },
+        {
+          "if": {"required": ["observeProjectileHitOn"]},
+          "then": {
+            "required": ["value", "aimDirection", "recordSeconds"],
+            "properties": {
+              "action": {"const": "skill"},
+              "subject": {"const": "player"},
+              "recordSeconds": {"exclusiveMinimum": 0, "maximum": 2}
+            }
+          }
+        }
+      ]
     }
   }
 }
