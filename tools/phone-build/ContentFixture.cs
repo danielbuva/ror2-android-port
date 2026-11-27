@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -9,7 +10,7 @@ using UnityEngine.Networking;
 public sealed class ContentFixture : MonoBehaviour
 {
     public string shaderAddress;
-    public bool computeHistogram;
+    public string[] computeAddresses;
 
     [Serializable] sealed class HistogramReport
     {
@@ -32,6 +33,32 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32 high;
         public bool passed;
         public string failure;
+    }
+
+    [Serializable] sealed class ScopeReport
+    {
+        public string shader;
+        public int nonZeroAfterClear;
+        public int nonZeroAfterGather;
+        public int mismatchedAfterGather;
+        public string failure;
+
+        public bool Passed => failure == null && nonZeroAfterClear == 0 && mismatchedAfterGather == 0;
+    }
+
+    [Serializable] sealed class ScopesReport
+    {
+        public string graphics;
+        public ScopeReport waveform;
+        public ScopeReport vectorscope;
+        public bool passed;
+        public string failure;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct WaveformBin
+    {
+        public uint red, green, blue, alpha;
     }
 
     [Serializable] public sealed class Report
@@ -84,7 +111,7 @@ public sealed class ContentFixture : MonoBehaviour
 
     IEnumerator Start()
     {
-        if (!String.IsNullOrEmpty(shaderAddress))
+        if (!String.IsNullOrEmpty(shaderAddress) || computeAddresses?.Length > 0)
         {
             yield return CheckShader();
             yield break;
@@ -160,14 +187,38 @@ public sealed class ContentFixture : MonoBehaviour
     void CheckShaderBundle(AssetBundle bundle, string loadError)
     {
         string graphics = SystemInfo.graphicsDeviceType.ToString();
-        if (computeHistogram)
+        if (computeAddresses?.Length == 2)
+        {
+            var scopes = new ScopesReport { graphics = graphics };
+            try
+            {
+                foreach (string address in computeAddresses)
+                {
+                    var shader = LoadComputeShader(bundle, address, loadError);
+                    switch (shader.name)
+                    {
+                        case "Waveform" when scopes.waveform == null:
+                            scopes.waveform = CheckScope(shader, true);
+                            break;
+                        case "Vectorscope" when scopes.vectorscope == null:
+                            scopes.vectorscope = CheckScope(shader, false);
+                            break;
+                        default:
+                            throw new Exception("Unexpected scope shader: " + shader.name);
+                    }
+                }
+                scopes.passed = graphics == "Vulkan" && scopes.waveform.Passed && scopes.vectorscope.Passed;
+            }
+            catch (Exception error) { scopes.failure = error.Message; }
+            Debug.Log("PHONE_SHADER_COMPUTE " + JsonUtility.ToJson(scopes));
+            return;
+        }
+        if (computeAddresses?.Length == 1)
         {
             var histogram = new HistogramReport { graphics = graphics };
             try
             {
-                if (bundle == null) throw new Exception(loadError ?? "ComputeShader bundle did not load");
-                var shader = bundle.LoadAsset<ComputeShader>(shaderAddress);
-                if (shader == null || !SystemInfo.supportsComputeShaders) throw new Exception("ComputeShader is unavailable or unsupported");
+                var shader = LoadComputeShader(bundle, computeAddresses[0], loadError);
                 histogram.shader = shader.name;
                 DispatchHistogram(shader, histogram);
             }
@@ -187,6 +238,15 @@ public sealed class ContentFixture : MonoBehaviour
         }
         catch (Exception error) { report.failure = error.Message; }
         Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(report));
+    }
+
+    static ComputeShader LoadComputeShader(AssetBundle bundle, string address, string loadError)
+    {
+        if (bundle == null) throw new Exception(loadError ?? "ComputeShader bundle did not load");
+        var shader = bundle.LoadAsset<ComputeShader>(address);
+        if (shader == null || !SystemInfo.supportsComputeShaders)
+            throw new Exception("ComputeShader is unavailable or unsupported: " + address);
+        return shader;
     }
 
     static uint[] KernelThreads(ComputeShader shader, int kernel)
@@ -243,6 +303,84 @@ public sealed class ContentFixture : MonoBehaviour
                 report.nonZeroAfterGather == 1 && report.lastBin == width * width;
         }
         finally { Destroy(source); }
+    }
+
+    const int ScopeWidth = 16;
+    const int ScopeBinCount = ScopeWidth * ScopeWidth;
+
+    static ScopeReport CheckScope(ComputeShader shader, bool waveform)
+    {
+        var report = new ScopeReport { shader = shader.name };
+        var source = new Texture2D(ScopeWidth, ScopeWidth, TextureFormat.RGBA32, false, true);
+        try
+        {
+            var red = new Color32[ScopeBinCount];
+            for (int i = 0; i < red.Length; ++i) red[i] = new Color32(128, 0, 0, 255);
+            source.SetPixels32(red);
+            source.Apply();
+            if (waveform) DispatchWaveform(shader, source, report);
+            else DispatchVectorscope(shader, source, report);
+        }
+        catch (Exception error) { report.failure = error.Message; }
+        finally { Destroy(source); }
+        return report;
+    }
+
+    static void DispatchScope(ComputeShader shader, Texture source, ComputeBuffer buffer, bool waveform, bool clear)
+    {
+        int kernel = shader.FindKernel("K" + shader.name + (clear ? "Clear" : "Gather"));
+        shader.SetVector("_Params", new Vector4(ScopeWidth, ScopeWidth, waveform ? 0 : ScopeWidth, 0));
+        shader.SetBuffer(kernel, "_" + shader.name + "Buffer", buffer);
+        if (!clear) shader.SetTexture(kernel, "_Source", source);
+        shader.Dispatch(kernel, waveform && !clear ? ScopeWidth : 1, 1, 1);
+    }
+
+    static void DispatchVectorscope(ComputeShader shader, Texture source, ScopeReport report)
+    {
+        var bins = new uint[ScopeBinCount];
+        for (int i = 0; i < bins.Length; ++i) bins[i] = 1;
+        using (var buffer = new ComputeBuffer(bins.Length, sizeof(uint)))
+        {
+            buffer.SetData(bins);
+            DispatchScope(shader, source, buffer, false, true);
+            buffer.GetData(bins);
+            report.nonZeroAfterClear = CountNonZero(bins);
+            DispatchScope(shader, source, buffer, false, false);
+            buffer.GetData(bins);
+        }
+        report.nonZeroAfterGather = CountNonZero(bins);
+        // Mid-red maps to U=6, V=12 on this 16 × 16 grid.
+        for (int i = 0; i < bins.Length; ++i)
+            if (bins[i] != (i == 12 * ScopeWidth + 6 ? ScopeBinCount : 0))
+                ++report.mismatchedAfterGather;
+    }
+
+    static void DispatchWaveform(ComputeShader shader, Texture source, ScopeReport report)
+    {
+        var bins = new WaveformBin[ScopeBinCount];
+        for (int i = 0; i < bins.Length; ++i)
+            bins[i] = new WaveformBin { red = 1, green = 1, blue = 1, alpha = 1 };
+        using (var buffer = new ComputeBuffer(bins.Length, 4 * sizeof(uint)))
+        {
+            buffer.SetData(bins);
+            DispatchScope(shader, source, buffer, true, true);
+            buffer.GetData(bins);
+            foreach (var bin in bins)
+                if ((bin.red | bin.green | bin.blue | bin.alpha) != 0) ++report.nonZeroAfterClear;
+            DispatchScope(shader, source, buffer, true, false);
+            buffer.GetData(bins);
+        }
+        for (int i = 0; i < bins.Length; ++i)
+        {
+            var bin = bins[i];
+            if ((bin.red | bin.green | bin.blue | bin.alpha) != 0) ++report.nonZeroAfterGather;
+            // Each column has 16 red samples at row 8. The kernel skips absolute bin 0.
+            int row = i % ScopeWidth;
+            int red = row == 8 ? ScopeWidth : 0;
+            int other = row == 0 && i > 0 ? ScopeWidth : 0;
+            if (bin.red != red || bin.green != other || bin.blue != other || bin.alpha != 0)
+                ++report.mismatchedAfterGather;
+        }
     }
 
     static void DrawAnimateAlpha(Shader shader, ShaderDrawReport report)
