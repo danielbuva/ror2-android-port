@@ -5299,6 +5299,20 @@ regenerate baked lighting. The operation consumes no codec or private fixture;
 all generated packs, APKs and raw observations stay ignored. Native BC6H support
 must be established before selecting this profile on another device.
 
+### Staged scene baked reflection suppliers (2026-11-27)
+
+`owner-scene-baked-reflection-textures.json` selects 75 BC6H Cubemaps from
+35 pinned PC bundles for scene probes. The existing `cube-preserve` producer
+checks every face and mip extent and copies the original compressed stream.
+Six source texture pointers per record are null, and the platform blobs are
+empty. Scene integration assigns the emitted pointers. One additional BC1
+scene Cubemap is already selectable through `owner-cubemap-textures.json`.
+
+The profile contains only source selectors, hashes, field and stream extents
+and destination metadata. Output hashes bind transformations of the user's
+input. It contains no game assets, serialized templates, SDK material, private
+configuration, or credentials. Generated packs and receipts stay ignored.
+
 ## Complete original-lighting scene alternatives audit (2026-10-29)
 
 | Recipe | Scope | Tracked information | Boundaries | Owner and evidence |
