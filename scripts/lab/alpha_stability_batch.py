@@ -167,6 +167,7 @@ class _GameThermalOwner:
         self.admission_battery = None
         self.battery_current_now = None
         self.battery_zone_celsius = None
+        self.admission_maximum_celsius = None
 
     def battery_current(self):
         return int(self.device.sh("cat", "/sys/class/power_supply/battery/current_now", timeout=0.7))
@@ -208,21 +209,26 @@ class _GameThermalOwner:
             observation["gap_seconds"] = gap
             observation["all_zones_raw"] = text
             maximum, value, excluded = cooldown_temperatures(text, admission=all_zones)
-            admission_maximum = maximum
+            admission_values = [
+                int(raw) / 1000
+                for name, raw, *_ in map(str.split, text.splitlines())
+                if raw != "UNREADABLE"
+                and name not in NON_TEMPERATURE_ZONES
+                and int(raw) > -30000
+                and name.lower().startswith(("cpu", "gpu", "battery", "skin"))
+            ]
+            self.admission_maximum_celsius = admission_maximum = max(admission_values)
             if all_zones:
-                admission_values, admission_excluded = [], []
+                admission_excluded = []
                 for line in text.splitlines():
                     fields = line.split()
                     if fields[1] == "UNREADABLE" or fields[0] in NON_TEMPERATURE_ZONES or int(fields[1]) <= -30000:
                         continue
-                    if fields[0].lower().startswith(("cpu", "gpu", "battery", "skin")):
-                        admission_values.append(int(fields[1]) / 1000)
-                    else:
+                    if not fields[0].lower().startswith(("cpu", "gpu", "battery", "skin")):
                         entry = dict(type=fields[0], raw=int(fields[1]), reason="Outside CPU/GPU/battery/skin admission; retained for runtime sampling")
                         if len(fields) == 3:
                             entry["path"] = fields[2]
                         admission_excluded.append(entry)
-                admission_maximum = max(admission_values)  # Readable CPU coverage was required above.
                 observation.update(admission_maximum_celsius=admission_maximum, admission_excluded_zones=admission_excluded)
                 self.runtime_zones = [
                     (fields[0], fields[2])
@@ -386,7 +392,7 @@ class _GameThermalOwner:
         self.thread.start()
         self.stopper.start()
 
-    def between_sessions(self):
+    def between_sessions(self, *, cool_start=False):
         """Cool at the verified menu while the runtime observer stays active."""
         phase = self.phase
         self.phase = "session-memory-cooldown"
@@ -397,7 +403,10 @@ class _GameThermalOwner:
                 if self.error:
                     raise ThermalCancelled(self.error)
                 admitted = dict(battery=self.battery.copy(), battery_zone_celsius=self.battery_zone_celsius)
-                if max(admitted["battery"]["celsius"], admitted["battery_zone_celsius"]) <= 35:
+                if cool_start:
+                    admitted["admission_maximum_celsius"] = self.admission_maximum_celsius
+                cool_battery = max(admitted["battery"]["celsius"], admitted["battery_zone_celsius"]) <= 35
+                if cool_battery and (not cool_start or admitted["admission_maximum_celsius"] <= 50):
                     break
                 time.sleep(THERMAL_INTERVAL_SECONDS)
             if not self.device.display(True):
