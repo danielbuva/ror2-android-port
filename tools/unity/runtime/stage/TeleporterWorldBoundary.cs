@@ -618,6 +618,9 @@ public sealed partial class PortSession
                     Present(damageTrail.segmentPrefab);
                 foreach (var projectile in root.GetComponentsInChildren<RoR2.Projectile.ProjectileController>(true))
                     Present(coordinator.OriginalProjectileGhost(projectile));
+                foreach (var explosion in root.GetComponentsInChildren<RoR2.Projectile.ProjectileExplosion>(true))
+                    if (explosion.fireChildren)
+                        Present(explosion.childrenProjectilePrefab);
             }
             Present(source);
             // Objective projectile templates can be presented before the world report exists.

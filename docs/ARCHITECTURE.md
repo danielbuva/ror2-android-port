@@ -1407,7 +1407,18 @@ decoding, raw copying, fixed source-coordinate color extension and public
 JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
 original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
 colour space and usage. It checks source extents and preserves metadata rather
-than generating replacement mip levels. `build_texture_jpeg.py` owns
+than generating replacement mip levels. `source-bc3-etc` likewise reads each
+original mip, including the texels stored in its boundary blocks. It writes
+ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
+normal maps. It uses the existing pinned native decoder, ETC2 colour and
+EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
+use the same codec pins and output checks. `texture_native_profile.py` selects
+original Alpha8, HDR Cubemap and BC3 records from the PC texture coverage ledger.
+It checks native schemas, platform data, references and complete mip extents,
+then writes a private profile. Source-derived BC3 profiles pin the original
+bytes and expected output extents and leave reference output hashes empty.
+The producer's setup, stream checks and output ownership apply to these packs.
+`build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
 an explicit compiler; `texture_jpeg.c` owns bounded stdin/stdout processing.
 New private output, source/tool admission, bounded compiler/codec children,
@@ -1872,6 +1883,12 @@ local signed fixture server, actual UI/session assertions and owned cleanup.
 The fixture checks that one changed output rebuilds, the unchanged producer is
 reused, the profile and settings survive, and the next check reports the installed
 release is current. Its toolhost and generated binaries/keys stay in the lab.
+Its host-only `--preflight-alpha-update` mode verifies both local alpha release
+graphs against the hash-pinned installer's packaged publisher trust. The
+`installed_alpha` verifier checks their assembly plans and signed runtime
+attempts, and the update owner reports the changed, removed and unchanged
+output dependencies in ascending publisher version order. Device cache reuse
+and native profile retention require the installed game.
 `scripts/lab-alpha-packaging.py` extends that owner with synthetic package issuance,
 installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending
@@ -3887,6 +3904,13 @@ binds the separate writer and observer, retains pending evidence by hash, and
 checks two cold world Starts for one reconciliation and unchanged settings.
 Native replay supersedes the pending generation. Cleanup stops the package and
 clears the attempt's request and witness files.
+
+The same runner owns `profile-save-failure`. It selects ordinary Start with
+an attempt-bound lab request, and `AndroidProfileBoundary` consumes the fault
+at the native result commit. `AndroidOfflineProfile` raises an injected write
+error before creating the pending file. The runner verifies the live writer,
+durable native XML and ledger, and retained profile and settings before stopping
+the process. It clears the selector and reuses the two cold reconciliation checks.
 
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
@@ -8336,6 +8360,15 @@ clear and gather modules pass Vulkan 1.0 validation. The Android Vulkan
 fixture clears all 256 bins and gathers all 256 solid-red pixels into the
 highest bin using those original kernels. Other compute shapes remain open.
 
+The signed release graph accepts `owner-compute-shader-translation-v1` packs
+as explicit bundle suppliers. The Histogram profile binds the original PC
+record and destination, and `shader_translate.py` verifies the installed
+translator and validator before producing its typed pack receipt. Managed-host
+`build_shader_tools.py` builds the two ARM64 API 24 native executables from
+pinned public archives and retains corresponding source, notices and relink
+materials. The existing native provider plan stages the executables. Android
+execution of the signed producer remains open.
+
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
 produced Android body through the pack receipt and type table. Shader fallback
@@ -8533,6 +8566,10 @@ material values for missing properties. The original material rows are retained.
 prefabs through the owned content loader before the native state configuration
 populates the GroundLight fields. Native GroundLight selects and spawns each
 effect. The native effect owner restores the prefabs' material slots at teardown.
+The same session retains the projectile at Beetle Queen's configured FireSpit
+address. The native effect owner follows the explosion's enabled child projectile
+reference and prepares both detached ghosts before the director spawns enemies.
+Teardown restores the original material slots.
 `IntegratedWorldSession` sends the owned Engineer shield template through the
 same presentation owner before native deployment. The center and edge renderers
 inherit the prepared materials, and world teardown restores the template slots.

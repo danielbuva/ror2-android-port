@@ -1,8 +1,7 @@
 """Current: observe a genuine pending-file transaction, terminate its owned writer, cold-recover.
 
-The interruption case refuses a missed pre-commit window. The shared runner's
-separate settings-save-failure workload uses one-shot lab ENOSPC injection;
-neither case claims physical volume exhaustion or power-loss coverage.
+Interruption cases refuse a missed pre-commit window. The shared runner also
+supports one-shot lab ENOSPC injection for settings and native profile commits.
 """
 
 import json
@@ -188,8 +187,31 @@ def new_native_loss(before, after):
     return identity[1], entry["file"]
 
 
-def check_profile_write_interrupt(device, thermal, request, output, launch, start_from_menu, device_cleanup=None):
-    """Interrupt the native profile commit while retaining its durable result."""
+def wait_for_profile_save_failure(device, thermal, report_path, report_id, pid, attempt, deadline):
+    while time.monotonic() < deadline:
+        if thermal.error:
+            raise RuntimeError(thermal.error)
+        if device.sh("pidof", PACKAGE, check=False).strip() != pid:
+            raise RuntimeError("Profile failure check lost its owned writer")
+        report = _read_json(device, report_path)
+        if matches_run(report, pid, attempt, report_id=report_id) and report.get("firstFailure"):
+            failure = report["firstFailure"].splitlines()[0]
+            results = report.get("results") or {}
+            if (
+                failure.removeprefix("System.IO.IOException: ") != "ENOSPC: injected profile write failure"
+                or results.get("reportReloaded") is not True
+                or results.get("persisted") is not False
+                or (report.get("profile") or {}).get("resultApplied") is not False
+            ):
+                raise RuntimeError("Unexpected native profile outcome: " + failure)
+            return report
+        time.sleep(0.5)
+    raise RuntimeError("Native loss/profile save failure deadline")
+
+
+def check_profile_recovery(device, thermal, request, output, launch, start_from_menu, device_cleanup=None):
+    """Fail the profile commit after the real native result becomes durable."""
+    injected = request["mode"] == "profile-save-failure"
     expected = request["apk_sha256"]
     installed = device.owned()
     bind_installed_apk(installed, expected_sha256=expected)
@@ -200,19 +222,20 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
     results = runtime + "/offline-run-results-v1/"
     ledger = results + "profile.json"
     settings = runtime + "/offline-settings-v1/preferences.json"
-    request_file = runtime + "/profile-write-observer.request"
+    observer_request = runtime + "/profile-write-observer.request"
+    selector = runtime + "/movement-batch-selection.json"
     report_id = "body-state-spawn-state-auto-player"
     nonce = uuid.uuid4().hex
     prefix = runtime + "/ror2lab-write-" + nonce
     ready_path, result_path = prefix + ".ready", prefix + ".result"
-    witnesses = (ready_path, result_path, ready_path + ".tmp", result_path + ".tmp")
+    witnesses = () if injected else (ready_path, result_path, ready_path + ".tmp", result_path + ".tmp")
     if any(
         _remote_path_state(device, path) != "absent"
         for path in (
             pending,
-            request_file,
+            observer_request,
             runtime + "/settings-write-observer.request",
-            runtime + "/movement-batch-selection.json",
+            selector,
             runtime + "/whole-catalog-selection.json",
             *witnesses,
         )
@@ -220,8 +243,14 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
         raise RuntimeError("Profile witness requires idle ordinary startup and no existing pending transaction")
     if any(_remote_path_state(device, path) != "file" for path in (primary, settings)):
         raise RuntimeError("Profile witness requires retained lab profile and settings")
-    uid = observer_uid(device)
     receipt = dict(success=False, attempt=attempt, apk_sha256=expected)
+    request_file = selector if injected else observer_request
+    request_text = nonce
+    if injected:
+        request_text = json.dumps(
+            dict(attempt=attempt, id=report_id, freePlay=True, debugOptions=dict(profileSaveFailure=True, purpose="Native profile result ENOSPC"))
+        )
+    uid = None if injected else observer_uid(device)
 
     def hashes():
         return persistence_hashes(device, runtime, "android-profile-v1", "offline-run-results-v1", "offline-settings-v1")
@@ -244,12 +273,12 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
         return pid, profile
 
     try:
-        local = output / "profile-observer.request"
-        local.write_text(nonce)
+        local = output / request_file.rsplit("/", 1)[1]
+        local.write_text(request_text)
         device.cmd("push", str(local), request_file)
-        if _read_raw(device, request_file) != nonce:
-            raise RuntimeError("Profile observer request readback differs")
-        pid, profile = start("interrupted")
+        if _read_raw(device, request_file) != request_text:
+            raise RuntimeError("Profile recovery request readback differs")
+        pid, profile = start("initial")
         if profile.get("reconciledRuns") != 0:
             raise RuntimeError("Initial Start reconciled earlier results")
         before = hashes()
@@ -259,40 +288,58 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
         old_entries = read_ledger()
         receipt["before"] = before
         deadline = time.monotonic() + request["duration_seconds"]
-        while _remote_path_state(device, result_path) != "file":
-            if thermal.error:
-                raise RuntimeError(thermal.error)
-            if time.monotonic() >= deadline:
-                raise RuntimeError("Native loss/profile observer deadline")
-            latest = _read_json(device, runtime + "/movement-batch-" + report_id + ".json")
-            if matches_run(latest, pid, attempt, report_id=report_id) and latest.get("firstFailure"):
-                raise RuntimeError("Native first failure: " + latest["firstFailure"])
-            time.sleep(0.5)
-        ready, observed = _read_json(device, ready_path), _read_json(device, result_path)
-        receipt.update(observer_ready=ready, observer_result=observed)
-        for witness in (ready, observed):
-            validate_observer_binding(witness, nonce, pid, uid)
-            if witness.get("pendingName") != "profile.json.pending" or witness["observerPid"] != ready["observerPid"]:
-                raise RuntimeError("Profile observer did not bind the same separate process and path")
-        receipt["writer_exit"] = stop_after_observed_exit(device, observed, expected)
-        interrupted = hashes()
-        receipt["interrupted"] = interrupted
-        interrupted_transaction(before[primary], interrupted.get(primary), dict(state=_remote_path_state(device, pending)), observed)
-        if pending not in interrupted or any(interrupted.get(path) != digest for path, digest in before.items() if path not in (ledger, ledger + ".backup")):
-            raise RuntimeError("Interrupted write changed a retained profile, settings or native result")
+        report_path = runtime + "/movement-batch-" + report_id + ".json"
+        if injected:
+            failed = wait_for_profile_save_failure(device, thermal, report_path, report_id, pid, attempt, deadline)
+            write(output / "profile-save-failed.json", failed)
+        else:
+            while _remote_path_state(device, result_path) != "file":
+                if thermal.error:
+                    raise RuntimeError(thermal.error)
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("Native loss/profile observer deadline")
+                latest = _read_json(device, report_path)
+                if matches_run(latest, pid, attempt, report_id=report_id) and latest.get("firstFailure"):
+                    raise RuntimeError("Native first failure: " + latest["firstFailure"])
+                time.sleep(0.5)
+            ready, observed = _read_json(device, ready_path), _read_json(device, result_path)
+            receipt.update(observer_ready=ready, observer_result=observed)
+            for witness in (ready, observed):
+                validate_observer_binding(witness, nonce, pid, uid)
+                if witness.get("pendingName") != "profile.json.pending" or witness["observerPid"] != ready["observerPid"]:
+                    raise RuntimeError("Profile observer did not bind the same separate process and path")
+            receipt["writer_exit"] = stop_after_observed_exit(device, observed, expected)
+        failed_hashes = hashes()
+        receipt["interrupted" if not injected else "after_failure"] = failed_hashes
+        pending_state = _remote_path_state(device, pending)
+        if injected:
+            if pending_state != "absent" or pending in failed_hashes:
+                raise RuntimeError("Injected write failure left an unexpected pending profile")
+        else:
+            interrupted_transaction(before[primary], failed_hashes.get(primary), dict(state=pending_state), observed)
+            if pending not in failed_hashes:
+                raise RuntimeError("Interrupted profile pending file is absent from the hash inventory")
+        if any(failed_hashes.get(path) != digest for path, digest in before.items() if path not in (ledger, ledger + ".backup")):
+            raise RuntimeError("Failed write changed a retained profile, settings or native result")
         entries = read_ledger()
         run_id, report_file = new_native_loss(old_entries, entries)
         if (
             results + report_file in before
-            or results + report_file not in interrupted
+            or results + report_file not in failed_hashes
             or run_id in generation["appliedRuns"]
             or run_id in generation["baselineRuns"]
-            or (ledger in before and interrupted.get(ledger + ".backup") != before[ledger])
+            or (ledger in before and failed_hashes.get(ledger + ".backup") != before[ledger])
         ):
             raise RuntimeError("New result identity was already present or lacked its durable XML")
         receipt["run_id"] = run_id
-        if _read_raw(device, request_file) != nonce:
-            raise RuntimeError("Profile observer request ownership changed")
+        if injected:
+            if failed["results"].get("reportFile") != report_file or device.sh("pidof", PACKAGE, check=False).strip() != pid:
+                raise RuntimeError("Injected failure lost the bound writer or durable report")
+            receipt["writer_survived_pid"] = pid
+            bind_installed_apk(device.owned(), expected_sha256=expected)
+            device.sh("am", "force-stop", PACKAGE)
+        if _read_raw(device, request_file) != request_text:
+            raise RuntimeError("Profile recovery request ownership changed")
         remove_device_file(device, request_file, device_cleanup)
         receipt["first_cooldown"] = thermal.between_sessions()
         recovery_pid, profile = start("first-cold")
@@ -308,7 +355,7 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
             or recovered.get(backup) != before[primary]
             or _remote_path_state(device, pending) != "absent"
             or {path: digest for path, digest in recovered.items() if path not in (primary, backup)}
-            != {path: digest for path, digest in interrupted.items() if path not in (primary, backup, pending)}
+            != {path: digest for path, digest in failed_hashes.items() if path not in (primary, backup, pending)}
         ):
             raise RuntimeError("First cold Start did not recover and apply only the durable native loss")
         bind_installed_apk(device.owned(), expected_sha256=expected)
@@ -325,7 +372,7 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
             bind_installed_apk(device.owned(), expected_sha256=expected)
             if not receipt["success"]:
                 device.sh("am", "force-stop", PACKAGE)
-            if _read_raw(device, request_file) == nonce:
+            if _read_raw(device, request_file) == request_text:
                 remove_device_file(device, request_file, device_cleanup)
             for remote in witnesses:
                 if _remote_path_state(device, remote) != "absent":
@@ -334,7 +381,7 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
             receipt["success"] = False
             raise
         finally:
-            write(output / "profile-write-interrupt.json", receipt)
+            write(output / (request["mode"] + ".json"), receipt)
     return receipt
 
 

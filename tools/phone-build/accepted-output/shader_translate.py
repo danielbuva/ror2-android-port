@@ -9,13 +9,14 @@ import struct
 import subprocess
 import sys
 
-import lz4.block
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parents[2] / "scripts/lab"))
 
 import object_produce as objects
 import shader_produce as shader
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts/lab"))
-from shader_segments import read_segments, selected_layout
+COMPUTE_PROFILE = "owner-compute-shader-translation-v1"
 
 
 def vertex_channels(dxbc):
@@ -106,6 +107,9 @@ def compile_spirv(tools, directory, index, dxbc, descriptors, *, vertex=False):
 
 
 def translate_tree(original, directory, tools):
+    import lz4.block
+    from shader_segments import read_segments, selected_layout
+
     form = original["m_ParsedForm"]
     (subshader,) = form["m_SubShaders"]
     (shader_pass,) = subshader["m_Passes"]
@@ -247,25 +251,39 @@ def produce(request):
     if output.is_relative_to(root) or root.is_relative_to(output):
         raise ValueError("translation output must be disjoint from original inputs")
     profile = request.get("profile")
+    input_id = None
+    tool_pins = {}
+    tools = request["tools"]
     if profile is None:
         records = [{"source": request["source"], "output": request["record"]}]
     else:
         path = Path(profile["path"]).resolve(strict=True)
         shader.checked(path, profile)
-        records = json.loads(path.read_bytes())["typed_records"]
+        selection = json.loads(path.read_bytes())
+        records = selection["typed_records"]
         if not records:
             raise ValueError("translated Shader profile is empty")
+        if selection.get("schema") == COMPUTE_PROFILE:
+            input_id = selection["input_id"]
+            if input_id != objects.M.INPUT_ID or set(tools) != {"dxbc", "spirv_val"}:
+                raise ValueError("compute translation requires the accepted input and two installed tools")
+            tool_pins = tools
+            for pin in tool_pins.values():
+                shader.checked(Path(pin["path"]), pin)
+            tools = {name: pin["path"] for name, pin in tool_pins.items()}
 
     directory = output / "programs"
     directory.mkdir(parents=True)
     rows, types, type_ids = [], [], {}
     with (output / "objects.bin").open("xb") as stream:
         for target, typ, original in source_records(root, records):
+            if input_id is not None and typ["class_id"] != 72:
+                raise ValueError("compute translation profile requires a ComputeShader record")
             stage_dir = directory / str(len(rows))
             stage_dir.mkdir()
             node = objects.W.shader_node(typ["tree"])
             translate = translate_tree if typ["class_id"] == 48 else translate_compute
-            tree = translate(objects.W.read_shader_body(node, original), stage_dir, request["tools"])
+            tree = translate(objects.W.read_shader_body(node, original), stage_dir, tools)
             body = objects.W.write_shader_body(node, tree)
             rows.append(
                 dict(target, offset=stream.tell(), bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), type_id=objects.record_type(typ, types, type_ids))
@@ -283,6 +301,11 @@ def produce(request):
             name: {"bytes": (output / name).stat().st_size, "sha256": shader.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")
         },
     }
+    if input_id is not None:
+        for pin in tool_pins.values():
+            shader.checked(Path(pin["path"]), pin)
+        receipt["input_id"] = input_id
+        receipt["tool_sha256"] = {name: pin["sha256"] for name, pin in tool_pins.items()}
     (output / "result.json").write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n")
     return receipt
 

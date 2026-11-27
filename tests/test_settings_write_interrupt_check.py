@@ -17,6 +17,12 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
     witness = dict(success=True, createObserved=True, writerExited=True, pendingPresentBeforeStop=True, pendingPresentAfterStop=True)
 
     def test_profile_interruption_recovers_only_the_new_native_loss(self):
+        self.check_profile_recovery(injected=False)
+
+    def test_profile_enospc_retains_live_writer_and_recovers_only_the_new_native_loss(self):
+        self.check_profile_recovery(injected=True)
+
+    def check_profile_recovery(self, *, injected):
         root = "/owned-lab"
         primary = root + "/android-profile-v1/profile.json"
         settings = root + "/offline-settings-v1/preferences.json"
@@ -27,26 +33,38 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
         loss = dict(file=run_file, ending="StandardLoss", win=False, debugAssisted=False)
         old_generation = dict(version=2, appliedRuns=[applied], baselineRuns=[])
         old_hashes = {primary: "original", primary + ".backup": "older", settings: "unchanged"}
-        stopped_hashes = dict(old_hashes, **{primary + ".pending": "partial", ledger: "ledger", result_root + run_file: "xml"})
+        stopped_hashes = dict(old_hashes, **{ledger: "ledger", result_root + run_file: "xml"})
+        if not injected:
+            stopped_hashes[primary + ".pending"] = "partial"
         recovered_hashes = dict(stopped_hashes, **{primary: "updated", primary + ".backup": "original"})
-        recovered_hashes.pop(primary + ".pending")
+        recovered_hashes.pop(primary + ".pending", None)
         device = Mock()
         device.read_receipt.return_value = {"persistentDataPath": root}
         thermal = Mock(error=None)
         witness = dict(nonce=nonce, pid=101, uid=10001, observerPid=102, pendingName="profile.json.pending")
-        request_file = root + "/profile-write-observer.request"
+        request_file = root + ("/movement-batch-selection.json" if injected else "/profile-write-observer.request")
         witness_file = root + "/ror2lab-write-" + nonce + ".result"
         witness_raw = json.dumps(dict(witness, **self.witness)).encode()
+        pushed = {}
 
-        def shell(*args):
+        def shell(*args, **kwargs):
             if args[0] == "sha256sum":
                 return hashlib.sha256(witness_raw).hexdigest()
             if args[0] == "sh" and "stat -c" in args[2]:
-                return str(len(witness_raw) if args[-2] == witness_file else len(nonce))
+                return str(len(witness_raw) if args[-2] == witness_file else len(pushed[request_file]))
+            if args[0] == "pidof":
+                return "101"
             return ""
 
         device.sh.side_effect = shell
-        device.cmd.side_effect = lambda op, source, dest: Path(dest).write_bytes(witness_raw) if op == "pull" else None
+
+        def command(op, source, dest):
+            if op == "pull":
+                Path(dest).write_bytes(witness_raw)
+            if op == "push":
+                pushed[dest] = Path(source).read_text()
+
+        device.cmd.side_effect = command
 
         paths = {primary: "file", settings: "file"}
         ledger_states = iter(["absent", "file"])
@@ -58,7 +76,7 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
 
         def start(device, owner, pid, output, *, report_id):
             self.assertEqual(report_id, "body-state-spawn-state-auto-player")
-            if pid == "101":
+            if pid == "101" and not injected:
                 paths.update({witness_file: "file", primary + ".pending": "file"})
             else:
                 paths.pop(primary + ".pending", None)
@@ -69,6 +87,15 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
                 return next(generations)
             if path == ledger:
                 return dict(version=1, runs=[loss])
+            if injected:
+                return dict(
+                    pid=101,
+                    attempt="fixture-attempt",
+                    id="body-state-spawn-state-auto-player",
+                    firstFailure="System.IO.IOException: ENOSPC: injected profile write failure\nstack trace",
+                    results=dict(reportReloaded=True, persisted=False, reportFile=run_file),
+                    profile=dict(resultApplied=False),
+                )
             if path.endswith(".ready"):
                 return witness
             return dict(witness, **self.witness)
@@ -82,21 +109,30 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
             stack.enter_context(patch.object(check.uuid, "uuid4", return_value=Mock(hex=nonce)))
             stack.enter_context(patch.object(check, "_remote_path_state", side_effect=path_state))
             stack.enter_context(patch.object(check, "_read_json", side_effect=read_json))
-            stack.enter_context(patch.object(check, "_read_raw", side_effect=[nonce, nonce, ""]))
+            reads = iter([True, True, False])
+            stack.enter_context(patch.object(check, "_read_raw", side_effect=lambda device, path: pushed[path] if next(reads) else ""))
             stack.enter_context(patch.object(check, "persistence_hashes", side_effect=[old_hashes, stopped_hashes, recovered_hashes, recovered_hashes]))
-            stack.enter_context(patch.object(check, "stop_after_observed_exit", return_value=dict(writer_absent=True)))
+            stop = stack.enter_context(patch.object(check, "stop_after_observed_exit", return_value=dict(writer_absent=True)))
             stack.enter_context(patch.object(thermal, "between_sessions", return_value={}))
             cleanup = dict(bytes_removed=0, files=[])
-            receipt = check.check_profile_write_interrupt(
-                device, thermal, dict(apk_sha256="a" * 64, duration_seconds=2), Path(temporary), start_device, start, cleanup
+            mode = "profile-save-failure" if injected else "profile-write-interrupt"
+            receipt = check.check_profile_recovery(
+                device, thermal, dict(mode=mode, apk_sha256="a" * 64, duration_seconds=2), Path(temporary), start_device, start, cleanup
             )
-            self.assertEqual((Path(temporary) / Path(witness_file).name).read_bytes(), witness_raw)
+            if injected:
+                stop.assert_not_called()
+                self.assertEqual(receipt["writer_survived_pid"], "101")
+                self.assertTrue(json.loads(pushed[request_file])["debugOptions"]["profileSaveFailure"])
+                self.assertTrue((Path(temporary) / "profile-save-failed.json").is_file())
+            else:
+                stop.assert_called_once()
+                self.assertEqual((Path(temporary) / Path(witness_file).name).read_bytes(), witness_raw)
+                device.sh.assert_any_call("rm", "--", witness_file)
         self.assertTrue(receipt["success"])
         self.assertEqual(receipt["run_id"], new_id)
         self.assertEqual(start_device.call_count, 3)
         device.sh.assert_any_call("rm", "--", request_file)
-        device.sh.assert_any_call("rm", "--", witness_file)
-        self.assertEqual(cleanup["bytes_removed"], len(witness_raw) + len(nonce))
+        self.assertEqual(cleanup["bytes_removed"], len(pushed[request_file]) + (0 if injected else len(witness_raw)))
         self.assertFalse(any(primary + ".pending" in call.args for call in device.sh.call_args_list if call.args[0] == "rm"))
 
     def test_result_ledger_cannot_substitute_an_assisted_or_reordered_loss(self):

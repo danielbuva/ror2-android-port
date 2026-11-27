@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1543](PORTING_JOURNAL.md#j1543--record-sustained-assisted-combat-on-secondary-nova) | 2026-11-27 | Record sustained assisted combat on Secondary Nova | 2026-11-27. |
+| [J1542](PORTING_JOURNAL.md#j1542--recover-a-native-profile-save-after-injected-enospc) | 2026-11-27 | Recover a native profile save after injected ENOSPC | 2026-11-27. |
 | [J1535](PORTING_JOURNAL.md#j1535--replay-a-pinned-converter-stage-on-android) | 2026-11-27 | Replay a pinned converter stage on Android | 2026-11-27. |
 | [J1492](PORTING_JOURNAL.md#j1492--restore-acrids-native-normal-and-finisher-swing-bindings) | 2026-11-17 | Restore Acrid's native normal and finisher swing bindings | 2026-11-18. |
 | [J1491](PORTING_JOURNAL.md#j1491--recover-native-materials-when-baked-effects-load) | 2026-11-17 | Recover native materials when baked effects load | 2026-11-18. |
@@ -370,3 +372,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1537](PORTING_JOURNAL.md#j1537--activate-the-native-commencement-mission-on-entry) | 2026-11-27 | Activate the native Commencement mission on entry | 2026-11-26. |
 | [J1538](PORTING_JOURNAL.md#j1538--draw-a-translated-source-shader-on-android-vulkan) | 2026-11-27 | Draw a translated source Shader on Android Vulkan | 2026-11-27. |
 | [J1540](PORTING_JOURNAL.md#j1540--dispatch-translated-source-computeshader-kernels-on-android-vulkan) | 2026-11-27 | Dispatch translated source ComputeShader kernels on Android Vulkan | 2026-11-27. |
+| [J1544](PORTING_JOURNAL.md#j1544--recover-beetle-queen-acid-ghost-materials) | 2026-11-27 | Recover Beetle Queen acid ghost materials | 2026-11-27. |

@@ -130,6 +130,35 @@ Evidence: `work/coordination/alpha-shared-device-session-20261113T005754Z/`
 APK SHA-256: `0c440333e3906c483ad8280ab6287e299ca8f7e10238c696425f1e3423cde2ad`;
 build source `4e12f51b`. Raw evidence stays private.
 
+### Secondary Nova sustained combat
+
+On 2026-11-27, the shared runner recorded 1,800.011 seconds of stationary
+native primary fire in one original first-stage world, with invincibility and
+an enemy soft limit of 12. The native limit of 40 was restored at teardown.
+The workload recorded 34 kills and 534 shots.
+
+| Window | Frames | Mean FPS | p50 / p95 / p99 (ms) | Frames above 50 ms |
+| --- | ---: | ---: | ---: | ---: |
+| Reconciled counter window | 106,604 | 59.311 | 16.67 / 16.85 / 33.32 | 14 |
+| Covered final 570.008 of 600 s | 33,712 | 59.410 | 16.67 / 16.87 / 16.92 | 2 |
+
+The full final ten minutes have 29.992 seconds of uncovered boundary time,
+so full-window quantiles are unavailable. Both measured means fall below the
+60 FPS floor. Ordinary play, visual parity and device budgets remain open.
+
+All 61 power observations recorded external power. Battery level held at 80%,
+with a charge-gauge delta of −4,818 µAh and a peak of 35 °C. Analyzed CPU/GPU
+peaks were 85.6/71.1 °C, with 2.817 seconds above 80 °C, a maximum sample gap
+of 0.986 seconds and 0.330 seconds unclassified at the boundary. The wider
+runner window peaked at 94.3 °C and spent 13.006 seconds above 80 °C. Safety
+limits held, scratch was removed, the app stopped, the OLED slept, and the
+lease was released. Device energy use and causal throttling remain unmeasured.
+
+Evidence lives in `work/coordination/alpha-saf-stability-20261127/nova-b-sustained-placement/`
+(`terminal.done.json`, `performance.json`, `performance.md`, `thermal.jsonl`).
+APK SHA-256 `5af412ac93b310c221879305194cb68d3f81868252c048a573ef2c99db2d236e`,
+build source `53b5781a`.
+
 ### Sustained assisted raw-frame observation
 
 The existing sustained owner completed 1,800.810 host seconds on 2026-11-12.
