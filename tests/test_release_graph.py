@@ -1068,18 +1068,25 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(value) if isinstance(value, dict) else value)
 
-            for name in (*G.INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so"):
+            for name in (*G.INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so", "libc++_shared.so"):
                 write(native / name, "installed tool fixture " + name)
             write(runtime / "data-hashes.json", {"clang/21/include/header.h": "fixture v1"})
             original = inputs / "import/files/Data/source.txt"
             write(original, "owned fixture")
+            stock = original.parent / "wwise-stock/stock-input"
+            ndk = original.parent / "wwise-ndk/sysroot/target-input"
+            write(stock, "licensed stock fixture")
+            write(ndk, "target SDK fixture")
             input_manifest = "recipe/inputs.json"
             write(
                 repo / input_manifest,
                 {
                     "schema": 1,
                     "game_version": "synthetic-v1",
-                    "files": [{"path": "Data/source.txt", "bytes": original.stat().st_size, "sha256": G.digest(original)}],
+                    "files": [
+                        {"path": p.relative_to(inputs / "import/files").as_posix(), "bytes": p.stat().st_size, "sha256": G.digest(p)}
+                        for p in (original, stock, ndk)
+                    ],
                 },
             )
             authored = repo / "tools/unity/Fixture.cs"
@@ -1235,7 +1242,12 @@ if 'audio_members' in request:
     (stage / 'stage-receipt.json').write_text(json.dumps({'inventory': pin(source)}))
     supplied = managed / 'supplied-sdk'
     supplied.mkdir()
-    (supplied / 'libAkSoundEngine.so').write_bytes(b'local licensed library fixture')
+    receipt_pin = request['wwise_build']
+    receipt_bytes = pathlib.Path(receipt_pin['path']).read_bytes()
+    assert pin(receipt_bytes)['sha256'] == receipt_pin['sha256'] and len(receipt_bytes) == receipt_pin['bytes']
+    library = pathlib.Path(request['source_inputs']['wwise_native']).read_bytes()
+    assert json.loads(receipt_bytes)['library'] == pin(library)
+    (supplied / 'libAkSoundEngine.so').write_bytes(library)
     burst = frame.parent.parent / 'burst'
     burst.mkdir()
     (burst / 'lib_burst_generated.so').write_bytes(pathlib.Path(request['burst_tools']['runtime']).read_bytes())
@@ -1358,6 +1370,7 @@ if 'resource_dir' in tools:
             admission, plan = load("install_inputs"), load("install_flow")
             code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
             package_job = "recipe/jobs/owner-package-inputs.json"
+            wwise = "recipe/jobs/owner-wwise-native.json"
             progress = []
             audio_layout = root / "private-stage-receipt.json"
             write(
@@ -1384,7 +1397,10 @@ if 'resource_dir' in tools:
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
-                graph.attach_install_plan(index, required_inputs=input_manifest, workspace_bytes=0, bindings={"original": "Data/source.txt", "pc": "."})
+                bindings = {"original": "Data/source.txt", "pc": "."}
+                if current:
+                    bindings.update(wwise_stock="Data/wwise-stock", wwise_ndk_root="Data/wwise-ndk")
+                graph.attach_install_plan(index, required_inputs=input_manifest, workspace_bytes=0, bindings=bindings)
                 if current:
                     self.assertIn("tools/wwise-android-abi/generate.py", graph.jobs[code]["source_files"])
                     self.assertIn("recipe/original-audio-owner-sources.json", graph.jobs[code]["source_files"])
@@ -1401,10 +1417,12 @@ if 'resource_dir' in tools:
                     self.assertNotIn("recipe/jobs/owner-burst-code.json", graph.jobs)
                     self.assertNotIn(str(audio_layout), json.dumps(graph.jobs[code]))
                     self.assertNotIn("private authoring witness", json.dumps(graph.jobs[code]))
+                    self.assertIn("tools/phone-build/owner-code/wwise-native/PcmReadbackRingV1.h", graph.jobs[wwise]["source_files"])
+                    self.assertNotIn("tools/phone-build/owner-code/produce.py", graph.jobs[wwise]["source_files"])
                 else:
                     self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
                     self.assertNotIn(package_job, graph.jobs[player]["needs"])
-                self.assertEqual(graph.jobs[code]["needs"], [package_job])
+                self.assertEqual(graph.jobs[code]["needs"], [package_job, wwise] if current else [package_job])
                 self.assertIn("recipe/runtime-sources.json", graph.jobs[player]["source_files"])
                 self.assertEqual(graph.jobs[witness]["needs"], [code, player])
                 release = {
@@ -1422,7 +1440,8 @@ if 'resource_dir' in tools:
                 )
                 self.assertEqual(
                     plan.validate_plan(index["install_plan"], index, dispatcher.descriptor),
-                    {package_job: "assembly", code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"},
+                    {package_job: "assembly", code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"}
+                    | ({wwise: "assembly"} if current else {}),
                 )
                 dispatcher.execute(bundle)
                 dispatcher.execute(native_job)
@@ -1515,6 +1534,28 @@ if 'resource_dir' in tools:
 
             for path in self.root_graph().current_code_sources(signed_audio=True):
                 write(repo / path, (ROOT / path).read_text())
+            fixture_graph = G.Graph(repo, {})
+            fixture_graph.wwise_native()
+            for path in fixture_graph.public_files[wwise]:
+                if not (repo / path).exists():
+                    write(repo / path, (ROOT / path).read_text())
+            write(
+                producer_root / "wwise_native.py",
+                """import argparse, hashlib, json, pathlib
+parser = argparse.ArgumentParser()
+for name in ('stock', 'sysroot', 'clang', 'linker', 'resource-dir', 'output'):
+    parser.add_argument('--' + name, required=True, type=pathlib.Path)
+args = parser.parse_args()
+assert args.clang.name == 'libclang.so' and args.linker.name == 'lib-ld.lld-.so'
+assert args.resource_dir.parts[-2:] == ('clang', '21')
+library = (args.stock / 'stock-input').read_bytes() + (args.sysroot / 'target-input').read_bytes()
+args.output.mkdir()
+(args.output / 'libAkSoundEngine.so').write_bytes(library)
+(args.output / 'result.json').write_text(json.dumps({
+    'success': True, 'library': {'sha256': hashlib.sha256(library).hexdigest(), 'bytes': len(library)},
+}))
+""",
+            )
             request = json.loads((repo / code_request).read_text())
             with self.assertRaisesRegex(ValueError, "audio-bearing code"):
                 G.Graph(repo, {}).compile([], code_request=code_request, native_request=native_request, audio_stage_receipt=audio_layout)
@@ -1540,6 +1581,7 @@ if 'resource_dir' in tools:
             progress.clear()
             build(current=True)
             self.assertIn((code, False), progress)
+            self.assertIn((wwise, True), progress)
             write(burst_runtime, "Burst fixture v2")
             self.assertEqual(build(current=True)["rebuilt"], ["apk/lib/arm64-v8a/lib_burst_generated.so"])
             write(runtime / "data-hashes.json", {"clang/21/include/header.h": "fixture v2"})
@@ -1547,6 +1589,7 @@ if 'resource_dir' in tools:
             self.assertFalse(build(current=True)["rebuilt"])
             self.assertIn((code, False), progress)
             self.assertIn((native_job, False), progress)
+            self.assertIn((wwise, False), progress)
 
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):

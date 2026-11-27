@@ -9,7 +9,9 @@ from pathlib import Path
 import struct
 import time
 
-import native
+NATIVE_SPEC = importlib.util.spec_from_file_location("owner_wwise_native_stage", Path(__file__).with_name("native.py"))
+native = importlib.util.module_from_spec(NATIVE_SPEC)
+NATIVE_SPEC.loader.exec_module(native)
 
 LIBRARY = "libAkSoundEngine.so"
 DIAGNOSTICS = Path(__file__).resolve().with_name("wwise-native")
@@ -109,6 +111,19 @@ def audit_library(path):
     }
 
 
+def verify_build(library, pin):
+    if set(pin) != {"path", "sha256", "bytes"}:
+        raise ValueError("explicit Wwise producer receipt pin required")
+    receipt = native.canonical(pin["path"]).read_bytes()
+    if len(receipt) != pin["bytes"] or hashlib.sha256(receipt).hexdigest() != pin["sha256"]:
+        raise ValueError("Wwise producer receipt differs from the dependency pin")
+    build = json.loads(receipt)
+    actual = audit_library(library)
+    if build.get("schema") != 1 or build.get("success") is not True or build.get("overlay_sha256") != native.sha(POLICY) or build.get("library") != actual:
+        raise ValueError("Wwise library differs from the successful producer receipt")
+    return actual["sha256"]
+
+
 def prepare_common(common, output):
     policy = json.loads(POLICY.read_text())
     serializer = common / "AkCallbackSerializer.cpp"
@@ -189,7 +204,7 @@ def run(stock, sysroot, clang, linker, resource_dir, output):
         (output / name).mkdir()
     env = dict(os.environ, TMPDIR=str(output / "tmp"))
     started = time.monotonic()
-    result = {"schema": 1, "success": False}
+    result = {"schema": 1, "success": False, "clang_sha256": native.sha(clang), "linker_sha256": native.sha(linker)}
     try:
         serializer, stubs = prepare_common(integration / "Common", output / "common")
         sources = [

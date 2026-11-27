@@ -25,6 +25,7 @@ PRODUCERS = {
     "tools/phone-build/owner-code/run_android.py",
     "tools/phone-build/owner-code/produce.py",
     "tools/phone-build/owner-code/native.py",
+    "tools/phone-build/owner-code/wwise_native.py",
     "tools/phone-build/package-assemblies/produce.py",
     *{
         "tools/phone-build/accepted-output/" + name + ".py"
