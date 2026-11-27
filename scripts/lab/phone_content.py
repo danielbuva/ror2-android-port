@@ -205,7 +205,11 @@ def material_references(value):
         not isinstance(row, dict) or any(not isinstance(row.get(key), str) or not row[key] for key in ("property", "texture")) for row in textures
     ):
         return None
-    return value["shader"], sorted((row["property"], row["texture"]) for row in textures)
+    if any("type" in row and (not isinstance(row["type"], str) or not row["type"]) for row in textures):
+        return None
+    names = sorted((row["property"], row["texture"]) for row in textures)
+    types = {(row["property"], row["texture"], row["type"]) for row in textures if "type" in row}
+    return value["shader"], names, types
 
 
 def manifest_entries(rows):
@@ -266,8 +270,11 @@ def validate_native_content(attempt, commit):
             or (asset.get("subasset") and (row.get("subasset") != asset["subasset"] or row.get("loaded_name") != asset["subasset"]))
         ):
             raise RuntimeError("Native-content typed load mismatch")
-        if "material" in asset and material_references(row.get("material")) != material_references(asset["material"]):
-            raise RuntimeError("Native-content Material shader or saved texture mismatch: " + asset["name"])
+        if "material" in asset:
+            shader, names, types = material_references(asset["material"])
+            actual = material_references(row.get("material"))
+            if actual is None or actual[:2] != (shader, names) or not types.issubset(actual[2]):
+                raise RuntimeError("Native-content Material shader or saved texture mismatch: " + asset["name"])
         if "manifest" in asset and manifest_entries(row.get("manifest")) != manifest_entries(asset["manifest"]):
             raise RuntimeError("Native-content AssetBundleManifest bundles, hashes or dependencies mismatch: " + asset["name"])
     return report
