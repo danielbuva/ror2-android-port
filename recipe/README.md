@@ -7538,3 +7538,13 @@ bundle identities used by existing scenes. The 2026-11-27 audit matched
 each destination to one PC source body and checked the class schema, byte
 extent and absence of PPtrs. The same provenance, privacy, license and
 sensitive-content review applies to this profile.
+
+Audit 2026-11-27. `owner-whole-game-mesh-frontier.json` selects two original
+inline Meshes for the canonical graph. The provenance, privacy, licensing and
+sensitive-content review covered original and destination identities, body
+lengths and hashes. The existing Mesh producer reads the original installation
+locally. Geometry, collision data and Unity evidence stay under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-mesh-frontier.json` | `82f6cf1f4166edee7095a990829180de4be75dbe223524f395cad9e674fdad2d` |
