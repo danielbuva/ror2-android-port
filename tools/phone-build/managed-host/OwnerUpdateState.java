@@ -94,7 +94,7 @@ public final class OwnerUpdateState {
         if ("failed".equals(status)) return "Conversion failed. Review the first failure before retrying.";
         if ("complete".equals(status)) return "Producer finished; later reconstruction or installation steps may remain.";
         if (thermal || "cooling".equals(status)) return (manual ? "Paused by you and cooling. " : "Cooling automatically. ")
-            + "Resume clears only a manual pause; it cannot bypass cooling. The 85 C ceiling releases below 70 C; the normal duty gate must also clear. A 15-minute ceiling pause stops work.";
+            + "Resume clears only a manual pause; it cannot bypass cooling. The 90 C ceiling releases below 70 C; the normal duty gate must also clear. A 15-minute ceiling pause stops work.";
         if (manual || "paused".equals(status)) return "Paused by you; monitoring remains active. Resume continues when thermal admission permits.";
         return "Conversion active in the foreground service. You may leave this screen; reopen it to inspect progress or cancel.";
     }

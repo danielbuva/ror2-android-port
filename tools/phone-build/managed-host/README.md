@@ -346,8 +346,8 @@ never pauses its sensor loop or overrides its cooling decision. These controls
 stop when work hands off to Android installation and do not apply to profile
 verification or recovery. Provider cancel
 uses `CancellationSignal` and closes the active source stream. Battery admission
-retains the documented caller rule (at most 35 C and 85%, no charging at or above
-80%); the supervisor's thermal limits are unchanged. The screen displays signed
+requires a measured temperature of at most 35 C at any charge level. The
+supervisor pauses at 90 C on the hottest readable SoC zone. The screen displays signed
 stages, byte/job progress, elapsed time, first failure, live duty-runner readings
 and Android battery charge/health; unavailable or old readings are marked.
 

@@ -2213,6 +2213,22 @@ public class Review {
             LAB.publish(service, files, 1)
             self.assertEqual(service.requests, [])
 
+    def test_local_release_server_streams_signed_bundle_file(self):
+        payload = b"authored release bundle\n" * 50_000
+        with tempfile.TemporaryDirectory() as directory, LAB.server() as service:
+            bundle = Path(directory) / "public-tools.zip"
+            bundle.write_bytes(payload)
+            with patch.object(Path, "read_bytes", side_effect=AssertionError("release must be streamed")):
+                base = LAB.publish(service, {bundle.name: bundle}, 8)
+                with urllib.request.urlopen(base + "latest.json") as response:
+                    metadata = json.load(response)
+                self.assertEqual(service.requests, ["/latest.json"])
+                self.assertEqual(metadata["assets"][0]["size"], len(payload))
+                with urllib.request.urlopen(metadata["assets"][0]["browser_download_url"]) as response:
+                    self.assertEqual(response.headers["Content-Length"], str(len(payload)))
+                    self.assertEqual(response.read(), payload)
+            self.assertEqual(service.requests, ["/latest.json", "/public-tools.zip"])
+
     def test_pm_path_empty_success_or_exit_one_is_absence(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         for code in (0, 1):

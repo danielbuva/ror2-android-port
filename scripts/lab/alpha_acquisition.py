@@ -104,15 +104,136 @@ def dispatch_control(phone, installer, action):
     raise installer.Failure("acquisition-control-unacknowledged-" + action)
 
 
-class Acquisition:
-    def __init__(self, installer, require, request, config, temporary):
+class FolderImport:
+    def __init__(self, installer, require):
         self.installer, self.require = installer, require
-        self.apk = config["installer_apk"]
-        self.apk_hash = config["installer_sha256"]
         self.stage_name = "LabAcquisition-" + secrets.token_hex(8)
         self.external_root = "/sdcard/Download"
         self.stage_root = f"{self.external_root}/{self.stage_name}"
         self.owned_stage = False
+
+    def tree_hashes(self, phone, root, *, private=False):
+        script = f"cd {shlex.quote(root)} && find . -type f -exec sha256sum {{}} +"
+        args = ["run-as", self.installer.PACKAGE] if private else []
+        raw = phone.command("shell", shlex.join([*args, "sh", "-c", script]), label="acquisition-tree-hashes", timeout=300)
+        return hash_listing(raw)
+
+    def verify_tree(self, phone, root, expected, *, private=False):
+        self.require(self.tree_hashes(phone, root, private=private) == expected, "acquisition-tree-hash-mismatch")
+
+    def cleanup(self, phone):
+        if self.owned_stage:
+            phone.shell("rm", "-rf", self.stage_root, label="acquisition-remove-owned-external-directory")
+            phone.shell("test", "!", "-e", self.stage_root, label="acquisition-external-directory-absent")
+
+    def picker_tree(self, phone):
+        tree = phone.ui_windows(DOCUMENTS, recovery=False)
+        phone.prompt_nodes(tree, DOCUMENTS)
+        return tree
+
+    def click_picker(self, phone, tree, labels, label, *, ids=(), clickable=False):
+        node = picker_node(tree, *labels, ids=ids, clickable=clickable)
+        self.require(node is not None, label + "-unavailable")
+        phone.tap_prompt_node(node, label)
+
+    def click_document(self, phone, name):
+        tree = self.picker_tree(phone)
+        # A long list or a clipped grid card can hide the document title.
+        for direction in (-1, 1):
+            for _ in range(5):
+                node = picker_node(tree, name, ids=("title",))
+                if node is not None:
+                    phone.tap_prompt_node(node, "acquisition-select-document")
+                    return
+                scroll = next((node for node in tree.iter("node") if node.get("scrollable") == "true"), None)
+                if scroll is None:
+                    break
+                bounds = list(map(int, re.findall(r"\d+", scroll.get("bounds", ""))))
+                self.require(len(bounds) == 4, "acquisition-picker-scroll-bounds")
+                x1, y1, x2, y2 = bounds
+                x, top, bottom = (x1 + x2) // 2, y1 + (y2 - y1) // 5, y2 - (y2 - y1) // 5
+                start, end = (bottom, top) if direction < 0 else (top, bottom)
+                phone.shell("input", "swipe", str(x), str(start), str(x), str(end), "250", label="acquisition-scroll-documents")
+                tree = self.picker_tree(phone)
+        raise self.installer.Failure("acquisition-document-not-visible")
+
+    def require_selection(self, phone, kind, name):
+        preferences = phone.command(
+            "shell", "run-as", self.installer.PACKAGE, "cat", "shared_prefs/owner-phone-flow.xml", label="acquisition-selected-document", idempotent=True
+        )
+        self.require(selected_document(preferences, kind, f"Download/{self.stage_name}/{name}"), "acquisition-selected-document-mismatch")
+
+    def choose(self, phone, kind, name=None, *, via_control=False):
+        if via_control:
+            dispatch_control(phone, self.installer, "choose-folder" if kind == "tree" else "choose-zip")
+        else:
+            phone.tap("Choose game folder" if kind == "tree" else "Choose game ZIP")
+        tree = self.picker_tree(phone)
+        if name is None:
+            phone.shell("input", "keyevent", "KEYCODE_BACK", label="acquisition-cancel-focused-picker")
+            phone.ui_windows((self.installer.PACKAGE,), recovery=False)
+            return
+        self.click_picker(phone, tree, ("show roots",), "acquisition-show-picker-locations", clickable=True)
+        # Select the device root. The separate Downloads provider can omit ADB-staged files.
+        device_name = phone.shell("settings", "get", "global", "device_name", label="acquisition-local-storage-label").decode().strip()
+        model = phone.shell("getprop", "ro.product.model", label="acquisition-device-model").decode().strip()
+        labels = tuple(name for name in (device_name, model, "internal storage", "internal shared storage") if name and name != "null")
+        self.click_picker(phone, self.picker_tree(phone), labels, "acquisition-open-local-storage-root", ids=("title",))
+        for part in ("Download", self.stage_name, *name.split("/")):
+            self.click_document(phone, part)
+        if kind == "tree":
+            for text in ("Use this folder", "Allow"):
+                self.click_picker(phone, self.picker_tree(phone), (text,), "acquisition-confirm-folder-grant", clickable=True)
+        phone.ui_windows((self.installer.PACKAGE,), recovery=False)
+        observed = phone.read("update-state.json")
+        self.require(
+            observed and observed.get("state") == "INPUT_REQUIRED" and "Source selected." in observed.get("message", ""),
+            "acquisition-source-selection-unverified",
+        )
+        self.require_selection(phone, kind, name)
+
+    def restart_installer(self, phone, kind, name):
+        phone.require_owned_installer()
+        phone.shell("am", "force-stop", self.installer.PACKAGE, label="acquisition-stop-installer-before-reopen")
+        phone.start(repeat_notification_denial=True)
+        self.require_selection(phone, kind, name)
+
+    def wait_import(self, phone, expected, *, timeout=360):
+        deadline = time.monotonic() + min(phone.timeout, timeout)
+        while time.monotonic() < deadline:
+            row = phone.read("import-state.json")
+            if row:
+                state = row.get("state")
+                if expected == "COPYING" and state == "IMPORTING" and 0 < row.get("completed", 0) < row.get("total", 0):
+                    return row
+                if state in {"ERROR", "IMPORTED", "CANCELLED"}:
+                    self.require(expected == state, "acquisition-unexpected-import-terminal")
+                    return row
+            time.sleep(0.5)
+        raise self.installer.Failure("acquisition-import-timeout")
+
+    def require_visible_status(self, phone, *parts):
+        # The status TextView is first in the installer's ScrollView.
+        for _ in range(6):
+            tree = phone.ui_windows((self.installer.PACKAGE,), recovery=False)
+            if any(all(part in node.get("text", "") for part in parts) for node in tree.iter("node")):
+                return
+            scroll = next((node for node in tree.iter("node") if node.get("scrollable") == "true"), None)
+            if scroll is None:
+                break
+            bounds = list(map(int, re.findall(r"\d+", scroll.get("bounds", ""))))
+            self.require(len(bounds) == 4, "installer-status-scroll-bounds")
+            x1, y1, x2, y2 = bounds
+            x = str((x1 + x2) // 2)
+            phone.shell("input", "swipe", x, str(y1 + (y2 - y1) // 5), x, str(y2 - (y2 - y1) // 5), "250", label="installer-scroll-to-status")
+        raise self.installer.Failure("installer-status-not-visible")
+
+
+class Acquisition(FolderImport):
+    def __init__(self, installer, require, request, config, temporary):
+        super().__init__(installer, require)
+        self.apk = config["installer_apk"]
+        self.apk_hash = config["installer_sha256"]
         tools = installer.HostTools(config)
         manifest = installer.run([tools.build / "aapt", "dump", "badging", self.apk], label="inspect-cached-installer-manifest").decode()
         installer.require_installer_manifest(manifest, config["installer_version"])
@@ -157,15 +278,6 @@ class Acquisition:
             archive.writestr("sample.txt", "two")
         self.invalid_archive_hash = hashlib.sha256(self.invalid_archive.read_bytes()).hexdigest()
 
-    def tree_hashes(self, phone, root, *, private=False):
-        script = f"cd {shlex.quote(root)} && find . -type f -exec sha256sum {{}} +"
-        args = ["run-as", self.installer.PACKAGE] if private else []
-        raw = phone.command("shell", shlex.join([*args, "sh", "-c", script]), label="acquisition-tree-hashes", timeout=300)
-        return hash_listing(raw)
-
-    def verify_tree(self, phone, root, expected, *, private=False):
-        self.require(self.tree_hashes(phone, root, private=private) == expected, "acquisition-tree-hash-mismatch")
-
     def staged_unchanged(self, phone):
         self.verify_tree(phone, self.stage_root + "/Supported", self.current[2])
         self.verify_tree(phone, self.stage_root + "/Older", self.older[2])
@@ -194,80 +306,6 @@ class Acquisition:
         phone.storage()
         self.results["staged"] = {"bytes": staged, "shared_free_before": free, "zip_bytes": archive_bytes}
 
-    def cleanup(self, phone):
-        if self.owned_stage:
-            phone.shell("rm", "-rf", self.stage_root, label="acquisition-remove-owned-external-directory")
-            phone.shell("test", "!", "-e", self.stage_root, label="acquisition-external-directory-absent")
-
-    def picker_tree(self, phone):
-        tree = phone.ui_windows(DOCUMENTS, recovery=False)
-        phone.prompt_nodes(tree, DOCUMENTS)
-        return tree
-
-    def click_picker(self, phone, tree, labels, label, *, ids=(), clickable=False):
-        node = picker_node(tree, *labels, ids=ids, clickable=clickable)
-        self.require(node is not None, label + "-unavailable")
-        phone.tap_prompt_node(node, label)
-
-    def click_document(self, phone, name):
-        tree = self.picker_tree(phone)
-        # A long list or a clipped grid card can hide the document title.
-        for direction in (-1, 1):
-            for _ in range(5):
-                node = picker_node(tree, name, ids=("title",))
-                if node is not None:
-                    phone.tap_prompt_node(node, "acquisition-select-document")
-                    return
-                scroll = next((node for node in tree.iter("node") if node.get("scrollable") == "true"), None)
-                if scroll is None:
-                    break
-                bounds = list(map(int, re.findall(r"\d+", scroll.get("bounds", ""))))
-                self.require(len(bounds) == 4, "acquisition-picker-scroll-bounds")
-                x1, y1, x2, y2 = bounds
-                x, top, bottom = (x1 + x2) // 2, y1 + (y2 - y1) // 5, y2 - (y2 - y1) // 5
-                start, end = (bottom, top) if direction < 0 else (top, bottom)
-                phone.shell("input", "swipe", str(x), str(start), str(x), str(end), "250", label="acquisition-scroll-documents")
-                tree = self.picker_tree(phone)
-        raise self.installer.Failure("acquisition-document-not-visible")
-
-    def require_selection(self, phone, kind, name):
-        preferences = phone.command(
-            "shell", "run-as", self.installer.PACKAGE, "cat", "shared_prefs/owner-phone-flow.xml", label="acquisition-selected-document", idempotent=True
-        )
-        self.require(selected_document(preferences, kind, f"Download/{self.stage_name}/{name}"), "acquisition-selected-document-mismatch")
-
-    def choose(self, phone, kind, name=None):
-        dispatch_control(phone, self.installer, "choose-folder" if kind == "tree" else "choose-zip")
-        tree = self.picker_tree(phone)
-        if name is None:
-            phone.shell("input", "keyevent", "KEYCODE_BACK", label="acquisition-cancel-focused-picker")
-            phone.ui_windows((self.installer.PACKAGE,), recovery=False)
-            return
-        self.click_picker(phone, tree, ("show roots",), "acquisition-show-picker-locations", clickable=True)
-        # Select the device root. The separate Downloads provider can omit ADB-staged files.
-        device_name = phone.shell("settings", "get", "global", "device_name", label="acquisition-local-storage-label").decode().strip()
-        model = phone.shell("getprop", "ro.product.model", label="acquisition-device-model").decode().strip()
-        labels = tuple(name for name in (device_name, model, "internal storage", "internal shared storage") if name and name != "null")
-        self.click_picker(phone, self.picker_tree(phone), labels, "acquisition-open-local-storage-root", ids=("title",))
-        for part in ("Download", self.stage_name, *name.split("/")):
-            self.click_document(phone, part)
-        if kind == "tree":
-            for text in ("Use this folder", "Allow"):
-                self.click_picker(phone, self.picker_tree(phone), (text,), "acquisition-confirm-folder-grant", clickable=True)
-        phone.ui_windows((self.installer.PACKAGE,), recovery=False)
-        observed = phone.read("update-state.json")
-        self.require(
-            observed and observed.get("state") == "INPUT_REQUIRED" and "Source selected." in observed.get("message", ""),
-            "acquisition-source-selection-unverified",
-        )
-        self.require_selection(phone, kind, name)
-
-    def restart_installer(self, phone, kind, name):
-        phone.require_owned_installer()
-        phone.shell("am", "force-stop", self.installer.PACKAGE, label="acquisition-stop-installer-before-reopen")
-        phone.start(repeat_notification_denial=True)
-        self.require_selection(phone, kind, name)
-
     def prepare_plan(self, phone, service, version):
         self.installer.publish(service, self.releases[version], version)
         if version > 1:
@@ -283,38 +321,8 @@ class Acquisition:
             "acquisition-signed-plan-not-selected",
         )
 
-    def wait_import(self, phone, expected):
-        deadline = time.monotonic() + min(phone.timeout, 360)
-        while time.monotonic() < deadline:
-            row = phone.read("import-state.json")
-            if row:
-                state = row.get("state")
-                if expected == "COPYING" and state == "IMPORTING" and 0 < row.get("completed", 0) < row.get("total", 0):
-                    return row
-                if state in {"ERROR", "IMPORTED", "CANCELLED"}:
-                    self.require(expected == state, "acquisition-unexpected-import-terminal")
-                    return row
-            time.sleep(0.5)
-        raise self.installer.Failure("acquisition-import-timeout")
-
     def visible_status(self, phone, state, detail):
-        # The installer status TextView is first in a real ScrollView. Search
-        # it from the top after interacting with controls below it.
-        for _ in range(6):
-            tree = phone.ui_windows((self.installer.PACKAGE,), recovery=False)
-            for node in tree.iter("node"):
-                text = node.get("text", "")
-                if "Game import: " + state in text and all(part in text for part in detail):
-                    return
-            scroll = next((node for node in tree.iter("node") if node.get("scrollable") == "true"), None)
-            if scroll is None:
-                break
-            bounds = list(map(int, re.findall(r"\d+", scroll.get("bounds", ""))))
-            self.require(len(bounds) == 4, "acquisition-status-scroll-bounds")
-            x1, y1, x2, y2 = bounds
-            x = str((x1 + x2) // 2)
-            phone.shell("input", "swipe", x, str(y1 + (y2 - y1) // 5), x, str(y2 - (y2 - y1) // 5), "250", label="acquisition-scroll-to-status")
-        raise self.installer.Failure("acquisition-status-not-visible")
+        self.require_visible_status(phone, "Game import: " + state, *detail)
 
     def no_admitted_output(self, phone, *, no_import=False):
         self.require(phone.read("owner-apk-ready.json") is None and not phone.occupied(self.installer.GAME), "acquisition-unverified-apk-admitted")
@@ -324,7 +332,7 @@ class Acquisition:
     def run_case(self, phone, case, kind, name, expected, passed, *, message=(), select=True):
         self.installer.set_phase(case)
         if select:
-            self.choose(phone, kind, name)
+            self.choose(phone, kind, name, via_control=True)
         if expected == "IMPORTED":
             self.restart_installer(phone, kind, name)
         start = time.monotonic()
@@ -415,7 +423,7 @@ class Acquisition:
         self.prepare_plan(phone, service, 1)
         installer.set_phase("saf-picker-cancelled")
         prior = phone.read("update-state.json")
-        self.choose(phone, "tree")
+        self.choose(phone, "tree", via_control=True)
         self.require(phone.read("update-state.json") == prior and phone.read("import-state.json") is None, "acquisition-picker-cancellation-changed-state")
         self.no_admitted_output(phone, no_import=True)
         passed("saf-picker-cancelled")

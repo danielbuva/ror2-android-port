@@ -23,6 +23,7 @@ from pathlib import Path
 import re
 import secrets
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -77,6 +78,11 @@ class FlowMetrics:
         "verify-profile-settings",
         "check-up-to-date",
     )
+    STAGED_STAGES = (
+        "signed-source-import",
+        "baseline-play",
+        "updated-play",
+    )
 
     def __init__(self, phone):
         self.phone, self.current, self.rows = phone, None, []
@@ -120,7 +126,7 @@ class FlowMetrics:
 
     @contextmanager
     def stage(self, name):
-        if name not in self.STAGES or self.current is not None:
+        if name not in self.STAGES + self.STAGED_STAGES or self.current is not None:
             raise Failure("phone-flow-stage-contract")
         row = {"stage": name, "started": time.monotonic(), "times": [], "ends": [], "samples": [], "completed": False, "sample_limit_reached": False}
         self.current = row
@@ -600,8 +606,15 @@ def read_context(source_commit=None):
             or built.get("apk_bytes") != apk.stat().st_size
         ):
             raise Failure("toolhost-cache-build-provenance-mismatch")
-    # The builder's publisher key is deliberately not opened or copied. A new
-    # independent key exercises the explicit debug-only additive trust seam.
+    return {
+        "installer_apk": apk,
+        "installer_version": receipt.get("version_code"),
+        "installer_sha256": receipt["apk_sha256"],
+        **toolchain_context(),
+    }
+
+
+def toolchain_context():
     # Only the public repository's deterministic environment selector runs;
     # no private directories/configuration are searched for tool paths.
     values = run(
@@ -610,12 +623,7 @@ def read_context(source_commit=None):
     ).split(b"\0")
     if len(values) != 4 or values[-1]:
         raise Failure("public-toolchain-environment-invalid")
-    return {
-        "installer_apk": apk,
-        "installer_version": receipt.get("version_code"),
-        "installer_sha256": receipt["apk_sha256"],
-        **{key: Path(value.decode()).resolve(strict=True) for key, value in zip(("android_sdk", "java_home", "ndk"), values[:3])},
-    }
+    return {key: Path(value.decode()).resolve(strict=True) for key, value in zip(("android_sdk", "java_home", "ndk"), values[:3])}
 
 
 class HostTools:
@@ -827,18 +835,24 @@ for name in sys.argv[4:]:
             public.public_source_path(name, sha(data))
             archive.writestr(name, data)
         archive.writestr("bundle-index.json", encoded(index))
+    with bundle.open("rb") as stream:
+        bundle_sha256 = hashlib.file_digest(stream, "sha256").hexdigest()
     body = {
         "version": "synthetic-N" + ("+1" if version == 2 else ""),
         "version_code": version,
         "application_id": GAME,
         "minimum_installer_version": 3,
-        "bundle_sha256": sha(bundle.read_bytes()),
+        "bundle_sha256": bundle_sha256,
         "data_schema": {"writes": 1, "reads": [1]},
         "entries": {name: public.entry_dependencies(index, name) for name in inputs},
     }
     public.validate_publication(bundle, body)
     envelope = public.sign_envelope(body, KEY_ID, private_key, public_key)
-    return {"release.json": encoded(envelope["release"]), "release.sig": encoded(envelope["signature"]), "public-tools.zip": bundle.read_bytes()}
+    return {"release.json": encoded(envelope["release"]), "release.sig": encoded(envelope["signature"]), "public-tools.zip": bundle}
+
+
+def asset_size(data):
+    return data.stat().st_size if isinstance(data, Path) else len(data)
 
 
 @contextmanager
@@ -848,11 +862,19 @@ def server():
             with self.server.lock:
                 self.server.requests.append(self.path)
                 data = self.server.paths.get(self.path)
-            self.send_response(200 if data is not None else 404)
-            self.send_header("Content-Length", str(len(data) if data is not None else 0))
-            self.end_headers()
+            if isinstance(data, Path):
+                with data.open("rb") as stream:
+                    self.send_length(200, os.fstat(stream.fileno()).st_size)
+                    shutil.copyfileobj(stream, self.wfile, length=1024 * 1024)
+                return
+            self.send_length(200 if data is not None else 404, len(data) if data is not None else 0)
             if data is not None:
                 self.wfile.write(data)
+
+        def send_length(self, status, size):
+            self.send_response(status)
+            self.send_header("Content-Length", str(size))
+            self.end_headers()
 
         def log_message(self, *args):
             pass
@@ -876,7 +898,7 @@ def publish(service, files, version):
         "draft": False,
         "prerelease": False,
         "tag_name": "owner-v" + str(version),
-        "assets": [{"name": name, "size": len(data), "browser_download_url": base + name} for name, data in files.items()],
+        "assets": [{"name": name, "size": asset_size(data), "browser_download_url": base + name} for name, data in files.items()],
     }
     with service.lock:
         service.paths = {"/" + name: data for name, data in files.items()}
@@ -894,6 +916,7 @@ def adb_diagnostic(label, **record):
 
 
 class Phone:
+    install_consent_label = None
     storage_reserve = 15 * 1024**3
 
     def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
@@ -992,7 +1015,8 @@ class Phone:
 
     def install(self, apk):
         self.install_attempted = True
-        self.installer_hash = sha(apk.read_bytes())
+        with apk.open("rb") as source:
+            self.installer_hash = hashlib.file_digest(source, "sha256").hexdigest()
         try:
             self.transport.install(
                 apk,
@@ -1097,7 +1121,7 @@ class Phone:
     def reserve_install_outputs(self, apk, inputs, releases):
         # Cover the installed/staged installer and APKs plus retained inputs
         # and release tools, including temporary transaction copies.
-        payload = sum(len(data) for data in inputs.values()) + sum(len(data) for row in releases.values() for data in row.values())
+        payload = sum(len(data) for data in inputs.values()) + sum(asset_size(data) for row in releases.values() for data in row.values())
         self.storage_reserve = type(self).storage_reserve + 3 * (apk.stat().st_size + payload)
 
     def put(self, name, data):
@@ -1490,7 +1514,7 @@ class Phone:
             if (
                 row
                 and row.get("state") in ("INSTALLING", "AWAITING_CONFIRMATION")
-                and (not callback_observed or (require_pending_prompt and not consent_observed))
+                and (not callback_observed or ((require_pending_prompt or self.install_consent_label) and not consent_observed))
             ):
                 try:
                     diagnostic = self.capture_install_diagnostic()
@@ -1499,14 +1523,15 @@ class Phone:
                     # or manufacture proof that a callback remained absent.
                     diagnostic = {"status": "unavailable"}
                 if (
-                    require_pending_prompt
+                    (require_pending_prompt or self.install_consent_label)
                     and row.get("state") == "AWAITING_CONFIRMATION"
                     and diagnostic.get("status") == "observed"
                     and diagnostic.get("callback") == "pending-user-action"
                     and diagnostic.get("session_match") is True
                 ):
                     pending_observed = True
-                    consent_observed = self.confirm_synthetic_install() or consent_observed
+                    if not consent_observed:
+                        consent_observed = self.confirm_synthetic_install()
                 if diagnostic.get("status") == "observed" and (diagnostic.get("callback") != "none" or diagnostic.get("callback_entry") == "entered"):
                     callback_observed = True
                     callback_absent_since = None
@@ -1532,7 +1557,7 @@ class Phone:
                 callback_absent_since = None
             # Consent is always the real Android PackageInstaller UI. Never forge
             # success receipts or use adb install to replace the alpha package.
-            if not require_pending_prompt:
+            if not require_pending_prompt and not self.install_consent_label:
                 self.tap("Install", required=False)
             time.sleep(1)
         raise Failure("install-readback-timeout")
@@ -1727,7 +1752,7 @@ class Phone:
         # the focused display-0 window, as for the already qualified Settings UI.
         _, nodes = self.prompt_nodes(self.ui_windows(installers, recovery=False), installers)
         print(encoded({"mode": "install-consent-fixture", "identity_verified": True, "observed": install_consent_summary(nodes)}).decode(), end="", flush=True)
-        if not any(node.get("text") == "Synthetic update fixture" for node in nodes):
+        if not any(node.get("text") == (self.install_consent_label or "Synthetic update fixture") for node in nodes):
             raise Failure("install-consent-fixture-not-identified")
         buttons = [
             node
