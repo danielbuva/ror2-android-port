@@ -3,7 +3,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using RoR2;
 using UnityEngine;
@@ -262,7 +261,7 @@ public sealed partial class PortSession
         }
         void RestrictStartingScenesToManifest(WeightedSelection<SceneDef> choices)
         {
-            var path = Path.Combine(Application.persistentDataPath, "payload", "generated-android-data");
+            var path = System.IO.Path.Combine(Application.persistentDataPath, "payload", "generated-android-data");
             var bundle = AssetBundle.LoadFromFile(path);
             coordinator.Check(bundle, "Converted stage release bundle manifest missing");
             try
