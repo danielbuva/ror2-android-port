@@ -98,23 +98,45 @@ class DeviceSessionTests(unittest.TestCase):
             runner.run_workload(device, thermal, request, self.output, result)
         self.assertEqual(result["shader_compute"], report)
 
-    def test_texture_readback_requires_vulkan_and_preserves_the_sample_report(self):
+    def test_texture_readback_rejects_non_vulkan_and_retains_verified_pixels(self):
         device, thermal = mock.Mock(), mock.Mock()
         thermal.cancelled.is_set.return_value = False
         device.sh.return_value = "42"
+        runtime = "/sdcard/Android/data/" + runner.PHONE_CONTENT_PACKAGE + "/files"
+        device.read_receipt.return_value = dict(persistentDataPath=runtime)
         request = dict(self.request, mode="texture-readback")
-        report = dict(graphics="Vulkan", passed=True, samples=[dict(mip=1, face=2)])
-        with mock.patch.object(runner, "launch", return_value={"pid": "42"}):
-            for graphics in ("Vulkan", "OpenGLES3"):
-                report["graphics"] = graphics
-                device.cmd.return_value = "Unity: PHONE_TEXTURE_READBACK " + json.dumps(report)
-                result = {}
-                if graphics == "Vulkan":
-                    runner.run_workload(device, thermal, request, self.output, result)
-                else:
+        pixels = bytes([0, 255, 0, 255] * 4)
+        sample = dict(mip=1, face=2, width=2, height=2, graphics="Vulkan", color_space="Gamma", format="RGBA32")
+        report = dict(graphics="Vulkan", passed=True, unloaded=True, samples=[sample])
+        data = {"texture-0.rgba": pixels}
+
+        def retain(_device, remote, local, cleanup):
+            self.assertEqual(remote, runtime + "/" + local.name)
+            blob = data[local.name]
+            local.write_bytes(blob)
+            return hashlib.sha256(blob).hexdigest()
+
+        with (
+            mock.patch.object(runner, "launch", return_value={"pid": "42"}),
+            mock.patch.object(device_module, "retain_device_file", side_effect=retain) as capture,
+        ):
+            for graphics in ("OpenGLES3", "Vulkan", "Vulkan"):
+                sample["sha256"] = hashlib.sha256(pixels).hexdigest() if capture.call_count == 0 else "0" * 64
+                data["texture-readback.json"] = json.dumps(report).encode()
+                marker = dict(graphics=graphics, passed=True, sha256=hashlib.sha256(data["texture-readback.json"]).hexdigest())
+                device.cmd.return_value = "Unity: PHONE_TEXTURE_READBACK " + json.dumps(marker)
+                result = {"device_cleanup": {}}
+                if graphics != "Vulkan":
                     with self.assertRaisesRegex(RuntimeError, "inspect its Vulkan report"):
                         runner.run_workload(device, thermal, request, self.output, result)
-                self.assertEqual(result["texture_readback"], report)
+                    capture.assert_not_called()
+                elif capture.call_count:
+                    with self.assertRaisesRegex(RuntimeError, "readback hash mismatch"):
+                        runner.run_workload(device, thermal, request, self.output, result)
+                else:
+                    runner.run_workload(device, thermal, request, self.output, result)
+                    self.assertEqual(result["texture_readback"], report)
+                    self.assertEqual((self.output / "texture-0.rgba").read_bytes(), pixels)
 
     def test_installed_alpha_request_has_no_local_game_apk_or_selector(self):
         request = dict(self.request, package="dev.ror2lab.alpha", mode=runner.INSTALLED_ALPHA)

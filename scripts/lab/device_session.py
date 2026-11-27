@@ -1189,6 +1189,27 @@ def observe_unplugged(device, request, output, result, pid):
     result["owner_unplugged"].update(unplugged_summary(capture_path, config, pid))
 
 
+def retain_texture_readback(device, output, result, marker):
+    from device import retain_device_file
+    from phone_texture_readback import validate_texture_mip
+
+    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    cleanup = result["device_cleanup"]
+    receipt = output / "texture-readback.json"
+    if retain_device_file(device, runtime + "/texture-readback.json", receipt, cleanup) != marker["sha256"]:
+        raise RuntimeError("Vulkan texture readback receipt hash differs from the process report")
+    report = result["texture_readback"] = json.loads(receipt.read_text())
+    if report["graphics"] != "Vulkan" or report["passed"] is not True or report["unloaded"] is not True or not report["samples"]:
+        raise RuntimeError("Vulkan texture readback receipt contract failed")
+    for index, sample in enumerate(report["samples"]):
+        name = f"texture-{index}.rgba"
+        local = output / name
+        retain_device_file(device, runtime + "/" + name, local, cleanup)
+        if sample["graphics"] != "Vulkan":
+            raise RuntimeError("Vulkan texture readback sample used different graphics")
+        validate_texture_mip(local, sample, sample)
+
+
 def run_workload(device, thermal, request, output, result, *, _reset_idle=None, start_attempt=None):
     process_checks = result.setdefault("process_checkpoints", [])
     checked_launch = partial(launch, process_checks=process_checks)
@@ -1268,6 +1289,8 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
                     report = result[report_name] = json.loads(payload)
                     if report.get("passed") is not True or report.get("graphics") != "Vulkan":
                         raise RuntimeError("Content fixture failed; inspect its Vulkan report")
+                    if request["mode"] == "texture-readback":
+                        retain_texture_readback(device, output, result, report)
                     return
             thermal.cancelled.wait(1)
         raise RuntimeError("Content fixture produced no report before the deadline")

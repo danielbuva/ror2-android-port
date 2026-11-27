@@ -12,6 +12,7 @@ from phone_content import VERSION, native_content_request, stage, validate_nativ
 SOURCES = {
     "ContentFixtureTextureMip.cs": "Assets/Editor",
     "TextureMipFixture.shader": "Assets",
+    "TextureMipSampling.cs": "Assets",
 }
 
 
@@ -50,7 +51,7 @@ def validate_texture_mip(path, selection, report):
             raise RuntimeError("Exact-editor texture mip readback hash mismatch")
 
 
-def run_editor(path):
+def run_editor(path, *, build=False):
     from build_lock import host_build_lock, unity_editor_env
     from common import ROOT, WORK
     from phone_registry import BINARY_SHA256
@@ -59,6 +60,8 @@ def run_editor(path):
     if not path.is_relative_to(WORK.resolve()):
         raise RuntimeError("Texture readback request must be ignored local state")
     request = readback_request(path)
+    if build and request.get("dependencies"):
+        raise RuntimeError("Vulkan texture fixture requires a standalone bundle")
     editor_env = unity_editor_env()
     editor = Path(editor_env["UNITY_EDITOR"])
     with editor.open("rb") as stream:
@@ -72,7 +75,18 @@ def run_editor(path):
     attempt = WORK / "rebuild/phone-texture-readback" / uuid.uuid4().hex
     project = attempt / "project"
     fixture = stage(project)
-    for name, folder in SOURCES.items():
+    sources = (
+        SOURCES
+        if not build
+        else SOURCES
+        | {
+            "ContentFixtureTexturePlayer.cs": "Assets/Editor",
+            "TextureMipPlayer.cs": "Assets",
+        }
+    )
+    if build and subprocess.check_output(["git", "status", "--porcelain", "--", "tools/phone-build", "scripts/lab/phone_texture_readback.py"], cwd=ROOT):
+        raise RuntimeError("Commit the texture fixture sources before building")
+    for name, folder in sources.items():
         relative = "tools/phone-build/" + name
         data = (ROOT / relative).read_bytes()
         (project / folder / name).write_bytes(data)
@@ -82,6 +96,16 @@ def run_editor(path):
     snapshot = attempt / "native-content-request.json"
     snapshot.write_text(json.dumps(request, indent=2) + "\n")
     editor_env.update(ROR2_PHONE_BUILD_SOURCE=commit, ROR2_PHONE_TEXTURE_READBACK=str(snapshot))
+    bundle = project / "Assets/StreamingAssets/texture-readback.bundle"
+    apk = attempt / "phone-content-fixture.apk"
+    if build:
+        editor_env.update(
+            ROR2_PHONE_ORACLE_REPORT=str(attempt / "oracle.json"),
+            ANDROID_SDK_HOME=str(ROOT / ".local/phone-build-android"),
+            ANDROID_USER_HOME=str(ROOT / ".local/phone-build-android/.android"),
+            GRADLE_USER_HOME=str(ROOT / ".local/phone-build-gradle"),
+        )
+        Path(editor_env["ANDROID_USER_HOME"]).mkdir(parents=True, exist_ok=True)
     log = attempt / "editor.log"
     args = [
         str(editor),
@@ -92,23 +116,36 @@ def run_editor(path):
         "-buildTarget",
         "Android",
         "-executeMethod",
-        "ContentFixtureBuilder.CheckTextureReadback",
+        "ContentFixtureBuilder.BuildTexturePlayer" if build else "ContentFixtureBuilder.CheckTextureReadback",
         "-logFile",
         str(log),
     ]
     result = {"success": False, "source_commit": commit, "unity": VERSION, "log": str(log), "inputs": fixture}
     try:
         with host_build_lock(common_dir.parent / "work/coordination/unity-build.lock", operation="exact-editor texture mip readback", timeout=1):
-            child = subprocess.run(args, env=editor_env, capture_output=True, timeout=600)
+            if build:
+                subprocess.run(["/bin/cp", "-c", request["path"], str(bundle)], check=True)
+            try:
+                child = subprocess.run(args, env=editor_env, capture_output=True, timeout=600)
+            finally:
+                bundle.unlink(missing_ok=True)
         (attempt / "launch.txt").write_bytes(child.stdout + child.stderr)
         result["exit_code"] = child.returncode
         if child.returncode:
             raise RuntimeError("Exact-editor texture readback failed: " + str(log))
-        report = validate_native_content(attempt, commit)
-        samples = json.loads((attempt / "texture-readback.json").read_text())
-        for index, (asset, sample) in enumerate(zip(request["assets"], samples["samples"], strict=True)):
-            validate_texture_mip(attempt / f"texture-{index}.rgba", asset["texture_mip"], sample)
-        result.update(success=True, native_content=report, samples=samples["samples"])
+        if build:
+            report = json.loads((attempt / "player-build.json").read_text())
+            if report["source_commit"] != commit or report["unity"] != VERSION or not report["build_report_guid"]:
+                raise RuntimeError("Vulkan texture player build receipt differs")
+            with apk.open("rb") as stream:
+                apk_sha256 = hashlib.file_digest(stream, "sha256").hexdigest()
+            result.update(success=True, apk=str(apk), apk_sha256=apk_sha256, bundle_sha256=request["sha256"])
+        else:
+            report = validate_native_content(attempt, commit)
+            samples = json.loads((attempt / "texture-readback.json").read_text())
+            for index, (asset, sample) in enumerate(zip(request["assets"], samples["samples"], strict=True)):
+                validate_texture_mip(attempt / f"texture-{index}.rgba", asset["texture_mip"], sample)
+            result.update(success=True, native_content=report, samples=samples["samples"])
     except Exception as error:
         result["error"] = str(error)
         raise
