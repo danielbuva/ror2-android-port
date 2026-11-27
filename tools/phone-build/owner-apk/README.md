@@ -524,6 +524,22 @@ no preference XML, paths, exception text or release request is exported. An
 unavailable observation is not proof that the button listener did not execute.
 This diagnostic does not change Check dispatch, permissions or install consent.
 
+**Check for updates** fetches public release metadata and the detached signed
+manifest, not the public tool bundle. **Build** downloads that bundle only
+after a separate owner action and checks the signed SHA-256 before extracting
+or running any tool. An offline or interrupted transfer or a mismatched hash
+leaves the installed release unchanged; the installer shows a fixed retry
+message rather than exposing raw connection details. Before creating a
+PackageInstaller session it also checks the locally built APK against the
+verified ready receipt and refuses a signer that differs from the installed
+package. The installer checks the streamed bytes again before committing the
+session. It does not uninstall to update.
+
+The existing publisher protocol uses stable `owner-v<integer>` releases for
+public tools. Its signed publisher code, the Android app's installed version
+code and minimum installer version are separate values. This protocol does
+not publish semantic converter releases or a prerelease channel.
+
 Managed JSON writes normalize only the platform-provided app-files root alias,
 not arbitrary target paths. The Context-aware writer retains child-link and
 atomic-write guards. Host tests reproduce the aliased-root failure and verify
