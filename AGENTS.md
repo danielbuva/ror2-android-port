@@ -104,6 +104,12 @@ The goal is speed of implementation, not theoretical safety; boundaries above st
 - Agents: keep each turn short (about 30 tool calls), hand off through a compact state file (at most
   6 KB), start long builds, phone runs and tests detached with an absolute done-file and end the turn
   instead of polling. At most two subagents at a time, for bounded read-only work.
+- Worker count: run a worker only while it makes the project faster. Codex quota, the three test
+  devices and the one exact editor are shared, so an extra worker can slow the others. The
+  orchestrator runs `python3 scripts/worker-yield.py` at least daily and before starting a
+  worker: park PARK verdicts; when over `budget-daily` or device-bound, park WATCH workers first,
+  worst cost per merged PR first; start a worker only when budget and device or editor capacity
+  are idle. Unpark when the measured bottleneck clears.
 
 ## Definition of done
 

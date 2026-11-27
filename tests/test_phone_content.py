@@ -44,6 +44,9 @@ class PhoneContentTests(unittest.TestCase):
                     "ContentFixtureBuilder.cs",
                     "ContentFixtureSceneCheck.cs",
                     "ContentFixtureTextureMip.cs",
+                    "ContentFixtureTexturePlayer.cs",
+                    "TextureMipPlayer.cs",
+                    "TextureMipSampling.cs",
                     "ContentFixture.cs",
                     "NativeScriptSchemaFixture.cs",
                 )

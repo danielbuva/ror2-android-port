@@ -339,6 +339,13 @@ previous native 4f309b9d and its source/receipts under
 and older rollback receipts. The selection must name an exact library explicitly;
 no timestamped run or mutable current-build pointer is searched implicitly.
 
+The standalone phone compiler in `tools/phone-build/owner-code/wwise_native.py`
+requires the licensed stock Wwise Android integration and SDK headers,
+Profile archives, Android libzip headers, and an NDK r25c target sysroot
+with its adjacent target runtime archives. The tracked overlay reconstructs
+the two adapted vendor sources under the explicit private output. This
+route has host ELF proof and awaits signed release and Android qualification.
+
 The private waveform transport is `lab-original-audio-pcm/` below the selected
 app's actual Unity persistent-data root, never a configured SD path. Each raw
 float/JSON pair is create-new, named with an opaque capture ID and native
