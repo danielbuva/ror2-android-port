@@ -564,7 +564,9 @@ def validate_publication(bundle_path, body):
             flow = _module("publication_install_flow", here / "install_flow.py")
             flow.validate_plan(index["install_plan"], index, lambda name: load_json(archive.read(public_path(name))))
             inputs = _module("publication_install_inputs", here / "install_inputs.py")
-            inputs.input_description(index["install_plan"], load_json(archive.read(index["install_plan"]["required_inputs"])))
+            plan = index["install_plan"]
+            acquired = load_json(archive.read(plan["acquired_inputs"])) if "acquired_inputs" in plan else None
+            inputs.input_description(plan, load_json(archive.read(plan["required_inputs"])), acquired)
         owner = _module("publisher_apk_owner", here / "build_owner_apk.py")
         if "install_plan" in index:
             owner.validate_source_payload(body["entries"])

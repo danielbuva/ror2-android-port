@@ -62,7 +62,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "ee889308867c63ce75e52d126ad4dca50642b99c9411f488b468dc2dd6d4bb2f"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "0127b5448164d88976a484153c9b047a815acb1d0b304c4378ce4bb5a026f79e"
 STAGE_PIN_TOOL_SHA256 = "e58420236cadec75e47b959e2ed0dd36dace0d55638b462f552422af9d236b28"
 REQUEST_PIN_TOOL_SHA256 = "b4c8abdc7e98be1db34c1b20f35abcc154487caa36aaafafd5b48fc70fb47a5e"
 MANAGED_PRODUCER_SHA256 = "1d71425de0cc4f4dc2cf7b7e96c3554253514ec05b1ef2e2a655866aca548892"
@@ -82,7 +82,7 @@ OWNER_SOURCE_HASHES = {
     "../../runtime/session/PortSession.cs": "fd120d35f52b93c285fd356b5455d7c925c8907164260e6945ee8d1c82a418b4",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "0c08a4e06977e68ec5bc1acc20014f6cdabb7d3f71dd2874caaa6455f3f9b059",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
-    "../../runtime/world/IntegratedWorldBoundary.cs": "6a23c42ebbe784537b7211d8bff069fcdf0a73b12a11682da2e1c36504bd43bc",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "52c6dfb73273c281e4532735cf66e4fde7c100d01142dd10262ba62030adc426",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "d1d197dc12526614f37b9c3c3699be3bf16a96315abd3ac698c15b4270bfe8b6",
     "../../runtime/world/SurvivorSkillObserver.cs": "00f496749c33bdb1c2fcc7ec8fa87c3abb8abb7e0048b7e1404aa9505d061e6b",
     "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "31cceff4ae1ea0df0b94fc6a63fc07c1e687f38bde9e12fd9c1330118997aa7d",

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1554](PORTING_JOURNAL.md#j1554--verify-signed-crunch-and-bc7-texture-conversion-on-android) | 2026-11-27 | Verify signed Crunch and BC7 texture conversion on Android | 2026-11-27. |
 | [J1547](PORTING_JOURNAL.md#j1547--stage-pinned-converter-inputs-in-owned-android-scratch) | 2026-11-27 | Stage pinned converter inputs in owned Android scratch | 2026-11-27. |
 | [J1543](PORTING_JOURNAL.md#j1543--record-sustained-assisted-combat-on-secondary-nova) | 2026-11-27 | Record sustained assisted combat on Secondary Nova | 2026-11-27. |
 | [J1542](PORTING_JOURNAL.md#j1542--recover-a-native-profile-save-after-injected-enospc) | 2026-11-27 | Recover a native profile save after injected ENOSPC | 2026-11-27. |
@@ -378,3 +379,6 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1546](PORTING_JOURNAL.md#j1546--verify-signed-histogram-conversion-on-android) | 2026-11-27 | Verify signed Histogram conversion on Android | 2026-11-27. |
 | [J1547](PORTING_JOURNAL.md#j1547--recover-rex-disperse-charge-materials) | 2026-11-27 | Recover REX Disperse charge materials | 2026-11-27. |
 | [J1548](PORTING_JOURNAL.md#j1548--recover-acrid-leap-acid-ghost-materials) | 2026-11-27 | Recover Acrid Leap acid ghost materials | 2026-11-27. |
+| [J1550](PORTING_JOURNAL.md#j1550--reuse-unchanged-producer-outputs-on-android-updates) | 2026-11-27 | Reuse unchanged producer outputs on Android updates | 2026-11-27. |
+| [J1552](PORTING_JOURNAL.md#j1552--recover-rex-mortar-aim-and-projectile-materials) | 2026-11-27 | Recover REX Mortar aim and projectile materials | 2026-11-27. |
+| [J1553](PORTING_JOURNAL.md#j1553--run-a-pinned-texture-stage-with-a-disposable-android-toolhost) | 2026-11-27 | Run a pinned texture stage with a disposable Android toolhost | 2026-11-27. |

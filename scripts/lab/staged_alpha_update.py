@@ -1,11 +1,12 @@
-"""Qualify a local signed source-graph pair through the owned Android installer."""
+"""Qualify local signed source graphs through the owned Android installer."""
 
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+import tarfile
 import time
 
 from alpha_acquisition import FolderImport, GIB, IMPORT, cohort, stage_folder
-from installed_alpha import InstalledAlphaDevice, installer_trust, preflight_update, release_tools, verify_installed
+from installed_alpha import InstalledAlphaDevice, installer_trust, preflight_releases, release_tools, verify_installed
 
 
 ASSETS = ("release.json", "release.sig", "public-tools.zip")
@@ -19,6 +20,19 @@ CASES = (
     "staged-updated-native-play",
     "staged-up-to-date",
 )
+NIGHTLY_CASES = ("signed-source-import", "staged-baseline-install", "nightly-baseline-tour")
+
+
+def acquired_sources(inventories, root, inputs):
+    inventory = inventories[0]
+    if any(other != inventory for other in inventories[1:]):
+        raise ValueError("staged update pair must use the same signed acquired-tool inventory")
+    if bool(inventory) != (root is not None):
+        raise ValueError("staged request must supply an acquired_source only for signed acquired tools")
+    if not inventory:
+        return {}
+    source = Path(root).resolve(strict=True)
+    return {name: (inputs.verify_acquired(source, name, pin), pin) for name, pin in inventory.items()}
 
 
 def verify_incremental(receipt, source, changed, unchanged, attempts, require):
@@ -44,23 +58,29 @@ def verify_incremental(receipt, source, changed, unchanged, attempts, require):
 
 
 class StagedUpdate(FolderImport):
-    def __init__(self, installer, require, request):
+    def __init__(self, installer, require, request, *, nightly=False):
         super().__init__(installer, require)
+        self.nightly = nightly
         self.apk = Path(request["installer_apk"]).resolve(strict=True)
         self.apk_hash = request["installer_sha256"]
         self.game_label = request["game_label"]
         require(isinstance(self.game_label, str) and bool(self.game_label.strip()), "staged-game-label-required")
         version = request["installer_version"]
-        self.directories = {name: Path(request[name + "_release"]).resolve(strict=True) for name in ("baseline", "update")}
-        self.pair = preflight_update(self.apk, self.apk_hash, version, *self.directories.values(), include_install_plan=True)
-        require(bool(self.pair["changed_entries"]) and bool(self.pair["unchanged_entries"]), "staged-pair-must-exercise-change-and-reuse")
+        names = ("baseline",) if nightly else ("baseline", "update")
+        self.directories = {name: Path(request[name + "_release"]).resolve(strict=True) for name in names}
+        self.pair = preflight_releases(self.apk, self.apk_hash, version, *self.directories.values(), include_install_plan=True)
+        if not nightly:
+            require(bool(self.pair["changed_entries"]) and bool(self.pair["unchanged_entries"]), "staged-pair-must-exercise-change-and-reuse")
         self.trust = installer_trust(self.apk, self.apk_hash)
         tools = installer.HostTools(installer.toolchain_context())
         manifest = installer.run([tools.build / "aapt", "dump", "badging", self.apk], label="inspect-staged-installer-manifest").decode()
         installer.require_installer_manifest(manifest, version)
         owner = release_tools()
         importer = owner.module("staged_update_importer", owner.HERE / "game_import.py")
-        self.current = cohort(request["current_inventory"], request["current_source"], importer)
+        inputs = owner.module("staged_update_inputs", owner.HERE / "install_inputs.py")
+        self.acquired = acquired_sources([self.pair[name].get("acquired_inputs", {}) for name in names], request.get("acquired_source"), inputs)
+        self.acquired_bytes = sum(pin["bytes"] for _, pin in self.acquired.values())
+        self.current = cohort(request["current_inventory"], None if nightly else request["current_source"], importer)
         self.inputs = {}
         for name in self.directories:
             plan = self.pair[name]["input_plan"]
@@ -68,23 +88,54 @@ class StagedUpdate(FolderImport):
             require(len(matching) == 1, "staged-pair-does-not-admit-current-originals")
             self.inputs[name] = matching[0]["manifest_sha256"]
         self.releases = {name: {asset: directory / asset for asset in ASSETS} for name, directory in self.directories.items()}
-        self.stage_target = self.stage_root + "/Originals"
+        self.originals = "Originals"
+        if nightly:
+            source = request["phone_source"]
+            parts = PurePosixPath(source).parts
+            require(
+                len(parts) >= 2 and "/".join(parts) == source and all(part not in ("/", "..") for part in parts),
+                "nightly-phone-source-must-be-relative-to-download",
+            )
+            self.stage_name = parts[0]
+            self.stage_root = f"{self.external_root}/{self.stage_name}"
+            self.originals = "/".join(parts[1:])
+        self.stage_target = self.stage_root + "/" + self.originals
 
     def stage(self, phone):
         source, _, hashes, size = self.current
         phone.storage_reserve = (
             20 * GIB
             + 2 * self.apk.stat().st_size
-            + 2 * size
+            + (size if self.nightly else 2 * size)
+            + self.acquired_bytes
             + max(self.pair[name]["input_plan"]["workspace_bytes"] + files["public-tools.zip"].stat().st_size for name, files in self.releases.items())
         )
         phone.storage()
+        if self.nightly:
+            self.verify_tree(phone, self.stage_target, hashes)
+            return
         free = phone.available(phone.shell("df", "-k", self.external_root, label="staged-shared-free-before"))
         self.require(free >= 20 * GIB + size, "staged-shared-storage-reserve")
         phone.shell("mkdir", self.stage_root, label="staged-create-owned-download-directory")
         self.owned_stage = True
         stage_folder(phone, source, hashes, self.stage_target)
         self.verify_tree(phone, self.stage_target, hashes)
+
+    def stage_acquired(self, phone):
+        package = self.installer.PACKAGE
+        root = "files/owner-input"
+        phone.require_owned_installer()
+        phone.storage()
+        phone.shell("run-as", package, "mkdir", "-p", root, label="staged-acquired-directory")
+        phone.shell("run-as", package, "test", "!", "-e", root + "/acquired", label="staged-acquired-must-be-fresh")
+        with phone.transport.extract_tar(["run-as", package, "tar", "-xf", "-", "-C", root], label="staged-acquired-transfer", timeout=1200) as archive:
+            for name, (source, pin) in self.acquired.items():
+                info = tarfile.TarInfo(name)
+                info.mode = 0o700 if source.stat().st_mode & 0o111 else 0o600
+                info.size = pin["bytes"]
+                with source.open("rb") as stream:
+                    archive.addfile(info, stream)
+        self.verify_tree(phone, root + "/acquired", {name.removeprefix("acquired/"): pin["sha256"] for name, (_, pin) in self.acquired.items()}, private=True)
 
     def import_originals(self, phone):
         phone.tap("Prepare signed installation plan")
@@ -94,7 +145,7 @@ class StagedUpdate(FolderImport):
             state.get("release", {}).get("version_code") == source["publisher_version_code"] and phone.read("install-inputs.json") == source["input_plan"],
             "staged-signed-input-plan-not-selected",
         )
-        self.choose(phone, "tree", "Originals")
+        self.choose(phone, "tree", self.originals)
         phone.tap("Import / resume game files")
         result = self.wait_import(phone, "IMPORTED", timeout=phone.timeout)
         _, manifest, hashes, size = self.current
@@ -163,7 +214,7 @@ class StagedUpdate(FolderImport):
             run_workload(
                 device,
                 phone.thermal,
-                {"mode": INSTALLED_ALPHA, "duration_seconds": min(phone.timeout, 600), "retain_native_loss": name == "baseline"},
+                {"mode": INSTALLED_ALPHA, "duration_seconds": min(phone.timeout, 600), "retain_native_loss": name == "baseline" and not self.nightly},
                 output,
                 result,
                 start_attempt=result["installed_release"]["attempt"],
@@ -187,7 +238,8 @@ class StagedUpdate(FolderImport):
                 phone.require_owned_installer()
                 self.require(phone.package_hash(self.installer.GAME) == device.installed["apk_sha256"], "staged-play-ownership-changed")
                 phone.shell("am", "force-stop", self.installer.GAME, label="staged-stop-owned-game")
-        phone.start()
+        if not self.nightly:
+            phone.start()
 
     def native_hashes(self, device):
         from settings_write_interrupt_check import persistence_hashes
@@ -206,6 +258,31 @@ class StagedUpdate(FolderImport):
         )
         return {path.removeprefix(runtime + "/"): digest for path, digest in hashes.items()}
 
+    def nightly_play(self, phone, device, receipt, stage):
+        from whole_game_scoreboard import installed_census
+
+        tour_failed = False
+        try:
+            with stage("baseline-play"):
+                self.play(phone, device, "baseline")
+        except Exception:
+            tour_failed = True
+            raise
+        finally:
+            if not phone.thermal.cancelled.is_set():
+                try:
+                    with stage("whole-game-scoreboard"):
+                        self.require(phone.thermal.device.display(False), "nightly-census-display-sleep")
+                        tour = self.installer.DIAGNOSTICS.directory / "baseline-play/terminal.done.json"
+                        installed_census(phone, self.installer, receipt, device, tour)
+                except Exception as error:
+                    if not tour_failed:
+                        raise
+                    self.installer.DIAGNOSTICS.write("census-error.json", self.installer.encoded({"error": str(error)}))
+                finally:
+                    if tour_failed:
+                        self.installer.set_phase("baseline-play")
+
     def run(self, phone, passed):
         installer = self.installer
         metrics = phone.flow_metrics = installer.FlowMetrics(phone)
@@ -221,10 +298,12 @@ class StagedUpdate(FolderImport):
             phone.install(self.apk)
             phone.require_owned_installer()
             self.require(phone.installer_hash == self.apk_hash, "staged-installer-changed")
+        if self.acquired:
+            with stage("staged-acquired-tools"):
+                self.stage_acquired(phone)
         phone.install_consent_label = self.game_label
         with installer.server() as service:
             baseline = self.pair["baseline"]["publisher_version_code"]
-            update = self.pair["update"]["publisher_version_code"]
             base = installer.publish(service, self.releases["baseline"], baseline)
             port = "tcp:" + str(service.server_port)
             phone.command("reverse", "--no-rebind", port, port, label="staged-reverse-create")
@@ -249,10 +328,15 @@ class StagedUpdate(FolderImport):
             with stage("baseline-reconstruct-and-install"):
                 first, device = self.install(phone, "baseline")
                 passed("staged-baseline-install")
+            if self.nightly:
+                self.nightly_play(phone, device, first, stage)
+                passed("nightly-baseline-tour")
+                return
             with stage("baseline-play"):
                 self.play(phone, device, "baseline")
                 before = self.native_hashes(device)
                 passed("staged-baseline-native-save")
+            update = self.pair["update"]["publisher_version_code"]
             with stage("check-for-updates"):
                 installer.publish(service, self.releases["update"], update)
                 changes = phone.check(update)

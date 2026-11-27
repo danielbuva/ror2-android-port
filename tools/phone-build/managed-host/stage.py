@@ -281,6 +281,7 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         "owner-apk/ProfileRetentionProvider.java",
         "owner-apk/install_inputs.py",
         "owner-apk/binary_manifest.py",
+        "owner-code/GnuToolAdapter.c",
         "accepted-output/package.py",
         "accepted-output/assemble.py",
         "accepted-output/phone_runner.py",

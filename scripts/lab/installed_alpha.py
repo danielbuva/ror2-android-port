@@ -135,8 +135,8 @@ def release_attempt(bundle, release, public):
             return attempt
 
 
-def preflight_update(installer_apk, installer_sha256, installer_version, baseline, update, *, include_install_plan=False):
-    """Qualify two local signed source graphs before selecting a phone."""
+def preflight_releases(installer_apk, installer_sha256, installer_version, baseline, update=None, *, include_install_plan=False):
+    """Qualify a local signed release or ordered update pair before selecting a phone."""
     trust = installer_trust(installer_apk, installer_sha256)
     owner = release_tools()
     public = owner.public()
@@ -145,8 +145,9 @@ def preflight_update(installer_apk, installer_sha256, installer_version, baselin
         with (Path(directory) / name).open("rb") as stream:
             return public.load_json(stream.read(limit + 1), max_bytes=limit)
 
+    directories = (baseline,) if update is None else (baseline, update)
     versions = []
-    for directory in (baseline, update):
+    for directory in directories:
         envelope = {
             "release": read(directory, "release.json", owner.MAX_METADATA),
             "signature": read(directory, "release.sig", 16384),
@@ -156,7 +157,7 @@ def preflight_update(installer_apk, installer_sha256, installer_version, baselin
         versions.append(release)
 
     sources = []
-    for directory, release in zip((baseline, update), versions):
+    for directory, release in zip(directories, versions):
         bundle = Path(directory) / "public-tools.zip"
         public.validate_publication(bundle, release)
         source = {
@@ -169,14 +170,25 @@ def preflight_update(installer_apk, installer_sha256, installer_version, baselin
             with zipfile.ZipFile(bundle) as archive:
                 index = public.read_bundle_index(archive.read(public.INDEX), release)
                 plan = index["install_plan"]
-                with archive.open(plan["required_inputs"]) as catalog:
-                    contents = catalog.read(public.MAX_JSON_BYTES + 1)
-                if hashlib.sha256(contents).hexdigest() != index["files"][plan["required_inputs"]]:
-                    raise ValueError("required-input catalog differs from the signed plan")
+
+                def read_manifest(key):
+                    name = plan[key]
+                    with archive.open(name) as stream:
+                        contents = stream.read(public.MAX_JSON_BYTES + 1)
+                    if hashlib.sha256(contents).hexdigest() != index["files"][name]:
+                        raise ValueError("input inventory differs from the signed plan: " + key)
+                    return public.load_json(contents)
+
+                manifest = read_manifest("required_inputs")
+                acquired = read_manifest("acquired_inputs") if "acquired_inputs" in plan else None
             inputs = load_module("installed_alpha_input_plan", ROOT / "tools/phone-build/owner-apk/install_inputs.py")
-            source["input_plan"] = inputs.input_description(plan, public.load_json(contents))
+            source["input_plan"] = inputs.input_description(plan, manifest, acquired)
+            if acquired is not None:
+                source["acquired_inputs"] = acquired
             source["jobs"] = sorted(job for stage in plan["stages"] for job in stage["jobs"])
         sources.append(source)
+    if update is None:
+        return {"baseline": sources[0]}
     changes = owner.release_changes(versions[0]["entries"], versions[1]["entries"])
     return {
         "baseline": sources[0],
@@ -184,6 +196,10 @@ def preflight_update(installer_apk, installer_sha256, installer_version, baselin
         **changes,
         "unchanged_entries": sorted(versions[1]["entries"].keys() - set(changes["changed_entries"])),
     }
+
+
+def preflight_update(installer_apk, installer_sha256, installer_version, baseline, update, *, include_install_plan=False):
+    return preflight_releases(installer_apk, installer_sha256, installer_version, baseline, update, include_install_plan=include_install_plan)
 
 
 def verify_installed(device, installer_package, installer_sha256, trust, expected_source_sha256, public_tools, *, staged=False):

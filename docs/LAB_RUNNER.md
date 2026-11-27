@@ -137,7 +137,11 @@ For a signed source-release update, set `operation` to `staged-update` and add
 Each release directory supplies its signed manifest, signature and public tools
 ZIP. Use a disposable installer with the publisher key in its packaged trust.
 The dry-run verifies both signed source graphs and checks that both support the
-current inventory. The detached run serves the releases over local ADB reverse,
+current inventory. For a plan with an `acquired_inputs` inventory, set
+`acquired_source` to the owner-local directory containing the declared
+`acquired/` files. Both releases must pin the same tool inventory. The runner
+verifies and streams those files into the disposable installer before import.
+The detached run serves the releases over local ADB reverse,
 imports the staged originals through Android's picker, and checks native save
 retention across a same-key update. Each play phase writes a
 `terminal.done.json` bound to the live APK hash and signed runtime attempt.
@@ -145,6 +149,23 @@ The whole-game scoreboard can join those receipts to a census of the same APK.
 Cleanup removes the scoped stage and the packages the run installed. Import
 and each reconstruction have a four-hour limit to accommodate the measured
 signed native build.
+
+For the scheduled phone conversion, use `operation: nightly` and
+`device: nova-b`. Supply the same installer, inventory and baseline release
+fields. Set `phone_source` to a two-or-more-component folder path relative to
+the phone's Downloads directory, for example `LabInput/Originals`. The runner
+verifies that existing folder against `current_inventory` and imports it
+through the system picker. Use a fresh `done_file` under
+`work/coordination/p1-nightly/<UTC date>/`. Dry-run before joining the device
+queue, then detach on the grant.
+
+The nightly builds and installs one signed release, then observes bootstrap
+Play, character select, first stage and End Run. It records the native title
+as unobserved. The installer toolhost inventories the retained signed APK on
+the phone. The host joins the census and tour by APK hash and retains the
+scoreboard, thermal metrics and first failure in the dated run directory.
+Classes without a comparison APK are counted as unverified. Cleanup removes
+the run's installer and game packages and leaves the staged originals in place.
 
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
@@ -164,20 +185,23 @@ detached handle for reconciliation.
 ## Run a converter stage on the phone
 
 `./dev converter-stage <producer> --request <config.json> --workstream <name>`
-runs a registered content producer against files already staged in the retained
-toolhost. Use the producer's filename stem with hyphens, for example
+runs a registered content producer against pinned inputs. Use the producer's
+filename stem with hyphens, for example
 `bundle-preload`, `mesh-produce`, or `texture-produce`. Run with `--dry-run`
 before queuing the phone. Run the live command detached once the dispatcher
-grants the phone. The shared runner checks the installed toolhost hash, grant,
-battery and storage, and owns thermal supervision and cleanup.
+grants the phone. The shared runner checks the toolhost identity, grant, battery
+and storage, and owns thermal supervision and cleanup.
 
-Use the emission config below with `"operation": "converter-stage"`,
-`"request": "stage.json"`, and the required `retained_tool_sha256`. Omit
-`expected_records`. Its manifest maps `stage.json` to the host descriptor
-pin and lists any additional producer dependencies as `repo/<tracked path>`
+Use the emission config below with `"operation": "converter-stage"` and
+`"request": "stage.json"`. Omit `expected_records`. Set
+`retained_tool_sha256` to reuse the exact installed toolhost. For a fresh
+disposable install, omit that pin and supply every descriptor input in the
+manifest as `inputs/<input_root>/<relative path>`. The manifest maps
+`stage.json` to the host descriptor pin and lists any additional producer
+dependencies as `repo/<tracked path>`
 keys. The action pins all producer paths to the calling checkout's clean
 commit, adds the selected script and the runner's support files, and writes a
-new manifest beside the terminal receipt. The retained toolhost supplies the
+new manifest beside the terminal receipt. The toolhost supplies the
 Python runtime. The current runner accepts internal-only toolhost staging.
 
 An example descriptor for a prepared bundle request is:
@@ -192,7 +216,8 @@ An example descriptor for a prepared bundle request is:
 }
 ```
 
-`input_root` is relative to the retained toolhost's `files/owner-input`.
+`input_root` is relative to the retained toolhost's `files/owner-input` or
+the fresh scratch input directory.
 Pass the stage's read-only input files under `inputs` and its generated files
 under `output`. Path arguments also accept `repo`, `native`, and `runtime`.
 Use `.` for the root itself. Artifact paths and the optional `scoreboard`
@@ -201,7 +226,8 @@ run. Bundle preload runs with one record worker on Android.
 
 The terminal directory receives JSON receipts, artifact hashes, and the
 optional scoreboard. Every attempt gets fresh device scratch, which is removed
-after the terminal result. Staged inputs and the installed toolhost are preserved.
+after the terminal result. The runner removes a toolhost installed for the
+attempt and preserves an explicitly retained toolhost and its existing inputs.
 If the device disconnects during production, use the generated
 `*.request.json` with a fresh terminal filename in the same directory and
 resume its retained handle through `--emission-request ... --resume-emission`.

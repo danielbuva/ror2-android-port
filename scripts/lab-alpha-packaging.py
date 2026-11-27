@@ -255,7 +255,7 @@ def import_acceptance(phone, dex, passed):
 
 def main(argv=None):
     sys.path.insert(0, str(ROOT / "scripts/lab"))
-    from staged_alpha_update import CASES as STAGED_CASES, StagedUpdate
+    from staged_alpha_update import CASES as STAGED_CASES, NIGHTLY_CASES, StagedUpdate
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -269,6 +269,7 @@ def main(argv=None):
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--acquisition-request", type=Path, help="Qualify actual SAF acquisition with local input inventories")
     source.add_argument("--staged-update-request", type=Path, help="Qualify a signed local source-release pair through the real installer")
+    source.add_argument("--nightly-request", type=Path, help="Build one signed release from staged originals and run the installed-alpha tour")
     parser.add_argument("--toolhost-source-commit", help="Reuse an unmodified signed packaging fixture from this commit")
     parser.add_argument("--dry-run", action="store_true", help="Verify pinned toolhost and compile the acceptance inputs on the host")
     parser.add_argument("--timeout", type=int, default=1200)
@@ -276,7 +277,9 @@ def main(argv=None):
     if args.qualify_install_prompts and args.allow_test_installs:
         print("FAIL install-prompt-mode-conflict", flush=True)
         return 1
-    if (args.acquisition_request or args.staged_update_request) and (
+    staged_request = args.staged_update_request or args.nightly_request
+    nightly = args.nightly_request is not None
+    if (args.acquisition_request or staged_request) and (
         args.package_only
         or args.qualify_install_prompts
         or args.allow_test_installs
@@ -288,11 +291,19 @@ def main(argv=None):
     acquisition = None
     completed = set()
     failed = False
+    first_failure = None
     phase = "setup"
 
     def passed(case):
         require(
-            case in INSTALLER.CASES + (INSTALLER.PROMPT_CASES if args.qualify_install_prompts else ()) + PACKAGE_CASES + IMPORT_CASES + SAF_CASES + STAGED_CASES
+            case
+            in INSTALLER.CASES
+            + (INSTALLER.PROMPT_CASES if args.qualify_install_prompts else ())
+            + PACKAGE_CASES
+            + IMPORT_CASES
+            + SAF_CASES
+            + STAGED_CASES
+            + NIGHTLY_CASES
             and case not in completed,
             "unexpected-acceptance-case",
         )
@@ -307,25 +318,31 @@ def main(argv=None):
         if args.allow_test_notifications:
             require("allow_test_notifications" in inspect.signature(INSTALLER.Phone).parameters, "merge-installer-notification-authorization-first")
             kwargs["allow_test_notifications"] = True
-        INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(ROOT / "work/coordination/alpha-packaging-acceptance")
-        if args.staged_update_request:
+        request = json.loads(staged_request.read_bytes()) if staged_request else {}
+        diagnostics_root = ROOT / "work/coordination/alpha-packaging-acceptance"
+        if nightly and not args.dry_run:
+            diagnostics_root = Path(request["done_file"]).parent.resolve()
+            require(diagnostics_root.is_relative_to((ROOT / "work/coordination/p1-nightly").resolve()), "nightly-dated-output-required")
+        INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(diagnostics_root)
+        print("INFO alpha-packaging evidence=" + INSTALLER.DIAGNOSTICS.directory.relative_to(ROOT).as_posix(), flush=True)
+        if staged_request:
             phase = "staged-update-host-preflight"
-            acquisition = StagedUpdate(INSTALLER, require, json.loads(args.staged_update_request.read_bytes()))
+            acquisition = StagedUpdate(INSTALLER, require, request, nightly=nightly)
             if args.dry_run:
-                print("PASS staged-update signed source graphs and current input inventory precheck", flush=True)
+                print("PASS signed source release and current input inventory precheck", flush=True)
                 return 0
             phone = Phone(serial, args.timeout)
             phase = "staged-update"
-            # Reserve separate windows for import and both builds, with time
-            # left for play checks and cleanup before the outer runner exits.
-            with phone.observe_thermal(duration=3 * args.timeout + 1200, require_continuous_trace=True):
+            # Leave time after import and build for the tour, census and cleanup.
+            duration = 2 * args.timeout + 2400 if nightly else 3 * args.timeout + 1200
+            with phone.observe_thermal(duration=duration, require_continuous_trace=True):
                 try:
                     acquisition.run(phone, passed)
                 finally:
                     metrics, phone.flow_metrics = phone.flow_metrics, None
                     if metrics is not None:
                         INSTALLER.DIAGNOSTICS.write("phone-flow-metrics.json", INSTALLER.encoded(metrics.report(include_samples=True)))
-            require(completed == set(STAGED_CASES), "staged-update-case-series-incomplete")
+            require(completed == set(NIGHTLY_CASES if nightly else STAGED_CASES), "staged-update-case-series-incomplete")
         else:
             request = json.loads(args.acquisition_request.read_bytes()) if args.acquisition_request else {}
             source_commit = request.get("toolhost_source_commit") if args.acquisition_request else args.toolhost_source_commit
@@ -379,11 +396,15 @@ def main(argv=None):
         if phase in ("saf-acquisition", "staged-update"):
             phase = INSTALLER.CURRENT_PHASE
         print("FAIL alpha-packaging phase=" + phase + " reason=" + str(error), flush=True)
+        first_failure = {"phase": phase, "reason": str(error)}
         failed = True
-    except Exception:
+    except Exception as error:
+        if phase in ("saf-acquisition", "staged-update"):
+            phase = INSTALLER.CURRENT_PHASE
         if INSTALLER.DIAGNOSTICS is not None:
             INSTALLER.DIAGNOSTICS.write("alpha-packaging-error.log", traceback.format_exc().encode())
         print("FAIL alpha-packaging phase=" + phase + " reason=unexpected-local-error-see-private-evidence", flush=True)
+        first_failure = {"phase": phase, "reason": str(error) or type(error).__name__}
         failed = True
     finally:
         if phone is not None:
@@ -393,6 +414,7 @@ def main(argv=None):
                     acquisition.cleanup(phone)
                 except Exception:
                     print("FAIL cleanup reason=owned-download-cleanup-not-verified", flush=True)
+                    first_failure = first_failure or {"phase": "cleanup", "reason": "owned-download-cleanup-not-verified"}
                     failed = True
             try:
                 result = phone.cleanup()
@@ -402,9 +424,15 @@ def main(argv=None):
                     print("SKIP cleanup packages=not-checked reason=no-owned-package-mutation", flush=True)
             except Exception:
                 print("FAIL cleanup reason=owned-package-cleanup-not-verified", flush=True)
+                first_failure = first_failure or {"phase": "cleanup", "reason": "owned-package-cleanup-not-verified"}
                 failed = True
+        if nightly and not args.dry_run and INSTALLER.DIAGNOSTICS is not None:
+            INSTALLER.DIAGNOSTICS.write(
+                "nightly-summary.json",
+                INSTALLER.encoded({"success": not failed, "completed": sorted(completed), "first_failure": first_failure}),
+            )
         INSTALLER.DIAGNOSTICS = None
-    if not failed and not (args.acquisition_request or args.staged_update_request):
+    if not failed and not (args.acquisition_request or staged_request):
         print("SCOPE synthetic-only; SAF/provider UI, legitimate cohorts, power-loss and game-profile acceptance NOT RUN", flush=True)
     return int(failed)
 

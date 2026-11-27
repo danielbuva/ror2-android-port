@@ -1169,10 +1169,12 @@ class BundlePreparationTests(unittest.TestCase):
     def test_fresh_managed_preparation_retains_script_identity_properties_and_null_source(self):
         E = P.module("bundle_endpoints")
         identity = P.O.module("_prepare_test_identity", Path(__file__).resolve().parents[1] / "scripts/lab/script_identity.py")
-        for null in (False, True):
-            with self.subTest(null=null), tempfile.TemporaryDirectory() as tmp:
+        for mode in ("managed", "original-null", "missing-script"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 inputs, request, policy, pin = self.fixture(root)
+                null = mode == "original-null"
+                missing = mode == "missing-script"
                 node = identity._node
                 names = ("AuthoredBehaviour", "Fixture", "Authored.dll")
                 props = bytes(range(16))
@@ -1211,12 +1213,24 @@ class BundlePreparationTests(unittest.TestCase):
                     tree=identity._tree(nodes),
                     dependencies=[],
                 )
-                body = struct.pack("<iqiiqi", 0, 0, 1, 0, 0 if null else 20, 0)
+                null_body = struct.pack("<iqiiqi", 0, 0, 1, 0, 0, 0)
+                body = null_body if null else struct.pack("<iqiiqi", 0, 0, 1, 0, 20, 0)
+                null_type = dict(typ, script_type=-1, script_id=bytes(16), hash=bytes(16))
                 source = root / "original/managed.bundle"
-                raw = self.serialized([dict(path_id=10, type=typ, body=body), dict(path_id=20, type=script_type, body=script)], platform=19)
+                records = [dict(path_id=10, type=typ, body=body), dict(path_id=20, type=script_type, body=script)]
+                if missing:
+                    records.append(dict(path_id=30, type=null_type, body=null_body))
+                raw = self.serialized(records, platform=19)
                 with source.open("wb") as stream:
                     P.O.W.write_bundle(stream, [("CAB-managed", 4, len(raw), lambda: io.BytesIO(raw))], lambda block, method: block, flags=0x40)
-                digest = P.hashlib.sha256(body).hexdigest()
+                output = dict(bundle="managed-pack", member="managed-member", path_id=10, bytes=len(body), sha256=P.hashlib.sha256(body).hexdigest())
+                record = dict(path_id=10, class_id=114, sha256=output["sha256"], outputs=[output])
+                if missing:
+                    witness = dict(
+                        bundle=source.name, bundle_sha256=P.O.B.sha(source), member="CAB-managed", path_id=30, sha256=P.hashlib.sha256(null_body).hexdigest()
+                    )
+                    record["missing_script_base"] = dict(bytes=len(null_body), type_source=witness)
+                    output.update(sha256=witness["sha256"], transform=dict(references=[{"offset": 16, "from": [0, 20], "to": [0, 0]}]))
                 profile = root / "managed.json"
                 profile.write_text(
                     json.dumps(
@@ -1226,19 +1240,7 @@ class BundlePreparationTests(unittest.TestCase):
                                 dict(
                                     path=source.name,
                                     sha256=P.O.B.sha(source),
-                                    members=[
-                                        dict(
-                                            name="CAB-managed",
-                                            objects=[
-                                                dict(
-                                                    path_id=10,
-                                                    class_id=114,
-                                                    sha256=digest,
-                                                    outputs=[dict(bundle="managed-pack", member="managed-member", path_id=10, bytes=len(body), sha256=digest)],
-                                                )
-                                            ],
-                                        )
-                                    ],
+                                    members=[dict(name="CAB-managed", objects=[record])],
                                 )
                             ],
                         )
@@ -1266,9 +1268,9 @@ class BundlePreparationTests(unittest.TestCase):
                 policy.pop("field_routes")
                 sdk = root / "runtime-scripts"
                 sdk.write_bytes(self.serialized([dict(path_id=70, type=script_type, body=script)]))
-                request["staged"] = [] if null else [dict(bundle="sdk", member="Library/unity default resources", file=pin(sdk))]
+                request["staged"] = [] if null or missing else [dict(bundle="sdk", member="Library/unity default resources", file=pin(sdk))]
                 # SDK serialized resources require witnesses when tree-free; this one retains its tree.
-                if not null:
+                if not (null or missing):
                     full = root / "script-full.json"
                     full.write_text(
                         json.dumps(
@@ -1299,13 +1301,21 @@ class BundlePreparationTests(unittest.TestCase):
                 prepared = json.loads(Path(result["request"]["path"]).read_bytes())
                 value = list(P.json_rows(root / "prepared/selected-records.jsonl"))[0]
                 _, retained = P.ProducerRecords().record(value)
-                if null:
-                    proof = prepared["null_script_sources"][0]["type_source"]
-                    self.assertEqual(proof["sha256"], digest)
+                if null or missing:
+                    self.assertEqual(len(prepared["null_script_sources"]), 1)
+                    declaration = prepared["null_script_sources"][0]
+                    self.assertEqual(declaration["destination"], destination)
+                    proof = declaration["type_source"]
+                    self.assertEqual(proof["sha256"], P.hashlib.sha256(null_body).hexdigest())
                     qualification = E.Qualification(SimpleNamespace(**vars(P)), None, prepared, {}, {}, {})
                     qualification.game = (root / "original").resolve()
                     qualification.null_sources = {tuple(destination): proof}
-                    self.assertEqual(qualification.null_source(value), typ)
+                    if missing:
+                        self.assertEqual(proof, witness)
+                        self.assertEqual(value["source"], [source.name, "CAB-managed", 10])
+                        self.assertEqual(value["policies"], {"missing_script_base": record["missing_script_base"]})
+                    self.assertEqual(qualification.null_source(value), null_type)
+                    self.assertEqual(P.qualify_null_script_base(retained, null_type, qualification.null_source(value))[("m_Script",)], (0, 0))
                 else:
                     self.assertEqual(P.pointers(retained, typ, {})[("m_Script",)], (1, 70))
                     original = json.loads((root / "prepared/original-script-properties.json").read_bytes())
