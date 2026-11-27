@@ -15,29 +15,25 @@ SPEC.loader.exec_module(fixture)
 
 
 class InstallerToolhostTest(unittest.TestCase):
-    def test_rebuild_checks_new_public_pins_and_preserves_runtime_recipe(self):
+    def test_repack_accepts_updated_repo_pins_and_refuses_runtime_or_source_drift(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            source = root / "new.py"
-            source.write_bytes(b"new source")
-            base = {"python_version": "3.14.8", "public_profile_source_hashes": {"old.py": "unused"}}
-            current = {"python_version": "3.14.8", "public_profile_source_hashes": {source.name: fixture.digest(source)}}
-
-            def git(_root, action, *args):
-                if action == "diff":
-                    return ""
-                if action == "ls-tree":
-                    return source.name + "\0"
-                return json.dumps(base if args[0].startswith("base:") else current)
-
-            with mock.patch.object(fixture, "git", side_effect=git):
-                fixture.verify_runtime_inputs(root, "base", "current")
-                source.write_bytes(b"wrong source")
-                with self.assertRaisesRegex(ValueError, "public transform source differs"):
-                    fixture.verify_runtime_inputs(root, "base", "current")
-                current["python_version"] = "3.14.9"
-                with self.assertRaisesRegex(ValueError, "retained Android runtime recipe differs"):
-                    fixture.verify_runtime_inputs(root, "base", "current")
+            root = Path(directory).resolve()
+            source = root / "recipe" / "fixture.json"
+            source.parent.mkdir()
+            source.write_bytes(b"current source")
+            name = "recipe/fixture.json"
+            runtime = {"natives": ["retained-library"]}
+            base = json.dumps(dict(runtime, public_profile_source_hashes={name: "a" * 64}))
+            staging = mock.Mock()
+            profile = dict(runtime, public_profile_source_hashes={name: fixture.digest(source)})
+            with mock.patch.object(fixture, "git", side_effect=["", base, name] * 2 + ["", base]):
+                staging.load_metadata.side_effect = [profile.copy(), profile.copy(), dict(profile, natives=[])]
+                fixture.verify_runtime_inputs(root, "old", "new", staging)
+                source.write_bytes(b"source drift")
+                with self.assertRaisesRegex(ValueError, "public fixture source differs"):
+                    fixture.verify_runtime_inputs(root, "old", "new", staging)
+                with self.assertRaisesRegex(ValueError, "retained Android tool profile differs"):
+                    fixture.verify_runtime_inputs(root, "old", "new", staging)
 
     def test_base_receipt_binds_request_key_and_source_commit(self):
         with tempfile.TemporaryDirectory() as directory:

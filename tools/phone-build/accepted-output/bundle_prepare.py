@@ -241,7 +241,7 @@ def extend_selection(owner, member, required, selected, types, routes, extension
 
 
 def original_identities(owner, path, source_files=None, *, destinations=None):
-    """Reverse original body selectors, SDK Shader leaves and MonoScript remaps."""
+    """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
 
     def add(record, source):
@@ -268,6 +268,14 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
                     add(record, (source["path"], source["member"], row["source_path_id"]))
                 else:
                     add(record, ("sdk", "Resources/unity_builtin_extra", row["sdk_shader"]))
+            return result
+        if "shader_links" in profile:
+            for row in profile["records"]:
+                source = row["original"]
+                if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
+                    raise ValueError("original source file pins disagree")
+                for target in row["outputs"]:
+                    add((target["bundle"], target["member"], target["path_id"]), (source["path"], source["member"], source["path_id"]))
             return result
         if "original_sources" in profile:
             originals = profile["original_sources"]

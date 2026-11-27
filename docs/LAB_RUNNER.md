@@ -36,10 +36,12 @@ build trusts) there, so a later `script` job can install that build and sign syn
 
 ## Current local packaging request
 
-Use the installer APK and receipt cached for the checkout's commit. Keep the
-cache pinned with `.prune-keep` until qualification finishes. An ignored JSON
-request names the canonical `repo`, linked `checkout`, configured `device`
-alias, granted `workstream` and new absolute `done_file` under canonical `work/`.
+Use the installer APK and receipt cached for the checkout's commit. A packaging
+request can set `toolhost_source_commit` to reuse a verified earlier fixture when
+the embedded installer inputs match. Keep the cache pinned with `.prune-keep`
+until qualification finishes. An ignored JSON request names the canonical
+`repo`, linked `checkout`, configured `device` alias, granted `workstream` and
+new absolute `done_file` under canonical `work/`.
 
 ```
 source scripts/env.sh
@@ -51,8 +53,10 @@ Dry-run verifies the cached installer and prepares the synthetic fixtures withou
 accessing the device. The detached runner checks the grant before taking the
 lease, then invokes the existing package and signing acceptance. The shared
 thermal monitor verifies cool-start admission and records the run's thermal
-trace. The runner retains installed receipts, versions and hashes before
-disposing of the owned fixtures.
+trace. The shared display owner wakes only the authorized display at the first
+installer launch and verifies sleep and mode restoration after the UI flow.
+The runner retains installed receipts, versions and hashes before disposing of
+the owned fixtures.
 The terminal receipt links the private log after cleanup and pruning.
 To prepare the APK, use a separate request with `"operation": "toolhost"`,
 `"device": "thor"` and a Thor grant. This calls the configured toolhost builder,
@@ -74,10 +78,10 @@ source scripts/env.sh
 ```
 
 This compiles the current Java and manifest, packages the tracked installer
-sources against the current source pins, and verifies every retained runtime
-asset and Android library. The build requires the same native/runtime inputs
-and records the base commit and hash next to the new APK. The rebuilt APK is
-cached by the checkout commit.
+sources and verifies every retained runtime asset and Android library.
+The build refuses changed native/runtime inputs and records the base commit
+and hash next to the new APK. The repack verifies current authored source pins
+against the tracked files it embeds and caches the APK by checkout commit.
 An explicitly staged Android build can also seed this rebuild. Use its
 request-keyed cache directory. For an older receipt without source and signer
 fields, replay its original packaging request against the original checkout with
@@ -97,10 +101,10 @@ invalid controls in a scoped Downloads directory. A private one-use command
 invokes the normal buttons in the debuggable installer-test package. Android's
 system picker grants read access through the external storage provider. The
 shared display owner verifies top-panel-only use on Thor and restores its prior
-mode when the picker tests end. The run
-restarts the installer before importing the supported selections, verifies a
-mid-copy cancellation and resumed import, and hashes staged files before and
-after acquisition. It then removes its owned files and installer.
+mode when the picker tests end. The run restarts the installer before importing
+the supported selections, verifies a mid-copy cancellation and resumed import,
+and hashes staged files before and after acquisition. It then removes its owned
+files and installer.
 
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
