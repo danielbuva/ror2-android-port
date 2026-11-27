@@ -2469,11 +2469,12 @@ materials, shaders, textures, sprites and supported native asset roots): snapsho
 and hash the explicit request, load every address with its exact engine type, record the
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
-An explicit Texture2D or Cubemap mip selection enables graphics for that editor
-check. `ContentFixtureTextureMip.cs` point-samples the selected mip and cube face
-through `TextureMipFixture.shader`, writes a private RGBA8 readback and releases
-the temporary rendering objects. The host checks the sample identity, extent
-and hash alongside the typed-load receipt.
+The separate `phone-texture-readback` action stages an isolated editor project
+via `phone_texture_readback.py`. `ContentFixtureTextureMip.cs` point-samples an
+explicit Texture2D mip or Cubemap face and mip through `TextureMipFixture.shader`,
+writes a private RGBA8 readback and releases the temporary rendering objects.
+The host checks the sample identity, extent and hash alongside the typed-load
+receipt.
 The editor reports native AnimatorController roots as
 `UnityEditor.Animations.AnimatorController`; their original Addressables
 locations use `UnityEngine.RuntimeAnimatorController`.

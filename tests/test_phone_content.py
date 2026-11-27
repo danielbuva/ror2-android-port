@@ -21,8 +21,9 @@ from phone_content import (
     validate_native_content,
     validate_native_scene,
     validate_oracle,
-    validate_texture_mip,
 )
+
+from phone_texture_readback import readback_request, validate_texture_mip
 
 
 class PhoneContentTests(unittest.TestCase):
@@ -108,11 +109,11 @@ class PhoneContentTests(unittest.TestCase):
             request = {"path": str(bundle), "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(), "assets": [asset]}
             request_path = attempt / "request.json"
             request_path.write_text(json.dumps(request))
-            self.assertEqual(native_content_request(request_path), request)
+            self.assertEqual(readback_request(request_path), request)
             for invalid in (asset | {"type": "Texture2D"}, asset | {"texture_mip": {"mip": -1, "face": 2}}):
                 request_path.write_text(json.dumps(request | {"assets": [invalid]}))
                 with self.assertRaisesRegex(RuntimeError, "valid face"):
-                    native_content_request(request_path)
+                    readback_request(request_path)
             pixels = attempt / "texture-0.rgba"
             pixels.write_bytes(b"\x10\x20\x30\xff" * 4)
             report = selection | {
