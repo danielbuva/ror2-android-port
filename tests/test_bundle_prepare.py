@@ -53,6 +53,32 @@ class BundlePreparationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "original source file pins disagree"):
                 P.module("bundle_prepare").original_identities(P, path, {source[0]: "b" * 64})
 
+    def test_payload_shader_suppliers_use_pinned_original_selectors(self):
+        source = dict(path="shaders.bundle", member="CAB-source", sha256="a" * 64)
+        output = dict(bundle="content", member="CAB-content", path_id=7)
+        other = dict(output, path_id=8)
+        profiles = {
+            "template": (
+                dict(source=source, template_inputs={}, shaders=[dict(path_id=11, outputs=[output]), dict(path_id=12, outputs=[other])]),
+                {7: 11, 8: 12},
+            ),
+            "sdk": (dict(source_type=dict(source, path_id=13), compiler_sdk={}, materials=[], outputs=[output, other]), {7: 13, 8: 13}),
+        }
+        original_identities = P.module("bundle_prepare").original_identities
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "profile.json"
+            for name, (profile, outputs) in profiles.items():
+                with self.subTest(name=name):
+                    path.write_text(json.dumps(profile))
+                    source_files = {}
+                    expected = {
+                        ("content", "CAB-content", output_id): {("shaders.bundle", "CAB-source", original_id)} for output_id, original_id in outputs.items()
+                    }
+                    self.assertEqual(original_identities(P, path, source_files), expected)
+                    self.assertEqual(source_files, {source["path"]: source["sha256"]})
+                    with self.assertRaisesRegex(ValueError, "original source file pins disagree"):
+                        original_identities(P, path, {source["path"]: "b" * 64})
+
     def test_generated_material_prepares_from_object_pack_without_original_alias(self):
         root_repo = Path(__file__).resolve().parents[1]
         G = P.O.module("_generated_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
