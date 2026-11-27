@@ -7,7 +7,7 @@ from itertools import combinations
 from pathlib import Path
 import sys
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 SPEC = importlib.util.spec_from_file_location("shader_produce", Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output/shader_produce.py")
 N = importlib.util.module_from_spec(SPEC)
@@ -190,12 +190,12 @@ class NativeUI(unittest.TestCase):
 
 
 class ComputeRecords(unittest.TestCase):
-    def test_dxbc_compute_metadata_matches_storage_descriptor_bindings(self):
+    def test_dxbc_compute_metadata_matches_descriptor_bindings(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
             import shader_translate as translator
 
-        def resource(name, dimension):
-            return dict(name=name, generatedName="", bindPoint=0, samplerBindPoint=-1, texDimension=dimension)
+        def resource(name, dimension, register=0):
+            return dict(name=name, generatedName="", bindPoint=register, samplerBindPoint=-1, texDimension=dimension)
 
         original = {
             "m_Name": "Fixture",
@@ -228,15 +228,88 @@ class ComputeRecords(unittest.TestCase):
                 )
             ],
         }
+        declarations = original["variants"][0]["kernels"]
+        buffers = declarations[0]["variantMap"][0][1]
+        images = dict(
+            buffers,
+            cbs=[resource("Params", -1)],
+            textures=[resource("From", 3), resource("To", 3, 1)],
+            outBuffers=[resource("Array", 5, 1), resource("Volume", 3)],
+            threadGroupSize=[4, 4, 4],
+        )
+        declarations.append(dict(declarations[0], name="WriteImages", variantMap=[("", images)]))
+        sampled = dict(
+            buffers,
+            cbs=[resource("Params", -1)],
+            textures=[
+                dict(resource("Array", 5, 2), samplerBindPoint=7),
+                dict(resource("Image", 2, 0), samplerBindPoint=7),
+                resource("LoadOnly", 2, 4),
+            ],
+            builtinSamplers=[dict(sampler=85, bindPoint=3)],
+            outBuffers=[resource("Destination", 2, 4)],
+        )
+        declarations.append(dict(declarations[0], name="SampleAndWrite", variantMap=[("", sampled)]))
+        mixed_inputs = dict(
+            buffers,
+            cbs=[resource("Params", -1)],
+            inBuffers=[resource("Histogram", -1)],
+            textures=[resource("Previous", 2, 1)],
+            outBuffers=[resource("Exposure", 2)],
+        )
+        declarations.append(dict(declarations[0], name="ReadAndWrite", variantMap=[("", mixed_inputs)]))
         with patch.object(translator, "compile_spirv", return_value=b"SPIR-V") as compile_spirv:
             tree = translator.translate_compute(original, Path("fixture"), {})
-        compile_spirv.assert_called_once_with({}, Path("fixture"), 0, b"DXBC", ["texture", "0", "0", "0", "storage", "0", "0", "1", "cbv", "0", "1", "0"])
+        self.assertEqual(
+            compile_spirv.call_args_list,
+            [
+                call({}, Path("fixture"), 0, b"DXBC", ["texture", "0", "0", "0", "storage", "0", "0", "1", "cbv", "0", "1", "0"]),
+                call(
+                    {},
+                    Path("fixture"),
+                    1,
+                    b"DXBC",
+                    ["texture", "0", "0", "0", "texture", "1", "0", "1", "storage-image", "0", "0", "2", "storage-image", "1", "0", "3", "cbv", "0", "1", "0"],
+                ),
+                call(
+                    {},
+                    Path("fixture"),
+                    2,
+                    b"DXBC",
+                    [
+                        *("sampler", "3", "0", "0"),
+                        *("sampler", "7", "0", "1"),
+                        *("texture", "0", "0", "2"),
+                        *("texture", "2", "0", "3"),
+                        *("texture", "4", "0", "4"),
+                        *("storage-image", "4", "0", "5"),
+                        *("cbv", "0", "1", "0"),
+                    ],
+                ),
+                call(
+                    {},
+                    Path("fixture"),
+                    3,
+                    b"DXBC",
+                    ["structured", "0", "0", "0", "texture", "1", "0", "1", "storage-image", "0", "0", "2", "cbv", "0", "1", "0"],
+                ),
+            ],
+        )
         variant = tree["variants"][0]
         kernel = variant["kernels"][0]["variantMap"][0][1]
         self.assertEqual(variant["targetRenderer"], 21)
         self.assertEqual([kernel[key][0]["bindPoint"] for key in ("cbs", "textures", "outBuffers")], [0x10000, 0, 0x2000001])
         self.assertEqual(kernel["code"], b"SPIR-V")
         self.assertEqual(kernel["threadGroupSize"], [4, 4, 1])
+        image_kernel = variant["kernels"][1]["variantMap"][0][1]
+        self.assertEqual([(row["bindPoint"], row["texDimension"]) for row in image_kernel["outBuffers"]], [(0x02000003, 5), (0x02000002, 3)])
+        self.assertEqual(image_kernel["threadGroupSize"], [4, 4, 4])
+        sampled_kernel = variant["kernels"][2]["variantMap"][0][1]
+        self.assertEqual(sampled_kernel["builtinSamplers"], [dict(sampler=85, bindPoint=0)])
+        self.assertEqual([(row["bindPoint"], row["samplerBindPoint"]) for row in sampled_kernel["textures"]], [(3, 1), (2, 1), (4, -1)])
+        self.assertEqual(sampled_kernel["outBuffers"][0]["bindPoint"], 0x02000005)
+        mixed_kernel = variant["kernels"][3]["variantMap"][0][1]
+        self.assertEqual([mixed_kernel[key][0]["bindPoint"] for key in ("cbs", "inBuffers", "textures", "outBuffers")], [0x10000, 0, 1, 0x02000002])
         self.assertEqual(original["variants"][0]["targetRenderer"], 2)
 
     def test_same_buffer_name_can_have_distinct_kernel_layouts(self):

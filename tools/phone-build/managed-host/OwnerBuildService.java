@@ -4,6 +4,8 @@ import android.app.*;
 import android.content.*;
 import android.os.*;
 import java.io.*;
+import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
 import org.json.*;
 
 /** Owns the worker, foreground notification and wake lock, independently of any Activity. */
@@ -31,6 +33,10 @@ public final class OwnerBuildService extends Service {
     public static boolean isRunning() { return running || pending; }
     static boolean hasLiveControls() { return running && liveControls; }
     public static String action(Context app) { return app.getSharedPreferences(PREFERENCES, 0).getString("action", ""); }
+    static String transferState(String action) {
+        if ("tool-acquire".equals(action)) return "tools-state.json";
+        return "import".equals(action) ? "import-state.json" : null;
+    }
     public static synchronized void launch(Context app, String action) {
         if (running || pending) return;
         pending = true;
@@ -55,7 +61,8 @@ public final class OwnerBuildService extends Service {
     private Notification notification() {
         String detail = "Your game files stay on this device";
         try {
-            File file = new File(getFilesDir(), "owner-input/" + ("import".equals(action(this)) ? "import-state.json" : "update-state.json"));
+            String transfer = transferState(action(this));
+            File file = new File(getFilesDir(), "owner-input/" + (transfer == null ? "update-state.json" : transfer));
             if (file.isFile()) detail = ToolHostActivity.readJson(file).optString("message", detail);
         } catch (Exception ignored) { }
         if ("AWAITING_CONFIRMATION".equals(OwnerInstaller.state(this)))
@@ -86,7 +93,8 @@ public final class OwnerBuildService extends Service {
         }
         if (running) return START_NOT_STICKY;
         pending = false;
-        if (!("release-check".equals(action) || "install-prepare".equals(action) || "release-build".equals(action) || "import".equals(action) || "install".equals(action) || "release-rollback".equals(action) || "profile-recover".equals(action) || "install-verify".equals(action))) {
+        final String transfer = transferState(action);
+        if (!(transfer != null || "release-check".equals(action) || "install-prepare".equals(action) || "release-build".equals(action) || "install".equals(action) || "release-rollback".equals(action) || "profile-recover".equals(action) || "install-verify".equals(action))) {
             stopSelf(startId); return START_NOT_STICKY;
         }
         if ((OwnerInstaller.busy(this) && !"install-verify".equals(action)) || (OwnerAlphaInstall.pending(this) && !"profile-recover".equals(action) && !"install-verify".equals(action))) { stopSelf(startId); return START_NOT_STICKY; }
@@ -110,8 +118,8 @@ public final class OwnerBuildService extends Service {
             wakeLock.acquire(); handler.post(refresh);
             thread = new Thread(new Runnable() { public void run() {
                 try {
-                    if ("import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)) requireBatteryAdmission();
-                    if ("import".equals(action)) importFiles();
+                    if (transfer != null || "release-build".equals(action) || "release-rollback".equals(action)) requireBatteryAdmission();
+                    if (transfer != null) transferFiles(transfer);
                     else if ("install-verify".equals(action)) OwnerInstaller.finishVerification(OwnerBuildService.this);
                     else if ("profile-recover".equals(action)) OwnerInstaller.recoverProfiles(OwnerBuildService.this);
                     else if ("install".equals(action)) {
@@ -136,13 +144,14 @@ public final class OwnerBuildService extends Service {
                         }
                     }
                 } catch (Exception error) {
-                    if ("import".equals(action)) {
+                    if (transfer != null) {
+                        boolean tools = "tool-acquire".equals(action);
                         boolean stopped = destroyed || "cancel".equals(importControl);
-                        boolean cancelled = stopped || error instanceof InterruptedIOException;
-                        String message = stopped ? IMPORT_CANCELLED : error.getMessage();
+                        boolean cancelled = stopped || (!tools && error instanceof InterruptedIOException);
+                        String message = stopped ? (tools ? "Tool acquisition cancelled. Resume to keep the verified files and partial transfers." : IMPORT_CANCELLED) : error.getMessage();
                         try {
-                            ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"),
-                                new JSONObject().put("state", cancelled ? "CANCELLED" : "ERROR").put("message", message));
+                            ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/" + transfer),
+                                new JSONObject().put("state", cancelled ? "CANCELLED" : tools ? "TOOLS_UNAVAILABLE" : "ERROR").put("message", message));
                         }
                         catch (Exception ignored) { }
                     } else ToolHostActivity.updateStatus(OwnerBuildService.this, "ERROR", error.getMessage());
@@ -178,15 +187,17 @@ public final class OwnerBuildService extends Service {
         if (temperature < 0) throw new IOException("Battery temperature unavailable");
         if (temperature > 350) throw new IOException("Battery admission refused: cool to ≤ 35 C");
     }
-    private void importFiles() throws Exception {
+    private void transferFiles(String receipt) throws Exception {
         final long started = SystemClock.elapsedRealtime();
+        final boolean tools = "tools-state.json".equals(receipt);
+        final File state = new File(getFilesDir(), "owner-input/" + receipt);
         inputAccess = new OwnerInputSource.Access();
-        OwnerInputSource.run(this, new OwnerInputImport.Observer() {
+        OwnerInputImport.Observer observer = new OwnerInputImport.Observer() {
             public void checkpoint() throws Exception {
                 while ("pause".equals(importControl) && !destroyed) {
-                    File state = new File(getFilesDir(), "owner-input/import-state.json");
                     JSONObject current = state.isFile() ? ToolHostActivity.readJson(state) : new JSONObject();
-                    if (!"PAUSED".equals(current.optString("state"))) ToolHostActivity.writeJson(OwnerBuildService.this, state, current.put("state", "PAUSED").put("message", "Import paused. Verified files are retained."));
+                    if (!"PAUSED".equals(current.optString("state"))) ToolHostActivity.writeJson(OwnerBuildService.this, state,
+                        current.put("state", "PAUSED").put("message", tools ? "Tool acquisition paused. Resume to continue." : "Import paused. Verified files are retained."));
                     Thread.sleep(250);
                 }
                 if (destroyed || "cancel".equals(importControl)) throw new InterruptedIOException(IMPORT_CANCELLED);
@@ -196,13 +207,15 @@ public final class OwnerBuildService extends Service {
                 if (now - lastImportProgress < 250 && complete != total) return;
                 lastImportProgress = now;
                 boolean validating = path.startsWith("Checking version:");
-                JSONObject progress = new JSONObject().put("state", validating ? "VALIDATING" : "IMPORTING")
-                    .put("message", validating ? path : "Importing " + path).put("elapsed_seconds", (now - started) / 1000);
+                JSONObject progress = new JSONObject().put("state", tools ? "ACQUIRING_TOOLS" : validating ? "VALIDATING" : "IMPORTING")
+                    .put("message", tools ? "Acquiring " + path : validating ? path : "Importing " + path).put("elapsed_seconds", (now - started) / 1000);
                 // Identification reports a phase, not copied bytes (tree counts are files).
                 if (!validating && total > 0) progress.put("completed", complete).put("total", total);
-                ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"), progress);
+                ToolHostActivity.writeJson(OwnerBuildService.this, state, progress);
             }
-        }, inputAccess);
+        };
+        if (tools) OwnerInputSource.acquire(this, observer, inputAccess);
+        else OwnerInputSource.run(this, observer, inputAccess);
     }
     private void finishService() {
         liveControls = false; running = false; pending = false;
@@ -217,5 +230,54 @@ public final class OwnerBuildService extends Service {
         if (thread != null && thread.isAlive()) thread.interrupt();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         super.onDestroy();
+    }
+}
+
+/** HTTPS transport for a file URL admitted by the signed tool inventory. */
+final class OwnerToolDownload {
+    static InputStream skip(InputStream input, long offset, OwnerInputImport.Observer observer) throws Exception {
+        try {
+            while (offset > 0) {
+                observer.checkpoint();
+                long skipped = input.skip(Math.min(offset, 1024 * 1024));
+                if (skipped == 0) {
+                    if (input.read() == -1) throw new IOException("Source ended before the saved tool offset");
+                    skipped = 1;
+                }
+                offset -= skipped;
+            }
+            return input;
+        } catch (Exception error) {
+            input.close();
+            throw error;
+        }
+    }
+    static InputStream open(String url, String path, long bytes, long offset, OwnerInputImport.Observer observer) throws Exception {
+        HttpsURLConnection connection = (HttpsURLConnection)new URL(url).openConnection();
+        connection.setInstanceFollowRedirects(false);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
+        connection.setRequestProperty("Accept-Encoding", "identity");
+        if (offset > 0) connection.setRequestProperty("Range", "bytes=" + offset + "-");
+        try {
+            int status = connection.getResponseCode();
+            String encoding = connection.getContentEncoding();
+            if (encoding != null && !"identity".equalsIgnoreCase(encoding))
+                throw new IOException("Tool source did not serve the original bytes: " + path);
+            if (status == 206 && offset > 0) {
+                String expected = "bytes " + offset + "-" + (bytes - 1) + "/" + bytes;
+                if (!expected.equals(connection.getHeaderField("Content-Range")))
+                    throw new IOException("Tool source did not serve the requested range: " + path);
+            } else if (status != 200) throw new IOException("Tool source unavailable (HTTP " + status + "): " + path);
+            InputStream stream = new FilterInputStream(connection.getInputStream()) {
+                @Override public void close() throws IOException {
+                    try { super.close(); } finally { connection.disconnect(); }
+                }
+            };
+            return status == 200 ? skip(stream, offset, observer) : stream;
+        } catch (Exception error) {
+            connection.disconnect();
+            throw error;
+        }
     }
 }

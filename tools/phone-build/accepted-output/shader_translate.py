@@ -181,29 +181,46 @@ def translate_compute(original, directory, tools):
         if declaration["globalKeywords"] or declaration["localKeywords"]:
             raise ValueError("compute keyword variants require qualification")
         ((keywords, kernel),) = declaration["variantMap"]
-        if keywords or kernel["inBuffers"] or kernel["builtinSamplers"] or not bytes(kernel["code"]).startswith(b"DXBC"):
+        if keywords or not bytes(kernel["code"]).startswith(b"DXBC"):
             raise ValueError("unqualified DXBC compute resources or code")
         textures = kernel["textures"]
+        builtins = kernel["builtinSamplers"]
         constants = kernel["cbs"]
-        (storage,) = kernel["outBuffers"]
+        structured = kernel["inBuffers"]
+        storage = kernel["outBuffers"]
         if (
-            len(textures) > 1
-            or any(row["texDimension"] != 2 for row in textures)
+            any(row["texDimension"] not in (2, 3, 5) or row["generatedName"] for row in textures)
             or len(constants) > 1
-            or storage["texDimension"] != -1
-            or any(row["samplerBindPoint"] != -1 or row["generatedName"] for row in [*textures, *constants, storage])
+            or not storage
+            or any(row["texDimension"] != -1 for row in structured)
+            or any(row["texDimension"] not in (-1, 2, 3, 5) for row in storage)
+            or any(row["samplerBindPoint"] != -1 or row["generatedName"] for row in [*constants, *structured, *storage])
         ):
             raise ValueError("unqualified compute binding layout")
-        # Images and storage share set 0; constants use set 1. Unity encodes
-        # the descriptor set and the writable-buffer flag in bindPoint.
+        # Unity allocates set 0 in sampler, read-only and writable-resource order.
         descriptors = []
+        sampler_registers = {row["samplerBindPoint"] for row in textures if row["samplerBindPoint"] != -1}
+        sampler_registers.update(row["bindPoint"] for row in builtins)
+        sampler_slots = {register: slot for slot, register in enumerate(sorted(sampler_registers))}
+        for register, slot in sampler_slots.items():
+            descriptors.extend(("sampler", str(register), "0", str(slot)))
+        for row in builtins:
+            row["bindPoint"] = sampler_slots[row["bindPoint"]]
+        for row in textures:
+            row["samplerBindPoint"] = sampler_slots.get(row["samplerBindPoint"], -1)
+        input_start = len(sampler_slots)
+        inputs = [*textures, *structured]
+        # Unity encodes the descriptor set and writable-resource flag in bindPoint.
         for rows, kind, descriptor_set, start, flag in (
-            (textures, "texture", 0, 0, 0),
-            ([storage], "storage", 0, len(textures), 0x2000000),
+            (inputs, "texture", 0, input_start, 0),
+            (storage, "storage", 0, input_start + len(inputs), 0x02000000),
             (constants, "cbv", 1, 0, 0),
         ):
-            for slot, row in enumerate(rows, start):
-                descriptors.extend((kind, str(row["bindPoint"]), str(descriptor_set), str(slot)))
+            for slot, row in enumerate(sorted(rows, key=lambda row: row["bindPoint"]), start):
+                descriptor_kind = "storage-image" if kind == "storage" and row["texDimension"] != -1 else kind
+                if kind == "texture" and row["texDimension"] == -1:
+                    descriptor_kind = "structured"
+                descriptors.extend((descriptor_kind, str(row["bindPoint"]), str(descriptor_set), str(slot)))
                 row["bindPoint"] = flag | (descriptor_set << 16) | slot
         kernel["code"] = compile_spirv(tools, directory, index, bytes(kernel["code"]), descriptors)
     return tree
