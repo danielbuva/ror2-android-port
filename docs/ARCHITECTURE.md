@@ -3338,6 +3338,16 @@ nothing. It retains no process state, closes Git/file readers at exit and leaves
 journal/index edits for manual reference review and staging. It neither fetches
 nor commits. `tests/test_journal_renumber.py` covers ownership and refusal cases.
 
+For a clean checked-out topic containing fetched `origin/main`,
+`scripts/journal-pre-push.py` (support) uses the same renumber and index owners.
+It reads the outgoing commit, computes heading dates against its history,
+and creates a forward-only local commit limited to the two journal paths if
+they need repair. The hook stops that push because Git captured the old tip;
+the next push validates the exact new tip. No temporary file or state survives
+the check. Dirty worktrees and ambiguous journal content are not repaired.
+`tests/test_journal_pre_push.py` exercises the real hook and remote ref update
+against a disposable local Git remote.
+
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh exact-commit checkout. The hook uses
 `scripts/ci-test-impact.py` to trace Python imports, source references and

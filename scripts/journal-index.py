@@ -120,13 +120,16 @@ def parse_journal(text: str) -> list[Entry]:
     return entries
 
 
-def blame_dates(root: Path) -> dict[int, str]:
+def blame_dates(root: Path, *, contents: Path | None = None, pending_date: str | None = None) -> dict[int, str]:
     """Map final line numbers to author dates in the author's recorded timezone.
 
     Using author-tz (not the machine's zone) keeps --check identical on a UTC CI runner.
     """
+    command = ["git", "blame", "--line-porcelain"]
+    if contents is not None:
+        command.extend(("--contents", str(contents)))
     output = subprocess.check_output(
-        ["git", "blame", "--line-porcelain", JOURNAL.as_posix()],
+        [*command, JOURNAL.as_posix()],
         cwd=root,
         text=True,
         encoding="utf-8",
@@ -134,12 +137,14 @@ def blame_dates(root: Path) -> dict[int, str]:
     )
     dates = {}
     line_number = None
+    pending = False
     author_time = None
     author_tz = None
     for line in output.splitlines():
         match = BLAME_HEADER.fullmatch(line)
         if match:
             line_number = int(match.group(1))
+            pending = not int(line.split(" ", 1)[0], 16)
             author_time = None
             author_tz = None
         elif line.startswith("author-time "):
@@ -151,7 +156,7 @@ def blame_dates(root: Path) -> dict[int, str]:
         elif line.startswith("\t"):
             if line_number is None or author_time is None or author_tz is None:
                 raise ValueError("Git blame record lacks a line number, author-time or author-tz")
-            dates[line_number] = datetime.fromtimestamp(author_time, author_tz).strftime("%Y-%m-%d")
+            dates[line_number] = pending_date if pending and pending_date is not None else datetime.fromtimestamp(author_time, author_tz).strftime("%Y-%m-%d")
     return dates
 
 
