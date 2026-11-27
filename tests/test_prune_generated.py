@@ -132,6 +132,22 @@ class PruneGeneratedTests(unittest.TestCase):
         planner.aggressive_files()
         return planner
 
+    def test_aggressive_cli_requires_explicit_dedupe_flag(self):
+        self.work.mkdir()
+        for flags in ([], ["--apply"], ["--dedupe"], ["--dedupe", "--apply"]):
+            with (
+                self.subTest(flags=flags),
+                patch.object(sys, "argv", [str(SCRIPT), "--aggressive", "--json", *flags]),
+                patch.object(prune.subprocess, "check_output", return_value=str(self.root / ".git")),
+                patch.object(prune, "volume_available", return_value=1024),
+                patch.object(prune, "duplicate_plan", return_value=[]) as duplicates,
+                redirect_stdout(io.StringIO()) as output,
+            ):
+                prune.main()
+                enabled = "--dedupe" in flags
+                self.assertEqual(json.loads(output.getvalue())["dedupe"], enabled)
+                self.assertEqual(duplicates.call_count, int(enabled))
+
     def test_aggressive_apks_require_48_hours_and_respect_protection(self):
         from hashlib import sha256
 

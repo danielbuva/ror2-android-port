@@ -155,10 +155,15 @@ class SpriteProduceTests(unittest.TestCase):
             prepared = directory / "prepared"
             receipt = P.prepare(profile, P.B.sha(profile), pc, decoder, P.B.sha(decoder), prepared)
             self.assertTrue(receipt["success"])
-            request = json.loads((prepared / "sprite-source-request.json").read_text())["items"][0]
+            request_path = prepared / "sprite-source-request.json"
+            request = json.loads(request_path.read_text())["items"][0]
+            request_pin = receipt["request_sha256"]
+            self.assertEqual(request_pin, P.B.sha(request_path))
             self.assertEqual(request["mesh_type"], 1)
             self.assertEqual(request["rect"], [0, 0, 16, 8])
-            png = Path(request["png"]).read_bytes()
+            self.assertEqual(request["png"], "images/0.png")
+            png = (prepared / request["png"]).read_bytes()
+            self.assertEqual(hashlib.sha256(png).hexdigest(), request["sha256"])
             self.assertEqual(png[:8], b"\x89PNG\r\n\x1a\n")
             chunks, offset = {}, 8
             while offset < len(png):
@@ -170,9 +175,13 @@ class SpriteProduceTests(unittest.TestCase):
             scanlines = zlib.decompress(chunks[b"IDAT"])
             self.assertEqual(scanlines[:65], b"\0" + rgba[-64:])
             self.assertEqual(scanlines[-65:], b"\0" + rgba[:64])
+            native_value = json.loads(native.read_text())
+            native_value["request_sha256"] = request_pin
+            native.write_text(json.dumps(native_value))
             output = directory / "pack"
-            result = P.produce(profile, P.B.sha(profile), pc, native, P.B.sha(native), output)
+            result = P.produce(profile, P.B.sha(profile), pc, native, P.B.sha(native), output, request_path=request_path, request_pin=request_pin)
             self.assertTrue(result["success"])
+            self.assertEqual(result["request_sha256"], request_pin)
             self.assertEqual((output / "objects.bin").read_bytes(), expected)
             self.assertEqual(json.loads((output / "index.jsonl").read_text())["offset"], 0)
             row = json.loads((output / "index.jsonl").read_text())
@@ -180,6 +189,34 @@ class SpriteProduceTests(unittest.TestCase):
             self.assertEqual(types[row["type_id"]], P.A.O.json_layout(P.A.O.source_record_type(bundle, "CAB-authored", 77, 213)))
             self.assertEqual(result["outputs"]["types.json"]["sha256"], P.B.sha(output / "types.json"))
             self.assertEqual(P.B.sha(bundle), original_hash)
+
+    def test_requested_native_geometry_requires_matching_pin_and_cohort(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            pc, _, profile, native, _, _, _ = fixture(directory)
+            request = directory / "request.json"
+            native_value = json.loads(native.read_text())
+            output = directory / "pack"
+
+            def produce(**kwargs):
+                return P.produce(profile, P.B.sha(profile), pc, native, P.B.sha(native), output, **kwargs)
+
+            request.write_text(json.dumps({"items": [{"id": "authored"}]}))
+            with self.assertRaisesRegex(ValueError, "paired"):
+                produce(request_path=request)
+            with self.assertRaisesRegex(ValueError, "request drift"):
+                produce(request_path=request, request_pin="0" * 64)
+            with self.assertRaisesRegex(ValueError, "does not bind"):
+                produce(request_path=request, request_pin=P.B.sha(request))
+            for identities in (["different"], ["authored", "authored"]):
+                with self.subTest(identities=identities):
+                    request.write_text(json.dumps({"items": [{"id": identity} for identity in identities]}))
+                    request_pin = P.B.sha(request)
+                    native_value["request_sha256"] = request_pin
+                    native.write_text(json.dumps(native_value))
+                    with self.assertRaisesRegex(ValueError, "request does not cover"):
+                        produce(request_path=request, request_pin=request_pin)
+            self.assertFalse(output.exists())
 
     def test_functional_output_records_actual_identity_and_keeps_pointer_checks(self):
         with tempfile.TemporaryDirectory() as temporary:

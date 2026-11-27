@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1575](PORTING_JOURNAL.md#j1575--draw-terrain-detail-vertex-lighting-on-android-vulkan) | 2026-11-27 | Draw Terrain Detail vertex lighting on Android Vulkan | 2026-11-27. |
 | [J1576](PORTING_JOURNAL.md#j1576--verify-all-signed-crunch-and-bc7-producer-artifacts-on-android) | 2026-11-27 | Verify all signed Crunch and BC7 producer artifacts on Android | 2026-11-27. |
 | [J1574](PORTING_JOURNAL.md#j1574--draw-cloud-remap-and-reproduce-its-signed-vulkan-pack) | 2026-11-27 | Draw Cloud Remap and reproduce its signed Vulkan pack | 2026-11-27. |
 | [J1567](PORTING_JOURNAL.md#j1567--run-detached-device-jobs-through-the-shared-fifo) | 2026-11-27 | Run detached device jobs through the shared FIFO | 2026-11-27. |
