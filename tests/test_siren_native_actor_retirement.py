@@ -28,7 +28,7 @@ STUBS = r"""
 using System; using System.Collections.Generic; using System.Linq;
 public class UObject { public bool exists=true; public static implicit operator bool(UObject o) => !ReferenceEquals(o,null)&&o.exists; }
 public struct NetworkInstanceId {
- public uint Value; public NetworkInstanceId(uint value){Value=value;} public static NetworkInstanceId Invalid => new NetworkInstanceId(0);
+ public uint Value; public NetworkInstanceId(uint value){Value=value;} public static NetworkInstanceId Invalid => new NetworkInstanceId(uint.MaxValue);
  public static bool operator ==(NetworkInstanceId a,NetworkInstanceId b)=>a.Value==b.Value;
  public static bool operator !=(NetworkInstanceId a,NetworkInstanceId b)=>a.Value!=b.Value;
  public override bool Equals(object o)=>o is NetworkInstanceId id&&Value==id.Value; public override int GetHashCode()=>(int)Value;
@@ -110,6 +110,11 @@ CASES = r"""
   natural.ValidateOwnedMaster(row,"Boss",NetworkInstanceId.Invalid,"boss");natural.RequestDestroy(row,false);natural.RequestDestroy(row,false);
   Need(row.naturallyRetired&&!row.masterDestroyRequestCompleted&&natural.Report.naturallyRetiredBossMasters==1,"native master misreported or counted twice");
   Need(!NetworkServer.DestroyCalls.ContainsKey(1)&&!NetworkServer.DestroyCalls.ContainsKey(1001),"naturally destroyed actor destroyed again");
+
+  var foreignBoss=new Harness();var foreignBossRow=foreignBoss.Add(6);
+  foreignBossRow.master.minionOwnership=new MinionOwnership{NetworkownerMasterId=new NetworkInstanceId(77)};
+  foreignBoss.OnNativeActorDeath(foreignBoss.Damage(foreignBossRow));
+  Need(!foreignBossRow.nativeDeathObserved,"boss with a foreign owner authorized retirement");
 
   // Master destruction may precede corpse retirement; only that captured dead corpse is cleaned.
   var corpse=new Harness();var corpseRow=corpse.Add(2);corpse.OnNativeActorDeath(corpse.Damage(corpseRow));corpse.KillMaster(corpseRow);

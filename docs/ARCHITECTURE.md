@@ -5466,9 +5466,10 @@ and summon callbacks identify the original boss and its probes without scanning
 all masters. The boss master may retain the authored card's exact body prefab
 while native body creation uses the adapted catalog template at the same body
 index. Capture, death observation and cleanup recognize both references while
-retaining the original squad, server and ownership checks. Cleanup validates
-the complete owned actor set before requesting
-body/master destruction. A terminal original server-death witness permits accounting
+retaining the original squad, server and ownership checks. Boss master capture
+starts with the native invalid minion-owner ID, and probe capture records the
+observed summoner ID. Cleanup validates the complete owned actor set before
+requesting body/master destruction. A terminal original server-death witness permits accounting
 for an exact destroyed/unmapped captured master; any remaining corpse must still
 match the captured identity, dead health and server map before an owned cleanup
 request. Natural master retirement and requested destruction have separate
@@ -5478,9 +5479,9 @@ state and synchronously destroys only that owned scene instance while the server
 is active. This runs the native squad's `OnDestroy` unsubscribe before the existing
 session shutdown, which precedes deferred geometry unload. Actor destruction
 requests are recorded as requests; `cleanupDisposed` must be read alongside
-`cleanupError` and the individual cleanup flags. Egg placement, native spawn/unspawn,
-rewards and teardown still need device acceptance. No separate probe switch case
-implements this behavior.
+`cleanupError` and the individual cleanup flags. The assisted device replay
+observed native defeat, reward and both owners' cleanup. Ordinary player input
+through the encounter remains a device gate.
 
 Native teleporter retirement (`TeleporterWorldSession`, current source draft,
 J600): this owner captures the exact instantiated host and network identity,
