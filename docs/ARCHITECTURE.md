@@ -6644,6 +6644,11 @@ same-cohort conversion, Burst and IL2CPP jobs to `owner-apk/release_jobs.py`.
 It compares the dispatcher readback hashes with the producer receipts and
 requires the entire compile plan before the runner collects evidence and
 removes owned scratch.
+Signed artifact requests use the same envelope and dispatcher to qualify one
+declared producer artifact from a release. The runner checks the selected
+artifact hash, collects the producer and thermal receipts, and removes the
+owned input and output files. The artifact itself stays on the device until
+cleanup.
 
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
