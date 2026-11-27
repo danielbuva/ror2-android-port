@@ -6,6 +6,17 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1540 — Dispatch translated source ComputeShader kernels on Android Vulkan
+
+2026-11-27. The translated source histogram ComputeShader retains both
+kernel declarations and their workgroup sizes. Android Vulkan cleared all
+256 bins and gathered all 256 red pixels into bin 255. Peak SoC was 54.5 °C
+with no time above 80 °C. Fixture removal, OLED sleep and lease release passed.
+APK SHA-256 `e75ac3c1098b3dbd3c41f7c9ae3d65f7d6b5f06cdf7fd57c4f94c43a1c74b528`
+(source `a452a340`). Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `whole-game-histogram-device-01/terminal.done.json`.
+Device draw for the additional graphics variants and game integration remain open.
+
 ## J1538 — Draw a translated source Shader on Android Vulkan
 
 2026-11-27. Wine vkd3d-shader translated all eight Animate Alpha DXBC

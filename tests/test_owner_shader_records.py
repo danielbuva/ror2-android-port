@@ -55,6 +55,51 @@ class CompilerHosting(unittest.TestCase):
 
 
 class TranslatedShaderPack(unittest.TestCase):
+    def test_vertex_preserves_native_structure_array_and_member_offsets(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+            from shader_segments import parameter_layout
+
+        record = N.reflection(
+            [
+                "cb: Draw 272 1",
+                "const: Tint 256 0 0 1 4 0",
+                "const: Transforms 0 0 2 128 0 2",
+                "const: Transforms.Forward 0 0 1 4 4 0",
+                "const: Transforms.Inverse 64 0 1 4 4 0",
+            ]
+        )
+        source = N.native_parameters(record, {"constants": [], "buffers": [], "bindings": [], "textures": []})
+        native = parameter_layout(source, structured=True)["buffers"][1]
+        rows, descriptors = translator.stage_parameters({"buffers": [dict(native, slot=4)], "textures": []}, vertex=True)
+        self.assertEqual(descriptors, ["cbv", "4", "1", "6"])
+        expected = dict(record["buffers"][0], name="vs_Draw")
+        self.assertEqual(N.reflection(rows)["buffers"], [expected])
+        invalid = source.replace(N.words(0, 2, 128, 2), N.words(32, 2, 128, 2))
+        with self.assertRaisesRegex(RuntimeError, "exceeds native buffer"):
+            parameter_layout(invalid, structured=True)
+
+    def test_fragment_uses_independent_sampler_registers_and_native_variant_shape(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+
+        textures = [
+            dict(name="left", slot=0, sampler=3, dimension=2, multisampled=False),
+            dict(name="right", slot=3, sampler=0, dimension=4, multisampled=False),
+            dict(name="variant", slot=1, sampler=3, dimension=None, native_texture_descriptor=4),
+        ]
+        rows, descriptors = translator.stage_parameters({"buffers": [], "textures": textures}, vertex=False)
+        self.assertEqual(
+            [descriptors[index : index + 4] for index in range(0, len(descriptors), 4)],
+            [["texture", "0", "0", "4"], ["sampler", "3", "0", "3"], ["texture", "3", "0", "7"], ["sampler", "0", "0", "0"], ["texture", "1", "0", "5"]],
+        )
+        reflected = N.reflection(rows)["textures"]
+        fragment = 0x08000000
+        self.assertEqual(
+            [(row["texture"], row["sampler"], row["dimension"]) for row in reflected],
+            [(fragment | 4, fragment | 3, 2), (fragment | 7, fragment, 4), (fragment | 5, fragment | 3, 2)],
+        )
+
     def test_profile_receipt_admits_two_original_records(self):
         import hashlib
         import json
