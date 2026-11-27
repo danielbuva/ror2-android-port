@@ -696,7 +696,7 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
   --jpeg-codec PUBLIC_JPEG_TOOL --jpeg-codec-sha256 TOOL_SHA256
 ```
 
-For native Alpha8 Texture2D and BC6H/RGBAHalf Cubemap originals, use
+For native Alpha8, RGB24 and RGBA32 Texture2D originals and BC6H/RGBAHalf Cubemaps, use
 `texture_native_profile.py` with the PC coverage ledger from `texture_catalog.py`.
 The resulting local profile selects previously missing bundle identities that
 have complete mip chains, empty platform data and no external references. It

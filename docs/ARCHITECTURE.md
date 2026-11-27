@@ -1418,7 +1418,8 @@ ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
 normal maps. It uses the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
 use the same codec pins and output checks. `texture_native_profile.py` selects
-original Alpha8, HDR Cubemap, BC1 and BC3 records from the PC texture coverage ledger.
+original Alpha8, RGB24, RGBA32, HDR Cubemap, BC1 and BC3 records from the PC
+texture coverage ledger.
 It checks native schemas, platform data, references and complete mip extents,
 then writes a private profile. Source-derived BC profiles pin original bytes and
 expected output extents and leave reference output hashes empty. BC1 colour
@@ -6650,6 +6651,11 @@ same-cohort conversion, Burst and IL2CPP jobs to `owner-apk/release_jobs.py`.
 It compares the dispatcher readback hashes with the producer receipts and
 requires the entire compile plan before the runner collects evidence and
 removes owned scratch.
+Signed artifact requests use the same envelope and dispatcher to qualify one
+declared producer artifact from a release. The runner checks the selected
+artifact hash, collects the producer and thermal receipts, and removes the
+owned input and output files. The artifact itself stays on the device until
+cleanup.
 
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
@@ -8372,8 +8378,9 @@ record and destination, and `shader_translate.py` verifies the installed
 translator and validator before producing its typed pack receipt. Managed-host
 `build_shader_tools.py` builds the two ARM64 API 24 native executables from
 pinned public archives and retains corresponding source, notices and relink
-materials. The existing native provider plan stages the executables. Android
-execution of the signed producer remains open.
+materials. The existing native provider plan stages the executables. The shared
+runner verified the signed Histogram producer on Android. Its output hash
+matched the object dispatched in the Vulkan fixture.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
