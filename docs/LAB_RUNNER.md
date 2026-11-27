@@ -208,8 +208,9 @@ terminal evidence it removes that root and preserves the installed toolhost.
 Use a separate terminal directory for each cold run. Resume applies only to an
 unconfirmed handle in this mode.
 Dry-run validates pins without device access. Live execution with `--workstream`
-verifies the named grant, takes the lease and stops Unity's ADB server before
-device admission. Use the same workstream to reattach to a retained lease.
+verifies the named grant and takes the lease before device admission. Use the
+same workstream to reattach to a retained lease. Pass `--strict-battery` when
+seeding inputs for a converter stage to apply the same charge limits as replay.
 Execution uses the standard fresh checkout, cooldown, package-identity,
 storage and display owners.
 The current runtime staging supports configured internal-only devices; adopted

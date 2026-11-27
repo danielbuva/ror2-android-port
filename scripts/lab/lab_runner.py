@@ -113,7 +113,7 @@ def battery_refusal(level, current_now, temp_tenths, charge_override=False):
 
 
 class Runner:
-    def __init__(self, repo, env):
+    def __init__(self, repo, env, *, strict_battery=False):
         self.repo = Path(repo).resolve()
         self.env = env
         self.run_id = env.get("LAB_RUN_ID", str(int(time.time())))
@@ -123,7 +123,8 @@ class Runner:
         config = self.repo / "work/config/lab-runner.json"
         self.config = json.loads(config.read_text()) if config.is_file() else {}
         self.devices = self.config.get("devices", {})
-        self.charge_override = bool(self.config.get("battery_charge_override", False))
+        self.strict_battery = strict_battery
+        self.charge_override = not strict_battery and bool(self.config.get("battery_charge_override", False))
         self.adb = shutil.which("adb", path="/opt/homebrew/bin") or "adb"
         self.leases = self.repo / ".local/orchestrator/leases"
         self.resume_state = None
@@ -149,6 +150,8 @@ class Runner:
         env = dict(os.environ, **(extra_env or {}))
         if self.charge_override:
             env["LAB_BATTERY_CHARGE_OVERRIDE"] = "1"  # child device tools honour the owner's choice
+        elif self.strict_battery:
+            env.pop("LAB_BATTERY_CHARGE_OVERRIDE", None)
         env.pop("GH_TOKEN", None)  # lab jobs never see the workflow token
         with self.log.open("a") as log:
             log.write(f"$ {shlex.join(argv)}\n")
@@ -536,7 +539,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
     return int(not result["success"])
 
 
-def local_emission(path, *, dry_run=False, resume=False, restage=False, workstream=None):
+def local_emission(path, *, dry_run=False, resume=False, restage=False, workstream=None, strict_battery=False):
     """Private request entry point; same script/worktree/lease owner as /lab."""
     request = json.loads(Path(path).read_bytes())
     configuration = request["runner"]
@@ -552,9 +555,7 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
         print(json.dumps(dict(success=True, dry_run=True, files=len(files))))
         return 0
     result = dict(success=False)
-    runner = Runner(repo, {})
-    if request.get("operation") == "converter-stage":
-        runner.charge_override = False
+    runner = Runner(repo, {}, strict_battery=strict_battery or request.get("operation") == "converter-stage")
     if resume or restage:
         runner.resume_state = done.parent / "device-state.json"
 
@@ -684,6 +685,7 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(description="Current shared device runner: pinned bundle emission or signed-code conversion")
         parser.add_argument("--emission-request", required=True)
         parser.add_argument("--workstream", help="Require this dispatcher grant before taking the device lease")
+        parser.add_argument("--strict-battery", action="store_true", help="Apply standard charge limits even when a local override is configured")
         mode = parser.add_mutually_exclusive_group()
         mode.add_argument("--dry-run", action="store_true")
         mode.add_argument("--resume-emission", action="store_true")
@@ -702,6 +704,7 @@ if __name__ == "__main__":
                 resume=arguments.resume_emission,
                 restage=arguments.restage_emission,
                 workstream=arguments.workstream,
+                strict_battery=arguments.strict_battery,
             )
         )
     sys.exit(main())
