@@ -560,7 +560,7 @@ def prepare(owner, inputs, output):
                 staged.add(row["bundle"], pin)
             normalized_staged.append(normalized)
 
-        def source_target(source, metadata, pointer, owner_field):
+        def source_target(source, metadata, pointer, owner_field, checked_destination):
             fid, pid = pointer
             if not 0 <= fid <= len(metadata["externals"]):
                 raise ValueError("source pointer outside member table")
@@ -568,6 +568,8 @@ def prepare(owner, inputs, output):
             if target_member.startswith("archive:/"):
                 target_member = target_member.rsplit("/", 1)[-1]
             candidates = external_sources.get((target_member, pid), ()) if fid else sources.get((source[0], target_member, pid), ())
+            if checked_destination in candidates:
+                return checked_destination
             if len(candidates) != 1:
                 raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer, owner_field)))
             return next(iter(candidates))
@@ -692,15 +694,17 @@ def prepare(owner, inputs, output):
                         # The producer checked the input bytes before applying
                         # this patch. Here the final type identifies its PPtr.
                         relocated = reference is not None and tuple(reference["to"]) == pointer
-                        producer_target = (*member, pointer[1])
-                        if relocated and not pointer[0] and tuple(binding["record_source"][:2]) == member and "generated" in bindings.get(producer_target, {}):
+                        producer_target = None
+                        if relocated and not pointer[0] and tuple(binding["record_source"][:2]) == member:
+                            producer_target = (*member, pointer[1])
+                        if "generated" in bindings.get(producer_target, {}):
                             # The checked producer patch explicitly names a generated record
                             # in this member, which has no original-file selector.
                             endpoint = producer_target
                         else:
                             _, _, metadata = original(source)
                             original_pointer = tuple(reference["from"]) if relocated else pointer
-                            endpoint = source_target(source, metadata, original_pointer, key)
+                            endpoint = source_target(source, metadata, original_pointer, key, producer_target)
                 else:
                     endpoint = staged.target(target[1], pointer)
                 read(endpoint)
