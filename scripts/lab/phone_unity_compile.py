@@ -18,7 +18,7 @@ import uuid
 PROFILE = "authored-unity-builtin-references-v1"
 SOURCE = "scripts/lab/phone_unity_compile.py"
 FIXTURE = "tools/phone-build/ContentFixture.cs"
-FIXTURE_SHA = "f019b7996eddf2d2dbbdb1e0c133f5a85e8a98d86b78390dbc02a1e5af36808e"
+FIXTURE_SHA = "c7e20fe148e6293b3691b68fc3c8f154743cf137f780cfe0003306743fb661df"
 SOURCES = (SOURCE, "scripts/lab/phone_managed_compile.py", "scripts/lab/phone_module_policy.py", FIXTURE)
 GROUPS = {
     "PlaybackEngines/AndroidPlayer/Variations/il2cpp/Managed": 64,

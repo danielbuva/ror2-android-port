@@ -2463,12 +2463,15 @@ For the Animate Alpha Vulkan diagnostic, set `ROR2_PHONE_SHADER_DRAW=1` on
 address. The builder embeds the checked bundle in the disposable fixture APK.
 `ContentFixture.cs` draws two ramp inputs offscreen and reports the center
 pixels, graphics backend and result through `PHONE_SHADER_DRAW`.
-`ROR2_PHONE_SHADER_COMPUTE=1` uses the same fixture for one standalone
-ComputeShader address. The Vulkan player seeds 256 histogram counters,
-dispatches the source clear and gather kernels on a flat red input, then
-reports the thread dimensions and readback through `PHONE_SHADER_COMPUTE`.
-The shared device runner's `shader-compute` mode captures that report and
-removes the disposable fixture.
+`ROR2_PHONE_SHADER_COMPUTE=1` uses the same fixture with a standalone bundle
+containing Histogram or the Waveform and Vectorscope pair. The Vulkan player
+seeds the diagnostic buffers, dispatches each source clear and gather kernel
+and checks the complete readback using a flat red input. The fixture releases
+its buffers and textures and reports through `PHONE_SHADER_COMPUTE`. The shared
+device runner's `shader-compute` mode captures the report and removes the
+disposable fixture. A pair of Texture3DLerp assets uses the source-translated
+and pinned SDK programs at separate addresses. The fixture compares both
+kernels' ARGBHalf volume writes with expected values and releases the volumes.
 For a streamed scene, the same request pins the bundle and dependencies and
 specifies the exact path in `scene`.
 `ContentFixtureSceneCheck.cs` enters Play Mode in the isolated project, loads
@@ -8406,12 +8409,22 @@ registers for 2D and cube images. It preserves per-variant structured
 constant arrays, member offsets and strides through the same native parameter
 writer. Unity typed-loaded the additional texture and instancing variants.
 Their device draw and whole-game coverage remain open.
-The ComputeShader path preserves the source kernel and
-workgroup tables, remaps storage, constants and sampler-free 2D image bindings,
-and writes bare Vulkan SPIR-V into the native kernel. The original histogram
+The ComputeShader path preserves the source kernel and workgroup tables and
+writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
+then read-only textures and structured buffers, then writable buffers and 2D,
+3D and array images. Samplers retain their Unity names and texture associations.
+The producer preserves Unity's resource dimensions and write flag and maps
+constants to set 1. The original histogram
 clear and gather modules pass Vulkan 1.0 validation. The Android Vulkan
 fixture clears all 256 bins and gathers all 256 solid-red pixels into the
-highest bin using those original kernels. Other compute shapes remain open.
+highest bin using those original kernels. The same fixture dispatched the
+original Waveform and Vectorscope kernels from a shared bundle and matched
+their complete clear and gather readbacks. The volume fixture dispatched the
+two original Texture3DLerp kernels and the two SDK controls against ARGBHalf
+3D targets and matched every component. The exposure fixture matched the
+weighted ExposureHistogram bins and the fixed and progressive AutoExposure
+RFloat results. Runtime camera integration and MultiScaleVO downsample
+dispatch remain open.
 
 The signed release graph accepts `owner-compute-shader-translation-v1` packs
 as explicit bundle suppliers. The Histogram profile binds the original PC
@@ -8419,7 +8432,11 @@ record and destination, and `shader_translate.py` verifies the installed
 translator and validator before producing its typed pack receipt. Managed-host
 `build_shader_tools.py` builds the two ARM64 API 24 native executables from
 pinned public archives and retains corresponding source, notices and relink
-materials. The existing native provider plan stages the executables. The shared
+materials. It applies and retains the vkd3d patch for read-only structured
+buffers. `shader_translate.py` includes those buffers in set 0 alongside
+sampled images, ordered by their original read-only register. The translator
+opts into Vulkan storage-buffer loads for those inputs. The existing native
+provider plan stages the executables. The shared
 runner verified the signed Histogram producer on Android. Its output hash
 matched the object dispatched in the Vulkan fixture.
 
