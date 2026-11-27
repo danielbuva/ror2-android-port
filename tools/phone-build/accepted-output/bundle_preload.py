@@ -2041,13 +2041,130 @@ def referenced_meshes(consumers, member, schemas):
     return meshes
 
 
-def expose_local_assets(source, output, name, member, groups, *, codec, codec_sha256, packs=(), external_bundles=(), mesh_consumers=()):
+def closed_local_records(closure, name, member, packs, game, pins):
+    """Read verified body extents and their complete native descriptors."""
+    records = {}
+    for pack, files in packs.items():
+        selected = {int(pid): row for pid, row in closure["records"].items() if row["pack"] == pack}
+        for row in json_rows(files["index.jsonl"]):
+            pid = row["path_id"]
+            expected = selected.get(pid)
+            if expected is None or (row["bundle"], row["member"]) != (name, member):
+                continue
+            if pid in records or row["sha256"] != expected["sha256"] or "resource" in row:
+                raise ValueError(f"Closed local record extent differs: {pid}")
+            if "types" in files:
+                definition = files["types"][row["type_id"]]
+                typ = {key: bytes.fromhex(value) if key in ("tree", "hash", "script_id") else value for key, value in definition.items()}
+            else:
+                relative, original_member, original_pid = expected["source"]
+                original = O.M.safe_input(game, relative)
+                pins.add(original)
+                typ = O.source_record_type(original, original_member, original_pid, expected["class_id"])
+            if (typ["class_id"], typ["hash"].hex()) != (expected["class_id"], expected["type_hash"]):
+                raise ValueError(f"Closed local record native descriptor differs: {pid}")
+            records[pid] = (O.record_extent(files["objects.bin"], row), typ)
+    if set(records) != set(map(int, closure["records"])):
+        raise ValueError("Closed local record pack coverage differs")
+    return records
+
+
+def append_closed_local_types(layout, records, managed, schemas):
+    """Allocate only new type and script slots, leaving the existing tables in place."""
+    type_ids = {full_type_key(typ): index for index, typ in enumerate(layout["types"])}
+    script_ids = {tuple(pointer): index for index, pointer in enumerate(layout["scripts"])}
+    for pid, (body, typ) in records.items():
+        final = typ
+        if typ["class_id"] == 114:
+            fields = pointers(body, typ, schemas)
+            script = fields.get(("m_Script",), fields.get(("#490",)))
+            if script != tuple(managed[str(pid)]["pointer"]):
+                raise ValueError(f"Closed local record script differs: {pid}")
+            if script not in script_ids:
+                script_ids[script] = len(layout["scripts"])
+                layout["scripts"].append(script)
+            final = dict(typ, script_type=script_ids[script])
+        key = full_type_key(final)
+        if key not in type_ids:
+            if final["dependencies"]:
+                raise ValueError(f"New local type has unrelocated native dependencies: {pid}")
+            type_ids[key] = len(layout["types"])
+            layout["types"].append(final)
+        yield pid, body, type_ids[key]
+
+
+def qualify_closed_local(native, member, records, closure, consumer, read, schemas):
+    """Join pinned scene roots, exact managed scripts and final external fields."""
+    C = module("catalog_complete")
+    fields_by_pid = {pid: pointers(body, typ, schemas) for pid, (body, typ) in records.items()}
+    consumer_member = consumer["member"]
+    managed = closure["managed_bindings"]
+    expected_fields = {}
+    for endpoint in closure["external_endpoints"]:
+        for pid, field in endpoint["uses"]:
+            expected_fields[pid, tuple(field)] = (endpoint["member"], endpoint["class_id"], endpoint["sha256"])
+    seen_fields = set()
+    for pid, fields in fields_by_pid.items():
+        for field, pointer in fields.items():
+            file_id, target = pointer
+            if not file_id or not target:
+                continue
+            owner, typ, body = native.record(member, pointer)
+            key = pid, field
+            if expected_fields.get(key) != (owner, typ["class_id"], hashlib.sha256(body).hexdigest()):
+                raise ValueError(f"Closed local record external endpoint differs: {pid} {field}")
+            seen_fields.add(key)
+    if seen_fields != expected_fields.keys():
+        raise ValueError("Closed local record external field coverage differs")
+    for pid, witness in managed.items():
+        body, typ = records[int(pid)]
+        script = tuple(witness["pointer"])
+        if script[0] == 0:
+            script_body, script_type = read(script[1])
+            owner = member
+        else:
+            owner, script_type, script_body = native.record(member, script)
+        identity = C.script_identity(script_body)
+        if (
+            owner != witness["member"]
+            or script_type["class_id"] != 115
+            or list(identity) != witness["identity"]
+            or typ["script_id"] != C.S.md4("".join(identity).encode())
+            or typ["hash"].hex() != witness["native_properties"]
+            or hashlib.sha256(script_body).hexdigest() != witness["v41_script_body"]
+            or not witness["matching_signed_registry_properties"]
+        ):
+            raise ValueError(f"Closed local record signed script differs: {pid}")
+
+    _, layout, objects = native.members[consumer_member]
+    script_id = C.S.md4("".join(consumer["identity"]).encode())
+    matches = [pid for pid, row in objects.items() if layout["types"][row["type_id"]].get("script_id") == script_id]
+    (pid,) = matches
+    _, typ, body = native.record(consumer_member, (0, pid))
+    fields = pointers(body, typ, schemas)
+    roots = []
+    for field, expected in closure["scene_roots"].items():
+        route = tuple(field.split("/"))
+        file_id, target = fields[route]
+        external = layout["externals"][file_id - 1]["path"] if file_id > 0 else None
+        if [file_id, target] != expected or external != f"archive:/{member}/{member}" or target not in records:
+            raise ValueError(f"Closed local record consumer route differs: {field}")
+        roots.append(target)
+    return roots
+
+
+def expose_local_assets(source, output, name, member, groups, *, codec, codec_sha256, packs=(), external_bundles=(), mesh_consumers=(), closed=None):
     """Expose typed local objects while preserving the current bundle's other assets."""
     W, C = module("unity_write"), module("catalog_complete")
     bundle = W.B.Bundle(source)
     target = output / (name + ".bundle")
-    with bundle.member(member) as stream:
-        layout = W.read_serialized(stream)
+    from contextlib import ExitStack
+
+    with ExitStack() as stack:
+        stream = stack.enter_context(bundle.member(member))
+        native = C.ProducedMembers()
+        native.add(member, stream, name)
+        _, layout, _ = native.members[member]
         objects = {obj["path_id"]: obj for obj in layout["objects"]}
         schemas = {}
         replacements, additions, resources = {}, [], []
@@ -2055,6 +2172,17 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
         resource_start = bundle.members[resource_member][1] if packs else 0
         resource_end = resource_start
         type_ids = {full_type_key(typ): i for i, typ in enumerate(layout["types"])}
+        if closed:
+            for provider, (path, external) in closed["providers"].items():
+                if external != member:
+                    native.add(external, stack.enter_context(O.source_member(path, external)), provider)
+            for pid, body, type_id in append_closed_local_types(layout, closed["records"], closed["witness"]["managed_bindings"], schemas):
+                if not pid or pid in objects:
+                    raise ValueError(f"Closed local record identity is occupied: {pid}")
+                obj = dict(path_id=pid, type_id=type_id, offset=layout["bytes"] + len(additions), bytes=len(body))
+                additions.append(obj)
+                objects[pid] = obj
+                replacements[pid] = body
         for pack in packs:
             for row in json_rows(pack["index.jsonl"]):
                 pid = row["path_id"]
@@ -2093,6 +2221,9 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
         appended_meshes = {obj["path_id"] for obj in additions if layout["types"][obj["type_id"]]["class_id"] == 43}
         mesh_endpoints = appended_meshes & referenced_meshes(mesh_consumers, member, schemas)
         pending, selected = list(mesh_endpoints), []
+        if closed:
+            consumer_roots = qualify_closed_local(native, member, closed["records"], closed["witness"], closed["consumer"], read, schemas)
+            pending.extend(consumer_roots)
         for group in groups:
             path = group["path"].lower()
             if path in occupied_paths:
@@ -2121,13 +2252,16 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
                 continue
             if pid == container or pid not in objects:
                 raise ValueError(f"Local asset dependency is absent or names the bundle container: {pid}")
+            if closed and pid not in closed["records"]:
+                graph[pid] = set()
+                continue
             body, typ = read(pid)
             fields = pointers(body, typ, schemas)
             if pid in replacements and typ["class_id"] == 213:
                 file_id, texture = fields.get(("m_RD", "texture"), (0, 0))
                 if file_id or texture not in objects or layout["types"][objects[texture]["type_id"]]["class_id"] != 28:
                     raise ValueError(f"Appended Sprite names an unqualified Texture2D: {pid}")
-            for field, (file_id, other) in fields.items():
+            for field, (file_id, other) in () if closed else fields.items():
                 if (
                     file_id
                     and other
@@ -2146,7 +2280,7 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
             pending.extend(other for file_id, other in graph[pid] if not file_id)
         if any(obj["path_id"] not in graph for obj in additions):
             raise ValueError("Appended asset is outside the checked preload closure")
-        if not selected and not mesh_endpoints:
+        if not selected and not mesh_endpoints and not closed:
             raise ValueError("Local assets require registered groups or checked Mesh consumers")
 
         def table(body):
@@ -2199,6 +2333,9 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
                 persisted.seek(metadata["data_offset"] + entry["offset"])
                 if W.B.exact(persisted, entry["bytes"]) != replacements[pid]:
                     raise ValueError(f"Persisted local asset body differs: {pid}")
+                if closed and pid in closed["records"]:
+                    body, expected_type = closed["records"][pid]
+                    qualified_final_type(body, metadata["types"][entry["type_id"]], metadata["scripts"], expected_type)
         entry = next(row for row in metadata["objects"] if row["path_id"] == container)
         persisted.seek(metadata["data_offset"] + entry["offset"])
         container_body = W.B.exact(persisted, entry["bytes"])
@@ -2792,7 +2929,8 @@ def expose_local_assets_request(inputs, output):
     inputs = Path(inputs).resolve(strict=True)
     request = json.loads(inputs.read_bytes())
     if (
-        request.keys() - {"packs", "external_bundles", "mesh_consumers"} != {"schema", "source", "codec", "name", "member", "groups"}
+        request.keys() - {"packs", "external_bundles", "mesh_consumers", "native_closure", "consumer", "game"}
+        != {"schema", "source", "codec", "name", "member", "groups"}
         or request["schema"] != "owner-bundle-local-assets-v1"
     ):
         raise ValueError("Unsupported local asset registration input contract")
@@ -2816,6 +2954,26 @@ def expose_local_assets_request(inputs, output):
         packs.append(dict(files, types=json.loads(files["types.json"].read_bytes())))
     externals = [(pins.pin(row["bundle"]), row["member"]) for row in request.get("external_bundles", [])]
     mesh_consumers = [(pins.pin(row["bundle"]), row["member"]) for row in request.get("mesh_consumers", [])]
+    closed = None
+    if "native_closure" in request:
+        witness = pins.read(request["native_closure"])
+        if (
+            packs
+            or externals
+            or mesh_consumers
+            or not witness["success"]
+            or witness["errors"]
+            or witness["donor"] != {"bundle": request["source"], "member": request["member"]}
+        ):
+            raise ValueError("Closed local records require an independent verified source closure")
+        files = {}
+        for key, pack in witness["pack_inputs"].items():
+            files[key] = {file: pins.pin(pin) for file, pin in pack.items()}
+            if "types.json" in files[key]:
+                files[key]["types"] = json.loads(files[key]["types.json"].read_bytes())
+        records = closed_local_records(witness, request["name"], request["member"], files, Path(request["game"]).resolve(strict=True), pins)
+        providers = {key: (pins.pin(row["bundle"]), row["member"]) for key, row in witness["providers"].items()}
+        closed = dict(witness=witness, records=records, providers=providers, consumer=request["consumer"])
     result = expose_local_assets(
         source,
         output,
@@ -2827,9 +2985,12 @@ def expose_local_assets_request(inputs, output):
         packs=packs,
         external_bundles=externals,
         mesh_consumers=mesh_consumers,
+        closed=closed,
     )
     pins.check()
     result["source_sha256"] = request["source"]["sha256"]
+    if closed:
+        result["native_closure_sha256"] = request["native_closure"]["sha256"]
     (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     return result
 
