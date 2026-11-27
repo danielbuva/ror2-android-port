@@ -137,7 +137,7 @@ public final class ToolHostActivity extends Activity {
         refreshStatus();
     }
     private void control(String action) {
-        try { if (OwnerBuildService.isRunning()) OwnerBuildService.control(this, action); }
+        try { if (OwnerBuildService.hasLiveControls()) OwnerBuildService.control(this, action); }
         catch (Exception error) { updateStatus(this, "ERROR", error.getMessage()); }
     }
     private void resume(boolean retry) {
@@ -494,7 +494,8 @@ public final class ToolHostActivity extends Activity {
         String previous = OwnerBuildService.action(this);
         if ("ERROR".equals(OwnerInstaller.state(this))) previous = getSharedPreferences(OwnerBuildService.PREFERENCES, 0).getString("last_build_action", "release-build");
         OwnerUpdateState.Screen screen = model.screen(OwnerBuildService.isRunning(), OwnerInstaller.busy(this), OwnerAlphaInstall.pending(this),
-            new File(getFilesDir(), "owner-input/install-inputs.json").isFile(), importState, OwnerAlphaInstall.canRollback(this), OwnerUpdateState.resumableAction(previous));
+            new File(getFilesDir(), "owner-input/install-inputs.json").isFile(), importState, OwnerAlphaInstall.canRollback(this),
+            OwnerUpdateState.resumableAction(previous), OwnerBuildService.hasLiveControls());
         boolean needsPermission = !installPermissionGranted() && !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this);
         permissionButton.setVisibility(needsPermission ? android.view.View.VISIBLE : android.view.View.GONE);
         confirmationButton.setVisibility(OwnerInstaller.hasConfirmation(this) ? android.view.View.VISIBLE : android.view.View.GONE);
