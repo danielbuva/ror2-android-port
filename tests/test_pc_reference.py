@@ -97,6 +97,37 @@ class PcReferenceTest(unittest.TestCase):
         self.assertFalse(pc_reference.positive_steam_account("    ActiveUser    REG_DWORD    0x0"))
         self.assertTrue(pc_reference.positive_steam_account("    ActiveUser    REG_DWORD    0x12"))
 
+    def test_capture_admits_warning_pressure_at_minimum_free_memory(self):
+        with patch.object(pc_reference.subprocess, "check_output", side_effect=["2\n", "System-wide memory free percentage: 25%\n"]):
+            pc_reference.check_capture_memory()
+        with (
+            patch.object(pc_reference.subprocess, "check_output", side_effect=["2\n", "System-wide memory free percentage: 24%\n"]),
+            self.assertRaisesRegex(RuntimeError, "at least 25%"),
+        ):
+            pc_reference.check_capture_memory()
+        with patch.object(pc_reference.subprocess, "check_output", return_value="4\n"), self.assertRaisesRegex(RuntimeError, "critical"):
+            pc_reference.check_capture_memory()
+
+    def test_critical_pressure_stops_the_wrapper_and_only_the_matching_detached_capture(self):
+        request = r"Z:\capture\roost\request.json"
+        command = ["wine", "--ror2lab-reference", request]
+        matches = f"42 Risk of Rain 2.exe --ror2lab-reference {request}\n43 Risk of Rain 2.exe\n44 steam.exe\n"
+        with (
+            patch.object(pc_reference, "check_capture_memory"),
+            patch.object(pc_reference, "memory_pressure_level", return_value=4),
+            patch.object(pc_reference.subprocess, "Popen") as start,
+            patch.object(pc_reference.subprocess, "check_output", return_value=matches),
+            patch.object(pc_reference.os, "killpg") as kill_group,
+            patch.object(pc_reference.os, "kill") as kill_process,
+        ):
+            process = start.return_value.__enter__.return_value
+            process.pid = 41
+            process.wait.side_effect = pc_reference.subprocess.TimeoutExpired(command, 1)
+            with self.assertRaisesRegex(RuntimeError, "Capture aborted"):
+                pc_reference.run_capture(command, None, 10)
+            kill_group.assert_called_once_with(41, pc_reference.signal.SIGKILL)
+            kill_process.assert_called_once_with(42, pc_reference.signal.SIGKILL)
+
     def test_cross_over_uses_the_clone_executable_as_a_positional_path(self):
         plan = json.loads((ROOT / "tools/pc-reference/plans/gameplay.json").read_text())
         scenario = pc_reference.load_plan(plan)[0]
@@ -106,9 +137,8 @@ class PcReferenceTest(unittest.TestCase):
             with (
                 patch.object(pc_reference, "LOCAL", local),
                 patch.object(pc_reference, "check_capture_host"),
-                patch.object(pc_reference.subprocess, "run") as launch,
+                patch.object(pc_reference, "run_capture", return_value=2) as launch,
             ):
-                launch.return_value.returncode = 2
                 with self.assertRaisesRegex(RuntimeError, "never produced a result"):
                     pc_reference.run_plan(pc_reference.argparse.Namespace(timeout=1), clone, {}, ["wine"], plan, [scenario])
             command = launch.call_args.args[0]

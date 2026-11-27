@@ -19,8 +19,9 @@ the game before starting a capture.
 Preparation uses an APFS clone inside the same bottle. Stock Steam performs
 initialization and ownership checks. After they succeed, the plug-in switches
 profile storage to memory and suppresses achievement writes. Its loader and
-managed assembly references stay on this Mac. The runner checks host memory
-pressure before launching each scenario.
+managed assembly references stay on this Mac. Each scenario starts when host
+memory pressure is below level 4 and `memory_pressure -Q` reports at least 25%
+free. The runner stops the capture if pressure reaches level 4.
 
 ## Plans and evidence
 

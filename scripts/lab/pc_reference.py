@@ -7,11 +7,14 @@ import math
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.request
 import zipfile
+from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -151,14 +154,27 @@ def positive_steam_account(output):
     return bool(match and int(match[1], 16))
 
 
+def memory_pressure_level():
+    return int(subprocess.check_output(["/usr/sbin/sysctl", "-n", "kern.memorystatus_vm_pressure_level"], text=True).strip())
+
+
+def check_capture_memory():
+    pressure = memory_pressure_level()
+    if pressure >= 4:
+        raise RuntimeError(f"Host memory pressure is critical (level {pressure})")
+    summary = subprocess.check_output(["/usr/bin/memory_pressure", "-Q"], text=True)
+    free = re.search(r"^System-wide memory free percentage: (\d+)%$", summary, re.M)
+    if free is None:
+        raise RuntimeError("Could not read free host memory from memory_pressure -Q")
+    if int(free[1]) < 25:
+        raise RuntimeError(f"Host memory is {free[1]}% free; captures require at least 25%")
+
+
 def check_capture_host(command):
     steam = subprocess.run(["/usr/bin/pgrep", "-if", r'(^|[/\\]|[[:space:]"])steam[.]exe([[:space:]"]|$)'], capture_output=True)
     if steam.returncode == 1:
         raise RuntimeError("NEED owner: start and sign in to Steam in the reference bottle")
     steam.check_returncode()
-    pressure = subprocess.check_output(["/usr/sbin/sysctl", "-n", "kern.memorystatus_vm_pressure_level"], text=True).strip()
-    if pressure != "1":
-        raise RuntimeError(f"Host memory pressure is {pressure}; captures require normal pressure (1)")
     processes = subprocess.check_output([*command, "tasklist.exe"], text=True, timeout=35)
     if re.search(r"^\s*Steam\.exe\s+", processes, re.I | re.M) is None:
         raise RuntimeError("NEED owner: start and sign in to Steam in the reference bottle")
@@ -172,6 +188,34 @@ def check_capture_host(command):
     )
     if account.returncode or not positive_steam_account(account.stdout):
         raise RuntimeError("NEED owner: sign in to Steam in the reference bottle")
+
+
+def run_capture(command, log, timeout):
+    check_capture_memory()
+    deadline = time.monotonic() + timeout
+    with subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, start_new_session=True) as process:
+        try:
+            while (remaining := deadline - time.monotonic()) > 0:
+                try:
+                    return process.wait(timeout=min(1, remaining))
+                except subprocess.TimeoutExpired:
+                    pressure = memory_pressure_level()
+                    if pressure >= 4:
+                        raise RuntimeError(f"Capture aborted: host memory pressure reached critical level {pressure}") from None
+            raise subprocess.TimeoutExpired(command, timeout)
+        except BaseException:
+            # Wine may give its GUI process a separate session. The unique
+            # request argument identifies this capture in either session.
+            with suppress(ProcessLookupError):
+                os.killpg(process.pid, signal.SIGKILL)
+            request = command[-1]
+            processes = subprocess.check_output(["/bin/ps", "-axww", "-o", "pid=,args="], text=True, errors="replace")
+            for row in processes.splitlines():
+                pid, arguments = row.split(maxsplit=1)
+                if "--ror2lab-reference" in arguments and request in arguments:
+                    with suppress(ProcessLookupError):
+                        os.kill(int(pid), signal.SIGKILL)
+            raise
 
 
 def load_plan(plan):
@@ -292,7 +336,7 @@ def run_plan(args, clone, identity, command, plan, scenarios):
             request = output / "request.json"
             write(request, {"settings": plan["settings"], "scenario": scenario})
             with (output / "wine.log").open("wb") as log:
-                process = subprocess.run(
+                exit_code = run_capture(
                     [
                         *command,
                         "--dll",
@@ -312,9 +356,8 @@ def run_plan(args, clone, identity, command, plan, scenarios):
                         "--ror2lab-reference",
                         windows_path(request),
                     ],
-                    stdout=log,
-                    stderr=subprocess.STDOUT,
-                    timeout=args.timeout,
+                    log,
+                    args.timeout,
                 )
             terminal = output / "result.json"
             result = read(terminal) if terminal.is_file() else {"status": "failed", "error": "Recorder never produced a result"}
@@ -322,12 +365,12 @@ def run_plan(args, clone, identity, command, plan, scenarios):
                 {
                     "id": scenario["id"],
                     "result": str(terminal.relative_to(root)) if terminal.is_file() else None,
-                    "exit_code": process.returncode,
+                    "exit_code": exit_code,
                     **result,
                 }
             )
-            if process.returncode or result["status"] != "passed":
-                raise RuntimeError(result.get("error") or f"{scenario['id']} exited with code {process.returncode}")
+            if exit_code or result["status"] != "passed":
+                raise RuntimeError(result.get("error") or f"{scenario['id']} exited with code {exit_code}")
             for step in result["steps"]:
                 if step.get("grapple_ticks"):
                     clip = "grapple.mp4"
