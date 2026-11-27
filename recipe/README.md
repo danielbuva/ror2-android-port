@@ -7174,6 +7174,25 @@ SDK resources and receipts stay local.
 | --- | --- |
 | `owner-whole-game-v30-retained-source-records.json` | `4a9a098e015aa054830f1b216469795e4c9cc34857124d08db813e62dd82272c` |
 
+## V38 pickup and skin preload suppliers (2026-11-27)
+
+The scoped preload release can bind all 76 records through eight existing
+producer jobs. The record profile selects 57 Missile and Whip droplet
+components, including three managed records with original MonoScript
+witnesses. The texture profile selects the original `texFWSnow` object and
+its stream for the existing Android RGBA mip conversion.
+
+The provenance, licensing, privacy and sensitive-content review covered
+source selectors and hashes, expected output metadata, field extents, and
+checked reference relocations. Source objects, source pixels, SDK resources
+and generated packs stay local. Both new suppliers passed host production.
+Signed release dispatch and Android acceptance remain open.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-preload-droplet-records.json` | `b3d56c2cf8a2dcea1810cecd2441677e2e853eb2fe6acf5e15cfe47499175684` |
+| `owner-preload-snow-texture.json` | `a3f9a7267348740632a684302f2291dd7921222f141093fe85cc563ecd2da0aa` |
+
 ## V30 specialized record suppliers (2026-11-26)
 
 The texture and mesh profiles select 47 Texture2D and 22 Mesh records for
