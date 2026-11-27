@@ -17,7 +17,12 @@ public static partial class ContentFixtureBuilder
     static string Output(string name) { return Path.GetFullPath(Path.Combine(Application.dataPath, "../..", name)); }
 
     [Serializable] public sealed class NativeContentBundle { public string path; public string sha256; }
-    [Serializable] public sealed class NativeMaterialTexture { public string property; public string texture; }
+    [Serializable] public sealed class NativeMaterialTexture
+    {
+        public string property;
+        public string texture;
+        public string type;
+    }
     [Serializable] public sealed class NativeMaterialReferences
     {
         public string shader;
@@ -107,7 +112,9 @@ public static partial class ContentFixtureBuilder
                 var value = pair.FindPropertyRelative("second").FindPropertyRelative("m_Texture").objectReferenceValue;
                 if (value != null)
                     references.textures.Add(new NativeMaterialTexture {
-                        property = pair.FindPropertyRelative("first").stringValue, texture = value.name
+                        property = pair.FindPropertyRelative("first").stringValue,
+                        texture = value.name,
+                        type = value.GetType().Name
                     });
             }
         }

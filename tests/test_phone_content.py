@@ -181,7 +181,10 @@ class PhoneContentTests(unittest.TestCase):
                 pins.append({"path": str(bundle), "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest()})
             material = {
                 "shader": "Authored/Control",
-                "textures": [{"property": "_Base", "texture": "base"}, {"property": "_Normal", "texture": "normal"}],
+                "textures": [
+                    {"property": "_Base", "texture": "base", "type": "CustomRenderTexture"},
+                    {"property": "_Normal", "texture": "normal"},
+                ],
             }
             asset = {"name": "assets/fixture/control.mat", "type": "Material", "material": material}
             request = pins[0] | {"dependencies": [pins[1]], "assets": [asset]}
@@ -196,6 +199,8 @@ class PhoneContentTests(unittest.TestCase):
                 "unloaded": True,
                 "assets": [asset | {"loaded_name": "control", "loaded_type": "UnityEngine.Material"}],
             }
+            report = copy.deepcopy(report)
+            report["assets"][0]["material"]["textures"][1]["type"] = "Texture2D"
             output = attempt / "native-content-check.json"
             output.write_text(json.dumps(report))
             self.assertEqual(validate_native_content(attempt, "c" * 40)["count"], 1)
@@ -203,6 +208,7 @@ class PhoneContentTests(unittest.TestCase):
                 lambda r: r["dependencies"].clear(),
                 lambda r: r["assets"][0]["material"].update(shader="Hidden/InternalErrorShader"),
                 lambda r: r["assets"][0]["material"]["textures"].pop(),
+                lambda r: r["assets"][0]["material"]["textures"][0].update(type="Texture2D"),
             ):
                 changed = copy.deepcopy(report)
                 mutate(changed)
