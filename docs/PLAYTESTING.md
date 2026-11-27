@@ -54,6 +54,15 @@ pending, with the input used, timing and first failure. If the ten-minute
 window ends before a natural defeat, a stage transition or either Golem attack,
 leave that observation pending. Keep captures, receipts and profiles local.
 
+### Commencement finale
+
+Use a matching owner APK and payload built with `pauseBeforeMoon: false`.
+Keep the phone plugged in and reach Commencement from Sky Meadow with assists
+off. Use physical controls for traversal and jumps. Activate and charge the
+pillars, complete every Mithrix phase, return to the dropship and escape.
+Verify that the native results save. Record the first failing checkpoint
+and keep its screenshot and logs local.
+
 ### Unplugged energy session deferred by owner
 
 The owner deferred the 30-minute unplugged session on 2026-11-18. The
