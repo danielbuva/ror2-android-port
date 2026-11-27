@@ -3343,6 +3343,14 @@ The shared device runner calls the pruner from its own checkout and passes the
 canonical work directory explicitly.
 The ledger distinguishes logical candidate bytes from the signed change in
 volume-available bytes measured by `df`, which includes concurrent host activity.
+`--dedupe` plans only APFS cloning across canonical `work/` and
+`.local/build-lanes/`. It matches regular files of at least 64 MiB by size and
+full SHA-256, then atomically replaces each later copy with a verified clone of
+the first copy. It preserves destination mode, timestamps, ACLs and extended
+attributes. Immutable history, symlinks, open files and files modified in the
+last 30 minutes are skipped. Byte-identical copies inside `.prune-keep` trees
+are eligible. The standalone mode measures the volume change from cloning;
+`--aggressive` includes cloning after ordinary cleanup.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
