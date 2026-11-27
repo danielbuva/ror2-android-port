@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1534 — Recover Artificer Nano-Bomb release materials
+
+2026-11-27. The existing effect owner prepares the native projectile's
+detached ghost and the materials assigned by `OmniEffect` during native Start.
+Paired assisted Distant Roost video shows the black release square, radial
+cards and opaque ring backing clear while blue lightning remains visible.
+The same-PID report recorded one paired native secondary activation and
+all skill machines back at Idle. All 266 payload hashes matched J1532.
+APK SHA-256 `5af412ac93b310c221879305194cb68d3f81868252c048a573ef2c99db2d236e` (source `53b5781a`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-bomb-release-recovery-main-nova/`.
+SoC peaked at 92.3 °C with 20.727 s above 80 °C. Cleanup and OLED sleep passed.
+Impact brightness still needs a matched PC capture. Fire Bolt strips remain open.
 ## J1533 — Admit shipped first stages on converted ordinary Start
 
 2026-11-27. The staged converter qualifies material texture and shader preloads.

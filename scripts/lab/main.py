@@ -17,6 +17,11 @@ if len(sys.argv) > 1 and sys.argv[1] == "shared-build":
 
     sys.exit(main(sys.argv[2:]))
 
+if len(sys.argv) > 1 and sys.argv[1] == "pc-reference":
+    from pc_reference import main
+
+    sys.exit(main(sys.argv[2:]))
+
 if len(sys.argv) > 1 and sys.argv[1] == "lane" or os.environ.get("LAB_LANE"):
     from build_lanes import main, dispatch
 
@@ -33,6 +38,7 @@ p = argparse.ArgumentParser(
   lane: current
   device-session: current
   shared-build: current
+  pc-reference: current
   converter-stage: current
   diagnostics: current
   migrate-device-receipts: current
@@ -70,6 +76,7 @@ p.add_argument(
         "lane",
         "device-session",
         "shared-build",
+        "pc-reference",
         "converter-stage",
         "diagnostics",
         "migrate-device-receipts",
