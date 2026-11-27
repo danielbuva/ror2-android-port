@@ -307,7 +307,7 @@ class RefusedLeaseTest(unittest.TestCase):
                 self.assertEqual(lab_runner.local_packaging(request, dry_run=True), 0)
                 backup.assert_not_called()
                 self.assertEqual(lab_runner.local_packaging(request), 0)
-                self.assertEqual(backup.call_args.args[1:], (repo, "thor", "fixture-worker", output))
+                self.assertEqual(backup.call_args.args[1:], ("thor", "fixture-worker", output))
                 build.assert_not_called()
             self.assertTrue(json.loads(done.read_bytes())["signing_key_backed_up"])
 

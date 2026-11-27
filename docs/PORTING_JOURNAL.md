@@ -6,6 +6,101 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1519 — Bind direct-selected survivor Animators before native locomotion
+
+2026-11-26. Bind source controllers and avatars before native main-state entry.
+The exact editor verifies bindings after native ModelLocator detachment for
+Bandit and Captain. Assisted Distant Roost and Verdant Falls captures show
+native authority, all three cached locomotion parameters, and a moving Animator
+at nonzero motor speed with zero utility callbacks.
+APK SHA-256 `14d49b25da22d47547d7804cc0f91987d8373681b3c12d80b7b0ea30572ef3f4` (source `c2577e4f`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/`:
+`bandit-direct-survivor-locomotion-main-nova-retry2/` and
+`captain-direct-survivor-locomotion-main-nova-retry1/` retain reports, screenshots and logs.
+SoC peaks were 85.2 °C and 76.9 °C, with 1.403 s and 0 s above 80 °C.
+Both passed adopted placement, scratch removal and OLED sleep.
+Ordinary input, matched on-screen body motion and the other affected survivors remain open.
+
+## J1518 — Observe the native Siren boss and restore its reward drop
+
+2026-11-26. Accept the authored Siren boss body at the exact catalog index
+and refresh the source BossGroup drop table before encounter activation.
+APK SHA-256 `ed894ca36f0e4f0be0b7568bd6c4237ed9bdcd1852c767ec3eb113f32acaa179` (source `77fab14b`).
+Evidence: `work/coordination/gameplay-coverage-20261126/siren-refresh-reward-table-nova-b/`.
+Assisted samples 120 and 132 show all six eggs cleared, native boss master
+141, the same-process BossGroup defeat and a valid reward droplet (143).
+Paired screenshots and logs retained. SoC peaked at 80.0 °C in play segment
+7 with 0 s above 80 °C. Battery started at 31 °C and peaked at 32 °C.
+Runner cleanup passed. Native encounter retirement and matched PC rendering remain open.
+
+## J1517 — Recover the assisted Gold shrine-to-teleporter route
+
+2026-11-26. The assisted route keeps moving while earning the shrine cost
+and resets the old terrain recovery window at the next objective.
+APK SHA-256 `f9f9dc63f97b800924fb8019f8926f7c2b221a7d697805b05a30db266ba34571` (source `46d0ba4f`).
+Evidence: `work/coordination/gameplay-coverage-20261126/gold-teleporter-recovery-nova-b-current/`.
+Paired screenshots and logs show the purchase, native charge, Gold Shores
+entry, four beacons, native boss defeat and grounded return to the next stage.
+The old 85 °C ceiling stopped observation after return at 85.2 °C, with
+9.595 s above 80 °C and a 31 °C start battery. Scratch and display cleanup passed.
+Native boss reward availability and matched PC rendering remain open.
+
+## J1516 — Restore Bandit additive gestures and sidearm locomotion
+
+2026-11-26. The catalog build restores additive reference poses, synchronized
+gesture overrides and SideWeapon locomotion. Exact-editor comparisons
+matched the source for 54 gesture poses and 36 poses per weapon layer.
+APK SHA-256 `1fef2de40c3ea79759fa3d0e57ae912037f57b1cfcd558bec098fe7b5979324c` (source `5f1990a8`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/bandit-additive-gesture-main-nova/`.
+Assisted Distant Roost held 115.690 s of native authority with four paired
+skill callbacks. Sample 180 includes the PID-bound screenshot and logcat.
+The base Animator advanced. Mean frame time was 11.420 ms. SoC peaked at
+95.5 °C with 119.006 s above 80 °C. Battery peaked at 33 °C.
+Adopted placement, scratch removal and OLED sleep passed. Device sidearm
+motion and matched PC gesture visuals remain open.
+
+## J1515 — Restore Captain additive gesture reference poses
+
+2026-11-26. The catalog build restores 13 source clips, including Captain's
+shared Commando clips. The exact editor compared 54 Captain poses and
+reduced the maximum transform error from 1.019465 to 4.172325e-7.
+APK SHA-256 `1fef2de40c3ea79759fa3d0e57ae912037f57b1cfcd558bec098fe7b5979324c` (source `5f1990a8`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/captain-additive-gesture-main-nova-stacked-retry1/`.
+Assisted Verdant Falls held 120.746 s of native authority with four paired
+skill callbacks. Sample 135 includes the PID-bound screenshot and logcat.
+The base Animator advanced. Mean frame time was 13.207 ms. SoC peaked at
+95.5 °C with 116.330 s above 80 °C. Battery peaked at 30 °C.
+Adopted placement, scratch removal and OLED sleep passed.
+Matched PC gesture visuals remain open.
+
+## J1514 — Restore Huntress additive gesture reference poses
+
+2026-11-26. The catalog build restores Transform reference poses for seven
+original Huntress gesture clips. The exact editor compared 63 Huntress
+poses against the originals and recovered the source transforms.
+APK SHA-256 `1fef2de40c3ea79759fa3d0e57ae912037f57b1cfcd558bec098fe7b5979324c` (source `5f1990a8`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/huntress-additive-gesture-main-nova-stacked/`.
+Menu selection and assisted Start reached Verdant Falls. The stage held
+186.554 s of native authority with four paired skill callbacks. Sample 165
+includes the PID-bound screenshot and logcat. The base Animator advanced.
+Mean frame time was 16.612 ms. SoC peaked at 97.1 °C with 198.040 s above
+80 °C and no sustained exceedance of the 95 °C limit. Battery peaked at
+33 °C. Adopted placement, scratch removal and OLED sleep passed.
+Matched PC gesture visuals remain open.
+
+## J1512 — Build signed-release IL2CPP and Burst on Android
+
+2026-11-26. The #651 Mono library repair let the signed native graph complete
+from accepted owner input on Thor. It used 332 managed providers and completed
+826 IL2CPP compile tasks. IL2CPP SHA-256
+`88c8bf265e105b31f9e222b3239568a460b34bdfe706ea48dcd4aa577d4ad164`.
+The native receipt also pins global metadata and the Burst library.
+Evidence: `work/coordination/p1-wholegame-1031/signed-native-mono-fix-1126.eCmmEdXH/run/`.
+Production took 9,158 s, peaked at 3.18 GB child RSS and used a net 4.36 GB of
+storage before cleanup. CPU/GPU peaked at 68.4 °C with zero pauses.
+Owned scratch removal, OLED sleep and lease release passed. APK assembly,
+installation, runtime qualification and updates remain open.
+
 ## J1511 — Return to the native menu after End Run in the converted player
 
 2026-11-26. Visible Play and native Start reached Titanic Plains as Commando

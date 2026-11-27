@@ -345,3 +345,10 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1509](PORTING_JOURNAL.md#j1509--restore-original-base-survivor-bank-attachments) | 2026-11-26 | Restore original base-survivor bank attachments | 2026-11-26. |
 | [J1510](PORTING_JOURNAL.md#j1510--observe-huntress-primary-audio-on-the-native-emitter) | 2026-11-26 | Observe Huntress primary audio on the native emitter | 2026-11-26. |
 | [J1511](PORTING_JOURNAL.md#j1511--return-to-the-native-menu-after-end-run-in-the-converted-player) | 2026-11-26 | Return to the native menu after End Run in the converted player | 2026-11-26. |
+| [J1512](PORTING_JOURNAL.md#j1512--build-signed-release-il2cpp-and-burst-on-android) | 2026-11-26 | Build signed-release IL2CPP and Burst on Android | 2026-11-26. |
+| [J1514](PORTING_JOURNAL.md#j1514--restore-huntress-additive-gesture-reference-poses) | 2026-11-26 | Restore Huntress additive gesture reference poses | 2026-11-26. |
+| [J1515](PORTING_JOURNAL.md#j1515--restore-captain-additive-gesture-reference-poses) | 2026-11-26 | Restore Captain additive gesture reference poses | 2026-11-26. |
+| [J1516](PORTING_JOURNAL.md#j1516--restore-bandit-additive-gestures-and-sidearm-locomotion) | 2026-11-26 | Restore Bandit additive gestures and sidearm locomotion | 2026-11-26. |
+| [J1517](PORTING_JOURNAL.md#j1517--recover-the-assisted-gold-shrine-to-teleporter-route) | 2026-11-26 | Recover the assisted Gold shrine-to-teleporter route | 2026-11-26. |
+| [J1518](PORTING_JOURNAL.md#j1518--observe-the-native-siren-boss-and-restore-its-reward-drop) | 2026-11-26 | Observe the native Siren boss and restore its reward drop | 2026-11-26. |
+| [J1519](PORTING_JOURNAL.md#j1519--bind-direct-selected-survivor-animators-before-native-locomotion) | 2026-11-26 | Bind direct-selected survivor Animators before native locomotion | 2026-11-26. |

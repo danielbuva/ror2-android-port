@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using RoR2;
@@ -100,7 +101,8 @@ public static class SurvivorSkillInputHost
             Require(after.isMoving && after.forwardSpeed && after.rightSpeed,
                     "Native locomotion snapshot unavailable after native model detachment before main state");
             return new { initializedBeforeMainState = true, nativeModelDetachment = true,
-                         nativeParameterSnapshot = true, nativeGameplayTested = false };
+                         nativeParameterSnapshot = true, nativeGameplayTested = false,
+                         sourceControllers = new[] { "Bandit2", "Captain" }.Select(VerifySourceAnimatorBeforeMainState).ToArray() };
         }
         finally
         {
@@ -110,37 +112,149 @@ public static class SurvivorSkillInputHost
         }
     }
 
+    static string VerifySourceAnimatorBeforeMainState(string survivor)
+    {
+        string path = SurvivorAssetRoot + survivor + "/";
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + survivor + "Body.prefab");
+        var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path + "anim" + survivor + ".controller");
+        var avatar = AssetDatabase.LoadAssetAtPath<Avatar>(path + "mdl" + survivor + "Avatar.asset");
+        Require(prefab && controller && avatar, "Source locomotion fixture assets missing: " + survivor);
+        var parent = new GameObject("source-pre-state-animation-contract");
+        parent.SetActive(false);
+        Transform model = null;
+        try
+        {
+            var body = UnityEngine.Object.Instantiate(prefab, parent.transform);
+            var locator = body.GetComponent<ModelLocator>();
+            model = locator.modelTransform;
+            var animator = model.GetComponent<Animator>();
+            var before = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!before.isMoving && !before.forwardSpeed && !before.rightSpeed,
+                    "Inactive source fixture unexpectedly exposes locomotion parameters: " + survivor);
+            NovaDiagnosticDisplay.PrepareAnimationBeforeSpawn(model, controller, avatar, sourceSelected: true);
+            locator.Start();
+            animator.Update(0);
+            var after = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(animator.isInitialized && after.isMoving && after.forwardSpeed && after.rightSpeed,
+                    "Source locomotion parameters unavailable after native detachment: " + survivor);
+            return survivor;
+        }
+        finally
+        {
+            if (model) UnityEngine.Object.DestroyImmediate(model.gameObject);
+            UnityEngine.Object.DestroyImmediate(parent);
+        }
+    }
+
     // Compare imported aim, firing and hit-reaction poses with current native
     // clips on the same frozen rig. This does not qualify device presentation.
-    public static object SampleCommandoAim()
+    public static object SampleCommandoAim() =>
+        SampleSourcePoses("Commando", "mdlCommandoDualiesAvatar", new[] { "MuzzleLeft", "MuzzleRight" },
+                          new[] { ("", 0), ("FirePistol, Left", 1), ("FirePistol, Right", 1), ("Flinch1", 1) });
+
+    public static object SampleHuntressGestures() =>
+        SampleSourcePoses("Huntress", "mdlHuntressAvatar", new[] { "base", "chest", "head", "Muzzle", "BowStringIKTarget" },
+                          new[] { ("", 0), ("FireSeekingShot", 2), ("FireSeekingShotToIdle", 2),
+                                  ("Flinch1", 1), ("Flinch2", 1), ("Flinch3", 1), ("FlinchStart", 1) });
+
+    public static object SampleCaptainGestures() =>
+        SampleSourcePoses("Captain", "mdlCaptainAvatar", new[] { "chest", "head", "MuzzleGun", "MuzzleHandRadio" },
+                          new[] { ("", 0), ("ChargeCaptainShotgun", 2), ("FireCaptainShotgun", 2),
+                                  ("FireTazer", 2), ("CallSupplyDrop", 2), ("CallAirstrike1", 2) }, new[] { "Commando" });
+
+    public static object SampleBanditGestures() =>
+        SampleSourcePoses("Bandit2", "mdlBandit2Avatar",
+                          new[] { "chest", "head", "MuzzleShotgun", "MuzzlePistol", "MuzzleSlashBlade", "MuzzleSmokebomb" },
+                          new[] { ("", 0), ("FireMainWeapon", 2), ("FireSideWeapon", 2), ("Reload", 2),
+                                  ("ThrowSmokebomb", 2), ("SlashBlade", 2) }, synchronizedDriver: "Gesture, Additive");
+
+    public static object SampleBanditWeaponLocomotion() => new
     {
-        const string path = "Assets/WholeGame/RoR2/Base/Characters/Commando/";
+        side = SampleBanditWeaponLocomotion("Body, SideWeapon"),
+        stealth = SampleBanditWeaponLocomotion("Body, StealthWeapon")
+    };
+
+    static object SampleBanditWeaponLocomotion(string layer) =>
+        SampleSourcePoses("Bandit2", "mdlBandit2Avatar",
+                          new[] { "base", "chest", "head", "MuzzleShotgun", "MuzzlePistol" },
+                          null, synchronizedDriver: "Body", weaponLayer: layer);
+
+    static float[] ReadPose(Transform[] transforms) => transforms
+        .SelectMany(t => new[] { t.position.x, t.position.y, t.position.z, t.forward.x, t.forward.y, t.forward.z }).ToArray();
+
+    static IEnumerable<float[]> SampleWeaponLocomotion(Animator animator, string layer, Transform[] transforms)
+    {
+        int body = animator.GetLayerIndex("Body"), weapon = animator.GetLayerIndex(layer);
+        int other = animator.GetLayerIndex(layer == "Body, SideWeapon" ? "Body, StealthWeapon" : "Body, SideWeapon");
+        Require(body >= 0 && weapon >= 0 && other >= 0, "Bandit locomotion layers missing");
+        foreach (var state in new[] { "Jump", "Run", "Idle", "Sprint", "AscendDescend", "IdleIn" })
+        {
+            int hash = Animator.StringToHash(state);
+            var inputs = state == "Run"
+                ? new[] { (0f, -.3f, 0f), (0f, .3f, 0f), (-.3f, 0f, 0f), (.3f, 0f, 0f), (.15f, .15f, 0f) }
+                : state == "AscendDescend"
+                    ? new[] { (0f, 0f, -30f), (0f, 0f, -11f), (0f, 0f, 8f) }
+                    : new[] { (0f, 0f, 0f) };
+            foreach (var (right, forward, up) in inputs)
+                foreach (float time in new[] { 0f, .5f, .999f })
+                {
+                    animator.Rebind();
+                    animator.Update(0);
+                    animator.SetLayerWeight(weapon, 1);
+                    animator.SetLayerWeight(other, 0);
+                    animator.SetFloat("rightSpeed", right);
+                    animator.SetFloat("forwardSpeed", forward);
+                    animator.SetFloat("upSpeed", up);
+                    animator.SetFloat("walkSpeed", 1f);
+                    animator.Play(hash, body, time);
+                    animator.Update(0);
+                    Require(animator.GetCurrentAnimatorStateInfo(body).shortNameHash == hash &&
+                            animator.GetCurrentAnimatorStateInfo(weapon).shortNameHash == hash,
+                            "Bandit locomotion did not reach " + state + " on " + layer);
+                    yield return ReadPose(transforms);
+                }
+        }
+    }
+
+    const string SurvivorAssetRoot = "Assets/WholeGame/RoR2/Base/Characters/";
+
+    static object SampleSourcePoses(string survivor, string avatarName, string[] poseNames,
+                                    (string Name, int Layers)[] gestures, string[] sharedClipSurvivors = null,
+                                    string synchronizedDriver = null, string weaponLayer = null)
+    {
+        string path = SurvivorAssetRoot + survivor + "/";
         string project = System.IO.Path.GetDirectoryName(Application.dataPath);
         var recipe = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(
             System.IO.Path.Combine(project, ".rebuild/source-animation-reference-poses.json")));
-        var row = recipe["clips"].First(x => ((string)x["clip"]).StartsWith(path, StringComparison.Ordinal));
         var config = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(
             System.IO.Path.Combine(System.IO.Directory.GetParent(project).FullName, "config/local.json")));
-        string bundlePath = System.IO.Path.Combine((string)config["game_path"], (string)row["source"]);
-        using (var stream = System.IO.File.OpenRead(bundlePath))
-        using (var digest = System.Security.Cryptography.SHA256.Create())
-            Require(BitConverter.ToString(digest.ComputeHash(stream)).Replace("-", "").ToLowerInvariant() == (string)row["source_sha256"],
-                    "Current native animation bundle changed since composition");
-        var bundle = AssetBundle.LoadFromFile(bundlePath);
-        Require(bundle, "Current native animation bundle could not load");
+        var bundles = new Dictionary<string, AssetBundle>();
         var parent = new GameObject("source-additive-sampling");
         parent.SetActive(false);
         AnimatorOverrideController overrides = null;
         try
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + "CommandoBody.prefab");
-            Require(prefab, "Current source Commando prefab missing");
+            foreach (string owner in new[] { survivor }.Concat(sharedClipSurvivors ?? Array.Empty<string>()))
+            {
+                string ownerPath = SurvivorAssetRoot + owner + "/";
+                var row = recipe["clips"].First(x => ((string)x["clip"]).StartsWith(ownerPath, StringComparison.Ordinal));
+                string bundlePath = System.IO.Path.Combine((string)config["game_path"], (string)row["source"]);
+                using (var stream = System.IO.File.OpenRead(bundlePath))
+                using (var digest = System.Security.Cryptography.SHA256.Create())
+                    Require(BitConverter.ToString(digest.ComputeHash(stream)).Replace("-", "").ToLowerInvariant() == (string)row["source_sha256"],
+                            "Current native animation bundle changed since composition: " + owner);
+                var bundle = AssetBundle.LoadFromFile(bundlePath);
+                Require(bundle, "Current native animation bundle could not load: " + owner);
+                bundles.Add(ownerPath, bundle);
+            }
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + survivor + "Body.prefab");
+            Require(prefab, "Current source prefab missing: " + survivor);
             var body = UnityEngine.Object.Instantiate(prefab, parent.transform);
             foreach (var component in body.GetComponentsInChildren<MonoBehaviour>(true)) component.enabled = false;
             foreach (var component in body.GetComponentsInChildren<Collider>(true)) component.enabled = false;
             var animator = body.GetComponentInChildren<Animator>(true);
-            var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path + "animCommando.controller");
-            animator.avatar = AssetDatabase.LoadAssetAtPath<Avatar>(path + "mdlCommandoDualiesAvatar.asset");
+            var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path + "anim" + survivor + ".controller");
+            animator.avatar = AssetDatabase.LoadAssetAtPath<Avatar>(path + avatarName + ".asset");
             animator.enabled = true;
             animator.applyRootMotion = false;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
@@ -149,25 +263,45 @@ public static class SurvivorSkillInputHost
             body.SetActive(true);
             parent.SetActive(true);
             animator.Update(0);
-            var nativeClips = bundle.LoadAllAssets<AnimationClip>();
-            overrides = new AnimatorOverrideController(controller);
+            var poseTransforms = animator.GetComponentsInChildren<Transform>(true)
+                .Where(t => poseNames.Contains(t.name)).OrderBy(t => t.name).ToArray();
+            Require(poseTransforms.Select(t => t.name).SequenceEqual(poseNames.OrderBy(name => name)),
+                    "Current source pose transforms missing or ambiguous: " + survivor);
             var pairs = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>>();
-            overrides.GetOverrides(pairs);
-            for (int i = 0; i < pairs.Count; i++)
+            RuntimeAnimatorController nativeController;
+            if (synchronizedDriver != null)
             {
-                var original = pairs[i].Key;
-                var native = nativeClips.FirstOrDefault(x => x.name == original.name);
-                Require(native, "Current native comparison clip missing: " + original.name);
-                pairs[i] = new System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>(original, native);
+                nativeController = bundles[path].LoadAllAssets<RuntimeAnimatorController>().Single(x => x.name == controller.name);
             }
-            overrides.ApplyOverrides(pairs);
+            else
+            {
+                var nativeClips = bundles.ToDictionary(pair => pair.Key, pair => pair.Value.LoadAllAssets<AnimationClip>());
+                overrides = new AnimatorOverrideController(controller);
+                overrides.GetOverrides(pairs);
+                for (int i = 0; i < pairs.Count; i++)
+                {
+                    var original = pairs[i].Key;
+                    var ownerClips = nativeClips.Single(pair => AssetDatabase.GetAssetPath(original).StartsWith(pair.Key, StringComparison.Ordinal)).Value;
+                    var native = ownerClips.FirstOrDefault(x => x.name == original.name);
+                    Require(native, "Current native comparison clip missing: " + original.name);
+                    pairs[i] = new System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>(original, native);
+                }
+                overrides.ApplyOverrides(pairs);
+                nativeController = overrides;
+            }
             var samples = new System.Collections.Generic.List<float[]>();
             float maximum = 0;
             int components = 0, sampleIndex = 0;
             foreach (bool native in new[] { false, true })
             {
-                animator.runtimeAnimatorController = native ? overrides : controller;
-                foreach (string gesture in new[] { "", "FirePistol, Left", "FirePistol, Right", "Flinch1" })
+                animator.runtimeAnimatorController = native ? nativeController : controller;
+                if (weaponLayer != null)
+                {
+                    foreach (var values in SampleWeaponLocomotion(animator, weaponLayer, poseTransforms))
+                        Compare(values, native);
+                    continue;
+                }
+                foreach (var gesture in gestures)
                     foreach (float cycle in new[] { 0f, .5f, .999f })
                         foreach (float time in new[] { 0f, .07f, .15f })
                         {
@@ -180,37 +314,46 @@ public static class SurvivorSkillInputHost
                             animator.SetFloat("aimYawCycle", cycle);
                             animator.Play("PitchControl", pitch, 0);
                             animator.Play("YawControl", yaw, 0);
-                            if (gesture.Length != 0)
+                            if (gesture.Layers != 0)
                             {
-                                int hash = Animator.StringToHash(gesture);
-                                int layer = Enumerable.Range(0, animator.layerCount).Single(i => animator.HasState(i, hash));
-                                animator.PlayInFixedTime(hash, layer, time);
+                                int hash = Animator.StringToHash(gesture.Name);
+                                var layers = Enumerable.Range(0, animator.layerCount).Where(i => animator.HasState(i, hash)).ToArray();
+                                Require(layers.Length == gesture.Layers, "Native gesture layers changed: " + gesture.Name);
+                                int[] drivers = synchronizedDriver == null ? layers : new[] { animator.GetLayerIndex(synchronizedDriver) };
+                                Require(drivers.All(layers.Contains), "Native gesture driver missing: " + gesture.Name);
+                                foreach (int layer in drivers)
+                                    animator.PlayInFixedTime(hash, layer, time);
                                 animator.Update(0);
-                                Require(animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == hash, "Native gesture did not play: " + gesture);
+                                Require(layers.All(layer => animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == hash),
+                                        "Native gesture did not play: " + gesture.Name);
                             }
                             animator.Update(0);
-                            var values = animator.GetComponentsInChildren<Transform>(true)
-                                .Where(t => t.name == "MuzzleLeft" || t.name == "MuzzleRight")
-                                .OrderBy(t => t.name)
-                                .SelectMany(t => new[] { t.position.x, t.position.y, t.position.z, t.forward.x, t.forward.y, t.forward.z }).ToArray();
-                            Require(values.Length == 12, "Current source muzzle transforms missing");
-                            if (!native) samples.Add(values);
-                            else
-                            {
-                                var imported = samples[sampleIndex++];
-                                for (int i = 0; i < values.Length; i++) maximum = Mathf.Max(maximum, Mathf.Abs(imported[i] - values[i]));
-                                components += values.Length;
-                            }
+                            Compare(ReadPose(poseTransforms), native);
                         }
             }
-            Require(maximum <= .001f, "Imported additive firing/aim/hit poses differ from native clips: " + maximum);
-            return new { samples = samples.Count, components, maximumComponentError = maximum, nativeClipOverrides = pairs.Count };
+            Require(maximum <= .001f,
+                    survivor + " " + (weaponLayer ?? "additive") + " poses differ from native playback: " + maximum);
+            return new { samples = samples.Count, components, maximumComponentError = maximum,
+                         nativeClipOverrides = pairs.Count, sourceController = synchronizedDriver != null,
+                         matchesNativePoses = maximum <= .001f };
+
+            void Compare(float[] values, bool native)
+            {
+                if (!native)
+                {
+                    samples.Add(values);
+                    return;
+                }
+                var imported = samples[sampleIndex++];
+                for (int i = 0; i < values.Length; i++) maximum = Mathf.Max(maximum, Mathf.Abs(imported[i] - values[i]));
+                components += values.Length;
+            }
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(parent);
             if (overrides) UnityEngine.Object.DestroyImmediate(overrides);
-            bundle.Unload(true);
+            foreach (var bundle in bundles.Values) bundle.Unload(true);
         }
     }
 

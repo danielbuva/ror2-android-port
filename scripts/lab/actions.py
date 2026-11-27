@@ -625,7 +625,7 @@ _ENTRIES = (
         "generate",
         {},
         "current",
-        "Current host-only native single-pass reconstruction: optional --target ramp-fog (default), sobel-buffer or sobel-outline. Refuses source/tool drift and existing output; editor compilation, Android execution and appearance remain separate gates.",
+        "Current host-only native single-pass reconstruction. Targets: ramp-fog (default), sobel-buffer, sobel-outline, vision-limit. Refuses source/tool drift and existing output. Editor compilation, Android execution and appearance remain separate gates.",
         handler=_native_shader_target,
     ),
     Action(

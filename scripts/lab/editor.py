@@ -121,7 +121,7 @@ async def _main():
                     "execute_code",
                     {
                         "action": "execute",
-                        "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return new { references=WholeCatalogBuild.RestoreSourceAdditiveReferencePoses(), aim=SurvivorSkillInputHost.SampleCommandoAim(), animation=SurvivorSkillInputHost.VerifyAnimatorBeforeMainState(), touch=SurvivorSkillInputHost.VerifyTouchWithoutPhysicalController() };',
+                        "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return new { references=WholeCatalogBuild.RestoreSourceAdditiveReferencePoses(), aim=SurvivorSkillInputHost.SampleCommandoAim(), huntress=SurvivorSkillInputHost.SampleHuntressGestures(), captain=SurvivorSkillInputHost.SampleCaptainGestures(), bandit=SurvivorSkillInputHost.SampleBanditGestures(), banditWeaponLocomotion=SurvivorSkillInputHost.SampleBanditWeaponLocomotion(), animation=SurvivorSkillInputHost.VerifyAnimatorBeforeMainState(), touch=SurvivorSkillInputHost.VerifyTouchWithoutPhysicalController() };',
                     },
                 )
             elif action == "siren-input-host":

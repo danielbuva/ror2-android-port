@@ -330,6 +330,15 @@ class Graph:
             ]
         if producer == "shader_produce":
             arguments += ["--sdk", self.sdk_contents()]
+            camera_selection = next((key for key in ("camera_compute", "camera_shader") if key in profile), None)
+            if camera_selection:
+                package_recipe = profile[camera_selection]["package_recipe"]
+                if package_recipe not in profile["authored_inputs"]:
+                    raise ValueError("camera package recipe lacks an authored input pin")
+                archive = Path(json.loads((self.repo / package_recipe).read_bytes())["package_archive"]).name
+                package = f"{PACKAGE_ARCHIVES}/{archive}"
+                arguments += ["--camera-package", package]
+                witnesses.append(package)
             if self.conversion:
                 recovered = ("native_ui", "native_materials", "native_internal", "native_intersection")
                 for flag, installed, required in (
@@ -453,7 +462,7 @@ class Graph:
             "shader_context",
             "shader_prefab",
             "payload_shader_records",
-        }:
+        } or (producer == "shader_produce" and "typed_records" in profile):
             artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
@@ -462,7 +471,7 @@ class Graph:
             outputs[target] = target
             if "original_bundle" not in profile:
                 artifacts["catalog_bundle"] = target
-        if producer in {"shader_produce", "player_data"}:
+        if producer == "player_data" or (producer == "shader_produce" and "typed_records" not in profile):
             artifacts = {"receipt": "result.json"}
             targets = [row["file"] for row in profile["shaders"]] if producer == "shader_produce" else list(profile["outputs"])
             if producer == "shader_produce":
@@ -574,7 +583,9 @@ class Graph:
                 profile = json.loads(path.read_bytes())
                 producer = owner(profile)
                 direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce"}
-                if producer not in direct and not (producer == "record_remap" and "original_sources" in profile):
+                typed_shaders = producer == "shader_produce" and "typed_records" in profile
+                registry_remap = producer == "record_remap" and "original_sources" in profile
+                if producer not in direct and not typed_shaders and not registry_remap:
                     raise ValueError("source lookup requires direct typed record selectors: " + pin)
             # Reuse preparation's body selectors; type_source is never evidence
             # that a profile produces that original object's serialized body.
@@ -674,6 +685,23 @@ class Graph:
         if self.conversion:
             request = dict(request, codec=INSTALLED_BUNDLE_CODEC)
         policy = request["policy"]
+        for table in policy.values():
+            if not isinstance(table, dict) or "shards" not in table:
+                continue
+            shards = table["shards"]
+            if (
+                set(table) != {"shards"}
+                or not isinstance(shards, list)
+                or not shards
+                or any(
+                    not isinstance(pin, dict)
+                    or set(pin) != {"path", "sha256", "bytes"}
+                    or not isinstance(pin["path"], str)
+                    or not pin["path"].startswith("${repo}/")
+                    for pin in shards
+                )
+            ):
+                raise ValueError("bundle policy shards require pinned repository files")
         sources = set()
 
         def visit(value):
@@ -812,7 +840,8 @@ class Graph:
         """Bind the source catalog to final containers and the embedded bootstrap."""
         request = json.loads((self.repo / request_path).read_text())
         common = {"schema", "input_id", "attempt"}
-        if set(request) - common not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
+        mode = set(request) - common - {"required_routes"}
+        if mode not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
             raise ValueError("unsupported catalog request template")
         profiles, bundles, needs, registries = [], {}, [], []
         resources = {}

@@ -179,6 +179,91 @@ class OwnerShaderTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertIn(number(0) + number(1) + number(13) + number(1 << 18), stream.sent)
 
+    def test_compute_preprocess_reads_kernel_defines_variants_and_include_state(self):
+        stream = Stream(
+            string("computeKeywordsUserGlobal: 1")
+            + string("_ GLOBAL")
+            + string("computeKeywordsUserLocal: 1")
+            + string("_ LOCAL")
+            + string("kernel: CSMain 1")
+            + string("STEP")
+            + string("2")
+            + string("requirements:")
+            + number(16385, 64)
+            + number(1)
+            + string("LOCAL")
+            + number(32, 64)
+            + string("endKernels: 0 1 2 -3 4 1")
+            + string("fixtures/shared.hlsl")
+            + string("preprocessed compute source")
+            + number(0xFFFFFFFF)
+            + number(0)
+            + number(0)
+        )
+        result = SHADER.Connection(stream).preprocess_compute(
+            "authored source", "fixtures/kernel.compute", platform_keywords=["MOBILE"], disabled_keywords=["DISABLED"]
+        )
+        self.assertEqual(
+            result,
+            {
+                "source": "preprocessed compute source",
+                "kernels": [{"name": "CSMain", "defines": [("STEP", "2")]}],
+                "keywords": {"global": [["_", "GLOBAL"]], "local": [["_", "LOCAL"]]},
+                "requirements": 16385,
+                "requirement_overrides": {"LOCAL": 32},
+                "flags": 0,
+                "include_hash": [1, 2, 0xFFFFFFFD, 4],
+                "dependencies": ["fixtures/shared.hlsl"],
+                "platform_masks": [0xFFFFFFFF, 0, 0],
+                "diagnostics": [],
+            },
+        )
+        self.assertEqual(
+            stream.sent,
+            string("c:preprocessCompute")
+            + string("authored source")
+            + string("fixtures/kernel.compute")
+            + number(0)
+            + number(13)
+            + number(1 << 18)
+            + number(1)
+            + string("MOBILE")
+            + number(1)
+            + string("DISABLED"),
+        )
+        self.assertFalse(stream.data)
+
+    def test_compute_compile_reads_binary_and_preserves_failure_diagnostics(self):
+        payload = b"authored binary witness"
+        stream = Stream(string("computeData: 1") + number(len(payload), 64) + payload)
+        result = SHADER.Connection(stream).compile_compute(
+            "processed source", "fixtures/kernel.compute", "CSMain", requirements=16385, defines=[("STEP", "2")], keywords=["LOCAL"]
+        )
+        self.assertEqual(result, {"success": True, "data": payload, "diagnostics": []})
+        self.assertEqual(
+            stream.sent,
+            string("c:compileComputeKernel")
+            + string("processed source")
+            + string("fixtures/kernel.compute")
+            + string("CSMain")
+            + b"".join(map(number, (0, 0, 0, 13, 1)))
+            + string("STEP")
+            + string("2")
+            + number(1)
+            + string("LOCAL")
+            + number(0)
+            + number(18)
+            + number(0)
+            + number(16385, 64)
+            + number(0)
+            + number(0),
+        )
+        self.assertFalse(stream.data)
+        response = string("err: 0 18 3") + string("kernel.compute") + string("authored syntax error") + string("computeData: 0") + number(0, 64)
+        result = SHADER.Connection(Stream(response)).compile_compute("invalid", "kernel.compute", "CSMain", requirements=16385)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["diagnostics"][0]["message"], "authored syntax error")
+
     def test_old_wire_version_truncation_and_unbounded_length_refuse(self):
         with self.assertRaisesRegex(ValueError, "version differs"):
             SHADER.Connection(Stream(struct.pack("<IQ", 201508070, 0))).buffer()

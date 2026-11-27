@@ -493,6 +493,35 @@ class CatalogCompletionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "catalog projection source identity differs"):
                 C.produce(path, root / "other")
 
+    def test_projection_appends_selected_aliases_in_source_order_and_preserves_root_keys(self):
+        locations = [dict(id=i, internalId=f"Assets/{i}.asset", type="UnityEngine.GameObject", primaryKey=str(i)) for i in range(1, 6)]
+        source = dict(
+            input_id="source",
+            source_catalog_sha256="catalog-hash",
+            locations=locations,
+            keys=[dict(key="aliases", locations=[4, 1, 3, 2]), dict(key="roots", locations=[3, 1, 5, 2])],
+            providers=[],
+        )
+        policy = dict(
+            schema="owner-catalog-projection-v1",
+            source_catalog_sha256="catalog-hash",
+            remaps={},
+            exclusions=[],
+            provider_roots=[1],
+            runtime_roots=[],
+            extra_roots=[5],
+            mesh_subobjects=[],
+            append_locations=[3, 4, 5],
+        )
+        builds = [dict(assetNames=[row["internalId"] for row in locations])]
+        with patch.object(sys, "path", [str(ROOT / "scripts/lab"), *sys.path]):
+            result = C.project_source_catalog(source, policy, builds, input_id="source", attempt="startup")
+            self.assertEqual(result["keys"], [dict(key="aliases", locations=[1, 2, 4, 3]), source["keys"][1]])
+            self.assertEqual(result["roots"], [1, 5])
+            for invalid in ([3, 3], [6]):
+                with self.assertRaisesRegex(ValueError, "catalog projection append selection differs"):
+                    C.project_source_catalog(source, dict(policy, append_locations=invalid), builds, input_id="source", attempt="startup")
+
     def test_player_resource_is_pinned_and_loaded_for_pointer_resolution(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -540,9 +569,11 @@ class CatalogCompletionTests(unittest.TestCase):
                 )
             )
             request["source_additions"] = dict(metadata=pin(source), locations=[2])
+            request["required_routes"] = [dict(key="ghost-guid", type=original["type"], location=2)]
             path.write_text(json.dumps(request))
             result = C.produce(path, root / "output")
             self.assertEqual(result["checks"]["locations"], 2)
+            self.assertEqual(result["checks"]["required_routes"], 1)
             emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
             self.assertEqual([(row["id"], row["bundle"]) for row in emitted["locations"]], [(1, "generated-android-data"), (2, "generated-android-data")])
             self.assertEqual([(row["key"], row["locations"]) for row in emitted["keys"]], [("group", [1, 2]), ("ghost-guid", [2])])
@@ -550,6 +581,26 @@ class CatalogCompletionTests(unittest.TestCase):
             path.write_text(json.dumps(request))
             with self.assertRaisesRegex(ValueError, "location selection differs"):
                 C.produce(path, root / "missing")
+
+    def test_required_routes_reject_missing_wrong_and_ambiguous_typed_endpoints(self):
+        shader = "UnityEngine.Shader, UnityEngine.CoreModule"
+        metadata = dict(
+            locations=[dict(id=1, type=shader), dict(id=2, type="UnityEngine.Material, UnityEngine.CoreModule"), dict(id=3, type=shader)],
+            keys=[
+                dict(key="camera", locations=[2, 1]),
+                dict(key="number", keyType="System.Int32", locations=[1]),
+                dict(key="ambiguous", keyType="System.String", locations=[1, 3]),
+            ],
+        )
+        C.validate_required_routes(metadata, [dict(key="camera", type=shader, location=1)])
+        for key, location, expected in (
+            ("missing", 1, "found \\[\\]"),
+            ("number", 1, "found \\[\\]"),
+            ("camera", 2, "found \\[1\\]"),
+            ("ambiguous", 1, "found \\[1, 3\\]"),
+        ):
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, expected):
+                C.validate_required_routes(metadata, [dict(key=key, type=shader, location=location)])
 
     def test_source_root_additions_restore_catalog_membership_and_alias_order(self):
         identity = dict(input_id="fixture", source_catalog_sha256="source-catalog", providers=["provider"])

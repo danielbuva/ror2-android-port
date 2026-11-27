@@ -207,6 +207,17 @@ class BundlePreparationTests(unittest.TestCase):
             policy["canonical"].update(profile=dict(pin(donor_identity), path="${repo}/recipe/donor-identity.json"), bundle=donor_pin)
             policy["field_routes"][0]["target"] = ["content", "CAB-content", 300]
             policy["asset_groups"][0]["preload_roots"] = [["content", "CAB-content", 300]]
+            selection = {
+                "bindings": [policy["bindings"][:2], policy["bindings"][2:]],
+                "asset_groups": [policy["asset_groups"]],
+            }
+            for field, shards in selection.items():
+                pins = []
+                for index, rows in enumerate(shards):
+                    path = repo / f"recipe/content-{field}-{index}.json"
+                    path.write_text(json.dumps(rows))
+                    pins.append(dict(pin(path), path="${repo}/" + path.relative_to(repo).as_posix()))
+                policy[field] = {"shards": pins}
             request.update(policy=policy, staged=[dict(bundle="canonical", file=donor_pin)])
             wrapper = repo / "recipe/owner-content.json"
             wrapper.write_text(json.dumps(dict(schema="owner-bundle-preload-release-v1", profiles=[*profiles, "recipe/owner-donor.json"], request=request)))
@@ -308,6 +319,8 @@ class BundlePreparationTests(unittest.TestCase):
             graph, index, release = compile_graph()
             content_job = "recipe/jobs/owner-content.json"
             self.assertIn("recipe/donor-identity.json", index["entries"]["payload/content"]["recipe_files"])
+            shard_names = {f"recipe/content-{field}-{index}.json" for field, shards in selection.items() for index in range(len(shards))}
+            self.assertTrue(shard_names <= set(index["entries"]["payload/content"]["recipe_files"]))
             self.assertIn("payload/canonical", release["entries"])
             self.assertEqual(graph.jobs[content_job]["outputs"]["payload/content"], "canonical/content.bundle")
             cold, progress = dispatch(index, release)
@@ -315,6 +328,7 @@ class BundlePreparationTests(unittest.TestCase):
             emitted = json.loads((cold.completed[content_job] / "result.json").read_bytes())
             self.assertEqual(emitted["canonical"]["canonical_roots"], 1)
             self.assertEqual(emitted["preparation"]["records"], 4)
+            self.assertTrue({str(repo / shard) for shard in shard_names} <= emitted["preparation"]["input_pins"].keys())
             actual = json.loads((root / "whole-catalog.json").read_bytes())
             self.assertEqual(actual["bundles"]["content"]["sha256"], emitted["sha256"])
             self.assertNotEqual(actual["bundles"]["content"]["sha256"], actual["bundles"]["canonical"]["sha256"])
@@ -323,7 +337,13 @@ class BundlePreparationTests(unittest.TestCase):
             _, progress = dispatch(index, release)
             self.assertTrue(all(reused is True for _, reused in progress))
             changed = json.loads(wrapper.read_text())
-            changed["request"]["policy"]["asset_groups"][0]["preload_roots"] = []
+            groups = repo / "recipe/content-asset_groups-0.json"
+            group_rows = json.loads(groups.read_bytes())
+            group_rows[0]["preload_roots"] = []
+            groups.write_text(json.dumps(group_rows))
+            with self.assertRaisesRegex(ValueError, "bundle public input pin differs"):
+                compile_graph()
+            changed["request"]["policy"]["asset_groups"]["shards"][0].update(sha256=G.digest(groups), bytes=groups.stat().st_size)
             wrapper.write_text(json.dumps(changed))
             _, index, release = compile_graph()
             _, progress = dispatch(index, release)
@@ -479,6 +499,49 @@ class BundlePreparationTests(unittest.TestCase):
             request_path.write_text(json.dumps(request))
             actual = P.produce_request(request_path, root / "actual")
             self.assertEqual(actual["sha256"], baseline["sha256"])
+
+    def test_fresh_sdk_witnesses_follow_staged_resource_pointers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root)
+            source = root / "original/a.bundle"
+            typ = P.O.source_record_type(source, "CAB-a", 10, 134)
+            resource = root / "unity_builtin_extra"
+            linked = struct.pack("<iq", 0, 11) + bytes(28)
+            records = [dict(path_id=pid, type=typ, body=linked if pid == 10 else bytes(40)) for pid in (10, 11, 12)]
+            resource.write_bytes(self.serialized(records, trees=False))
+            member = "Resources/unity_builtin_extra"
+            target = ["sdk", member, 10]
+            policy["field_routes"][0]["target"] = target
+            policy["asset_groups"][0]["preload_roots"][1] = target
+            policy_path = root / "policy.json"
+            policy_path.write_text(json.dumps(policy))
+            request["policy"] = pin(policy_path)
+            request["staged"][0] = dict(
+                bundle="sdk",
+                member=member,
+                file=pin(resource),
+                source_types=[dict(path_id=pid, source=[source.name, "CAB-a", 10], sha256=pin(source)["sha256"]) for pid in (10, 11, 12)],
+            )
+            inputs.write_text(json.dumps(request))
+            result = P.prepare_request(inputs, root / "prepared")
+            self.assertEqual(result["endpoints"], 2)
+            prepared = json.loads(Path(result["request"]["path"]).read_bytes())
+            sdk = prepared["staged"][0]
+            self.assertNotIn("source_types", sdk)
+            witnesses = json.loads(Path(sdk["full"]["path"]).read_bytes())
+            self.assertEqual([row["destination"] for row in witnesses], [target, ["sdk", member, 11]])
+            self.assertEqual(witnesses[0]["edges"], [[0, 0], [0, 11]])
+            self.assertEqual(witnesses[0]["provider_file_sha256"], pin(resource)["sha256"])
+            self.assertEqual(witnesses[0]["type_layout"], P.O.json_layout(typ))
+            self.assertTrue(P.produce_request(result["request"]["path"], root / "emitted")["success"])
+
+            records[0]["type"] = dict(typ, hash=b"b" * 16)
+            resource.write_bytes(self.serialized(records, trees=False))
+            request["staged"][0]["file"] = pin(resource)
+            inputs.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "SDK full metadata differs"):
+                P.prepare_request(inputs, root / "wrong-native-metadata")
 
     def test_fresh_preparation_emission_repack_and_warm_reuse(self):
         with tempfile.TemporaryDirectory() as tmp:

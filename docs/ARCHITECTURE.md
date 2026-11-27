@@ -221,11 +221,19 @@ signed policy, prepares fresh suppliers and runs the same checked emitter and
 optional canonical repack in one workspace. `release_graph.py` accepts
 `owner-bundle-preload-release-v1` profiles declaring prerequisite source profiles
 and that request. Public file pins join the signed source closure; supplier
-artifacts name declared jobs. Referenced donor/staged containers remain payload
+artifacts name declared jobs. Large binding, asset and field-route tables may
+use ordered, individually pinned JSON shards within the same policy. The
+compiler includes each shard in the signed job closure, and preparation
+verifies and records each input before emission. Bundle and donor routing stay
+in the bounded job descriptor. Referenced donor/staged containers remain payload
 and native-manifest dependencies. The graph assigns stable artifact names to
 object bundles and built-in player resources when it compiles their producers.
 Follower bundles and catalog production bind the same staged files. The catalog
 also consumes each emitted profile, independently of canonical body-identity proof.
+For SDK resource endpoints, preparation can generate full witnesses from pinned
+original type layouts and the produced resource bodies. The endpoint checker
+verifies native type metadata, body extents and recursively resolved pointers
+against those same staged files during preparation and emission.
 Managed witnesses must name generated artifacts, with registry body, receipt and
 schemas supplied by one final player job. When `--code-request` selects fresh
 conversion, witness production reads the same pinned managed provider manifest
@@ -260,6 +268,9 @@ candidate, retaining the previous record identity in the policy's `selection`
 lineage. Original source and destination stay fixed; unresolved candidates remain
 explicit. Selector discovery compiles only the suppliers actually chosen and
 does not admit their bodies, routes or graph.
+The V30 retained-source recipe supplies canonical records through
+`record_produce.py`. Original script selectors and the pinned editor base
+schema provide managed type hashes in the same producer job.
 
 `bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
 destination triples, separate from advertised container roots/subassets. Local
@@ -297,6 +308,18 @@ matches. For a canonical row backed by a record producer, an optional
 row's record digest. The producer must map the canonical output and duplicate
 to the same unique original body.
 
+`bundle_preload.py --expose-local-assets REQUEST --output NEW_DIRECTORY`
+registers ordered, typed roots already present in a pinned Android bundle.
+It derives the new preload intervals from their local PPtrs and preserves the
+old rows, dependency metadata, object bodies and resource members. Catalog
+production still checks each advertised address against the resulting bundle.
+The request can also supply pinned producer packs for absent Material and
+Texture2D IDs. They must match existing native types. The repacker checks
+texture references and the Shader's pinned external member, extends the
+existing resource stream, and reopens the output to check the new bodies
+and extents before writing a receipt. Temporary repack files are removed
+when the operation ends.
+
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
 remaining interaction gates.
@@ -317,15 +340,18 @@ playtest limits and reviewed feedback. It introduces no installer or runtime ste
 [Branding notes](assets/branding/README.md) record the two repository-only
 promotional graphics and their sources; they are not part of the runtime pipeline.
 
-Unity editor and batch launchers set `ANDROID_ADB_SERVER_PORT=5038` only in
-their child environment, isolating the bundled ADB server from the lab's canonical
-ADB on port 5037. `scripts/lab/build.py::editor` owns `./dev editor`;
+Unity editor and batch launchers share the lab's Homebrew ADB server on port
+5037. `scripts/lab/build_lock.py::unity_editor_env` configures the child to
+connect to the numeric loopback address so the bundled ADB client cannot start
+its own daemon. Device tooling starts the shared server when needed. Android
+user and Gradle homes remain isolated where configured.
+`scripts/lab/build.py::editor` owns `./dev editor`.
 `scripts/build-smoke.sh`, `scripts/lab/unity_rebuild.py`, `phone_content.py`,
-the `phone_*_oracle.py` launchers and `source_camera_bundle.py` own their batch
-children. `open-smoke.sh` delegates to `./dev editor`; existing editors must
-restart to inherit the isolated port. Child exit retains each launcher's log,
-process and mutex cleanup; device tooling and thermal cancellation keep their
-current owners. No global ADB environment or device-server setting is changed.
+the `phone_*_oracle.py` launchers, `source_camera_bundle.py` and
+`scripts/build-graphics-preload-fixture.py` own their batch children.
+`open-smoke.sh` delegates to `./dev editor`. Existing editors must restart to
+inherit the shared endpoint. Each launcher handles its logs, processes and mutex
+cleanup when its child exits.
 
 Launcher presentation: [`launcher/`](../launcher/README.md) owns the approved
 original background and dependency-free frontend. `controller.js` owns the
@@ -470,8 +496,8 @@ kernels. Host exposure reflection admits the public 8-wide kernel shapes;
 `source_camera_bundle.py::validate_vulkan_programs` independently reads the
 emitted Vulkan variants and requires the original kernel names/thread groups,
 nonempty variant maps and compiled code. The shared editor mutex serializes
-compilation, with child ADB isolated on port 5038. Setup protects the output with
-`.prune-keep`; compilation/validation exit writes `result.json`, and teardown
+compilation. The editor uses the shared ADB endpoint. Setup protects the output
+with `.prune-keep`. Compilation/validation exit writes `result.json`, and teardown
 removes the isolated project even when staging or editor configuration fails,
 retaining pinned sources, logs, a failure receipt or any compiled bundle. Host
 lifecycle regressions live in `tests/test_shader_postprocessing_uber.py`.
@@ -1455,7 +1481,7 @@ owner-backend/public-profile launches. Setup reads kernel CPU/GPU/battery/skin
 and readable SoC zones, checks thermal admission and selects inherited efficiency-core affinity
 with two-worker runtime limits. Its independent supervisor pauses the owned
 process group and nested-session descendants at CPU/GPU 70/55 C. A separate
-ceiling pauses the same family at 85 C on any readable CPU, GPU or SoC zone,
+ceiling pauses the same family at 90 C on any readable CPU, GPU or SoC zone,
 releases below 70 C, and aborts after 15 min at the ceiling. The 250 ms sampler
 also enforces the CPU/GPU 95 C/3 s and battery 43 C limits. Teardown kills owned
 processes. Receipts retain pause time, SoC peak and phase, and failures. The
@@ -1706,7 +1732,11 @@ keeps generated descriptors and caller-owned producer results. The managed-host
 `tools/phone-build/managed-host/ToolHostActivity.java` binds explicit
 check/prepare/import/build/install/resume actions to durable worker/install state.
 `onResume` registers the install-state observer and 500 ms refresh; `onPause`
-removes both. `OwnerUpdateState.java` owns Android-free presentation policy;
+removes both. The Activity opens Android's app-specific install-permission
+screen on an explicit request or attempted build. Returning from Settings never
+launches work; the foreground service independently gates build, rollback and
+installation before starting any worker. `OwnerUpdateState.java` owns
+Android-free presentation policy;
 its fresh `Screen` snapshot binds progress guidance and all Activity actions to
 current worker, consent, recovery and import-receipt facts. A failed import file
 is not build admission, and retained recovery disables Resume and other work.
@@ -1714,9 +1744,12 @@ its `StatusRender` coalesces changing same-phase text to two seconds while
 rendering phase changes immediately. Sampling and durable work remain separate.
 `OwnerInstaller.java` owns PackageInstaller sessions, streamed hashing,
 package/version/signer continuity and persistent asynchronous status. Its
-session-matched `Result` receiver owns Android confirmation intents. Missing or
-unlaunchable confirmation retains `AWAITING_CONFIRMATION` and the existing
-session; retry never creates a duplicate session. Android 12+ same-key updates
+session-matched `Result` receiver opens confirmation immediately only in the
+focused installer Activity. Otherwise its foreground-service notification and
+an in-app button let the owner return and open the system dialog. Unlaunchable
+confirmation can be retried in the foreground and never creates a second session.
+The platform intent is process-local; missing confirmation retains the session
+and does not imply success or authorize recovery. Android 12+ same-key updates
 request `USER_ACTION_NOT_REQUIRED`, with actual Android consent authoritative.
 `reconcile` recovers persisted session state after recreation; installed identity
 and required profile readback gate success and advancement of the installed
@@ -3158,9 +3191,16 @@ Signed catalog requests can select a projection policy and consume the original
 catalog emitted by managed-code production. `catalog_complete` joins that catalog
 to selected bundle profiles by asset path and explicit relocations, retains the
 original typed key ordering, and applies the pinned exclusions, root roles and
-mesh aliases. The source input identity and catalog hash bind that policy. The
+mesh aliases. A projection policy can move selected aliases to the end of
+their keys in source order. Keys that also introduce a selected root keep the
+original order. The source input identity and catalog hash bind that policy. The
 same invocation verifies actual Android containers and MonoScripts before writing
-the runtime catalog. Retained metadata remains available for historical requests.
+the runtime catalog. A catalog request can declare `required_routes` by string
+key, exact serialized type and source location ID. `catalog_complete` checks
+each route in the projected catalog after source additions and before reading
+bundle payloads. It rejects missing or ambiguous matches and records the number
+checked alongside the existing endpoint checks. Retained metadata remains
+available for historical requests.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Ordinary launcher startup selects
@@ -3279,10 +3319,10 @@ package; no parser or third-party implementation is vendored into the lab/player
 `--detach`. Use the serial from the workstream's queue grant for both commands.
 Portable requests can omit `serial` and `adopted_install`. Existing requests
 can embed `serial` and assert adopted-only placement with `adopted_install: true`.
-The dispatcher grants a device first; the child takes the canonical atomic
-lease before ADB, sources the pinned environment and stops Unity's port-5038
-ADB server. If discovery fails before the device context opens, the runner
-releases its lease and writes a failed receipt. Once a device context opens,
+The dispatcher grants a device. The child takes the canonical atomic lease
+before ADB and sources the pinned environment. If discovery fails before the
+device context opens, the runner releases its lease and writes a failed receipt.
+Once a device context opens,
 the runner requires verified idle cleanup before releasing the lease.
 Its request selects the canonical checkout, private output,
 workstream, disposable package, APK path/hash, duration and optional targeted-touch
@@ -5388,10 +5428,16 @@ The Siren encounter draft activates and network-spawns only the original inactiv
 `shipgraveyard` encounter identity. It preserves the source FSM, scripted boss
 card, squad, rewards and separately expansion-gated portal callback. It never
 calls global scene spawning, so the existing source-disabled MapZones retain
-their own boundary. The report distinguishes a selected owner, live eggs, native
-encounter start and the exact native BossGroup defeat event. Native squad-member
+their own boundary. Before activation, the encounter refreshes the source
+BossGroup basic reward table from the ready Run pickup lists. The report
+distinguishes a selected owner, live eggs, native encounter start and the exact
+native BossGroup defeat event. Native squad-member
 and summon callbacks identify the original boss and its probes without scanning
-all masters. Cleanup validates the complete owned actor set before requesting
+all masters. The boss master may retain the authored card's exact body prefab
+while native body creation uses the adapted catalog template at the same body
+index. Capture, death observation and cleanup recognize both references while
+retaining the original squad, server and ownership checks. Cleanup validates
+the complete owned actor set before requesting
 body/master destruction. A terminal original server-death witness permits accounting
 for an exact destroyed/unmapped captured master; any remaining corpse must still
 match the captured identity, dead health and server map before an owned cleanup
@@ -5726,6 +5772,10 @@ cannot reset that clock. Rejected terrain keeps neutral movement and the cliff
 guard, while the unfinished native waypoint still admits the existing stalled-path
 jump/replan request. `test_siren_gameplay_route_ownership.py` executes this
 policy against the retained Siren detour failure and recovery cases.
+On the assisted Gold Shores route, `GoldshoresBoundary` keeps moving toward the
+shrine while it needs gold and combat has no in-bounds target. When the route
+changes objectives, the existing navigator expires the previous terrain
+recovery window so the new objective can request a native graph route.
 The assisted selector retains its approach egg across native detours and combat
 input yields, revalidating membership in the current source cohort each frame.
 An attackable egg still takes priority; a dead or removed target falls back to
@@ -6511,8 +6561,9 @@ catalog consumer below stages this generated source; J965 qualifies the isolated
 exact-editor Android bundle fixture. Android appearance remains a separate gate.
 
 `scripts/lab/shader_ramp_fog.py` owns the source-bound single-pass
-`shader-ramp-fog` and `shader-screen-damage` host actions. The first also accepts
-`--target sobel-buffer` or `--target sobel-outline`; no target retains RampFog.
+`shader-ramp-fog` and `shader-screen-damage` host actions. `shader-ramp-fog`
+defaults to RampFog and accepts `--target sobel-buffer`, `--target sobel-outline`
+or `--target vision-limit`.
 Each target uses its fixed public `recipe/shader-<target>-candidate.json`. Each validates the
 accepted installation, exact native object/blob/program topology, measured
 interfaces and tool/helper pins before publishing new ignored evidence.
@@ -6521,13 +6572,15 @@ it retains recovered definitions before their calling wrappers. No game
 expressions or compiled programs are public inputs.
 
 Current output roots are
-`work/generated-shader-candidates/ramp-fog-r5/<input_id>/` and
-`work/generated-shader-candidates/screen-damage-r1/<input_id>/`, plus
-`work/generated-shader-candidates/{sobel-buffer,sobel-outline}-r1/<input_id>/`.
-SobelBuffer retains its separate fragment parameter record; binding slots name
-vertex/fragment stages independently of serialized record indices. Prior RampFog
-outputs remain preserved. Native programs, layouts, independent disassembly,
-byte roundtrips and source-immutability receipts accompany each candidate.
+`work/generated-shader-candidates/ramp-fog-r6/<input_id>/` and
+`work/generated-shader-candidates/screen-damage-r2/<input_id>/`, plus
+`work/generated-shader-candidates/{sobel-buffer,sobel-outline}-r2/<input_id>/` and
+`work/generated-shader-candidates/vision-limit-r1/<input_id>/`.
+SobelBuffer and VisionLimit retain separate fragment parameter records. Binding
+slots name vertex and fragment stages independently of serialized record
+indices. The output root revisions keep prior receipts usable with their source
+revision. Native programs, layouts, independent disassembly, byte roundtrips and
+source-immutability receipts accompany each candidate.
 The producer has no runtime setup or teardown; the original PostProcessLayer
 and effect renderer remain its consumers. Compilation and device appearance
 are separate gates, as in the earlier J965 RampFog bundle fixture.
@@ -6538,11 +6591,11 @@ are separate gates, as in the earlier J965 RampFog bundle fixture.
 inventory, four source shader identities, pass counts, keyword axes and exact
 authored/native tool pins. It imports the repository binder directly and writes
 only new ignored evidence under
-`work/generated-shader-candidates/translucent-camera-r2/<input_id>/`.
+`work/generated-shader-candidates/translucent-camera-r3/<input_id>/`.
 Input/tool drift, symlinked output roots, unknown metadata and colliding output
 paths refuse before publication. The generator retains EfficientBlur's two
 source passes/shared fragment and QuickDumbBlur's measured `FLIP_V` axis.
-R2 refreshes the shared signature-helper receipt while retaining the four
+R3 refreshes the shared signature-helper receipt while retaining the four
 shader identities and pass/keyword contracts. It has no runtime setup or
 teardown. J1009 verifies isolated Android/Vulkan
 compilation and cleanup. J1012 adds catalog consumption; J1017 installs the
@@ -7988,6 +8041,26 @@ existing dispatcher cache identity; texture owners retain codec, schema and pixe
 extent validation. Setup supplies pinned tools; scoped producers close on exit
 and retain their receipts. Complete APK and device acceptance remain open.
 
+`shader_produce.py` can supply a typed Shader leaf pack to `bundle_prepare.py`.
+The V30 recipe compiles Sprites/Default and the legacy VertexLit shader from
+the acquired SDK, and TMP Sprite from the SDK package. The original PC Shader
+layout is used for serialization. The producer checks names, source layouts,
+Vulkan program platforms and leaf dependencies. The signed release graph binds
+the resulting bodies and types to their PC or SDK identities. Compilation closes
+the standalone compiler and codec and retains a receipt for preparation.
+
+The same owner produces the camera Shader and ComputeShader leaf packs.
+`shader_compute.py` decodes the pinned SDK compiler's Vulkan kernel payloads
+and projects the executable, workgroup and reflected resources into the
+original native type. `shader_produce.py` resolves each selected local
+PostProcessResources PPtr before compiling its Post Processing package source.
+Graphics compilation keeps the original pass order, render state and properties.
+It retains slots for passes excluded by the Vulkan renderer mask and writes
+reflected inline samplers into the pass's shared parameter table.
+The signed graph witnesses the private archive and exposes the resulting
+typed packs to bundle preparation. Compiler lifetime and pack receipts are
+shared with the other Shader leaves.
+
 Fieldless component metadata uses the existing receipt-bound current MonoScript
 identity policy in `object_produce.py`; its schema/properties hash must still
 match the supplied script. Receipts record the actual script hash. Setup and
@@ -8055,18 +8128,21 @@ when installing the disposable converted package. Setup uses the verified SDK
 resource table; output hashes record the transformed entry. No runtime state or
 new lifecycle owner is added.
 
-Commando animation preparation stays in `AutomaticModelBoundary`: the artifact
-controller/avatar bind while the body is inactive. `NovaDiagnosticDisplay`
-isolates the existing model callbacks and enables the Animator/model before body
-activation. Native `ModelLocator.Start` detaches the model from its inactive
-model base, initializing the Animator. The boundary then verifies its locomotion
-parameters during `SpawnTeleporterState`, before native
-`BaseCharacterMain` snapshots them on its first entry. The display preserves the
-binding and reports the native movement cache and Animator state; its existing
-disposal owns teardown.
+`AutomaticModelBoundary` binds the Commando artifact Animator and direct-binding
+source survivor Animators while the body is inactive. `NovaDiagnosticDisplay`
+isolates model callbacks and enables the Animator and model before body activation.
+Native `ModelLocator.Start` detaches the model from its inactive model base,
+initializing the Animator. The boundary verifies locomotion parameters during
+`SpawnTeleporterState`, before native `BaseCharacterMain` snapshots them. It keeps
+direct-binding source renderers out of the loading view until the display has
+prepared their materials. The display retains the binding, enables native aim
+and reports the movement cache and Animator state. Native selected-skin loads
+retain their asynchronous controller and avatar owner. The existing display
+and detached-model disposal own teardown.
 `./dev editor --target lab --action commando-animation-host` is a current exact-editor
 contract check reproducing unavailable parameters under an inactive model base
-and parameter discovery after native detachment, before the main state
+and parameter discovery after native detachment, before the main state, including
+the imported Bandit and Captain controllers
 (`SurvivorSkillInputHost.VerifyAnimatorBeforeMainState`); gameplay remains a
 device gate.
 `NovaInputBridge` neutralizes unavailable physical input without suspending idle
@@ -8076,30 +8152,46 @@ and full cancellation through `Neutral`.
 
 Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
 and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
-Commando additive states and blend trees, plus other native AimPitch/AimYaw
-layers, resolves current catalog containers against accepted input hashes, and
-emits private source identities and Transform reference values through StageIO. The latter creates owned
+Commando, Huntress, Captain and Bandit2 additive states and blend trees, plus
+other native AimPitch/AimYaw layers. It resolves current catalog containers
+against accepted input hashes and emits private source identities and Transform
+reference values through StageIO. The latter creates owned
 constant reference clips before bundle production and applies the original
-additive reference settings. Unsupported muscle streams remain unchanged and
-are reported explicitly; unknown Transform bindings refuse restoration.
+additive reference settings. It also restores Bandit2's gesture synchronization
+and override-only motions from the source controller's layer and motion slots.
+The same stage imports Bandit2's SideWeapon clips from the accepted export.
+The editor restores the synchronized weapon motions and owns their blend trees
+in the generated controller.
+The generated controller persists in the composed project. Unsupported muscle
+streams remain unchanged and are reported explicitly; unknown Transform
+bindings refuse restoration.
 Generated clips persist with the composed project and are replaced on rebuild;
 there is no runtime owner. Code-only builds require unchanged source-pose inputs.
-The existing current `commando-animation-host` action also verifies persisted
-reference curves and compares frozen-base muzzle positions and directions against
-the original clips during aim, firing and hit reactions. The comparison overrides
-all Commando controller clips so a shared gesture defect cannot pass both sides.
-Bounded Commando aim/firing device evidence is recorded in the journal; other
-survivors and unassisted hit-reaction presentation remain separate gates.
+The current `commando-animation-host` action also verifies persisted reference
+curves and compares positions and directions on a frozen rig against the original
+clips. It samples Commando's muzzles and Huntress's torso, head and bow during
+aim, firing and hit reactions, and Captain's torso, head, gun and radio during
+aim, firing and call-ins. It samples Bandit2's torso, head and weapon attachment
+poses during aim, firing, reload, smoke bomb and blade gestures. Huntress firing
+and recovery and Captain's selected gestures play both gesture layers. Their
+comparison overrides controller clips with the originals, including Captain's
+shared Commando clips. The Bandit2 fixture drives the source gesture layer and
+compares both synchronized layers against the original controller.
+It also activates each Bandit2 weapon locomotion layer independently and
+compares the six synchronized states against the original controller.
+Device aim, firing and hit-reaction presentation remain separate checks.
 
 `WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor
 `./dev editor --target lab --action enemy-material-audit` inventory. It reads
 native-provider body/projectile candidates and the prepared session's registered
 effect prefabs, including inactive renderer slots, Billboard materials, particle
-meshes and trails. Private receipts retain source keywords, texture bindings and
-recovered-resource coverage. It does not initialize native catalogs, mutate
-materials or establish Android shader support or visual parity. Setup requires
-the prepared lab project and generated catalog; completion retains a private
-editor receipt and adds no runtime state.
+meshes and trails. It also resolves the Titan pre-fist projectile's addressed
+ghost and the Vagrant default skin's addressed body material, and inspects the
+direct Mercenary Expose and Acrid disease impact effects. The audit selects
+recovered resources from saved source keywords, as the runtime owner does.
+Setup requires the prepared lab project and generated catalog. The private
+editor receipt records typed bindings and resource coverage. Android rendering
+and pixel attribution require matched captures.
 
 `WholeCatalogHost.AuditBodyAnimations` owns the current exact-editor
 `./dev editor --target lab --action body-animation-audit` census. It identifies

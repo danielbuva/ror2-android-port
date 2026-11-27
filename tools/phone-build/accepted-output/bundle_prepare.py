@@ -241,7 +241,7 @@ def extend_selection(owner, member, required, selected, types, routes, extension
 
 
 def original_identities(owner, path, source_files=None, *, destinations=None):
-    """Reverse original body selectors and identity-bound MonoScript remaps."""
+    """Reverse original body selectors, SDK Shader leaves and MonoScript remaps."""
     result = {}
 
     def add(record, source):
@@ -252,6 +252,23 @@ def original_identities(owner, path, source_files=None, *, destinations=None):
         bundles = owner.A.profile_bundles(path)
     else:
         profile = json.loads(path.read_bytes())
+        if "typed_records" in profile:
+            for row in profile["typed_records"]:
+                output = row["output"]
+                record = output["bundle"], output["member"], output["path_id"]
+                if "source" in row:
+                    source = row["source"]
+                    if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
+                        raise ValueError("original source file pins disagree")
+                    add(record, (source["path"], source["member"], source["path_id"]))
+                elif "camera_compute" in row or "camera_shader" in row:
+                    source = profile["source_type"]
+                    if source_files is not None and source_files.setdefault(source["path"], source["sha256"]) != source["sha256"]:
+                        raise ValueError("original source file pins disagree")
+                    add(record, (source["path"], source["member"], row["source_path_id"]))
+                else:
+                    add(record, ("sdk", "Resources/unity_builtin_extra", row["sdk_shader"]))
+            return result
         if "original_sources" in profile:
             originals = profile["original_sources"]
             for row in profile["records"]:
@@ -306,6 +323,20 @@ def canonical_record_sources(owner, canonical, paths, destinations):
     return sources
 
 
+def policy_rows(pins, table):
+    """Read inline rows or concatenate individually pinned selection shards."""
+    if isinstance(table, list):
+        yield from table
+        return
+    if not isinstance(table, dict) or set(table) != {"shards"} or not isinstance(table["shards"], list) or not table["shards"]:
+        raise ValueError("bundle policy table requires inline rows or pinned shards")
+    for pin in table["shards"]:
+        rows = pins.read(pin)
+        if not isinstance(rows, list):
+            raise ValueError("bundle policy shard must contain a row list")
+        yield from rows
+
+
 def prepare(owner, inputs, output):
     """Derive graph, schemas, current field routes and retained relocation packs."""
     E = owner.module("bundle_endpoints")
@@ -357,7 +388,7 @@ def prepare(owner, inputs, output):
         suppliers[name] = SimpleNamespace(paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]))
     producer = owner.ProducerRecords(providers)
     bindings, sources = {}, {}
-    for row in policy["bindings"]:
+    for row in policy_rows(pins, policy["bindings"]):
         destination = tuple(row["destination"])
         if destination[:2] != member or destination in bindings or not destination[2]:
             raise ValueError("duplicate or foreign emitted destination")
@@ -369,7 +400,7 @@ def prepare(owner, inputs, output):
             raise ValueError("original body source absent or ambiguous")
         bindings[destination] = dict(row, source=list(source))
         sources.setdefault(source, set()).add(destination)
-    for row in policy.get("staged_bindings", []):
+    for row in policy_rows(pins, policy.get("staged_bindings", [])):
         sources.setdefault(tuple(row["source"]), set()).add(tuple(row["destination"]))
     external_sources, source_files_by_member = {}, {}
     for (path, source_member, pid), destinations in sources.items():
@@ -378,7 +409,7 @@ def prepare(owner, inputs, output):
         external_sources[key] = destinations if existing is None else existing | destinations
         source_files_by_member.setdefault(source_member, set()).add(path)
     overrides = {}
-    for row in policy.get("field_routes", []):
+    for row in policy_rows(pins, policy.get("field_routes", [])):
         key = tuple(row["owner"]), tuple(row["field"])
         if key in overrides:
             raise ValueError("duplicate exceptional field route")
@@ -428,6 +459,30 @@ def prepare(owner, inputs, output):
             if row["bundle"] == "sdk":
                 leaves = pins.read(row["leaves"]) if "leaves" in row else []
                 full = pins.read(row["full"]) if "full" in row else []
+                if "source_types" in row:
+                    if "full" in row or "leaves" in row:
+                        raise ValueError("SDK source types cannot be combined with retained witnesses")
+                    name = row["member"]
+                    staged.add_sdk(pin, name)
+                    for selector in normalized.pop("source_types"):
+                        source, source_sha = selector["source"], selector["sha256"]
+                        if source_files.setdefault(source[0], source_sha) != source_sha:
+                            raise ValueError("original source file pins disagree")
+                        _, typ, _ = original(source)
+                        pid = selector["path_id"]
+                        _, _, body = staged.members.record(name, (0, pid))
+                        full.append(
+                            descriptor(
+                                ("sdk", name, pid),
+                                body,
+                                typ,
+                                provider="sdk/" + name,
+                                provider_kind="serialized_file",
+                                provider_file_sha256=pin["sha256"],
+                                type_layout=owner.O.json_layout(typ),
+                            )
+                        )
+                    normalized["full"] = write(f"sdk-{Path(name).name}-source-types.json", full)
                 for witness in leaves + full:
                     target = tuple(witness["destination"])
                     if target in staged_descriptors and staged_descriptors[target] != witness:
@@ -435,7 +490,8 @@ def prepare(owner, inputs, output):
                     staged_descriptors[target] = witness
                     types[witness["full_type"]] = witness["type_layout"]
                     providers[witness["provider"]] = Path(pin["path"])
-                staged.add_sdk(pin, row["member"], leaves)
+                if "source_types" not in row:
+                    staged.add_sdk(pin, row["member"], leaves)
                 if full:
                     staged.qualify_sdk_full(row["member"], full, provider_paths=providers)
             else:
@@ -472,8 +528,12 @@ def prepare(owner, inputs, output):
                 actual, body = producer.record(value)
                 if actual != row:
                     raise ValueError("supplier record changed")
-                original_body, original_type, _ = original(binding["source"])
                 identity = row.get("source_produced", {}).get("script_identity")
+                if binding["source"][:2] == ["sdk", "Resources/unity_builtin_extra"]:
+                    if identity is not None or typ["class_id"] != 48 or not typ.get("tree") or owner.pointers(body, typ, {}):
+                        raise ValueError("SDK supplier requires a typed Shader without pointers")
+                else:
+                    original_body, original_type, _ = original(binding["source"])
                 if identity is not None:
                     if not original_type.get("tree") or original_type["dependencies"]:
                         raise ValueError("registry MonoScript requires an original leaf layout and verified identity")
@@ -504,7 +564,8 @@ def prepare(owner, inputs, output):
             return value, body, typ
 
         pending = []
-        for group in policy["asset_groups"]:
+        asset_groups = list(policy_rows(pins, policy["asset_groups"]))
+        for group in asset_groups:
             pending.extend((*member, pid) for pid in group["roots"])
             pending.extend(tuple(target) for target in group.get("preload_roots", []))
         while pending:
@@ -669,8 +730,8 @@ def prepare(owner, inputs, output):
             path_ids=sorted(key[2] for key in selected if key[:2] == member),
             externals=externals,
             dependencies=sorted({key[0] for key in selected if key[:2] != member and key[0] != "sdk"} | ({donor["name"]} if canonical else set())),
-            asset_groups=policy["asset_groups"],
-            assets=policy["assets"],
+            asset_groups=asset_groups,
+            assets=list(policy_rows(pins, policy["assets"])),
         )
         managed = dict(request["managed_inputs"])
         for key, pin in managed.items():

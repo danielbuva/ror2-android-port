@@ -27,6 +27,53 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_bundle_shader_leaves_resolve_original_and_sdk_sources(self):
+        profile = ROOT / "recipe/owner-v30-bundle-shader-leaves.json"
+        pin = G.digest(profile)
+        rows = []
+        for row in json.loads(profile.read_bytes())["typed_records"]:
+            destination = [row["output"][key] for key in ("bundle", "member", "path_id")]
+            source = row.get("source")
+            original = [source[key] for key in ("path", "member", "path_id")] if source else ["sdk", "Resources/unity_builtin_extra", row["sdk_shader"]]
+            rows.append(dict(destination=destination, source=original, record_source=destination, record="a" * 64))
+
+        graph = G.Graph(ROOT, {})
+        graph.conversion = graph.code_conversion("recipe/owner-code-job-inputs.json")
+        bindings = graph.bundle_bindings(rows, *rows[0]["destination"][:2], source_profiles=[pin])
+        self.assertEqual(bindings["unresolved"], [])
+        self.assertEqual([row["source"] for row in bindings["bindings"]], [row["source"] for row in rows])
+        self.assertEqual([row["supplier"] for row in bindings["bindings"]], [pin] * len(rows))
+        self.assertEqual(len(bindings["suppliers"]), 1)
+        job = graph.jobs["recipe/jobs/owner-v30-bundle-shader-leaves.json"]
+        self.assertEqual(job["outputs"], {})
+        self.assertEqual(set(job["artifacts"]), {"receipt", "objects", "index", "types"})
+        self.assertIn("--compiler-command", job["arguments"])
+        self.assertIn("recipe/jobs/owner-sdk-shader-inputs.json", job["needs"])
+
+    def test_camera_program_packs_resolve_original_records_and_archive(self):
+        for name, count in (("owner-v30-camera-compute.json", 12), ("owner-v30-camera-shaders.json", 24)):
+            with self.subTest(profile=name):
+                profile = ROOT / "recipe" / name
+                pin = G.digest(profile)
+                selection = json.loads(profile.read_bytes())
+                original = selection["source_type"]
+                rows = []
+                for row in selection["typed_records"]:
+                    destination = [row["output"][key] for key in ("bundle", "member", "path_id")]
+                    source = [original["path"], original["member"], row["source_path_id"]]
+                    rows.append(dict(destination=destination, source=source, record_source=destination, record="a" * 64))
+
+                graph = G.Graph(ROOT, {})
+                graph.conversion = graph.code_conversion("recipe/owner-code-job-inputs.json")
+                bindings = graph.bundle_bindings(rows, *rows[0]["destination"][:2], source_profiles=[pin])
+                self.assertEqual(bindings["unresolved"], [])
+                self.assertEqual([row["source"] for row in bindings["bindings"]], [row["source"] for row in rows])
+                self.assertEqual([row["supplier"] for row in bindings["bindings"]], [pin] * count)
+                job = graph.jobs["recipe/jobs/" + name]
+                archive = "${inputs}/acquired/unity-packages/com.unity.postprocessing-2.3.0.tgz"
+                self.assertIn(archive, job["cache_witnesses"])
+                self.assertEqual(job["arguments"][job["arguments"].index("--camera-package") + 1], archive)
+
     def test_install_plan_reports_unbound_producer_inputs(self):
         graph = G.Graph(ROOT, {})
         producer, dependency = "recipe/jobs/fixture.json", "recipe/jobs/dependency.json"
@@ -353,7 +400,10 @@ class ReleaseGraphTests(unittest.TestCase):
             template = json.loads(request.read_text())
             policy = repo / "recipe/catalog-projection.json"
             policy.write_text("{}")
-            projected = {key: value for key, value in template.items() if key != "metadata"} | {"projection": "recipe/catalog-projection.json"}
+            required = [dict(key="camera", type="UnityEngine.Shader, UnityEngine.CoreModule", location=123)]
+            projected = {key: value for key, value in template.items() if key != "metadata"} | dict(
+                projection="recipe/catalog-projection.json", required_routes=required
+            )
             request.write_text(json.dumps(projected))
             with self.assertRaisesRegex(ValueError, "requires original-input code conversion"):
                 graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
@@ -365,6 +415,7 @@ class ReleaseGraphTests(unittest.TestCase):
             job = graph.jobs[name]
             self.assertEqual(job["needs"], ["final", "player", code])
             self.assertEqual(job["request"]["projection"]["source"], graph.artifact_pin(code, "original_catalog"))
+            self.assertEqual(job["request"]["required_routes"], required)
             self.assertEqual(graph.jobs[code]["artifacts"]["original_catalog"], "managed-production/original-catalog.json")
             self.assertIn("recipe/catalog-projection.json", graph.entry(name)["recipe_files"])
             request.write_text(json.dumps(template))
