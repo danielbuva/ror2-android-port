@@ -2396,6 +2396,12 @@ For the Animate Alpha Vulkan diagnostic, set `ROR2_PHONE_SHADER_DRAW=1` on
 address. The builder embeds the checked bundle in the disposable fixture APK.
 `ContentFixture.cs` draws two ramp inputs offscreen and reports the center
 pixels, graphics backend and result through `PHONE_SHADER_DRAW`.
+`ROR2_PHONE_SHADER_COMPUTE=1` uses the same fixture for one standalone
+ComputeShader address. The Vulkan player seeds 256 histogram counters,
+dispatches the source clear and gather kernels on a flat red input, then
+reports the thread dimensions and readback through `PHONE_SHADER_COMPUTE`.
+The shared device runner's `shader-compute` mode captures that report and
+removes the disposable fixture.
 For a streamed scene, the same request pins the bundle and dependencies and
 specifies the exact path in `scene`.
 `ContentFixtureSceneCheck.cs` enters Play Mode in the isolated project, loads

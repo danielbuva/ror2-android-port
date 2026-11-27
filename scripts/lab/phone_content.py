@@ -21,6 +21,7 @@ NATIVE_CONTENT_TYPES = frozenset(
         "AnimationClip",
         "Material",
         "Shader",
+        "ComputeShader",
         "Texture2D",
         "Cubemap",
         "Sprite",
@@ -341,8 +342,9 @@ def run_editor(project, *, build=False, ambient=False):
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
     scene_check = False
     shader_bundle = None
-    if env.get("ROR2_PHONE_SHADER_DRAW") and (not build or not env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK")):
-        raise RuntimeError("Shader draw requires a fixture build and a native-content request")
+    probes = [(key, kind) for key, kind in (("ROR2_PHONE_SHADER_DRAW", "Shader"), ("ROR2_PHONE_SHADER_COMPUTE", "ComputeShader")) if env.get(key)]
+    if len(probes) > 1 or (probes and (not build or not env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"))):
+        raise RuntimeError("Select one shader probe with a fixture build and a native-content request")
     if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
         if ambient:
             raise RuntimeError("Native-content typed loads require the content fixture")
@@ -351,11 +353,12 @@ def run_editor(project, *, build=False, ambient=False):
         request_path.write_text(json.dumps(request, indent=2) + "\n")
         env["ROR2_PHONE_NATIVE_CONTENT_CHECK"] = str(request_path)
         scene_check = "scene" in request
-        if env.get("ROR2_PHONE_SHADER_DRAW"):
+        if probes:
+            ((probe, kind),) = probes
             assets = request.get("assets", [])
-            if len(assets) != 1 or assets[0]["type"] != "Shader" or assets[0].get("subasset") or request.get("dependencies"):
-                raise RuntimeError("Shader draw requires exactly one Shader address in a standalone bundle")
-            env["ROR2_PHONE_SHADER_DRAW"] = assets[0]["name"]
+            if len(assets) != 1 or assets[0]["type"] != kind or assets[0].get("subasset") or request.get("dependencies"):
+                raise RuntimeError(f"Shader probe requires exactly one {kind} address in a standalone bundle")
+            env[probe] = assets[0]["name"]
             shader_bundle = project / "Assets/StreamingAssets/phone-shader.bundle"
         if scene_check:
             if build:

@@ -57,15 +57,16 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
 
-    def test_shader_draw_requires_the_disposable_fixture_without_gameplay_inputs(self):
-        request = dict(self.request, mode="shader-draw", package=runner.PHONE_CONTENT_PACKAGE)
-        runner.save(self.request_file, request)
-        self.assertEqual(runner.load_request(self.request_file)["mode"], "shader-draw")
-        for changes in (dict(mode="launch"), dict(package=self.request["package"]), dict(prior_receipt="another.json")):
-            with self.subTest(changes=changes):
-                runner.save(self.request_file, dict(request, **changes))
-                with self.assertRaisesRegex(ValueError, "standalone workload"):
-                    runner.load_request(self.request_file)
+    def test_shader_probes_require_the_disposable_fixture_without_gameplay_inputs(self):
+        for mode in ("shader-draw", "shader-compute"):
+            request = dict(self.request, mode=mode, package=runner.PHONE_CONTENT_PACKAGE)
+            runner.save(self.request_file, request)
+            self.assertEqual(runner.load_request(self.request_file)["mode"], mode)
+            for changes in (dict(mode="launch"), dict(package=self.request["package"]), dict(prior_receipt="another.json")):
+                with self.subTest(mode=mode, changes=changes):
+                    runner.save(self.request_file, dict(request, **changes))
+                    with self.assertRaisesRegex(ValueError, "standalone workload"):
+                        runner.load_request(self.request_file)
 
     def test_shader_draw_preserves_vulkan_pixel_report_even_on_failure(self):
         device, thermal = mock.Mock(), mock.Mock()
@@ -81,9 +82,21 @@ class DeviceSessionTests(unittest.TestCase):
                 if passes:
                     runner.run_workload(device, thermal, request, self.output, result)
                 else:
-                    with self.assertRaisesRegex(RuntimeError, "draw failed"):
+                    with self.assertRaisesRegex(RuntimeError, "inspect its Vulkan report"):
                         runner.run_workload(device, thermal, request, self.output, result)
                 self.assertEqual(result["shader_draw"], report)
+
+    def test_shader_compute_admits_the_vulkan_histogram_report(self):
+        device, thermal = mock.Mock(), mock.Mock()
+        thermal.cancelled.is_set.return_value = False
+        device.sh.return_value = "42"
+        request = dict(self.request, mode="shader-compute")
+        report = dict(graphics="Vulkan", passed=True, nonZeroAfterClear=0, nonZeroAfterGather=1, lastBin=256)
+        device.cmd.return_value = "Unity: PHONE_SHADER_COMPUTE " + json.dumps(report)
+        result = {}
+        with mock.patch.object(runner, "launch", return_value={"pid": "42"}):
+            runner.run_workload(device, thermal, request, self.output, result)
+        self.assertEqual(result["shader_compute"], report)
 
     def test_menu_start_rejects_selector_for_a_different_apk_attempt(self):
         request = dict(self.request, start_from_menu=True, selection={"attempt": "run-folder"})

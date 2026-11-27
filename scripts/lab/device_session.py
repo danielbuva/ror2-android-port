@@ -112,15 +112,17 @@ def load_request(path, serial=None):
         "player-screens",
         "owner-unplugged",
         "shader-draw",
+        "shader-compute",
     }:
         raise ValueError("Unknown device workload mode")
-    if value["mode"] == "shader-draw" or value["package"] == PHONE_CONTENT_PACKAGE:
+    shader_modes = {"shader-draw", "shader-compute"}
+    if value["mode"] in shader_modes or value["package"] == PHONE_CONTENT_PACKAGE:
         if (
-            value["mode"] != "shader-draw"
+            value["mode"] not in shader_modes
             or value["package"] != PHONE_CONTENT_PACKAGE
             or value.keys() - required - {"mode", "serial", "adopted_install", "cooldown_seconds", "capture_interval_seconds"}
         ):
-            raise ValueError("Shader draw requires the disposable content fixture and its standalone workload")
+            raise ValueError("Shader probe requires the disposable content fixture and its standalone workload")
     elif value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
     if value["mode"] in {"settings-save-failure", "profile-write-interrupt"} and "selection" in value:
@@ -1225,7 +1227,9 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
-    if request["mode"] == "shader-draw":
+    if request["mode"] in {"shader-draw", "shader-compute"}:
+        report_name = request["mode"].replace("-", "_")
+        report_marker = "PHONE_" + report_name.upper() + " "
         deadline = time.monotonic() + request["duration_seconds"]
         while time.monotonic() < deadline:
             if thermal.cancelled.is_set():
@@ -1234,14 +1238,14 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
                 raise RuntimeError("Shader fixture process exited or changed")
             log = device.cmd("logcat", "-d", "--pid=" + pid, "Unity:I", "AndroidRuntime:E", "*:S")
             for line in log.splitlines():
-                _, marker, payload = line.partition("PHONE_SHADER_DRAW ")
+                _, marker, payload = line.partition(report_marker)
                 if marker:
-                    report = result["shader_draw"] = json.loads(payload)
+                    report = result[report_name] = json.loads(payload)
                     if report.get("passed") is not True or report.get("graphics") != "Vulkan":
-                        raise RuntimeError("Shader fixture draw failed; inspect sampled pixels")
+                        raise RuntimeError("Shader fixture failed; inspect its Vulkan report")
                     return
             thermal.cancelled.wait(1)
-        raise RuntimeError("Shader fixture produced no draw report before the deadline")
+        raise RuntimeError("Shader fixture produced no report before the deadline")
     if request.get("start_from_menu") and "input_script" not in request:
         reference = request.get("bootstrap_play_reference")
         if launched.get("activity") == device.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity":

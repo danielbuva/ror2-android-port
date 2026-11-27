@@ -78,6 +78,7 @@ public static partial class ContentFixtureBuilder
             case "AnimationClip": return typeof(AnimationClip);
             case "Material": return typeof(Material);
             case "Shader": return typeof(Shader);
+            case "ComputeShader": return typeof(ComputeShader);
             case "Texture2D": return typeof(Texture2D);
             case "Cubemap": return typeof(Cubemap);
             case "Sprite": return typeof(Sprite);
@@ -303,7 +304,9 @@ public static partial class ContentFixtureBuilder
         PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
         var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
         var fixture = new GameObject("PhoneContentFixture").AddComponent<ContentFixture>();
-        fixture.shaderAddress = Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_DRAW");
+        var computeAddress = Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_COMPUTE");
+        fixture.computeHistogram = !String.IsNullOrEmpty(computeAddress);
+        fixture.shaderAddress = computeAddress ?? Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_DRAW");
         EditorSceneManager.SaveScene(scene, "Assets/Fixture.unity");
         var report = BuildPipeline.BuildPlayer(new[] { "Assets/Fixture.unity" }, Output("phone-content-fixture.apk"), BuildTarget.Android, BuildOptions.Development);
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Fixture build failed: " + report.summary.result);

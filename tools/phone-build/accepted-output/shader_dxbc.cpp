@@ -75,7 +75,8 @@ int main(int argc, char **argv)
     request.source = {dxbc.data(), dxbc.size()};
     request.source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
     request.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
-    request.source_name = argv[1];
+    // vkd3d embeds this name in SPIR-V debug metadata.
+    request.source_name = "shader.dxbc";
     request.log_level = VKD3D_SHADER_LOG_WARNING;
     const vkd3d_shader_compile_option storage_buffer_option{
         VKD3D_SHADER_COMPILE_OPTION_BUFFER_UAV, VKD3D_SHADER_COMPILE_OPTION_BUFFER_UAV_STORAGE_BUFFER,
