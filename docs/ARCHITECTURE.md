@@ -212,6 +212,8 @@ boundary. Destinations that share a supplier record keep separate relocation
 packs so each can bind its own checked field routes to the same source lineage.
 Retained suppliers bind their own receipt-pinned type tables;
 an explicit `pointer_namespace` declares their already-relocated member table.
+When a checked producer patch names a generated record in its own output
+member, preparation resolves the typed field directly to that declared record.
 Setup opens declared original and staged members; teardown closes streams on
 success or failure. Preparation retains pins and emits the existing request,
 including original script properties and canonical body-identity witnesses.
@@ -352,6 +354,10 @@ PPtrs to be supplied at their existing external identity. The repacker checks
 the exact native Mesh type and consumer member and can supply these endpoints
 without adding catalog roots. It reads back the unchanged container in that
 case. Temporary repack files are removed when the operation ends.
+For a verified closed record set, the same repacker can check a streamed
+scene's native consumer by member, PathID and class. Its typed PPtr must
+identify the added record in the donor member. The donor retains that record
+without a catalog address, as required by scene occlusion data.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
@@ -1119,8 +1125,9 @@ profile leaves them intact.
 `recipe/owner-whole-game-prefab-component-source-records.json` supplies the
 original Transform, Light and Rigidbody records used by FireworkLight and
 SoundEmitter. Bundle preparation distinguishes file-local PPtrs from external
-member identities, resolves the component owners and checks every relocated
-pointer in the emitted prefab closure.
+member identities. For producer relocations, it matches the final typed PPtr
+and its offset to the pinned patch and resolves the original endpoint through
+the selected owners. Emission checks the resulting prefab closure.
 `recipe/owner-goolake-shrine-script-bindings.json` supplies three Sandy shrine
 MonoBehaviours from the original bundles. Their relocated script PPtrs resolve
 to the canonical MonoScripts in the Commando donor. The staged bundle composer
@@ -2369,6 +2376,8 @@ specifies the exact path in `scene`.
 the bundle additively, selects the scene and reads native occlusion settings.
 It records loaded roots, MeshRenderer counts, the resolved data reference
 and Umbra sizes around activation, then unloads the scene and its bundles.
+The optional `loadMode: "Single"` control loads the same inputs alone and
+creates a blank scene for teardown. The receipt records which mode ran.
 The editor exposes the data reference. Serialized scene checks cover the
 release renderer table. Android culling, appearance and gameplay require
 device evidence.
@@ -3663,6 +3672,10 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Reported CPU/GPU exposure above 80 C uses only the left sample of intervals
+up to one second. One hot group establishes an exceedance; classifying an
+interval as non-hot requires both groups. Missing coverage stays unclassified,
+and no classifiable interval yields unavailable exposure rather than zero.
 Reconciled raw windows also report strictly >50 ms consecutive hitch bursts,
 longest within-window run and worst absolute frame index (earliest on ties).
 Incomplete raw windows remain unavailable; boundary bursts may extend outside
@@ -6453,6 +6466,14 @@ decoder on each block, tracks CPU time and peak RSS, and returns a decoded hash
 and block count. The runner verifies those against the request and owns thermal
 supervision, receipt collection and scratch cleanup.
 
+The current `./dev converter-stage` action uses the same emission runner and
+the installed toolhost's Python runtime. `owner-apk/lab_stage.py` runs one
+registered content producer against a pinned request under the toolhost's
+existing owner-input tree. The host stages the current committed producer
+closure and a small descriptor. The phone checks the input pins, hashes the
+declared artifacts, and returns the stage and thermal receipts with an optional
+scoreboard. The runner removes attempt scratch and preserves the input tree.
+
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner
@@ -8181,8 +8202,9 @@ the standalone compiler and codec and retains a receipt for preparation.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
-produced Android body through the pack receipt and type table. Shader
-dependencies use the produced member namespace or explicit field routes.
+produced Android body through the pack receipt and type table. Shader fallback
+fields derived from a prefab recipe resolve its local alias or pinned SDK
+source binding. Explicit field routes can resolve other shader dependencies.
 
 The same owner produces the camera Shader and ComputeShader leaf packs.
 `shader_compute.py` decodes the pinned SDK compiler's Vulkan kernel payloads

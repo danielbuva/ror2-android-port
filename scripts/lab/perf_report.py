@@ -123,10 +123,15 @@ def thermal_samples(rows):
             fields = line.split("\t")
             if len(fields) < 2:
                 continue
-            key = "cpu_c" if fields[0].startswith("cpu") else "gpu_c" if fields[0].startswith("gpu") else None
-            if key and fields[1] != "UNREADABLE":
-                value = float(fields[1]) / 1000
-                if math.isfinite(value):
+            name = fields[0].lower()
+            key = "cpu_c" if name.startswith("cpu") else "gpu_c" if name.startswith("gpu") else None
+            if key:
+                try:
+                    value = float(fields[1]) / 1000
+                except ValueError:
+                    continue
+                # Match the sampler's unavailable low-reading cutoff.
+                if math.isfinite(value) and value > -30:
                     groups[key].append(value)
         result.append(
             dict(
@@ -382,11 +387,18 @@ def analyze(session, thermal, raw_trace=None, completed=None):
     start, end = stamp(first["snapshot_utc"]), stamp(last["snapshot_utc"])
     heat = [r for r in thermal_samples(thermal) if start <= r["utc_seconds"] <= end]
     gaps = [b["utc_seconds"] - a["utc_seconds"] for a, b in zip(heat, heat[1:])]
-    above80 = 0
-    for a, b in zip(heat, heat[1:]):
-        gap = b["utc_seconds"] - a["utc_seconds"]
-        if gap <= 1 and max(a["cpu_c"] or 0, a["gpu_c"] or 0) > 80:
-            above80 += gap
+    above80 = classified = 0
+    for row, gap in zip(heat, gaps):
+        if not 0 < gap <= 1:
+            continue
+        channels = (row["cpu_c"], row["gpu_c"])
+        # One hot group establishes an exceedance; ruling one out requires
+        # readings from both groups. A retained row alone is not coverage.
+        hot = any(value is not None and value > 80 for value in channels)
+        if hot or all(value is not None for value in channels):
+            classified += gap
+            if hot:
+                above80 += gap
     # Host elapsed time is recorded before reading the runtime snapshot. Use
     # snapshot UTC, not host elapsed, to pair FPS observations with thermal UTC.
     runtime_bins = defaultdict(list)
@@ -428,7 +440,9 @@ def analyze(session, thermal, raw_trace=None, completed=None):
             max_gap_seconds=max(gaps) if gaps else None,
             gaps_over_one_second=sum(gap > 1 for gap in gaps),
             boundary_uncovered_seconds=(heat[0]["utc_seconds"] - start + end - heat[-1]["utc_seconds"]) if heat else end - start,
-            time_above80_observed_seconds=above80,
+            threshold_observed_seconds=classified,
+            threshold_unobserved_seconds=max(0, end - start - classified),
+            time_above80_observed_seconds=above80 if classified else None,
             **{f"peak_{key}": max((r[key] for r in heat if r[key] is not None), default=None) for key in ("cpu_c", "gpu_c", "battery_c")},
         ),
         first_nonzero_hal_status_seconds=statuses[0]["host_seconds"] if statuses else None,
@@ -443,7 +457,7 @@ def analyze(session, thermal, raw_trace=None, completed=None):
             "CPU/GPU timings are latest FrameTimingManager observations, not a synchronized per-frame critical-path trace.",
             "Five-minute bins use elapsed UTC from the first runtime snapshot for both runtime and thermal rows; counter windows still use host observations.",
             "Final ten-minute counters use the first retained observation inside the last 600 host seconds; uncovered boundary time is reported, never interpolated.",
-            "Thermal exposure uses left-sample hold only across gaps <=1 s; uncovered boundaries and longer gaps are unmeasured.",
+            "Thermal exposure uses the left sample across gaps <=1 s. One hot CPU/GPU group counts above 80 C; a non-hot interval needs both groups. Other time is unclassified.",
             "This report does not attribute clock changes to thermal limits. Battery-terminal observations do not qualify an unplugged energy budget.",
         ],
     )
@@ -470,6 +484,14 @@ def markdown(report):
         return "unavailable" if value is None else f"{value:.2f}"
 
     tail = report["final_ten_minutes"]
+    thermal = report["thermal"]
+    above80 = thermal["time_above80_observed_seconds"]
+    unclassified = thermal["threshold_unobserved_seconds"]
+    exposure = (
+        f"time above 80 C unavailable; {unclassified:.3f} s unclassified"
+        if above80 is None
+        else f"{above80:.3f} s above 80 C; {thermal['threshold_observed_seconds']:.3f} s classified; {unclassified:.3f} s unclassified"
+    )
 
     def quantile_line(label, values):
         if values is None:
@@ -569,6 +591,7 @@ def markdown(report):
         quantile_line("Final ten-minute individual-frame p50/p95/p99", tail["true_frame_time_percentiles_ms"]),
         f"Periodic frame-mean p50/p95/p99: {fmt(proxy['p50'])}/{fmt(proxy['p95'])}/{fmt(proxy['p99'])} ms (equal observation weights).",
         *hitch_lines,
+        f"CPU/GPU thermal exposure: {exposure}.",
         "Throttling onset: unestablished by this report.",
         "",
         *budget_lines,

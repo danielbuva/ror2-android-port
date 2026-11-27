@@ -15,6 +15,7 @@ public static partial class ContentFixtureBuilder
         public string sha256;
         public NativeContentBundle[] dependencies;
         public string scene;
+        public string loadMode;
     }
 
     [Serializable] sealed class SceneCheckReport
@@ -23,6 +24,7 @@ public static partial class ContentFixtureBuilder
         public string sourceCommit;
         public string bundleSha256;
         public string scenePath;
+        public string loadMode;
         public int roots;
         public int meshRenderers;
         public bool occlusionDataResolved;
@@ -38,6 +40,7 @@ public static partial class ContentFixtureBuilder
     static readonly List<AssetBundle> sceneBundles = new List<AssetBundle>();
     static Scene hostScene;
     static Scene streamedScene;
+    static LoadSceneMode sceneLoadMode;
     static AsyncOperation sceneOperation;
     static bool unloadingScene;
     static double sceneCheckDeadline;
@@ -54,6 +57,8 @@ public static partial class ContentFixtureBuilder
                 throw new Exception("Exact editor required");
             sceneRequest = JsonUtility.FromJson<SceneCheckRequest>(File.ReadAllText(
                 Environment.GetEnvironmentVariable("ROR2_PHONE_NATIVE_CONTENT_CHECK")));
+            sceneLoadMode = sceneRequest.loadMode == "Single" ? LoadSceneMode.Single : LoadSceneMode.Additive;
+            sceneReport.loadMode = sceneLoadMode.ToString();
             var blank = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             if (!EditorSceneManager.SaveScene(blank, "Assets/SceneCheckHost.unity"))
                 throw new Exception("Could not save the empty fixture scene");
@@ -94,7 +99,7 @@ public static partial class ContentFixtureBuilder
                 if (!bundle.isStreamedSceneAssetBundle || Array.IndexOf(bundle.GetAllScenePaths(), path) < 0)
                     throw new Exception("Pinned scene path is absent from the streamed bundle: " + path);
                 sceneReport.umbraBeforeLoad = StaticOcclusionCulling.umbraDataSize;
-                sceneOperation = SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
+                sceneOperation = SceneManager.LoadSceneAsync(path, sceneLoadMode);
                 if (sceneOperation == null) throw new Exception("Unity did not start the streamed scene load");
                 return;
             }
@@ -107,6 +112,8 @@ public static partial class ContentFixtureBuilder
             }
 
             ObserveStreamedScene();
+            if (sceneLoadMode == LoadSceneMode.Single)
+                hostScene = SceneManager.CreateScene("SceneCheckCleanup");
             if (!SceneManager.SetActiveScene(hostScene))
                 throw new Exception("Could not restore the fixture scene");
             sceneOperation = SceneManager.UnloadSceneAsync(streamedScene);
@@ -127,7 +134,7 @@ public static partial class ContentFixtureBuilder
         foreach (var root in roots)
             sceneReport.meshRenderers += root.GetComponentsInChildren<MeshRenderer>(true).Length;
         sceneReport.umbraBeforeActivation = StaticOcclusionCulling.umbraDataSize;
-        if (!SceneManager.SetActiveScene(streamedScene))
+        if (SceneManager.GetActiveScene() != streamedScene && !SceneManager.SetActiveScene(streamedScene))
             throw new Exception("Unity could not activate the pinned scene");
         sceneReport.umbraAfterActivation = StaticOcclusionCulling.umbraDataSize;
 
