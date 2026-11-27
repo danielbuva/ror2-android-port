@@ -132,6 +132,8 @@ Supported exact types are `LightingSettings`, `Mesh`, `Avatar`, `AnimationClip`,
 `PhysicMaterial`, `SpeedTreeWindAsset` and `AnimatorOverrideController`.
 An optional `subasset` name selects an exact named result of
 `LoadAssetWithSubAssets` at the given address and type.
+Material requests can qualify saved texture references by property and name,
+with an optional `type` such as `CustomRenderTexture` for the resolved object.
 The fixture resolves the SDK's internal `SpeedTreeWindAsset` type from the
 Terrain module. For `OcclusionCullingData`, the fixture verifies the native
 class name returned by the editor after loading the record as a Unity object.

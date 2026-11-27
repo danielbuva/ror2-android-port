@@ -294,6 +294,11 @@ class InstalledAlphaTests(unittest.TestCase):
         select = staged_alpha_update.acquired_sources
         self.assertEqual(select([pin, pin], self.root, inputs), {name: (source.resolve(), tool)})
         self.assertEqual(select([{}, {}], None, inputs), {})
+        remote = {"acquired/downloaded.txt": dict(tool, url="https://test.invalid/downloaded.txt")}
+        self.assertEqual(select([remote, remote], None, inputs, on_phone=True), {})
+        self.assertEqual(select([pin | remote, pin | remote], self.root, inputs, on_phone=True), {name: (source.resolve(), tool)})
+        with self.assertRaisesRegex(ValueError, "same signed acquired-tool inventory"):
+            select([pin | remote, pin], self.root, inputs, on_phone=True)
         with self.assertRaisesRegex(ValueError, "same signed acquired-tool inventory"):
             select([pin, {}], self.root, inputs)
         with self.assertRaisesRegex(ValueError, "must supply an acquired_source"):
@@ -301,6 +306,27 @@ class InstalledAlphaTests(unittest.TestCase):
         source.write_bytes(b"changed compiler")
         with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
             select([pin, pin], self.root, inputs)
+
+    def test_staged_on_phone_acquisition_checks_receipt_and_visible_result(self):
+        staged = staged_alpha_update.StagedUpdate.__new__(staged_alpha_update.StagedUpdate)
+        staged.installer = Mock(PACKAGE="dev.ror2lab.installertest")
+        staged.require = Mock()
+        staged.acquired = {"acquired/android-sdk/compiler.txt": None}
+        staged.choose = Mock()
+        staged.verify_acquired = Mock()
+        staged.require_visible_status = Mock()
+        phone = Mock(timeout=1)
+        pin = "a" * 64
+        phone.read.return_value = {"state": "TOOLS_READY", "inventory_sha256": pin}
+
+        staged.acquire_tools(phone, {"acquired_inputs_sha256": pin})
+
+        staged.choose.assert_called_once_with(phone, "tree", "Tools", tools=True)
+        phone.tap.assert_called_once_with("Acquire / resume required tools")
+        staged.require.assert_called_once_with(True, "staged-acquired-receipt-mismatch")
+        staged.verify_acquired.assert_called_once_with(phone)
+        staged.require_visible_status.assert_called_once_with(phone, "Required tools: Required tools verified in private storage.")
+        staged.installer.DIAGNOSTICS.write.assert_called_once()
 
     def test_nightly_census_joins_play_failure_without_pulling_the_apk(self):
         module_path = Path(installed_alpha.__file__).with_name("whole_game_scoreboard.py")
