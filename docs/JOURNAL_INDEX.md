@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J1562](PORTING_JOURNAL.md#j1562--draw-original-outline-instancing-on-android-vulkan) | 2026-11-27 | Draw original Outline instancing on Android Vulkan | 2026-11-27. |
+| [J1563](PORTING_JOURNAL.md#j1563--acquire-signed-sdk-tools-inside-the-android-installer) | 2026-11-27 | Acquire signed SDK tools inside the Android installer | 2026-11-27. |
 | [J1561](PORTING_JOURNAL.md#j1561--dispatch-original-ambient-occlusion-downsampling-on-android-vulkan) | 2026-11-27 | Dispatch original ambient occlusion downsampling on Android Vulkan | 2026-11-27. |
 | [J1554](PORTING_JOURNAL.md#j1554--verify-signed-crunch-and-bc7-texture-conversion-on-android) | 2026-11-27 | Verify signed Crunch and BC7 texture conversion on Android | 2026-11-27. |
 | [J1558](PORTING_JOURNAL.md#j1558--dispatch-original-fixed-and-progressive-autoexposure-on-android-vulkan) | 2026-11-27 | Dispatch original fixed and progressive AutoExposure on Android Vulkan | 2026-11-27. |

@@ -105,6 +105,7 @@ def validate_download(name, url):
         if url.startswith(
             (
                 "https://dl.google.com/dl/android/maven2/com/android/tools/",
+                "https://dl.google.com/dl/android/maven2/com/android/zipflinger/",
                 "https://repo.maven.apache.org/maven2/com/google/guava/",
                 "https://repo.maven.apache.org/maven2/com/squareup/javawriter/",
                 "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/",
