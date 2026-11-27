@@ -1,0 +1,59 @@
+{
+  "settings": {
+    "width": 1280,
+    "height": 960,
+    "fps": 60,
+    "fov": 60,
+    "disablePostProcessing": true
+  },
+  "scenarios": [
+    {
+      "id": "rex-titanic-plains",
+      "scene": "golemplains",
+      "seed": "3",
+      "body": "TreebotBody",
+      "steps": [
+        {
+          "id": "disperse-clear-control",
+          "action": "capture",
+          "player": [-115.959984, -145.258530, -190.760513],
+          "settleSeconds": 1,
+          "view": {
+            "position": [-115.959961, -135.640930, -201.884094],
+            "yaw": 0,
+            "pitch": 30.96599
+          }
+        },
+        {
+          "id": "disperse-clear-cast",
+          "action": "skill",
+          "value": "utility",
+          "aimDirection": [0, 0, 1],
+          "recordSeconds": 2
+        },
+        {
+          "id": "disperse-beetle-before",
+          "action": "spawn",
+          "subject": "beetle",
+          "value": "BeetleMaster",
+          "freezeAi": true,
+          "relativeToPlayer": true,
+          "position": [0, 0, 3.5],
+          "settleSeconds": 8
+        },
+        {
+          "id": "disperse-beetle-cast",
+          "action": "skill",
+          "value": "utility",
+          "aimAt": "beetle",
+          "recordSeconds": 2
+        },
+        {
+          "id": "disperse-beetle-after",
+          "action": "capture",
+          "subject": "beetle"
+        }
+      ]
+    }
+  ]
+}

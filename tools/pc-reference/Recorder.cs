@@ -43,6 +43,8 @@ namespace Ror2Lab.Reference
         private bool finished;
         private CharacterBody aimSubject;
         private Vector3 aimPoint;
+        private Vector3 explicitAimDirection;
+        private FrameBurst frameBurst;
 
         private void Awake()
         {
@@ -178,6 +180,8 @@ namespace Ror2Lab.Reference
                 user.GetCurrentBody().currentVehicle.EjectPassenger();
 
             InstallAudioObserver();
+            if (scenario.steps.Any(step => step.action == "grapple"))
+                GrappleObservation.Install(harmony);
             if (scenario.captureAudio)
             {
                 waveStatus = AkSoundEngine.StartOutputCapture(Path.Combine(output, "mix.wav")).ToString();
@@ -211,6 +215,7 @@ namespace Ror2Lab.Reference
             stepId = step.id;
             if (waveRecording)
                 AkSoundEngine.AddOutputCaptureMarker(stepId);
+            bool captureProjectile = !string.IsNullOrEmpty(step.observeProjectileHitOn);
             CharacterBody player = user.GetCurrentBody();
             if (!player || !player.healthComponent.alive)
                 throw new InvalidOperationException("Player died before " + stepId);
@@ -256,14 +261,26 @@ namespace Ror2Lab.Reference
                     throw new InvalidOperationException("Capture actor has no live body: " + step.subject);
             }
 
-            if (!string.IsNullOrEmpty(step.aimAt) || (step.aim != null && step.aim.Length != 0))
+            if (!string.IsNullOrEmpty(step.aimAt) || (step.aim != null && step.aim.Length != 0) ||
+                (step.aimDirection != null && step.aimDirection.Length != 0))
             {
                 aimSubject = subject;
-                aimPoint = string.IsNullOrEmpty(step.aimAt) ? CaptureStep.Vector(step.aim) :
-                    step.aimAt == "player" ? player.corePosition : actors[step.aimAt].GetBody().corePosition;
+                explicitAimDirection = step.aimDirection != null && step.aimDirection.Length != 0
+                    ? CaptureStep.Vector(step.aimDirection).normalized : Vector3.zero;
+                if (explicitAimDirection == Vector3.zero)
+                    aimPoint = string.IsNullOrEmpty(step.aimAt) ? CaptureStep.Vector(step.aim) :
+                        step.aimAt == "player" ? player.corePosition : actors[step.aimAt].GetBody().corePosition;
                 ApplyAim();
                 yield return new WaitForSecondsRealtime(0.25f);
             }
+            string folder = Path.Combine(output, stepId);
+            Directory.CreateDirectory(folder);
+            if (captureProjectile)
+            {
+                yield return RecordProjectileStep(folder, step, player, rig);
+                yield break;
+            }
+            GrappleObservation grapple = null;
             switch (step.action)
             {
                 case "state":
@@ -276,9 +293,13 @@ namespace Ror2Lab.Reference
                     machine.SetState((EntityState)Activator.CreateInstance(type));
                     break;
                 case "skill":
-                    GenericSkill skill = SelectSkill(subject.skillLocator, step.value);
-                    if (!skill || !skill.ExecuteIfReady())
-                        throw new InvalidOperationException($"Native skill {step.value} could not execute on {subject.name}.");
+                    ExecuteSkill(subject, step.value);
+                    break;
+                case "grapple":
+                    if (subject != player || !(step.holdSeconds > 0 && step.recordSeconds > step.holdSeconds))
+                        throw new ArgumentException("Grapple requires the local player and a recording window longer than the hold.");
+                    grapple = GrappleObservation.Begin(player, step.holdSeconds);
+                    StartCoroutine(grapple.SampleTicks());
                     break;
                 case "ping":
                     user.master.GetComponent<PingerController>().DebugPingObject(subject);
@@ -296,8 +317,6 @@ namespace Ror2Lab.Reference
                 default:
                     throw new ArgumentException("Unrecognized action: " + step.action);
             }
-            string folder = Path.Combine(output, stepId);
-            Directory.CreateDirectory(folder);
             if (step.settleSeconds > 0 && step.action != "move")
                 yield return new WaitForSecondsRealtime(step.settleSeconds);
             yield return new WaitForEndOfFrame();
@@ -314,8 +333,39 @@ namespace Ror2Lab.Reference
                 frameTimes.Add(new FrameTime { frame = name, seconds = Time.realtimeSinceStartup });
                 WriteFrame(Path.Combine(folder, name));
             }
+            grapple?.Write(folder);
             steps.Add(new StepResult { id = stepId, frame = stepId + "/frame.png", state = stepId + "/state.json",
-                timeline = frameTimes.ToArray() });
+                grapple_ticks = grapple == null ? null : stepId + "/grapple-ticks.jsonl", timeline = frameTimes.ToArray() });
+        }
+
+        private IEnumerator RecordProjectileStep(string folder, CaptureStep step, CharacterBody player, CameraRigController rig)
+        {
+            CharacterBody target = actors[step.observeProjectileHitOn].GetBody();
+            if (!target || !target.healthComponent.alive)
+                throw new InvalidOperationException("Projectile capture requires its live target.");
+
+            yield return new WaitForEndOfFrame();
+            CaptureEvidence.WriteState(folder, rig.sceneCam, player, target, step, request.scenario);
+            var burst = new FrameBurst();
+            frameBurst = burst;
+            burst.Capture();
+            ApplyAim();
+            var observation = ProjectileObservation.Begin(player, target, SelectSkill(player.skillLocator, step.value));
+            StartCoroutine(observation.SampleTicks());
+            ExecuteSkill(player, step.value);
+            double end = Time.realtimeSinceStartupAsDouble + step.recordSeconds;
+            do
+            {
+                yield return new WaitForEndOfFrame();
+                burst.Capture();
+            } while (Time.realtimeSinceStartupAsDouble < end);
+            observation.Write(folder);
+            yield return Until(() => burst.IsReady, "Projectile video GPU reads did not finish.", 10);
+            FrameTime[] timeline = burst.Write(folder);
+            burst.Dispose();
+            frameBurst = null;
+            steps.Add(new StepResult { id = stepId, frame = stepId + "/frame.png", state = stepId + "/state.json",
+                projectile_trace = stepId + "/projectile-trace.json", timeline = timeline });
         }
 
         private void LateUpdate() => ApplyAim();
@@ -324,10 +374,18 @@ namespace Ror2Lab.Reference
         {
             if (!aimSubject || !aimSubject.inputBank)
                 return;
-            Vector3 direction = (aimPoint - aimSubject.inputBank.aimOrigin).normalized;
+            Vector3 direction = explicitAimDirection == Vector3.zero
+                ? (aimPoint - aimSubject.inputBank.aimOrigin).normalized : explicitAimDirection;
             aimSubject.inputBank.aimDirection = direction;
             if (aimSubject.characterDirection)
                 aimSubject.characterDirection.moveVector = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
+        }
+
+        private static void ExecuteSkill(CharacterBody subject, string slot)
+        {
+            GenericSkill skill = SelectSkill(subject.skillLocator, slot);
+            if (!skill || !skill.ExecuteIfReady())
+                throw new InvalidOperationException($"Native skill {slot} could not execute on {subject.name}.");
         }
 
         private static GenericSkill SelectSkill(SkillLocator skills, string slot)
@@ -404,6 +462,9 @@ namespace Ror2Lab.Reference
             finished = true;
             SteamworksClientManager.onLoaded -= IsolateProfile;
             active = null;
+            GrappleObservation.Stop();
+            ProjectileObservation.Stop();
+            frameBurst?.Dispose();
             harmony?.UnpatchSelf();
             if (waveRecording)
                 waveStatus = AkSoundEngine.StopOutputCapture().ToString();
@@ -488,14 +549,10 @@ namespace Ror2Lab.Reference
             public string id;
             public string frame;
             public string state;
+            public string grapple_ticks;
+            public string projectile_trace;
             public FrameTime[] timeline;
         }
 
-        [Serializable]
-        private sealed class FrameTime
-        {
-            public string frame;
-            public float seconds;
-        }
     }
 }

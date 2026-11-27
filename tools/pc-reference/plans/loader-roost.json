@@ -1,0 +1,33 @@
+{
+  "settings": {
+    "width": 1280,
+    "height": 960,
+    "fps": 60,
+    "fov": 60,
+    "disablePostProcessing": true
+  },
+  "scenarios": [
+    {
+      "id": "loader-roost",
+      "scene": "blackbeach2",
+      "seed": "3",
+      "body": "LoaderBody",
+      "naturalFirstStage": true,
+      "steps": [
+        {
+          "id": "loader-terrain-grapple",
+          "action": "grapple",
+          "player": [62.078, 11.038, 116.575],
+          "aim": [59.0005493, 11.0884218, 110.7081604],
+          "view": {
+            "position": [67.5449295, 14.7521095, 126.9969635],
+            "yaw": -152.321075,
+            "pitch": 11.265413
+          },
+          "holdSeconds": 2.4,
+          "recordSeconds": 5
+        }
+      ]
+    }
+  ]
+}

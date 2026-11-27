@@ -3144,7 +3144,13 @@ default and unknown-name fallback. The listing action itself is current.
 `./dev pc-reference` is the current host recorder for stock Steam PC captures.
 `scripts/lab/pc_reference.py` owns the separate CrossOver clone, launch and
 capture manifest. `tools/pc-reference/Recorder.cs` owns its isolated profile,
-local run, camera and capture lifecycle. See the [PC reference recorder](../tools/pc-reference/README.md).
+local run, camera and capture lifecycle. `GrappleObservation.cs` supplies
+the Loader test input and records the stock hook and motor at fixed ticks.
+`ProjectileObservation.cs` records the stock skill, owned projectile and native
+damage for projectile comparison steps. `FrameBurst.cs` captures rendered frames
+around the cast for timestamped video.
+`tools/pc-reference/compare.py` pairs a hashed PC frame with a selected
+Android capture. See the [PC reference recorder](../tools/pc-reference/README.md).
 The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
