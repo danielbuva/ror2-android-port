@@ -77,6 +77,8 @@ def compile_cache(sdk_state, tool_state, compiler, android_tools, output, protec
         CCACHE_COMPILERTYPE="clang",
         CCACHE_STATSLOG=str(output / "logs/ccache-stats.log"),
     )
+    if android_tools:
+        cache_environment["CCACHE_COMPILER"] = compiler
     return executable, provider_hash, identity, cache_environment
 
 
@@ -709,7 +711,11 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
                 # exact compile command, including paths that affect object bytes.
                 namespace = hashlib.sha256(json.dumps([identity, command]).encode()).hexdigest()
                 options["env"] = dict(cache_environment, CCACHE_NAMESPACE=namespace)
-                command = [str(executable), *command]
+                # ccache parses paths containing "=" as configuration before
+                # the compiler argument. Android APK install paths contain
+                # "="; CCACHE_COMPILER supplies the verified absolute path.
+                compiler_arg = Path(command[0]).name if android_tools else command[0]
+                command = [str(executable), compiler_arg, *command[1:]]
             invoke(command, output, str(index), **options)
         if sha(source) != before:
             raise ValueError("native input changed during compilation")
