@@ -377,7 +377,13 @@ fixtures run in one serial group, not concurrently against their shared outputs.
 Reports contain local diagnostics: review them before sharing. Neither runner
 mode replaces toolchain or device acceptance.
 
-With `git config core.hooksPath scripts/git-hooks` installed, the pre-push
+Use `./dev publish` from a clean topic branch to fetch and merge `origin/main`,
+commit journal and tracked-source pin repairs when needed, and push the prepared
+branch ref through the lab pre-push hook. Use `./dev publish --pr` to open or
+find its PR to `main` and print `AUTOMERGE <n>` for the merge bot. Rerunning the
+command after a PR creation error reuses the existing branch and open PR.
+
+For direct pushes with `git config core.hooksPath scripts/git-hooks` installed, the pre-push
 hook also reconciles a clean checked-out topic's journal against its merged
 `origin/main`. It keeps main's entries intact and, when needed, creates a new
 local commit containing only the renumbered journal and regenerated index. Git

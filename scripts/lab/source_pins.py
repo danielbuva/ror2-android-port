@@ -455,6 +455,13 @@ def prior_versions(root, commit, base):
     return tuple(dict.fromkeys(versions))
 
 
+def build_plan(root, commit, base):
+    with ExitStack() as stack:
+        blobs = Blobs(root, stack)
+        snapshot = Snapshot(root, commit, blobs)
+        return Plan(snapshot, prior_versions(root, commit, base), blobs)
+
+
 def main(argv=None, *, root=ROOT):
     parser = argparse.ArgumentParser(prog="./dev pins", description="Current host tooling for tracked-source recipe pins.")
     parser.add_argument("command", choices=("check", "refresh"))
@@ -466,10 +473,7 @@ def main(argv=None, *, root=ROOT):
     if (args.commit and args.command != "check") or (args.refresh_for_push and not args.commit):
         parser.error("commit checks use check; refresh-for-push requires an outgoing commit")
     try:
-        with ExitStack() as stack:
-            blobs = Blobs(root, stack)
-            snapshot = Snapshot(root, args.commit, blobs)
-            plan = Plan(snapshot, prior_versions(root, args.commit, args.base), blobs)
+        plan = build_plan(root, args.commit, args.base)
         plan.report(args.show_external)
         if plan.issues:
             return 1

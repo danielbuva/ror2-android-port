@@ -3392,6 +3392,13 @@ the check. Dirty worktrees and ambiguous journal content are not repaired.
 `tests/test_journal_pre_push.py` exercises the real hook and remote ref update
 against a disposable local Git remote.
 
+`scripts/lab/publish.py` owns the current `./dev publish [--pr]` workflow for
+a clean checked-out topic. It fetches and merges main, uses the journal repair
+and source pin owners to commit generated changes, then pushes the topic ref
+through the existing hook. After verifying the remote tip, `--pr` creates or
+finds the matching open PR and prints the merge bot registration line. The
+command keeps no publication state beyond the normal Git refs and PR.
+
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh exact-commit checkout. The hook uses
 `scripts/ci-test-impact.py` to trace Python imports, source references and

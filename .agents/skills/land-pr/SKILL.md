@@ -19,9 +19,12 @@ description: Use when updating, verifying and merging a branch or draft PR of th
    Never renumber someone else's entry.
 2. `.local/lab-venv/bin/ruff format` + `ruff check` on changed Python; `python3 -m unittest discover -s tests` for affected tests.
 3. `python3 scripts/audit-public.py` on staged content; manually confirm no game-derived bytes, device serials, private paths or credentials.
-4. Push. The pre-push hook runs `scripts/ci-local.sh` with affected test selection in a fresh clone. GitHub runs the full suite.
+4. Run `./dev publish --pr` in the foreground. It fetches and merges `origin/main`, commits any
+   journal and tracked-source pin repairs, then pushes the branch ref through the normal pre-push
+   hook. The hook runs `scripts/ci-local.sh` with affected test selection in a fresh clone. GitHub
+   runs the full suite. If the merge conflicts, resolve it as in step 1 before rerunning the command.
 5. Journal shipped device-verified behaviour and closed readiness or alpha gates. Cite the device run for device claims. Record routine host-only fixes in their PR.
-6. After opening the PR, append `AUTOMERGE <n>` to the workstream status file. The orchestrator's
+6. Append the `AUTOMERGE <n>` line printed by `./dev publish --pr` to the workstream status file. The orchestrator's
    merge bot waits for the required `host-tests` check and squash-merges with the GitHub noreply
    author address. GitHub deletes the remote head branch. Start the next item from `origin/main`
    while CI runs. Use `WAITING ci-pr <n>` only when the next step requires the merge.

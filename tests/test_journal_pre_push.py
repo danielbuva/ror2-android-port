@@ -1,5 +1,7 @@
-"""Exercise the real pre-push hook against a disposable Git remote."""
+"""Exercise publication and the real pre-push hook against a disposable Git remote."""
 
+from hashlib import sha256
+import json
 import os
 from pathlib import Path
 import shutil
@@ -25,7 +27,7 @@ class JournalPrePushTests(unittest.TestCase):
             self.env.pop(name, None)
         self.git("init", "-q", "-b", "main")
         self.git("config", "user.name", "Synthetic fixture")
-        self.git("config", "user.email", "fixture.invalid")
+        self.git("config", "user.email", "@".join(("fixture", "users.noreply.github.com")))
         self.git("config", "commit.gpgsign", "false")
         self.git("init", "-q", "--bare", str(self.remote))
         self.git("remote", "add", "origin", str(self.remote))
@@ -34,6 +36,8 @@ class JournalPrePushTests(unittest.TestCase):
             "journal-renumber.py",
             "journal-pre-push.py",
             "lab/source_pins.py",
+            "lab/publish.py",
+            "audit-public.py",
             "git-hooks/pre-push",
         ):
             target = self.root / "scripts" / name
@@ -48,6 +52,12 @@ class JournalPrePushTests(unittest.TestCase):
         (self.root / JOURNAL).write_text("# Journal\n\n## J1 — Base\n\nBase evidence.\n")
         (self.root / INDEX).write_text("Synthetic generated index placeholder.\n")
         (self.root / "unrelated.txt").write_text("original\n")
+        producer = self.root / "tools/producer.py"
+        producer.parent.mkdir()
+        producer.write_text("# initial producer\n")
+        recipe = self.root / "recipe/fixture.json"
+        recipe.parent.mkdir()
+        recipe.write_text(json.dumps({"input": {"path": "tools/producer.py", "sha256": sha256(producer.read_bytes()).hexdigest()}}))
         self.commit("base")
         self.git("push", "-q", "origin", "main")
         self.git("switch", "-q", "-c", "dani/fixture")
@@ -78,6 +88,51 @@ class JournalPrePushTests(unittest.TestCase):
 
     def push(self, *, ok=True):
         return self.git("push", "origin", "dani/fixture", ok=ok, date="2020-01-08T23:00:00-0800")
+
+    def publish(self, *args):
+        return subprocess.run([sys.executable, "scripts/lab/publish.py", *args], cwd=self.root, env=self.env, text=True, capture_output=True, timeout=30)
+
+    def test_publish_repairs_and_checks_both_in_the_first_push(self):
+        producer = self.root / "tools/producer.py"
+        producer.write_text("# changed producer\n")
+        self.commit("change producer")
+        untouched = self.root / "untracked-private.txt"
+        untouched.write_text("leave alone\n")
+        self.git("config", "--unset", "core.hooksPath")
+        result = self.publish()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("Run git push again", result.stderr)
+        self.assertNotIn("Commit the refreshed files", result.stderr)
+        tip = self.git("rev-parse", "HEAD").stdout.strip()
+        self.assertEqual(result.stdout.count(f"checked {tip}"), 1)
+        self.assertTrue(self.git("ls-remote", "--heads", "origin", "dani/fixture").stdout.startswith(tip))
+        self.assertIn("## J3 — Topic", (self.root / JOURNAL).read_text())
+        pin = json.loads((self.root / "recipe/fixture.json").read_text())["input"]["sha256"]
+        self.assertEqual(pin, sha256(producer.read_bytes()).hexdigest())
+        self.assertEqual(self.git("status", "--porcelain").stdout, "?? untracked-private.txt\n")
+
+    def test_publish_creates_then_reuses_the_exact_pr(self):
+        bin_dir = self.root.parent / "bin"
+        bin_dir.mkdir()
+        gh = bin_dir / "gh"
+        gh.write_text(
+            "#!/bin/sh\n"
+            "url=https://example.invalid/owner/repo/pull/42\n"
+            "tip=$(git rev-parse HEAD)\n"
+            'row=$(printf \'{"number":42,"url":"%s","headRefOid":"%s","isCrossRepository":false}\' "$url" "$tip")\n'
+            'case "$1 $2" in\n'
+            '  "pr list") if test -f pr-created; then printf "[%s]\\n" "$row"; else echo "[]"; fi ;;\n'
+            '  "pr create") test ! -e pr-created || exit 7; touch pr-created; echo "$url" ;;\n'
+            '  "pr view") echo "$row" ;;\n'
+            "  *) exit 8 ;;\n"
+            "esac\n"
+        )
+        gh.chmod(0o755)
+        self.env["PATH"] = f"{bin_dir}{os.pathsep}{self.env['PATH']}"
+        for _ in range(2):
+            result = self.publish("--pr")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(result.stdout.splitlines()[-2:], ["https://example.invalid/owner/repo/pull/42", "AUTOMERGE 42"])
 
     def test_first_push_repairs_then_retry_sends_exact_new_commit(self):
         original = self.git("rev-parse", "HEAD").stdout.strip()
