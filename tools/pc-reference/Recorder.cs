@@ -178,6 +178,8 @@ namespace Ror2Lab.Reference
                 user.GetCurrentBody().currentVehicle.EjectPassenger();
 
             InstallAudioObserver();
+            if (scenario.steps.Any(step => step.action == "grapple"))
+                GrappleObservation.Install(harmony);
             if (scenario.captureAudio)
             {
                 waveStatus = AkSoundEngine.StartOutputCapture(Path.Combine(output, "mix.wav")).ToString();
@@ -264,6 +266,7 @@ namespace Ror2Lab.Reference
                 ApplyAim();
                 yield return new WaitForSecondsRealtime(0.25f);
             }
+            GrappleObservation grapple = null;
             switch (step.action)
             {
                 case "state":
@@ -279,6 +282,12 @@ namespace Ror2Lab.Reference
                     GenericSkill skill = SelectSkill(subject.skillLocator, step.value);
                     if (!skill || !skill.ExecuteIfReady())
                         throw new InvalidOperationException($"Native skill {step.value} could not execute on {subject.name}.");
+                    break;
+                case "grapple":
+                    if (subject != player || !(step.holdSeconds > 0 && step.recordSeconds > step.holdSeconds))
+                        throw new ArgumentException("Grapple requires the local player and a recording window longer than the hold.");
+                    grapple = GrappleObservation.Begin(player, step.holdSeconds);
+                    StartCoroutine(grapple.SampleTicks());
                     break;
                 case "ping":
                     user.master.GetComponent<PingerController>().DebugPingObject(subject);
@@ -314,8 +323,9 @@ namespace Ror2Lab.Reference
                 frameTimes.Add(new FrameTime { frame = name, seconds = Time.realtimeSinceStartup });
                 WriteFrame(Path.Combine(folder, name));
             }
+            grapple?.Write(folder);
             steps.Add(new StepResult { id = stepId, frame = stepId + "/frame.png", state = stepId + "/state.json",
-                timeline = frameTimes.ToArray() });
+                grapple_ticks = grapple == null ? null : stepId + "/grapple-ticks.jsonl", timeline = frameTimes.ToArray() });
         }
 
         private void LateUpdate() => ApplyAim();
@@ -404,6 +414,7 @@ namespace Ror2Lab.Reference
             finished = true;
             SteamworksClientManager.onLoaded -= IsolateProfile;
             active = null;
+            GrappleObservation.Stop();
             harmony?.UnpatchSelf();
             if (waveRecording)
                 waveStatus = AkSoundEngine.StopOutputCapture().ToString();
@@ -488,6 +499,7 @@ namespace Ror2Lab.Reference
             public string id;
             public string frame;
             public string state;
+            public string grapple_ticks;
             public FrameTime[] timeline;
         }
 

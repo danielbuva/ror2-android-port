@@ -3,6 +3,7 @@
 import argparse
 import fcntl
 import json
+import math
 import os
 import re
 import shutil
@@ -28,6 +29,8 @@ CLONE_NAME = "ror2-reference"
 RECEIPT = ".ror2lab-reference.json"
 EXCLUDE = {"steam_appid.txt", "bepinex", "winhttp.dll", "doorstop_config.ini", ".doorstop_version"}
 NAME = re.compile(r"[a-z0-9][a-z0-9_-]{0,79}\Z")
+FRAME = re.compile(r"frame(?:-[0-9]{4,})?\.png\Z")
+ACTIONS = {"capture", "spawn", "state", "skill", "grapple", "ping", "fire-trail", "move"}
 
 
 def steam_build(source):
@@ -199,7 +202,34 @@ def load_plan(plan):
             raise ValueError("Scenario seed must be a decimal string in the unsigned 64-bit range")
         if not scenario.get("scene") or not scenario.get("body"):
             raise ValueError("Scenario requires an expected scene and survivor body")
+        for step in scenario["steps"]:
+            if step.get("action") not in ACTIONS:
+                raise ValueError("Step requires a supported action")
+            if step["action"] == "grapple":
+                hold, window = step.get("holdSeconds"), step.get("recordSeconds")
+                if not all(type(value) in (int, float) and math.isfinite(value) for value in (hold, window)) or not 0 < hold < window:
+                    raise ValueError("Grapple requires a recording window longer than the positive hold")
     return scenarios
+
+
+def encode_grapple_video(folder, timeline, ffmpeg):
+    if len(timeline) < 2 or any(not FRAME.fullmatch(frame["frame"]) for frame in timeline):
+        raise RuntimeError("Grapple video requires a valid PNG timeline")
+    lines = ["ffconcat version 1.0"]
+    for frame, next_frame in zip(timeline, timeline[1:]):
+        duration = next_frame["seconds"] - frame["seconds"]
+        if not math.isfinite(duration) or duration <= 0:
+            raise RuntimeError("Grapple frame timestamps must increase")
+        lines.extend((f"file {frame['frame']}", f"duration {duration:.6f}"))
+    lines.append(f"file {timeline[-1]['frame']}")
+    receipt = folder / "video.ffconcat"
+    receipt.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    subprocess.run(
+        [ffmpeg, "-nostdin", "-v", "error", "-f", "concat", "-i", receipt, "-c:v", "libx264", "-pix_fmt", "yuv420p", "grapple.mp4"],
+        cwd=folder,
+        timeout=60,
+        check=True,
+    )
 
 
 def capture_files(output, scenario, result):
@@ -209,10 +239,12 @@ def capture_files(output, scenario, result):
     files = ["audio-events.jsonl"]
     if result.get("audio_capture_status") == "AK_Success":
         files.append("mix.wav")
-    for step in steps:
+    for planned, step in zip(scenario["steps"], steps):
         folder = step["id"]
         files.extend((f"{folder}/frame.png", f"{folder}/state.json"))
         files.extend(f"{folder}/{frame['frame']}" for frame in step["timeline"][1:])
+        if planned.get("action") == "grapple":
+            files.extend((f"{folder}/grapple-ticks.jsonl", f"{folder}/grapple.mp4"))
     artifacts = {}
     for name in files:
         path = (output / name).resolve()
@@ -224,9 +256,12 @@ def capture_files(output, scenario, result):
 
 def run_plan(args, clone, identity, command, plan, scenarios):
     check_capture_host(command)
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg and any(step["action"] == "grapple" for scenario in scenarios for step in scenario["steps"]):
+        raise RuntimeError("Loader video capture requires ffmpeg")
     root = Path(tempfile.mkdtemp(prefix=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-"), dir=LOCAL))
     write(root / "plan.json", plan)
-    manifest = {"status": "running", "platform": "crossover-d3d11", **identity, "scenarios": []}
+    manifest = {"schema_version": 1, "status": "running", "platform": "crossover-d3d11", **identity, "scenarios": []}
     try:
         for index, scenario in enumerate(scenarios):
             if index:
@@ -272,6 +307,10 @@ def run_plan(args, clone, identity, command, plan, scenarios):
             )
             if process.returncode or result["status"] != "passed":
                 raise RuntimeError(result.get("error") or f"{scenario['id']} exited with code {process.returncode}")
+            for step in result["steps"]:
+                if step.get("grapple_ticks"):
+                    encode_grapple_video(output / step["id"], step["timeline"], ffmpeg)
+                    step["video"] = f"{step['id']}/grapple.mp4"
             manifest["scenarios"][-1]["sha256"] = capture_files(output, scenario, result)
         manifest["status"] = "passed"
     except BaseException as error:

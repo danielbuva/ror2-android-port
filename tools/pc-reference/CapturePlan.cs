@@ -45,6 +45,7 @@ namespace Ror2Lab.Reference
         public bool relativeToPlayer;
         public float settleSeconds;
         public float recordSeconds;
+        public float holdSeconds;
         public float[] player;
         public float[] position;
         public float[] aim;

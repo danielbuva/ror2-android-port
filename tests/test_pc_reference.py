@@ -34,6 +34,26 @@ class PcReferenceTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "artifact is missing"):
                 pc_reference.capture_files(output, scenario, result)
 
+    def test_grapple_plan_and_manifest_require_hold_trace_and_clip(self):
+        plan = json.loads((ROOT / "tools/pc-reference/plans/loader-roost.json").read_text())
+        scenario = pc_reference.load_plan(plan)[0]
+        step = scenario["steps"][0]
+        folder = step["id"]
+        result = {"steps": [{"id": folder, "timeline": [{"frame": "frame.png"}]}]}
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory).resolve()
+            (output / folder).mkdir()
+            for name in ("audio-events.jsonl", f"{folder}/frame.png", f"{folder}/state.json", f"{folder}/grapple-ticks.jsonl"):
+                (output / name).write_text(name)
+            with self.assertRaisesRegex(RuntimeError, "grapple.mp4"):
+                pc_reference.capture_files(output, scenario, result)
+            clip = output / folder / "grapple.mp4"
+            clip.write_text("encoded fixture")
+            self.assertEqual(pc_reference.capture_files(output, scenario, result)[f"{folder}/grapple.mp4"], pc_reference.sha(clip))
+        step["holdSeconds"] = step["recordSeconds"]
+        with self.assertRaisesRegex(ValueError, "longer than the positive hold"):
+            pc_reference.load_plan(plan)
+
     def test_reference_clone_requires_its_ownership_receipt(self):
         with tempfile.TemporaryDirectory() as directory:
             drive = Path(directory) / "drive_c"

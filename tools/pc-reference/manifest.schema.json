@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RoR2 PC reference capture manifest v1",
+  "type": "object",
+  "required": ["schema_version", "platform", "status", "build", "managed_sha256", "scenarios"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "platform": {"const": "crossover-d3d11"},
+    "status": {"enum": ["passed", "failed"]},
+    "error": {"type": "string"},
+    "build": {"type": "string", "pattern": "^[0-9]+$"},
+    "managed_sha256": {"$ref": "#/$defs/sha256"},
+    "scenarios": {"type": "array", "items": {"$ref": "#/$defs/scenario"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "scenario": {
+      "type": "object",
+      "required": ["id", "status", "result", "exit_code"],
+      "properties": {
+        "id": {"type": "string"},
+        "status": {"enum": ["passed", "failed"]},
+        "result": {"type": ["string", "null"], "description": "Recorder receipt relative to the manifest folder."},
+        "exit_code": {"type": "integer"},
+        "scene": {"type": "string"},
+        "seed": {"type": "string"},
+        "route": {"enum": ["native-first-stage", "assisted-direct-entry"]},
+        "sha256": {
+          "type": "object",
+          "description": "Hashes keyed by paths relative to this scenario's evidence folder.",
+          "additionalProperties": {"$ref": "#/$defs/sha256"}
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "frame", "state", "timeline"],
+            "properties": {
+              "id": {"type": "string"},
+              "frame": {"type": "string"},
+              "state": {"type": "string"},
+              "grapple_ticks": {"type": ["string", "null"]},
+              "video": {"type": "string"},
+              "timeline": {
+                "type": "array", "minItems": 1,
+                "items": {
+                  "type": "object", "required": ["frame", "seconds"],
+                  "properties": {
+                    "frame": {"type": "string", "description": "PNG relative to the step folder."},
+                    "seconds": {"type": "number", "minimum": 0, "description": "Unity realtime since startup."}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

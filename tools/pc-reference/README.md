@@ -11,6 +11,7 @@ the game before starting a capture.
 ./dev pc-reference --validate-plan tools/pc-reference/plans/gameplay.json
 ./dev pc-reference tools/pc-reference/plans/gameplay.json --scenario roost
 ./dev pc-reference tools/pc-reference/plans/gameplay.json
+./dev pc-reference tools/pc-reference/plans/loader-roost.json
 ```
 
 Preparation uses an APFS clone inside the same bottle. Stock Steam performs
@@ -31,7 +32,12 @@ native portal and beacon sequence need their own gameplay captures.
 
 Step actions include `capture`, `spawn` (master prefab), `state` (entity
 state and machine), `skill` (native skill slot), `ping`, `fire-trail`
-and `move`. A step can reuse the preceding camera or supply a new position
+and `move`. `grapple` holds Loader's default Secondary in the local input
+bank for `holdSeconds` with movement input zero, then releases it. The Roost
+plan records the native Hook state and network ID, world attachment, anchor
+and motor position at fixed ticks. The step requires `ffmpeg` to assemble
+an MP4 from timestamped PNGs at about 10 samples per second.
+A step can reuse the preceding camera or supply a new position
 and yaw/pitch. `aimAt` takes a spawned actor's alias or `player`.
 `settleSeconds` delays a shot or specifies an assisted move's duration.
 `recordSeconds` adds timestamped PNGs after the first frame.
@@ -44,6 +50,17 @@ carry event identity, emitter, returned playing ID and Unity time. Wwise's
 optional mix capture reports its middleware result. The WAV and frame
 timestamps require runtime validation before use in a listening comparison.
 These plans use native PC render resolution.
+
+The [plan schema](plan.schema.json) describes the recorder inputs. The
+[manifest schema](manifest.schema.json) describes the output consumed by
+the comparison tool. The tool pairs an explicit PC step and Android PNG,
+reports scene and camera metadata when an Android gameplay state is supplied,
+and can compose an image for visual inspection.
+
+```sh
+python3 tools/pc-reference/compare.py "$pc_manifest" loader-roost loader-terrain-grapple "$phone_png" \
+  --android-state "$phone_gameplay_json" --side-by-side "$private_output_png"
+```
 
 CrossOver translates the Windows D3D11 renderer, which can shift color and
 lighting relative to native Windows. Its captures can be used for presence,
