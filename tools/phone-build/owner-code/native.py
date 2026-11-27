@@ -339,6 +339,9 @@ def plan(profile, sdk, output, android_tools=None):
         argv = [str(sdk / profile["compiler"]), *arguments(profile["arguments"][item["arguments"]], roots, source=source, obj=obj)]
         if android_tools:
             argv = android_command(argv, sdk, android_tools)
+            # LLD hashes debug info before stripping. Keep job roots out of
+            # that build ID without rewriting runtime source-location macros.
+            argv.append(f"-fdebug-prefix-map={output}=.")
         jobs.append({"source": str(source), "output": str(obj), "kind": kind, "argv": argv})
     link = [str(sdk / profile["compiler"]), *arguments(profile["link"], roots, library=output / "libil2cpp.unstripped.so")]
     if android_tools:
@@ -347,7 +350,7 @@ def plan(profile, sdk, output, android_tools=None):
     linked = [v for v in link if v.endswith(".o")]
     if len(linked) != len(objects) or set(linked) != set(objects) or len(set(objects)) != len(objects):
         raise ValueError("compile/link object closure differs")
-    return {"schema": 1, "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
+    return {"schema": 1, "sdk": str(sdk), "jobs": jobs, "wrappers": wrappers, "link": link, "library": str(output / "libil2cpp.unstripped.so")}
 
 
 def elapsed_clock():
@@ -498,10 +501,13 @@ def compiled_jobs(folder, current, profile, sdk, inputs, *, resume=False):
     source_state = lambda rows: {name: {k: v for k, v in row.items() if k != "path"} for name, row in rows.items()}
     if source_state(previous["sources"]) != source_state(inputs["sources"]):
         raise ValueError("compiled converter source cohort differs")
-    compiler = "/" + profile["compiler"]
-    if not old["jobs"][0]["argv"][0].endswith(compiler):
-        raise ValueError("compiled SDK command binding differs")
-    old_sdk = old["jobs"][0]["argv"][0][: -len(compiler)]
+    old_sdk = old.get("sdk")
+    if old_sdk is None:
+        # Older SDK-native and Linux plans recorded the SDK driver in argv.
+        compiler = "/" + profile["compiler"]
+        if not old["jobs"][0]["argv"][0].endswith(compiler):
+            raise ValueError("compiled SDK command binding differs")
+        old_sdk = old["jobs"][0]["argv"][0][: -len(compiler)]
     old_output = str(Path(old["library"]).parent)
     output = str(Path(current["library"]).parent)
 
@@ -710,6 +716,10 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
                     result["reused_compile_tasks"] += 1
                     continue
                 complete(*compile_job(index, job))
+            if measured is not None or "compile_workers" in request:
+                indexes = range(len(value["jobs"])) if measured is None else sorted(measured)
+                receipts = output / "job-results"
+                write(output / "logs" / "compile-objects.json", {str(i): json.loads((receipts / f"{i}.json").read_text()) for i in indexes})
             if measured is None:
                 size = sum(Path(j["output"]).stat().st_size for j in value["jobs"])
                 if shutil.disk_usage(output).free < size + 1536 * 1024**2:

@@ -20,7 +20,7 @@ SPEC.loader.exec_module(NATIVE)
 
 
 class OwnerCodeNativeTests(unittest.TestCase):
-    def compiled_fixture(self, root):
+    def compiled_fixture(self, root, android_tools=None):
         old_sdk, sdk, folder, output = [root / name for name in ("old-sdk", "sdk", "compiled", "relink")]
         for directory in (old_sdk, sdk, folder / "objects", folder / "job-results"):
             directory.mkdir(parents=True)
@@ -34,7 +34,9 @@ class OwnerCodeNativeTests(unittest.TestCase):
             "jobs": [{"sdk": "sdk.c", "arguments": 0}, {"generated": "Fixture.cpp", "arguments": 0}, {"lump": ["header.c"], "arguments": 0}],
             "link": ["-shared", {"object": 0}, {"object": 1}, {"object": 2}, "-o", "LIBRARY"],
         }
-        old, current = NATIVE.plan(profile, old_sdk, folder), NATIVE.plan(profile, sdk, output)
+        old, current = NATIVE.plan(profile, old_sdk, folder, android_tools), NATIVE.plan(profile, sdk, output, android_tools)
+        if android_tools is None:
+            old.pop("sdk")  # Exercise receipts from before the SDK root was explicit.
         old["link"][1:4] = reversed(old["link"][1:4])
         generated = hashlib.sha256(b"independent generated source").hexdigest()
         inputs = {
@@ -74,6 +76,17 @@ class OwnerCodeNativeTests(unittest.TestCase):
             rows = NATIVE.compiled_jobs(*fixture)
             self.assertEqual(len(rows), 3)
             self.assertEqual(rows[1][0].read_bytes(), b"independent compiled witness 1")
+
+    def test_android_debug_path_is_stable_and_relink_accepts_relocated_plan(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            tools = {name: str(root / name) for name in ("clang", "linker", "resource_dir")}
+            folder, current, profile, sdk, inputs = self.compiled_fixture(root, tools)
+            for job in current["jobs"]:
+                self.assertEqual(job["argv"][0], tools["clang"])
+                self.assertIn(f"-fdebug-prefix-map={root / 'relink'}=.", job["argv"])
+            self.assertFalse(any("debug-prefix-map" in arg for arg in current["link"]))
+            self.assertEqual(len(NATIVE.compiled_jobs(folder, current, profile, sdk, inputs)), 3)
 
     def test_relocated_reused_lump_keeps_original_compile_hash_and_can_be_reused_again(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -274,6 +287,7 @@ class OwnerCodeNativeTests(unittest.TestCase):
                     with patch.object(NATIVE, "invoke", side_effect=paired_invoke):
                         parallel = NATIVE.run({**request, "output": str(parallel_output), "measure_jobs": [497, 499], "compile_workers": 2}, profile=profile)
                     self.assertEqual((parallel["phase"], parallel["compile_workers"], parallel["compile_tasks"]), ("native-measured", 2, 2))
+                    self.assertEqual((parallel_output / "logs/compile-objects.json").read_bytes(), (measured_output / "logs/compile-objects.json").read_bytes())
                     for index in ("497", "499"):
                         process = json.loads((parallel_output / f"logs/{index}.process.json").read_text())
                         self.assertEqual(process["exit_code"], 0)

@@ -1992,7 +1992,11 @@ SDK wrapper root after relocation. An optional independently written pause
 clock lets its process wait count active time while the entire tool UID is
 stopped; malformed/reset clocks fail closed. Selected-job measurement compiles
 only requested units, records timings and skips linking, with a distinct
-`native-measured` terminal phase. Setup and controller clock ordering are in the
+`native-measured` terminal phase. The Android Clang plan maps its job directory
+out of DWARF so equivalent builds can share a linker build ID across output
+paths. Explicit worker comparisons and selected measurements collect the
+existing object digests in one private log before linking or teardown.
+Setup and controller clock ordering are in the
 [native owner contract](../tools/phone-build/owner-code/README.md).
 The normal linker/stripper then use the selected profile order. Neither owner
 reads an accepted ELF as a supplier.

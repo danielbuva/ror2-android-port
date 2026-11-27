@@ -391,7 +391,10 @@ runner. The linker uses the same object order. A failed concurrent build
 publishes the contiguous completed prefix for a serial resume. A direct
 native request can also pair the same `measure_jobs` selection in two
 outputs with one and two workers. Compare the per-object hashes and BOOTTIME
-process windows with fixed compiler inputs and CPU affinity.
+process windows with fixed compiler inputs and CPU affinity. These requests
+retain `logs/compile-objects.json` through shared-runner cleanup. Android Clang
+normalizes the job output path in debug information so linker build IDs can
+match across job directories. Runtime source-location macros keep their values.
 
 `compile_timeout_seconds` sets the per-translation-unit budget (default 3,600
 seconds). Choose a generous multiple of the largest unit's measured active phone
