@@ -98,6 +98,141 @@ class DeviceSessionTests(unittest.TestCase):
             runner.run_workload(device, thermal, request, self.output, result)
         self.assertEqual(result["shader_compute"], report)
 
+    def test_installed_alpha_request_has_no_local_game_apk_or_selector(self):
+        request = dict(self.request, package="dev.ror2lab.alpha", mode=runner.INSTALLED_ALPHA)
+        del request["apk"], request["apk_sha256"]
+        request.update(
+            installer_apk="installer.apk",
+            installer_package="example.authorized.installer",
+            installer_sha256="a" * 64,
+            source_sha256="b" * 64,
+            public_tools="public-tools.zip",
+        )
+        (self.root / "public-tools.zip").touch()
+        runner.save(self.request_file, request)
+        with mock.patch("installed_alpha.installer_trust", return_value={"keys": {"fixture": "example"}}) as trust:
+            normalized = runner.load_request(self.request_file)
+            self.assertNotIn("apk", normalized)
+            trust.assert_called_once_with(str((self.root / "installer.apk").resolve()), request["installer_sha256"])
+            runner.save(self.request_file, dict(request, selection={"attempt": "fixture"}))
+            with self.assertRaisesRegex(ValueError, "unknown fields"):
+                runner.load_request(self.request_file)
+
+    def test_installed_alpha_launch_observes_unity_before_returning(self):
+        target = mock.Mock(package="dev.ror2lab.alpha")
+        thermal = mock.Mock(error=None)
+        launched = dict(pid="12", activity=target.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity")
+        unity = target.package + "/com.unity3d.player.UnityPlayerActivity"
+        target.sh.side_effect = ["12", "  Display: mDisplayId=0\n  mCurrentFocus=Window{focus u0 " + unity + "}"]
+        request = {"mode": runner.INSTALLED_ALPHA, "duration_seconds": 30}
+        with (
+            mock.patch.object(runner, "launch", return_value=launched),
+            mock.patch.object(runner, "play_from_bootstrap") as play,
+            mock.patch.object(runner, "observe_alpha_tour") as tour,
+            mock.patch.object(runner, "capture") as capture,
+        ):
+            runner.run_workload(target, thermal, request, self.output, {}, start_attempt="signed")
+        self.assertEqual(json.loads((self.output / "player-activity.json").read_text()), {"activity": unity, "pid": "12"})
+        play.assert_called_once_with(target, thermal, "12", self.output)
+        tour.assert_called_once_with(
+            target, thermal, "12", self.output, {"native_title": "unobserved", "phase": "player-activity", "bootstrap_play": True}, "signed", 30
+        )
+        capture.assert_not_called()
+
+    def test_alpha_tour_binds_native_return_to_the_same_process_and_attempt(self):
+        target = mock.Mock(package="dev.ror2lab.alpha")
+        thermal = mock.Mock(error=None)
+        unity = target.package + "/com.unity3d.player.UnityPlayerActivity"
+        focus = "  Display: mDisplayId=0\n  mCurrentFocus=Window{focus u0 " + unity + "}\n  mDisplayRotation=ROTATION_0"
+        settings = dict(
+            screenWidth=1920,
+            screenHeight=1080,
+            buttonX=200,
+            buttonY=200,
+            endRunButtonX=300,
+            endRunButtonY=300,
+            confirmEndRunButtonX=400,
+            confirmEndRunButtonY=400,
+        )
+        base = dict(id="body-state-spawn-state-auto-player", attempt="signed", pid=12, session=1)
+        menu = dict(base, phase="offline-start-menu", hud=dict(survivorSelectableCount=4, menuStartX=100, menuStartY=100, screenWidth=1920, screenHeight=1080))
+        world = dict(base, phase="integrated-world-playing", world={"ready": True}, stage={"scene": "first-stage"}, settings=settings)
+        reports = iter(
+            [
+                dict(menu, attempt="stale"),
+                menu,
+                world,
+                dict(world, settings=dict(settings, paused=True, canEndRun=True)),
+                dict(world, settings=dict(settings, endRunConfirmationVisible=True)),
+                dict(menu, session=2),
+            ]
+        )
+        completed = dict(base, success=True, cleanup=True, settings={"sessionAbandoned": True})
+
+        def shell(cmd, *args, **kwargs):
+            if cmd == "cat":
+                return json.dumps(completed if "movement-completed-session-1.json" in args[0] else next(reports))
+            return {"pidof": "12", "dumpsys": focus, "wm": "Physical size: 1920x1080", "input": ""}[cmd]
+
+        target.sh.side_effect = shell
+        tour = {}
+        with mock.patch.object(runner.time, "sleep"):
+            runner.observe_alpha_tour(target, thermal, "12", self.output, tour, "signed", 30)
+        self.assertEqual(tour, dict(attempt="signed", pid="12", phase="completed", character_select=True, first_stage="first-stage", returned=True))
+        taps = [call.args for call in target.sh.call_args_list if call.args[0] == "input"]
+        self.assertEqual(taps, [("input", "-d", "0", "tap", str(coord), str(coord)) for coord in (100, 200, 300, 400)])
+        self.assertEqual(json.loads((self.output / "returned-menu.json").read_text())["session"], 2)
+        target.collect.assert_not_called()
+
+    def test_installed_alpha_stops_only_the_verified_game_and_releases_lease(self):
+        package = "dev.ror2lab.alpha"
+        installed = dict(package=package, package_path="package:/fixture/base.apk", apk_sha256=self.digest, attempt="signed")
+        request = dict(
+            self.request,
+            package=package,
+            mode=runner.INSTALLED_ALPHA,
+            installer_package="example.authorized.installer",
+            installer_sha256="a" * 64,
+            installer_trust={"keys": {}},
+            source_sha256="b" * 64,
+            public_tools="fixture.zip",
+        )
+        targets = [mock.Mock(package=package), mock.Mock(package=package)]
+        for selected in targets:
+            selected.owned.return_value = installed
+            selected.storage.return_value = {}
+            selected.sh.side_effect = lambda command, *args, **kwargs: {
+                "sh": process_snapshot(),
+                "sha256sum": self.digest + "  /fixture/base.apk",
+                "am": "",
+                "pidof": "",
+            }[command]
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=32 * 1024**3)),
+            mock.patch("installed_alpha.InstalledAlphaDevice", side_effect=targets),
+            mock.patch("installed_alpha.verify_installed", return_value=installed),
+            mock.patch.object(
+                batch,
+                "_GameThermalOwner",
+                return_value=mock.Mock(error=None, admission_battery={}, peak_cpu_gpu_celsius=30, time_above_80_seconds=0),
+            ),
+            mock.patch.object(batch, "_prune"),
+            mock.patch.object(runner, "prepare_launch"),
+            mock.patch.object(runner, "placement", return_value={}),
+            mock.patch.object(runner, "run_workload"),
+            mock.patch.object(runner, "reset_idle") as reset,
+        ):
+            result = runner.execute(request)
+        self.assertTrue(result["success"], result.get("error") or result.get("cleanup_errors"))
+        self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertTrue(result["lease_released"])
+        self.assertIn(mock.call("am", "force-stop", package), targets[0].sh.call_args_list)
+        targets[1].display.assert_called_once_with(False)
+        targets[0].install.assert_not_called()
+        targets[0].sync.assert_not_called()
+        reset.assert_not_called()
+
     def test_menu_start_rejects_selector_for_a_different_apk_attempt(self):
         request = dict(self.request, start_from_menu=True, selection={"attempt": "run-folder"})
         runner.save(self.request_file, request)
@@ -367,6 +502,24 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertFalse(lease_path.exists())
 
+    def test_menu_observation_records_owned_roster_without_starting(self):
+        target, thermal = mock.Mock(package="dev.ror2lab.alpha"), mock.Mock(error=None)
+        menu = dict(
+            phase="offline-start-menu",
+            pid=12,
+            attempt="owned-attempt",
+            selectedSurvivor="Commando",
+            hud=dict(survivorRosterCount=20, survivorSelectableCount=2),
+        )
+        with mock.patch.object(runner, "wait_for_settings_report", return_value=menu) as observe:
+            result = runner.observe_start_menu(target, thermal, "12", self.output, report_id="ordinary", attempt=menu["attempt"])
+        self.assertEqual(result, menu)
+        self.assertEqual(json.loads((self.output / "start-menu.json").read_text()), menu)
+        self.assertTrue(observe.call_args.args[3](menu))
+        self.assertFalse(observe.call_args.args[3]({"phase": "integrated-world-playing"}))
+        self.assertEqual(observe.call_args.kwargs["attempt"], menu["attempt"])
+        self.assertEqual(target.mock_calls, [])
+
     def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
         target, thermal = mock.Mock(package=self.request["package"]), mock.Mock(error=None)
         target.sh.return_value = process_snapshot(("12", "03:19:58", target.package))
@@ -410,6 +563,18 @@ class DeviceSessionTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "focus absent"):
                 runner.start_from_menu(target, thermal, "12", self.output, process_checks=process_checks)
         self.assertFalse(any(call.args[:1] == ("input",) for call in target.sh.call_args_list))
+
+    def test_process_check_scopes_installer_alpha_to_the_selected_package(self):
+        alpha = "dev.ror2lab.alpha"
+        target = mock.Mock(package=alpha)
+        target.sh.return_value = process_snapshot(("42", "03:19:58", alpha))
+        checks = []
+        runner.check_lab_processes(target, checks, "launch", "42")
+        self.assertEqual([row["package"] for row in checks[0]["processes"]], [alpha])
+
+        target.package = self.request["package"]
+        runner.check_lab_processes(target, checks, "before-launch")
+        self.assertEqual(checks[1]["processes"], [])
 
     def test_menu_start_records_second_lab_process_and_blocks_input(self):
         target, thermal = mock.Mock(package="dev.ror2lab.converted"), mock.Mock(error=None)
