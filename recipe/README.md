@@ -6303,6 +6303,25 @@ from the original bodies only at their 47 relocated pointers. Unity
 2021.3.45f2 checked nine Shader bindings and 38 saved texture bindings
 and unloaded the bundles. Release integration and rendered output remain open.
 
+### Whole-game Sad1 Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sad1-native-material-records.json` | `58c9714d6ec255146f2f8d1b5d217a1aeb957e52d9e41db2e5b54e718624386d` |
+
+Audit date 2026-11-27. The recipe selects 33 Material records referenced by
+the Sad1 scene from six original Steam bundles. It publishes only source
+paths, IDs, sizes, and hashes. The shared record producer reads the
+Material bodies from the user's installation. The AssetRipper PPtr and
+Material extensions informed member and saved texture lookup.
+
+The 33 emitted bodies match the original type trees and differ only at
+PPtr fields. Unity 2021.3.45f2 loaded all 33 Materials, checked 33 Shader
+and 232 saved texture bindings, and unloaded the fixture. The referenced
+Texture2D outputs come from existing RGB and ETC1 suppliers. Generated
+content and local evidence stay ignored. Release integration and
+rendered output remain pending.
+
 ### Whole-game Standard fallback keyword registration (J1306)
 
 | Recipe | SHA-256 |

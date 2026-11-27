@@ -8187,6 +8187,12 @@ Materials. It supplies two of the Material destinations referenced by
 the Mire Clip cohort. The isolated fixture validates the original
 Material fields and Shader and texture links before bundle teardown.
 
+`recipe/owner-whole-game-sad1-native-material-records.json` supplies 33
+Sad1 Material bodies through the shared record producer. Bundle
+preparation resolves their Shader and texture PPtrs, including eleven
+textures from existing suppliers. The isolated Unity fixture checks the
+resolved bindings before unloading.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
