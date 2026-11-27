@@ -57,6 +57,34 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
 
+    def test_shader_draw_requires_the_disposable_fixture_without_gameplay_inputs(self):
+        request = dict(self.request, mode="shader-draw", package=runner.PHONE_CONTENT_PACKAGE)
+        runner.save(self.request_file, request)
+        self.assertEqual(runner.load_request(self.request_file)["mode"], "shader-draw")
+        for changes in (dict(mode="launch"), dict(package=self.request["package"]), dict(prior_receipt="another.json")):
+            with self.subTest(changes=changes):
+                runner.save(self.request_file, dict(request, **changes))
+                with self.assertRaisesRegex(ValueError, "standalone workload"):
+                    runner.load_request(self.request_file)
+
+    def test_shader_draw_preserves_vulkan_pixel_report_even_on_failure(self):
+        device, thermal = mock.Mock(), mock.Mock()
+        thermal.cancelled.is_set.return_value = False
+        device.sh.return_value = "42"
+        request = dict(self.request, mode="shader-draw")
+        report = dict(graphics="Vulkan", passed=True, low=dict(r=255), high=dict(g=255))
+        with mock.patch.object(runner, "launch", return_value={"pid": "42"}):
+            for passes in (True, False):
+                report["passed"] = passes
+                device.cmd.return_value = "Unity: PHONE_SHADER_DRAW " + json.dumps(report)
+                result = {}
+                if passes:
+                    runner.run_workload(device, thermal, request, self.output, result)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "draw failed"):
+                        runner.run_workload(device, thermal, request, self.output, result)
+                self.assertEqual(result["shader_draw"], report)
+
     def test_menu_start_rejects_selector_for_a_different_apk_attempt(self):
         request = dict(self.request, start_from_menu=True, selection={"attempt": "run-folder"})
         runner.save(self.request_file, request)

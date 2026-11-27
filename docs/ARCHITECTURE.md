@@ -3442,6 +3442,9 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+The `shader-draw` workload runs only the disposable phone content fixture. It
+retains the launched PID's Vulkan pixel report, then removes its own verified
+installation before the terminal idle and OLED checks.
 For `owner-unplugged`, the same runner arms a one-shot request on adopted
 app storage and verifies that the launched PID can read the admitted thermal
 sensors before prompting the owner. `LabDiagnostics` reports foreground
