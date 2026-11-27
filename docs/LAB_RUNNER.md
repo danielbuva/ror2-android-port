@@ -267,11 +267,18 @@ The lab runner stages its two Unity readers automatically.
 
 ## Current local emission request
 
-After obtaining the orchestrator's device grant, use the same runner locally:
+Submit a new headless converter job to the shared device FIFO:
 
 ```
 source scripts/env.sh
 .local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --dry-run
+.local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --workstream <name> --queue --detach
+```
+
+The detached job prints the absolute terminal receipt path. The existing
+grant-based invocation also supports retained emission recovery:
+
+```
 .local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --workstream <name>
 ```
 

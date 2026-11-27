@@ -122,16 +122,9 @@ def compile_spirv(tools, directory, index, dxbc, descriptors, *, vertex=False):
     return spirv.read_bytes()
 
 
-def translate_tree(original, directory, tools):
-    import lz4.block
-    from shader_segments import read_segments, selected_layout
+def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
+    from shader_segments import selected_layout
 
-    form = original["m_ParsedForm"]
-    (subshader,) = form["m_SubShaders"]
-    (shader_pass,) = subshader["m_Passes"]
-    if shader_pass["m_Type"] != 0 or shader_pass["m_ProgramMask"] != 6 or original["m_Dependencies"]:
-        raise ValueError("translation requires one leaf vertex/fragment pass")
-    raw, records, dxbc = read_segments(original, bytes(original["compressedBlob"]))
     stages = {}
     # Both stages share descriptor set 1. Keep the vertex range above all
     # fragment constant buffers, including those in instanced variants.
@@ -167,23 +160,46 @@ def translate_tree(original, directory, tools):
         executable = shader.linked_vulkan_program(*codes, alpha_clip="UNITY_UI_ALPHACLIP" in keywords)
         compilation = {"reflection": reflection, "data": executable, "gpu_program_type": 25}
         variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
-    raw, table, programs, parameters = shader.variant_records(variants, form["m_KeywordNames"])
+    return variants
+
+
+def translate_tree(original, directory, tools):
+    import lz4.block
+    from shader_segments import read_segments
+
+    form = original["m_ParsedForm"]
+    passes = [shader_pass for subshader in form["m_SubShaders"] for shader_pass in subshader["m_Passes"]]
+    if not passes or any(p["m_Type"] != 0 or p["m_ProgramMask"] != 6 for p in passes):
+        raise ValueError("translation requires ordinary vertex/fragment passes")
+    source, records, dxbc = read_segments(original, bytes(original["compressedBlob"]))
+    groups = []
+    for ordinal, shader_pass in enumerate(passes):
+        pass_directory = directory
+        if len(passes) > 1:
+            pass_directory = directory / f"pass-{ordinal}"
+            pass_directory.mkdir()
+        variants = translate_pass(original, shader_pass, source, records, dxbc, pass_directory, tools)
+        groups.append(shader.variant_records(variants, form["m_KeywordNames"]))
+    raw, packed = shader.merge_variant_records(groups)
+    # Bundle preparation resolves these source dependency pointers against the
+    # typed supplier bindings when it relocates the Shader.
     tree = shader.deepcopy(original)
-    target = tree["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]
-    target["m_Platforms"] = [18]
-    target["m_NameIndices"] = table["m_NameIndices"]
-    target["m_EditorDataHash"] = [{f"bytes[{index}]": byte for index, byte in enumerate(shader.spooky(raw))}]
-    target["progVertex"].update(
-        m_CommonParameters=table["m_CommonParameters"],
-        m_PlayerSubPrograms=[shader.deepcopy(programs) for _ in range(3)] + [[]],
-        m_ParameterBlobIndices=[parameters[:] for _ in range(3)] + [[]],
-    )
-    fragment = target["progFragment"]
-    fragment.update(
-        m_CommonParameters={key: [] for key in fragment["m_CommonParameters"]},
-        m_PlayerSubPrograms=[],
-        m_ParameterBlobIndices=[],
-    )
+    targets = (shader_pass for subshader in tree["m_ParsedForm"]["m_SubShaders"] for shader_pass in subshader["m_Passes"])
+    for target, (pass_raw, _, _, _), (table, programs, parameters) in zip(targets, groups, packed):
+        target["m_Platforms"] = [18]
+        target["m_NameIndices"] = table["m_NameIndices"]
+        target["m_EditorDataHash"] = [{f"bytes[{index}]": byte for index, byte in enumerate(shader.spooky(pass_raw))}]
+        target["progVertex"].update(
+            m_CommonParameters=table["m_CommonParameters"],
+            m_PlayerSubPrograms=[shader.deepcopy(programs) for _ in range(3)] + [[]],
+            m_ParameterBlobIndices=[parameters[:] for _ in range(3)] + [[]],
+        )
+        fragment = target["progFragment"]
+        fragment.update(
+            m_CommonParameters={key: [] for key in fragment["m_CommonParameters"]},
+            m_PlayerSubPrograms=[],
+            m_ParameterBlobIndices=[],
+        )
     compressed = lz4.block.compress(raw, mode="high_compression", compression=9, store_size=False)
     tree.update(
         platforms=[18],

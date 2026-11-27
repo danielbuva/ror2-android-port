@@ -222,7 +222,16 @@ be reviewed. `source_inputs` has exactly these canonical absolute paths:
 | `wwise_android_source` | Owner's authorized Android PINVOKE declarations. |
 | `wwise_os_string_source` | Matching authorized Android handwritten declarations. |
 | `wwise_abi_native` | Matching generic Release ARM64 SDK library for static ABI inspection. |
-| `wwise_native` | The explicitly supplied hash-bound instrumented SDK product required by existing audio contracts; independent production remains open. |
+| `wwise_native` | The explicitly supplied hash-bound instrumented SDK product required by the current managed producer. |
+
+The standalone `wwise_native.py` takes the licensed `--stock` root (containing
+`integration/Wwise/AkSoundEngine` and `sdk`), the NDK r25c `--sysroot` with its
+sibling runtime archives, explicit `--clang`, `--linker` and
+`--resource-dir` paths, and a new private `--output` directory. It emits
+`libAkSoundEngine.so` and `result.json` after validating the ARM64 export roster,
+SONAME, dependencies and 16 KiB load alignment. Retain the receipt and logs
+when removing the generated library, objects and composed source. The signed
+managed path still consumes its historical pin until the new receipt is wired in.
 
 ```sh
 python tools/phone-build/owner-code/produce.py /absolute/owner/source-request.json
@@ -400,6 +409,17 @@ process windows with fixed compiler inputs and CPU affinity. These requests
 retain `logs/compile-objects.json` through shared-runner cleanup. Android Clang
 normalizes the job output path in debug information so linker build IDs can
 match across job directories. Runtime source-location macros keep their values.
+
+The native stage uses `/opt/homebrew/bin/ccache` when available on the host.
+The toolhost can supply the hash-verified `native-links/ccache` executable
+alias. The cache lives outside the job output, under
+`~/Library/Caches/dev.ror2lab.il2cpp-ccache` on macOS (10 GiB) and the
+installer's private `files/native-ccache` on Android (3 GiB). Set
+`use_ccache: false` in a native request for a direct compiler control.
+The cache key retains the pinned SDK/sysroot, compiler and resource bytes and
+complete command line. A rebuild can reuse entries at the same paths. The
+owner retains ccache's per-job outcome log beside the compiler process logs.
+Linking, stripping and Linux NDK execution through QEMU use their usual tools.
 
 `compile_timeout_seconds` sets the per-translation-unit budget (default 3,600
 seconds). Choose a generous multiple of the largest unit's measured active phone

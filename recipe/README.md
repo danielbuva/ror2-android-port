@@ -2769,6 +2769,28 @@ Provenance, privacy, licensing and sensitive-content review completed 2026-11-27
 | --- | --- |
 | `owner-cloud-intersection-graphics-translation.json` | `28da3f8dfb441d3f621bdccfe5b15622f34f5b83c4e7bed345ef731afed0fa80` |
 
+The multipass graphics profile selects the original PaintHeight,
+Cutout/VertexLit and TerrainLayerUtils shaders. It supplies source identities,
+hashes and canonical destinations to the existing signed graphics translator.
+The translator uses the pinned public toolchain and the shared shader record
+writer. Game programs, translated bodies and raw evidence stay local.
+Provenance, privacy, licensing and sensitive-content review completed 2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-multipass-graphics-translation.json` | `8ff591da12ae3f76a4e4a81945c2e165d6bfdde3d1d8e364fd585a011bc042d8` |
+
+The Cloud Remap profile selects the original Shader and its source-linked
+Legacy Transparent/VertexLit fallback. It pins only source identities, hashes
+and canonical destinations. The signed graphics translator reuses the pinned
+public tools. Original programs, translated bodies and device evidence stay
+local. Provenance, privacy, licensing and sensitive-content review completed
+2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-cloud-remap-graphics-translation.json` | `59fe8c20139b0b1763f13e4eb84f4cd3c45b2e67f8d93c5a8839410878c045c1` |
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP
@@ -6265,6 +6287,22 @@ Pinned AssetRipper `AssetCollection.TryGetAsset` informed the external
 member lookup. Unity 2021.3.45f2 loaded and unloaded all eight Materials
 in the isolated fixture and verified eight Shader and 33 texture bindings.
 
+### Whole-game Mire Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-mire-native-material-records.json` | `5e24dc046ea17fd59d4cf88c2fa58651fbe3736aa507c0a9b411e97e5e7626f8` |
+
+Audit date 2026-11-27. The recipe selects nine Mire and Access Codes Node
+Materials from the legitimate Steam input. It publishes source paths,
+record and member IDs, sizes and hashes. Material bodies, dependency
+bytes and local paths stay in ignored storage. The pinned AssetRipper
+PPtr and Material extensions informed member and saved texture lookup.
+The isolated fixture verified that all nine emitted records differ
+from the original bodies only at their 47 relocated pointers. Unity
+2021.3.45f2 checked nine Shader bindings and 38 saved texture bindings
+and unloaded the bundles. Release integration and rendered output remain open.
+
 ### Whole-game Standard fallback keyword registration (J1306)
 
 | Recipe | SHA-256 |
@@ -7600,8 +7638,21 @@ middleware, original files and outputs stay local.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-code-job-inputs.json` | `6a9db9c77118f96c2d064c4696a95160092e47303dca2e8d4217aef4ac389714` |
+| `owner-code-job-inputs.json` | `07c1476269c8c25aa07a56f234a9cd8628a0374c0c801180d048012dd1ee5f59` |
 | `owner-burst-job-inputs.json` | `3a4d0dbbdfbc8dcd7d170322c58e95333cc941e9d8155a92db980bfec9adcac8` |
+
+Audit 2026-11-27. `owner-wwise-native.json` pins the stock and transformed
+Wwise source hashes and carries only authored diagnostic insertions.
+`tools/phone-build/owner-code/wwise-native/` contains the five authored bridge,
+ring and monitor files from the J794, J918 and J950 lineage. A manual review
+of header dependencies and a comparison against 474 stock source files
+found no copied vendor implementation in those files. The compiler lists
+the licensed archive and translation-unit inputs. Licensed sources, composed
+files, libraries and private compiler evidence stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-wwise-native.json` | `28507d75b01e22aed72df58c269225e769febb2bd95fd8a3badec0ab0eac7892` |
 
 Audit 2026-11-26. `owner-v30-bundle-shader-leaves.json` uses original game
 bundle selectors and the acquired Unity SDK to compile three Shader leaves.
@@ -7740,3 +7791,41 @@ pack data or private paths are included. Producer output stays under ignored
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-canonical-native-roster-records.jsonl.gz` | `f20a75d8b362e4f3e39c6da4963c7260de0a8232057af23d524808e649863994` |
+
+## Nest FBX native records (2026-11-27)
+
+`owner-nest-fbx-native-records.json` supplies 253 original native records
+for 42 Nest FBX groups through `record_produce.py`. The existing Mesh and
+shader recipes supply their remaining native records. Unity 2021.3.45f2
+loaded and unloaded 84 typed GameObject and Mesh requests for the scoped
+bundle. Release admission still requires preserving source preload order.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative original bundle selectors, source and destination object IDs,
+class IDs, sizes and hashes. The producer reads original serialized bodies
+from the user's installation and writes the pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-nest-fbx-native-records.json` | `00330558b4b1fad6131bd4d34dfb3d1dba7699f835ea963457d97e005b7c8545` |
+
+## Sad1 and Fungal native Material records (2026-11-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sad1-signed-cloud-material-records.json` | `1ba50768746c41a8a3bfa1e9f26bd2dd39bb675bd01895620f18036d41ebadda` |
+| `owner-whole-game-fungal-native-material-records.json` | `5702d6ad798294ef684a6a268cc1c7486d7fc597258813a4e410bf7fd46328b4` |
+| `owner-whole-game-fungal-signed-cloud-material-records.json` | `cd860a89009a2389c890bf7fe155f7ee6249273f23f51eef1cd5604959f41ed5` |
+
+The shared record producer reads 28 Sad1 and 24 Fungal Material bodies from
+the official PC input. The emitted bodies preserve their original type
+trees and fields outside PPtr relocation. Unity 2021.3.45f2 loaded and
+unloaded all three fixtures and checked 52 Shader and 183 Texture2D
+bindings. Five Fungal Materials use existing Standard or Triplanar
+Shader stand-ins. One Fungal texture binding uses the BC1-to-ETC supplier.
+Canonical release integration and Android draws remain open.
+
+The review covered source and destination selectors, class IDs, sizes
+and hashes, following the pinned AssetRipper member and saved-property
+lookup. Serialized bodies, generated packs and local paths stay under
+ignored `work/`.

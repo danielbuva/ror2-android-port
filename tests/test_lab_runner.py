@@ -408,6 +408,52 @@ class RefusedLeaseTest(unittest.TestCase):
             self.assertTrue(execute.call_args.kwargs["local_ref"])
             self.assertEqual(json.loads(done.read_text())["error"], "synthetic failure")
 
+    def test_local_emission_detaches_the_same_queued_runner_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            request = repo / "request.json"
+            done = repo / "work/terminal.json"
+            request.write_text(json.dumps(dict(runner=dict(repo=str(repo)), done_file=str(done))))
+            with mock.patch.object(lab_runner.subprocess, "Popen") as process:
+                options = dict(workstream="fixture-worker", queued=True, detach=True)
+                self.assertEqual(lab_runner.local_emission(request, **options), 0)
+                with self.assertRaises(FileExistsError):
+                    lab_runner.local_emission(request, **options)
+            process.assert_called_once()
+            self.assertEqual(process.call_args.args[0][-3:], ["--workstream", "fixture-worker", "--queue"])
+            self.assertTrue(process.call_args.kwargs["start_new_session"])
+            self.assertEqual(json.loads(done.with_suffix(".job.json").read_bytes())["done_file"], str(done))
+            self.assertFalse(done.exists())
+
+    def test_queued_emission_acquires_lease_before_battery_and_records_release(self):
+        from device_queue import DeviceQueue, ENABLED
+
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            run = lab_runner.Runner(repo, {})
+            run.devices = {"fixture": "synthetic"}
+            queue = DeviceQueue(run.leases.parent, "synthetic")
+            queue.directory.mkdir(parents=True)
+            (queue.directory / ENABLED).touch()
+
+            def admit(*_args, **_kwargs):
+                owner = json.loads((queue.lease / "lab-runner.json").read_bytes())
+                self.assertEqual(owner["workstream"], "fixture-worker")
+                return None
+
+            with (
+                mock.patch.object(run, "require_grant") as grant,
+                mock.patch.object(run, "admit_battery", side_effect=admit),
+                mock.patch.object(run, "run", return_value=0),
+                mock.patch.object(lab_runner._TRANSPORT, "AdbTransport") as adb,
+            ):
+                command = lab_runner.parse_command("/lab script device=fixture -- scripts/synthetic.py")
+                self.assertEqual(run.execute(command, local_checkout=repo, workstream="fixture-worker", queued=True), (0, None))
+            grant.assert_not_called()
+            self.assertIn("KEYCODE_SLEEP", adb.return_value.run.call_args.args)
+            self.assertTrue(run.queue_receipt["lease_released"])
+            self.assertFalse(queue.lease.exists())
+
     def test_resume_claims_only_its_retained_lease_after_previous_runner_exits(self):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {})

@@ -344,6 +344,15 @@ _ENTRIES = (
         handler=_target,
     ),
     Action(
+        "phone-texture-readback-build",
+        "phone_texture_readback",
+        "run_editor",
+        {"build": True},
+        "current",
+        "Experimental: build a disposable ARM64 Vulkan texture readback APK from a standalone --target REQUEST.json. No device access.",
+        handler=_target,
+    ),
+    Action(
         "phone-content-build",
         "phone_content",
         "run_editor",

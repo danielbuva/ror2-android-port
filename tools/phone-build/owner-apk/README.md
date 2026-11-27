@@ -806,13 +806,26 @@ the managed compiler's `packages/inputs.json`. A fixed-target player registry
 uses the code request's original `source_inputs.packages` and flat inventory,
 which also includes TestRunner and MCP importer sources.
 
+For the current code and native requests, bind `sdk_install` and
+`code_providers` to `acquired/sdk` and `acquired/providers` in the install plan.
+The signed acquired-input inventory pins the files under both roots. Managed
+conversion, native compilation and player data read the same SDK root. With
+`--package-archives`, the package supplier replaces the compiler's `packages`
+directory binding. The compact `install-inputs.json` handed to the installer
+has an 8 MiB limit for the tool inventory and supported-originals catalog
+together.
+
 Optional `--audio-stage-receipt /path/to/private/stage-receipt.json` adds
 the staged Wwise banks, streamed media, receipt and licensed ARM64 library to
 the signed APK entries. Pair it with the current `--code-request` and its
 `--native-request`. The graph reads only relative member names from the host
-stage for publication. The code producer derives and verifies the actual audio
-cohort from the owner's inputs. Its own receipt supplies the compiled runtime pin
-and APK entry.
+stage for publication. Set the signed install plan's `wwise_stock` and
+`wwise_ndk_root` bindings to the licensed stock integration and NDK r25c
+target inputs, respectively. The Wwise job uses the installer's Clang and LLD
+and supplies a hash-bound native receipt and library to managed production.
+The code producer derives the bank cohort from the owner's inputs and binds
+the compiled runtime pin and APK entry to the verified library. Publish these
+local manifests with `--minimum-installer-version 6` or later.
 The full audio cohort exceeds the 4 MiB index budget if its dependency closure
 is repeated for every member. The publisher compacts these indexes and requires
 `--minimum-installer-version 4` or later for compact-index releases.

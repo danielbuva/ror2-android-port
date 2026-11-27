@@ -9,13 +9,18 @@ Current independent prepared builds use [build lanes](build-lanes.md):
 `./dev lane --action create --name NAME`, then `LAB_LANE=NAME ./dev …`.
 
 Shared device runs use the current `./dev device-session --request <JSON>`
-entry point. Validate with `--dry-run`, then use `--detach` after the dispatcher
-grants the device. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
-evidence rules. Required request fields are `canonical_root`, `output` (under
-its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
-`adopted_install: true` and `duration_seconds`. Optional fields are
+entry point. Validate with `--device SERIAL --queue --dry-run`, then submit
+with `--device SERIAL --queue --detach`. The detached job takes its turn in
+the device FIFO and prints the absolute terminal receipt path. Existing grants
+continue to work with `--device SERIAL --detach`. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
+evidence rules. For disposable APKs, supply `canonical_root`, `output` (under
+its `work/`), `workstream`, `package`, `apk`, `apk_sha256` and `duration_seconds`.
+Select the device serial with `--device` or the request's `serial` field.
+Set `adopted_install: true` for adopted-only placement. Omit it when using the
+second Nova's internal storage profile. Other optional fields include
 `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
-`settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`),
+`settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`,
+or fixture modes `shader-draw`, `shader-compute` and `texture-readback`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
 the runner), `input_schedule` (launch-mode list of `{ "at_seconds": 5,
 "script": "touch.json" }`, ordered within the observation duration),
@@ -252,6 +257,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 | `./dev prototype --action phone-apk-fixture` | Experimental: repackage only the authored content fixture from hash-bound --target REQUEST.json; writes a new unsigned APK, requiring later alignment/signing. No device or game build access. |
 | `./dev prototype --action phone-content-check` | Experimental: check generated --target PROJECT in the exact editor under the primary checkout build mutex; no game project or device access. |
 | `./dev prototype --action phone-texture-readback` | Experimental: read selected texture mips and cube faces from hash-pinned bundles in --target REQUEST.json with the exact editor GPU. No player build or device access. |
+| `./dev prototype --action phone-texture-readback-build` | Experimental: build a disposable ARM64 Vulkan texture readback APK from a standalone --target REQUEST.json. No device access. |
 | `./dev prototype --action phone-content-build` | Experimental: build committed authored --target PROJECT as a separate ARM64 IL2CPP/Vulkan fixture APK under the primary checkout build mutex; no install or game build changes. |
 | `./dev prototype --action phone-content-fixture` | Experimental: generate an authored TextAsset bundle and isolated exact-editor fixture under work/rebuild/phone-content; no game input, build, install or runtime change. |
 | `./dev prototype --action phone-content-ambient-fixture` | Experimental: stage an isolated authored sky capture fixture; requires an external read-only capture controller, not a game build or content producer. |
@@ -395,8 +401,9 @@ platform identity key the dependency environment; warm reuse validates installed
 package metadata. No test result, working tree, `work/`, generated lab output or
 game material is cached. Cache setup locks are released before tests so independent
 pushes do not share a running workspace. Darwin keeps the Unity-read sandbox and
-case-sensitive temporary-volume setup/cleanup. Linux removes scratch before exit;
-macOS retains asynchronous volume cleanup. `HOST_TEST_WORKERS` controls local
+case-sensitive temporary-volume setup. Local CI cleans scratch synchronously
+on exit. CI startup and aggressive pruning sweep recorded inactive scratch
+older than 30 minutes. `HOST_TEST_WORKERS` controls local
 concurrency (default 2); GitHub uses 4. Set 1 to diagnose serial behavior, not to
 skip a check.
 
