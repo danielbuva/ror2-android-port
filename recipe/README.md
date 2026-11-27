@@ -1,5 +1,12 @@
 # Build recipes
 
+2026-11-27 source-pin refresh audit. The changes bind current tracked shader
+helpers, project layout and supplier profiles by SHA-256 and update the sizes of
+two authored inputs. Provenance, privacy, licensing and sensitive-content review
+covered these public file bindings. Original input and produced record hashes
+retain their recorded identities. Audit tables below describe the revisions
+reviewed in their respective entries.
+
 `owner-whole-game-generated-objects.json` supplies four typed records for
 canonical bundle preparation. It selects the permitted SDK default material,
 the current authored projectile adapter script, and the original fieldless
