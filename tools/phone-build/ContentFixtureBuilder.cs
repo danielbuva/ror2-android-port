@@ -305,9 +305,13 @@ public static partial class ContentFixtureBuilder
         PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
         var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
         var fixture = new GameObject("PhoneContentFixture").AddComponent<ContentFixture>();
-        var computeAddress = Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_COMPUTE");
-        fixture.computeHistogram = !String.IsNullOrEmpty(computeAddress);
-        fixture.shaderAddress = computeAddress ?? Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_DRAW");
+        if (!String.IsNullOrEmpty(Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_COMPUTE")))
+        {
+            var request = JsonUtility.FromJson<NativeContentRequest>(
+                File.ReadAllText(Environment.GetEnvironmentVariable("ROR2_PHONE_NATIVE_CONTENT_CHECK")));
+            fixture.computeAddresses = Array.ConvertAll(request.assets, asset => asset.name);
+        }
+        else fixture.shaderAddress = Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_DRAW");
         EditorSceneManager.SaveScene(scene, "Assets/Fixture.unity");
         var report = BuildPipeline.BuildPlayer(new[] { "Assets/Fixture.unity" }, Output("phone-content-fixture.apk"), BuildTarget.Android, BuildOptions.Development);
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Fixture build failed: " + report.summary.result);

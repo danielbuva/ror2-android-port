@@ -2727,9 +2727,17 @@ distribution alongside the executables. Game programs, translated bodies and
 local build paths stay private. Provenance/privacy/licensing and sensitive-content
 audit: 2026-11-27.
 
+The camera ComputeShader profile selects the eleven additional matched
+records in the current camera bundle. Each row records the accepted PC
+source identity and its canonical destination. Host replay reproduced the
+eleven body hashes from the individual packs. Provenance, privacy, licensing
+and sensitive-content review covered the source selectors, hashes and output
+routing. Programs, translated bodies and device evidence stay local.
+
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-histogram-compute-translation.json` | `237d60bfb5624afc874cf152a6ea785f9b9afea6077b185023cf19526d404d50` |
+| `owner-camera-compute-translation.json` | `b089d2fc030cef076d780d1c0e293c69eeed5c4573462011be9406ce39f75716` |
 
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
