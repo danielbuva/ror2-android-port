@@ -2243,7 +2243,8 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
         externals = [row["path"].rsplit("/", 1)[-1] if row["path"].startswith("archive:/") else row["path"] for row in layout["externals"]]
         external_layouts = {}
         for path, external in external_bundles:
-            with W.B.Bundle(path).member(external) as stream_external:
+            member_name = "unity_builtin_extra" if external == "Resources/unity_builtin_extra" else external
+            with O.source_member(path, member_name) as stream_external:
                 descriptor = W.read_serialized(stream_external)
             external_layouts[external] = {obj["path_id"]: descriptor["types"][obj["type_id"]]["class_id"] for obj in descriptor["objects"]}
         while pending:
@@ -2262,20 +2263,22 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
                 if file_id or texture not in objects or layout["types"][objects[texture]["type_id"]]["class_id"] != 28:
                     raise ValueError(f"Appended Sprite names an unqualified Texture2D: {pid}")
             for field, (file_id, other) in () if closed else fields.items():
-                if (
-                    file_id
-                    and other
-                    and (
-                        typ["class_id"] != 21
-                        or field != ("m_Shader",)
-                        or not 1 <= file_id <= len(externals)
-                        or external_layouts.get(externals[file_id - 1], {}).get(other) != 48
-                    )
-                ):
-                    raise ValueError(f"Local asset depends on an unqualified external Shader: {pid}")
-                if pid in replacements and typ["class_id"] == 21 and other and field[-1] == "m_Texture":
-                    if file_id or other not in objects or layout["types"][objects[other]["type_id"]]["class_id"] != 28:
-                        raise ValueError(f"Appended Material names an unqualified Texture2D: {pid}")
+                if not other:
+                    continue
+                material_texture = typ["class_id"] == 21 and field[-1] == "m_Texture"
+                if file_id:
+                    allowed_classes = ()
+                    if typ["class_id"] == 21 and field == ("m_Shader",):
+                        allowed_classes = (48,)
+                    elif typ["class_id"] == 48 and len(field) == 3 and field[:2] == ("m_Dependencies", "Array"):
+                        allowed_classes = (48,)
+                    elif material_texture:
+                        allowed_classes = (28, 89)
+                    if not 1 <= file_id <= len(externals) or external_layouts.get(externals[file_id - 1], {}).get(other) not in allowed_classes:
+                        raise ValueError(f"Local asset depends on an unqualified external object: {pid} {field}")
+                elif pid in replacements and material_texture:
+                    if other not in objects or layout["types"][objects[other]["type_id"]]["class_id"] not in (28, 89):
+                        raise ValueError(f"Appended Material names an unqualified Texture2D or Cubemap: {pid}")
             graph[pid] = {edge for edge in fields.values() if edge[1]}
             pending.extend(other for file_id, other in graph[pid] if not file_id)
         if any(obj["path_id"] not in graph for obj in additions):
