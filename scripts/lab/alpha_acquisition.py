@@ -136,10 +136,10 @@ class Acquisition:
         self.releases, self.plans = {}, {}
         for version, recognized in ((1, []), (2, [self.older[1]])):
             catalog = {"schema": 2, "supported": [self.current[1]], "recognized": recognized}
-            self.releases[version] = installer.release_fixture(
-                public, authored, version, temporary / f"acquisition-release-{version}", private, self.key, required_catalog=catalog
-            )
-            plan = {"workspace_bytes": 64 * 1024**2, "stages": []}
+            directory = temporary / f"acquisition-release-{version}"
+            self.releases[version] = installer.release_fixture(public, authored, version, directory, private, self.key, required_catalog=catalog)
+            with zipfile.ZipFile(directory / "public-tools.zip") as bundle:
+                plan = public.load_json(bundle.read("bundle-index.json"))["install_plan"]
             self.plans[version] = inputs.input_description(plan, catalog)
         self.archive = temporary / "Supported.zip"
         self.invalid_archive = temporary / "Invalid.zip"
