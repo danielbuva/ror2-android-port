@@ -1119,8 +1119,9 @@ profile leaves them intact.
 `recipe/owner-whole-game-prefab-component-source-records.json` supplies the
 original Transform, Light and Rigidbody records used by FireworkLight and
 SoundEmitter. Bundle preparation distinguishes file-local PPtrs from external
-member identities, resolves the component owners and checks every relocated
-pointer in the emitted prefab closure.
+member identities. For producer relocations, it matches the final typed PPtr
+and its offset to the pinned patch and resolves the original endpoint through
+the selected owners. Emission checks the resulting prefab closure.
 `recipe/owner-goolake-shrine-script-bindings.json` supplies three Sandy shrine
 MonoBehaviours from the original bundles. Their relocated script PPtrs resolve
 to the canonical MonoScripts in the Commando donor. The staged bundle composer

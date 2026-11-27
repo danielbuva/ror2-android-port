@@ -240,7 +240,7 @@ def extend_selection(owner, member, required, selected, types, routes, extension
     required["dependencies"] = sorted(dependencies.union(required["dependencies"]))
 
 
-def original_identities(owner, path, source_files=None, *, destinations=None, generated=None):
+def original_identities(owner, path, source_files=None, *, destinations=None, generated=None, relocations=None):
     """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
 
@@ -328,7 +328,11 @@ def original_identities(owner, path, source_files=None, *, destinations=None, ge
             for kind in ("objects", "meshes", "textures", "avatars"):
                 for row in member.get(kind, []):
                     for target in row["outputs"]:
-                        add((target["bundle"], target["member"], target["path_id"]), (bundle["path"], member["name"], row["path_id"]))
+                        record = target["bundle"], target["member"], target["path_id"]
+                        source = bundle["path"], member["name"], row["path_id"]
+                        add(record, source)
+                        if relocations is not None and (references := target.get("transform", {}).get("references")):
+                            relocations[record, source] = {reference["offset"]: reference for reference in references}
     return result
 
 
@@ -412,9 +416,11 @@ def prepare(owner, inputs, output):
         if logical in providers and providers[logical] != directory:
             raise ValueError("ambiguous supplier provider")
         providers[logical] = directory
-        generated = {}
-        profiles[name] = original_identities(owner, paths["profile"], source_files, generated=generated)
-        suppliers[name] = SimpleNamespace(paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]), generated=generated)
+        generated, relocations = {}, {}
+        profiles[name] = original_identities(owner, paths["profile"], source_files, generated=generated, relocations=relocations)
+        suppliers[name] = SimpleNamespace(
+            paths=paths, types=types, provider=logical, profile_sha=owner.O.B.sha(paths["profile"]), generated=generated, relocations=relocations
+        )
     producer = owner.ProducerRecords(providers)
     bindings, sources = {}, {}
     for row in policy_rows(pins, policy["bindings"]):
@@ -535,7 +541,7 @@ def prepare(owner, inputs, output):
                 staged.add(row["bundle"], pin)
             normalized_staged.append(normalized)
 
-        def source_target(source, metadata, pointer):
+        def source_target(source, metadata, pointer, owner_field):
             fid, pid = pointer
             if not 0 <= fid <= len(metadata["externals"]):
                 raise ValueError("source pointer outside member table")
@@ -544,7 +550,7 @@ def prepare(owner, inputs, output):
                 target_member = target_member.rsplit("/", 1)[-1]
             candidates = external_sources.get((target_member, pid), ()) if fid else sources.get((source[0], target_member, pid), ())
             if len(candidates) != 1:
-                raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer)))
+                raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer, owner_field)))
             return next(iter(candidates))
 
         def read(target):
@@ -614,15 +620,21 @@ def prepare(owner, inputs, output):
         for group in asset_groups:
             pending.extend((*member, pid) for pid in group["roots"])
             pending.extend(tuple(target) for target in group.get("preload_roots", []))
+        parsed = owner.ParsedTrees()
         while pending:
             target = pending.pop()
             if target in selected:
                 continue
             value, body, typ = read(target)
             selected[target] = value
-            fields = owner.pointers(body, typ, {})
+            fields = sorted(owner.pointer_fields(body, typ, parsed))
+            binding = bindings.get(target, {})
+            source = value.get("source")
+            references = {}
+            if source is not None:
+                references = suppliers[binding["supplier"]].relocations.get((tuple(binding["record_source"]), tuple(source)), {})
             edges = []
-            for field, pointer in sorted(fields.items()):
+            for field, offset, pointer in fields:
                 if not pointer[1]:
                     continue
                 key = target, field
@@ -633,16 +645,19 @@ def prepare(owner, inputs, output):
                     endpoint = tuple(override["target"])
                     used.add(key)
                 elif target[:2] == member:
-                    namespace = bindings[target].get("pointer_namespace")
+                    namespace = binding.get("pointer_namespace")
                     if namespace is not None:
                         fid, pid = pointer
                         if not 0 <= fid < len(namespace):
                             raise ValueError("produced pointer outside declared member table")
                         endpoint = (*namespace[fid], pid)
                     else:
-                        source = value["source"]
                         _, _, metadata = original(source)
-                        endpoint = source_target(source, metadata, pointer)
+                        reference = references.get(offset)
+                        # The producer checked the input bytes before applying
+                        # this patch. Here the final type identifies its PPtr.
+                        original_pointer = tuple(reference["from"]) if reference and tuple(reference["to"]) == pointer else pointer
+                        endpoint = source_target(source, metadata, original_pointer, key)
                 else:
                     endpoint = staged.target(target[1], pointer)
                 read(endpoint)

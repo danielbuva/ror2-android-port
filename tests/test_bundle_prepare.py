@@ -493,7 +493,7 @@ class BundlePreparationTests(unittest.TestCase):
         P.O.W.write_serialized(stream, layout, lambda row: io.BytesIO(packed[row["path_id"]]))
         return stream.getvalue()
 
-    def fixture(self, root):
+    def fixture(self, root, *, relocate_duplicate=False):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
         original = root / "original"
         original.mkdir()
@@ -530,6 +530,10 @@ class BundlePreparationTests(unittest.TestCase):
             for pid, raw in bodies.items():
                 target = dict(bundle="pack-" + name, member="packed-" + name, path_id=pid, bytes=len(raw), sha256=P.hashlib.sha256(raw).hexdigest())
                 objects.append(dict(path_id=pid, class_id=134, sha256=target["sha256"], outputs=[target]))
+                if relocate_duplicate and (name, pid) == ("a", 10):
+                    # The retained output PathID also names an unrelated PC object.
+                    references = [{"offset": 24, "from": [0, 40], "to": [0, 30]}]
+                    target.update(sha256=P.hashlib.sha256(P.O.remap(raw, references)).hexdigest(), transform=dict(references=references))
                 destination = {("a", 10): 100, ("b", 10): 200, ("a", 30): 300, ("a", 40): 400}[name, pid]
                 bindings.append(
                     dict(
@@ -721,6 +725,15 @@ class BundlePreparationTests(unittest.TestCase):
             profile = json.loads(Path(second["catalog_profile"]["path"]).read_bytes())
             self.assertEqual(profile["bundle"]["asset_groups"][0]["roots"], [100, 200])
             self.assertEqual(second["catalog_bundle"]["sha256"], second["sha256"])
+
+    def test_preparation_resolves_relocated_pointer_by_original_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _, _, _ = self.fixture(root, relocate_duplicate=True)
+            prepared = P.prepare_request(inputs, root / "prepared")
+            first = next(P.json_rows(root / "prepared/routes.jsonl"))
+            self.assertIn(dict(field=["duplicate"], pointer=[0, 400], target=["content", "CAB-content", 400]), first["edges"])
+            self.assertTrue(P.produce_request(prepared["request"]["path"], root / "emitted")["success"])
 
     def test_fresh_preparation_keeps_distinct_routes_for_shared_supplier_record(self):
         with tempfile.TemporaryDirectory() as tmp:

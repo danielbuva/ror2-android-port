@@ -369,16 +369,18 @@ def module(name):
 O, A = module("object_produce"), module("record_produce")
 
 
-def pointers(body, typ, schemas):
+def pointer_fields(body, typ, schemas):
     key = typ["tree"]
     if key not in schemas:
         schemas[key] = A.SCHEMA.type_tree(io.BytesIO(key))
     spans = A.fields(body, schemas[key])[1]
-    return {
-        path: struct.unpack_from("<iq", body, start)
-        for path, (start, end) in spans.items()
-        if end - start == 12 and path + ("m_FileID",) in spans and path + ("m_PathID",) in spans
-    }
+    for path, (start, end) in spans.items():
+        if end - start == 12 and path + ("m_FileID",) in spans and path + ("m_PathID",) in spans:
+            yield path, start, struct.unpack_from("<iq", body, start)
+
+
+def pointers(body, typ, schemas):
+    return {path: pointer for path, _, pointer in pointer_fields(body, typ, schemas)}
 
 
 def full_type_key(typ):
