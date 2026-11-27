@@ -5426,7 +5426,9 @@ The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
 for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, and
-REX's Disperse charge, which instantiate or pool their prefabs directly.
+REX's Disperse charge and Mortar's aim endpoint and projectile. Mortar's
+endpoint rim and expanding projectile sphere retain their distinct source
+blend modes.
 Artificer's configured Nano-Bomb projectile
 also enters this owner so the projectile controller's detached ghost takes the
 same material recovery path. It holds native addressable provider leases through
@@ -8612,6 +8614,10 @@ With detailed visual diagnostics enabled, the same owner follows the first
 native REX Disperse cast. It reads the charge state's live instance and then
 matches the release by catalog identity. Each phase records end-of-frame
 renderer slots for up to 1.25 seconds or 120 frames in the world report.
+The same diagnostics sample the first REX Mortar aim endpoint and read the
+configured projectile and impact indices before the native state fires on exit.
+For up to two seconds after release, the trace records the owned projectile,
+its ghost and matching pooled impact roots for comparison with the video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
