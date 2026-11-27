@@ -348,27 +348,36 @@ class Device:
     def install(self, apk, mode="streaming"):
         timing = PhaseTiming()
         apk = Path(apk)
-        if mode not in {"streaming", "incremental"}:
+        if mode not in {"auto", "streaming", "incremental"}:
             raise RuntimeError("Unknown install transport")
         with timing.phase("apk_validation_hash"):
             validate_apk_identity(apk, self.package)
             apk_hash = sha(apk)
-        if self.exists():
-            self.owned()
+        previous = self.owned() if self.exists() else None
         with timing.phase("storage_query"):
             storage = self.storage()
+        requested = mode
+        if mode == "auto":
+            mode = "incremental" if storage["mode"] == "internal" else "streaming"
         transport = ["--streaming", "--no-incremental"]
         idsig_hash = None
         if mode == "incremental":
             idsig = Path(str(apk) + ".idsig")
-            if not idsig.is_file() or idsig.is_symlink():
-                raise RuntimeError("Incremental install requires the APK's generated v4 .idsig sidecar")
-            if not re.search(r"^feature:android\.software\.incremental_delivery(?:=\d+)?$", self.sh("pm", "list", "features"), re.M):
-                raise RuntimeError("Selected device does not advertise incremental delivery; use streaming")
-            # adb's explicit mode verifies the sidecar and must fail rather than
-            # silently substituting a different transport for this measurement.
-            idsig_hash = sha(idsig)
-            transport = ["--incremental", "--wait"]
+            if storage["mode"] != "internal":
+                reason = "Incremental install requires internal package placement"
+            elif not idsig.is_file() or idsig.is_symlink():
+                reason = "Incremental install requires the APK's generated v4 .idsig sidecar"
+            elif not re.search(r"^feature:android\.software\.incremental_delivery(?:=\d+)?$", self.sh("pm", "list", "features"), re.M):
+                reason = "Selected device does not advertise incremental delivery; use streaming"
+            else:
+                reason = None
+            if reason is None:
+                idsig_hash = sha(idsig)
+                transport = ["--incremental", "--wait"]
+            elif requested == "auto":
+                mode = "streaming"
+            else:
+                raise RuntimeError(reason)
         limit = self.settings.get("apk_install_limit")
         counter = self.install_counter()
         prior_counter = read(counter) if counter.exists() else {"serial": self.serial, "dispatched": 0}
@@ -397,6 +406,16 @@ class Device:
             )
             if isinstance(error, RuntimeError) and re.search(r"Failure \[INSTALL_FAILED_UPDATE_INCOMPATIBLE(?=[:\]])", str(error)):
                 raise InstallSignatureMismatch(str(error)) from error
+            if (
+                requested == "auto"
+                and mode == "incremental"
+                and isinstance(error, RuntimeError)
+                and re.search(r"Device doesn't support incremental installations|Failure \[INSTALL_FAILED_[A-Z_]+(?=[:\]])", str(error))
+            ):
+                current = self.owned() if self.exists() else None
+                if current == previous:
+                    if current is None or self.sh("sha256sum", current["package_path"].removeprefix("package:")).split()[:1] == [current["apk_sha256"]]:
+                        return self.install(apk, mode="streaming")
             raise
         with timing.phase("placement_query"):
             package_path = self.sh("pm", "path", self.package)
@@ -409,6 +428,7 @@ class Device:
             "package_path": package_path,
             "details": details,
             "seconds": time.monotonic() - t,
+            "dispatch_monotonic": t,
             "install_output": output,
             "storage": storage,
             "transport": mode,

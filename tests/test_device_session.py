@@ -1545,7 +1545,7 @@ class DeviceSessionTests(unittest.TestCase):
             target.base = ["fake-adb", "-s", target.serial]
             target.storage.return_value = {"mode": "adopted", "uuid": "fixture-adopted"}
             target.install_counter.return_value = self.root / "install-count.json"
-            target.install.side_effect = lambda apk: device_class.install(target, apk)
+            target.install.side_effect = lambda apk, mode: device_class.install(target, apk, mode)
             target.reset.side_effect = lambda: device_class.reset(target)
             target.cmd.side_effect = lambda *args, **kwargs: device_class.cmd(target, *args, **kwargs)
 
@@ -1728,7 +1728,7 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual((result["apk"], result["apk_sha256"]), (self.request["apk"], self.digest))
         self.assertEqual(result["device_cleanup"]["bytes_removed"], 17 * 2 * len(runner.TRANSIENTS))
         if not signature_failure:
-            target.install.assert_called_once_with(Path(self.request["apk"]))
+            target.install.assert_called_once_with(Path(self.request["apk"]), mode="auto")
         removed = [event for event in events if event.startswith("remove:")]
         self.assertTrue(removed)
         self.assertEqual(events.count("stop"), 3)
@@ -1916,6 +1916,17 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual([checkpoint["phase"] for checkpoint in checks], ["before-launch", "launch"])
         self.assertEqual(checks[-1]["processes"][0]["pid"], "73")
         thermal.launch.assert_not_called()
+
+    def test_install_launch_records_dispatch_to_verified_pid(self):
+        target = mock.Mock(package=self.request["package"])
+        thermal = mock.Mock(error=None)
+        result = {"install": {"dispatch_monotonic": 10}}
+        self.output.mkdir(parents=True)
+        with mock.patch.object(runner, "launch", return_value={"pid": "73"}) as launcher, mock.patch.object(runner.time, "monotonic", return_value=35):
+            runner.run_workload(target, thermal, dict(self.request, mode=runner.INSTALL_LAUNCH), self.output, result)
+        launcher.assert_called_once_with(target, thermal, process_checks=[], resolve_activity=True)
+        self.assertEqual(result["install_to_pid_seconds"], 25)
+        self.assertEqual(json.loads((self.output / "launch.json").read_text())["pid"], "73")
 
     def test_only_resumed_peer_is_reset_before_converted_launch(self):
         peer = "dev.ror2lab.arm64"
