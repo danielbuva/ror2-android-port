@@ -1306,7 +1306,10 @@ constant or controller body is stored in the recipe.
 Setup, pack state and teardown remain with the same generic record owner.
 `scripts/lab/sprite_native_fixture.py` stages the current SDK-only Sprite runtime
 diagnostic with `SpriteNativeFixture.cs`. It references source PNGs by path/hash
-in a fresh ignored project. Under the editor mutex, the pinned Unity MCP invokes
+in a fresh ignored project. A portable request references `images/<index>.png`
+relative to its own directory. Staging preserves request bytes and links the
+image directory. The constructor verifies each PNG hash and includes the exact
+request SHA-256 in its result. Under the editor mutex, the pinned Unity MCP invokes
 `Tools/P1/Run Sprite Native Fixture`; created textures and sprites are destroyed
 after each item. Float-bit geometry and the terminal result stay private. The
 fixture also emits UVs, bounds and native rect/pivot/border properties for source
