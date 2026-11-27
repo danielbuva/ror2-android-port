@@ -1,0 +1,63 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-vulturehunter_assets_all_23e6b0ba9e7aa91b501c76762857cc41.bundle",
+      "sha256": "6c9b48b9c16c8af1377f71357a655147a3227081d1d614eb9b08c2f6c6776181",
+      "members": [
+        {
+          "name": "CAB-b9aee876c8112016124753b784cc53a2",
+          "objects": [
+            {
+              "path_id": -7485375802205637297,
+              "class_id": 74,
+              "sha256": "b711358086dbcf67497c5c2c66c2c301ef9d5946dad7a96582b580ee0eeb8617",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4403338027579567182,
+                  "bytes": 137660,
+                  "sha256": "b711358086dbcf67497c5c2c66c2c301ef9d5946dad7a96582b580ee0eeb8617",
+                  "native_type_hash": "1ece1117b1e6a8b84516b3eb77051cc3",
+                  "transform": {
+                    "references": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-champrush_assets_all_fd4643f1facb2244e27804738a95fb52.bundle",
+      "sha256": "9cc3882bdbf6dc0697340e4bf872e21fe45de3bd41d8b4a84ee2a3f2356000c3",
+      "members": [
+        {
+          "name": "CAB-4f72786e025de63715eedfc72d7cfb47",
+          "objects": [
+            {
+              "path_id": 7301973034176715397,
+              "class_id": 74,
+              "sha256": "c6815d3626664a0f768096b66f8858940ce4ab6a2ae26b5f594e4a13f76fa596",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2488314450409642772,
+                  "bytes": 4832,
+                  "sha256": "c6815d3626664a0f768096b66f8858940ce4ab6a2ae26b5f594e4a13f76fa596",
+                  "native_type_hash": "1ece1117b1e6a8b84516b3eb77051cc3",
+                  "transform": {
+                    "references": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

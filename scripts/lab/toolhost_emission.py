@@ -19,6 +19,7 @@ import uuid
 import zipfile
 import tarfile
 
+from evidence_files import open_evidence
 
 SIGNED_CODE = "signed-code"
 SIGNED_NATIVE = "signed-native"
@@ -369,7 +370,7 @@ done
 
 def summarize_resources(trace, code_output):
     """Join captured producer-tree samples to subprocess BOOTTIME windows."""
-    with trace.open() as stream:
+    with open_evidence(trace) as stream:
         samples = [json.loads(line) for line in stream]
     ticks = [sample["boottime_seconds"] for sample in samples]
     if any(left > right for left, right in zip(ticks, ticks[1:])):

@@ -248,7 +248,7 @@ def run_request(request_path, *, dry_run=False, detach=False):
         if not dry_run and not detach:
             output.mkdir(parents=True, exist_ok=True)
             try:
-                cleanup = subprocess.run([sys.executable, str(root / "scripts/prune-generated.py"), "--apply"], cwd=root, check=False)
+                cleanup = subprocess.run([sys.executable, str(root / "scripts/prune-generated.py"), "--apply", "--aggressive"], cwd=root, check=False)
                 result["prune_exit"] = cleanup.returncode
                 result["success"] = result["success"] and cleanup.returncode == 0
             except BaseException:
