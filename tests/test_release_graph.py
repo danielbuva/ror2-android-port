@@ -1848,6 +1848,11 @@ fixtures = {{'authored': {bundle!r}, 'sidecar': {sidecar!r}}}
             dispatcher.produce("payload/authored", release["entries"]["payload/authored"], destination)
             self.assertEqual(destination.read_bytes(), bundle)
             self.assertEqual(progress, [False, False])
+            consumer = dispatcher.descriptor(index["entries"]["payload/authored"]["job"])
+            (supplier,) = consumer["needs"]
+            self.assertEqual(dispatcher.artifact_sha256(supplier, "objects"), hashlib.sha256(b"authored").hexdigest())
+            with self.assertRaisesRegex(ValueError, "outside the signed entry graph"):
+                dispatcher.artifact_sha256("recipe/jobs/unreachable.json", "objects")
             manifest_target = "payload/generated-android-data"
             dispatcher.produce(manifest_target, release["entries"][manifest_target], root / "manifest")
             import UnityPy

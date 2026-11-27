@@ -162,10 +162,14 @@ def prepare_inventory(inputs, native):
     (work / "config/local.json").write_text(json.dumps({"game_path": str(game)}) + "\n")
 
 
-def signed_native_job(request, inputs, runtime, installed, native):
-    """Qualify signed conversion, Burst and native jobs in one phone attempt."""
+SIGNED_RELEASE_FIELDS = {"bundle", "envelope", "public_key", "key_id", "output"}
+SIGNED_ARTIFACT_FIELDS = SIGNED_RELEASE_FIELDS | {"job", "artifact", "bindings"}
+
+
+def signed_release_job(request, inputs, runtime, installed, native):
+    """Qualify an artifact or the native cohort through the signed dispatcher."""
     owner = runtime / "repo/tools/phone-build/owner-apk"
-    spec = importlib.util.spec_from_file_location("android_signed_native_jobs", owner / "release_jobs.py")
+    spec = importlib.util.spec_from_file_location("android_signed_release_jobs", owner / "release_jobs.py")
     jobs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(jobs)
     updates = jobs.UPDATES
@@ -173,11 +177,14 @@ def signed_native_job(request, inputs, runtime, installed, native):
     envelope = publisher.load_json(updates.within(inputs, request["envelope"], exists=True).read_bytes())
     key = updates.within(inputs, request["public_key"], exists=True).read_bytes()
     release = publisher.verify_envelope(envelope, {request["key_id"]: key})
-    identity = updates.input_identity(inputs, {})
-    prepare_inventory(inputs, native)
+    artifact_only = set(request) == SIGNED_ARTIFACT_FIELDS
+    config = {"bindings": request["bindings"]} if artifact_only else {}
+    identity = updates.input_identity(inputs, config)
+    if not artifact_only:
+        prepare_inventory(inputs, native)
 
     output = updates.within(inputs / "work", request["output"])
-    output.mkdir(mode=0o700)
+    output.mkdir(mode=0o700, parents=True)
     started = time.monotonic()
     free = shutil.disk_usage(output).free
     result = {"success": False}
@@ -185,7 +192,14 @@ def signed_native_job(request, inputs, runtime, installed, native):
         repo = output / "verified-repo"
         bundle = updates.within(inputs, request["bundle"], exists=True)
         index = updates.extract_bundle(bundle, repo, release)
-        dispatcher = jobs.Dispatcher(repo, index, release, inputs, runtime, installed, {}, identity)
+        dispatcher = jobs.Dispatcher(repo, index, release, inputs, runtime, installed, config, identity)
+        if artifact_only:
+            job, artifact = request["job"], request["artifact"]
+            sha256 = dispatcher.artifact_sha256(job, artifact)
+            if updates.input_identity(inputs, config) != identity:
+                raise ValueError("signed artifact input identity changed")
+            result.update(success=True, job=job, artifact=artifact, sha256=sha256, bundle_sha256=release["bundle_sha256"])
+            return result
         library = "apk/lib/arm64-v8a/libil2cpp.so"
         metadata = "apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"
         burst = "apk/lib/arm64-v8a/lib_burst_generated.so"
@@ -245,10 +259,10 @@ def run(request_file, runtime, installed):
     backend = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(backend)
     request = json.loads(request_file.read_text())
-    if set(request) == {"bundle", "envelope", "public_key", "key_id", "output"}:
+    if set(request) in (SIGNED_RELEASE_FIELDS, SIGNED_ARTIFACT_FIELDS):
         os.environ["TMPDIR"] = str(runtime / "tmp")
         Path(os.environ["TMPDIR"]).mkdir(exist_ok=True)
-        print(json.dumps(signed_native_job(request, inputs, runtime, installed, backend.native)), flush=True)
+        print(json.dumps(signed_release_job(request, inputs, runtime, installed, backend.native)), flush=True)
         return
     before = json.loads((inputs / "input-hashes.json").read_text())
 
