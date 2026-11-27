@@ -8696,6 +8696,13 @@ hierarchy, particle systems, Material and managed components to
 existing suppliers. The scoped editor fixture loads the prefab and unloads
 the bundle. Release admission requires the original 30-slot preload order.
 
+The ChefDisplayFrost profile feeds its original Light, prefab hierarchy,
+particle systems, Material and managed components to `record_produce.py`.
+Bundle preparation resolves the Material's saved links against existing
+suppliers, including two RGB mip textures. The scoped exact-editor fixture
+loads the GameObject and unloads the bundle. Canonical intake preserves the
+source preload order and verifies the full dependency closure.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
