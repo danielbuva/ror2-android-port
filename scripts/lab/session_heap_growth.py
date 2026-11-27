@@ -303,7 +303,7 @@ def capture_pair(receipt_path, menus, expected_apk_sha256, root=None):
     if not path.is_absolute():
         path = root / path
     receipt = json.loads(path.read_text())
-    if receipt.get("success") is not True or receipt.get("mode") != "capture" or receipt.get("apk_sha256") != expected_apk_sha256:
+    if receipt.get("success") is not True or receipt.get("mode") not in {"capture", "session-memory"} or receipt.get("apk_sha256") != expected_apk_sha256:
         raise AnalysisError("successful_matching_capture_required")
     evidence = (root / receipt["stage_evidence"]).resolve()
     if not evidence.is_relative_to((root / "work").resolve()):
@@ -316,6 +316,8 @@ def capture_pair(receipt_path, menus, expected_apk_sha256, root=None):
         or stage.get("runtime_errors")
         or stage.get("failures")
         or stage.get("memory_snapshots") != snapshots
+        or not isinstance(snapshots, dict)
+        or any(str(menu) not in snapshots for menu in menus)
     ):
         raise AnalysisError("capture_receipt_stage_mismatch")
     pair = []
@@ -602,7 +604,7 @@ def main(argv=None):
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--export-dir", help="New private work/coordination directory; build pinned parser, export and analyze")
     source.add_argument("--export-receipt", help="Explicit existing export receipt; verify and analyze read-only")
-    parser.add_argument("--receipt", required=True, help="Explicit successful private session_memory_batch capture receipt")
+    parser.add_argument("--receipt", required=True, help="Explicit successful private session-memory capture receipt")
     parser.add_argument("--expected-apk-sha256", required=True)
     parser.add_argument("--expected-receipt-sha256", required=True, help="Exact successful capture receipt digest")
     parser.add_argument("--menus", nargs=2, type=int, required=True, metavar=("BEFORE", "AFTER"))

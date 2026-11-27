@@ -419,6 +419,18 @@ class GameThermalOwnerTests(unittest.TestCase):
                 self.owner.sample()
         self.assertEqual(json.loads(self.owner.trace.read_text().splitlines()[-1])["soc_celsius"], 90)
 
+    def test_plugged_in_workload_records_and_requires_external_power(self):
+        self.owner.require_external_power = True
+        self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]
+        battery = "temperature: 340\nlevel: 80\nstatus: 4\nUSB powered: "
+        self.device.cmd.return_value = self.runtime_reply("49000", battery + "true")
+        self.owner.sample()
+        self.assertTrue(json.loads(self.owner.trace.read_text().splitlines()[-1])["battery_external_power"])
+        self.device.cmd.return_value = self.runtime_reply("49000", battery + "false")
+        with self.assertRaisesRegex(RuntimeError, "external power"):
+            self.owner.sample()
+        self.assertFalse(json.loads(self.owner.trace.read_text().splitlines()[-1])["battery_external_power"])
+
     def test_slow_admission_discovers_paths_then_runtime_uses_one_cat(self):
         self.device.display.return_value = True
         self.device.cmd.return_value = (

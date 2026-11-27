@@ -230,7 +230,9 @@ def collect_memory_snapshot(device, runtime, out, name):
     return {"file": name, "sha256": digest, "bytes": local.stat().st_size}
 
 
-def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False, _launch=None, _between_sessions=None):
+def check_session_memory(
+    sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False, _launch=None, _between_sessions=None, *, _device=None
+):
     if type(sessions) is not int or not MIN_SESSIONS <= sessions <= MAX_SESSIONS:
         raise ValueError("Use %d to %d sessions" % (MIN_SESSIONS, MAX_SESSIONS))
     if type(memory_snapshots) is not bool or memory_snapshots and root_walk:
@@ -239,7 +241,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     expected_apk_sha256 = validate_expected_apk_sha256(expected_apk_sha256)
     if expected_apk_sha256 is None:
         raise ValueError("session-memory-check requires --expected-apk-sha256 for the installed APK")
-    device = SessionCleanupDevice()
+    device = SessionCleanupDevice() if _device is None else _device
     installed = device.owned()
     storage = device.storage()
     mode = device.settings["storage_mode"]
@@ -585,4 +587,4 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     write(out / "result.json", result)
     if failures:
         raise RuntimeError("Session memory check failed (" + str(first_failure or stop) + "); see " + result["evidence"])
-    return {key: result[key] for key in ("success", "stop", "sessions_observed", "apk_sha256", "growth", "evidence")}
+    return {key: result[key] for key in ("success", "stop", "sessions_observed", "apk_sha256", "growth", "evidence", "memory_snapshots")}

@@ -382,6 +382,12 @@ class SessionHeapGrowthTests(unittest.TestCase):
             fixture(after).close()
             receipt = capture(root, before, after)
             pair = heap.capture_pair(receipt, [2, 4], "a" * 64, root)
+            shared = json.loads(receipt.read_text())
+            shared["mode"] = "session-memory"
+            receipt.write_text(json.dumps(shared))
+            self.assertEqual(heap.capture_pair(receipt, [2, 4], "a" * 64, root), pair)
+            with self.assertRaisesRegex(heap.AnalysisError, "stage_mismatch"):
+                heap.capture_pair(receipt, [2, 33], "a" * 64, root)
             with heap.database(before) as connection:
                 heap.verify_export(connection, pair[0][0])
                 with self.assertRaisesRegex(heap.AnalysisError, "binding_mismatch"):

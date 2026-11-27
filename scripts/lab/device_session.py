@@ -76,6 +76,7 @@ def load_request(path, serial=None):
         "dismiss_usb_chooser",
         "capture_video",
         "enforce_soc_ceiling",
+        "session_memory",
     }
     installed_alpha = isinstance(value, dict) and value.get("mode") == INSTALLED_ALPHA
     path_fields = ("canonical_root", "output", "apk", "input_script", "input_mapping", "prior_receipt", "payload_directory")
@@ -127,6 +128,7 @@ def load_request(path, serial=None):
         "profile-save-failure",
         "software-notices",
         "player-screens",
+        "session-memory",
         "owner-unplugged",
         "shader-draw",
         "shader-compute",
@@ -146,6 +148,32 @@ def load_request(path, serial=None):
         raise ValueError("Persistence workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
+    if value["mode"] == "session-memory":
+        from session_memory_check import MAX_SESSIONS, MIN_SESSIONS
+
+        memory = value.get("session_memory")
+        memory_fields = {
+            "mode",
+            "serial",
+            "adopted_install",
+            "cooldown_seconds",
+            "capture_interval_seconds",
+            "payload_directory",
+            "prior_receipt",
+            "dismiss_usb_chooser",
+            "session_memory",
+        }
+        if (
+            not isinstance(memory, dict)
+            or memory.keys() - {"sessions", "snapshots"}
+            or type(memory.get("sessions")) is not int
+            or not MIN_SESSIONS <= memory["sessions"] <= MAX_SESSIONS
+            or type(memory.get("snapshots", False)) is not bool
+            or value.keys() - required - memory_fields
+        ):
+            raise ValueError("Session memory requires a session count, an optional snapshot flag and its own gameplay controls")
+    elif "session_memory" in value:
+        raise ValueError("session_memory requires the session-memory workload")
     if value["mode"] == "owner-unplugged":
         if value["duration_seconds"] != UNPLUGGED_SECONDS or "adopted_install" not in value:
             raise ValueError("Owner unplugged workload requires 30 minutes and adopted-only installation")
@@ -1193,6 +1221,20 @@ def observe_unplugged(device, request, output, result, pid):
 def run_workload(device, thermal, request, output, result, *, _reset_idle=None, start_attempt=None):
     process_checks = result.setdefault("process_checkpoints", [])
     checked_launch = partial(launch, process_checks=process_checks)
+    if request["mode"] == "session-memory":
+        from session_memory_check import check_session_memory
+
+        memory = request["session_memory"]
+        stage = check_session_memory(
+            sessions=memory["sessions"],
+            expected_apk_sha256=request["apk_sha256"],
+            memory_snapshots=memory.get("snapshots", False),
+            _device=device,
+            _launch=lambda selected: checked_launch(selected, thermal),
+            _between_sessions=partial(thermal.between_sessions, cool_start=True),
+        )
+        result.update(session_memory=stage, stage_evidence=stage["evidence"], memory_snapshots=stage["memory_snapshots"])
+        return
     if request["mode"] == "owner-unplugged":
         launched = checked_launch(device, thermal)
         save(output / "launch.json", launched)
@@ -1567,7 +1609,7 @@ def execute(request):
 
     root, output = Path(request["canonical_root"]), Path(request["output"])
     common.WORK = root / "work"  # Set before importing owners that capture WORK.
-    from alpha_stability_batch import _GameThermalOwner, _idle_readback, _prune
+    from alpha_stability_batch import NATIVE_CAPTURE_HEADROOM_BYTES, _GameThermalOwner, _idle_readback, _prune
     from device import PACKAGE, Device, InstallSignatureMismatch, remove_device_file
     from device_context import command_selectors, set_command_selector
     from installed_attempt import attempt_from_installed
@@ -1578,6 +1620,8 @@ def execute(request):
         raise RuntimeError("Terminal receipt already exists; consume it instead of replaying")
     (output / ".prune-keep").touch()
     installed_alpha = request["mode"] == INSTALLED_ALPHA
+    session_memory = request["mode"] == "session-memory"
+    snapshots = session_memory and request["session_memory"].get("snapshots", False)
     apk = None if installed_alpha else Path(request["apk"])
     cleanup = dict(bytes_removed=0, files=[])
     result = dict(
@@ -1602,8 +1646,9 @@ def execute(request):
     prior_selectors = command_selectors()
     try:
         source_environment(root)
-        result["host_storage"] = dict(estimated_output_bytes=1024**3, margin_bytes=20 * 1024**3, free_bytes=shutil.disk_usage(output).free)
-        if result["host_storage"]["free_bytes"] < 21 * 1024**3:
+        estimated_output = 1024**3 + (2 * NATIVE_CAPTURE_HEADROOM_BYTES if snapshots else 0)
+        result["host_storage"] = dict(estimated_output_bytes=estimated_output, margin_bytes=DEVICE_RESERVE_BYTES, free_bytes=shutil.disk_usage(output).free)
+        if result["host_storage"]["free_bytes"] < estimated_output + DEVICE_RESERVE_BYTES:
             raise RuntimeError("Host capture output plus 20 GiB margin unavailable")
         lease.acquire()
         set_command_selector(request["serial"], None)
@@ -1634,8 +1679,10 @@ def execute(request):
                 initial_hash_pending = False
             payload = payload_files(request)
             payload_size = sum(path.stat().st_size for path in payload)
-            reserve = apk.stat().st_size + payload_size + DEVICE_RESERVE_BYTES
-            result["storage_before"] = placement(device, reserve, adopted_only=request.get("adopted_install", False), install_apk=apk)
+            snapshot_reserve = NATIVE_CAPTURE_HEADROOM_BYTES if snapshots else 0
+            reserve = apk.stat().st_size + payload_size + DEVICE_RESERVE_BYTES + snapshot_reserve
+            adopted_only = request.get("adopted_install", False)
+            result["storage_before"] = placement(device, reserve, adopted_only=adopted_only, install_apk=apk)
             if active_hash:
                 ensure_runtime(device)
                 result["initial_reset"] = {}
@@ -1647,7 +1694,7 @@ def execute(request):
                 try:
                     result["install"] = device.install(apk)
                 except InstallSignatureMismatch:
-                    if request["mode"] == "owner-unplugged" or device.package != PACKAGE or not active_hash or not payload:
+                    if request["mode"] in {"owner-unplugged", "session-memory"} or device.package != PACKAGE or not active_hash or not payload:
                         raise
                     limit = device.settings.get("apk_install_limit")
                     if limit is not None and common.read(device.install_counter())["dispatched"] >= limit:
@@ -1668,13 +1715,13 @@ def execute(request):
                     active_hash = verify_owned(device)["apk_sha256"]
             active_hash = request["apk_sha256"]
             check_lab_processes(device, result["process_checkpoints"], "install")
-            result["storage_after"] = placement(device, payload_size + DEVICE_RESERVE_BYTES)
+            result["storage_after"] = placement(device, payload_size + DEVICE_RESERVE_BYTES + snapshot_reserve, adopted_only=adopted_only)
             runtime = ensure_runtime(device)
             if "payload_directory" in request:
                 result["sync"] = device.sync(Path(request["payload_directory"]), replace_previous=True, cleanup=cleanup)
                 if "install_recovery" in result:
                     result["install_recovery"]["payload_resynced"] = True
-                result["storage_after_sync"] = placement(device, DEVICE_RESERVE_BYTES)
+                result["storage_after_sync"] = placement(device, DEVICE_RESERVE_BYTES + snapshot_reserve, adopted_only=adopted_only)
             result["installed_idle"] = _idle_readback(device, active_hash)
             exception_log = runtime + "/exceptions.jsonl"
             initial_exception_bytes = exception_log_size(device, exception_log)
@@ -1706,12 +1753,15 @@ def execute(request):
             output / "thermal.jsonl",
             time.monotonic() + request["cooldown_seconds"],
             enforce_soc_ceiling=request.get("enforce_soc_ceiling", False),
+            require_external_power=session_memory,
         )
         thermal.phase = "cooldown"
         thermal.cool()
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600
         thermal.phase = request["mode"]
         prelaunch = result.setdefault("prelaunch", {})
+        if session_memory and not device.display(True):
+            raise RuntimeError("Session memory requires verified display-zero wake")
         prepare_launch(device, prelaunch)
         if request.get("dismiss_usb_chooser"):
             dismiss_usb_chooser(device, runtime, prelaunch.setdefault("usb_chooser", {}))
@@ -1759,7 +1809,7 @@ def execute(request):
                 except BaseException:
                     cleanup_errors.append(name + ": " + traceback.format_exc())
 
-            if device and active_hash and not installed_alpha:
+            if device and active_hash and not installed_alpha and not session_memory:
                 try:
                     pid = next(
                         (checkpoint["verified_launch_pid"] for checkpoint in reversed(result["process_checkpoints"]) if "verified_launch_pid" in checkpoint),

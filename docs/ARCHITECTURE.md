@@ -6384,6 +6384,14 @@ It is an observation runner: it attributes no retaining root
 and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
 `--target`, and keeps evidence under `work/device/<serial>/experiments/session-memory/`.
 Host contracts: `tests/test_session_memory_check.py`.
+The shared `device-session` workload `session-memory` calls that owner with the
+leased device and checked launcher. It requires external power, cools the
+device between sessions and includes the capture identities and stage evidence
+in its terminal receipt. Completed-world reclamation in `SessionResourceBoundary`
+also releases destroyed hurtbox references from returned `DotController` stacks
+after deferred destruction. Live targets and checked-out stacks stay with the
+game's pool lifecycle. The idle contract is exercised in
+`tests/test_diagnostic_retention.py`.
 The shared session process check reuses `baseline.process_pid`'s checked shell
 observation: a legitimate absent PID is reported as process exit, while transport failures
 propagate as runner errors and cannot verify process termination during cleanup.

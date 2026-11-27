@@ -141,10 +141,11 @@ class _GameThermalOwner:
     cooldown before a new stage requires at most 50 C, battery at most 35 C.
     """
 
-    def __init__(self, device, expected, trace, deadline, *, charge_override=CHARGE_OVERRIDE, enforce_soc_ceiling=False):
+    def __init__(self, device, expected, trace, deadline, *, charge_override=CHARGE_OVERRIDE, enforce_soc_ceiling=False, require_external_power=False):
         self.device, self.expected, self.trace, self.deadline = device, expected, trace, deadline
         self.charge_override = charge_override
         self.enforce_soc_ceiling = enforce_soc_ceiling
+        self.require_external_power = require_external_power
         self.soc_celsius = None
         self.stop = threading.Event()
         self.sample_stop = threading.Event()
@@ -189,17 +190,22 @@ class _GameThermalOwner:
                 except subprocess.TimeoutExpired as error:
                     raise RuntimeError(THERMAL_GAP_ERROR) from error
                 observation["runtime_raw"] = raw
-                sensors, separator, battery = raw.partition("\n__LAB_BATTERY__\n")
+                sensors, separator, battery_text = raw.partition("\n__LAB_BATTERY__\n")
                 if not separator:
                     raise RuntimeError("Missing runtime battery boundary")
                 values = sensors.rstrip("\n").splitlines()
-                self.battery = battery_observation(battery)
                 if len(values) != len(self.runtime_zones) or any(len(value.split()) != 1 for value in values):
                     raise RuntimeError("Malformed runtime thermal observation")
                 text = "\n".join(name + "\t" + value + "\t" + path for (name, path), value in zip(self.runtime_zones, values))
             if all_zones:
-                self.battery = battery_observation(self.device.sh("dumpsys", "battery", timeout=0.7))
+                battery_text = self.device.sh("dumpsys", "battery", timeout=0.7)
+            self.battery = battery_observation(battery_text)
             observation["battery"] = self.battery
+            if self.require_external_power:
+                powered = re.search(r"^\s*(?:AC|USB|Wireless|Dock) powered:\s*true\s*$", battery_text, re.M) is not None
+                observation["battery_external_power"] = powered
+                if not powered:
+                    raise RuntimeError("Session memory requires verified external power")
             if all_zones:
                 self.battery_current_now = self.battery_current()
                 observation["battery_current_now"] = self.battery_current_now

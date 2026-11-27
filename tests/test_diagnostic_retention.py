@@ -15,6 +15,7 @@ HOST = r"""
 using System;
 using System.IO;
 using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -109,6 +110,23 @@ class BulletAttack {
  private static HitPool bulletHitPool=new HitPool();
  public static Stack<BulletHit> Returned {get{return bulletHitPool.Returned;}}
 }
+class DotController {
+ private class DotStack { public HurtBox hitHurtBox; public object other; }
+ private sealed class DotStackPool : PoolBase<DotStack> {}
+ private static readonly DotStackPool dotStackPool=new DotStackPool();
+ public static void Verify(Func<int> cleanup){
+  var dead=new HurtBox {destroyed=true};var live=new HurtBox();var other=new object();
+  var first=new DotStack {hitHurtBox=dead,other=other};var second=new DotStack {hitHurtBox=dead};
+  var active=new DotStack {hitHurtBox=live};var empty=new DotStack();var rented=new DotStack {hitHurtBox=dead};
+  var stack=dotStackPool.Returned;stack.Push(first);stack.Push(second);stack.Push(active);stack.Push(empty);
+  var before=stack.ToArray();var backingField=stack.GetType().GetField("_array",BindingFlags.Instance|BindingFlags.NonPublic);
+  var backing=backingField.GetValue(stack);
+  if(cleanup()!=2||!ReferenceEquals(first.hitHurtBox,null)||!ReferenceEquals(second.hitHurtBox,null)||!ReferenceEquals(first.other,other))throw new Exception("Destroyed returned DOT targets retained or unrelated state modified");
+  if(!ReferenceEquals(active.hitHurtBox,live)||!ReferenceEquals(rented.hitHurtBox,dead)||!ReferenceEquals(empty.hitHurtBox,null))throw new Exception("Cleanup changed a live, rented or empty target");
+  if(!before.SequenceEqual(stack)||!ReferenceEquals(backing,backingField.GetValue(stack)))throw new Exception("DOT pool storage or order changed");
+  if(cleanup()!=0)throw new Exception("DOT cleanup not idempotent");
+ }
+}
 namespace HG {
  public abstract class CollectionPool<T,C> where C:ICollection<T>,new() {
   private static readonly Stack<C> pooledCollections=new Stack<C>();
@@ -124,6 +142,7 @@ class ResourceOwner {
  public Report r=new Report();
  void Check(bool pass,string message){if(!pass)throw new InvalidOperationException(message);}
  CLEANUP
+ DOT_METHOD
  OVERLAP_METHOD
  SPAWN_METHOD
  RETURNED_POOLS
@@ -192,8 +211,19 @@ class ResourceOwner {
   var after=stack.ToArray();if(before.Length!=after.Length)throw new Exception("Pool resized");for(int i=0;i<before.Length;i++)if(!ReferenceEquals(before[i],after[i]))throw new Exception("Pool order changed");
   if(owner.ReleaseDestroyedPooledHitTargets()!=0)throw new Exception("Cleanup not idempotent");
  }
+ public static void VerifyDot(){
+  var owner=new ResourceOwner();
+  for(int flag=0;flag<4;flag++){
+   owner.r.world.cleaned=flag!=0;Run.instance=flag==1?new UnityEngine.Object():null;NetworkServer.active=flag==2;NetworkClient.active=flag==3;
+   bool refused=false;try{owner.ReleaseDestroyedPooledDotTargets();}catch(InvalidOperationException){refused=true;}
+   if(!refused)throw new Exception("Live-world DOT cleanup was allowed");
+  }
+  owner.r.world.cleaned=true;Run.instance=null;NetworkServer.active=NetworkClient.active=false;
+  if(owner.ReleaseDestroyedPooledDotTargets()!=0)throw new Exception("Empty pool had a target");
+  DotController.Verify(owner.ReleaseDestroyedPooledDotTargets);
+ }
 }
-class Program {static void Main(string[] args){if(args[0]=="scene-details")LabDiagnostics.VerifySceneDetails();else if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="returned-pools")ResourceOwner.VerifyReturnedPools();else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
+class Program {static void Main(string[] args){if(args[0]=="scene-details")LabDiagnostics.VerifySceneDetails();else if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="returned-pools")ResourceOwner.VerifyReturnedPools();else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else if(args[0]=="dot")ResourceOwner.VerifyDot();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
 """
 
 
@@ -220,6 +250,7 @@ class DiagnosticRetentionTests(unittest.TestCase):
             extract_method((ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text(), "    int ReleaseDestroyedPooledHitTargets()"),
         )
         resource = (ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text()
+        code = code.replace("DOT_METHOD", extract_method(resource, "    int ReleaseDestroyedPooledDotTargets()"))
         code = code.replace("OVERLAP_METHOD", extract_method(resource, "    int PruneDestroyedOverlapTargets()"))
         code = code.replace("SPAWN_METHOD", extract_method(resource, "    int PruneDestroyedSpawnCardCallbacks()"))
         code = code.replace("RETURNED_POOLS", extract_method(resource, "    string[] ReclaimReturnedSessionPools()"))
@@ -264,6 +295,9 @@ class DiagnosticRetentionTests(unittest.TestCase):
 
     def test_teardown_releases_only_destroyed_targets_of_returned_hits(self):
         self.case("cleanup")
+
+    def test_teardown_releases_only_destroyed_targets_of_returned_dot_stacks(self):
+        self.case("dot")
 
     def test_idle_teardown_reclaims_returned_storage_without_mutating_rentals(self):
         self.case("returned-pools")

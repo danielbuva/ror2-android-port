@@ -57,6 +57,34 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
 
+    def test_session_memory_uses_shared_device_and_owns_its_launch(self):
+        self.request.update(mode="session-memory", session_memory={"sessions": 32, "snapshots": True})
+        runner.save(self.request_file, self.request)
+        request = runner.load_request(self.request_file)
+        device, thermal = mock.Mock(), mock.Mock()
+        stage = {"evidence": "work/session-memory", "memory_snapshots": {"2": {}, "33": {}}}
+
+        def workload(**kwargs):
+            self.assertIs(kwargs["_device"], device)
+            self.assertEqual(kwargs["sessions"], 32)
+            self.assertTrue(kwargs["memory_snapshots"])
+            self.assertEqual(kwargs["expected_apk_sha256"], self.digest)
+            kwargs["_launch"](device)
+            kwargs["_between_sessions"]()
+            return stage
+
+        receipt = {}
+        with mock.patch("session_memory_check.check_session_memory", side_effect=workload), mock.patch.object(runner, "launch") as launch:
+            runner.run_workload(device, thermal, request, self.output, receipt)
+        launch.assert_called_once_with(device, thermal, process_checks=[])
+        thermal.between_sessions.assert_called_once_with(cool_start=True)
+        self.assertEqual(receipt["stage_evidence"], stage["evidence"])
+        self.assertEqual(receipt["memory_snapshots"], stage["memory_snapshots"])
+        self.request.update(session_memory={"sessions": 2, "snapshots": True})
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "session count"):
+            runner.load_request(self.request_file)
+
     def test_shader_probes_require_the_disposable_fixture_without_gameplay_inputs(self):
         for mode in ("shader-draw", "shader-compute"):
             request = dict(self.request, mode=mode, package=runner.PHONE_CONTENT_PACKAGE)

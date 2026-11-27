@@ -10,8 +10,7 @@ using UnityEngine.Networking;
 using UnityEngine.Profiling;
 
 // Measurements and reclamation only at an already completed owned session.
-// Only the two measured returned-item pools are reclaimed, with no live world.
-// Checked-out objects, live content, other process caches and files are untouched.
+// Reclaim measured retired references and returned storage with no live world.
 public sealed partial class PortSession
 {
     [Serializable]
@@ -460,6 +459,32 @@ public sealed partial class PortSession
         }
         return released;
     }
+    // Paired menu heaps trace a retired player and session to returned DOT
+    // stacks whose original Reset leaves hitHurtBox assigned.
+    int ReleaseDestroyedPooledDotTargets()
+    {
+        Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
+              "Refuse pooled-DOT cleanup in a live session");
+        var poolField = typeof(DotController).GetField("dotStackPool", BindingFlags.Static | BindingFlags.NonPublic);
+        var pool = poolField?.GetValue(null);
+        Check(pool != null, "Original DOT stack pool changed");
+        var poolType = poolField.FieldType.BaseType;
+        var itemsField = poolType.GetField("items", BindingFlags.Instance | BindingFlags.NonPublic);
+        var items = itemsField?.GetValue(pool) as IEnumerable;
+        var targetField = poolType.GetGenericArguments().SingleOrDefault()?.GetField("hitHurtBox", BindingFlags.Instance | BindingFlags.Public);
+        Check(items != null && targetField?.FieldType == typeof(HurtBox), "Original returned DOT stack storage changed");
+        int released = 0;
+        foreach (var stack in items)
+        {
+            var target = (HurtBox)targetField.GetValue(stack);
+            if (!ReferenceEquals(target, null) && !target)
+            {
+                targetField.SetValue(stack, null);
+                released++;
+            }
+        }
+        return released;
+    }
     // Paired menu captures show unique returned items growing in these stacks.
     // Original sphere-cast hits and serialized Highlight lists can enter them
     // without an earlier rental, so their size is not a concurrency watermark.
@@ -499,6 +524,7 @@ public sealed partial class PortSession
         int pruned = PruneDestroyedDepossessionSubscribers();
         var registries = PruneDestroyedOriginalRegistries().Concat(new[] {
             "BulletAttack.bulletHitPool.destroyedTargets:" + ReleaseDestroyedPooledHitTargets(),
+            "DotController.dotStackPool.destroyedTargets:" + ReleaseDestroyedPooledDotTargets(),
             "OverlapAttack.discoveredHurtboxes.destroyedTargets:" + PruneDestroyedOverlapTargets(),
             "CharacterSpawnCard.loadoutAvailability.destroyedTargets:" + PruneDestroyedSpawnCardCallbacks()
         }).Concat(ReclaimReturnedSessionPools()).ToArray();
