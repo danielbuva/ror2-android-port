@@ -844,6 +844,22 @@ class ReleaseGraphTests(unittest.TestCase):
             (native / "libtexture-pixels.so").write_text("changed installed provider")
             self.assertNotEqual(after["native_sha256:libtexture-pixels.so"], dispatch.input_pins(names["rgb-mip"])["native_sha256:libtexture-pixels.so"])
 
+    def test_signed_source_bc1_binds_native_codecs_without_sdk_extraction(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            profile = repo / "recipe/owner-authored-bc1.json"
+            profile.parent.mkdir()
+            profile.write_text(json.dumps({"bundles": [{"members": [{"textures": [{"operation": "source-bc1-etc"}]}]}]}))
+            graph = G.Graph(repo, {})
+            graph.conversion = "recipe/jobs/owner-code.json"
+            job = graph.jobs[graph.build(G.digest(profile))]
+            args = job["arguments"]
+            for flag, native in (("pixels-codec", "libtexture-pixels.so"), ("etc-codec", "libtexture-etc.so")):
+                self.assertEqual(args[args.index("--" + flag) + 1], "${native}/" + native)
+                self.assertEqual(args[args.index("--" + flag + "-sha256") + 1], "${native_sha256:" + native + "}")
+            self.assertEqual(job["needs"], [])
+            self.assertNotIn("request", job)
+
     def test_player_shader_suppliers_keep_serialized_and_nested_pack_contracts(self):
         graph = G.Graph(ROOT, {})
         player_path = ROOT / "recipe/owner-player-data.json"

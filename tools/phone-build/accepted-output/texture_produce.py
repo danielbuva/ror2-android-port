@@ -701,6 +701,9 @@ def produce(
     sdk_toolchain_sha256=None,
     resume=False,
     comparison="exact",
+    *,
+    pixels_codec=None,
+    pixels_codec_sha256=None,
 ):
     if comparison not in ("exact", "diagnostic"):
         raise ValueError("unknown output comparison policy")
@@ -710,13 +713,16 @@ def produce(
     if set(profile) != {"input_id", "bundles"} or profile["input_id"] != MESH.INPUT_ID:
         raise ValueError("unknown texture input")
     pc = pc.resolve(strict=True)
-    needs_sdk = any(
-        texture["operation"] in {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *SOURCE_BC_ETC_FORMATS}
-        for bundle in profile["bundles"]
-        for member in bundle["members"]
-        for texture in member["textures"]
-    )
+    operations = {texture["operation"] for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]}
+    needs_sdk = bool(operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", "source-bc3-etc"})
     sdk = sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) if needs_sdk or sdk_toolchain is not None or sdk_toolchain_sha256 is not None else None
+    if ("source-bc1-etc" in operations and sdk is None) or pixels_codec is not None or pixels_codec_sha256 is not None:
+        if pixels_codec is None or pixels_codec_sha256 is None:
+            raise ValueError("pinned native texture pixel decoder required")
+        pixels_codec = pixels_codec.resolve(strict=True)
+        if pixels_codec.is_relative_to(pc) or BUNDLE.sha(pixels_codec) != pixels_codec_sha256:
+            raise ValueError("native texture pixel decoder drift or overlap with original input")
+    codec_tools = sdk if pixels_codec is None else {**(sdk or {}), "pixels": str(pixels_codec)}
     needs_jpeg = any(
         texture["operation"] in {"rgb-jpeg", "dxt1-rgb-jpeg"} or (texture["operation"] in {"etc1", "etc1-mips"} and texture["jpeg"])
         for bundle in profile["bundles"]
@@ -729,12 +735,8 @@ def produce(
         jpeg_codec = jpeg_codec.resolve(strict=True)
         if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec drift or overlap with original input")
-    needs_etc = any(
-        texture["operation"]
-        in {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *SOURCE_BC_ETC_FORMATS}
-        for bundle in profile["bundles"]
-        for member in bundle["members"]
-        for texture in member["textures"]
+    needs_etc = bool(
+        operations & {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *SOURCE_BC_ETC_FORMATS}
     )
     if needs_etc or etc_codec is not None or etc_codec_sha256 is not None:
         if etc_codec is None or etc_codec_sha256 is None:
@@ -772,6 +774,8 @@ def produce(
         receipt["etc_codec_sha256"] = etc_codec_sha256
     if sdk is not None:
         receipt["sdk_toolchain_sha256"] = sdk_toolchain_sha256
+    if pixels_codec is not None:
+        receipt["pixels_codec_sha256"] = pixels_codec_sha256
     types, completed_types = [], []
     if resume:
         counts, types, completed_types = texture_resume(output, profile, receipt)
@@ -823,7 +827,7 @@ def produce(
                         body = BUNDLE.exact(member, selected["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original texture body drift")
-                        pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
+                        pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, codec_tools)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"][completed:]:
                             if target["pixel_sha256"] is None and len(pixels) != target["pixel_bytes"]:
@@ -868,6 +872,8 @@ def produce(
             raise ValueError("public JPEG codec changed during production")
         if etc_codec is not None and BUNDLE.sha(etc_codec) != etc_codec_sha256:
             raise ValueError("public ETC codec changed during production")
+        if pixels_codec is not None and BUNDLE.sha(pixels_codec) != pixels_codec_sha256:
+            raise ValueError("native texture pixel decoder changed during production")
         if sdk is not None and sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) != sdk:
             raise ValueError("SDK texture toolchain changed during production")
         receipt["outputs"] = {
@@ -898,6 +904,8 @@ def main():
     parser.add_argument("--etc-codec-sha256")
     parser.add_argument("--sdk-toolchain", type=Path)
     parser.add_argument("--sdk-toolchain-sha256")
+    parser.add_argument("--pixels-codec", type=Path)
+    parser.add_argument("--pixels-codec-sha256")
     parser.add_argument("--comparison", choices=("exact", "diagnostic"), default="exact")
     args = parser.parse_args()
     produce(
@@ -913,6 +921,8 @@ def main():
         args.sdk_toolchain_sha256,
         resume=args.resume,
         comparison=args.comparison,
+        pixels_codec=args.pixels_codec,
+        pixels_codec_sha256=args.pixels_codec_sha256,
     )
 
 

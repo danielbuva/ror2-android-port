@@ -1423,6 +1423,7 @@ It checks native schemas, platform data, references and complete mip extents,
 then writes a private profile. Source-derived BC profiles pin original bytes and
 expected output extents and leave reference output hashes empty. BC1 colour
 retains usage and encodes each original mip as ETC1 RGB after checking opacity.
+BC1-only jobs pin the native pixel decoder and ETC encoder directly.
 The producer's setup, stream checks and output ownership apply to these packs.
 `build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and

@@ -55,6 +55,7 @@ INSTALLED_CODE_WITNESSES = {"${native}/" + path for path in INSTALLED_CODE_TOOLS
 TEXTURE_NATIVE = {
     "jpeg_codec": "libtexture-jpeg.so",
     "etc_codec": "libtexture-etc.so",
+    "pixels_codec": "libtexture-pixels.so",
 }
 COMPUTE_NATIVE = {"dxbc": "libshader-dxbc.so", "spirv_val": "libspirv-val.so"}
 PIXEL_DECODER = "libtexture-pixels.so"
@@ -395,8 +396,10 @@ class Graph:
             source_bc_etc = {"source-bc1-etc", "source-bc3-etc"}
             if operations & {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *source_bc_etc}:
                 bindings.append("etc_codec")
-            if operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *source_bc_etc}:
+            if operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", "source-bc3-etc"}:
                 bindings.append("sdk_toolchain")
+            elif "source-bc1-etc" in operations:
+                bindings.append("pixels_codec")
             for binding in bindings:
                 flag = "--" + binding.replace("_", "-")
                 if not self.conversion:

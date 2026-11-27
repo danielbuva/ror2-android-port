@@ -715,12 +715,12 @@ Android GPU support and canonical package integration remain separate checks.
 
 Use `--source-bc3` or `--source-bc1` on the same discovery command to
 select missing BC3 or BC1 Texture2Ds. BC1 colour uses ETC1 RGB and requires
-opaque texels, including the original block padding. Run the producer
-with the pinned ETC helper and SDK descriptor
-from the encoder comparison setup and pass `--comparison diagnostic`. The
-producer transcodes the original mip chain, retains the source hashes and
-checks output extents. The pack records actual output hashes without a
-reference APK byte-match claim.
+opaque texels, including the original block padding. Use a pinned ETC helper
+and pass `--comparison diagnostic`. For BC1, pin the native decoder with
+`--pixels-codec` and `--pixels-codec-sha256`. The encoder comparison's pinned
+SDK descriptor supplies the decoder too and is required for BC3. The producer
+retains the source hashes, checks output extents and records actual output
+hashes for the original mip transcode.
 
 The producer copies original raw pixel/mip bytes, decodes BC1 top mips to RGB,
 extends transparent RGB with fixed cardinal Manhattan jump flooding, or applies
