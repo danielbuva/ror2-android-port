@@ -6,6 +6,32 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1538 — Draw a translated source Shader on Android Vulkan
+
+2026-11-27. Wine vkd3d-shader translated all eight Animate Alpha DXBC
+variant pairs. The record producer kept source state, keywords and bindings
+under the original Shader name. Unity typed-loaded the resulting leaf.
+The Android Vulkan fixture sampled opaque red and green, matching the SDK
+compiler control at both ramp endpoints. SoC peaked at 70.8 °C with no time
+above 80 °C. Fixture removal, OLED sleep and lease release passed.
+APK SHA-256 `267913901faf8778caafbdf33f4b45c409e38e699bced633e9d655c0981fd4dd`.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`vulkan-wine-device-01/terminal.done.json` and the `vulkan-control-device-02/` receipt.
+Other shader passes, ComputeShader dispatch and normal gameplay remain open.
+
+## J1537 — Activate the native Commencement mission on entry
+
+2026-11-26. The lab verifies the 730-component Moon2 scene contract,
+binds director cards to owned templates and keeps native loot setup on entry.
+Assisted Sky Meadow transport on Nova B grounded the player on Moon2 geometry
+and activated the destination SceneInfo. In the same process, native authority
+held with population ready, four batteries, 77 scene network objects and timers.
+APK `f9f9dc63f97b800924fb8019f8926f7c2b221a7d697805b05a30db266ba34571` (source `46d0ba4f`).
+Evidence under `work/coordination/gameplay-coverage-20261126/moon-native-entry-nova-b/`
+includes the `sample-36/` screenshot, log and report (46.69 FPS, 21.42 ms).
+The next segment hit 86.4 °C after 2.88 s above 80 °C. Admission battery
+was 30 °C. `terminal.done.json` confirms scratch cleanup, OLED sleep and lease
+release. Owner traversal, Mithrix, escape and matched PC rendering remain open.
 ## J1534 — Recover Artificer Nano-Bomb release materials
 
 2026-11-27. The existing effect owner prepares the native projectile's
