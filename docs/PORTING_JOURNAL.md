@@ -6,6 +6,33 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1553 — Run a pinned texture stage with a disposable Android toolhost
+
+2026-11-27. The shared converter-stage runner installed the pinned toolhost
+on Nova B, staged the original inputs for eight BC1 Cubemaps and ran the
+Android ETC producer. All four pack artifacts matched host byte counts and
+SHA-256 hashes. Resource SHA-256 `b7976d2933c0cdcec70e9d74bd4323d1e07d70695b8b5143fab3d822f831f2be`.
+The producer took 935.7 s, peaked at 437.9 MiB RSS and used 132.6 MiB
+of net stage storage. Peak CPU/GPU was 57.7 °C with 0 s above 80 °C.
+Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a859516807c00a4`.
+The runner verified package removal and OLED sleep and released the lease.
+Evidence `work/coordination/p1-textures/phone-bc1-cubemap-1127/terminal.done.json`.
+Signed Crunch/BC7 conversion and in-game Cubemap checks remain open.
+
+## J1552 — Recover REX Mortar aim and projectile materials
+
+2026-11-27. The original body visual owner prepares REX's configured
+Mortar endpoint and projectile sphere with their source alpha and additive
+blends. An assisted Titanic Plains Secondary recorded one authority and
+one server activation and returned to native main. Live aim and projectile
+renders used recovered variants 100 and 105/111 at queue 3000. Paired video
+shows both gray fills clear while the aim rim, charge and burst remain.
+APK SHA-256 `45c2481c10ef58c2464ed89e12ea82f15283cd919f1facc95885c7c530cc730d` (source `4a302d74`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/rex-mortar-indicators-main-nova/`.
+Adopted cleanup and OLED sleep passed. SoC peaked at 95.1 °C for one
+sample, battery stayed at 30 °C, and the maximum launch gap was 0.411 s.
+The magenta impact disk's live material attribution and PC parity remain open.
+
 ## J1550 — Reuse unchanged producer outputs on Android updates
 
 2026-11-27. The signed synthetic alpha update on Nova B rebuilt one payload

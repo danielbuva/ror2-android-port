@@ -5426,7 +5426,9 @@ The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
 for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, and
-REX's Disperse charge, which instantiate or pool their prefabs directly.
+REX's Disperse charge and Mortar's aim endpoint and projectile. Mortar's
+endpoint rim and expanding projectile sphere retain their distinct source
+blend modes.
 Artificer's configured Nano-Bomb projectile
 also enters this owner so the projectile controller's detached ghost takes the
 same material recovery path. It holds native addressable provider leases through
@@ -6616,16 +6618,18 @@ and block count. The runner verifies those against the request and owns thermal
 supervision, receipt collection and scratch cleanup.
 
 The current `./dev converter-stage` action uses the same emission runner and
-the installed toolhost's Python runtime. `owner-apk/lab_stage.py` runs one
-registered content producer against a pinned request under the toolhost's
-existing owner-input tree. The host stages the current committed producer
-closure and a small descriptor. For a producer fixture, the private manifest
+the toolhost's Python runtime. `owner-apk/lab_stage.py` runs one registered
+content producer against a pinned request under the retained toolhost's
+owner-input tree or a fresh staging root. The host stages the current
+committed producer closure and a small descriptor. The private manifest
 can also supply `inputs/<input_root>/<pinned relative path>` entries with the
 usual `source`, `bytes` and `sha256` pins. These entries must cover exactly the
 descriptor's `input_pins`. The runner streams them into its own scratch instead
 of using retained inputs. The phone checks the input pins, hashes the declared
 artifacts, and returns the stage and thermal receipts with an optional
-scoreboard. The runner removes attempt scratch and preserves retained inputs.
+scoreboard. With every input staged, the runner can install the pinned
+disposable toolhost on a fixture-free device and remove it at terminal cleanup.
+The runner removes attempt scratch and preserves retained inputs.
 The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
 accessible to the retained toolhost. The same scoreboard owner runs on the
 host and phone with the same request pins and JSON schema.
@@ -8612,6 +8616,10 @@ With detailed visual diagnostics enabled, the same owner follows the first
 native REX Disperse cast. It reads the charge state's live instance and then
 matches the release by catalog identity. Each phase records end-of-frame
 renderer slots for up to 1.25 seconds or 120 frames in the world report.
+The same diagnostics sample the first REX Mortar aim endpoint and read the
+configured projectile and impact indices before the native state fires on exit.
+For up to two seconds after release, the trace records the owned projectile,
+its ghost and matching pooled impact roots for comparison with the video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
