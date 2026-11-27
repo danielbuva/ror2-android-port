@@ -2155,6 +2155,13 @@ object-pack placement. The API returns the typed tree, raw record stream and
 serialized body and retains private diagnostics. Complete-file and phone gates
 remain independent of partial SDK-record qualification.
 
+The experimental `tools/phone-build/accepted-output/shader_dxbc.cpp` host
+tool translates one PC DXBC stage to Vulkan SPIR-V using Wine vkd3d-shader.
+The caller supplies a descriptor map for the linked stages. The tool owns
+the input and output streams and frees the compiler result before exit.
+Unity parameter metadata and player packaging remain with the shader record
+producer.
+
 The existing object writer can retain an original MonoScript's editor property
 hash for an unchanged MonoBehaviour schema (`preserve_original_script_hash`).
 The original MonoScript class, runtime script identity and exact schema must
