@@ -22,6 +22,10 @@ SPEC = importlib.util.spec_from_file_location("emission_installer_fixture", ROOT
 INSTALLER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(INSTALLER)
 
+STAGE_SPEC = importlib.util.spec_from_file_location("phone_stage_fixture", ROOT / EMISSION.STAGE_OWNER)
+STAGE = importlib.util.module_from_spec(STAGE_SPEC)
+STAGE_SPEC.loader.exec_module(STAGE)
+
 
 class EmissionTests(unittest.TestCase):
     def setUp(self):
@@ -89,6 +93,68 @@ class EmissionTests(unittest.TestCase):
             if self.collected is not None:
                 stack.enter_context(patch.object(EMISSION, "collect", return_value=self.collected))
             return EMISSION.execute(self.path, INSTALLER, resume=resume, restage=restage)
+
+    def test_converter_stage_uses_retained_input_and_only_collects_json(self):
+        manifest = Path(self.request["manifest"]["path"])
+        files = json.loads(manifest.read_text())["files"]
+        EMISSION.write(manifest, {"files": {"stage.json": files["request.json"]}})
+        self.request.pop("expected_records")
+        self.request.update(
+            operation=EMISSION.CONVERTER_STAGE,
+            request="stage.json",
+            retained_tool_sha256=self.request["tool_apk"]["sha256"],
+            manifest=dict(path=str(manifest), sha256=EMISSION.digest(manifest)),
+        )
+        EMISSION.write(self.path, self.request)
+        self.phone.occupied.return_value = True
+        self.collected = dict(stage=dict(success=True, artifacts=dict(bundle=dict(sha256="a" * 64))), thermal={})
+        with patch.object(EMISSION, "collect_evidence") as evidence:
+            result = self.run_request()
+        self.assertTrue(result["success"], result)
+        self.assertTrue(result["retained_tool_preserved"])
+        evidence.assert_not_called()
+        (producer,) = self.phone.transport.start_detached.call_args.args
+        self.assertIn("/data/user/0/dev.ror2lab.installertest/files/owner-input", producer)
+        self.assertEqual(result["transfer_bytes"], files["request.json"]["bytes"])
+        self.phone.install.assert_not_called()
+
+    def test_converter_stage_hashes_device_artifact_and_keeps_input(self):
+        inputs = self.root / "owner-input/staged"
+        inputs.mkdir(parents=True)
+        source = inputs / "inputs.json"
+        source.write_text("authored")
+        producer = next(name for name in STAGE.PRODUCERS if name.endswith("/bundle_preload.py"))
+        repo = self.root / "repo"
+        script = repo / producer
+        script.parent.mkdir(parents=True)
+        script.write_text(
+            "import sys\nfrom pathlib import Path\n"
+            "assert sys.argv[-2:] == ['--workers', '1']\n"
+            "output = Path(sys.argv[4])\n"
+            "output.mkdir()\n"
+            "(output / 'bundle').write_bytes(Path(sys.argv[2]).read_bytes())\n"
+            "(output / 'scoreboard.json').write_text('{\"verified\": 1}')\n"
+        )
+        descriptor = dict(
+            producer=producer,
+            input_root="staged",
+            input_pins={"inputs.json": EMISSION.digest(source)},
+            arguments=["--inputs", {"inputs": "inputs.json"}, "--output", {"output": "."}],
+            artifacts={"bundle": "bundle"},
+            scoreboard="scoreboard.json",
+        )
+        EMISSION.write(self.path, descriptor)
+        receipt = self.output / "stage.json"
+        stage = STAGE.load_stage(self.path)
+        args = (stage, repo, inputs.parent, self.output / "artifacts", repo, repo, [sys.executable], receipt)
+        self.assertEqual(STAGE.run(*args), 0)
+        result = json.loads(receipt.read_text())
+        self.assertEqual(result["artifacts"]["bundle"], dict(sha256=EMISSION.digest(source), bytes=8))
+        self.assertEqual(json.loads((self.output / "scoreboard.json").read_bytes()), {"verified": 1})
+        stage["input_pins"]["inputs.json"] = "a" * 64
+        self.assertEqual(STAGE.run(*args), 1)
+        self.assertIn("staged input hash differs", json.loads(receipt.read_bytes())["first_failure"])
+        self.assertEqual(source.read_text(), "authored")
 
     def test_explicit_restage_replaces_only_confirmed_terminal_owned_inputs(self):
         self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
