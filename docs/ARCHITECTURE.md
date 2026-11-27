@@ -8137,6 +8137,11 @@ Vulkan program platforms and leaf dependencies. The signed release graph binds
 the resulting bodies and types to their PC or SDK identities. Compilation closes
 the standalone compiler and codec and retains a receipt for preparation.
 
+Release-graph discovery also accepts typed packs from `shader_prefab.py`.
+Preparation uses each recipe's pinned original Shader identity and reads the
+produced Android body through the pack receipt and type table. Shader
+dependencies use the produced member namespace or explicit field routes.
+
 The same owner produces the camera Shader and ComputeShader leaf packs.
 `shader_compute.py` decodes the pinned SDK compiler's Vulkan kernel payloads
 and projects the executable, workgroup and reflected resources into the
