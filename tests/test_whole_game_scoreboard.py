@@ -117,7 +117,13 @@ class WholeGameScoreboardTests(unittest.TestCase):
                 result["device"], dict(launch="passed", menu="unobserved", first_stage="passed", stage_transition="unobserved", stages=["fixture"])
             )
             self.assertEqual([row["owner"] for row in result["classes"]], ["p1-textures", "p1-scenes-w"])
-            terminal.write_text(json.dumps(dict(apk_sha256=pin(reference)["sha256"])))
+            census = root / "census.json"
+            S.write(census, dict(result, device=S.device_observations([], result["apk_sha256"])))
+            candidate.unlink()
+            reference.unlink()
+            request = dict(schema=request["schema"], census=pin(census), device_receipts=request["device_receipts"])
+            self.assertEqual(S.build(request), result)
+            terminal.write_text(json.dumps(dict(apk_sha256=result["reference_apk_sha256"])))
             request["device_receipts"] = [pin(terminal)]
             with self.assertRaisesRegex(ValueError, "different build"):
                 S.build(request)

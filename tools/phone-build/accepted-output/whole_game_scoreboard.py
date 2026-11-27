@@ -221,6 +221,14 @@ def device_observations(receipts, apk_sha256):
 def build(spec):
     if spec["schema"] != "whole-game-scoreboard-request-v1":
         raise ValueError("Unknown whole-game scoreboard request schema")
+    if "census" in spec:
+        if spec.keys() & {"candidate", "reference", "original_audit"} or not spec.get("device_receipts"):
+            raise ValueError("A saved census requires device receipts as its only additional input")
+        report = json.loads(pinned(spec["census"]).read_bytes())
+        if report["schema"] != "whole-game-scoreboard-v1":
+            raise ValueError("Unknown saved whole-game scoreboard schema")
+        report["device"] = device_observations(spec["device_receipts"], report["apk_sha256"])
+        return report
     reference = spec.get("reference")
     counts = defaultdict(Counter)
     files = Counter()
