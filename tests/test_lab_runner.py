@@ -225,8 +225,12 @@ class RefusedLeaseTest(unittest.TestCase):
             config = repo / "work/config/lab-runner.json"
             config.parent.mkdir(parents=True)
             config.write_text(json.dumps({"devices": {"thor": "fixture-thor", "nova-b": "fixture-nova"}}))
-            for operation, device, budget in (("staged-update", "thor", 3 * 14400 + 1800), ("nightly", "nova-b", 2 * 14400 + 3000)):
-                with self.subTest(operation=operation):
+            for operation, device, tools, budget in (
+                ("staged-update", "thor", False, 3 * 14400 + 1800),
+                ("staged-update", "thor", True, 4 * 14400 + 1800),
+                ("nightly", "nova-b", False, 2 * 14400 + 3000),
+            ):
+                with self.subTest(operation=operation, acquire_on_phone=tools):
                     request_path.write_text(
                         json.dumps(
                             dict(
@@ -234,8 +238,9 @@ class RefusedLeaseTest(unittest.TestCase):
                                 checkout=str(repo),
                                 workstream="fixture-worker",
                                 device=device,
-                                done_file=str(repo / f"work/{operation}.json"),
+                                done_file=str(repo / f"work/{operation}-{tools}.json"),
                                 operation=operation,
+                                acquire_on_phone=tools,
                             )
                         )
                     )

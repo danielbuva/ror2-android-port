@@ -255,7 +255,7 @@ def import_acceptance(phone, dex, passed):
 
 def main(argv=None):
     sys.path.insert(0, str(ROOT / "scripts/lab"))
-    from staged_alpha_update import CASES as STAGED_CASES, NIGHTLY_CASES, StagedUpdate
+    from staged_alpha_update import CASES as STAGED_CASES, NIGHTLY_CASES, TOOL_CASE, StagedUpdate, ToolAcquisition
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -268,6 +268,7 @@ def main(argv=None):
     parser.add_argument("--package-only", action="store_true", help="Qualify signed packages without running the direct importer harness")
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--acquisition-request", type=Path, help="Qualify actual SAF acquisition with local input inventories")
+    source.add_argument("--tool-acquisition-request", type=Path, help="Qualify the SDK picker and pinned HTTPS download with a local signed plan")
     source.add_argument("--staged-update-request", type=Path, help="Qualify a signed local source-release pair through the real installer")
     source.add_argument("--nightly-request", type=Path, help="Build one signed release from staged originals and run the installed-alpha tour")
     parser.add_argument("--toolhost-source-commit", help="Reuse an unmodified signed packaging fixture from this commit")
@@ -279,7 +280,7 @@ def main(argv=None):
         return 1
     staged_request = args.staged_update_request or args.nightly_request
     nightly = args.nightly_request is not None
-    if (args.acquisition_request or staged_request) and (
+    if (args.acquisition_request or args.tool_acquisition_request or staged_request) and (
         args.package_only
         or args.qualify_install_prompts
         or args.allow_test_installs
@@ -304,6 +305,7 @@ def main(argv=None):
             + SAF_CASES
             + STAGED_CASES
             + NIGHTLY_CASES
+            + (TOOL_CASE,)
             and case not in completed,
             "unexpected-acceptance-case",
         )
@@ -325,7 +327,25 @@ def main(argv=None):
             require(diagnostics_root.is_relative_to((ROOT / "work/coordination/p1-nightly").resolve()), "nightly-dated-output-required")
         INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(diagnostics_root)
         print("INFO alpha-packaging evidence=" + INSTALLER.DIAGNOSTICS.directory.relative_to(ROOT).as_posix(), flush=True)
-        if staged_request:
+        if args.tool_acquisition_request:
+            phase = "tool-acquisition-host-fixture"
+            tools_request = json.loads(args.tool_acquisition_request.read_bytes())
+            with tempfile.TemporaryDirectory(prefix="ror2-synthetic-tools-", dir="/tmp") as name:
+                acquisition = ToolAcquisition(INSTALLER, require, tools_request, Path(name))
+                if args.dry_run:
+                    print("PASS signed tool acquisition host precheck", flush=True)
+                    return 0
+                phone = Phone(serial, args.timeout)
+                phase = "tool-acquisition"
+                with phone.observe_thermal(require_continuous_trace=True):
+                    try:
+                        acquisition.run(phone, passed)
+                    finally:
+                        metrics, phone.flow_metrics = phone.flow_metrics, None
+                        if metrics is not None:
+                            INSTALLER.DIAGNOSTICS.write("phone-flow-metrics.json", INSTALLER.encoded(metrics.report(include_samples=True)))
+                require(completed == {TOOL_CASE}, "tool-acquisition-case-incomplete")
+        elif staged_request:
             phase = "staged-update-host-preflight"
             acquisition = StagedUpdate(INSTALLER, require, request, nightly=nightly)
             if args.dry_run:
@@ -434,7 +454,7 @@ def main(argv=None):
                 INSTALLER.encoded({"success": not failed, "completed": sorted(completed), "first_failure": first_failure}),
             )
         INSTALLER.DIAGNOSTICS = None
-    if not failed and not (args.acquisition_request or staged_request):
+    if not failed and not (args.acquisition_request or args.tool_acquisition_request or staged_request):
         print("SCOPE synthetic-only; SAF/provider UI, legitimate cohorts, power-loss and game-profile acceptance NOT RUN", flush=True)
     return int(failed)
 

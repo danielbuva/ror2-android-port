@@ -147,6 +147,7 @@ files in Downloads and selects them through Android's SDK/tool folder picker.
 The installer fetches any signed HTTPS inputs directly and reports the verified
 inventory. The runner checks the receipt and hashes the private tree before
 starting reconstruction.
+
 The detached run serves the releases over local ADB reverse,
 imports the staged originals through Android's picker, and checks native save
 retention across a same-key update. Each play phase writes a
@@ -155,6 +156,14 @@ The whole-game scoreboard can join those receipts to a census of the same APK.
 Cleanup removes the scoped stage and the packages the run installed. Import
 and each reconstruction have a four-hour limit to accommodate the measured
 signed native build.
+
+For a fixture that stops after verifying tool acquisition, use
+`operation: "tool-acquisition"` with `installer_apk`, `installer_sha256` and
+`installer_version`. Supply `tools_inventory` as a map from `acquired/`
+paths to `bytes` and `sha256` pins. Include an approved `url` for at least
+one HTTPS tool and provide `acquired_source` for the owner-folder pins.
+The shared runner signs a disposable plan locally, checks both sources and
+removes the installer and staged files.
 
 For the scheduled phone conversion, use `operation: nightly` and
 `device: nova-b`. Supply the same installer, inventory and baseline release

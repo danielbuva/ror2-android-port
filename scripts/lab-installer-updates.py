@@ -779,7 +779,7 @@ def synthetic_inputs(tools, temporary):
     return result
 
 
-def release_fixture(public, inputs, version, directory, private_key, public_key, *, required_catalog=None):
+def release_fixture(public, inputs, version, directory, private_key, public_key, *, required_catalog=None, acquired=None):
     contents = {name: (ROOT / name).read_bytes() for name in public.PUBLISHING_SOURCE_FILES}
     required = {
         "schema": 1,
@@ -823,6 +823,10 @@ for name in sys.argv[4:]:
             for stage in ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install")
         ],
     }
+    if acquired is not None:
+        inventory = "recipe/owner-acquired-tools.json"
+        contents[inventory] = encoded(acquired)
+        plan["acquired_inputs"] = inventory
     index = {
         "schema": 1,
         "files": {name: sha(data) for name, data in contents.items()},
