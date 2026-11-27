@@ -6265,6 +6265,22 @@ Pinned AssetRipper `AssetCollection.TryGetAsset` informed the external
 member lookup. Unity 2021.3.45f2 loaded and unloaded all eight Materials
 in the isolated fixture and verified eight Shader and 33 texture bindings.
 
+### Whole-game Mire Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-mire-native-material-records.json` | `5e24dc046ea17fd59d4cf88c2fa58651fbe3736aa507c0a9b411e97e5e7626f8` |
+
+Audit date 2026-11-27. The recipe selects nine Mire and Access Codes Node
+Materials from the legitimate Steam input. It publishes source paths,
+record and member IDs, sizes and hashes. Material bodies, dependency
+bytes and local paths stay in ignored storage. The pinned AssetRipper
+PPtr and Material extensions informed member and saved texture lookup.
+The isolated fixture verified that all nine emitted records differ
+from the original bodies only at their 47 relocated pointers. Unity
+2021.3.45f2 checked nine Shader bindings and 38 saved texture bindings
+and unloaded the bundles. Release integration and rendered output remain open.
+
 ### Whole-game Standard fallback keyword registration (J1306)
 
 | Recipe | SHA-256 |
