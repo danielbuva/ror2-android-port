@@ -1,0 +1,91 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-globalcontent_assets_all_771300875213bab359b17ff3cbbb3fc1.bundle",
+      "sha256": "1a2c23b104a2c599693e3b3f1ec554db684c905cdec50f2daa53419fe3d51164",
+      "members": [
+        {
+          "name": "CAB-8120010f04e2e8c3b938a3cc877a8136",
+          "textures": [
+            {
+              "path_id": -4430797411101549365,
+              "offset": 69760,
+              "bytes": 208,
+              "sha256": "817aa056e3a5c630be824b7d43edd4c86574cf3a433e86dfa93deed20c5037c6",
+              "fields": {
+                "m_Name": [
+                  0,
+                  16
+                ],
+                "m_CompleteImageSize": [
+                  32,
+                  4
+                ],
+                "m_TextureFormat": [
+                  40,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  21,
+                  3
+                ],
+                "m_LightmapFormat": [
+                  88,
+                  4
+                ],
+                "image data": [
+                  100,
+                  4
+                ],
+                "m_StreamData": [
+                  104,
+                  104
+                ],
+                "m_MipCount": [
+                  44,
+                  4
+                ],
+                "m_ColorSpace": [
+                  92,
+                  4
+                ]
+              },
+              "pixels": {
+                "member": "CAB-8120010f04e2e8c3b938a3cc877a8136.resS",
+                "offset": 786512,
+                "bytes": 349552,
+                "sha256": "dc655436d7f3269277ab494dce83d28e2ac33da0c9d6b976393f51432c9bbd1b"
+              },
+              "operation": "sdk-rgba-mips",
+              "width": 512,
+              "height": 512,
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6196592524492627297,
+                  "bytes": 208,
+                  "sha256": "ba56044c17f67d333802f8f704ec52cfc07b6d4718138ea5c2aa749d069ed073",
+                  "name": "texFWSnow",
+                  "pixel_sha256": "eaa45616c332614dabd8fc2c17222bf513fa2c7d8b14ca1d17b824a4bbf5909f",
+                  "pixel_bytes": 349552,
+                  "inline": false,
+                  "stream": {
+                    "offset": 1761342944,
+                    "size": 349552,
+                    "path": "archive:/CAB-db73b5db4016675ba5b1a0ee354adfb9/CAB-db73b5db4016675ba5b1a0ee354adfb9.resS"
+                  },
+                  "alpha_optional": false,
+                  "usage": 0,
+                  "mips": 10,
+                  "colour_space": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

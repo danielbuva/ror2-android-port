@@ -673,16 +673,16 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
                 raise ValueError("catalog projection remap has no produced owner: " + selector)
             mapped[selector] = path
             continue
-        # Unity bundle inventories normalize case. Keep the source location's
-        # spelling in the catalog passed to the runtime locator.
-        candidates = [original]
+        # UnityFS container names can be lowercased. Runtime locations retain
+        # the source spelling even when the produced owner matches by casefold.
+        candidates = {original}
         if original.casefold().startswith("assets/"):
-            candidates.append("Assets/WholeGame/" + original[len("Assets/") :])
-        matches = [candidate for candidate in candidates if candidate.casefold() in paths]
+            candidates.add("Assets/WholeGame/" + original.split("/", 1)[1])
+        matches = {candidate for candidate in candidates if candidate.casefold() in paths}
         if len(matches) > 1:
             raise ValueError("catalog projection has ambiguous produced owners: " + selector)
         if matches:
-            mapped[selector] = matches[0]
+            mapped[selector] = matches.pop()
     if not remaps.keys() <= mapped.keys():
         raise ValueError("catalog projection remap must select an asset location")
 

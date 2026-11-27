@@ -6,6 +6,31 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1523 — Restore converted Goolake's native Mesh references
+
+2026-11-27. Pack five source Mesh records into Goolake's dependency donor and
+bind the pack to the consuming scene in the signed release graph.
+APK SHA-256 `c9ba5d61f96daee12aca90a59624aee7966fab827091398287b5d72222e52fc6` (runtime `0ffee31b`, producer `05031afa`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v41-catalog-spelling/v41-native-goolake-transition/`.
+The assisted native Plains exit activated Goolake with 2,048 renderers and
+320 mesh colliders. The strict geometry gate reported zero missing Mesh
+references. SoC peaked at 89.6 °C with 7.50 s above 80 °C and a 35 °C start
+battery. Adopted placement, scratch removal and OLED sleep passed.
+Native destination population, sustained play and Razorwire pickup remain open.
+
+## J1522 — Retire the native Siren boss at End Run
+
+2026-11-27. Capture the source boss with HLAPI's invalid minion-owner ID so
+the native death event authorizes retirement of its exact server identity.
+APK SHA-256 `8d61bcc60d70820310373a83dcb12a8bb1c8745cbff452de26850da95346836a` (source `250ef2af`).
+Evidence: `work/coordination/gameplay-coverage-20261126/siren-native-retirement-fix-nova-b/`.
+Sample 168 records native defeat and reward droplet 148 at 59.96 FPS (16.68 ms).
+The same session's completed report records boss 146 naturally retired,
+both owners disposed, 12 eggs retired and 42 toggle targets restored.
+The runner stopped after cleanup at 90.4 °C SoC, with 11.13 s above 80 °C
+and a 35 °C battery. Scratch removal, OLED sleep and lease release passed.
+Ordinary player input and matched PC rendering remain open.
+
 ## J1521 — Complete the assisted converted Titanic Plains teleporter exit
 
 2026-11-27. The assisted driver chooses the charged native teleporter for exit.

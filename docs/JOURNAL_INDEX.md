@@ -354,3 +354,5 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1519](PORTING_JOURNAL.md#j1519--bind-direct-selected-survivor-animators-before-native-locomotion) | 2026-11-26 | Bind direct-selected survivor Animators before native locomotion | 2026-11-26. |
 | [J1520](PORTING_JOURNAL.md#j1520--restore-the-native-gold-shores-boss-reward) | 2026-11-26 | Restore the native Gold Shores boss reward | 2026-11-27. |
 | [J1521](PORTING_JOURNAL.md#j1521--complete-the-assisted-converted-titanic-plains-teleporter-exit) | 2026-11-26 | Complete the assisted converted Titanic Plains teleporter exit | 2026-11-27. |
+| [J1522](PORTING_JOURNAL.md#j1522--retire-the-native-siren-boss-at-end-run) | 2026-11-26 | Retire the native Siren boss at End Run | 2026-11-27. |
+| [J1523](PORTING_JOURNAL.md#j1523--restore-converted-goolakes-native-mesh-references) | 2026-11-26 | Restore converted Goolake's native Mesh references | 2026-11-27. |
