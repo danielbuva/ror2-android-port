@@ -28,7 +28,16 @@ def module(name):
 BUNDLE = module("unity_bundle")
 MESH = module("mesh_produce")
 O = module("object_produce")
-SOURCE_BC_ETC_FORMATS = {"source-bc1-etc": 10, "source-bc3-etc": 12, "source-bc7-etc": 25}
+SOURCE_BC_ETC_FORMATS = {
+    "source-bc1-etc": 10,
+    "source-bc3-etc": 12,
+    "source-bc7-etc": 25,
+    "source-bc3-crunch-etc": 29,
+    "source-bc1-cube-etc": 10,
+    "source-bc7-cube-etc": 25,
+}
+SOURCE_BC_CUBE_OPERATIONS = {"source-bc1-cube-etc", "source-bc7-cube-etc"}
+SOURCE_BC_NATIVE_OPERATIONS = {"source-bc1-etc", "source-bc1-cube-etc"}
 CUBE_NATIVE_PIXEL_BYTES = {1: 1, 3: 3, 17: 8}
 
 
@@ -260,7 +269,7 @@ def field(body, fields, name):
 
 def body_output(body, fields, pixels, target, operation):
     required = {"m_Name", "m_CompleteImageSize", "m_TextureFormat", "m_IsAlphaChannelOptional", "m_LightmapFormat", "image data", "m_StreamData"}
-    cube = operation in {"cube-mips", "cube-hdr", "cube-rgba-mips", "cube-preserve"}
+    cube = operation in {"cube-mips", "cube-hdr", "cube-rgba-mips", "cube-preserve", *SOURCE_BC_CUBE_OPERATIONS}
     source_bc_etc_format = SOURCE_BC_ETC_FORMATS.get(operation)
     has_mips = operation in {"etc1-mips", "sdk-rgba-mips", "source-rgba-mips"} or cube or source_bc_etc_format is not None
     if has_mips:
@@ -289,7 +298,7 @@ def body_output(body, fields, pixels, target, operation):
         usage = struct.unpack("<i", field(body, fields, "m_LightmapFormat"))[0]
         if source_bc_etc_format == 10 and usage not in (0, 6):
             raise ValueError("unqualified source BC1 colour usage")
-        normal = source_bc_etc_format in (12, 25) and usage == 3
+        normal = not cube and source_bc_etc_format in (12, 25, 29) and usage == 3
         original_mips = struct.unpack("<i", field(body, fields, "m_MipCount"))[0]
         original_colour_space = struct.unpack("<i", field(body, fields, "m_ColorSpace"))[0]
         original_alpha_optional = bool(field(body, fields, "m_IsAlphaChannelOptional")[0])
@@ -397,7 +406,7 @@ def source_rgba(pixels, width, height, fmt, sdk):
     return rgba_source(pixels, width, height, fmt)
 
 
-def source_bc_extents(pixel_bytes, width, height, fmt, mips):
+def source_bc_layout(width, height, fmt, mips):
     if (
         type(width) is not int
         or type(height) is not int
@@ -405,11 +414,16 @@ def source_bc_extents(pixel_bytes, width, height, fmt, mips):
         or not 0 < height <= 8192
         or type(mips) is not int
         or not 1 <= mips <= max(width, height).bit_length()
-        or fmt not in SOURCE_BC_ETC_FORMATS.values()
+        or fmt not in (10, 12, 25)
     ):
         raise ValueError("unqualified source BC mip chain")
     extents = [(max(1, width >> mip), max(1, height >> mip)) for mip in range(mips)]
     sizes = [((w + 3) // 4) * ((h + 3) // 4) * (8 if fmt == 10 else 16) for w, h in extents]
+    return extents, sizes
+
+
+def source_bc_extents(pixel_bytes, width, height, fmt, mips):
+    extents, sizes = source_bc_layout(width, height, fmt, mips)
     if pixel_bytes != sum(sizes):
         raise ValueError("source BC mip chain extent differs")
     return extents, sizes
@@ -587,8 +601,21 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
         if source_bc_etc_format is not None:
             if fmt != source_bc_etc_format or sdk is None or etc_codec is None:
                 raise ValueError("matching source BC format and pinned ETC tools required")
+            width, height = selected["width"], selected["height"]
+            if operation in SOURCE_BC_CUBE_OPERATIONS:
+                stride = struct.unpack("<I", field(body, selected["fields"], "m_CompleteImageSize"))[0]
+                if not stride or len(pixels) != stride * 6:
+                    raise ValueError("cubemap source must contain six complete face strides")
+                return b"".join(
+                    source_bc_etc(pixels[start : start + stride], width, height, fmt, mips, False, sdk, etc_codec) for start in range(0, len(pixels), stride)
+                )
+            if fmt == 29:
+                result = subprocess.run([str(etc_codec), str(width), str(height), "uncrunch-bc3-mips"], input=pixels, capture_output=True, timeout=120)
+                if result.returncode:
+                    raise ValueError("public Unity Crunch full-mip decoder failed")
+                pixels, fmt = result.stdout, 12
             normal = fmt in (12, 25) and struct.unpack("<i", field(body, selected["fields"], "m_LightmapFormat"))[0] == 3
-            return source_bc_etc(pixels, selected["width"], selected["height"], fmt, mips, normal, sdk, etc_codec)
+            return source_bc_etc(pixels, width, height, fmt, mips, normal, sdk, etc_codec)
         return source_rgba_mips(pixels, selected["width"], selected["height"], fmt, mips, sdk)
     if operation in {"sdk-rgba", "sdk-rgba-mips"}:
         if sdk is None:
@@ -786,9 +813,10 @@ def produce(
     pc = pc.resolve(strict=True)
     witnesses = texture_witnesses(pc, profile.get("schema_witnesses", []))
     operations = {texture["operation"] for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]}
-    needs_sdk = bool(operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", "source-bc3-etc", "source-bc7-etc"})
+    source_bc_sdk = SOURCE_BC_ETC_FORMATS.keys() - SOURCE_BC_NATIVE_OPERATIONS
+    needs_sdk = bool(operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *source_bc_sdk})
     sdk = sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) if needs_sdk or sdk_toolchain is not None or sdk_toolchain_sha256 is not None else None
-    if ("source-bc1-etc" in operations and sdk is None) or pixels_codec is not None or pixels_codec_sha256 is not None:
+    if (operations & SOURCE_BC_NATIVE_OPERATIONS and sdk is None) or pixels_codec is not None or pixels_codec_sha256 is not None:
         if pixels_codec is None or pixels_codec_sha256 is None:
             raise ValueError("pinned native texture pixel decoder required")
         pixels_codec = pixels_codec.resolve(strict=True)

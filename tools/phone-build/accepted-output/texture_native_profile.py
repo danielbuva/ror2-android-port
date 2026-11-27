@@ -31,7 +31,11 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     cube = typ["class_id"] == 89
     usage = integer("m_LightmapFormat")
     if source_operation:
-        if cube or fmt != texture.SOURCE_BC_ETC_FORMATS[source_operation] or (fmt == 10 and usage not in (0, 6)):
+        if (
+            cube != (source_operation in texture.SOURCE_BC_CUBE_OPERATIONS)
+            or fmt != texture.SOURCE_BC_ETC_FORMATS[source_operation]
+            or (fmt == 10 and usage not in (0, 6))
+        ):
             return None
     elif fmt not in (texture.CUBE_NATIVE_PIXEL_BYTES.keys() | {24} if cube else NATIVE_2D_PIXEL_BYTES):
         return None
@@ -58,7 +62,13 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
         expected = 0
     elif source_operation:
         try:
-            texture.source_bc_extents(stride, width, height, fmt, mips)
+            if fmt == 29:
+                if stride <= 0:
+                    return None
+                encoded_stride = sum(texture.source_bc_layout(width, height, 12, mips)[1])
+            else:
+                texture.source_bc_extents(stride, width, height, fmt, mips)
+                encoded_stride = stride
         except ValueError:
             return None
         expected = stride
@@ -108,15 +118,16 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     if cube or source_operation:
         target.update(mips=mips, colour_space=integer("m_ColorSpace"))
     if source_operation:
-        normal = fmt in (12, 25) and usage == 3
-        target_bytes = expected // 2 if normal else expected
+        normal = not cube and fmt in (12, 25, 29) and usage == 3
+        encoded = encoded_stride * faces
+        target_bytes = encoded // 2 if normal else encoded
         target.update(sha256=None, pixel_sha256=None, pixel_bytes=target_bytes)
         if normal:
             target.update(usage=4, alpha_optional=True)
         if size:
             target["stream"]["size"] = target_bytes
         else:
-            target["bytes"] += target_bytes - expected
+            target["bytes"] += ((target_bytes + 3) & ~3) - ((image_size + 3) & ~3)
     elif texture.body_output(body, fields, pixels, target, operation) != body:
         return None
     return dict(
@@ -189,6 +200,19 @@ if __name__ == "__main__":
     compression.add_argument("--source-bc1", action="store_const", dest="source_operation", const="source-bc1-etc", help="select BC1 colour originals for ETC1")
     compression.add_argument("--source-bc3", action="store_const", dest="source_operation", const="source-bc3-etc", help="select BC3 originals for Android ETC")
     compression.add_argument("--source-bc7", action="store_const", dest="source_operation", const="source-bc7-etc", help="select BC7 originals for Android ETC")
+    compression.add_argument(
+        "--source-bc3-crunch",
+        action="store_const",
+        dest="source_operation",
+        const="source-bc3-crunch-etc",
+        help="select DXT5Crunched originals for Android ETC",
+    )
+    compression.add_argument(
+        "--source-bc1-cube", action="store_const", dest="source_operation", const="source-bc1-cube-etc", help="select opaque BC1 Cubemap originals for ETC1"
+    )
+    compression.add_argument(
+        "--source-bc7-cube", action="store_const", dest="source_operation", const="source-bc7-cube-etc", help="select BC7 Cubemap originals for ETC2 RGBA8"
+    )
     args = parser.parse_args()
     pc = args.pc.resolve(strict=True)
     if args.output.resolve().is_relative_to(pc):
