@@ -21,6 +21,8 @@ HERE = Path(__file__).resolve().parent
 UPDATES = module("install_input_updates", HERE / "updates.py")
 STAGES = ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install")
 ACQUIRED = "acquired/"
+# The installer reads this private document through ToolHostActivity.readInstallInputs.
+MAX_DESCRIPTION_BYTES = 8 * 1024**2
 
 
 def validate_plan(plan, files):
@@ -161,9 +163,15 @@ def input_description(plan, manifest, acquired=None):
     if tools:
         description["acquired_inputs"] = tools
         description["acquired_inputs_sha256"] = hashlib.sha256(UPDATES.RELEASE.signed_bytes(tools)).hexdigest()
-    if len(UPDATES.RELEASE.signed_bytes(description)) > 3 * 1024**2:
-        raise ValueError("phone input description exceeds bounded UI metadata limit")
+    description_bytes(description)
     return description
+
+
+def description_bytes(description):
+    data = UPDATES.RELEASE.signed_bytes(description)
+    if len(data) > MAX_DESCRIPTION_BYTES:
+        raise ValueError("phone input description exceeds bounded UI metadata limit")
+    return data
 
 
 def read_plan(index, repo):
@@ -175,7 +183,9 @@ def read_plan(index, repo):
 
 
 def write_description(inputs, description):
-    UPDATES.write_json(UPDATES.within(inputs, "install-inputs.json"), description)
+    data = description_bytes(description)
+    with UPDATES.ATOMIC.writer(UPDATES.within(inputs, "install-inputs.json")) as stream:
+        stream.write(data)
 
 
 def describe(index, repo, inputs):

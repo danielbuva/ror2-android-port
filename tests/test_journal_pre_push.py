@@ -29,7 +29,13 @@ class JournalPrePushTests(unittest.TestCase):
         self.git("config", "commit.gpgsign", "false")
         self.git("init", "-q", "--bare", str(self.remote))
         self.git("remote", "add", "origin", str(self.remote))
-        for name in ("journal-index.py", "journal-renumber.py", "journal-pre-push.py", "git-hooks/pre-push", "lab/source_pins.py"):
+        for name in (
+            "journal-index.py",
+            "journal-renumber.py",
+            "journal-pre-push.py",
+            "lab/source_pins.py",
+            "git-hooks/pre-push",
+        ):
             target = self.root / "scripts" / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / "scripts" / name, target)
