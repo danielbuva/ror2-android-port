@@ -132,13 +132,13 @@ def receive(transport, url, destination, limit):
         raise OSError("The release server could not provide the requested file. The installed version was not changed.") from error
     except (OSError, http.client.HTTPException) as error:
         raise OSError("The release connection was offline or interrupted. Check your network and retry. The installed version was not changed.") from error
-    with source:
-        length = source.headers.get("Content-Length")
+    with source as response:
+        length = response.headers.get("Content-Length")
         if length is not None and (not length.isdecimal() or int(length) > limit):
             raise ValueError("release download exceeds size limit")
         while True:
             try:
-                data = source.read(65536)
+                data = response.read(65536)
             except (OSError, http.client.HTTPException) as error:
                 raise OSError("Release download interrupted. Retry on a stable connection. The installed version was not changed.") from error
             if not data:
