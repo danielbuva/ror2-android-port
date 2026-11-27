@@ -37,10 +37,6 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
 
 ## Alpha acquisition and playtests
 
-- [ ] Qualify actual SAF folder/ZIP providers with legitimate input cohorts:
-      validation, cancellation and explicit supported/unknown-version handling.
-      Keep the source installation read-only; follow the
-      [acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract).
 - [ ] Qualify final alpha identity, issued-version/same-key updates and forward
       rollback, including real profile/settings backup, verified restore,
       interruption and cold-start retention. Lab update hash retention in

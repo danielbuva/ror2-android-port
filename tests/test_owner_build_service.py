@@ -46,11 +46,27 @@ public void startForeground(int id,Notification n){if(foregroundFail)throw new I
     + "OwnerAlphaInstall.java": "package dev.ror2lab.phonebuildhostfixture;import android.content.*;public class OwnerAlphaInstall {public static boolean pending;public static boolean pending(Context c){return pending;}}",
     PACKAGE
     + "OwnerInputImport.java": "package dev.ror2lab.phonebuildhostfixture;public class OwnerInputImport {public interface Observer {void checkpoint() throws Exception;void progress(String p,long c,long t) throws Exception;}}",
-    PACKAGE
-    + "OwnerInputSource.java": """package dev.ror2lab.phonebuildhostfixture;import android.content.*;public class OwnerInputSource {public static class Access {public void cancel(){}}public static void run(Context c,OwnerInputImport.Observer o,Access a)throws Exception{o.checkpoint();}}""",
+    PACKAGE + "OwnerInputSource.java": """package dev.ror2lab.phonebuildhostfixture;
+import android.content.*;import java.io.*;import java.util.concurrent.*;
+public class OwnerInputSource {
+    public static CountDownLatch reading;
+    public static class Access {
+        private final CountDownLatch closed=new CountDownLatch(1);
+        public void cancel(){closed.countDown();}
+    }
+    public static void run(Context c,OwnerInputImport.Observer observer,Access access)throws Exception {
+        observer.checkpoint();
+        if(reading==null)throw new IOException("provider unavailable");
+        reading.countDown();
+        if(!access.closed.await(5,TimeUnit.SECONDS))throw new IOException("provider read did not close");
+        throw new InterruptedIOException("read interrupted");
+    }
+}""",
     PACKAGE
     + "ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;import android.content.*;import java.io.*;import java.util.concurrent.*;import org.json.*;public class ToolHostActivity {
-public static String backgroundProgress(Context c){return "synthetic thermal state";}public static String status;public static int controls,installs;public static CountDownLatch installEntered,installRelease;public static JSONObject readJson(File f){return new JSONObject().put("state",status);}public static void writeJson(Context c,File f,JSONObject j){controls++;}public static void updateStatus(Context c,String s,String m){status=s;}public static void installPrepared(Context c)throws Exception{installs++;if(installEntered!=null){installEntered.countDown();installRelease.await();}}
+public static String backgroundProgress(Context c){return "synthetic thermal state";}public static String status;public static int controls,installs;public static CountDownLatch installEntered,installRelease;public static JSONObject importState;public static JSONObject readJson(File f){return new JSONObject().put("state",status);}
+public static void writeJson(Context c,File f,JSONObject j){if(f.getName().equals("import-state.json"))importState=j;else controls++;}
+public static void updateStatus(Context c,String s,String m){status=s;}public static void installPrepared(Context c)throws Exception{installs++;if(installEntered!=null){installEntered.countDown();installRelease.await();}}
 public static class Worker {public static volatile int executions,cancels;public static CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1);Context context;public Worker(Context c){context=c;}public void executeUpdate(String a)throws Exception {executions++;entered.countDown();release.await();if("release-build".equals(a)){File f=new File(context.getFilesDir(),"owner-input/update-state.json");f.getParentFile().mkdirs();f.createNewFile();status="READY";}}public void cancel(){cancels++;}}}""",
 }
 HARNESS = r"""
@@ -104,6 +120,19 @@ try {
     check(ToolHostActivity.controls==priorControls);
 } finally {ToolHostActivity.installRelease.countDown();finish();}
 check(ToolHostActivity.installs==3);
+OwnerInputSource.reading=new CountDownLatch(1);
+OwnerBuildService importer=new OwnerBuildService();
+importer.onStartCommand(action("import"),0,18);
+check(OwnerInputSource.reading.await(5,TimeUnit.SECONDS));
+importer.onStartCommand(action("control-cancel"),0,19);
+finish();
+check("CANCELLED".equals(ToolHostActivity.importState.optString("state")));
+check(ToolHostActivity.importState.optString("message").contains("Verified files retained"));
+OwnerInputSource.reading=null;
+importer.onStartCommand(action("import"),0,20);
+finish();
+check("ERROR".equals(ToolHostActivity.importState.optString("state")));
+check("provider unavailable".equals(ToolHostActivity.importState.optString("message")));
 System.out.println("single-flight lifecycle PASS");
 }}
 """

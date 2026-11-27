@@ -75,14 +75,14 @@ host contracts from installed-alpha acceptance.
       verifies interrupted profile recovery and cold starts on the lab build.
       The production alpha still needs native save retention through update and
       rollback, interruption, cold launch and owner key recovery.
-- [ ] Phone-qualify folder/ZIP validation, cancellation and honest supported/unknown
+- [x] Phone-qualify folder/ZIP validation, cancellation and honest supported/unknown
       version refusal with legitimate input cohorts and actual SAF providers
       ([acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)).
-      [The acquisition fixture](PORTING_JOURNAL.md#j1488--verify-android-folder-and-zip-acquisition-through-the-installer)
-      covers system picker Back, both version refusals, cancellation during
-      validation and hash-verified folder/ZIP imports on Nova B. The owner route
-      still needs selection from an external provider and persisted URI reopen
-      across app UIDs.
+      Android's external storage provider passed picker Back, both version
+      refusals, malformed-input refusal and mid-copy cancellation. The installer
+      resumed the folder import after force-stop and reopened the selected ZIP
+      after force-stop. Both imports and the unchanged source copies passed
+      hash verification. [Device evidence](PORTING_JOURNAL.md#j1529--qualify-external-saf-validation-and-import-resume).
       Keep source installations read-only; account downloads and Steam Cloud deferred.
 
 Laboratory capacity, placement and runtime-backing receipts in
