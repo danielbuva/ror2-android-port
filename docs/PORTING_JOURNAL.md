@@ -6,7 +6,7 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
-## J1546 — Recover REX Disperse charge materials
+## J1547 — Recover REX Disperse charge materials
 
 2026-11-27. The original body visual owner prepares the native Disperse
 charge prefab before it is instantiated. In assisted seed-3 Titanic Plains,
@@ -19,6 +19,7 @@ Evidence `work/coordination/gameplay-fidelity-coverage-20261117/rex-disperse-cha
 contains the native log, paired capture assessment and terminal receipt.
 SoC peaked at 81.6 °C with 0.317 s above 80 °C and 29 °C battery.
 Adopted placement, scratch cleanup, OLED sleep and lease release passed.
+
 ## J1546 — Verify signed Histogram conversion on Android
 
 2026-11-27. The shared toolhost runner verified the signed release and original
