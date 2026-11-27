@@ -442,6 +442,28 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
         with self.assertRaisesRegex(ValueError, "committed regular"):
             self.build("untracked.zip")
 
+    def test_large_reviewed_transform_recipe_is_verified_on_extraction(self):
+        updates = PUBLIC._module("test_transform_recipe_updates", ROOT / "tools/phone-build/owner-apk/updates.py")
+        recipe = "recipe/owner-transforms.json"
+        unrelated = "recipe/other.json"
+        data = json.dumps({"synthetic": "x" * 128}).encode()
+        for name in (recipe, unrelated):
+            (self.root / name).write_bytes(data)
+        self.commit()
+        self.plan["entries"]["apk/a.txt"]["recipe_files"].append(recipe)
+        with patch.object(PUBLIC, "MAX_PUBLIC_FILE_BYTES", 64), patch.object(PUBLIC, "MAX_TRANSFORM_RECIPE_BYTES", len(data)):
+            result = self.build()
+            self.plan["files"].append(unrelated)
+            with self.assertRaisesRegex(ValueError, "size limit exceeded: recipe/other.json"):
+                self.build("other.zip")
+
+        archive = Path(self.temporary.name) / "public.zip"
+        verified = Path(self.temporary.name) / "verified"
+        body = dict(release_body(), bundle_sha256=result["bundle_sha256"], entries=result["entries"])
+        index = updates.extract_bundle(archive, verified, body)
+        self.assertEqual(index["files"][recipe], hashlib.sha256(data).hexdigest())
+        self.assertEqual((verified / recipe).read_bytes(), data)
+
     def test_transitive_shared_producer_and_one_recipe_changes(self):
         first = self.build("first.zip")
         (self.root / "recipe/a.json").write_text('{"schema":1,"example":"changed"}')
