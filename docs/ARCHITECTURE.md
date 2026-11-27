@@ -2369,6 +2369,8 @@ specifies the exact path in `scene`.
 the bundle additively, selects the scene and reads native occlusion settings.
 It records loaded roots, MeshRenderer counts, the resolved data reference
 and Umbra sizes around activation, then unloads the scene and its bundles.
+The optional `loadMode: "Single"` control loads the same inputs alone and
+creates a blank scene for teardown. The receipt records which mode ran.
 The editor exposes the data reference. Serialized scene checks cover the
 release renderer table. Android culling, appearance and gameplay require
 device evidence.
