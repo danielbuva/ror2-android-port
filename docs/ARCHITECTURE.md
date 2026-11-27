@@ -1412,15 +1412,15 @@ decoding, raw copying, fixed source-coordinate color extension and public
 JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
 original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
 colour space and usage. It checks source extents and preserves metadata rather
-than generating replacement mip levels. `source-bc3-etc` likewise reads each
-original mip, including the texels stored in its boundary blocks. It writes
-ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
-normal maps. It uses the existing pinned native decoder, ETC2 colour and
+than generating replacement mip levels. `source-bc3-etc` and `source-bc7-etc`
+read each original mip, including the texels stored in its boundary blocks.
+Both write ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for
+packed A/G normal maps. They use the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
 use the same codec pins and output checks. `texture_native_profile.py` selects
-original Alpha8, RGB24, RGBA32, ARGB32, HDR Cubemap, BC1 and BC3 records from the
-PC texture coverage ledger. The same selector and producer support standalone
-player records. They pin the original serialized file, any sibling resource
+original Alpha8, RGB24, RGBA32, ARGB32, native Cubemap, BC1, BC3 and BC7 records
+from the PC texture coverage ledger. The same selector and producer support
+standalone player records. They pin the original serialized file, any sibling resource
 stream and an embedded tree from an original bundle with the same complete
 type identity. Native copy also preserves original zero-pixel placeholders.
 It checks native schemas, platform data, references and complete mip extents,
@@ -1479,8 +1479,8 @@ handling. Its `bc6-half` pipe mode decodes one unsigned BC6H mip into little-end
 RGBAHalf with opaque alpha. It crops edge blocks to the requested dimensions and
 streams four rows at a time. The default-scene owner still consumes the native
 capture while source reflection and ambient compatibility are evaluated.
-The opt-in `cube-preserve` operation retains original BC6H/RGBAHalf face/mip
-bytes, format, color space and usage with per-face CompleteImageSize. The audited
+The opt-in `cube-preserve` operation retains original Alpha8, RGB24, BC6H and
+RGBAHalf face/mip bytes, format, color space and usage with per-face CompleteImageSize. The audited
 `recipe/owner-source-baked-reflections.json` selects two original baked probes;
 no codec or SDK is consumed. Existing input/profile/body/resource hash gates,
 checkpoint ownership and teardown apply. Native BC6H support is a device gate;
