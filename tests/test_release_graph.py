@@ -55,6 +55,7 @@ class ReleaseGraphTests(unittest.TestCase):
             ("owner-histogram-compute-translation.json", compute),
             ("owner-outline-graphics-translation.json", graphics),
             ("owner-cloud-intersection-graphics-translation.json", graphics),
+            ("owner-multipass-graphics-translation.json", graphics),
             ("owner-cloud-remap-graphics-translation.json", graphics),
         ):
             with self.subTest(profile=profile):

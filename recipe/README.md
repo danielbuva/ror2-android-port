@@ -2769,6 +2769,17 @@ Provenance, privacy, licensing and sensitive-content review completed 2026-11-27
 | --- | --- |
 | `owner-cloud-intersection-graphics-translation.json` | `28da3f8dfb441d3f621bdccfe5b15622f34f5b83c4e7bed345ef731afed0fa80` |
 
+The multipass graphics profile selects the original PaintHeight,
+Cutout/VertexLit and TerrainLayerUtils shaders. It supplies source identities,
+hashes and canonical destinations to the existing signed graphics translator.
+The translator uses the pinned public toolchain and the shared shader record
+writer. Game programs, translated bodies and raw evidence stay local.
+Provenance, privacy, licensing and sensitive-content review completed 2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-multipass-graphics-translation.json` | `8ff591da12ae3f76a4e4a81945c2e165d6bfdde3d1d8e364fd585a011bc042d8` |
+
 The Cloud Remap profile selects the original Shader and its source-linked
 Legacy Transparent/VertexLit fallback. It pins only source identities, hashes
 and canonical destinations. The signed graphics translator reuses the pinned
