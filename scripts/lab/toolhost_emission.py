@@ -102,7 +102,7 @@ def load_request(path, *, refresh_repo=False):
     if decode:
         required |= {"expected_decoded_sha256", "retained_tool_sha256"}
     if stage:
-        required = (required - {"expected_records"}) | {"operation", "retained_tool_sha256"}
+        required = (required - {"expected_records"}) | {"operation"}
     if "retained_tool_sha256" in request:
         required.add("retained_tool_sha256")
         previous = request["retained_tool_sha256"]
@@ -141,7 +141,7 @@ def load_request(path, *, refresh_repo=False):
         if request["request"] != "stage.json" or any(name != "stage.json" and not name.startswith(("repo/", STAGE_INPUTS)) for name in files):
             raise ValueError("converter-stage-staging-path")
         staged = {name: pin["sha256"] for name, pin in files.items() if name.startswith(STAGE_INPUTS)}
-        if staged:
+        if staged or "retained_tool_sha256" not in request:
             descriptor = stage_owner(Path(__file__).resolve().parents[2]).load_stage(files["stage.json"]["source"])
             expected = {f"{STAGE_INPUTS}{descriptor['input_root']}/{name}": sha for name, sha in descriptor["input_pins"].items()}
             if staged != expected:
@@ -805,7 +805,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
             except BaseException as error:
                 result.update(success=False, cleanup_error=str(error))
         elif phone is not None and phone.owned_installer:
-            if signed and (terminal or job is None):
+            if (signed or stage) and (terminal or job is None):
                 try:
                     phone.remove_owned_installer()
                     result["owned_app_removed"] = True

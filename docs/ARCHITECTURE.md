@@ -6611,16 +6611,18 @@ and block count. The runner verifies those against the request and owns thermal
 supervision, receipt collection and scratch cleanup.
 
 The current `./dev converter-stage` action uses the same emission runner and
-the installed toolhost's Python runtime. `owner-apk/lab_stage.py` runs one
-registered content producer against a pinned request under the toolhost's
-existing owner-input tree. The host stages the current committed producer
-closure and a small descriptor. For a producer fixture, the private manifest
+the toolhost's Python runtime. `owner-apk/lab_stage.py` runs one registered
+content producer against a pinned request under the retained toolhost's
+owner-input tree or a fresh staging root. The host stages the current
+committed producer closure and a small descriptor. The private manifest
 can also supply `inputs/<input_root>/<pinned relative path>` entries with the
 usual `source`, `bytes` and `sha256` pins. These entries must cover exactly the
 descriptor's `input_pins`. The runner streams them into its own scratch instead
 of using retained inputs. The phone checks the input pins, hashes the declared
 artifacts, and returns the stage and thermal receipts with an optional
-scoreboard. The runner removes attempt scratch and preserves retained inputs.
+scoreboard. With every input staged, the runner can install the pinned
+disposable toolhost on a fixture-free device and remove it at terminal cleanup.
+The runner removes attempt scratch and preserves retained inputs.
 The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
 accessible to the retained toolhost. The same scoreboard owner runs on the
 host and phone with the same request pins and JSON schema.

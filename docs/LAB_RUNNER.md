@@ -164,20 +164,23 @@ detached handle for reconciliation.
 ## Run a converter stage on the phone
 
 `./dev converter-stage <producer> --request <config.json> --workstream <name>`
-runs a registered content producer against files already staged in the retained
-toolhost. Use the producer's filename stem with hyphens, for example
+runs a registered content producer against pinned inputs. Use the producer's
+filename stem with hyphens, for example
 `bundle-preload`, `mesh-produce`, or `texture-produce`. Run with `--dry-run`
 before queuing the phone. Run the live command detached once the dispatcher
-grants the phone. The shared runner checks the installed toolhost hash, grant,
-battery and storage, and owns thermal supervision and cleanup.
+grants the phone. The shared runner checks the toolhost identity, grant, battery
+and storage, and owns thermal supervision and cleanup.
 
-Use the emission config below with `"operation": "converter-stage"`,
-`"request": "stage.json"`, and the required `retained_tool_sha256`. Omit
-`expected_records`. Its manifest maps `stage.json` to the host descriptor
-pin and lists any additional producer dependencies as `repo/<tracked path>`
+Use the emission config below with `"operation": "converter-stage"` and
+`"request": "stage.json"`. Omit `expected_records`. Set
+`retained_tool_sha256` to reuse the exact installed toolhost. For a fresh
+disposable install, omit that pin and supply every descriptor input in the
+manifest as `inputs/<input_root>/<relative path>`. The manifest maps
+`stage.json` to the host descriptor pin and lists any additional producer
+dependencies as `repo/<tracked path>`
 keys. The action pins all producer paths to the calling checkout's clean
 commit, adds the selected script and the runner's support files, and writes a
-new manifest beside the terminal receipt. The retained toolhost supplies the
+new manifest beside the terminal receipt. The toolhost supplies the
 Python runtime. The current runner accepts internal-only toolhost staging.
 
 An example descriptor for a prepared bundle request is:
@@ -192,7 +195,8 @@ An example descriptor for a prepared bundle request is:
 }
 ```
 
-`input_root` is relative to the retained toolhost's `files/owner-input`.
+`input_root` is relative to the retained toolhost's `files/owner-input` or
+the fresh scratch input directory.
 Pass the stage's read-only input files under `inputs` and its generated files
 under `output`. Path arguments also accept `repo`, `native`, and `runtime`.
 Use `.` for the root itself. Artifact paths and the optional `scoreboard`
@@ -201,7 +205,8 @@ run. Bundle preload runs with one record worker on Android.
 
 The terminal directory receives JSON receipts, artifact hashes, and the
 optional scoreboard. Every attempt gets fresh device scratch, which is removed
-after the terminal result. Staged inputs and the installed toolhost are preserved.
+after the terminal result. The runner removes a toolhost installed for the
+attempt and preserves an explicitly retained toolhost and its existing inputs.
 If the device disconnects during production, use the generated
 `*.request.json` with a fresh terminal filename in the same directory and
 resume its retained handle through `--emission-request ... --resume-emission`.
