@@ -4839,7 +4839,7 @@ Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
 The runner removed its attempt scratch, preserved staged inputs, slept the
 display and released the lease. Typed load and gameplay remain open.
 
-## J1544 — Return to the menu after End Run in converted Distant Roost
+## J1545 — Return to the menu after End Run in converted Distant Roost
 
 2026-11-27. V46 ordinary Start gave Commando native authority in Distant Roost.
 Touch input moved him 37.60 m and fired 31 primary shots. With Commando alive,
