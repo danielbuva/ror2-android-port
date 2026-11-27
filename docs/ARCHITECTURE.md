@@ -3162,6 +3162,8 @@ paths. `scripts/lab/evidence_files.py` opens raw or compressed trace bytes for
 retained reports and heap analysis. The heap export owner materializes one
 snapshot at a time in its existing temporary directory and preserves capture
 identity. Apply is serialized and writes its ledger under `work/cleanup-analysis`.
+The shared device runner calls the pruner from its own checkout and passes the
+canonical work directory explicitly.
 The ledger distinguishes logical candidate bytes from the signed change in
 volume-available bytes measured by `df`, which includes concurrent host activity.
 
@@ -3429,6 +3431,8 @@ each lab process before and after install and launch, and before sending the
 observed Start input. Install requires both packages idle. After launch and
 at Start, only the selected launcher PID may be running. An unexpected process
 stops the workload and leaves its checkpoint in the private terminal receipt.
+Terminal capture uses the most recent PID verified at the launch boundary,
+including when the process exits before cleanup.
 An Android signature mismatch allows one uninstall/reinstall only for the
 disposable lab package with a live hash-backed ownership receipt and an explicit
 payload source. The uninstall clears its data. The runner revalidates placement
@@ -5507,6 +5511,8 @@ it does not discover arbitrary future table consumers. The portable
 `test_native_source_loot_contract.py` executes the extracted lease and checks
 source ordering with authored fixtures. Native Run regeneration/roll remains a
 device gate.
+Its interactable template cache logs the source prefab identity immediately
+before and after each native clone to locate failures during deserialization.
 `TeleporterWorldSession.PrepareInactiveObjectiveTemplate` prepares its owned
 clone before the existing direct spawn. `WholeInteractableSession` uses a
 short-lived `WholeStagePopulationObservation` to store the exact selection/spawn

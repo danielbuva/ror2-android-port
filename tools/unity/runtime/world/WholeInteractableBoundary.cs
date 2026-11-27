@@ -438,7 +438,11 @@ public sealed partial class PortSession
                 return owned;
             coordinator.Check(source && coordinator.worldStaging && !coordinator.worldStaging.activeInHierarchy,
                               "Original interactable staging unavailable");
+            string cloneIdentity = " scene=" + SceneManager.GetActiveScene().name + " prefab=" + source.name +
+                                   " sourceId=" + source.GetInstanceID();
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "LAB_INTERACTABLE_CLONE_BEGIN{0}", cloneIdentity);
             owned = PortSession.Instantiate(source, coordinator.worldStaging.transform);
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "LAB_INTERACTABLE_CLONE_END{0}", cloneIdentity);
             owned.name = source.name;
             owned.SetActive(true);
             wholeInteractableTemplates.Add(source, owned);

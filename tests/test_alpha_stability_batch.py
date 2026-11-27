@@ -27,6 +27,16 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.lease = self.root / ".local/orchestrator/leases" / SERIAL
         self.args = dict(device_serial=SERIAL, expected_apk_sha256=HASH, canonical_root=self.root, done_file=self.done)
 
+    def test_prune_uses_runner_checkout_script_with_canonical_work(self):
+        pruner = Path(batch.__file__).resolve().parents[1] / "prune-generated.py"
+        with mock.patch.object(batch.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as run:
+            batch._prune(self.root)
+        run.assert_called_once_with(
+            [sys.executable, str(pruner), "--apply", "--aggressive", "--work-dir", str(self.root / "work")],
+            capture_output=True,
+            text=True,
+        )
+
     def test_host_capture_admission_uses_output_estimate_plus_margin(self):
         for free_gib in (28, 29, 96):
             with self.subTest(free_gib=free_gib), mock.patch.object(batch.shutil, "disk_usage", return_value=SimpleNamespace(free=free_gib * 1024**3)):

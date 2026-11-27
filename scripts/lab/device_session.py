@@ -506,6 +506,7 @@ def launch(device, thermal, *, process_checks):
     else:
         result = _launch_converted(device, thermal)
     check_lab_processes(device, process_checks, "launch", result["pid"])
+    process_checks[-1]["verified_launch_pid"] = str(result["pid"])
     return result
 
 
@@ -1515,8 +1516,12 @@ def execute(request):
 
             if device and active_hash:
                 try:
-                    pid = device.sh("pidof", device.package, check=False).strip()
-                    if pid.isdecimal():
+                    pid = next(
+                        (checkpoint["verified_launch_pid"] for checkpoint in reversed(result["process_checkpoints"]) if "verified_launch_pid" in checkpoint),
+                        None,
+                    )
+                    if pid is not None:
+                        lease.require()
                         capture(device, output / "terminal-capture", pid)
                 except BaseException:
                     result["capture_error"] = traceback.format_exc()
