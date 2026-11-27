@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RoR2 PC reference capture plan",
+  "type": "object",
+  "required": ["settings", "scenarios"],
+  "properties": {
+    "settings": {
+      "type": "object",
+      "required": ["width", "height", "fps", "fov"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "fps": {"type": "integer", "minimum": 1},
+        "fov": {"type": "number", "minimum": 1, "exclusiveMaximum": 179},
+        "disablePostProcessing": {"type": "boolean"}
+      }
+    },
+    "scenarios": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "scene", "seed", "body", "steps"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "scene": {"type": "string", "minLength": 1},
+          "seed": {"type": "string", "pattern": "^[0-9]+$", "description": "Must fit an unsigned 64-bit integer."},
+          "body": {"type": "string", "minLength": 1},
+          "naturalFirstStage": {"type": "boolean", "default": false},
+          "captureAudio": {"type": "boolean", "default": false},
+          "steps": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/step"}}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$", "description": "Unique across scenario and step IDs."},
+    "vector": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number"}},
+    "step": {
+      "type": "object",
+      "required": ["id", "action"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "action": {"enum": ["capture", "spawn", "state", "skill", "grapple", "ping", "fire-trail", "move"]},
+        "subject": {"type": "string"},
+        "value": {"type": "string"},
+        "machine": {"type": "string"},
+        "aimAt": {"type": "string"},
+        "observeProjectileHitOn": {"type": "string", "minLength": 1, "description": "Earlier spawned target for a stock player skill. Records all rendered frames and native damage within a window of at most two seconds."},
+        "freezeAi": {"type": "boolean"},
+        "relativeToPlayer": {"type": "boolean"},
+        "settleSeconds": {"type": "number", "minimum": 0},
+        "recordSeconds": {"type": "number", "minimum": 0},
+        "holdSeconds": {"type": "number", "exclusiveMinimum": 0, "description": "Fixed simulation time; must be shorter than recordSeconds."},
+        "player": {"$ref": "#/$defs/vector"},
+        "position": {"$ref": "#/$defs/vector"},
+        "aim": {"$ref": "#/$defs/vector"},
+        "aimDirection": {"$ref": "#/$defs/vector"},
+        "view": {
+          "type": "object",
+          "required": ["position", "yaw", "pitch"],
+          "properties": {
+            "position": {"$ref": "#/$defs/vector"},
+            "relativeToPlayer": {"type": "boolean"},
+            "yaw": {"type": "number"},
+            "pitch": {"type": "number"}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"action": {"const": "grapple"}}},
+          "then": {"required": ["holdSeconds", "recordSeconds"]}
+        },
+        {
+          "if": {"required": ["observeProjectileHitOn"]},
+          "then": {
+            "required": ["value", "aimDirection", "recordSeconds"],
+            "properties": {
+              "action": {"const": "skill"},
+              "subject": {"const": "player"},
+              "recordSeconds": {"exclusiveMinimum": 0, "maximum": 2}
+            }
+          }
+        }
+      ]
+    }
+  }
+}
