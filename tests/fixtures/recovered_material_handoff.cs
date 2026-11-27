@@ -119,6 +119,14 @@ namespace EntityStates.Mage.Weapon
         public GameObject projectilePrefab = configuredProjectile;
     }
 }
+namespace EntityStates.Treebot.Weapon
+{
+    public class ChargeSonicBoom
+    {
+        public static EntityStateGameObject configuredEffect;
+        public EntityStateGameObject chargeEffectPrefab = configuredEffect;
+    }
+}
 namespace RoR2
 {
     public class OmniEffect : UnityEngine.Object
@@ -332,6 +340,7 @@ static class Fixture
     {
         var flame = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
         var charge = new Renderer { sharedMaterials = new[] { original } };
+        var disperseGlow = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
         var bombGhost = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
         var mercNormal = new Renderer { sharedMaterials = new[] { original } };
         var mercFinisher = new Renderer { sharedMaterials = new[] { original } };
@@ -340,6 +349,9 @@ static class Fixture
         var fallback = new Renderer { sharedMaterials = new[] { original } };
         EntityStates.Mage.Weapon.Flamethrower.configuredEffect = new GameObject { components = new[] { flame } };
         EntityStates.Mage.Weapon.ChargeNovabomb.configuredEffect = new GameObject { components = new[] { charge } };
+        EntityStates.Treebot.Weapon.ChargeSonicBoom.configuredEffect = new EntityStateGameObject {
+            directReference = new GameObject { components = new[] { disperseGlow } }
+        };
         EntityStates.Mage.Weapon.ThrowNovabomb.configuredProjectile = new GameObject { components = new[] {
             new RoR2.Projectile.ProjectileController { ghostPrefab = new GameObject { components = new[] { bombGhost } } }
         } };
@@ -380,7 +392,7 @@ static class Fixture
               "Mage Nano-Bomb ghost trail should be prepared and its original retained");
         Check(!EntityStates.Merc.GroundLight.comboSwingEffectPrefab && !EntityStates.Merc.GroundLight.comboFinisherSwingEffectPrefab,
               "Merc presentation must leave native state configuration to the game");
-        foreach (var renderer in new Renderer[] { flame, charge, bombGhost, mercNormal, mercFinisher })
+        foreach (var renderer in new Renderer[] { flame, charge, disperseGlow, bombGhost, mercNormal, mercFinisher })
         {
             var material = renderer.sharedMaterials[0];
             Check(material.shader.name == "Recovered/" + original.shader.name &&
@@ -402,7 +414,7 @@ static class Fixture
         queenOperation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 &&
               EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab == queenReference &&
-              session.worldLootSourceMaterials.Count == 9, "Queen preparation must retain native state configuration");
+              session.worldLootSourceMaterials.Count == 10, "Queen preparation must retain native state configuration");
         foreach (var renderer in new[] { queenGas, queenSpittle })
             Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
                   session.worldLootSourceMaterials[renderer][0] == original,
