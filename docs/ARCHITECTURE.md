@@ -8228,6 +8228,12 @@ pinned original/SDK roots and fresh output; scoped readers close on process exit
 and receipts persist. Twelve records are host raw-exact to J850. This adds no
 runtime owner; complete bundle and phone production remain open.
 
+The Sad1 and Fungal Material profiles for signed Cloud Remap, together with
+the Fungal native Material profile, select 52 original class-21 bodies through
+`record_produce.py`. Bundle preparation resolves the saved Shader and Texture2D
+pointers against the signed Shader and existing texture suppliers. The exact
+editor fixture checks the bindings and unloads its bundles after each cohort.
+
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
 texture declarations (`any`). Setup takes explicit original/SDK/template/codec
