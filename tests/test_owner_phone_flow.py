@@ -87,6 +87,34 @@ public class Harness {
         refuses("Found version: v0",()->OwnerInputImport.identifyZip(new ByteArrayInputStream(zip(new String[]{"Data/a.bin","Data/b.bin"},new byte[][]{ancient,two})),versions,new Watch()));
         refuses("Found version: unknown",()->OwnerInputImport.identifyZip(new ByteArrayInputStream(zip(new String[]{"Data/a.bin"},new byte[][]{one})),versions,new Watch()));
         Watch versionCancelled=new Watch();versionCancelled.cancel=true;refuses("cancelled",()->OwnerInputImport.identifyTree(versionSource,versions,versionCancelled));
+        File tools=new File(root,"tools"); tools.mkdirs();
+        OwnerInputImport.Required sdk=row("acquired/sdk/archive",two);
+        List<OwnerInputImport.Required> required=Arrays.asList(sdk);
+        OwnerInputImport.ResumableSource absent=(wanted,offset)->{throw new IOException("SDK unavailable");};
+        refuses("SDK unavailable",()->OwnerInputImport.acquire(tools,required,0,new Watch(),absent));
+        Watch stopAfterChunk=new Watch(){public void progress(String path,long done,long total){if(done>=65536)cancel=true;}};
+        refuses("cancelled",()->OwnerInputImport.acquire(tools,required,0,stopAfterChunk,(wanted,offset)->new ByteArrayInputStream(two)));
+        File destination=new File(tools,sdk.path);
+        check(!destination.exists() && new File(tools,"tool-staging").listFiles()[0].length()==65536);
+        OwnerInputImport.acquire(tools,required,0,new Watch(),(wanted,offset)->{
+            check(offset==65536); return new ByteArrayInputStream(two,(int)offset,two.length-(int)offset);
+        });
+        check(Arrays.equals(two,Files.readAllBytes(destination.toPath())));
+        OwnerInputImport.acquire(tools,required,0,new Watch(),absent);
+        check(new File(tools,"tool-staging").listFiles().length==0);
+        byte[] replacement=two.clone();replacement[0]=11;
+        List<OwnerInputImport.Required> update=Arrays.asList(row(sdk.path,replacement));
+        refuses("SHA-256",()->OwnerInputImport.acquire(tools,update,0,new Watch(),(wanted,offset)->new ByteArrayInputStream(two)));
+        check(Arrays.equals(two,Files.readAllBytes(destination.toPath())));
+        OwnerInputImport.acquire(tools,update,0,new Watch(),(wanted,offset)->{
+            check(offset==0); return new ByteArrayInputStream(replacement);
+        });
+        check(Arrays.equals(replacement,Files.readAllBytes(destination.toPath())));
+        List<OwnerInputImport.Required> renamed=Arrays.asList(row("acquired/sdk",one));
+        OwnerInputImport.acquire(tools,renamed,0,new Watch(),(wanted,offset)->new ByteArrayInputStream(one));
+        check(!destination.exists() && new File(tools,"acquired/sdk").isFile());
+        List<OwnerInputImport.Required> hugeTool=Arrays.asList(new OwnerInputImport.Required("acquired/huge",Long.MAX_VALUE/2,hash(one)));
+        refuses("Not enough",()->OwnerInputImport.acquire(tools,hugeTool,0,new Watch(),absent));
         check(watch.checks>0); System.out.println("phone import contracts PASS " + cases);
     }
 }

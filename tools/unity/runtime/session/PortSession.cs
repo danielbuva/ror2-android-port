@@ -200,6 +200,7 @@ public sealed partial class PortSession : MonoBehaviour
         public bool diagnosticMageBombRelease;
         public string frameCaptureScene;
         public float frameCaptureRunSeconds;
+        public bool frameCaptureOcclusion;
         public Vector3 visualCaptureCenter;
         public bool developerSurvivorOverride;
         public DeveloperSkillVariantOverrideRequest developerSkillVariantOverride;

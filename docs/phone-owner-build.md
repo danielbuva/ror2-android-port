@@ -288,6 +288,16 @@ The public [extractor](../tools/phone-build/accepted-output/README.md#acquire-th
 does not download, accept terms or redistribute SDK content. Phone execution and
 complete compiler acquisition remain separate gates.
 
+For signed plans with a tool inventory, prepare the release in the installer
+and use **Acquire / resume required tools**. The installer can fetch immutable
+AssetRipper source files and the reviewed Maven JARs over HTTPS when their
+source URLs are signed alongside their sizes and SHA-256 hashes. For tools
+without a download URL, choose an owner SDK/tool folder whose relative paths
+match the signed inventory after `acquired/`. Each completed file is verified
+before it enters private build storage. Pause, cancel or interrupt a transfer
+and use the same action to resume. A missing or mismatched tool gets an
+unavailable state with the required path. Complete device qualification remains open.
+
 The [historical official terms](https://github.com/Unity-Technologies/TermsOfService/blob/bf4037bac93a0a716cff7621a796436954656b0c/Unity%20Software%20Additional%20Terms.md)
 define Unity Toolkits specifically as prefab/C# extensions. Do not classify
 IL2CPP under that clause merely because it is a tool. Owner internal use and

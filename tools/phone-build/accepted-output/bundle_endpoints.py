@@ -545,42 +545,11 @@ class FinalMembers:
                 close()
 
 
-def managed_checker(
-    owner,
-    identity_owner,
-    current,
-    normalizer,
-    sdk_tree,
-    member_tables,
-    registry_scripts,
-    original_script_properties,
-    null_script_source_type=None,
-):
-    """Check actual script readback before AND after final file allocation.
-
-    member_tables(value) returns the actual ordered external-member identities
-    for this body. The emitter member uses required.externals; staged members
-    use their own persisted metadata, never a synthetic scene table.
-    """
-
+def managed_script_properties(owner, identity_owner, current, normalizer, sdk_tree, registry_scripts):
+    """Prove the actual MonoScript body and managed type against the pinned CLR."""
     properties_cache = {}
 
-    def check(value, raw, typ, read_record):
-        fields = owner.pointers(raw, typ, {})
-        scripts = [p for field, p in fields.items() if field in (("m_Script",), ("#490",))]
-        if scripts == [(0, 0)] and null_script_source_type is not None:
-            owner.qualify_null_script_base(raw, typ, null_script_source_type(value))
-            return None
-        if len(scripts) != 1 or not scripts[0][1]:
-            raise ValueError("actual managed script field absent or ambiguous")
-        fid, pid = scripts[0]
-        member = tuple(value["destination"][:2])
-        if fid:
-            externals = member_tables(value)
-            if not 1 <= fid <= len(externals):
-                raise ValueError("actual script file ID outside member table")
-            member = tuple(externals[fid - 1])
-        script_value, script_raw, script_type = read_record((*member, pid))
+    def check(value, typ, script_value, script_raw, script_type):
         if script_type["class_id"] != 115:
             raise ValueError("actual m_Script is not MonoScript")
         offset, (name, namespace, assembly) = owner.O.script_fields(script_raw)
@@ -599,8 +568,6 @@ def managed_checker(
         if clr.get("unsupported"):
             if not clr.get("unchanged_provider_sha256") or typ["tree"].hex() not in clr["source_trees"]:
                 raise ValueError("unsupported current CLR lacks unchanged provider/source tree")
-            if properties != original_script_properties[identity]:
-                raise ValueError("unsupported current CLR original script properties differ")
         else:
             schema_key = identity, typ["tree"]
             if schema_key not in properties_cache:
@@ -609,6 +576,43 @@ def managed_checker(
             computed = properties_cache[schema_key]
             if computed != clr["properties"] or properties != computed:
                 raise ValueError("actual managed schema differs from current CLR")
+        return identity, properties
+
+    return check
+
+
+def managed_checker(
+    owner,
+    identity_owner,
+    current,
+    normalizer,
+    sdk_tree,
+    member_tables,
+    registry_scripts,
+    original_script_properties,
+    null_script_source_type=None,
+):
+    """Check actual script readback before and after final file allocation."""
+    check_properties = managed_script_properties(owner, identity_owner, current, normalizer, sdk_tree, registry_scripts)
+
+    def check(value, raw, typ, read_record):
+        fields = owner.pointers(raw, typ, {})
+        scripts = [p for field, p in fields.items() if field in (("m_Script",), ("#490",))]
+        if scripts == [(0, 0)] and null_script_source_type is not None:
+            owner.qualify_null_script_base(raw, typ, null_script_source_type(value))
+            return None
+        if len(scripts) != 1 or not scripts[0][1]:
+            raise ValueError("actual managed script field absent or ambiguous")
+        fid, pid = scripts[0]
+        member = tuple(value["destination"][:2])
+        if fid:
+            externals = member_tables(value)
+            if not 1 <= fid <= len(externals):
+                raise ValueError("actual script file ID outside member table")
+            member = tuple(externals[fid - 1])
+        identity, properties = check_properties(value, typ, *read_record((*member, pid)))
+        if current[identity].get("unsupported") and properties != original_script_properties[identity]:
+            raise ValueError("unsupported current CLR original script properties differ")
         if typ["hash"].hex() != properties:
             raise ValueError("actual managed native hash differs from MonoScript")
         return identity
@@ -775,10 +779,33 @@ def managed_context(owner, pins, inputs):
     curves = [nodes for layout in metadata["types"] if layout.get("tree") for nodes in identity._native_subtrees(layout["tree"], "AnimationCurve")]
     normalizer = identity._RegistryTypes.__new__(identity._RegistryTypes)
     normalizer.native_templates = {"AnimationCurve": next(nodes for nodes in curves if any(node["name"] == "tangentMode" for node in nodes))}
-    original = {tuple(value["identity"]): value["properties"] for value in pins.read(inputs["original_script_properties"])}
-    return dict(
-        identity_owner=identity, current=current, normalizer=normalizer, sdk_tree=typ["tree"], registry_scripts=scripts, original_script_properties=original
-    )
+    return dict(identity_owner=identity, current=current, normalizer=normalizer, sdk_tree=typ["tree"], registry_scripts=scripts)
+
+
+def managed_type_corrector(owner, pins, inputs):
+    """Change stale native metadata only for a provable current managed type."""
+    context = managed_context(owner, pins, inputs)
+    universe = current_providers(owner, pins, inputs)
+    check_properties = managed_script_properties(owner, **context)
+
+    def correct(value, typ, script_value, script_raw, script_type):
+        if script_type["class_id"] != 115:
+            raise ValueError("actual m_Script is not MonoScript")
+        offset, (name, namespace, assembly) = owner.O.script_fields(script_raw)
+        identity = assembly, namespace, name
+        if script_raw[offset : offset + 16] == typ["hash"] or context["current"][identity].get("unsupported"):
+            return typ
+        universe.registry(identity)
+        _, properties = check_properties(
+            {"current_registry_identity": identity, **value},
+            typ,
+            {"current_registry_identity": identity, **script_value},
+            script_raw,
+            script_type,
+        )
+        return dict(typ, hash=bytes.fromhex(properties))
+
+    return correct
 
 
 class Qualification:
@@ -820,7 +847,10 @@ class Qualification:
             self.universe = current_providers(owner, pins, request["managed_inputs"])
             context = managed_context(owner, pins, request["managed_inputs"])
             self.registry_scripts = context["registry_scripts"]
-            self.baseline = managed_checker(owner, **context, member_tables=self.tables, null_script_source_type=self.null_source)
+            original = {tuple(value["identity"]): value["properties"] for value in pins.read(request["managed_inputs"]["original_script_properties"])}
+            self.baseline = managed_checker(
+                owner, **context, member_tables=self.tables, original_script_properties=original, null_script_source_type=self.null_source
+            )
         self.endpoints = EndpointRecords(self.member, self.retained, self.staged, self.check)
         return self
 
