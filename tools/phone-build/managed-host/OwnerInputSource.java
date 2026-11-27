@@ -83,7 +83,7 @@ final class OwnerInputSource implements OwnerInputImport.Source {
             private OwnerInputSource local;
             public InputStream open(OwnerInputImport.Required row, long offset) throws Exception {
                 String url = pins.getJSONObject(row.path).optString("url");
-                if (!url.isEmpty()) return OwnerToolDownload.open(url, row, offset, observer);
+                if (!url.isEmpty()) return OwnerToolDownload.open(url, row.path, row.bytes, offset, observer);
                 if (local == null) {
                     boolean retained = false;
                     for (android.content.UriPermission permission : app.getContentResolver().getPersistedUriPermissions())

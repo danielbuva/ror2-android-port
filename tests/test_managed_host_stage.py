@@ -82,7 +82,6 @@ class ManagedHostStageTests(unittest.TestCase):
             "OwnerBuildService.java",
             "OwnerInputImport.java",
             "OwnerInputSource.java",
-            "OwnerToolDownload.java",
             "release-trust.json",
         ):
             self.assertIn(name, result["files"])

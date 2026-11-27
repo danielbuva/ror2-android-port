@@ -4,6 +4,8 @@ import android.app.*;
 import android.content.*;
 import android.os.*;
 import java.io.*;
+import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
 import org.json.*;
 
 /** Owns the worker, foreground notification and wake lock, independently of any Activity. */
@@ -228,5 +230,54 @@ public final class OwnerBuildService extends Service {
         if (thread != null && thread.isAlive()) thread.interrupt();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         super.onDestroy();
+    }
+}
+
+/** HTTPS transport for a file URL admitted by the signed tool inventory. */
+final class OwnerToolDownload {
+    static InputStream skip(InputStream input, long offset, OwnerInputImport.Observer observer) throws Exception {
+        try {
+            while (offset > 0) {
+                observer.checkpoint();
+                long skipped = input.skip(Math.min(offset, 1024 * 1024));
+                if (skipped == 0) {
+                    if (input.read() == -1) throw new IOException("Source ended before the saved tool offset");
+                    skipped = 1;
+                }
+                offset -= skipped;
+            }
+            return input;
+        } catch (Exception error) {
+            input.close();
+            throw error;
+        }
+    }
+    static InputStream open(String url, String path, long bytes, long offset, OwnerInputImport.Observer observer) throws Exception {
+        HttpsURLConnection connection = (HttpsURLConnection)new URL(url).openConnection();
+        connection.setInstanceFollowRedirects(false);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
+        connection.setRequestProperty("Accept-Encoding", "identity");
+        if (offset > 0) connection.setRequestProperty("Range", "bytes=" + offset + "-");
+        try {
+            int status = connection.getResponseCode();
+            String encoding = connection.getContentEncoding();
+            if (encoding != null && !"identity".equalsIgnoreCase(encoding))
+                throw new IOException("Tool source did not serve the original bytes: " + path);
+            if (status == 206 && offset > 0) {
+                String expected = "bytes " + offset + "-" + (bytes - 1) + "/" + bytes;
+                if (!expected.equals(connection.getHeaderField("Content-Range")))
+                    throw new IOException("Tool source did not serve the requested range: " + path);
+            } else if (status != 200) throw new IOException("Tool source unavailable (HTTP " + status + "): " + path);
+            InputStream stream = new FilterInputStream(connection.getInputStream()) {
+                @Override public void close() throws IOException {
+                    try { super.close(); } finally { connection.disconnect(); }
+                }
+            };
+            return status == 200 ? skip(stream, offset, observer) : stream;
+        } catch (Exception error) {
+            connection.disconnect();
+            throw error;
+        }
     }
 }
