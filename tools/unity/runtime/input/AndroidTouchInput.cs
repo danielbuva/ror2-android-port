@@ -1,6 +1,7 @@
 // Subsystem: input/camera. Owner map: docs/ARCHITECTURE.md#ownership.
 // NovaInputBridge owns setup, polling and fixed-tick consumption; Neutral/disable releases captures.
 using System;
+using OwnerLayout;
 using UnityEngine;
 
 // A pointer producer for the existing original InputBankTest consumer. No motor,
@@ -27,6 +28,10 @@ public sealed class AndroidTouchInput
     readonly Vector2[] previous = new Vector2[11];
     readonly Rect[] buttons = new Rect[9];
     readonly string[] labels = { "Jump", "Primary", "Secondary", "Utility", "Special", "Equipment", "Interact", "Sprint" };
+    public const string LayoutProfile = "touch-hud";
+    TouchProfile customLayout;
+    readonly float[] opacities = new float[8];
+    bool layoutChanged;
     Rect safe, moveZone, lookZone;
     Vector2 viewport;
     Vector2 moveCenter;
@@ -61,9 +66,49 @@ public sealed class AndroidTouchInput
     public Rect LookZone => lookZone;
 
     public static Rect PauseGuiRect(float width) => new Rect(width - 205, 10, 185, 40);
+    public static LayoutProjection ProjectSafeArea(Rect area, Vector2 screen)
+    {
+        if (area.width <= 0 || area.height <= 0 || area.x < 0 || area.y < 0 ||
+            area.xMax > screen.x || area.yMax > screen.y) return null;
+        return new LayoutProjection(screen.x, screen.y, area.x, screen.y - area.yMax, screen.x - area.xMax, area.y);
+    }
+    public TouchLayoutDocument CreateLayoutDefaults(Rect area, Vector2 screen)
+    {
+        var projection = ProjectSafeArea(area, screen);
+        if (projection == null) return null;
+        var defaults = new AndroidTouchInput();
+        defaults.Layout(area, screen);
+        var controls = new TouchControl[labels.Length];
+        for (int i = 0; i < labels.Length; i++)
+        {
+            var rect = defaults.buttons[i];
+            controls[labels.Length - 1 - i] = new TouchControl(labels[i],
+                projection.Unproject(new LayoutRect(rect.x, screen.y - rect.yMax, rect.width, rect.height)), 1, .65);
+        }
+        return new TouchLayoutDocument(new[] { new TouchProfile(LayoutProfile, controls) });
+    }
+    public bool ValidLayout(TouchLayoutDocument document)
+    {
+        try
+        {
+            var profile = document.Find(LayoutProfile);
+            if (profile.Controls.Length != labels.Length) return false;
+            for (int i = 0; i < labels.Length; i++) profile.Find(labels[i]);
+            return true;
+        }
+        catch (ArgumentException) { return false; }
+    }
+    public void SetLayoutProfile(TouchProfile profile)
+    {
+        if (ReferenceEquals(customLayout, profile)) return;
+        customLayout = profile;
+        layoutChanged = true;
+        Suspend();
+    }
     public void Layout(Rect area, Vector2 screen)
     {
-        if (safe == area && viewport == screen) return;
+        if (!layoutChanged && safe == area && viewport == screen) return;
+        layoutChanged = false;
         Suspend();
         safe = area;
         viewport = screen;
@@ -89,6 +134,17 @@ public sealed class AndroidTouchInput
         SetButton(Action.Equipment, right - 385 * scale, bottom + 105 * scale);
         SetButton(Action.Interact, right - 385 * scale, bottom + 225 * scale);
         SetButton(Action.Sprint, area.x + 410 * scale, bottom + 95 * scale);
+        var customProjection = customLayout == null ? null : ProjectSafeArea(area, screen);
+        for (int i = 0; i < labels.Length; i++)
+        {
+            opacities[i] = .65f;
+            if (customProjection == null) continue;
+            var control = customLayout.Find(labels[i]);
+            var rect = customProjection.Project(control.Rectangle);
+            buttons[i] = new Rect((float)rect.X, screen.y - (float)(rect.Y + rect.Height), (float)rect.Width, (float)rect.Height);
+            report.buttonCenters[i] = buttons[i].center;
+            opacities[i] = (float)control.Opacity;
+        }
         var pause = PauseGuiRect(screen.x);
         buttons[(int)Action.Pause] = new Rect(pause.x, screen.y - pause.yMax, pause.width, pause.height);
         report.buttonCenters[(int)Action.Pause] = buttons[(int)Action.Pause].center;
@@ -137,8 +193,13 @@ public sealed class AndroidTouchInput
             if (fingers[i] == id) { slot = i; break; }
         if (slot < 0 && began && !ended && !canceled)
         {
-            for (int i = 0; i < buttons.Length; i++)
-                if (buttons[i].Contains(position)) { slot = i + 2; break; }
+            // Editing can move an action over the fixed pause target. Keep
+            // that escape route reachable without changing default dispatch.
+            if (customLayout != null && buttons[(int)Action.Pause].Contains(position))
+                slot = (int)Action.Pause + 2;
+            else
+                for (int i = 0; i < buttons.Length; i++)
+                    if (buttons[i].Contains(position)) { slot = i + 2; break; }
             if (slot < 0 && moveZone.Contains(position)) slot = 0;
             if (slot < 0 && lookZone.Contains(position)) slot = 1;
             if (slot < 0 || fingers[slot] >= 0) return;
@@ -229,9 +290,11 @@ public sealed class AndroidTouchInput
             GUI.Box(GuiRect(new Rect(moveCenter.x - radius, moveCenter.y - radius, radius * 2, radius * 2)), "Move", style);
             var knob = moveCenter + Movement * radius;
             GUI.Box(GuiRect(new Rect(knob.x - 25 * scale, knob.y - 25 * scale, 50 * scale, 50 * scale)), "");
-            for (int i = 0; i < labels.Length; i++)
+            for (int index = 0; index < labels.Length; index++)
             {
-                GUI.color = held[i] ? new Color(.6f, 1, .6f, .85f) : new Color(1, 1, 1, .65f);
+                // The lowest action index wins an overlap in Pointer().
+                int i = customLayout == null ? index : labels.Length - 1 - index;
+                GUI.color = held[i] ? new Color(.6f, 1, .6f, Mathf.Min(1f, opacities[i] + .2f)) : new Color(1, 1, 1, opacities[i]);
                 GUI.Box(GuiRect(buttons[i]), labels[i], style);
             }
         }

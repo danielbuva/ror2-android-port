@@ -8257,11 +8257,24 @@ input dependency or persistence side effects and uses only the geometry owner.
 for both layout formats. It distinguishes missing/default from invalid/unavailable
 loads and uses flushed same-directory temporary files plus atomic replace, never
 delete-then-move. Invalid existing data is preserved for explicit caller recovery.
-The adapter is independent of live settings/UI; cross-process ownership, path
-security and physical durability qualification belong to its eventual integrator.
+The adapter is independent of live settings/UI; the live owner serializes its
+calls and supplies a private path. Physical durability remains unqualified.
 
 `TouchEditorGesture.cs` owns editor-only hit selection and single-pointer drag or
 bottom-right-resize transactions over `TouchLayoutEditor`; interruption cancels
 rather than committing stale display coordinates. It neither dispatches gameplay
 input nor writes files. The layout `INTEGRATION.md` lists entry points and remaining
-live wiring/device acceptance for the gameplay owners.
+device acceptance for the gameplay owners.
+
+`TouchLayoutSession.cs` composes the authored touch owners at the startup and
+explicit editor-exit boundary. It loads once when enabled, separates editor
+changes from the applied layout until a successful save, and leaves corrupt
+or unavailable stores untouched while returning read-only defaults. The staged
+`TouchLayoutHudBoundary.cs` connects it to the touch-only, default-off offline
+settings request. Saving the layout resets the request without discarding the
+saved action geometry; a failed settings reset can retry without rewriting it.
+The existing settings pause owns the editor; its gestures do not reach the
+gameplay input bank. The action rectangles and opacity go through the normal
+touch HUD projection, while movement, look and pause keep their authored layout.
+The separately modeled recovered HUD editor is not staged as a live feature.
+Host fixtures do not establish Unity or device acceptance.

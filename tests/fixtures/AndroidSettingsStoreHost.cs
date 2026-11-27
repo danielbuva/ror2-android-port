@@ -50,6 +50,7 @@ static class AndroidSettingsStoreHost
     {
         var store = new AndroidOfflineSettings(args[1]);
         Check(store.values.highRefreshRate, "fresh settings preserve the existing high frame-rate request");
+        Check(!store.values.touchLayoutEditor, "fresh settings must not open the touch editor");
         string path = Path.Combine(args[1], "preferences.json"), pending = path + ".pending";
         store.values.deadzone = .18f;
         Check(store.TrySave(), "first save");
@@ -59,15 +60,21 @@ static class AndroidSettingsStoreHost
             case "roundtrip":
                 store.values.deadzone = .3f; store.values.lookSensitivity = 1.5f; store.values.invertY = true;
                 store.values.highRefreshRate = false;
+                store.values.touchLayoutEditor = true;
                 Check(store.TrySave(), "atomic update");
                 var loaded = new AndroidOfflineSettings(args[1]);
                 Check(loaded.values.deadzone == .3f && loaded.values.invertY && loaded.values.lookSensitivity == 1.5f, "cold reload");
                 Check(!loaded.values.highRefreshRate, "refresh preference not durable");
                 Check(Same(first, File.ReadAllBytes(path + ".backup")), "previous validated bytes retained");
+                Check(loaded.values.touchLayoutEditor, "editor opt-in not durable");
+                loaded.values.touchLayoutEditor = false;
+                Check(loaded.TrySave() && !new AndroidOfflineSettings(args[1]).values.touchLayoutEditor, "editor opt-in reset not durable");
                 break;
             case "legacy-refresh":
                 File.WriteAllText(path, "{\"version\":1,\"offlineDifficulty\":0,\"deadzone\":0.18,\"lookSensitivity\":1,\"invertY\":false}");
-                Check(new AndroidOfflineSettings(args[1]).values.highRefreshRate, "legacy settings lost high-refresh default");
+                var legacy = new AndroidOfflineSettings(args[1]);
+                Check(legacy.values.highRefreshRate, "legacy settings lost high-refresh default");
+                Check(!legacy.values.touchLayoutEditor, "legacy settings opened the editor");
                 break;
             case "partial-pending":
                 File.WriteAllText(pending, "{partial");
