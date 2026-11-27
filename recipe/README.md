@@ -7603,6 +7603,15 @@ middleware, original files and outputs stay local.
 | `owner-code-job-inputs.json` | `07c1476269c8c25aa07a56f234a9cd8628a0374c0c801180d048012dd1ee5f59` |
 | `owner-burst-job-inputs.json` | `3a4d0dbbdfbc8dcd7d170322c58e95333cc941e9d8155a92db980bfec9adcac8` |
 
+Audit 2026-11-27. `owner-wwise-native.json` pins the stock and transformed
+Wwise source hashes and carries only authored diagnostic insertions.
+`tools/phone-build/owner-code/wwise-native/` contains the five authored bridge,
+ring and monitor files from the J794, J918 and J950 lineage. A manual review
+of header dependencies and a comparison against 474 stock source files
+found no copied vendor implementation in those files. The compiler lists
+the licensed archive and translation-unit inputs. Licensed sources, composed
+files, libraries and private compiler evidence stay local.
+
 Audit 2026-11-26. `owner-v30-bundle-shader-leaves.json` uses original game
 bundle selectors and the acquired Unity SDK to compile three Shader leaves.
 The provenance, licensing, privacy and sensitive-content review covered the

@@ -2140,6 +2140,16 @@ Clang driver, and invokes it without a global Linux execution handler. Original
 SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
 fallback; whole-player Linux app hosting and runtime parity are separate gates.
 
+`tools/phone-build/owner-code/wwise_native.py` builds the Android Wwise player
+library from the owner's licensed stock integration, SDK archives, and NDK
+r25c target files. The authored diagnostic code and
+`recipe/owner-wwise-native.json` reconstruct the two modified source files in
+the private output after checking their stock hashes. Clang and LLD link the
+result directly. The resulting receipt records the ELF hash, exact export
+roster digest, dependencies and load alignment. This standalone producer has
+passed host cross-compilation. Signed release dispatch and Android execution
+are separate gates.
+
 `owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
 invocation over freshly produced managed assemblies. The existing public Burst
 policy selects roots, SDK compilation API defines, options and tool hashes.
