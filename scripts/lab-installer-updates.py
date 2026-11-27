@@ -80,6 +80,7 @@ class FlowMetrics:
     )
     STAGED_STAGES = (
         "signed-source-import",
+        "staged-acquired-tools",
         "baseline-play",
         "updated-play",
     )

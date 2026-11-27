@@ -335,6 +335,8 @@ def main(argv=None):
             phase = "staged-update"
             # Leave time after import and build for the tour, census and cleanup.
             duration = 2 * args.timeout + 2400 if nightly else 3 * args.timeout + 1200
+            if request.get("acquire_on_phone") is True:
+                duration += args.timeout
             with phone.observe_thermal(duration=duration, require_continuous_trace=True):
                 try:
                     acquisition.run(phone, passed)

@@ -141,6 +141,12 @@ current inventory. For a plan with an `acquired_inputs` inventory, set
 `acquired_source` to the owner-local directory containing the declared
 `acquired/` files. Both releases must pin the same tool inventory. The runner
 verifies and streams those files into the disposable installer before import.
+Set `acquire_on_phone: true` to exercise the installer's acquisition flow.
+Supply `acquired_source` for the owner-folder inputs. The runner stages those
+files in Downloads and selects them through Android's SDK/tool folder picker.
+The installer fetches any signed HTTPS inputs directly and reports the verified
+inventory. The runner checks the receipt and hashes the private tree before
+starting reconstruction.
 The detached run serves the releases over local ADB reverse,
 imports the staged originals through Android's picker, and checks native save
 retention across a same-key update. Each play phase writes a
