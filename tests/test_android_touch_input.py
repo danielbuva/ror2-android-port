@@ -71,6 +71,8 @@ class AndroidTouchInputTests(unittest.TestCase):
                     )
                 ],
                 str(ROOT / "tools/unity/runtime/input/AndroidTouchInput.cs"),
+                str(ROOT / "tools/unity/runtime/layout/LayoutProjection.cs"),
+                str(ROOT / "tools/unity/runtime/layout/TouchLayoutDocument.cs"),
                 str(ROOT / "tests/fixtures/AndroidTouchInputHost.cs"),
                 str(camera),
                 str(bank),

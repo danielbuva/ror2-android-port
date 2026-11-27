@@ -18,7 +18,7 @@ namespace OwnerLayout
         public TouchLayoutDocument EditorDocument => editor == null ? Current : editor.Document;
         public TouchControl Draft => editor == null ? null : editor.Draft;
 
-        public TouchLayoutSession(bool enabled, TouchLayoutDocument defaults, LayoutPreferenceStore store)
+        public TouchLayoutSession(bool enabled, TouchLayoutDocument defaults, LayoutPreferenceStore store, Func<TouchLayoutDocument, bool> acceptLoaded = null)
         {
             Current = defaults ?? throw new ArgumentNullException(nameof(defaults));
             if (!enabled) return;
@@ -26,7 +26,11 @@ namespace OwnerLayout
             var load = store.LoadTouch(defaults);
             StartupState = load.State;
             // Invalid/unavailable is a read-only fallback, not permission to overwrite.
-            if (load.State == LayoutLoadState.Loaded) Current = load.Value;
+            if (load.State == LayoutLoadState.Loaded)
+            {
+                if (acceptLoaded != null && !acceptLoaded(load.Value)) StartupState = LayoutLoadState.Invalid;
+                else Current = load.Value;
+            }
         }
 
         public bool OpenEditor(double minimumWidthPixels, double minimumHeightPixels)

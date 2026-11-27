@@ -1,8 +1,7 @@
 # Layout model entry points for gameplay workers
 
-These host-tested authored models are not wired into the game. Live input/HUD
-owners, coordinate conversion and device checks belong to the gameplay workers;
-this note does not authorize or claim that integration.
+The touch path below is wired into the lab runtime; the separate recovered HUD
+scale/group editor remains an authored host model. Device acceptance is separate.
 
 1. Supply a `LayoutProjection(width, height, left, top, right, bottom)` from actual
    display/safe-area observations. All coordinates here use top-left, x-right,
@@ -26,11 +25,12 @@ this note does not authorize or claim that integration.
    committed model when saving is intended, handle I/O errors and retain unsaved
    UI state. One adapter serializes its calls; the integrator must serialize other
    writers and own private-path security. No directory-fsync or power-loss claim.
-6. Touch rectangle and scale/opacity fields need an explicit visual/hitbox policy
-   in the eventual renderer. This helper hit-tests the authored rectangle only;
-   it does not apply scale again or map generic IDs to gameplay actions. HUD scale
-   uses its documented corner/center anchor with safe-area clamping. Neither model
-   provides physical accessibility or visual parity guarantees.
+6. The touch HUD uses the projected rectangle for both rendering and hit testing,
+   with saved opacity but no secondary scale multiplier. The eight action IDs
+   must match the live HUD. Movement, look and the fixed pause escape route stay
+   unchanged; pause takes priority over an overlapping custom action target. The
+   separate HUD model uses its documented anchor scaling. Neither model implies
+   physical accessibility or visual parity.
 
 Publishing-host command (must execute actual C# tests, not just skip):
 
@@ -48,7 +48,7 @@ commit/save/restart, interrupted display changes, failed durable save with an
 unchanged prior file and retained retryable memory, independent HUD persistence,
 and corrupt restart refusal. It is model/file evidence, not an Android UI test.
 
-The host-only `TouchLayoutSession` now provides the lifecycle boundary for the
+The host-tested `TouchLayoutSession` provides the lifecycle boundary for the
 touch editor. Construct it at startup with the actual feature gate, defaults and
 one private store. Render `Current` outside the editor, and render
 `EditorDocument` plus `Draft` inside it. Route only editor pointers to the
@@ -58,4 +58,13 @@ for retry or discard. Unchanged exits do not touch disk. Use
 `DiscardAndClose` for cancellation or teardown. An invalid or unavailable file
 keeps defaults visible but blocks editing without repairing or overwriting the
 file; report `StartupState` rather than saying the owner's layout loaded.
-The caller still owns feature-flag lookup, Unity staging and device behavior.
+The touch-only settings panel exposes an unchecked `Edit touch controls layout`
+request. Use **Save and close** to persist the request and open the editor on
+the paused run or offline start screen. Editor **Save layout** commits the
+layout and clears the request; **Back** discards edits and also closes the
+request. A failed settings reset remains retryable without rewriting a
+committed layout. The saved geometry loads on restart even while the editor
+is off. Defaults render if the layout is missing, corrupt, or unavailable;
+invalid or unavailable owner files are not replaced. The editor owns only
+its single GUI pointer. Physical routing, visual placement and interruption
+behavior still need Unity/device acceptance.
