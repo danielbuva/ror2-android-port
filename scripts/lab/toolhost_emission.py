@@ -30,6 +30,7 @@ SIGNED_OPERATIONS = (*CODE_OPERATIONS, SIGNED_ARTIFACT)
 BUNDLE_DECODE = "bundle-decode"
 CONVERTER_STAGE = "converter-stage"
 STAGE_OWNER = "tools/phone-build/owner-apk/lab_stage.py"
+STAGE_INPUTS = "inputs/"
 STAGE_SUPPORT = {
     STAGE_OWNER,
     "tools/phone-build/accepted-output/phone_runner.py",
@@ -71,6 +72,13 @@ def relative(value):
     if not isinstance(value, str) or not value or path.is_absolute() or any(p in (".", "..") for p in value.split("/")):
         raise ValueError("emission-relative-path-required")
     return path
+
+
+def stage_owner(checkout):
+    spec = importlib.util.spec_from_file_location("phone_lab_stage", checkout / STAGE_OWNER)
+    owner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(owner)
+    return owner
 
 
 def load_request(path, *, refresh_repo=False):
@@ -122,8 +130,6 @@ def load_request(path, *, refresh_repo=False):
         raise ValueError("emission-request-not-staged")
     if decode and not DECODE_FILES <= files.keys():
         raise ValueError("emission-decode-producer-not-staged")
-    if stage and (request["request"] != "stage.json" or any(name != "stage.json" and not name.startswith("repo/") for name in files)):
-        raise ValueError("converter-stage-must-transfer-only-producers-and-descriptor")
     for name, pin in files.items():
         relative(name)
         if refresh_repo and name.startswith("repo/"):
@@ -131,6 +137,15 @@ def load_request(path, *, refresh_repo=False):
         path = Path(pin["source"])
         if path.stat().st_size != pin["bytes"] or digest(path) != pin["sha256"]:
             raise ValueError("emission-staged-input-pin")
+    if stage:
+        if request["request"] != "stage.json" or any(name != "stage.json" and not name.startswith(("repo/", STAGE_INPUTS)) for name in files):
+            raise ValueError("converter-stage-staging-path")
+        staged = {name: pin["sha256"] for name, pin in files.items() if name.startswith(STAGE_INPUTS)}
+        if staged:
+            descriptor = stage_owner(Path(__file__).resolve().parents[2]).load_stage(files["stage.json"]["source"])
+            expected = {f"{STAGE_INPUTS}{descriptor['input_root']}/{name}": sha for name, sha in descriptor["input_pins"].items()}
+            if staged != expected:
+                raise ValueError("converter-stage-staged-inputs-must-match-descriptor-pins")
     if signed:
         root = relative(request["request"]).parent
         code = json.loads(Path(files[request["request"]]["source"]).read_bytes())
@@ -192,9 +207,7 @@ def prepare_stage(path, checkout, name, *, dry_run):
     request, files = load_request(path, refresh_repo=True)
     if request.get("operation") != CONVERTER_STAGE:
         raise ValueError("converter-stage-request-required")
-    spec = importlib.util.spec_from_file_location("phone_lab_stage", checkout / STAGE_OWNER)
-    owner = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(owner)
+    owner = stage_owner(checkout)
     stage = owner.load_stage(files["stage.json"]["source"])
     if Path(stage["producer"]).stem.replace("_", "-") != name:
         raise ValueError("converter-stage-name-mismatch")
@@ -578,8 +591,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         # Only cooldown observation is reused here; gameplay start/stop methods
         # are never called. The on-phone tool supervisor owns production heat.
         if not active:
-            admission_options = {"charge_override": False} if stage else {}
-            admission = _GameThermalOwner(device, None, destination / "admission.jsonl", time.monotonic() + 1800, **admission_options)
+            admission = _GameThermalOwner(device, None, destination / "admission.jsonl", time.monotonic() + 1800)
             admission.cool()
             result["admission_battery"] = admission.admission_battery
         result["reattached_without_launch"] = active
@@ -668,7 +680,10 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 write(state_path, state)
                 write(lease / "retain.json", dict(reason="emission-remote-outcome-unknown", job=handle, state=str(state_path)))
 
-            invocation_options = {"owner_input": str(Path(state["remote"]).parent)} if stage else {}
+            invocation_options = {}
+            if stage:
+                staged_inputs = any(name.startswith(STAGE_INPUTS) for name in files)
+                invocation_options["owner_input"] = state["remote"] + "/inputs" if staged_inputs else str(Path(state["remote"]).parent)
             job = phone.transport.start_detached(
                 invocation(state["remote"], state["native"], request, state["attempt"], **invocation_options),
                 root=state["remote"],

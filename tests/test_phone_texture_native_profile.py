@@ -15,30 +15,90 @@ from test_phone_mesh_producer import array, bundle, node, serialized, text, vect
 TOOL = Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output/texture_native_profile.py"
 
 
+def texture_schema():
+    fields = (
+        "m_TextureFormat",
+        "m_Width",
+        "m_Height",
+        "m_MipCount",
+        "m_ImageCount",
+        "m_TextureDimension",
+        "m_CompleteImageSize",
+        "m_LightmapFormat",
+    )
+    return node(
+        "Base",
+        children=[
+            text("m_Name"),
+            *(node(name, 4) for name in fields),
+            node("m_IsAlphaChannelOptional", 1, meta=0x4000),
+            node("m_ColorSpace", 4),
+            array("m_PlatformBlob", node("data", 1)),
+            array("image data", node("data", 1), "TypelessData"),
+            node("m_StreamData", children=[node("offset", 8), node("size", 4), text("path")]),
+        ],
+    )
+
+
 class TextureNativeProfileTests(unittest.TestCase):
+    def test_produces_standalone_textures_with_pinned_schema_and_resource(self):
+        schema = texture_schema()
+        pixels = bytes(range(16))
+        argb = vector(b"ARGB", 4) + struct.pack("<8i", 5, 2, 2, 1, 1, 2, len(pixels), 6) + bytes(16)
+        argb += struct.pack("<QI", 3, len(pixels)) + vector(b"sharedassets0.assets.resS", 25)
+        empty = vector(b"Empty", 5) + struct.pack("<8i", 1, 0, 0, 1, 1, 2, 0, 0) + bytes(32)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc = root / "pc"
+            pc.mkdir()
+            resource = pc / "sharedassets0.assets.resS"
+            resource.write_bytes(b"pad" + pixels)
+            (pc / "sharedassets0.assets").write_bytes(serialized(argb, schema, path_id=6, class_id=28, trees=False))
+            (pc / "level0").write_bytes(serialized(empty, schema, path_id=7, class_id=28, trees=False))
+            source = pc / "authored.bundle"
+            source.write_bytes(bundle([("CAB-test", serialized(argb, schema, path_id=6, class_id=28), 4)]))
+            coverage = root / "coverage.jsonl"
+            coverage.write_text(
+                "".join(
+                    json.dumps(dict(source=[name, name, identity], status="missing")) + "\n" for name, identity in (("sharedassets0.assets", 6), ("level0", 7))
+                )
+            )
+            witnesses = root / "witnesses.json"
+            witnesses.write_text(json.dumps([dict(source=[source.name, "CAB-test", 6], class_id=28, sha256=sha256(source.read_bytes()).hexdigest())]))
+            profile_path = root / "profile.json"
+            subprocess.run(
+                [sys.executable, "-B", str(TOOL), str(pc), str(coverage), "--schema-witnesses", str(witnesses), "--output", str(profile_path)], check=True
+            )
+            profile = json.loads(profile_path.read_bytes())
+            self.assertEqual([item["resources"] for item in profile["bundles"]], [{}, {resource.name: sha256(resource.read_bytes()).hexdigest()}])
+            command = [
+                sys.executable,
+                "-B",
+                str(TOOL.with_name("texture_produce.py")),
+                "--pc",
+                str(pc),
+                "--profile",
+                str(profile_path),
+                "--profile-sha256",
+                sha256(profile_path.read_bytes()).hexdigest(),
+            ]
+            pack = root / "pack"
+            subprocess.run([*command, "--output", str(pack)], check=True)
+            self.assertEqual((pack / "objects.bin").read_bytes(), empty + argb)
+            self.assertEqual((pack / "resources.bin").read_bytes(), pixels)
+            self.assertTrue(json.loads((pack / "types.json").read_bytes())[0]["tree"])
+            resource.write_bytes(b"bad" + pixels)
+            result = subprocess.run([*command, "--output", str(root / "resource-drift")], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("standalone texture resource drift", result.stderr)
+            with source.open("ab") as stream:
+                stream.write(b"drift")
+            result = subprocess.run([*command, "--output", str(root / "schema-drift")], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("standalone texture schema witness drift", result.stderr)
+
     def test_discovers_original_mips_and_checks_platform_blob(self):
-        fields = (
-            "m_TextureFormat",
-            "m_Width",
-            "m_Height",
-            "m_MipCount",
-            "m_ImageCount",
-            "m_TextureDimension",
-            "m_CompleteImageSize",
-            "m_LightmapFormat",
-        )
-        schema = node(
-            "Base",
-            children=[
-                text("m_Name"),
-                *(node(name, 4) for name in fields),
-                node("m_IsAlphaChannelOptional", 1, meta=0x4000),
-                node("m_ColorSpace", 4),
-                array("m_PlatformBlob", node("data", 1)),
-                array("image data", node("data", 1), "TypelessData"),
-                node("m_StreamData", children=[node("offset", 8), node("size", 4), text("path")]),
-            ],
-        )
+        schema = texture_schema()
         pixels = bytes(range(10))
         header = vector(b"Fixture", 7) + struct.pack("<8i", 1, 4, 2, 2, 1, 2, len(pixels), 0) + bytes(8)
         suffix = vector(pixels, len(pixels)) + bytes(16)

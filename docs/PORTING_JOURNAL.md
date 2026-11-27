@@ -19,6 +19,19 @@ Evidence `work/coordination/gameplay-fidelity-coverage-20261117/acrid-leap-acid-
 contains the native log, comparison and terminal receipt. SoC peaked at
 78.1 °C and battery at 28 °C. Adopted placement, scratch cleanup, OLED
 sleep and lease release passed.
+## J1547 — Recover REX Disperse charge materials
+
+2026-11-27. The original body visual owner prepares the native Disperse
+charge prefab before it is instantiated. In assisted seed-3 Titanic Plains,
+one Utility tap produced one authority and one server callback. All 11 charge
+samples showed the recovered Glow at queue 3000 and recovered distortion.
+The same-process video shows the opaque charge card clear and visible green
+and purple release particles. Release-material and PC visual parity are open.
+APK SHA-256 `0b8d9a8990ee717bcfb8e433586ffcdb1a545724ea244db39ec4cccbe301b072` (source `ed6d7805`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/rex-disperse-charge-main-nova/`
+contains the native log, paired capture assessment and terminal receipt.
+SoC peaked at 81.6 °C with 0.317 s above 80 °C and 29 °C battery.
+Adopted placement, scratch cleanup, OLED sleep and lease release passed.
 
 ## J1546 — Verify signed Histogram conversion on Android
 
@@ -4904,3 +4917,14 @@ APK SHA-256 `5af412ac93b310c221879305194cb68d3f81868252c048a573ef2c99db2d236e`
 `work/coordination/alpha-saf-stability-20261127/nova-b-sustained-placement/`.
 The native enemy cap, scratch, display and lease teardown passed. Both FPS
 means missed 60 FPS. Ordinary play, matched visuals and budgets remain open.
+
+## J1547 — Stage pinned converter inputs in owned Android scratch
+
+2026-11-27. The shared runner streamed a pinned descriptor's inputs to its
+attempt directory on Secondary Nova. All four BC1 artifact sizes and SHA-256
+digests matched the host receipt. The stage took 2.47 s and peaked at 36.2 MiB
+RSS. The CPU/GPU peak was 54.1 °C at admission, with 0 s above 80 °C.
+The runner collected JSON and digests, retired scratch and slept the display.
+Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a859516807c00a4`.
+Evidence: `work/coordination/p1-phonepipe/2026-11-27/bc1-staged/terminal.done.json`.
+Unity typed load and gameplay remain open.

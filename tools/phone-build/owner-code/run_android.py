@@ -116,7 +116,7 @@ def android_sdk_job(request, inputs, runtime, installed, native):
 def texture_job(request, inputs, runtime, installed, native):
     """Run the existing source texture owner using private inputs and installed tools."""
     selection = request["textures"]
-    if set(selection) - {"jpeg_codec", "etc_codec", "sdk_toolchain", "resume"} != {"profile", "profile_sha256", "pc"}:
+    if set(selection) - {"jpeg_codec", "etc_codec", "pixels_codec", "sdk_toolchain", "resume"} != {"profile", "profile_sha256", "pc"}:
         raise ValueError("explicit source texture profile and original inputs required")
     resume = selection.get("resume", False)
     if not isinstance(resume, bool):
@@ -133,7 +133,7 @@ def texture_job(request, inputs, runtime, installed, native):
     owner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(owner)
     options = {"resume": resume}
-    for name in ("jpeg_codec", "etc_codec", "sdk_toolchain"):
+    for name in ("jpeg_codec", "etc_codec", "pixels_codec", "sdk_toolchain"):
         if name in selection:
             pin = selection[name]
             if set(pin) != {"path", "sha256"}:

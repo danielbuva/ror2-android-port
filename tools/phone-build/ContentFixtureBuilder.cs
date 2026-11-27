@@ -86,6 +86,7 @@ public static partial class ContentFixtureBuilder
             case "AvatarMask": return typeof(AvatarMask);
             case "PhysicMaterial": return typeof(PhysicMaterial);
             case "SpeedTreeWindAsset": return typeof(Terrain).Assembly.GetType("UnityEngine.SpeedTreeWindAsset", throwOnError: true);
+            case "AnimatorController": return typeof(UnityEditor.Animations.AnimatorController);
             case "AnimatorOverrideController": return typeof(AnimatorOverrideController);
             case "AssetBundleManifest": return typeof(AssetBundleManifest);
             default: throw new Exception("Unsupported native-content type: " + name);

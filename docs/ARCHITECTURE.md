@@ -1412,18 +1412,22 @@ decoding, raw copying, fixed source-coordinate color extension and public
 JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
 original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
 colour space and usage. It checks source extents and preserves metadata rather
-than generating replacement mip levels. `source-bc3-etc` likewise reads each
-original mip, including the texels stored in its boundary blocks. It writes
-ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
-normal maps. It uses the existing pinned native decoder, ETC2 colour and
+than generating replacement mip levels. `source-bc3-etc` and `source-bc7-etc`
+read each original mip, including the texels stored in its boundary blocks.
+Both write ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for
+packed A/G normal maps. They use the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
 use the same codec pins and output checks. `texture_native_profile.py` selects
-original Alpha8, RGB24, RGBA32, HDR Cubemap, BC1 and BC3 records from the PC
-texture coverage ledger.
+original Alpha8, RGB24, RGBA32, ARGB32, native Cubemap, BC1, BC3 and BC7 records
+from the PC texture coverage ledger. The same selector and producer support
+standalone player records. They pin the original serialized file, any sibling resource
+stream and an embedded tree from an original bundle with the same complete
+type identity. Native copy also preserves original zero-pixel placeholders.
 It checks native schemas, platform data, references and complete mip extents,
 then writes a private profile. Source-derived BC profiles pin original bytes and
 expected output extents and leave reference output hashes empty. BC1 colour
 retains usage and encodes each original mip as ETC1 RGB after checking opacity.
+BC1-only jobs pin the native pixel decoder and ETC encoder directly.
 The producer's setup, stream checks and output ownership apply to these packs.
 `build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
@@ -1475,8 +1479,8 @@ handling. Its `bc6-half` pipe mode decodes one unsigned BC6H mip into little-end
 RGBAHalf with opaque alpha. It crops edge blocks to the requested dimensions and
 streams four rows at a time. The default-scene owner still consumes the native
 capture while source reflection and ambient compatibility are evaluated.
-The opt-in `cube-preserve` operation retains original BC6H/RGBAHalf face/mip
-bytes, format, color space and usage with per-face CompleteImageSize. The audited
+The opt-in `cube-preserve` operation retains original Alpha8, RGB24, BC6H and
+RGBAHalf face/mip bytes, format, color space and usage with per-face CompleteImageSize. The audited
 `recipe/owner-source-baked-reflections.json` selects two original baked probes;
 no codec or SDK is consumed. Existing input/profile/body/resource hash gates,
 checkpoint ownership and teardown apply. Native BC6H support is a device gate;
@@ -2436,6 +2440,9 @@ materials, shaders, textures, sprites and supported native asset roots): snapsho
 and hash the explicit request, load every address with its exact engine type, record the
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
+The editor reports native AnimatorController roots as
+`UnityEditor.Animations.AnimatorController`; their original Addressables
+locations use `UnityEngine.RuntimeAnimatorController`.
 The request may pin dependency bundles in load order. The fixture opens them
 before loading root assets and unloads the full set in reverse order. An
 explicit Material expectation checks the loaded shader name and each saved
@@ -5407,11 +5414,12 @@ override references with the renderer and trail sources.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
-for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, which
-instantiate their prefabs directly. Artificer's configured Nano-Bomb projectile
+for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, and
+REX's Disperse charge, which instantiate or pool their prefabs directly.
+Artificer's configured Nano-Bomb projectile
 also enters this owner so the projectile controller's detached ghost takes the
-same material recovery path. It holds the Acrid
-finisher's typed provider lease through the run. Integrated world cleanup restores
+same material recovery path. It holds native addressable provider leases through
+the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
 The detailed renderer report reads VagrantMesh's effective slot properties from
@@ -6600,9 +6608,13 @@ The current `./dev converter-stage` action uses the same emission runner and
 the installed toolhost's Python runtime. `owner-apk/lab_stage.py` runs one
 registered content producer against a pinned request under the toolhost's
 existing owner-input tree. The host stages the current committed producer
-closure and a small descriptor. The phone checks the input pins, hashes the
-declared artifacts, and returns the stage and thermal receipts with an optional
-scoreboard. The runner removes attempt scratch and preserves the input tree.
+closure and a small descriptor. For a producer fixture, the private manifest
+can also supply `inputs/<input_root>/<pinned relative path>` entries with the
+usual `source`, `bytes` and `sha256` pins. These entries must cover exactly the
+descriptor's `input_pins`. The runner streams them into its own scratch instead
+of using retained inputs. The phone checks the input pins, hashes the declared
+artifacts, and returns the stage and thermal receipts with an optional
+scoreboard. The runner removes attempt scratch and preserves retained inputs.
 The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
 accessible to the retained toolhost. The same scoreboard owner runs on the
 host and phone with the same request pins and JSON schema.
@@ -8044,6 +8056,14 @@ relocating schema-checked Shader/texture relationships. Its four persisted
 records are host raw-exact; shared Shader and complete bundle/device gates
 remain separate. It owns no runtime state or teardown.
 
+`recipe/owner-whole-game-void-fbx-material-records.json` supplies eight
+original Materials to the Void Stage and Scrap Void FBX cohort through
+`record_produce.py`. The record pack retains the native class-21 schema
+and source fields. During preparation, `bundle_preload.py` resolves
+original member references to Shader and texture providers. The isolated
+fixture checks the typed bindings and unloads the Material bundle and its
+dependencies after the check.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
@@ -8577,6 +8597,10 @@ configured muzzle and impact effects by catalog identity. It retains camera
 projected screen bounds and material slots for up to 1.25 seconds or 120 frames.
 The report belongs to the current world and holds only observations. Projected
 bounds and effect identity identify candidates for comparison with the video.
+With detailed visual diagnostics enabled, the same owner follows the first
+native REX Disperse cast. It reads the charge state's live instance and then
+matches the release by catalog identity. Each phase records end-of-frame
+renderer slots for up to 1.25 seconds or 120 frames in the world report.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to

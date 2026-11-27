@@ -125,6 +125,10 @@ public sealed partial class PortSession
                                           "Mage Flamethrower", unavailable);
             PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.ChargeNovabomb().chargeEffectPrefab,
                                           "Mage Nano-Bomb charge", unavailable);
+            var disperseCharge = PrepareReferencedNativeEffect(new EntityStates.Treebot.Weapon.ChargeSonicBoom().chargeEffectPrefab,
+                                                                "Treebot Disperse charge", unavailable);
+            while (disperseCharge.MoveNext())
+                yield return disperseCharge.Current;
             // The projectile controller creates the detached ghost outside EffectCatalog.
             PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.ThrowNovabomb().projectilePrefab,
                                           "Mage Nano-Bomb projectile", unavailable);

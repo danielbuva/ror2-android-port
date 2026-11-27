@@ -62,7 +62,7 @@ def authored_mesh(streamed=False):
     return body, schema, vertex
 
 
-def serialized(body, schema, path_id=-123, class_id=43):
+def serialized(body, schema, path_id=-123, class_id=43, *, trees=True):
     strings = bytearray()
     offsets = {}
 
@@ -79,9 +79,10 @@ def serialized(body, schema, path_id=-123, class_id=43):
         for child in value.children:
             flatten(child, level + 1)
 
-    flatten(schema, 0)
-    metadata = b"2021.3.45f2\0" + struct.pack("<iBIiBh", 19, 1, 1, class_id, 0, -1) + bytes(16)
-    metadata += struct.pack("<II", len(nodes), len(strings)) + b"".join(nodes) + strings + bytes(4)
+    metadata = b"2021.3.45f2\0" + struct.pack("<i?IiBh", 19, trees, 1, class_id, 0, -1) + bytes(16)
+    if trees:
+        flatten(schema, 0)
+        metadata += struct.pack("<II", len(nodes), len(strings)) + b"".join(nodes) + strings + bytes(4)
     metadata += struct.pack("<I", 1)
     metadata += bytes(-len(metadata) % 4)
     metadata += struct.pack("<qqIi", path_id, 0, len(body), 0)
