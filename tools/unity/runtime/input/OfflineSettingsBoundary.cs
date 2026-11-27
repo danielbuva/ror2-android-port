@@ -53,8 +53,10 @@ public sealed partial class PortSession
     }
     void CleanupOfflineSettingsPause()
     {
+        CloseTouchLayoutEditor();
         offlineSettingsSession?.Dispose();
     }
+    bool HasSavedTouchEditorRequest => offlineSettingsSession != null && offlineSettingsSession.HasSavedTouchEditorRequest;
     bool SaveOfflineSettings()
     {
         return offlineSettingsSession != null && offlineSettingsSession.Save();
@@ -91,6 +93,8 @@ public sealed partial class PortSession
         string rebindError;
         float offlineSettingsTimeScale;
         bool writeObserverStarted;
+        bool savedTouchEditorRequest;
+        public bool HasSavedTouchEditorRequest => savedTouchEditorRequest;
         public OfflineSettingsSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -107,6 +111,7 @@ public sealed partial class PortSession
                                   "Settings failure injection requires a lab purpose");
                 coordinator.offlineSettings.ArmSaveFailure(diagnostic.settingsSaveFailure);
             }
+            savedTouchEditorRequest = coordinator.offlineSettings.values.touchLayoutEditor;
             AndroidOfflineSettings.current = coordinator.offlineSettings.values;
             coordinator.ApplyOfflineDisplayPreference();
             coordinator.offlineDifficulty = (DifficultyIndex)coordinator.offlineSettings.values.offlineDifficulty;
@@ -157,7 +162,10 @@ public sealed partial class PortSession
             rebindVisible = false;
             rebind = null;
             if (!show)
+            {
+                coordinator.offlineSettings.values.touchLayoutEditor = savedTouchEditorRequest;
                 feedback.Close();
+            }
             if (show && coordinator.worldPause && coordinator.worldPlayer && coordinator.worldPlayer.healthComponent.alive)
             {
                 coordinator.Check(PauseStopController.instance && !PauseStopController.instance.isPaused && Time.timeScale > 0,
@@ -204,6 +212,7 @@ public sealed partial class PortSession
             coordinator.r.settings.persisted = saved;
             if (saved)
             {
+                savedTouchEditorRequest = coordinator.offlineSettings.values.touchLayoutEditor;
                 AndroidOfflineSettings.current = coordinator.offlineSettings.values;
                 coordinator.ApplyOfflineDisplayPreference();
                 coordinator.r.settings.saves++;
@@ -349,8 +358,9 @@ public sealed partial class PortSession
                     GUI.Box(new Rect(Screen.width * .5f - 240, 60, 480, 50), coordinator.r.settings.error);
                 return false;
             }
-            GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 220, 480, 560),
-                    coordinator.UsesTouchUi()
+            var touchUi = coordinator.UsesTouchUi();
+            GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 220, 480, touchUi ? 590 : 560),
+                    touchUi
                         ? "Android offline settings · touch controls"
                         : "Android offline input settings · B back · A save");
             var x = Screen.width * .5f - 210;
@@ -367,9 +377,13 @@ public sealed partial class PortSession
             coordinator.offlineSettings.values.highRefreshRate =
                 GUI.Toggle(new Rect(x, y + 174, 420, 30), coordinator.offlineSettings.values.highRefreshRate,
                            "High refresh rate (applies on Save)");
+            if (touchUi)
+                coordinator.offlineSettings.values.touchLayoutEditor =
+                    GUI.Toggle(new Rect(x, y + 495, 420, 45), coordinator.offlineSettings.values.touchLayoutEditor, "Edit touch controls layout");
             if (GUI.Button(new Rect(x, y + 215, 200, 45), "Save and close"))
             {
-                if (Save())
+                if (Save() && !(touchUi && coordinator.offlineSettings.values.touchLayoutEditor &&
+                                (coordinator.offlineSettingsPaused || coordinator.offlineStartVisible)))
                     Show(false);
             }
             if (GUI.Button(new Rect(x + 220, y + 215, 200, 45), "Resume"))

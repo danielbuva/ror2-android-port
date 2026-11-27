@@ -122,6 +122,8 @@ public sealed partial class PortSession
     void OnGUI()
     {
         ConsumeTouchGameplayGuiEvent();
+        if (DrawTouchLayoutEditor())
+            return;
         if (DrawOfflineSettings())
             return;
         if (DrawOfflineStart())
@@ -487,6 +489,7 @@ public sealed partial class PortSession
                 if (spine)
                 {
                     bridge.touchControls = new AndroidTouchInput();
+                    coordinator.ApplyTouchLayout(bridge.touchControls);
                     coordinator.r.nova.touch = bridge.touchControls.report;
                 }
                 coordinator.r.nova.originalInputConsumer = true;
