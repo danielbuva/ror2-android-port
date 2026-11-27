@@ -382,3 +382,5 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1550](PORTING_JOURNAL.md#j1550--reuse-unchanged-producer-outputs-on-android-updates) | 2026-11-27 | Reuse unchanged producer outputs on Android updates | 2026-11-27. |
 | [J1552](PORTING_JOURNAL.md#j1552--recover-rex-mortar-aim-and-projectile-materials) | 2026-11-27 | Recover REX Mortar aim and projectile materials | 2026-11-27. |
 | [J1553](PORTING_JOURNAL.md#j1553--run-a-pinned-texture-stage-with-a-disposable-android-toolhost) | 2026-11-27 | Run a pinned texture stage with a disposable Android toolhost | 2026-11-27. |
+| [J1560](PORTING_JOURNAL.md#j1560--capture-paired-occlusion-windows-from-a-fixed-gameplay-camera) | 2026-11-27 | Capture paired occlusion windows from a fixed gameplay camera | 2026-11-27. |
+| [J1559](PORTING_JOURNAL.md#j1559--play-converted-distant-roost-with-source-occlusion-data) | 2026-11-27 | Play converted Distant Roost with source occlusion data | 2026-11-27. |

@@ -1999,6 +1999,12 @@ copies; `install_inputs.py` binds the signed input/stage plan to admitted local
 paths and writes the private original-file inventory and configuration used by
 the native-code owner. Startup metadata uses the admitted content hashes by
 default, so copying identical inputs again preserves its identity.
+`managed-host/OwnerInputSource.java` acquires the plan's pinned tools through
+the foreground service. It reads owner files through SAF and uses
+`OwnerToolDownload.java` for approved upstream HTTPS paths. `OwnerInputImport.java`
+keeps resumable partials outside the producer tree, verifies complete files and
+publishes them atomically under the private `acquired/` path. Build admission
+rehashes that tree against the signed plan before running a producer.
 `install_inputs.py` also generates the source-output assembly receipt.
 `install_flow.py` owns durable stage
 checkpoints and failure/retry state, including stage-admission write failures
@@ -8337,6 +8343,12 @@ recorded sizes and hashes. Native producer lineages retain their existing
 roots through actual staged member tables and retains the supplied SDK proofs.
 The command closes its staged readers and returns descriptor and schema pins
 for the existing emitter to qualify against actual bytes.
+The preparation policy can seed `retained_path_ids` for records referenced by
+other bundles. These records and their dependencies enter the same checked
+closure without adding entries to the bundle's catalog or container.
+Preparation uses the pinned current MonoScript body and CLR schema to repair
+stale native managed type hashes in its retained pack. Emission independently
+checks the relocated records and final member table against the same providers.
 This host/converter qualification does not admit Unity loadability or play.
 
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
@@ -8663,6 +8675,15 @@ with at least 5% flat mid-gray replaces that pair and ends sampling. The camera
 releases capture textures at teardown. The collider describes camera placement,
 and the PNGs can localize a presentation stage. Identifying a draw requires
 pixel-event evidence.
+
+The same selector accepts default-off `frameCaptureOcclusion` for the lab
+camera. After the requested stage and stopwatch arrive, the camera renders
+three windows with occlusion on, off and on from one pose and projection.
+Each window warms for 32 frames, measures 60 frames and then takes a paired
+capture. The report keeps submitted draw, SetPass and vertex totals, GPU timing
+totals and their sample counts. The camera restores the live pose, projection
+mode and culling setting after each render and on teardown. Stage exit or
+backgrounding during the comparison marks the capture incomplete.
 
 
 ## Host-only owner layout models

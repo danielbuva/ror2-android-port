@@ -70,6 +70,12 @@ public static class RawFrameCaptureHarness
         var capture = new AndroidPresentationCamera.RawFrameCapture(1);
         Field(camera, "report", report);
         Field(camera, "rawFrames", capture);
+        camera.BeginFrameCapture("stage", 12, null, false);
+        Check(report.frameCapture.occlusionWindows == null, "ordinary frame capture leaves occlusion untouched");
+        camera.BeginFrameCapture("stage", 12, null, true);
+        var windows = report.frameCapture.occlusionWindows;
+        Check(windows.Length == 3 && windows[0].enabled && !windows[1].enabled && windows[2].enabled &&
+              !report.frameCapture.occlusionComplete, "paired capture arms three separate on/off/on windows");
         Observe(camera, 16.5f);
         Field(camera, "measurementPaused", true);
         Observe(camera, 10000f);

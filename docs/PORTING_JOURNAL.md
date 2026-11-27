@@ -6,6 +6,30 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1559 — Play converted Distant Roost with source occlusion data
+
+2026-11-27. The staged converter retains the original native occlusion data,
+renderer slot order and portals. Ordinary Start reached Distant Roost with
+local Commando authority and native population. Touch input moved Commando
+39.10 m and fired 31 primary shots. The native loss report round-tripped.
+APK SHA-256 `203370439d8d432abdecaaf97402ceafac1c94d05cb0ccbb95697ad67683cd36`.
+Evidence `work/coordination/p1-selectors/staged-occlusion-v46/device-ordinary-occlusion/`.
+The active sample measured 60.08 FPS and 6.58 ms GPU. SoC peaked at 84 °C
+with 3.548 s above 80 °C. Adopted placement, scratch cleanup and OLED sleep passed.
+Six scoped GameObject keys still miss. Render parity remains open.
+
+## J1560 — Capture paired occlusion windows from a fixed gameplay camera
+
+2026-11-27. The opt-in camera diagnostic captured on/off/on from one view in
+converted Distant Roost. Each window logged 60 render frames and matching
+camera matrices. Six 160 × 90 PNGs show matching terrain silhouettes.
+Draw calls and SetPass calls averaged 323 and 177 in all three windows.
+GPU time averaged 12.185, 12.456 and 12.624 ms over 59, 58 and 56 samples.
+This view showed no culling benefit. Broader coverage and PC parity remain open.
+APK SHA-256 `de33b0d0d4c0eafd34a7d538d0643e090fdcd8cbb3bf4cee37c6c9d5285b4496` (runtime `fb32d30d`).
+Evidence `work/coordination/p1-selectors/paired-occlusion-1127/v46-matched-code/device-paired-occlusion/`.
+SoC peaked at 77.6 °C with 0 s above 80 °C. Scratch cleanup and OLED sleep passed.
+
 ## J1553 — Run a pinned texture stage with a disposable Android toolhost
 
 2026-11-27. The shared converter-stage runner installed the pinned toolhost

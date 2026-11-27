@@ -50,6 +50,17 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         public float targetRunSeconds, maxScreenGrayFraction;
         public int sampledFrames;
         public FrameCaptureSample sample;
+        public OcclusionWindow[] occlusionWindows;
+        public bool occlusionComplete;
+    }
+    [Serializable]
+    public sealed class OcclusionWindow
+    {
+        public bool enabled;
+        public int firstMeasuredFrame, lastMeasuredFrame, renderSamples, gpuSamples;
+        public long drawCalls, setPassCalls, vertices;
+        public double gpuMs;
+        public FrameCaptureSample sample;
     }
     [Serializable]
     public sealed class FrameCaptureSample
@@ -63,20 +74,114 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         public AndroidNativeSourceSkinLifecycle.VisualCameraSnapshot camera;
     }
     const int CaptureWidth = 160, CaptureHeight = 90;
+    const int OcclusionWarmupFrames = 32, OcclusionMeasuredFrames = 60;
     NovaThirdPersonView captureOrbit;
     float nextCapture;
     Coroutine pendingCapture;
     Texture2D sourceCapture, screenCapture;
+    Vector3 fixedPosition, livePosition;
+    Quaternion fixedRotation, liveRotation;
+    Matrix4x4 fixedProjection;
+    bool viewOverridden, liveOcclusion;
+    int occlusionIndex, occlusionFrames, lastOcclusionRender = -1, occlusionScene;
+    ulong lastGpuTimestamp;
 
-    public void BeginFrameCapture(string scene, float runSeconds, NovaThirdPersonView orbit)
+    public void BeginFrameCapture(string scene, float runSeconds, NovaThirdPersonView orbit, bool occlusion)
     {
         captureOrbit = orbit;
         report.frameCapture = new FrameCaptureReport { scene = scene, targetRunSeconds = runSeconds };
+        if (occlusion)
+            report.frameCapture.occlusionWindows =
+                new[] { new OcclusionWindow { enabled = true }, new OcclusionWindow(), new OcclusionWindow { enabled = true } };
+    }
+
+    void OnPreCull()
+    {
+        var capture = report.frameCapture;
+        if (capture?.occlusionWindows == null || capture.occlusionComplete || capture.error != null || measurementPaused)
+            return;
+        var scene = SceneManager.GetActiveScene();
+        var run = RoR2.Run.instance;
+        if (occlusionScene != 0 && (scene.handle != occlusionScene || !run))
+        {
+            capture.error = "Stage ended during fixed-view occlusion capture";
+            return;
+        }
+        if (occlusionScene == 0)
+        {
+            if (scene.name != capture.scene || !run || run.GetRunStopwatch() < capture.targetRunSeconds)
+                return;
+            occlusionScene = scene.handle;
+            fixedPosition = view.transform.position;
+            fixedRotation = view.transform.rotation;
+            fixedProjection = view.projectionMatrix;
+        }
+        livePosition = view.transform.position;
+        liveRotation = view.transform.rotation;
+        liveOcclusion = view.useOcclusionCulling;
+        viewOverridden = true;
+        view.transform.SetPositionAndRotation(fixedPosition, fixedRotation);
+        view.projectionMatrix = fixedProjection;
+        view.useOcclusionCulling = capture.occlusionWindows[occlusionIndex].enabled;
+    }
+
+    void RestoreOcclusionView()
+    {
+        if (!viewOverridden)
+            return;
+        viewOverridden = false;
+        view.transform.SetPositionAndRotation(livePosition, liveRotation);
+        view.ResetProjectionMatrix();
+        view.useOcclusionCulling = liveOcclusion;
+    }
+
+    void ObserveOcclusionWindow()
+    {
+        var capture = report.frameCapture;
+        if (capture?.occlusionWindows == null || capture.occlusionComplete || capture.error != null ||
+            lastOcclusionRender != Time.frameCount - 1 || lastOcclusionRender < 0)
+            return;
+        // These are completed-frame counters. Keep timing requests running during
+        // warmup so the delayed GPU results never straddle a measured window.
+        FrameTimingManager.CaptureFrameTimings();
+        if (occlusionFrames <= OcclusionWarmupFrames || occlusionFrames > OcclusionWarmupFrames + OcclusionMeasuredFrames)
+            return;
+        var window = capture.occlusionWindows[occlusionIndex];
+        if (window.firstMeasuredFrame == 0)
+            window.firstMeasuredFrame = lastOcclusionRender;
+        window.lastMeasuredFrame = lastOcclusionRender;
+        if (RenderCountersAvailable())
+        {
+            window.renderSamples++;
+            window.drawCalls += drawCallsRecorder.LastValue;
+            window.setPassCalls += setPassRecorder.LastValue;
+            window.vertices += verticesRecorder.LastValue;
+        }
+        if (FrameTimingManager.GetLatestTimings(1, latestTiming) > 0)
+        {
+            var timing = latestTiming[0];
+            if (timing.cpuTimePresentCalled != lastGpuTimestamp && timing.gpuFrameTime > 0)
+            {
+                lastGpuTimestamp = timing.cpuTimePresentCalled;
+                window.gpuSamples++;
+                window.gpuMs += timing.gpuFrameTime;
+            }
+        }
     }
 
     void ObserveFrameCapture(RenderTexture source, bool grading)
     {
         var capture = report.frameCapture;
+        if (capture?.occlusionWindows != null)
+        {
+            if (viewOverridden && lastOcclusionRender != Time.frameCount)
+            {
+                lastOcclusionRender = Time.frameCount;
+                if (++occlusionFrames == OcclusionWarmupFrames + OcclusionMeasuredFrames + 1)
+                    CaptureFrame(source, grading, RoR2.Run.instance.GetRunStopwatch(), capture.occlusionWindows[occlusionIndex]);
+            }
+            return;
+        }
         if (capture == null || capture.sampledFrames >= 48 || capture.error != null ||
             (capture.sample != null && capture.sample.screenGrayFraction >= .05f) ||
             pendingCapture != null || SceneManager.GetActiveScene().name != capture.scene)
@@ -88,8 +193,18 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         if (Mathf.Abs(seconds - capture.targetRunSeconds) > 12 || Time.realtimeSinceStartup < nextCapture)
             return;
         nextCapture = Time.realtimeSinceStartup + .5f;
+        CaptureFrame(source, grading, seconds, null);
+    }
+
+    void CaptureFrame(RenderTexture source, bool grading, float seconds, OcclusionWindow window)
+    {
         try
         {
+            var worldToCamera = view.worldToCameraMatrix;
+            var projection = view.projectionMatrix;
+            var first = window == null ? null : report.frameCapture.occlusionWindows[0].sample;
+            if (first != null && (!worldToCamera.Equals(first.worldToCamera) || !projection.Equals(first.projection)))
+                throw new InvalidOperationException("Fixed-view occlusion camera matrices changed");
             if (!sourceCapture)
                 sourceCapture = new Texture2D(CaptureWidth, CaptureHeight, TextureFormat.RGBA32, false);
             ReadCapture(source, sourceCapture);
@@ -104,17 +219,17 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
                 sourceFormat = report.colorGraphicsFormat, gBuffer3Format = report.gBuffer3Format,
                 skybox = RenderSettings.skybox ? RenderSettings.skybox.name : null,
                 background = view.backgroundColor, grading = grading,
-                worldToCamera = view.worldToCameraMatrix, projection = view.projectionMatrix,
+                worldToCamera = worldToCamera, projection = projection,
                 camera = AndroidNativeSourceSkinLifecycle.CaptureCamera(view, false)
-            }));
+            }, window));
         }
         catch (Exception error)
         {
-            capture.error = error.GetType().Name + ": " + error.Message;
+            report.frameCapture.error = error.GetType().Name + ": " + error.Message;
         }
     }
 
-    IEnumerator FinishFrameCapture(FrameCaptureSample sample)
+    IEnumerator FinishFrameCapture(FrameCaptureSample sample, OcclusionWindow window)
     {
         yield return new WaitForEndOfFrame();
         pendingCapture = null;
@@ -136,12 +251,19 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
             sample.screenGrayFraction = FlatGrayFraction(screenCapture);
             capture.sampledFrames++;
             capture.maxScreenGrayFraction = Mathf.Max(capture.maxScreenGrayFraction, sample.screenGrayFraction);
-            if (capture.sample == null || sample.screenGrayFraction >= .05f)
+            if (window != null || capture.sample == null || sample.screenGrayFraction >= .05f)
             {
                 sample.sourceGrayFraction = FlatGrayFraction(sourceCapture);
                 sample.sourcePngBase64 = Convert.ToBase64String(sourceCapture.EncodeToPNG());
                 sample.screenPngBase64 = Convert.ToBase64String(screenCapture.EncodeToPNG());
-                capture.sample = sample;
+                if (window == null)
+                    capture.sample = sample;
+                else
+                {
+                    window.sample = sample;
+                    occlusionFrames = 0;
+                    capture.occlusionComplete = ++occlusionIndex == capture.occlusionWindows.Length;
+                }
             }
         }
         catch (Exception error)
@@ -369,6 +491,7 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
     {
         if (paused)
         {
+            StopOcclusionCapture("Application paused during fixed-view occlusion capture");
             if (!measurementPaused)
             {
                 measurementPaused = true;
@@ -407,10 +530,13 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         if (ms > 50)
             report.over50ms++;
     }
+    bool RenderCountersAvailable() =>
+        drawCallsRecorder.Valid && setPassRecorder.Valid && verticesRecorder.Valid && drawCallsRecorder.Count > 0 &&
+        setPassRecorder.Count > 0 && verticesRecorder.Count > 0;
+
     void ObserveRenderCounters()
     {
-        if (drawCallsRecorder.Valid && setPassRecorder.Valid && verticesRecorder.Valid && drawCallsRecorder.Count > 0 &&
-            setPassRecorder.Count > 0 && verticesRecorder.Count > 0)
+        if (RenderCountersAvailable())
         {
             renderCounterCount++;
             drawCalls += drawCallsRecorder.LastValue;
@@ -425,6 +551,7 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
     }
     void LateUpdate()
     {
+        RestoreOcclusionView();
         if (measurementPaused)
             return;
         AndroidNativeDeferredPresentation.Configure(view);
@@ -457,6 +584,7 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         if (fallbackLight)
             fallbackLight.enabled = !sourceDirectional;
         ObserveFrameTiming(Time.unscaledDeltaTime * 1000);
+        ObserveOcclusionWindow();
         if (report.frames % 10 == 0)
             ObserveRenderCounters();
         if (report.frames % 30 == 0)
@@ -540,7 +668,14 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         var gbuffer = Shader.GetGlobalTexture("_CameraGBufferTexture3") as RenderTexture;
         report.gBuffer3Format = gbuffer ? gbuffer.format.ToString() : "unavailable";
         bool grading = grade && AndroidMaterialPresentation.report.enabled;
-        ObserveFrameCapture(source, grading);
+        try
+        {
+            ObserveFrameCapture(source, grading);
+        }
+        finally
+        {
+            RestoreOcclusionView();
+        }
         if (grading)
         {
             Graphics.Blit(source, destination, grade);
@@ -549,6 +684,15 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         else
             Graphics.Blit(source, destination);
     }
+    void StopOcclusionCapture(string error)
+    {
+        RestoreOcclusionView();
+        var capture = report.frameCapture;
+        if (occlusionScene != 0 && !capture.occlusionComplete && capture.error == null)
+            capture.error = error;
+    }
+    void OnDisable() => StopOcclusionCapture("Camera stopped during fixed-view occlusion capture");
+
     void OnDestroy()
     {
         if (pendingCapture != null)
