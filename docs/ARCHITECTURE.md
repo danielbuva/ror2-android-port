@@ -2470,11 +2470,17 @@ and hash the explicit request, load every address with its exact engine type, re
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
 The separate `phone-texture-readback` action stages an isolated editor project
-via `phone_texture_readback.py`. `ContentFixtureTextureMip.cs` point-samples an
+via `phone_texture_readback.py`. `TextureMipSampling.cs` point-samples an
 explicit Texture2D mip or Cubemap face and mip through `TextureMipFixture.shader`,
 writes a private RGBA8 readback and releases the temporary rendering objects.
 The host checks the sample identity, extent and hash alongside the typed-load
 receipt.
+The experimental `phone-texture-readback-build` action checks authored pixel
+controls and uses the same sampler in an isolated Vulkan IL2CPP player.
+`TextureMipPlayer.cs` loads the hash-pinned standalone bundle from the fixture
+APK, writes samples to app external storage and unloads the bundle. The shared
+device session's `texture-readback` mode binds the sample receipt to the fixture
+PID, verifies and removes the raw files, then uninstalls the fixture.
 The editor reports native AnimatorController roots as
 `UnityEditor.Animations.AnimatorController`; their original Addressables
 locations use `UnityEngine.RuntimeAnimatorController`.
