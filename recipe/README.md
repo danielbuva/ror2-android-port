@@ -2727,6 +2727,10 @@ distribution alongside the executables. Game programs, translated bodies and
 local build paths stay private. Provenance/privacy/licensing and sensitive-content
 audit: 2026-11-27.
 
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-histogram-compute-translation.json` | `237d60bfb5624afc874cf152a6ea785f9b9afea6077b185023cf19526d404d50` |
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP
