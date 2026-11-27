@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J1565](PORTING_JOURNAL.md#j1565--draw-original-cloud-intersection-remap-on-android-vulkan) | 2026-11-27 | Draw original Cloud Intersection Remap on Android Vulkan | 2026-11-27. |
+| [J1566](PORTING_JOURNAL.md#j1566--match-texture-mip-readback-on-android-vulkan-and-editor-metal) | 2026-11-27 | Match texture mip readback on Android Vulkan and editor Metal | 2026-11-27. |
 | [J1564](PORTING_JOURNAL.md#j1564--run-signed-outline-shader-translation-on-android) | 2026-11-27 | Run signed Outline shader translation on Android | 2026-11-27. |
 | [J1562](PORTING_JOURNAL.md#j1562--draw-original-outline-instancing-on-android-vulkan) | 2026-11-27 | Draw original Outline instancing on Android Vulkan | 2026-11-27. |
 | [J1563](PORTING_JOURNAL.md#j1563--acquire-signed-sdk-tools-inside-the-android-installer) | 2026-11-27 | Acquire signed SDK tools inside the Android installer | 2026-11-27. |
