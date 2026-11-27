@@ -7692,3 +7692,21 @@ BC6H Cubemaps and restore the local baked ReflectionProbe links.
 The provenance, privacy and licensing review found source selectors, extent and
 layout metadata, and hashes. Game bytes derive from locally supplied legitimate
 PC files and stay in ignored output directories.
+
+## Canonical native prefab roster (2026-11-27)
+
+`owner-canonical-native-roster-records.jsonl.gz` selects 1,974 retained native
+records across 26 original bundles. The existing `record_produce.py` owner
+copies the selected source bytes or applies the qualified GameObject
+component-array and pointer edits. The signed release graph can bind the
+fresh pack to the selected canonical records.
+
+The provenance, privacy, licensing and sensitive-content review covered
+source and destination selectors, length and type/body pins, and the checked
+component and pointer edits. No serialized bodies, type trees, generated
+pack data or private paths are included. Producer output stays under ignored
+`work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-canonical-native-roster-records.jsonl.gz` | `f20a75d8b362e4f3e39c6da4963c7260de0a8232057af23d524808e649863994` |
