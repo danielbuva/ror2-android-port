@@ -175,13 +175,8 @@ public final class OwnerBuildService extends Service {
         Intent battery = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         if (battery == null) throw new IOException("Battery state unavailable; cannot admit a build safely");
         int temperature = battery.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);
-        int level = battery.getIntExtra(BatteryManager.EXTRA_LEVEL, -1), scale = battery.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-        int status = battery.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-        if (temperature < 0 || level < 0 || scale <= 0 || status < 0) throw new IOException("Battery telemetry unavailable");
-        double percent = 100.0 * level / scale;
-        // Existing phone runner caller-admission policy; no limits are relaxed here.
-        if (temperature > 350 || percent > 85 || (status == BatteryManager.BATTERY_STATUS_CHARGING && percent >= 80))
-            throw new IOException("Battery admission refused: cool to ≤ 35 C, level ≤ 85%, and unplug when charging at ≥ 80%");
+        if (temperature < 0) throw new IOException("Battery temperature unavailable");
+        if (temperature > 350) throw new IOException("Battery admission refused: cool to ≤ 35 C");
     }
     private void importFiles() throws Exception {
         final long started = SystemClock.elapsedRealtime();

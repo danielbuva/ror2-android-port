@@ -77,6 +77,9 @@ class FlowMetrics:
         "in-place-update",
         "verify-profile-settings",
         "check-up-to-date",
+        "signed-source-import",
+        "baseline-play",
+        "updated-play",
     )
 
     def __init__(self, phone):
@@ -601,8 +604,15 @@ def read_context(source_commit=None):
             or built.get("apk_bytes") != apk.stat().st_size
         ):
             raise Failure("toolhost-cache-build-provenance-mismatch")
-    # The builder's publisher key is deliberately not opened or copied. A new
-    # independent key exercises the explicit debug-only additive trust seam.
+    return {
+        "installer_apk": apk,
+        "installer_version": receipt.get("version_code"),
+        "installer_sha256": receipt["apk_sha256"],
+        **toolchain_context(),
+    }
+
+
+def toolchain_context():
     # Only the public repository's deterministic environment selector runs;
     # no private directories/configuration are searched for tool paths.
     values = run(
@@ -611,12 +621,7 @@ def read_context(source_commit=None):
     ).split(b"\0")
     if len(values) != 4 or values[-1]:
         raise Failure("public-toolchain-environment-invalid")
-    return {
-        "installer_apk": apk,
-        "installer_version": receipt.get("version_code"),
-        "installer_sha256": receipt["apk_sha256"],
-        **{key: Path(value.decode()).resolve(strict=True) for key, value in zip(("android_sdk", "java_home", "ndk"), values[:3])},
-    }
+    return {key: Path(value.decode()).resolve(strict=True) for key, value in zip(("android_sdk", "java_home", "ndk"), values[:3])}
 
 
 class HostTools:
@@ -909,6 +914,7 @@ def adb_diagnostic(label, **record):
 
 
 class Phone:
+    install_consent_label = None
     storage_reserve = 15 * 1024**3
 
     def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
@@ -1007,7 +1013,8 @@ class Phone:
 
     def install(self, apk):
         self.install_attempted = True
-        self.installer_hash = sha(apk.read_bytes())
+        with apk.open("rb") as source:
+            self.installer_hash = hashlib.file_digest(source, "sha256").hexdigest()
         try:
             self.transport.install(
                 apk,
@@ -1505,7 +1512,7 @@ class Phone:
             if (
                 row
                 and row.get("state") in ("INSTALLING", "AWAITING_CONFIRMATION")
-                and (not callback_observed or (require_pending_prompt and not consent_observed))
+                and (not callback_observed or ((require_pending_prompt or self.install_consent_label) and not consent_observed))
             ):
                 try:
                     diagnostic = self.capture_install_diagnostic()
@@ -1514,14 +1521,15 @@ class Phone:
                     # or manufacture proof that a callback remained absent.
                     diagnostic = {"status": "unavailable"}
                 if (
-                    require_pending_prompt
+                    (require_pending_prompt or self.install_consent_label)
                     and row.get("state") == "AWAITING_CONFIRMATION"
                     and diagnostic.get("status") == "observed"
                     and diagnostic.get("callback") == "pending-user-action"
                     and diagnostic.get("session_match") is True
                 ):
                     pending_observed = True
-                    consent_observed = self.confirm_synthetic_install() or consent_observed
+                    if not consent_observed:
+                        consent_observed = self.confirm_synthetic_install()
                 if diagnostic.get("status") == "observed" and (diagnostic.get("callback") != "none" or diagnostic.get("callback_entry") == "entered"):
                     callback_observed = True
                     callback_absent_since = None
@@ -1547,7 +1555,7 @@ class Phone:
                 callback_absent_since = None
             # Consent is always the real Android PackageInstaller UI. Never forge
             # success receipts or use adb install to replace the alpha package.
-            if not require_pending_prompt:
+            if not require_pending_prompt and not self.install_consent_label:
                 self.tap("Install", required=False)
             time.sleep(1)
         raise Failure("install-readback-timeout")
@@ -1742,7 +1750,7 @@ class Phone:
         # the focused display-0 window, as for the already qualified Settings UI.
         _, nodes = self.prompt_nodes(self.ui_windows(installers, recovery=False), installers)
         print(encoded({"mode": "install-consent-fixture", "identity_verified": True, "observed": install_consent_summary(nodes)}).decode(), end="", flush=True)
-        if not any(node.get("text") == "Synthetic update fixture" for node in nodes):
+        if not any(node.get("text") == (self.install_consent_label or "Synthetic update fixture") for node in nodes):
             raise Failure("install-consent-fixture-not-identified")
         buttons = [
             node

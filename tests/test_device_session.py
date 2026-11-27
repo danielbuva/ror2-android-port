@@ -135,7 +135,14 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((self.output / "player-activity.json").read_text()), {"activity": unity, "pid": "12"})
         play.assert_called_once_with(target, thermal, "12", self.output)
         tour.assert_called_once_with(
-            target, thermal, "12", self.output, {"native_title": "unobserved", "phase": "player-activity", "bootstrap_play": True}, "signed", 30
+            target,
+            thermal,
+            "12",
+            self.output,
+            {"native_title": "unobserved", "phase": "player-activity", "bootstrap_play": True},
+            "signed",
+            30,
+            retain_native_loss=False,
         )
         capture.assert_not_called()
 

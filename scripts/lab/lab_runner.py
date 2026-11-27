@@ -405,7 +405,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
     try:
         device = request["device"]
         operation = request.get("operation", "packaging")
-        if operation not in ("packaging", "acquisition", "toolhost"):
+        if operation not in ("packaging", "acquisition", "staged-update", "toolhost"):
             raise CommandError("unknown local packaging operation")
         build_toolhost = operation == "toolhost"
         retain_signer = request.get("backup_installer_key", False)
@@ -422,6 +422,8 @@ def local_packaging(path, *, dry_run=False, detach=False):
         command = parse_command("/lab script device=" + device + " -- scripts/lab-alpha-packaging.py")
         if operation == "acquisition":
             command["args"].extend(["--acquisition-request", str(Path(path).resolve())])
+        elif operation == "staged-update":
+            command["args"].extend(["--staged-update-request", str(Path(path).resolve())])
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
             if operation == "packaging" and "toolhost_source_commit" in request:

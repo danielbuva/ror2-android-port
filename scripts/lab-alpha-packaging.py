@@ -128,7 +128,7 @@ class Phone(INSTALLER.Phone):
                 require(device.display(False), "acquisition-display-cleanup-not-verified")
 
     @contextmanager
-    def observe_thermal(self):
+    def observe_thermal(self, *, duration=1800):
         sys.path.insert(0, str(ROOT / "scripts/lab"))
         from alpha_stability_batch import _GameThermalOwner
         from device import Device
@@ -157,7 +157,7 @@ class Phone(INSTALLER.Phone):
                     self.device.sh("am", "force-stop", package, timeout=2)
 
         diagnostics = INSTALLER.DIAGNOSTICS
-        thermal = PackagingThermal(Device(self.serial), None, diagnostics.directory / "thermal.jsonl", time.monotonic() + 1800)
+        thermal = PackagingThermal(Device(self.serial), None, diagnostics.directory / "thermal.jsonl", time.monotonic() + duration)
         self.thermal = thermal
         try:
             thermal.cool()
@@ -246,6 +246,9 @@ def import_acceptance(phone, dex, passed):
 
 
 def main(argv=None):
+    sys.path.insert(0, str(ROOT / "scripts/lab"))
+    from staged_alpha_update import CASES as STAGED_CASES, StagedUpdate
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--qualify-install-prompts",
@@ -255,7 +258,9 @@ def main(argv=None):
     parser.add_argument("--allow-test-installs", action="store_true")
     parser.add_argument("--allow-test-notifications", action="store_true")
     parser.add_argument("--package-only", action="store_true", help="Qualify signed packages without running the direct importer harness")
-    parser.add_argument("--acquisition-request", type=Path, help="Qualify actual SAF acquisition with local input inventories")
+    source = parser.add_mutually_exclusive_group()
+    source.add_argument("--acquisition-request", type=Path, help="Qualify actual SAF acquisition with local input inventories")
+    source.add_argument("--staged-update-request", type=Path, help="Qualify a signed local source-release pair through the real installer")
     parser.add_argument("--toolhost-source-commit", help="Reuse an unmodified signed packaging fixture from this commit")
     parser.add_argument("--dry-run", action="store_true", help="Verify pinned toolhost and compile the acceptance inputs on the host")
     parser.add_argument("--timeout", type=int, default=1200)
@@ -263,14 +268,14 @@ def main(argv=None):
     if args.qualify_install_prompts and args.allow_test_installs:
         print("FAIL install-prompt-mode-conflict", flush=True)
         return 1
-    if args.acquisition_request and (
+    if (args.acquisition_request or args.staged_update_request) and (
         args.package_only
         or args.qualify_install_prompts
         or args.allow_test_installs
         or args.allow_test_notifications
         or args.toolhost_source_commit is not None
     ):
-        parser.error("acquisition uses a fresh installer with ordinary picker permissions")
+        parser.error("source qualification uses a fresh installer with ordinary picker and install permissions")
     phone = None
     acquisition = None
     completed = set()
@@ -279,7 +284,7 @@ def main(argv=None):
 
     def passed(case):
         require(
-            case in INSTALLER.CASES + (INSTALLER.PROMPT_CASES if args.qualify_install_prompts else ()) + PACKAGE_CASES + IMPORT_CASES + SAF_CASES
+            case in INSTALLER.CASES + (INSTALLER.PROMPT_CASES if args.qualify_install_prompts else ()) + PACKAGE_CASES + IMPORT_CASES + SAF_CASES + STAGED_CASES
             and case not in completed,
             "unexpected-acceptance-case",
         )
@@ -295,56 +300,73 @@ def main(argv=None):
             require("allow_test_notifications" in inspect.signature(INSTALLER.Phone).parameters, "merge-installer-notification-authorization-first")
             kwargs["allow_test_notifications"] = True
         INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(ROOT / "work/coordination/alpha-packaging-acceptance")
-        request = json.loads(args.acquisition_request.read_bytes()) if args.acquisition_request else {}
-        source_commit = request.get("toolhost_source_commit") if args.acquisition_request else args.toolhost_source_commit
-        config = INSTALLER.read_context(source_commit) if source_commit is not None else INSTALLER.read_context()
-        with tempfile.TemporaryDirectory(prefix="ror2-synthetic-alpha-", dir="/tmp") as name:
-            temporary = Path(name).resolve()
-            require(not temporary.is_relative_to(ROOT.resolve()), "throwaway-root-must-be-outside-repository")
-            if args.acquisition_request:
-                phase = "acquisition-host-fixture"
-                from lab.alpha_acquisition import Acquisition
-
-                acquisition = Acquisition(INSTALLER, require, request, config, temporary)
-                if args.dry_run:
-                    print("PASS alpha-acquisition signed catalogs and source inventory precheck", flush=True)
-                    return 0
-                acquisition.prepare_archive()
-                phone = Phone(serial, args.timeout)
-                phase = "saf-acquisition"
-                with phone.observe_thermal():
+        if args.staged_update_request:
+            phase = "staged-update-host-preflight"
+            acquisition = StagedUpdate(INSTALLER, require, json.loads(args.staged_update_request.read_bytes()))
+            if args.dry_run:
+                print("PASS staged-update signed source graphs and current input inventory precheck", flush=True)
+                return 0
+            phone = Phone(serial, args.timeout)
+            phase = "staged-update"
+            with phone.observe_thermal(duration=6 * args.timeout):
+                try:
                     acquisition.run(phone, passed)
-                require(completed == set(SAF_CASES), "acquisition-case-series-incomplete")
-            else:
-                if not args.package_only:
-                    phase = "compile-importer-harness"
-                    INSTALLER.set_phase(phase)
-                    dex = compile_import_harness(config, temporary)
-                if args.dry_run:
-                    INSTALLER.prepare_artifacts(config, temporary)
-                    print("PASS alpha-packaging host fixture", flush=True)
-                    return 0
-                phone = Phone(serial, args.timeout, **kwargs)
-                phase = "thermal-admission"
-                INSTALLER.set_phase(phase)
-                with phone.observe_thermal():
-                    phase = "installer-acceptance"
-                    try:
-                        INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts, record_metrics=True)
-                    finally:
-                        metrics, phone.flow_metrics = phone.flow_metrics, None
-                        if metrics is not None:
-                            INSTALLER.DIAGNOSTICS.write("phone-flow-metrics.json", INSTALLER.encoded(metrics.report(include_samples=True)))
-                    phase = "alpha-receipt-acceptance"
-                    INSTALLER.set_phase(phase)
-                    check_packaging_history(phone, passed)
+                finally:
+                    metrics, phone.flow_metrics = phone.flow_metrics, None
+                    if metrics is not None:
+                        INSTALLER.DIAGNOSTICS.write("phone-flow-metrics.json", INSTALLER.encoded(metrics.report(include_samples=True)))
+            require(completed == set(STAGED_CASES), "staged-update-case-series-incomplete")
+        else:
+            request = json.loads(args.acquisition_request.read_bytes()) if args.acquisition_request else {}
+            source_commit = request.get("toolhost_source_commit") if args.acquisition_request else args.toolhost_source_commit
+            config = INSTALLER.read_context(source_commit) if source_commit is not None else INSTALLER.read_context()
+            with tempfile.TemporaryDirectory(prefix="ror2-synthetic-alpha-", dir="/tmp") as name:
+                temporary = Path(name).resolve()
+                require(not temporary.is_relative_to(ROOT.resolve()), "throwaway-root-must-be-outside-repository")
+                if args.acquisition_request:
+                    phase = "acquisition-host-fixture"
+                    from lab.alpha_acquisition import Acquisition
+
+                    acquisition = Acquisition(INSTALLER, require, request, config, temporary)
+                    if args.dry_run:
+                        print("PASS alpha-acquisition signed catalogs and source inventory precheck", flush=True)
+                        return 0
+                    acquisition.prepare_archive()
+                    phone = Phone(serial, args.timeout)
+                    phase = "saf-acquisition"
+                    with phone.observe_thermal():
+                        acquisition.run(phone, passed)
+                    require(completed == set(SAF_CASES), "acquisition-case-series-incomplete")
+                else:
                     if not args.package_only:
-                        phase = "android-importer-acceptance"
+                        phase = "compile-importer-harness"
                         INSTALLER.set_phase(phase)
-                        import_acceptance(phone, dex, passed)
+                        dex = compile_import_harness(config, temporary)
+                    if args.dry_run:
+                        INSTALLER.prepare_artifacts(config, temporary)
+                        print("PASS alpha-packaging host fixture", flush=True)
+                        return 0
+                    phone = Phone(serial, args.timeout, **kwargs)
+                    phase = "thermal-admission"
+                    INSTALLER.set_phase(phase)
+                    with phone.observe_thermal():
+                        phase = "installer-acceptance"
+                        try:
+                            INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts, record_metrics=True)
+                        finally:
+                            metrics, phone.flow_metrics = phone.flow_metrics, None
+                            if metrics is not None:
+                                INSTALLER.DIAGNOSTICS.write("phone-flow-metrics.json", INSTALLER.encoded(metrics.report(include_samples=True)))
+                        phase = "alpha-receipt-acceptance"
+                        INSTALLER.set_phase(phase)
+                        check_packaging_history(phone, passed)
+                        if not args.package_only:
+                            phase = "android-importer-acceptance"
+                            INSTALLER.set_phase(phase)
+                            import_acceptance(phone, dex, passed)
     except INSTALLER.Failure as error:
         # Existing installer Failure codes are authored constants, not raw logs.
-        if phase == "saf-acquisition":
+        if phase in ("saf-acquisition", "staged-update"):
             phase = INSTALLER.CURRENT_PHASE
         print("FAIL alpha-packaging phase=" + phase + " reason=" + str(error), flush=True)
         failed = True
@@ -372,7 +394,7 @@ def main(argv=None):
                 print("FAIL cleanup reason=owned-package-cleanup-not-verified", flush=True)
                 failed = True
         INSTALLER.DIAGNOSTICS = None
-    if not failed and not args.acquisition_request:
+    if not failed and not (args.acquisition_request or args.staged_update_request):
         print("SCOPE synthetic-only; SAF/provider UI, legitimate cohorts, power-loss and game-profile acceptance NOT RUN", flush=True)
     return int(failed)
 
