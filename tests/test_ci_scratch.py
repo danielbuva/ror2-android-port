@@ -514,7 +514,8 @@ class ScratchTests(unittest.TestCase):
             process.communicate(timeout=5)
             os.kill(detached, 0)
             os.utime(scratch, (0, 0))
-            self.assertEqual(cleanup.reclaim(scratch), "open-files")
+            # The orphaned group can still be visible until its dead leader is reaped.
+            self.assertIn(cleanup.reclaim(scratch), {"live", "open-files"})
             self.assertTrue(scratch.exists())
         finally:
             self.stop_detached(pidfile)
