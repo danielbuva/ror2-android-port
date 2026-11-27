@@ -448,6 +448,16 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
         self.assertTrue((self.output / "terminal.done.json").is_file())
 
+    def test_queued_device_option_does_not_require_a_legacy_grant(self):
+        with mock.patch.object(runner.subprocess, "Popen", return_value=mock.Mock(pid=12)) as process:
+            args = ["--request", str(self.request_file), "--device", "second-fixture", "--queue", "--detach"]
+            self.assertEqual(runner.main(args), 0)
+            with self.assertRaises(FileExistsError):
+                runner.main(args)
+        process.assert_called_once()
+        self.assertEqual(process.call_args.args[0][-3:], ["--device", "second-fixture", "--queue"])
+        self.assertTrue(process.call_args.kwargs["start_new_session"])
+
     def test_discovery_failure_releases_lease_before_writing_failed_terminal(self):
         lease = runner.Lease(self.request)
 
@@ -470,6 +480,34 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertIn("Selected device is not attached and authorized", result["error"])
         self.assertTrue(result["lease_released"])
         self.assertFalse(lease.path.exists())
+        self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
+
+    def test_queued_discovery_failure_releases_lease_before_writing_terminal(self):
+        from device_queue import DeviceQueue, ENABLED
+
+        lease = runner.Lease(self.request)
+        queue = DeviceQueue(lease.path.parent.parent, self.request["serial"])
+        queue.directory.mkdir(parents=True)
+        (queue.directory / ENABLED).touch()
+
+        def discover(**_kwargs):
+            self.assertTrue(lease.path.is_dir())
+            self.assertFalse((self.output / "terminal.done.json").exists())
+            raise DeviceContextError("fixture discovery failure")
+
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
+            mock.patch.object(device_module, "Device", side_effect=discover),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(self.request, queued=True)
+
+        self.assertFalse(result["success"])
+        self.assertIn("fixture discovery failure", result["error"])
+        self.assertTrue(result["lease_released"])
+        self.assertFalse(lease.path.exists())
+        self.assertGreaterEqual(result["queue_wait_seconds"], 0)
         self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
 
     def test_interrupted_preinstall_hash_can_finish_verified_cleanup(self):
