@@ -5201,7 +5201,7 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `signed-cloud-remap-device-04/signed_artifact.json`. Whole-game scoring and
 linked Material rendering remain open.
 
-## J1575 — Batch SDK ETC2 colour encoding per mip on Android
+## J1576 — Batch SDK ETC2 colour encoding per mip on Android
 
 2026-11-27. The pinned SDK adapter reuses one process per ETC2 colour mip.
 On Nova B, 12 original BC3 textures with 72 mips produced all four matching
