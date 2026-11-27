@@ -319,6 +319,7 @@ thermal sampling policy; proposed performance budgets do not change those limits
       controls and update/rollback steps. Retain
       [J888's device observations and teardown](history/journal-J1-J1177/PORTING_JOURNAL.md#j888--refuse-unknown-baseline-device-state-and-verify-teardown).
 - [ ] Obtain explicit user approval for releases, outward announcements,
-      repository settings and issue templates after preparing reviewable changes
+      repository settings and issue templates after reviewing the
+      [draft publication package](alpha-publication-draft/README.md)
       ([publication policy](ALPHA_POLICY.md#distribution-and-feedback)).
       Workstream pushes and PR merges are already authorized.

@@ -32,8 +32,9 @@ from step 4. Prior assisted runs used this pair.
    and right stick for difficulty. Press X for Loadout,
    choose an available skill or skin, close with B, then press A to Start.
    Check that A inside Loadout changes the choice without starting. In stage,
-   move and aim together, use a skill and pause/resume. If you clear a stage,
-   check that the next stage loads and play resumes.
+   move and aim together, use a skill and pause/resume. Use the
+   [focus and resume sequence](#focus-and-resume) when it is the test priority.
+   If you clear a stage, check that the next stage loads and play resumes.
 2. Let enemies defeat the survivor during ordinary play. Inspect the native
    results and wait for **Original report saved on this Android device**, then
    press B to return to character select. Using only the touchscreen, select
@@ -53,6 +54,37 @@ Keep the phone plugged in throughout. Record each case as passed, failed or
 pending, with the input used, timing and first failure. If the ten-minute
 window ends before a natural defeat, a stage transition or either Golem attack,
 leave that observation pending. Keep captures, receipts and profiles local.
+
+### Focus and resume
+
+Before the owner window, use the shared `./dev device-session` request to
+preflight the matching APK and payload. For the observed run use `launch`
+mode, adopted-only installation, a 600-second duration and 60-second
+captures. Leave `start_from_menu` unset for physical Start. The runner
+launches the initial activity, so time icon-to-menu in the separate ordinary
+launch case. Keep the phone plugged in throughout.
+
+1. Start from the native menu with the controller. Once in ordinary play,
+   wait for an active sample, then hold movement and one action while going
+   Home. Turn the display off for about 15 seconds and return using the
+   Android app icon, still holding the controls. Do both transitions between
+   scheduled captures because the screenshot wakes the display.
+2. Check that the same run is active, held controls produce no gameplay
+   action after return, and releasing to neutral allows a fresh action.
+   Record the actual Home, screen-off, icon return, neutral and fresh-press
+   times. If the run is lost, record what the app shows.
+3. Open Settings during the same stage. Wait for a paused sample, go Home
+   and return via the icon. Keep Settings open through the next sample, then
+   explicitly resume and check that play advances.
+
+Use the private samples to compare PID, attempt and session. For active
+play, compare `runClock.stopwatch` and `runClock.fixedTicks` before and after
+the measured background interval. Check that they exclude suspended time and
+advance in the subsequent active sample. While Settings owns pause, require
+`settings.observations` to advance after return while `settings.runSeconds`
+and `settings.fixedTicks` stay stable until Resume. Record the first failure
+or leave unfinished cases pending. [J342](history/journal-J1-J1177/PORTING_JOURNAL.md#j342--original-combat-and-holdout-survive-android-suspension)
+records the earlier timed suspension observation.
 
 ### Commencement finale
 
