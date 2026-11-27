@@ -34,6 +34,7 @@ PRODUCERS = {
             "object_produce",
             "record_produce",
             "shader_produce",
+            "shader_translate",
             "texture_produce",
             "player_data",
             "sdk_inputs",
