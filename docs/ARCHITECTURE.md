@@ -2481,6 +2481,11 @@ For the Animate Alpha Vulkan diagnostic, set `ROR2_PHONE_SHADER_DRAW=1` on
 address. The builder embeds the checked bundle in the disposable fixture APK.
 `ContentFixture.cs` draws two ramp inputs offscreen and reports the center
 pixels, graphics backend and result through `PHONE_SHADER_DRAW`.
+The same draw fixture takes the original-derived Cloud Intersection Remap
+shader as a standalone input. It checks the directional pass with transparent
+and opaque masks through a point-sampled ramp, two translated instances and
+an untouched gap. The fixture restores the camera and keyword globals and
+releases its temporary render resources.
 `ROR2_PHONE_SHADER_COMPUTE=1` uses the same fixture with a standalone bundle
 containing Histogram or the Waveform and Vectorscope pair. The Vulkan player
 seeds the diagnostic buffers, dispatches each source clear and gather kernel
