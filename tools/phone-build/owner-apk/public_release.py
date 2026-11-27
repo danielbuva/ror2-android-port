@@ -32,6 +32,8 @@ MAX_BUNDLE_INDEX_BYTES = 4 * 1024 * 1024
 COMPACT_INDEX_INSTALLER_VERSION = 4
 AUTHORED_UNITY_INSTALLER_VERSION = 5
 MAX_PUBLIC_FILE_BYTES = 64 * 1024 * 1024
+# Reviewed source selectors for the whole-game Transform cohort (recipe/README.md).
+MAX_TRANSFORM_RECIPE_BYTES = 80 * 1024 * 1024
 MAX_BUNDLE_BYTES = 512 * 1024 * 1024
 INDEX = "bundle-index.json"
 SOURCE_SUFFIXES = {
@@ -460,8 +462,9 @@ def _blob(root, tracked, name):
     if name not in tracked or tracked[name][0] not in {"100644", "100755"} or tracked[name][1] != "blob":
         raise ValueError("committed regular public file required: " + name)
     size = int(subprocess.check_output(["git", "cat-file", "-s", tracked[name][2]], cwd=root))
-    if size > MAX_PUBLIC_FILE_BYTES:
-        raise ValueError("public source file size limit exceeded")
+    limit = MAX_TRANSFORM_RECIPE_BYTES if name == "recipe/owner-transforms.json" else MAX_PUBLIC_FILE_BYTES
+    if size > limit:
+        raise ValueError("public source file size limit exceeded: " + name)
     return subprocess.check_output(["git", "cat-file", "blob", tracked[name][2]], cwd=root)
 
 
