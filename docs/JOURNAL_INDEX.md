@@ -372,3 +372,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1537](PORTING_JOURNAL.md#j1537--activate-the-native-commencement-mission-on-entry) | 2026-11-27 | Activate the native Commencement mission on entry | 2026-11-26. |
 | [J1538](PORTING_JOURNAL.md#j1538--draw-a-translated-source-shader-on-android-vulkan) | 2026-11-27 | Draw a translated source Shader on Android Vulkan | 2026-11-27. |
 | [J1540](PORTING_JOURNAL.md#j1540--dispatch-translated-source-computeshader-kernels-on-android-vulkan) | 2026-11-27 | Dispatch translated source ComputeShader kernels on Android Vulkan | 2026-11-27. |
+| [J1544](PORTING_JOURNAL.md#j1544--recover-beetle-queen-acid-ghost-materials) | 2026-11-27 | Recover Beetle Queen acid ghost materials | 2026-11-27. |
