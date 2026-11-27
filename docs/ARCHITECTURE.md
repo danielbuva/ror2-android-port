@@ -3104,6 +3104,10 @@ in `scripts/lab/actions.py` owns each prototype action's current/historical labe
 shown by `./dev prototype --action list`, including the historical `inspect`
 default and unknown-name fallback. The listing action itself is current.
 `./dev lane --help` labels its explicit create/list/remove actions as current.
+`./dev pc-reference` is the current host recorder for stock Steam PC captures.
+`scripts/lab/pc_reference.py` owns the separate CrossOver clone, launch and
+capture manifest. `tools/pc-reference/Recorder.cs` owns its isolated profile,
+local run, camera and capture lifecycle. See the [PC reference recorder](../tools/pc-reference/README.md).
 The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
@@ -3523,6 +3527,9 @@ unsecured keyguard (with one swipe fallback) and verifies the window-policy
 lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
 a credential lock or unknown lock state aborts before launch. Cleanup still
 stops the owned packages, sleeps the display and releases the lease.
+On request the same owner checks the active USB chooser after unlock,
+verifies that Back closes it, and removes its temporary accessibility dumps
+from the verified runtime volume. The terminal records chooser visibility.
 After keyguard dismissal a converted session records any resumed lab process.
 If only the separate lab package resumed, the runner retains matching Android
 process-start events and uses its existing receipt-verified idle reset. The
