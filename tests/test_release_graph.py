@@ -30,7 +30,11 @@ class ReleaseGraphTests(unittest.TestCase):
     def test_direct_shader_jobs_bind_original_records_and_installed_tools(self):
         compute = ("libshader-dxbc.so", "libspirv-val.so")
         graphics = (*compute, "libshader-smolv.so", "libspirv-cross.so", "libglslang.so")
-        for profile, tools in (("owner-histogram-compute-translation.json", compute), ("owner-outline-graphics-translation.json", graphics)):
+        for profile, tools in (
+            ("owner-histogram-compute-translation.json", compute),
+            ("owner-outline-graphics-translation.json", graphics),
+            ("owner-cloud-intersection-graphics-translation.json", graphics),
+        ):
             with self.subTest(profile=profile):
                 self.check_direct_shader_job(profile, tools)
 
