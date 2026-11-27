@@ -105,7 +105,14 @@ class PhoneContentTests(unittest.TestCase):
                 "sha256": request["sha256"],
                 "count": len(NATIVE_CONTENT_TYPES),
                 "unloaded": True,
-                "assets": [asset | {"loaded_name": asset.get("subasset", ""), "loaded_type": "UnityEngine." + asset["type"]} for asset in request["assets"]],
+                "assets": [
+                    asset
+                    | {
+                        "loaded_name": asset.get("subasset", ""),
+                        "loaded_type": "OcclusionCullingData" if asset["type"] == "OcclusionCullingData" else "UnityEngine." + asset["type"],
+                    }
+                    for asset in request["assets"]
+                ],
             }
             output = attempt / "native-content-check.json"
             output.write_text(json.dumps(report))
@@ -119,6 +126,7 @@ class PhoneContentTests(unittest.TestCase):
                 lambda r: r["assets"].pop(),
                 lambda r: r["assets"][0].update(loaded_type="UnityEngine.Object"),
                 lambda r: r["assets"][1].update(name="wrong-address"),
+                lambda r: next(asset for asset in r["assets"] if asset["type"] == "OcclusionCullingData").update(loaded_type="UnityEngine.Object"),
                 lambda r: next(asset for asset in r["assets"] if asset["type"] == "Sprite").update(loaded_name="different-icon"),
             ):
                 changed = copy.deepcopy(report)
@@ -134,7 +142,6 @@ class PhoneContentTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "AssetBundleManifest"):
                     validate_native_content(attempt, "c" * 40)
             for change in (
-                {"assets": [{"name": "occlusion", "type": "OcclusionCullingData"}]},
                 {"assets": []},
                 {"assets": [{"name": "script", "type": "MonoScript"}]},
                 {"assets": request["assets"] * 2},

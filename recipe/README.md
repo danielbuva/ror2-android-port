@@ -7486,6 +7486,11 @@ Audit 2026-11-26. The assisted Gold shrine route refreshes the reviewed
 build-hook consumers. The authored change expires a terrain recovery timer
 when the objective changes. The refresh contains only authored source hashes.
 
+Audit 2026-11-27. The optional lab presentation capture adds two selector fields
+to `PortSession.cs` and refreshes its audio-owner source pin and build-hook
+bindings. These recipe changes contain authored source hashes only. Captured
+images and session evidence remain private.
+
 Audit 2026-11-27. `owner-goolake-scene-mesh-endpoints.json` selects five
 existing `owner-meshes.json` transforms for MeshFilter and MeshCollider
 references in Goolake. The provenance, privacy, licensing and sensitive-content
@@ -7519,6 +7524,7 @@ The original scene GUID, data pointer alias and portal table are retained.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-goolake-occlusion-record.json` | `03aaaa541245bc93ad33e61329a21f407451edfe2c2fb3f0bb37cf26cfde52dd` |
+| `owner-whole-game-occlusion-records.json` | `7f987156a19e11e8623c70feb4ea32c14ee0b0e7a75ecee34328616018ef1937` |
 
 The Goolake record profile selects the current original native class 363 and
 its existing whole-game destination. A 2026-11-27 provenance, privacy, license
@@ -7527,7 +7533,8 @@ identity, output extent and hash pins. The producer reads the visibility data
 from the owner’s PC installation. The recipe contains no bake data, type tree,
 program bytes, private paths or identifiers.
 
-Audit 2026-11-27. The optional lab presentation capture adds two selector fields
-to `PortSession.cs` and refreshes its audio-owner source pin and build-hook
-bindings. These recipe changes contain authored source hashes only. Captured
-images and session evidence remain private.
+The whole-game profile adds 19 original class 363 records at the shared
+bundle identities used by existing scenes. The 2026-11-27 audit matched
+each destination to one PC source body and checked the class schema, byte
+extent and absence of PPtrs. The same provenance, privacy, license and
+sensitive-content review applies to this profile.

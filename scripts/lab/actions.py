@@ -192,6 +192,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "whole-game-scoreboard",
+        "whole_game_scoreboard",
+        "report",
+        {},
+        "current",
+        "Current host census: scan all serialized members of a pinned APK and its payload. --target REQUEST.json writes the stable class and device scoreboard.",
+        handler=_target_json_result,
+    ),
+    Action(
         "source-camera-program-bundle",
         "source_camera_bundle",
         "build",
