@@ -57,6 +57,89 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
 
+    def test_installed_alpha_request_has_no_local_game_apk_or_selector(self):
+        request = dict(self.request, package="dev.ror2lab.alpha", mode=runner.INSTALLED_ALPHA)
+        del request["apk"], request["apk_sha256"]
+        request.update(
+            installer_apk="installer.apk",
+            installer_package="example.authorized.installer",
+            installer_sha256="a" * 64,
+            source_sha256="b" * 64,
+        )
+        runner.save(self.request_file, request)
+        with mock.patch("installed_alpha.installer_trust", return_value={"keys": {"fixture": "example"}}) as trust:
+            normalized = runner.load_request(self.request_file)
+            self.assertNotIn("apk", normalized)
+            trust.assert_called_once_with(str((self.root / "installer.apk").resolve()), request["installer_sha256"])
+            runner.save(self.request_file, dict(request, selection={"attempt": "fixture"}))
+            with self.assertRaisesRegex(ValueError, "unknown fields"):
+                runner.load_request(self.request_file)
+
+    def test_installed_alpha_launch_observes_unity_before_returning(self):
+        target = mock.Mock(package="dev.ror2lab.alpha")
+        thermal = mock.Mock(error=None)
+        launched = dict(pid="12", activity=target.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity")
+        unity = target.package + "/com.unity3d.player.UnityPlayerActivity"
+        target.sh.side_effect = ["12", "  Display: mDisplayId=0\n  mCurrentFocus=Window{focus u0 " + unity + "}"]
+        request = {"mode": runner.INSTALLED_ALPHA, "duration_seconds": 30}
+        with (
+            mock.patch.object(runner, "launch", return_value=launched),
+            mock.patch.object(runner, "play_from_bootstrap") as play,
+            mock.patch.object(runner, "capture") as capture,
+        ):
+            runner.run_workload(target, thermal, request, self.output, {})
+        self.assertEqual(json.loads((self.output / "player-activity.json").read_text()), {"activity": unity, "pid": "12"})
+        play.assert_called_once_with(target, thermal, "12", self.output)
+        capture.assert_not_called()
+
+    def test_installed_alpha_stops_only_the_verified_game_and_releases_lease(self):
+        package = "dev.ror2lab.alpha"
+        installed = dict(package=package, package_path="package:/fixture/base.apk", apk_sha256=self.digest)
+        request = dict(
+            self.request,
+            package=package,
+            mode=runner.INSTALLED_ALPHA,
+            installer_package="example.authorized.installer",
+            installer_sha256="a" * 64,
+            installer_trust={"keys": {}},
+            source_sha256="b" * 64,
+        )
+        targets = [mock.Mock(package=package), mock.Mock(package=package)]
+        for selected in targets:
+            selected.owned.return_value = installed
+            selected.storage.return_value = {}
+            selected.sh.side_effect = lambda command, *args, **kwargs: {
+                "sh": process_snapshot(),
+                "sha256sum": self.digest + "  /fixture/base.apk",
+                "am": "",
+                "pidof": "",
+            }[command]
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=32 * 1024**3)),
+            mock.patch("installed_alpha.InstalledAlphaDevice", side_effect=targets),
+            mock.patch("installed_alpha.verify_installed", return_value=installed),
+            mock.patch.object(
+                batch,
+                "_GameThermalOwner",
+                return_value=mock.Mock(error=None, admission_battery={}, peak_cpu_gpu_celsius=30, time_above_80_seconds=0),
+            ),
+            mock.patch.object(batch, "_prune"),
+            mock.patch.object(runner, "prepare_launch"),
+            mock.patch.object(runner, "placement", return_value={}),
+            mock.patch.object(runner, "run_workload"),
+            mock.patch.object(runner, "reset_idle") as reset,
+        ):
+            result = runner.execute(request)
+        self.assertTrue(result["success"], result.get("error") or result.get("cleanup_errors"))
+        self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertTrue(result["lease_released"])
+        self.assertIn(mock.call("am", "force-stop", package), targets[0].sh.call_args_list)
+        targets[1].display.assert_called_once_with(False)
+        targets[0].install.assert_not_called()
+        targets[0].sync.assert_not_called()
+        reset.assert_not_called()
+
     def test_menu_start_rejects_selector_for_a_different_apk_attempt(self):
         request = dict(self.request, start_from_menu=True, selection={"attempt": "run-folder"})
         runner.save(self.request_file, request)

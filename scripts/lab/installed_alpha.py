@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import zipfile
 
+from device import Device
 from installer_toolhost import load_module
 
 PACKAGE = "dev.ror2lab.alpha"
@@ -12,6 +13,33 @@ ROOT = Path(__file__).resolve().parents[2]
 RECEIPT_LIMIT = 4 * 1024**2
 SHA256 = re.compile(r"[0-9a-f]{64}")
 APPLICATION_ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+")
+
+
+class InstalledAlphaDevice(Device):
+    """Observe the installed game while the installer owns the transaction."""
+
+    supported_packages = {PACKAGE}
+
+    def __init__(self, selector, work_root):
+        super().__init__(selector, work_root, package=PACKAGE)
+        self.installed = None
+
+    def owned(self):
+        if self.installed is None or base_apk(self, PACKAGE) != self.installed["package_path"]:
+            raise RuntimeError("Live alpha package path differs from its verified installation")
+        return self.installed
+
+    def read_receipt(self, name):
+        if name == "installed.json":
+            if self.installed is None:
+                raise RuntimeError("Alpha installation has no verified ownership")
+            return self.installed
+        return super().read_receipt(name)
+
+    def _installer_only(self, *args, **kwargs):
+        raise RuntimeError("Alpha package and payload changes belong to its installer")
+
+    install = sync = reset = _installer_only
 
 
 def release_tools():
@@ -51,16 +79,20 @@ def apk_digest(device, package_path):
     return observed[0]
 
 
-def verify_installed(device, installer_package, installer_sha256, trust, expected_source_sha256):
-    """Read only the verified installer receipt and small PackageManager results."""
+def validate_selection(package, installer_package, installer_sha256, expected_source_sha256):
     if (
-        device.package != PACKAGE
+        package != PACKAGE
         or not APPLICATION_ID.fullmatch(installer_package)
         or installer_package in {PACKAGE, "dev.ror2lab.installertest"}
         or not SHA256.fullmatch(installer_sha256)
         or not SHA256.fullmatch(expected_source_sha256)
     ):
         raise ValueError("Explicit production installer and source release required")
+
+
+def verify_installed(device, installer_package, installer_sha256, trust, expected_source_sha256):
+    """Read only the verified installer receipt and small PackageManager results."""
+    validate_selection(device.package, installer_package, installer_sha256, expected_source_sha256)
     installer_path = base_apk(device, installer_package)
     if apk_digest(device, installer_path) != installer_sha256:
         raise RuntimeError("Live installer differs from the authorized APK")

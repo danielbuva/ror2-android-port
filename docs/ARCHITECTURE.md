@@ -3453,6 +3453,18 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+
+The same runner's `installed-alpha` mode observes an existing
+`dev.ror2lab.alpha` installation. `installed_alpha.py` pins publisher trust to
+the authorized installer APK, verifies the installer-private completion receipt
+against the selected signed release, then binds the live alpha version, APK hash
+and storage placement. The shared lifecycle observes the bootstrap Play action
+and PID-bound Unity activity on display 0. Cleanup stops the verified game,
+checks the installed hash and sleeps the display. This mode transfers JSON
+evidence and leaves package installation, payload and saves to the installer.
+The Unity activity observation is a launch checkpoint. Native menu and stage
+observations belong to the subsequent tour.
+
 For `owner-unplugged`, the same runner arms a one-shot request on adopted
 app storage and verifies that the launched PID can read the admitted thermal
 sensors before prompting the owner. `LabDiagnostics` reports foreground
