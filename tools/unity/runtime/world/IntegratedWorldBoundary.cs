@@ -1346,6 +1346,7 @@ public sealed partial class PortSession
                     "Assets/WholeGame/RoR2/Base/Characters/Engi/Projectiles/EngiBubbleShield/EngiBubbleShield.prefab");
                 coordinator.Check(template && !template.scene.IsValid(), "Engineer shield source must be the owned catalog template");
                 engiShieldGuard = EngiShieldHitGuardTemplateLease.Acquire(template);
+                coordinator.GetTeleporterWorldSession().PresentNativeEffectSource(template);
                 coordinator.r.world.engiShieldGuardPrepared = true;
             }
             PrepareEarlyHurtCaches(player);
