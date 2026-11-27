@@ -1230,6 +1230,11 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     if request["mode"] == "session-memory":
         from session_memory_check import check_session_memory
 
+        def cool_memory_menu():
+            admitted = thermal.between_sessions(cool_start=True)
+            prepare_launch(device, admitted.setdefault("keyguard", {}))
+            return admitted
+
         memory = request["session_memory"]
         stage = check_session_memory(
             sessions=memory["sessions"],
@@ -1237,7 +1242,7 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
             memory_snapshots=memory.get("snapshots", False),
             _device=device,
             _launch=lambda selected: checked_launch(selected, thermal),
-            _between_sessions=partial(thermal.between_sessions, cool_start=True),
+            _between_sessions=cool_memory_menu,
         )
         result.update(session_memory=stage, stage_evidence=stage["evidence"], memory_snapshots=stage["memory_snapshots"])
         return

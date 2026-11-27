@@ -74,10 +74,16 @@ class DeviceSessionTests(unittest.TestCase):
             return stage
 
         receipt = {}
-        with mock.patch("session_memory_check.check_session_memory", side_effect=workload), mock.patch.object(runner, "launch") as launch:
+        thermal.between_sessions.return_value = {"battery": {"celsius": 35}}
+        with (
+            mock.patch("session_memory_check.check_session_memory", side_effect=workload),
+            mock.patch.object(runner, "launch") as launch,
+            mock.patch.object(runner, "prepare_launch") as prepare,
+        ):
             runner.run_workload(device, thermal, request, self.output, receipt)
         launch.assert_called_once_with(device, thermal, process_checks=[])
         thermal.between_sessions.assert_called_once_with(cool_start=True)
+        prepare.assert_called_once_with(device, thermal.between_sessions.return_value["keyguard"])
         self.assertEqual(receipt["stage_evidence"], stage["evidence"])
         self.assertEqual(receipt["memory_snapshots"], stage["memory_snapshots"])
         self.request.update(session_memory={"sessions": 2, "snapshots": True})

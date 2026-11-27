@@ -399,25 +399,25 @@ def check_session_memory(
                         write(out / "final-menu.json", current)
                         stop = "repeated-sessions-observed"
                         break
-                    if session > 1 and _between_sessions:
-                        pause_started = time.monotonic()
-                        cooled = _between_sessions()
-                        # Display wake can precede Unity regaining input focus.
-                        focus_deadline = time.monotonic() + 10
-                        while not owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), PACKAGE):
-                            if time.monotonic() >= focus_deadline:
-                                fail("offline-menu-focus-not-restored", "session %d menu did not regain display-zero focus" % session)
-                                break
-                            time.sleep(0.25)
+                    pause_started = time.monotonic() if session > 1 and _between_sessions else None
+                    cooled = _between_sessions() if pause_started is not None else None
+                    # The menu report can arrive before the game receives input focus.
+                    focus_deadline = time.monotonic() + 10
+                    while not owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), PACKAGE):
+                        if time.monotonic() >= focus_deadline:
+                            fail("offline-menu-focus-not-restored", "session %d menu did not receive display-zero focus" % session)
+                            break
+                        time.sleep(0.25)
+                    if pause_started is not None:
                         seconds = time.monotonic() - pause_started
                         cooldowns.append(dict(before_session=session, seconds=seconds, observation=cooled, display_zero_focus=first_failure is None))
                         write(out / "cooldowns.json", cooldowns)
                         deadline += seconds
-                        if first_failure is not None:
-                            break
-                        if not cleanup._same_process(device, pid):
-                            fail("process-exited-during-cooldown")
-                            break
+                    if first_failure is not None:
+                        break
+                    if pause_started is not None and not cleanup._same_process(device, pid):
+                        fail("process-exited-during-cooldown")
+                        break
                     coords = menu_start_coordinates(current)
                     if coords is None:
                         fail("offline-menu-start-control-unavailable", "session %d" % session)

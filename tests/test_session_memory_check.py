@@ -73,7 +73,7 @@ class SessionMemoryCheckTests(unittest.TestCase):
     def test_native_loss_returns_through_menu_and_keeps_actual_cleanup_contract(self):
         from test_session_cleanup_check import abandoned_report, completed_report, live_report, ordinary_start_report, session_one_defeat_report
 
-        for fault in (None, "profile", "cleanup", "session", "stalled-menu", "unfocused-menu"):
+        for fault in (None, "profile", "cleanup", "session", "stalled-menu", "unfocused-menu", "unfocused-launch"):
             with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
                 root = Path(temporary)
                 out = root / "evidence"
@@ -92,9 +92,8 @@ class SessionMemoryCheckTests(unittest.TestCase):
                         return "Physical size: 1280x800"
                     if args == ("dumpsys", "window", "displays"):
                         window_samples += kwargs.get("timeout") == 5
-                        focus = (
-                            "Window{1 dev.ror2lab.arm64/com.unity3d.player.UnityPlayerActivity}" if window_samples > 1 and fault != "unfocused-menu" else "null"
-                        )
+                        focused = window_samples not in (1, 3) and fault != "unfocused-launch" and (fault != "unfocused-menu" or window_samples < 3)
+                        focus = "Window{1 dev.ror2lab.arm64/com.unity3d.player.UnityPlayerActivity}" if focused else "null"
                         return f"  Display: mDisplayId=0\n  mCurrentFocus={focus}\nmDisplayRotation=ROTATION_0"
                     return ""
 
@@ -155,7 +154,8 @@ class SessionMemoryCheckTests(unittest.TestCase):
                 self.assertEqual(result["success"], fault is None)
                 # One Return to menu tap despite two identical defeat reports; never Restart.
                 self.assertEqual(
-                    device.sh.call_args_list.count(mock.call("input", "tap", "610", "420")), 0 if fault in {"stalled-menu", "unfocused-menu"} else 1
+                    device.sh.call_args_list.count(mock.call("input", "tap", "610", "420")),
+                    0 if fault in {"stalled-menu", "unfocused-menu", "unfocused-launch"} else 1,
                 )
                 self.assertNotIn(mock.call("input", "tap", "207", "420"), device.sh.call_args_list)
                 start_tap = mock.call("input", "-d", "0", "tap", "100", "200")
@@ -163,6 +163,7 @@ class SessionMemoryCheckTests(unittest.TestCase):
                 starts = [index for index, call in enumerate(samples) if call == start_tap]
                 if fault in {None, "unfocused-menu"}:
                     if fault is None:
+                        self.assertEqual(samples[starts[0] - 2 : starts[0]], [mock.call("dumpsys", "window", "displays", timeout=5)] * 2)
                         self.assertEqual(samples[starts[1] - 2 : starts[1]], [mock.call("dumpsys", "window", "displays", timeout=5)] * 2)
                     else:
                         self.assertEqual(result["stop"], "offline-menu-focus-not-restored")
@@ -178,6 +179,11 @@ class SessionMemoryCheckTests(unittest.TestCase):
                     self.assertEqual([row["before_session"] for row in result["cooldowns"]], [2, 3])
                     self.assertTrue(all(row["seconds"] > 0 for row in result["cooldowns"]))
                     self.assertIn("OLED-sleep cooldown", result["growth"]["limits"])
+                elif fault == "unfocused-launch":
+                    self.assertEqual(result["stop"], "offline-menu-focus-not-restored")
+                    self.assertEqual(result["sessions_observed"], 0)
+                    self.assertFalse(starts)
+                    cooldown.assert_not_called()
                 else:
                     cooldown.assert_called_once()  # Session 1 passed; the second ending failed before another cooldown.
                     self.assertEqual(result["sessions_observed"], 1)

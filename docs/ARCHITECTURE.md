@@ -6387,8 +6387,10 @@ and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
 Host contracts: `tests/test_session_memory_check.py`.
 The shared `device-session` workload `session-memory` calls that owner with the
 leased device and checked launcher. It requires external power, cools the
-device between sessions and includes the capture identities and stage evidence
-in its terminal receipt. Completed-world reclamation in `SessionResourceBoundary`
+device between sessions and verifies keyguard dismissal after each cooldown.
+Every Start requires the owned game window to have display-zero focus. The
+terminal receipt includes the capture identities and stage evidence.
+Completed-world reclamation in `SessionResourceBoundary`
 also releases destroyed hurtbox references from returned `DotController` stacks
 after deferred destruction. Live targets and checked-out stacks stay with the
 game's pool lifecycle. The idle contract is exercised in
