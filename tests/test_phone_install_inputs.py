@@ -60,6 +60,45 @@ class InstallInputTests(unittest.TestCase):
         self.assertEqual(json.loads((self.inputs / "input-hashes.json").read_text()), {"import/files/Data/example.txt": self.manifest["files"][0]["sha256"]})
         self.assertFalse((self.inputs / "signing").exists())
 
+    def test_signed_acquired_tools_bind_and_hash_separately_from_originals(self):
+        original = self.import_fixture()
+        tool = self.inputs / "acquired/sdk/tool.txt"
+        tool.parent.mkdir(parents=True)
+        data = b"synthetic tool"
+        name = "acquired/sdk/tool.txt"
+        pin = {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        manifest = self.repo / "recipe/acquired.json"
+        manifest.write_text(json.dumps({name: pin}))
+        self.plan["acquired_inputs"] = "recipe/acquired.json"
+        self.plan["configuration"]["bindings"]["tool_root"] = "acquired/sdk"
+        self.index["files"]["recipe/acquired.json"] = INPUTS.UPDATES.RELEASE.digest(manifest)
+
+        self.assertEqual(INPUTS.describe(self.index, self.repo, self.inputs)["manifest"], self.manifest)
+        with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
+            INPUTS.prepare(self.index, self.repo, self.inputs)
+        tool.write_bytes(data)
+        config = INPUTS.prepare(self.index, self.repo, self.inputs)
+        self.assertEqual(config["bindings"]["tool_root"], "acquired/sdk")
+        self.assertEqual(config["bindings"]["game"], "import/files")
+        self.assertEqual(json.loads((self.inputs / "input-hashes.json").read_text())[name], pin["sha256"])
+        identity = INPUTS.UPDATES.input_identity(self.inputs, config)
+        self.assertEqual(INPUTS.UPDATES.input_identity(self.inputs, INPUTS.prepare(self.index, self.repo, self.inputs)), identity)
+        extra = tool.with_name("stale.txt")
+        extra.write_text("extra")
+        with self.assertRaisesRegex(ValueError, "tool tree differs"):
+            INPUTS.prepare(self.index, self.repo, self.inputs)
+        extra.unlink()
+        tool.write_bytes(b"changed tool!!")
+        with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
+            INPUTS.prepare(self.index, self.repo, self.inputs)
+        self.assertEqual(original.read_bytes(), b"example")
+
+    def test_signed_acquired_inventory_cannot_select_originals_keys_or_overlapping_paths(self):
+        pin = {"bytes": 1, "sha256": "b" * 64}
+        for value in ({"import/files/a": pin}, {"signing/owner/a": pin}, {"acquired/sdk": pin, "acquired/sdk/tool.txt": pin}):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "invalid acquired-tool inventory entry"):
+                INPUTS.acquired_inventory(value)
+
     def test_signed_versions_feed_the_native_original_inventory(self):
         imported = self.import_fixture()
         game = self.inputs / "import/files"
