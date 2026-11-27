@@ -403,6 +403,12 @@ class Acquisition:
             "private_free": phone.available(phone.shell("run-as", installer.PACKAGE, "df", "-k", ".", label="acquisition-installed-private-free")),
             "shared_free": phone.available(phone.shell("df", "-k", self.stage_root, label="acquisition-installed-shared-free")),
         }
+        with phone.active_display():
+            self.run_picker_cases(phone, passed, service)
+
+    def run_picker_cases(self, phone, passed, service):
+        installer = self.installer
+        installer.set_phase("acquisition-picker-start")
         phone.start()
         self.results["document_delivery"] = EXTERNAL_PROVIDER
         self.results["control_delivery"] = "private-lab-command-to-installer-button"

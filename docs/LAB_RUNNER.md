@@ -95,7 +95,9 @@ installer runtime sources and the disposable APK's document fixture. The dry-run
 checks the catalogs and source shape. The detached run stages the cohorts and
 invalid controls in a scoped Downloads directory. A private one-use command
 invokes the normal buttons in the debuggable installer-test package. Android's
-system picker grants read access through the external storage provider. The run
+system picker grants read access through the external storage provider. The
+shared display owner verifies top-panel-only use on Thor and restores its prior
+mode when the picker tests end. The run
 restarts the installer before importing the supported selections, verifies a
 mid-copy cancellation and resumed import, and hashes staged files before and
 after acquisition. It then removes its owned files and installer.

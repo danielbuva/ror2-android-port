@@ -112,6 +112,16 @@ class Phone(INSTALLER.Phone):
         return super().execute(*args, **kwargs)
 
     @contextmanager
+    def active_display(self):
+        device = self.thermal.device
+        try:
+            require(device.display(True), "acquisition-idle-display-policy-required")
+            yield
+        finally:
+            if device.display_awakened:
+                require(device.display(False), "acquisition-display-cleanup-not-verified")
+
+    @contextmanager
     def observe_thermal(self):
         sys.path.insert(0, str(ROOT / "scripts/lab"))
         from alpha_stability_batch import _GameThermalOwner

@@ -46,6 +46,14 @@ def bound(version=1, publisher=1, purpose="update", prior=None):
 
 
 class AlphaPackagingTests(unittest.TestCase):
+    def test_acquisition_sleeps_displays_on_picker_failure(self):
+        device = Mock(display_awakened=True)
+        phone = Mock(thermal=Mock(device=device))
+        with self.assertRaisesRegex(RuntimeError, "picker failed"), A.Phone.active_display(phone):
+            self.assertEqual(device.display.call_args.args, (True,))
+            raise RuntimeError("picker failed")
+        self.assertEqual([call.args for call in device.display.call_args_list], [(True,), (False,)])
+
     def test_acquisition_publishes_one_use_control_and_waits_for_matching_ack(self):
         command = {"action": "cancel", "id": "current"}
         phone = Mock(timeout=10)
