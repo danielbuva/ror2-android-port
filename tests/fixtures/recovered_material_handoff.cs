@@ -90,6 +90,19 @@ namespace EntityStates.Merc
         public static GameObject comboFinisherSwingEffectPrefab;
     }
 }
+namespace EntityStates.Mage.Weapon
+{
+    public class Flamethrower
+    {
+        public static GameObject configuredEffect;
+        public GameObject flamethrowerEffectPrefab = configuredEffect;
+    }
+    public class ChargeNovabomb
+    {
+        public static GameObject configuredEffect;
+        public GameObject chargeEffectPrefab = configuredEffect;
+    }
+}
 public static class WholeCatalogComposed
 {
     public static GameObject mercNormal;
@@ -186,7 +199,7 @@ public partial class SourceSession
     public GameObject OriginalProjectileGhost(RoR2.Projectile.ProjectileController controller) => controller.ghostPrefab;
     public void Prepare(GameObject root) => PresentNativeEffectSource(root);
     public void Stop() => StopPresentingNativeEffectReferences();
-    public IEnumerator PrepareSwings(List<string> unavailable) => PrepareNativeSwingEffects(unavailable);
+    public IEnumerator PrepareDirectEffects(List<string> unavailable) => PrepareDirectNativeEffects(unavailable);
     public IEnumerable<GameObject> ObserveEquipmentLocks(params ChestBehavior[] barrels) => EquipmentLockRoots(barrels);
 }
 public static partial class AndroidNativeDeferredPresentation
@@ -280,13 +293,17 @@ static class Fixture
         Check(lazy.subscribers == 0 && loaded.subscribers == 0 && pending.subscribers == 0 && pendingRenderer.sharedMaterials[0] == original,
             "late acquisition changed material after teardown");
     }
-    static void CheckSwingAdmission(Material original)
+    static void CheckDirectEffectAdmission(Material original)
     {
+        var flame = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
+        var charge = new Renderer { sharedMaterials = new[] { original } };
         var mercNormal = new Renderer { sharedMaterials = new[] { original } };
         var mercFinisher = new Renderer { sharedMaterials = new[] { original } };
         var normal = new Renderer { sharedMaterials = new[] { original } };
         var finisher = new Renderer { sharedMaterials = new[] { original } };
         var fallback = new Renderer { sharedMaterials = new[] { original } };
+        EntityStates.Mage.Weapon.Flamethrower.configuredEffect = new GameObject { components = new[] { flame } };
+        EntityStates.Mage.Weapon.ChargeNovabomb.configuredEffect = new GameObject { components = new[] { charge } };
         WholeCatalogComposed.mercNormal = new GameObject { components = new[] { mercNormal } };
         WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { mercFinisher } };
         EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
@@ -298,25 +315,28 @@ static class Fixture
         Addressables.operation = operation;
         var session = new SourceSession();
         var unavailable = new List<string>();
-        var prepare = session.PrepareSwings(unavailable);
+        var prepare = session.PrepareDirectEffects(unavailable);
         Check(prepare.MoveNext() && normal.sharedMaterials[0] != original && finisher.sharedMaterials[0] == original,
               "normal source should be prepared while native finisher loads");
+        Check(flame.trailMaterial.shader.name == "Recovered/" + original.shader.name &&
+              session.worldLootSourceTrails[flame] == original,
+              "Mage Flamethrower trail should be prepared and its original retained");
         Check(!EntityStates.Merc.GroundLight.comboSwingEffectPrefab && !EntityStates.Merc.GroundLight.comboFinisherSwingEffectPrefab,
               "Merc presentation must leave native state configuration to the game");
-        foreach (var renderer in new[] { mercNormal, mercFinisher })
+        foreach (var renderer in new[] { flame, charge, mercNormal, mercFinisher })
         {
             var material = renderer.sharedMaterials[0];
             Check(material.shader.name == "Recovered/" + original.shader.name &&
                   material.srcBlend == original.srcBlend && material.dstBlend == original.dstBlend &&
                   material.zWrite == original.zWrite && material.renderQueue == original.renderQueue &&
                   session.worldLootSourceMaterials[renderer][0] == original,
-                  "owned Merc swing did not preserve source render state before native state configuration");
+                  "direct native effect did not preserve source render state before instantiation");
         }
         operation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 && finisher.sharedMaterials[0] != original,
               "native finisher source should be prepared after loading");
         Check((string)Addressables.requestedKey == "native-finisher" && session.ownedOriginalVisualHandles[0] == operation &&
-              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 4,
+              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 6,
               "native address and source ownership must be preserved");
     }
     static void CheckIntersectionEffectAdmission()
@@ -407,7 +427,7 @@ static class Fixture
             srcBlend = 5, dstBlend = 10, zWrite = 0, renderQueue = 3050 };
         CheckLateEquipmentLock(fire);
         CheckBakedEffectAdmission(alpha);
-        CheckSwingAdmission(alpha);
+        CheckDirectEffectAdmission(alpha);
         CheckIntersectionEffectAdmission();
         CheckTeamAreaAdmission(unknown);
         var segmentRenderer = new ParticleSystemRenderer { sharedMaterials = new[] { fire }, trailMaterial = alpha };
