@@ -19,6 +19,7 @@ public sealed class NovaThirdPersonView
         public float fov;
     }
     public readonly Report report = new Report();
+    internal RaycastHit LastObstruction { get; private set; }
     public Vector3 ProjectWorldPoint(Vector3 point)
     {
         return camera.WorldToScreenPoint(point);
@@ -130,6 +131,7 @@ public sealed class NovaThirdPersonView
             distance = Mathf.Max(.35f, hit.distance - Mathf.Max(.05f, data.wallCushion.value));
             report.collisions++;
         }
+        LastObstruction = hit;
         camera.transform.SetPositionAndRotation(pivot + offset / wanted * distance, rotation);
         camera.fieldOfView = data.fov.alpha > 0 && data.fov.value > 1 ? data.fov.value : CharacterCameraParamsData.basic.fov.value;
         report.frames++;

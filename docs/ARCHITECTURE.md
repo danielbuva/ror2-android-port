@@ -8234,6 +8234,18 @@ the display camera, renderer state, projected bounds, mesh and first shared
 material. The sample holds no Unity references and works with native skin
 diagnostics disabled.
 
+The integrated lab route can request a same-frame presentation capture with
+`frameCaptureScene` and `frameCaptureRunSeconds` in its session selector.
+`NovaInputBoundary` arms `AndroidPresentationCamera` on the lab view. It samples
+the camera source and the composited screen in the same Unity frame within
+12 s of the requested native run stopwatch, at most 48 times. The existing
+private camera report retains the first pair of 160 × 90 PNGs, camera and target
+state, and the collider from the view's own obstruction cast. The first sample
+with at least 5% flat mid-gray replaces that pair and ends sampling. The camera
+releases capture textures at teardown. The collider describes camera placement,
+and the PNGs can localize a presentation stage. Identifying a draw requires
+pixel-event evidence.
+
 
 ## Host-only owner layout models
 
