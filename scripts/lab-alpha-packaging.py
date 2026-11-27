@@ -42,6 +42,8 @@ SAF_CASES = (
     "saf-picker-cancelled",
     "saf-unknown-refused",
     "saf-unsupported-refused",
+    "saf-incomplete-folder-refused",
+    "saf-invalid-zip-refused",
     "saf-import-cancelled",
     "saf-folder-validated",
     "saf-zip-validated",
@@ -114,6 +116,16 @@ class Phone(INSTALLER.Phone):
         if not device.display_awakened:
             require(device.display(True), "alpha-packaging-idle-display-policy-required")
         return super().start(repeat_notification_denial=repeat_notification_denial)
+
+    @contextmanager
+    def active_display(self):
+        device = self.thermal.device
+        try:
+            require(device.display(True), "acquisition-idle-display-policy-required")
+            yield
+        finally:
+            if device.display_awakened:
+                require(device.display(False), "acquisition-display-cleanup-not-verified")
 
     @contextmanager
     def observe_thermal(self):

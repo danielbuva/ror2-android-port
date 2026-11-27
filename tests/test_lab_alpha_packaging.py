@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("tested_alpha_packaging", ROOT / "scripts/lab-alpha-packaging.py")
@@ -45,6 +46,14 @@ def bound(version=1, publisher=1, purpose="update", prior=None):
 
 
 class AlphaPackagingTests(unittest.TestCase):
+    def test_acquisition_sleeps_displays_on_picker_failure(self):
+        device = Mock(display_awakened=True)
+        phone = Mock(thermal=Mock(device=device))
+        with self.assertRaisesRegex(RuntimeError, "picker failed"), A.Phone.active_display(phone):
+            self.assertEqual(device.display.call_args.args, (True,))
+            raise RuntimeError("picker failed")
+        self.assertEqual([call.args for call in device.display.call_args_list], [(True,), (False,)])
+
     def test_acquisition_publishes_one_use_control_and_waits_for_matching_ack(self):
         command = {"action": "cancel", "id": "current"}
         phone = Mock(timeout=10)
@@ -85,14 +94,42 @@ class AlphaPackagingTests(unittest.TestCase):
                 ACQUISITION.hash_listing(corrupt)
 
     def test_acquisition_requires_the_persisted_document_and_source_kind(self):
-        provider = "content://dev.ror2lab.installertest.acquisition"
-        tree = f'<map><string name="source_kind">tree</string><string name="source_uri">{provider}/tree/Lab%2FSupported</string></map>'
-        archive = tree.replace(">tree<", ">zip<").replace("/tree/", "/document/").replace("Supported<", "Supported.zip<")
-        self.assertTrue(ACQUISITION.selected_document(tree, "tree", "Lab/Supported"))
-        self.assertTrue(ACQUISITION.selected_document(archive, "zip", "Lab/Supported.zip"))
-        self.assertFalse(ACQUISITION.selected_document(tree, "zip", "Lab/Supported.zip"))
-        self.assertFalse(ACQUISITION.selected_document(archive, "zip", "Lab/Older.zip"))
-        self.assertFalse(ACQUISITION.selected_document(tree.replace("installertest.acquisition", "other"), "tree", "Lab/Supported"))
+        folder = "Download/Lab/Supported"
+        provider = "content://com.android.externalstorage.documents"
+        tree = f'<map><string name="source_kind">tree</string><string name="source_uri">{provider}/tree/primary%3ADownload%2FLab%2FSupported</string></map>'
+        archive = tree.replace(">tree<", ">zip<").replace("/tree/", "/document/").replace("Supported<", "Archive%2FSupported.zip<")
+        self.assertTrue(ACQUISITION.selected_document(tree, "tree", folder))
+        self.assertTrue(ACQUISITION.selected_document(archive, "zip", "Download/Lab/Archive/Supported.zip"))
+        self.assertFalse(ACQUISITION.selected_document(tree, "zip", folder))
+        for unexpected in ("dev.ror2lab.installertest.acquisition", "com.android.providers.downloads.documents"):
+            self.assertFalse(ACQUISITION.selected_document(tree.replace(ACQUISITION.EXTERNAL_PROVIDER, unexpected), "tree", folder))
+        self.assertFalse(ACQUISITION.selected_document(tree.replace("primary", "other"), "tree", folder))
+
+    def test_acquisition_picks_exact_enabled_document_in_focused_package(self):
+        package = ACQUISITION.DOCUMENTS[0]
+        tree = ET.fromstring(
+            f'<hierarchy><node package="{package}">'
+            f'<node package="{package}" resource-id="{package}:id/title" text="Supported.zip.bak" enabled="true" />'
+            '<node package="other" resource-id="android:id/title" text="Supported.zip" enabled="true" />'
+            f'<node package="{package}" resource-id="android:id/title" text="Supported.zip" enabled="true" />'
+            "</node></hierarchy>"
+        )
+        self.assertIs(ACQUISITION.picker_node(tree, "Supported.zip", ids=("title",)), list(tree.iter("node"))[-1])
+
+    def test_acquisition_waits_for_mid_copy_before_cancellation(self):
+        acquisition = ACQUISITION.Acquisition.__new__(ACQUISITION.Acquisition)
+        acquisition.require = A.require
+        phone = Mock(timeout=10)
+        partial = {"state": "IMPORTING", "completed": 500, "total": 1000}
+        phone.read.side_effect = [
+            {"state": "VALIDATING", "completed": 500, "total": 1000},
+            {"state": "IMPORTING", "completed": 0, "total": 1000},
+            {"state": "IMPORTING", "completed": 1000, "total": 1000},
+            partial,
+        ]
+        with patch.object(ACQUISITION.time, "sleep"):
+            self.assertEqual(acquisition.wait_import(phone, "COPYING"), partial)
+        self.assertEqual(phone.read.call_count, 4)
 
     def test_thermal_cancellation_refuses_more_acceptance_commands(self):
         phone = A.Phone("synthetic-test-device", 20)

@@ -361,3 +361,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1526](PORTING_JOURNAL.md#j1526--restore-artificer-additive-gestures-and-default-skin) | 2026-11-26 | Restore Artificer additive gestures and default skin | 2026-11-27. |
 | [J1527](PORTING_JOURNAL.md#j1527--restore-transparency-to-the-native-engineer-shield) | 2026-11-27 | Restore transparency to the native Engineer shield | 2026-11-27. |
 | [J1528](PORTING_JOURNAL.md#j1528--restore-artificer-charge-and-flame-materials) | 2026-11-27 | Restore Artificer charge and flame materials | 2026-11-27. |
+| [J1529](PORTING_JOURNAL.md#j1529--qualify-external-saf-validation-and-import-resume) | 2026-11-27 | Qualify external SAF validation and import resume | 2026-11-27. |

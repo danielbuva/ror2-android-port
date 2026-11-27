@@ -19,6 +19,20 @@ Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-cast-e
 Launch peaked at 91.9 °C, with 11.102 s above 80 °C and battery at 32 °C.
 Adopted placement, scratch removal and OLED sleep passed. Host pruning was
 completed separately. The upward flame and bomb release flash remain open.
+## J1529 — Qualify external SAF validation and import resume
+
+2026-11-27. Android DocumentsUI and its external storage provider passed picker
+Back, distinct unknown and known-unsupported refusals for the legitimate older
+cohort, and refusal of an incomplete folder and a case-aliased ZIP.
+Cancellation at 8,734,246 bytes removed partials and kept 42 hash-verified
+files. The supported folder resumed without reselection after force-stop.
+Folder and ZIP each verified 2,749 files after reopening the persisted grant.
+Staged source hashes stayed unchanged. APK admission stayed blocked.
+Installer APK SHA-256 `a1f4916fb9ab6550cc1d6c53f930396821e4df0d8c7356b4707c432f3078612b` (source `fcd34184`).
+Evidence under `work/coordination/alpha-packaging-acceptance/run-u3j6166c/`.
+Thermal sampling passed at 80.4 °C peak CPU/GPU and 30 °C starting battery.
+Owned scratch removal and OLED sleep passed. Build/install cancellation and
+the full phone-only play and update flow remain open.
 
 ## J1527 — Restore transparency to the native Engineer shield
 
