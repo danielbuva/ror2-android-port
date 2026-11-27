@@ -1407,7 +1407,12 @@ decoding, raw copying, fixed source-coordinate color extension and public
 JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
 original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
 colour space and usage. It checks source extents and preserves metadata rather
-than generating replacement mip levels. `build_texture_jpeg.py` owns
+than generating replacement mip levels. `source-bc3-etc` likewise reads each
+original mip, including the texels stored in its boundary blocks. It writes
+ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
+normal maps. It uses the existing pinned native decoder, ETC2 colour and
+EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
+use the same codec pins and output checks. `build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
 an explicit compiler; `texture_jpeg.c` owns bounded stdin/stdout processing.
 New private output, source/tool admission, bounded compiler/codec children,
