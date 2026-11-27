@@ -401,6 +401,17 @@ retain `logs/compile-objects.json` through shared-runner cleanup. Android Clang
 normalizes the job output path in debug information so linker build IDs can
 match across job directories. Runtime source-location macros keep their values.
 
+The native stage uses `/opt/homebrew/bin/ccache` when available on the host.
+The toolhost can supply the hash-verified `native-links/ccache` executable
+alias. The cache lives outside the job output, under
+`~/Library/Caches/dev.ror2lab.il2cpp-ccache` on macOS (10 GiB) and the
+installer's private `files/native-ccache` on Android (3 GiB). Set
+`use_ccache: false` in a native request for a direct compiler control.
+The cache key retains the pinned SDK/sysroot, compiler and resource bytes and
+complete command line. A rebuild can reuse entries at the same paths. The
+owner retains ccache's per-job outcome log beside the compiler process logs.
+Linking, stripping and Linux NDK execution through QEMU use their usual tools.
+
 `compile_timeout_seconds` sets the per-translation-unit budget (default 3,600
 seconds). Choose a generous multiple of the largest unit's measured active phone
 compile time. A caller that externally pauses the tool UID must also supply
