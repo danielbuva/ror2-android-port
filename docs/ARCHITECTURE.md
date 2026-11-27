@@ -8543,6 +8543,9 @@ For shaders with ordinary vertex and fragment passes, the translator retains
 subshader and pass order and render state. The shared record writer merges
 the per-pass Vulkan tables and relocates their program and parameter indices
 into the Shader's compressed blob.
+Terrain detail forward passes pair each full vertex keyword set with its
+original fragment after dropping the vertex-only `VERTEXLIGHT_ON` from the
+lookup. The linked program keeps the full vertex key and both requirements.
 The profile run closes the body stream and pins its index, type table and
 object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
@@ -8557,8 +8560,10 @@ preserves the native Unity instancing buffer names. When both stages consume
 `UnityDrawCallInfo`, they share its binding with both stage flags. The Android
 Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
 instances. It also draws Cloud Intersection Remap with the directional plain
-and instanced variants and depth fade disabled. Cloud native Material draws
-and whole-game coverage remain open.
+and instanced variants and depth fade disabled. The same fixture draws both
+Terrain Detail leaves through a Forward camera and reads the effect of a
+point light on each. Cloud native Material draws and whole-game coverage
+remain open.
 The ComputeShader path preserves the source kernel and workgroup tables and
 writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
 then read-only textures and structured buffers, then writable buffers and 2D,
@@ -8595,9 +8600,9 @@ matched the object dispatched in the Vulkan fixture.
 
 The signed `owner-graphics-shader-translation-v1` profiles route the original
 Outline, Cloud Intersection Remap, PaintHeight, Cutout/VertexLit,
-TerrainLayerUtils, Cloud Remap and its VertexLit fallback to their canonical
-bundle identities. The translator keeps the original Shader fallback name
-and dependency pointers. Bundle preparation resolves those pointers through
+TerrainLayerUtils, Cloud Remap and its VertexLit fallback, and two Terrain
+Detail leaves to their canonical bundle identities. The translator keeps the
+original Shader fallback name and dependency pointers. Bundle preparation resolves those pointers through
 the original source identities of the bound typed suppliers.
 The translator binds SMOL-V encoding,
 SPIRV-Cross and glslang alongside DXBC translation and SPIR-V validation.

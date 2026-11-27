@@ -5200,3 +5200,18 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `cloud-remap-draw-device-01/terminal.done.json` and
 `signed-cloud-remap-device-04/signed_artifact.json`. Whole-game scoring and
 linked Material rendering remain open.
+
+## J1575 — Draw Terrain Detail vertex lighting on Android Vulkan
+
+2026-11-27. The signed Shader producer preserved 324 source program keys
+across 12 Terrain Detail passes. Exact Unity loaded both Shader records.
+Vulkan APK `337b8be742353900b973e396ce6a12cbc9aab230c46e7c22417b38ed0ac8f930`
+(source `f4e58286`) drew both through the Forward camera. Adding a red point
+light changed `(64,64,64,255)` to `(134,64,64,255)` while the outside was blue.
+The signed bundle `c19f87930e4bd28b67375cb02bdcb61340e2cf88ab3b52c61b2450118ba4b87a`
+matched the host in 198.60 s with 92.9 MiB peak child RSS, 31.4 MiB stage
+storage and 64.1 °C peak CPU/GPU temperature.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`terrain-detail-forward-device-01/terminal.done.json` and
+`signed-terrain-detail-device-01/signed_artifact.json`. Linked scene draws and
+whole-game scoring remain open.
