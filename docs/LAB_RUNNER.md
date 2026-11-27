@@ -36,10 +36,12 @@ build trusts) there, so a later `script` job can install that build and sign syn
 
 ## Current local packaging request
 
-Use the installer APK and receipt cached for the checkout's commit. Keep the
-cache pinned with `.prune-keep` until qualification finishes. An ignored JSON
-request names the canonical `repo`, linked `checkout`, configured `device`
-alias, granted `workstream` and new absolute `done_file` under canonical `work/`.
+Use the installer APK and receipt cached for the checkout's commit. A packaging
+request can set `toolhost_source_commit` to reuse a verified earlier fixture when
+the embedded installer inputs match. Keep the cache pinned with `.prune-keep`
+until qualification finishes. An ignored JSON request names the canonical
+`repo`, linked `checkout`, configured `device` alias, granted `workstream` and
+new absolute `done_file` under canonical `work/`.
 
 ```
 source scripts/env.sh
@@ -51,8 +53,10 @@ Dry-run verifies the cached installer and prepares the synthetic fixtures withou
 accessing the device. The detached runner checks the grant before taking the
 lease, then invokes the existing package and signing acceptance. The shared
 thermal monitor verifies cool-start admission and records the run's thermal
-trace. The runner retains installed receipts, versions and hashes before
-disposing of the owned fixtures.
+trace. The shared display owner wakes only the authorized display at the first
+installer launch and verifies sleep and mode restoration after the UI flow.
+The runner retains installed receipts, versions and hashes before disposing of
+the owned fixtures.
 The terminal receipt links the private log after cleanup and pruning.
 To prepare the APK, use a separate request with `"operation": "toolhost"`,
 `"device": "thor"` and a Thor grant. This calls the configured toolhost builder,
