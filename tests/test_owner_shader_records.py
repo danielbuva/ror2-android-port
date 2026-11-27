@@ -54,6 +54,66 @@ class CompilerHosting(unittest.TestCase):
         self.assertEqual(call.kwargs["authored_files"], ["first", "second"])
 
 
+class TranslatedShaderPack(unittest.TestCase):
+    def test_profile_receipt_admits_two_original_records(self):
+        import hashlib
+        import json
+        import tempfile
+
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            from bundle_preload import ProducerRecords
+            import shader_translate as translator
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            pc = root / "pc"
+            pc.mkdir()
+            source = pc / "test.assets"
+            source.write_bytes(b"ab")
+            profile = root / "profile.json"
+            records = []
+            for path_id, body in ((1, b"a"), (2, b"b")):
+                records.append(
+                    {
+                        "source": {
+                            "path": source.name,
+                            "member": source.name,
+                            "path_id": path_id,
+                            "bytes": 2,
+                            "sha256": N.sha(source),
+                            "body_sha256": hashlib.sha256(body).hexdigest(),
+                        },
+                        "output": {"bundle": "test", "member": "target", "path_id": path_id + 10},
+                    }
+                )
+            profile.write_text(json.dumps({"typed_records": records}))
+            output = root / "translated"
+            request = {"pc": pc, "output": output, "tools": {}, "profile": {"path": profile, "bytes": profile.stat().st_size, "sha256": N.sha(profile)}}
+            metadata = {
+                "data_offset": 0,
+                "objects": [{"path_id": path_id, "type_id": 0, "offset": path_id - 1, "bytes": 1} for path_id in (1, 2)],
+                "types": [{"class_id": 48, "tree": b"test"}],
+            }
+            writer = translator.objects.W
+            with (
+                patch.object(writer, "read_serialized", return_value=metadata) as read_member,
+                patch.object(writer, "shader_node"),
+                patch.object(writer, "read_shader_body", side_effect=lambda node, body: body),
+                patch.object(writer, "write_shader_body", side_effect=lambda node, body: body),
+                patch.object(translator, "translate_tree", side_effect=lambda body, *_: body.upper()),
+            ):
+                receipt = translator.produce(request)
+            read_member.assert_called_once()
+            self.assertEqual(receipt["records"], 2)
+            self.assertEqual(len(json.loads((output / "types.json").read_bytes())), 1)
+            providers = ProducerRecords()
+            for index, body in enumerate((b"A", b"B")):
+                row, admitted = providers.record(
+                    {"provider": output, "record_source": ("test", "target", 11 + index), "record": N.sha(profile), "sha256": hashlib.sha256(body).hexdigest()}
+                )
+                self.assertEqual((row["offset"], row["type_id"], admitted), (index, 0, body))
+
+
 class NativeUI(unittest.TestCase):
     def test_original_shader_recovers_every_keyword_combination_from_pass_zero(self):
         axes = ["DOUBLESAMPLE", "UNITY_UI_CLIP_RECT", "UNITY_UI_ALPHACLIP"]

@@ -8246,12 +8246,15 @@ state and keyword registry, with all eight keyword combinations in the Vulkan
 pass. The typed pack binds the replacement to its existing Commando prefab
 bundle member and path ID so that Material references keep their target.
 
-The bounded `shader_translate.py` host diagnostic takes a request for one
-original leaf with a single vertex/fragment UI pass. It translates both source
-DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform with
+The bounded `shader_translate.py` host diagnostic takes a single leaf or a
+pinned `typed_records` profile of original vertex/fragment leaves. It reads
+each source member once and validates the selected object bodies. It translates
+both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform with
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
 linked envelope. It feeds source layouts through the existing
 `shader_produce.py` parameter writer and emits a typed replacement pack.
+The profile run closes the body stream and pins its index, type table and
+object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
 matched the two ramp endpoint pixels from the SDK control. The fixture
 owns the temporary draw resources and the shared runner owns package removal

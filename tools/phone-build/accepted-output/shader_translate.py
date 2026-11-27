@@ -1,6 +1,7 @@
 """Translate a source DXBC vertex/fragment Shader leaf to Unity Vulkan."""
 
 import argparse
+from collections import defaultdict
 import hashlib
 import json
 from pathlib import Path
@@ -9,7 +10,6 @@ import subprocess
 import sys
 
 import lz4.block
-import UnityPy
 
 import object_produce as objects
 import shader_produce as shader
@@ -149,28 +149,85 @@ def translate_tree(original, directory, tools):
     return tree
 
 
+def source_records(root, records):
+    files = defaultdict(lambda: defaultdict(list))
+    destinations = set()
+    for record in records:
+        source, target = record["source"], record["output"]
+        destination = target["bundle"], target["member"], target["path_id"]
+        if destination in destinations:
+            raise ValueError("duplicate translated Shader destination")
+        destinations.add(destination)
+        files[source["path"]][source["member"]].append(record)
+    for relative, members in files.items():
+        path = shader.relative(root, relative)
+        pins = {(row["source"]["bytes"], row["source"]["sha256"]) for group in members.values() for row in group}
+        if len(pins) != 1:
+            raise ValueError("original Shader file pins disagree: " + path.name)
+        ((size, digest),) = pins
+        shader.checked(path, {"bytes": size, "sha256": digest})
+        for member, group in members.items():
+            with objects.source_member(path, member) as stream:
+                metadata = objects.W.read_serialized(stream)
+                extents = {row["path_id"]: row for row in metadata["objects"]}
+                for record in group:
+                    source = record["source"]
+                    extent = extents.get(source["path_id"])
+                    if extent is None:
+                        raise ValueError(f"original Shader is absent: {path.name}/{member}/{source['path_id']}")
+                    typ = metadata["types"][extent["type_id"]]
+                    if typ["class_id"] != 48:
+                        raise ValueError("original record is not Shader48")
+                    stream.seek(metadata["data_offset"] + extent["offset"])
+                    body = objects.B.exact(stream, extent["bytes"])
+                    if "body_sha256" in source and hashlib.sha256(body).hexdigest() != source["body_sha256"]:
+                        raise ValueError(f"original Shader body differs: {path.name}/{member}/{source['path_id']}")
+                    yield record["output"], typ, body
+
+
 def produce(request):
-    source_root = Path(request["pc"]).resolve(strict=True)
-    source = request["source"]
-    path = shader.relative(source_root, source["path"])
-    shader.checked(path, source)
+    root = Path(request["pc"]).resolve(strict=True)
     output = Path(request["output"]).resolve()
-    if output.is_relative_to(source_root) or source_root.is_relative_to(output):
+    if output.is_relative_to(root) or root.is_relative_to(output):
         raise ValueError("translation output must be disjoint from original inputs")
-    typ = objects.source_record_type(path, source["member"], source["path_id"], 48)
-    obj = next(row for row in UnityPy.load(str(path)).objects if row.assets_file.name == source["member"] and row.path_id == source["path_id"])
-    output.mkdir()
+    profile = request.get("profile")
+    if profile is None:
+        records = [{"source": request["source"], "output": request["record"]}]
+    else:
+        path = Path(profile["path"]).resolve(strict=True)
+        shader.checked(path, profile)
+        records = json.loads(path.read_bytes())["typed_records"]
+        if not records:
+            raise ValueError("translated Shader profile is empty")
+
     directory = output / "programs"
-    directory.mkdir()
-    tree = translate_tree(obj.read_typetree(), directory, request["tools"])
-    body = objects.W.write_shader_body(obj.serialized_type.node, tree)
-    types = []
-    type_id = objects.record_type(typ, types, {})
-    row = dict(request["record"], offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), type_id=type_id)
-    (output / "objects.bin").write_bytes(body)
-    (output / "index.jsonl").write_text(json.dumps(row, sort_keys=True) + "\n")
+    directory.mkdir(parents=True)
+    rows, types, type_ids = [], [], {}
+    with (output / "objects.bin").open("xb") as stream:
+        for target, typ, original in source_records(root, records):
+            stage_dir = directory / str(len(rows))
+            stage_dir.mkdir()
+            node = objects.W.shader_node(typ["tree"])
+            tree = translate_tree(objects.W.read_shader_body(node, original), stage_dir, request["tools"])
+            body = objects.W.write_shader_body(node, tree)
+            rows.append(
+                dict(target, offset=stream.tell(), bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), type_id=objects.record_type(typ, types, type_ids))
+            )
+            stream.write(body)
+    (output / "index.jsonl").write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
     (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
-    return row
+    if profile is None:
+        return rows[0]
+    receipt = {
+        "success": True,
+        "profile_sha256": profile["sha256"],
+        "records": len(rows),
+        "outputs": {
+            name: {"bytes": (output / name).stat().st_size, "sha256": shader.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")
+        },
+    }
+    (output / "result.json").write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n")
+    return receipt
 
 
 if __name__ == "__main__":
