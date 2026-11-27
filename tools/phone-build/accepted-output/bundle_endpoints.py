@@ -816,9 +816,10 @@ class Qualification:
         for source in self.null_sources.values():
             path = owner.O.M.safe_input(self.game, source["bundle"])
             pins.add(path, dict(bytes=path.stat().st_size, sha256=source["bundle_sha256"]))
-        if any(value["class_id"] == 114 for value in self.selected.values()):
+        if any(value["class_id"] == 114 or value.get("generated") == "current_script" for value in self.selected.values()):
             self.universe = current_providers(owner, pins, request["managed_inputs"])
             context = managed_context(owner, pins, request["managed_inputs"])
+            self.registry_scripts = context["registry_scripts"]
             self.baseline = managed_checker(owner, **context, member_tables=self.tables, null_script_source_type=self.null_source)
         self.endpoints = EndpointRecords(self.member, self.retained, self.staged, self.check)
         return self
@@ -832,7 +833,17 @@ class Qualification:
     def retained(self, target):
         value = self.selected[tuple(target)]
         _, raw = self.producer.record(value)
-        return value, raw, self.typ(value)
+        typ = self.typ(value)
+        self.check_generated_script(value, raw, typ)
+        return value, raw, typ
+
+    def check_generated_script(self, value, raw, typ):
+        if value.get("generated") == "current_script":
+            identity = value["current_registry_identity"]
+            self.owner.O.current_script_identity(raw, typ["class_id"], identity)
+            self.universe.registry(identity)
+            if raw != self.registry_scripts[tuple(identity)][0]:
+                raise ValueError("generated MonoScript differs from pinned current registry")
 
     def tables(self, value):
         return self.external_members if tuple(value["destination"][:2]) == self.member else self.staged.member_tables(value)
@@ -898,6 +909,8 @@ class Qualification:
             if value["class_id"] == 114:
                 value, raw, typ = persisted(target)
                 self.check(value, raw, typ, self.endpoints)
+            elif value.get("generated") == "current_script":
+                self.check_generated_script(*persisted(target))
         self.endpoints.check_final(persisted)
         self.pins.check()
 

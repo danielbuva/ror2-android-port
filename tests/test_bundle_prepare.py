@@ -9,6 +9,7 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"))
@@ -51,6 +52,91 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(source_files, {source[0]: original["sha256"]})
             with self.assertRaisesRegex(ValueError, "original source file pins disagree"):
                 P.module("bundle_prepare").original_identities(P, path, {source[0]: "b" * 64})
+
+    def test_generated_material_prepares_from_object_pack_without_original_alias(self):
+        root_repo = Path(__file__).resolve().parents[1]
+        G = P.O.module("_generated_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, _, pin = self.fixture(root)
+            M = P.module("bundle_manifest")
+            nodes = [M.S._node("Material", "Base", -1, level=0), M.S._node("int", "value", 4)]
+            layout = dict(class_id=21, stripped=0, script_type=-1, hash=b"m" * 16, tree=M.S._tree(nodes), dependencies=[])
+            body = struct.pack("<i", 73)
+            original = root / "original" / "type.assets"
+            original.write_bytes(self.serialized([dict(path_id=10, type=layout, body=body)]))
+            profile = root / "recipe/owner-material.json"
+            profile.parent.mkdir()
+            destination = ["content", "CAB-content", 100]
+            profile.write_text(
+                json.dumps(
+                    dict(
+                        input_id=P.O.M.INPUT_ID,
+                        pack_only=True,
+                        bundle=dict(name=destination[0], member=destination[1], externals=[], comparison="diagnostic"),
+                        sources=[dict(path=original.name, member=original.name, sha256=P.O.B.sha(original))],
+                        objects=[
+                            dict(path_id=100, generate="DefaultMaterial", type_source=[0, 10], bytes=len(body), sha256=P.hashlib.sha256(body).hexdigest())
+                        ],
+                    )
+                )
+            )
+            pack = root / "material"
+            codec = Path(request["codec"]["path"])
+            with patch.object(P.O, "default_material", return_value=body):
+                result = P.O.produce(profile, P.O.B.sha(profile), original.parent, pack, codec, P.O.B.sha(codec))
+            index = json.loads((pack / "index.jsonl").read_text())
+            self.assertTrue(result["success"])
+            self.assertEqual(json.loads((pack / "types.json").read_text())[index["type_id"]], P.O.json_layout(layout))
+            binding = dict(destination=destination, record_source=destination, generated="sdk_material", pointer_namespace=[destination[:2]])
+            graph = G.Graph(root, {})
+            compiled = graph.bundle_bindings([dict(binding, record=P.O.B.sha(profile))], *destination[:2])
+            self.assertEqual(compiled["unresolved"], [])
+            self.assertEqual(compiled["bindings"], [dict(binding, supplier=P.O.B.sha(profile))])
+            job = graph.jobs["recipe/jobs/owner-material.json"]
+            self.assertEqual(job["outputs"], {})
+            self.assertNotIn("catalog_bundle", job["artifacts"])
+            binding["supplier"] = "material"
+            policy = root / "policy.json"
+            request.update(
+                staged=[],
+                suppliers=[
+                    dict(
+                        name="material",
+                        profile=pin(profile),
+                        **{
+                            key: pin(pack / filename)
+                            for key, filename in (("receipt", "result.json"), ("index", "index.jsonl"), ("objects", "objects.bin"), ("types", "types.json"))
+                        },
+                    )
+                ],
+            )
+            for wrong_source in (False, True):
+                row = dict(binding, source=[original.name, original.name, 10]) if wrong_source else binding
+                policy.write_text(
+                    json.dumps(
+                        dict(
+                            bundle=destination[0],
+                            member=destination[1],
+                            bindings=[row],
+                            asset_groups=[dict(guid="12" * 16, path="Assets/Material.mat", roots=[100])],
+                            assets=[dict(name="assets/material.mat", type="Material")],
+                        )
+                    )
+                )
+                request["policy"] = pin(policy)
+                inputs.write_text(json.dumps(request))
+                if wrong_source:
+                    with self.assertRaisesRegex(ValueError, "generated binding requires"):
+                        P.prepare_request(inputs, root / "invalid")
+                    continue
+                prepared = P.prepare_request(inputs, root / "prepared")
+                emitted = P.produce_request(prepared["request"]["path"], root / "emitted")
+                self.assertTrue(emitted["success"])
+                record = json.loads((root / "prepared/selected-records.jsonl").read_text())
+                self.assertEqual(record["generated"], "sdk_material")
+                self.assertEqual(record["pointer_namespace"], binding["pointer_namespace"])
+                self.assertNotIn("source", record)
 
     def test_source_registry_remap_restores_original_layout_without_copying_original_body(self):
         root_repo = Path(__file__).resolve().parents[1]

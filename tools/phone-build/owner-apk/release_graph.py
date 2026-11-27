@@ -452,6 +452,7 @@ class Graph:
             artifacts = {"receipt": "result.json"}
         elif producer == "object_produce":
             artifacts["layout"] = "layout.json"
+            artifacts["types"] = "types.json"
         if producer in {
             "record_produce",
             "record_remap",
@@ -466,7 +467,7 @@ class Graph:
             artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
-        if producer == "object_produce":
+        if producer == "object_produce" and not profile.get("pack_only"):
             target = "payload/" + ("windows-shaders.bundle" if "original_bundle" in profile else profile["bundle"]["name"])
             outputs[target] = target
             artifacts["catalog_bundle"] = target
@@ -622,10 +623,12 @@ class Graph:
                 problem = "foreign or missing destination"
             elif tuple(destination) in destinations:
                 problem = "duplicate destination"
-            elif any(not isinstance(row.get(key), list) or len(row[key]) != 3 for key in ("source", "record_source")):
+            elif any(
+                not isinstance(row.get(key), list) or len(row[key]) != 3 for key in (("record_source",) if "generated" in row else ("source", "record_source"))
+            ):
                 problem = "explicit source and record_source identities required"
             elif pin not in self.profiles:
-                available = candidates.get(tuple(row["source"]), set())
+                available = candidates.get(tuple(row.get("source", ())), set())
                 matches = {candidate for candidate in available if candidate[1] == tuple(record_source)}
                 if not matches:
                     matches = available
@@ -668,7 +671,9 @@ class Graph:
                     ]
                 unresolved.append(failure)
             else:
-                binding = {key: row[key] for key in ("destination", "source")} | dict(supplier=pin, record_source=record_source)
+                binding = {key: row[key] for key in ("destination", "source", "generated", "pointer_namespace") if key in row} | dict(
+                    supplier=pin, record_source=record_source
+                )
                 if selection is not None:
                     binding["selection"] = selection
                 bindings.append(binding)
@@ -964,6 +969,7 @@ class Graph:
     def current_code_sources(self, *, signed_audio=False):
         runtime = "recipe/runtime-sources.json"
         audio_manifest = "recipe/original-audio-owner-sources.json"
+        camera_recipe = "recipe/native-view-camera-transform.json"
         audio = self.repo / "tools/unity/support/audio"
         return [
             "environment/toolchain.json",
@@ -975,6 +981,8 @@ class Graph:
             "recipe/importer-identities.json",
             audio_manifest,
             "recipe/owner-audio-prefab.json",
+            camera_recipe,
+            json.loads((self.repo / camera_recipe).read_text())["source_paths"]["marker"],
             "recipe/wwise-android-abi.json",
             "recipe/wwise-init-android.json" if signed_audio else "tools/phone-build/legacy/transform_init.py.txt",
             "android/Assets/LabDiagnostics.cs",

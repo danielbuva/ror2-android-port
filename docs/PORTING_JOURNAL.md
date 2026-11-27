@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1527 — Restore transparency to the native Engineer shield
+
+2026-11-27. The native shield template enters the existing effect material
+owner before instantiation. Assisted Distant Roost variant samples 18 and 36
+show terrain and enemies through the deployed dome. The live center and edge
+both use transparent queue 3000. Sample 36 retains the guard, all four native
+skill callbacks on authority and server, two owned turrets, 33 owner projectile
+and 106 turret damage events. It recorded 49.97 FPS. Cleanup and OLED sleep passed.
+APK SHA-256 `b785cddcb3580191cd77095d6f3859ae812e0b618d9c3114209680b5fae67cd3` (source `ef3770fa`).
+Evidence `work/coordination/gameplay-coverage-20261126/engi-roost-native-material-census-nova-b/sample-36/`.
+The legacy 85 °C cutoff ended the run after capture at 88.4 °C peak with
+2.02 s above 80 °C. Separate white quads remain unattributed.
+
 ## J1526 — Restore Artificer additive gestures and default skin
 
 2026-11-27. The build restores the source gauntlet and hand reference
