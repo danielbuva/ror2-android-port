@@ -19,7 +19,7 @@ from shader_segments import read_segments, selected_layout
 
 
 def vertex_channels(dxbc):
-    """Map D3D input semantics to Unity channels and SPIR-V locations."""
+    """Map D3D inputs to Unity channels and serialized Vulkan bindings."""
     chunk_count = struct.unpack_from("<I", dxbc, 28)[0]
     for offset in struct.unpack_from(f"<{chunk_count}I", dxbc, 32):
         kind, size = struct.unpack_from("<4sI", dxbc, offset)
@@ -42,7 +42,9 @@ def vertex_channels(dxbc):
             channel = (b"POSITION", b"NORMAL", b"TANGENT", b"COLOR").index(name)
         else:
             raise ValueError(f"unqualified vertex semantic {name!r} index {semantic_index}")
-        channels.append((channel, register))
+        # Unity 2021 Vulkan adds 13 in the channel table. The SPIR-V
+        # location itself is still the original register.
+        channels.append((channel, 13 + register))
     return sorted(channels)
 
 
