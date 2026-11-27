@@ -397,6 +397,7 @@ class ScratchTests(unittest.TestCase):
         self.assertIsNotNone(process.poll())
 
     def test_normal_and_failure_exit_clean_synchronously(self):
+        self.fake_hdiutil(attached=False)
         # Existing fixture belongs to a fake dead PID; leave it recent so the
         # real startup sweep does not rely on assumptions about host PID ranges.
         os.utime(self.path, None)
@@ -404,8 +405,8 @@ class ScratchTests(unittest.TestCase):
             process = self.launch(f"exit {status}\n")
             out, err = process.communicate(timeout=10)
             self.assertEqual(process.returncode, status, out + err)
-            self.assertEqual(list(self.root.glob("ci-local.*")), [self.path])
             self.assertIn(b"cleanup: removed", err)
+            self.assertEqual(list(self.root.glob("ci-local.*")), [self.path])
 
     def test_shell_signal_style_exit_cleans_scratch(self):
         os.utime(self.path, None)
