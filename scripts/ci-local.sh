@@ -4,7 +4,7 @@
 # sandbox), and temporary files on a case-sensitive volume. Uncommitted work never affects it.
 # Usage: scripts/ci-local.sh [TARGET [BASE]]   (defaults: HEAD, merge-base with origin/main)
 # Reuses only locked source objects and pinned dependencies under the Git common directory.
-# Used by the pre-push hook (scripts/git-hooks/pre-push); exits nonzero if CI would fail.
+# The pre-push hook can select affected host tests with a third argument (--pre-push).
 set -euo pipefail
 # Hooks export repository-local variables. Clear them before addressing the fresh clone;
 # otherwise `git -C` still operates on the pushing worktree instead of the clone.
@@ -65,6 +65,12 @@ mkdir -p "$tmp"
 # A runner failure is fatal, never hidden by a fallback or a saved test result.
 if [ -f scripts/host-tests.py ]; then
   tests=(scripts/host-tests.py --workers "${HOST_TEST_WORKERS:-2}" --report "$scratch/host-tests.json")
+  if [ "${3:-}" = --pre-push ] && [ -f scripts/ci-test-impact.py ]; then
+    selection="$scratch/host-test-modules"
+    if "$python" scripts/ci-test-impact.py "$base" > "$selection" && [ -s "$selection" ]; then
+      tests+=(--modules-from "$selection")
+    fi
+  fi
 else
   tests=(-m unittest discover -s tests)
 fi

@@ -3189,7 +3189,13 @@ journal/index edits for manual reference review and staging. It neither fetches
 nor commits. `tests/test_journal_renumber.py` covers ownership and refusal cases.
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
-`scripts/ci-local.sh` in a fresh exact-commit checkout. `scripts/ci-local-cache.py`
+`scripts/ci-local.sh` in a fresh exact-commit checkout. The hook uses
+`scripts/ci-test-impact.py` to trace Python imports, source references and
+explicit test inputs from the pushed diff. `scripts/host-tests.py` discovers the
+whole suite and runs the selected modules with the smoke set. An unmapped change,
+check infrastructure change or discovery error runs the full suite. Ruff and
+repository audits run on every push. Manual local CI and GitHub run all modules.
+`scripts/ci-local-cache.py`
 owns a locked Git-object store and interpreter/requirements-keyed dependency
 cache under Git-private `ci-cache/`; no working tree, result or lab output is
 reused. Per-run checkout/index/config and test scratch remain disposable. Linux
