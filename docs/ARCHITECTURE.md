@@ -8537,8 +8537,10 @@ preserves the native Unity instancing buffer names. When both stages consume
 `UnityDrawCallInfo`, they share its binding with both stage flags. The Android
 Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
 instances. It also draws Cloud Intersection Remap with the directional plain
-and instanced variants and depth fade disabled. Cloud native Material draws
-and whole-game coverage remain open.
+and instanced variants and depth fade disabled. The same fixture draws both
+Terrain Detail leaves through a Forward camera and reads the effect of a
+point light on each. Cloud native Material draws and whole-game coverage
+remain open.
 The ComputeShader path preserves the source kernel and workgroup tables and
 writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
 then read-only textures and structured buffers, then writable buffers and 2D,
@@ -8575,9 +8577,9 @@ matched the object dispatched in the Vulkan fixture.
 
 The signed `owner-graphics-shader-translation-v1` profiles route the original
 Outline, Cloud Intersection Remap, PaintHeight, Cutout/VertexLit,
-TerrainLayerUtils, Cloud Remap and its VertexLit fallback to their canonical
-bundle identities. The translator keeps the original Shader fallback name
-and dependency pointers. Bundle preparation resolves those pointers through
+TerrainLayerUtils, Cloud Remap and its VertexLit fallback, and two Terrain
+Detail leaves to their canonical bundle identities. The translator keeps the
+original Shader fallback name and dependency pointers. Bundle preparation resolves those pointers through
 the original source identities of the bound typed suppliers.
 The translator binds SMOL-V encoding,
 SPIRV-Cross and glslang alongside DXBC translation and SPIR-V validation.
