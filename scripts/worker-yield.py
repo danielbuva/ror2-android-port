@@ -74,9 +74,10 @@ def day_of(timestamp):
     return datetime.datetime.fromtimestamp(timestamp, UTC).strftime("%Y-%m-%d")
 
 
-def read_logs(orchestrator, since):
+def read_logs(orchestrator, since, now):
     """Tokens, thread count and quota failures per workstream and per day."""
     tokens = collections.Counter()
+    last_day = collections.Counter()
     threads = collections.Counter()
     day_tokens = collections.Counter()
     day_workers = collections.defaultdict(set)
@@ -96,12 +97,14 @@ def read_logs(orchestrator, since):
                 except (ValueError, KeyError):
                     continue
                 tokens[name] += spent
+                if modified >= now.timestamp() - 86400:
+                    last_day[name] += spent
                 day_tokens[day] += spent
                 day_workers[day].add(name)
             elif QUOTA in line and '"turn.failed"' in line:
                 quota_hits += 1
                 quota_days.add(day)
-    return tokens, threads, day_tokens, day_workers, quota_hits, quota_days
+    return tokens, last_day, threads, day_tokens, day_workers, quota_hits, quota_days
 
 
 def read_status(orchestrator, since, merged):
@@ -188,7 +191,7 @@ def report(orchestrator, days, merged=None, now=None):
     now = now or datetime.datetime.now(UTC)
     since = now - datetime.timedelta(days=days)
     merged = merged_prs(since) if merged is None else merged
-    tokens, threads, day_tokens, day_workers, quota_hits, quota_days = read_logs(orchestrator, since)
+    tokens, last_day, threads, day_tokens, day_workers, quota_hits, quota_days = read_logs(orchestrator, since, now)
     prs, escalations = read_status(orchestrator, since, merged)
     grants, devices = read_grants(orchestrator, since)
     rows, median = verdicts(tokens, prs, escalations, grants)
@@ -217,10 +220,10 @@ def report(orchestrator, days, merged=None, now=None):
     if quota_hits:
         out.append(f"Quota: {quota_hits} turn(s) failed on the usage limit in this window.")
     active = {name: row for name, row in rows.items() if name not in parked}
-    daily = sum(row[0] for row in active.values()) / max(days, 1)
+    daily = sum(last_day[name] for name in active)
     if budget is None:
         out.append(
-            f"Active workers spend about {daily / 1e6:.0f}M a day. Set budget-daily to the spend the owner "
+            f"Active workers spent {daily / 1e6:.0f}M in the last 24 h. Set budget-daily to the spend the owner "
             "accepts; until then size the set by the verdicts and device contention alone."
         )
     elif daily > budget:
@@ -231,12 +234,12 @@ def report(orchestrator, days, merged=None, now=None):
             if over <= 0:
                 break
             cut.append(name)
-            over -= row[0] / max(days, 1)
+            over -= last_day[name]
         out.append(
-            f"Over budget: active workers spend about {daily / 1e6:.0f}M a day against {budget / 1e6:.0f}M. Park, worst cost per PR first: {', '.join(cut)}."
+            f"Over budget: active workers spent {daily / 1e6:.0f}M in the last 24 h against {budget / 1e6:.0f}M. Park, worst cost per PR first: {', '.join(cut)}."
         )
     else:
-        out.append(f"Within budget: about {daily / 1e6:.0f}M a day against {budget / 1e6:.0f}M.")
+        out.append(f"Within budget: {daily / 1e6:.0f}M in the last 24 h against {budget / 1e6:.0f}M.")
     device_users = [w for w in grants if w not in parked]
     if devices and len(device_users) > 2 * len(devices):
         out.append(

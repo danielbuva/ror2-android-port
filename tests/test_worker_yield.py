@@ -88,12 +88,12 @@ class WorkerYieldTests(unittest.TestCase):
         self.log("dear", "20261127T100000Z", [turn(30_000_000)])
         self.status("cheap", [f"2026-11-27T11:0{i}:00Z MERGED PR #{20 + i}" for i in range(6)])
         self.status("dear", ["2026-11-27T11:00:00Z MERGED PR #30"])
-        (self.root / "budget-daily").write_text("15\n")
+        (self.root / "budget-daily").write_text("45\n")
         merged = {str(n): ("2026-11-27", 10) for n in [20, 21, 22, 23, 24, 25, 30]}
 
         text, _ = worker_yield.report(self.root, 3, merged=merged, now=NOW)
 
-        self.assertIn("Over budget: active workers spend about 20M a day against 15M. Park, worst cost per PR first: dear.", text)
+        self.assertIn("Over budget: active workers spent 60M in the last 24 h against 45M. Park, worst cost per PR first: dear.", text)
 
     def test_device_contention_is_flagged(self):
         lines = [f"2026-11-27T1{i}:00:00Z dispatcher: granted dev1 to worker{i}" for i in range(4)]
