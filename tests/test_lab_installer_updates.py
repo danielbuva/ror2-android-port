@@ -164,7 +164,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         phone.flow_metrics.sample.assert_not_called()
         for state, reason in (
             ("ERROR", "installer-update-error"),
-            ("UP_TO_DATE", "release-check-state-unavailable"),
+            ("READY", "release-check-state-unavailable"),
             (None, "release-check-state-unavailable"),
         ):
             with patch.object(phone, "read", return_value={"state": state}):
@@ -186,6 +186,18 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 put.assert_called_once_with("update-state.json", LAB.encoded({"state": "TEST_WAIT"}))
                 tap.assert_called_once_with("Check for updates")
                 self.assertEqual(wait.call_count, int(state["state"] == "CHECKING"))
+
+    def test_check_accepts_up_to_date_only_when_expected(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        current = {"state": "UP_TO_DATE", "release": {"version_code": 2}}
+        with (
+            patch.object(phone, "put"),
+            patch.object(phone, "tap"),
+            patch.object(phone, "read", return_value=current),
+        ):
+            self.assertEqual(phone.check(2, "UP_TO_DATE"), current)
+            with self.assertRaisesRegex(LAB.Failure, "unexpected-release-check-result"):
+                phone.check(2)
 
     def test_check_retries_once_after_fresh_owned_control_and_unchanged_state(self):
         phone = LAB.Phone("synthetic-private", 1)
@@ -264,7 +276,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
 
     def test_check_retry_refuses_unknown_state_and_never_changes_permissions(self):
         phone = LAB.Phone("synthetic-private", 1)
-        for state in (None, {"state": "ERROR"}, {"state": "UP_TO_DATE"}):
+        for state in (None, {"state": "ERROR"}, {"state": "READY"}):
             with (
                 patch.object(phone, "require_owned_installer"),
                 patch.object(phone, "shell"),
@@ -1973,9 +1985,15 @@ class LabInstallerUpdatesTests(unittest.TestCase):
     def test_acceptance_checks_witness_before_marking_update_and_rollback_pass(self):
         phone = Mock()
         phone.occupied.return_value = False
-        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/></hierarchy>')
+        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/><node text="The installed game is up to date."/></hierarchy>')
         phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}, {"sha256": "rolled"}]
-        phone.read.return_value = {"sha256": "rolled"}
+        phone.read.side_effect = lambda name: (
+            {"rebuilt": [LAB.UPDATE_ENTRY], "reused": []}
+            if name == "update-state.json"
+            else {"sha256": "second" if LAB.CURRENT_PHASE == "check-up-to-date" else "rolled"}
+        )
+        phone.check.return_value = {"installed_manifest_known": True, "changed_entries": [LAB.UPDATE_ENTRY], "removed_entries": []}
+        phone.producer_attempt_count.side_effect = [2, 3]
         phone.package_hash.side_effect = lambda package: LAB.sha(b"synthetic test input") if package == LAB.PACKAGE else "rolled"
         phone.wait_state.return_value = {"message": "signature refused"}
         phone.attach_mock(Mock(), "passed")
@@ -1986,7 +2004,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             LAB.acceptance(phone, {}, Path("unused"), phone.passed)
         calls = [(call[0], call.args) for call in phone.mock_calls if call[0] in ("installed", "retention_witness", "passed")]
         self.assertEqual(
-            calls[:10],
+            calls[:11],
             [
                 ("installed", (1,)),
                 ("retention_witness", ("seed",)),
@@ -1995,18 +2013,26 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 ("installed", (2, {"sha256": "first"})),
                 ("retention_witness", ("verify", {"sha256": "second"})),
                 ("passed", ("update-N-to-N+1",)),
+                ("passed", ("check-up-to-date",)),
                 ("installed", (1, {"sha256": "second"})),
                 ("retention_witness", ("verify", {"sha256": "rolled"})),
                 ("passed", ("same-key-rollback",)),
             ],
         )
+        self.assertEqual([call.args for call in phone.check.call_args_list], [(1,), (2,), (2, "UP_TO_DATE")])
 
     def test_prompt_acceptance_requires_settings_and_pending_evidence_before_update_cases(self):
         phone = Mock()
         phone.occupied.return_value = False
-        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/></hierarchy>')
+        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/><node text="The installed game is up to date."/></hierarchy>')
         phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}, {"sha256": "rolled"}]
-        phone.read.return_value = {"sha256": "rolled"}
+        phone.read.side_effect = lambda name: (
+            {"rebuilt": [LAB.UPDATE_ENTRY], "reused": []}
+            if name == "update-state.json"
+            else {"sha256": "second" if LAB.CURRENT_PHASE == "check-up-to-date" else "rolled"}
+        )
+        phone.check.return_value = {"installed_manifest_known": True, "changed_entries": [LAB.UPDATE_ENTRY], "removed_entries": []}
+        phone.producer_attempt_count.side_effect = [2, 3]
         phone.package_hash.side_effect = lambda package: LAB.sha(b"synthetic test input") if package == LAB.PACKAGE else "rolled"
         phone.wait_state.return_value = {"message": "signature refused"}
         phone.attach_mock(Mock(), "passed")

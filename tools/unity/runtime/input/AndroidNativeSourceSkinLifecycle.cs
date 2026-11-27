@@ -207,6 +207,7 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     }
 
     public bool NativeAnimatorInitialized => NativeSelectedSkinReady && animator.isInitialized;
+    internal bool OwnsMaterial(Material material) => sourceByTranslated.ContainsKey(material);
 
     public static AndroidNativeSourceSkinLifecycle PrepareInactive(GameObject modelObject, CharacterBody expectedBody, Report report,
                                                                   bool useCharacterModelCallbacks = true)
