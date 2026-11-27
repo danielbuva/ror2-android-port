@@ -34,6 +34,7 @@ public sealed class ContentFixture : MonoBehaviour
         public string shader;
         public Color32 low;
         public Color32 high;
+        public Color32[] outlineSamples;
         public bool passed;
         public string failure;
     }
@@ -291,7 +292,8 @@ public sealed class ContentFixture : MonoBehaviour
             var shader = bundle.LoadAsset<Shader>(shaderAddress);
             if (shader == null || !shader.isSupported) throw new Exception("Shader is unavailable or unsupported");
             report.shader = shader.name;
-            DrawAnimateAlpha(shader, report);
+            if (shader.name == "Unlit/OutlineHighlightNew") DrawOutline(shader, report);
+            else DrawAnimateAlpha(shader, report);
         }
         catch (Exception error) { report.failure = error.Message; }
         Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(report));
@@ -557,6 +559,67 @@ public sealed class ContentFixture : MonoBehaviour
             report.passed = report.graphics == "Vulkan" && report.nonZeroAfterClear == 0 && gatherMatches;
         }
         finally { Destroy(source); }
+    }
+
+    static void DrawOutline(Shader shader, ShaderDrawReport report)
+    {
+        var color = Shader.PropertyToID("_OutlineColor");
+        var sobel = Shader.PropertyToID("_SobelTex");
+        var previousSobel = Shader.GetGlobalTexture(sobel);
+        var plain = new Material(shader);
+        var instanced = new Material(shader) { enableInstancing = true };
+        var mesh = new Mesh();
+        var pixels = new Texture2D(32, 1, TextureFormat.RGBA32, false, true);
+        var target = RenderTexture.GetTemporary(32, 32, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        var previous = RenderTexture.active;
+        try
+        {
+            using var commands = new CommandBuffer();
+            mesh.vertices = new[] {
+                new Vector3(-0.15f, -0.2f, 0.5f), new Vector3(-0.15f, 0.2f, 0.5f),
+                new Vector3(0.15f, 0.2f, 0.5f), new Vector3(0.15f, -0.2f, 0.5f)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2 };
+            plain.SetColor(color, Color.white);
+            var properties = new MaterialPropertyBlock();
+            properties.SetVectorArray(color, new Vector4[] { Color.red, Color.green });
+            var transforms = new[] {
+                Matrix4x4.Translate(new Vector3(-0.6f, 0, 0)), Matrix4x4.Translate(new Vector3(0.6f, 0, 0))
+            };
+            commands.SetRenderTarget(target);
+            commands.ClearRenderTarget(true, true, Color.blue);
+            commands.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+            commands.SetGlobalTexture(sobel, Texture2D.whiteTexture);
+            commands.DrawMesh(mesh, Matrix4x4.identity, plain, 0, 0);
+            commands.DrawMeshInstanced(mesh, 0, instanced, 0, transforms, transforms.Length, properties);
+            Graphics.ExecuteCommandBuffer(commands);
+
+            RenderTexture.active = target;
+            pixels.ReadPixels(new Rect(0, 16, 32, 1), 0, 0, false);
+            report.outlineSamples = new Color32[] {
+                pixels.GetPixel(16, 0), pixels.GetPixel(6, 0), pixels.GetPixel(25, 0), pixels.GetPixel(11, 0)
+            };
+            var expected = new Color32[] { Color.white, Color.red, Color.green, Color.blue };
+            for (int i = 0; i < expected.Length; ++i)
+            {
+                var sample = report.outlineSamples[i];
+                var match = expected[i];
+                if (Mathf.Abs(sample.r - match.r) > 5 || Mathf.Abs(sample.g - match.g) > 5 ||
+                    Mathf.Abs(sample.b - match.b) > 5)
+                    throw new Exception("Outline sample " + i + " did not match the expected RGB");
+            }
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            Shader.SetGlobalTexture(sobel, previousSobel);
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(target);
+            Destroy(plain);
+            Destroy(instanced);
+            Destroy(mesh);
+            Destroy(pixels);
+        }
     }
 
     const int ScopeWidth = 16;
