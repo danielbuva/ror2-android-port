@@ -28,13 +28,13 @@ STUBS = r"""
 using System; using System.Collections.Generic; using System.Linq;
 public class UObject { public bool exists=true; public static implicit operator bool(UObject o) => !ReferenceEquals(o,null)&&o.exists; }
 public struct NetworkInstanceId {
- public uint Value; public NetworkInstanceId(uint value){Value=value;} public static NetworkInstanceId Invalid => new NetworkInstanceId(0);
+ public uint Value; public NetworkInstanceId(uint value){Value=value;} public static NetworkInstanceId Invalid => new NetworkInstanceId(uint.MaxValue);
  public static bool operator ==(NetworkInstanceId a,NetworkInstanceId b)=>a.Value==b.Value;
  public static bool operator !=(NetworkInstanceId a,NetworkInstanceId b)=>a.Value!=b.Value;
  public override bool Equals(object o)=>o is NetworkInstanceId id&&Value==id.Value; public override int GetHashCode()=>(int)Value;
 }
 public class GameObject:UObject {
- public int scene=1; public uint id; public NetworkIdentity identity; public HealthComponent health;
+ public int scene=1,bodyIndex; public uint id; public NetworkIdentity identity; public HealthComponent health;
  public T GetComponent<T>() where T:class => typeof(T)==typeof(NetworkIdentity)?identity as T:health as T;
 }
 public class NetworkIdentity:UObject { public NetworkInstanceId netId; public bool isServer=true; }
@@ -51,6 +51,7 @@ public class DamageReport { public CharacterBody victimBody; public HealthCompon
 public static class BodyCatalog {
  public static readonly GameObject Boss=new GameObject(),Probe=new GameObject();
  public static GameObject FindBodyPrefab(string n)=>n=="Boss"?Boss:Probe; public static int FindBodyIndex(string n)=>n=="Boss"?1:2;
+ public static int FindBodyIndex(GameObject body)=>body.bodyIndex;
 }
 public static class NetworkServer {
  public static bool active=true; public static uint FailDestroyId;
@@ -73,6 +74,7 @@ public class ReportData {
 }
 public class Harness {
  const string OriginalBossBodyName="Boss",OriginalProbeBodyName="Probe";
+ GameObject originalBossBodyPrefab=new GameObject{bodyIndex=1};
  int scene=1; bool disposed,cleanupStarted,ownsActivatedSceneInstance=true; ReportData Report=new ReportData();
  ScriptedCombatEncounter encounter=new ScriptedCombatEncounter(); readonly HashSet<uint> ownedBossNetworkIds=new HashSet<uint>();
  readonly List<OwnedMaster> ownedBossMasters=new List<OwnedMaster>(),ownedProbeMasters=new List<OwnedMaster>();
@@ -96,6 +98,7 @@ CASES = r"""
  static void Main() {
   // A terminal original death is necessary; no observed event manufactures destruction.
   var natural=new Harness();var row=natural.Add(1);var damage=natural.Damage(row);
+  row.master.bodyPrefab=natural.originalBossBodyPrefab;
   damage.victim.alive=true;natural.OnNativeActorDeath(damage);Need(!row.nativeDeathObserved,"living victim accepted");damage.victim.alive=false;
   row.master.terminal=false;natural.OnNativeActorDeath(damage);Need(!row.nativeDeathObserved,"revivable death accepted");row.master.terminal=true;
   natural.cleanupStarted=true;natural.OnNativeActorDeath(damage);Need(!row.nativeDeathObserved,"cleanup death accepted");natural.cleanupStarted=false;
@@ -107,6 +110,11 @@ CASES = r"""
   natural.ValidateOwnedMaster(row,"Boss",NetworkInstanceId.Invalid,"boss");natural.RequestDestroy(row,false);natural.RequestDestroy(row,false);
   Need(row.naturallyRetired&&!row.masterDestroyRequestCompleted&&natural.Report.naturallyRetiredBossMasters==1,"native master misreported or counted twice");
   Need(!NetworkServer.DestroyCalls.ContainsKey(1)&&!NetworkServer.DestroyCalls.ContainsKey(1001),"naturally destroyed actor destroyed again");
+
+  var foreignBoss=new Harness();var foreignBossRow=foreignBoss.Add(6);
+  foreignBossRow.master.minionOwnership=new MinionOwnership{NetworkownerMasterId=new NetworkInstanceId(77)};
+  foreignBoss.OnNativeActorDeath(foreignBoss.Damage(foreignBossRow));
+  Need(!foreignBossRow.nativeDeathObserved,"boss with a foreign owner authorized retirement");
 
   // Master destruction may precede corpse retirement; only that captured dead corpse is cleaned.
   var corpse=new Harness();var corpseRow=corpse.Add(2);corpse.OnNativeActorDeath(corpse.Damage(corpseRow));corpse.KillMaster(corpseRow);
@@ -173,6 +181,7 @@ class SirenNativeActorRetirementTests(unittest.TestCase):
         source = SOURCE.read_text()
         markers = [
             "sealed class OwnedMaster",
+            "bool HasNativeActorBodyPrefab(",
             "void OnNativeActorDeath(",
             "void CaptureNativeActorDeath(",
             "void ValidateNaturallyDestroyedMaster(",

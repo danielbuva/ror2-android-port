@@ -57,7 +57,7 @@ class DutyCycleTests(unittest.TestCase):
 
     def test_soc_ceiling_uses_hottest_zone_and_strict_resume(self):
         policy = runner.ThermalDutyCycle("thor")
-        for tick, (soc, expected) in enumerate(((84.9, None), (85, signal.SIGSTOP), (92, None), (70, None), (69.9, signal.SIGCONT))):
+        for tick, (soc, expected) in enumerate(((89.9, None), (90, signal.SIGSTOP), (92, None), (70, None), (69.9, signal.SIGCONT))):
             self.assertEqual(policy.observe({**zones(cpu=65), "soc0": ("soc", 62), "soc1": ("soc", soc)}, tick * 0.25), expected)
         receipt = policy.receipt(1)
         self.assertEqual(receipt["ceiling_pauses"], 1)
@@ -67,7 +67,7 @@ class DutyCycleTests(unittest.TestCase):
 
     def test_ceiling_cooldown_preserves_cpu_duty_cycle(self):
         policy = runner.ThermalDutyCycle()
-        self.assertEqual(policy.observe({**zones(cpu=76), "soc0": ("soc", 85)}, 0), signal.SIGSTOP)
+        self.assertEqual(policy.observe({**zones(cpu=76), "soc0": ("soc", 90)}, 0), signal.SIGSTOP)
         self.assertIsNone(policy.observe({**zones(cpu=68), "soc0": ("soc", 69.9)}, 0.25))
         self.assertEqual(policy.observe(zones(cpu=55), 0.5), signal.SIGCONT)
         self.assertEqual(policy.receipt(0.5)["ceiling_pause_seconds"], 0.25)
@@ -90,7 +90,7 @@ class DutyCycleTests(unittest.TestCase):
                 result = runner.run(
                     ["producer"],
                     receipt,
-                    sensor=lambda: {**zones(), "soc0": ("soc", 45 if tick[0] == 0 else 85)},
+                    sensor=lambda: {**zones(), "soc0": ("soc", 45 if tick[0] == 0 else 90)},
                     clock=lambda: tick[0],
                     wait=wait,
                 )

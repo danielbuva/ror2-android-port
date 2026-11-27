@@ -452,6 +452,7 @@ class Graph:
             artifacts = {"receipt": "result.json"}
         elif producer == "object_produce":
             artifacts["layout"] = "layout.json"
+            artifacts["types"] = "types.json"
         if producer in {
             "record_produce",
             "record_remap",
@@ -466,11 +467,10 @@ class Graph:
             artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
-        if producer == "object_produce":
+        if producer == "object_produce" and not profile.get("pack_only"):
             target = "payload/" + ("windows-shaders.bundle" if "original_bundle" in profile else profile["bundle"]["name"])
             outputs[target] = target
-            if "original_bundle" not in profile:
-                artifacts["catalog_bundle"] = target
+            artifacts["catalog_bundle"] = target
         if producer == "player_data" or (producer == "shader_produce" and "typed_records" not in profile):
             artifacts = {"receipt": "result.json"}
             targets = [row["file"] for row in profile["shaders"]] if producer == "shader_produce" else list(profile["outputs"])
@@ -582,7 +582,7 @@ class Graph:
             if not compressed:
                 profile = json.loads(path.read_bytes())
                 producer = owner(profile)
-                direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce"}
+                direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce", "shader_prefab"}
                 typed_shaders = producer == "shader_produce" and "typed_records" in profile
                 registry_remap = producer == "record_remap" and "original_sources" in profile
                 if producer not in direct and not typed_shaders and not registry_remap:
@@ -623,10 +623,12 @@ class Graph:
                 problem = "foreign or missing destination"
             elif tuple(destination) in destinations:
                 problem = "duplicate destination"
-            elif any(not isinstance(row.get(key), list) or len(row[key]) != 3 for key in ("source", "record_source")):
+            elif any(
+                not isinstance(row.get(key), list) or len(row[key]) != 3 for key in (("record_source",) if "generated" in row else ("source", "record_source"))
+            ):
                 problem = "explicit source and record_source identities required"
             elif pin not in self.profiles:
-                available = candidates.get(tuple(row["source"]), set())
+                available = candidates.get(tuple(row.get("source", ())), set())
                 matches = {candidate for candidate in available if candidate[1] == tuple(record_source)}
                 if not matches:
                     matches = available
@@ -669,7 +671,9 @@ class Graph:
                     ]
                 unresolved.append(failure)
             else:
-                binding = {key: row[key] for key in ("destination", "source")} | dict(supplier=pin, record_source=record_source)
+                binding = {key: row[key] for key in ("destination", "source", "generated", "pointer_namespace") if key in row} | dict(
+                    supplier=pin, record_source=record_source
+                )
                 if selection is not None:
                     binding["selection"] = selection
                 bindings.append(binding)
@@ -677,7 +681,7 @@ class Graph:
 
     def bundle_preload(self, path, profile, active):
         """Bind fresh suppliers and actual final containers to a signed policy."""
-        if set(profile) != {"schema", "profiles", "request"}:
+        if set(profile) - {"mesh_append"} != {"schema", "profiles", "request"}:
             raise ValueError("unsupported bundle release contract")
         name = "recipe/jobs/" + Path(path).stem + ".json"
         needs = [self.build(digest(self.repo / dependency), active) for dependency in profile["profiles"]]
@@ -727,6 +731,24 @@ class Graph:
                         raise ValueError("bundle artifact requires a declared source producer")
 
         visit(request)
+        if "mesh_append" in profile:
+            append = profile["mesh_append"]
+            if set(append) != {"packs", "mesh_consumers"} or not all(append.values()):
+                raise ValueError("bundle Mesh append requires source packs and consuming scenes")
+            pack_artifacts = {"receipt": "receipt", "objects.bin": "objects", "resources.bin": "resources", "index.jsonl": "index", "types.json": "types"}
+            generated_packs = [
+                {filename: self.artifact_pin(job, artifact) for filename, artifact in pack_artifacts.items()}
+                for job in needs
+                if Path(self.jobs[job]["script"]).stem == "mesh_produce"
+            ]
+            for pack in append["packs"]:
+                if pack not in generated_packs:
+                    raise ValueError("bundle Mesh append requires one generated producer per pack")
+            generated_bundles = [self.artifact_pin(job, "catalog_bundle") for job in needs if "catalog_bundle" in self.jobs[job]["artifacts"]]
+            for consumer in append["mesh_consumers"]:
+                if consumer["bundle"] not in generated_bundles:
+                    raise ValueError("bundle Mesh append requires a generated scene bundle")
+            visit(append)
         # Indirect managed witnesses must come from generators whose source and
         # input closure the dispatcher can invalidate, rather than retained JSON.
         managed = request["managed_inputs"]
@@ -742,7 +764,10 @@ class Graph:
                 registry_jobs.add(match.group(1))
             if len(registry_jobs) != 1 or owner(self.job_profiles[next(iter(registry_jobs))]) != "player_data":
                 raise ValueError("bundle registry must come from one final player producer")
-        final = ("canonical/" if "canonical" in policy else "emitted/") + policy["bundle"] + ".bundle"
+        directory = "canonical" if "canonical" in policy else "emitted"
+        if "mesh_append" in profile:
+            directory = "mesh-complete"
+        final = directory + "/" + policy["bundle"] + ".bundle"
         self.jobs[name] = dict(
             schema=1,
             script=PREFIX + "bundle_preload.py",
@@ -806,21 +831,12 @@ class Graph:
         needs = []
         for job in sorted(set(selected_jobs)):
             descriptor = self.jobs[job]
-            for target, path in sorted(descriptor["outputs"].items()):
-                if not target.startswith("payload/"):
-                    continue
-                artifact = "manifest_bundle_" + str(len(bundles))
-                descriptor["artifacts"][artifact] = path
-                bundles.append(
-                    {
-                        "name": target.removeprefix("payload/"),
-                        "path": "${job:" + job + ":" + artifact + "}",
-                        "sha256": "${sha256:" + job + ":" + artifact + "}",
-                        "bytes": "${bytes:" + job + ":" + artifact + "}",
-                    }
-                )
-                if job not in needs:
-                    needs.append(job)
+            bundle = descriptor["artifacts"].get("catalog_bundle")
+            if bundle is None:
+                continue
+            target = next(target for target, path in descriptor["outputs"].items() if path == bundle)
+            bundles.append(dict(name=target.removeprefix("payload/"), **self.artifact_pin(job, "catalog_bundle")))
+            needs.append(job)
         if not bundles:
             raise ValueError("bundle manifest requires selected complete bundle profiles")
         name = "recipe/jobs/owner-bundle-manifest.json"
@@ -840,7 +856,8 @@ class Graph:
         """Bind the source catalog to final containers and the embedded bootstrap."""
         request = json.loads((self.repo / request_path).read_text())
         common = {"schema", "input_id", "attempt"}
-        if set(request) - common not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
+        mode = set(request) - common - {"required_routes"}
+        if mode not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
             raise ValueError("unsupported catalog request template")
         profiles, bundles, needs, registries = [], {}, [], []
         resources = {}
@@ -952,6 +969,7 @@ class Graph:
     def current_code_sources(self, *, signed_audio=False):
         runtime = "recipe/runtime-sources.json"
         audio_manifest = "recipe/original-audio-owner-sources.json"
+        camera_recipe = "recipe/native-view-camera-transform.json"
         audio = self.repo / "tools/unity/support/audio"
         return [
             "environment/toolchain.json",
@@ -963,6 +981,8 @@ class Graph:
             "recipe/importer-identities.json",
             audio_manifest,
             "recipe/owner-audio-prefab.json",
+            camera_recipe,
+            json.loads((self.repo / camera_recipe).read_text())["source_paths"]["marker"],
             "recipe/wwise-android-abi.json",
             "recipe/wwise-init-android.json" if signed_audio else "tools/phone-build/legacy/transform_init.py.txt",
             "android/Assets/LabDiagnostics.cs",

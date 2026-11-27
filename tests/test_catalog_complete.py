@@ -472,7 +472,7 @@ class CatalogCompletionTests(unittest.TestCase):
             projection = dict(
                 schema="owner-catalog-projection-v1",
                 source_catalog_sha256="catalog-hash",
-                remaps={"1": "assetbundlemanifest"},
+                remaps={"1": "AssetBundleManifest"},
                 exclusions=[2],
                 provider_roots=[1],
                 runtime_roots=[],
@@ -485,7 +485,10 @@ class CatalogCompletionTests(unittest.TestCase):
             result = C.produce(path, root / "output")
             self.assertEqual(result["checks"]["locations"], 1)
             emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
-            self.assertEqual(emitted["locations"], [dict(staged, primaryKey="authored", root=True, bundle="generated-android-data")])
+            self.assertEqual(
+                emitted["locations"],
+                [dict(staged, path="AssetBundleManifest", primaryKey="authored", root=True, bundle="generated-android-data")],
+            )
             self.assertEqual(emitted["keys"], [dict(key="alias", keyType="System.String", locations=[1])])
             policy.write_text(json.dumps(dict(projection, source_catalog_sha256="other")))
             request["projection"]["policy"] = pin(policy)
@@ -494,7 +497,9 @@ class CatalogCompletionTests(unittest.TestCase):
                 C.produce(path, root / "other")
 
     def test_projection_appends_selected_aliases_in_source_order_and_preserves_root_keys(self):
-        locations = [dict(id=i, internalId=f"Assets/{i}.asset", type="UnityEngine.GameObject", primaryKey=str(i)) for i in range(1, 6)]
+        locations = [dict(id=i, internalId=f"Assets/Item{i}.asset", type="UnityEngine.GameObject", primaryKey=str(i)) for i in range(1, 6)]
+        mesh_path = "Assets/WholeGame/SomeMesh.fbx"
+        mesh_key = "SomeMesh.fbx[trunk]"
         source = dict(
             input_id="source",
             source_catalog_sha256="catalog-hash",
@@ -510,13 +515,16 @@ class CatalogCompletionTests(unittest.TestCase):
             provider_roots=[1],
             runtime_roots=[],
             extra_roots=[5],
-            mesh_subobjects=[],
+            mesh_subobjects=[dict(path=mesh_path, key=mesh_key, type="UnityEngine.Mesh")],
             append_locations=[3, 4, 5],
         )
-        builds = [dict(assetNames=[row["internalId"] for row in locations])]
+        builds = [dict(assetNames=[f"assets/wholegame/item{i}.asset" for i in range(1, 6)] + [mesh_path.casefold()])]
         with patch.object(sys, "path", [str(ROOT / "scripts/lab"), *sys.path]):
             result = C.project_source_catalog(source, policy, builds, input_id="source", attempt="startup")
-            self.assertEqual(result["keys"], [dict(key="aliases", locations=[1, 2, 4, 3]), source["keys"][1]])
+            self.assertEqual([row["path"] for row in result["locations"]], [f"Assets/WholeGame/Item{i}.asset" for i in range(1, 6)] + [mesh_path])
+            self.assertEqual(
+                result["keys"], [dict(key="aliases", locations=[1, 2, 4, 3]), source["keys"][1], dict(key=mesh_key, keyType="System.String", locations=[6])]
+            )
             self.assertEqual(result["roots"], [1, 5])
             for invalid in ([3, 3], [6]):
                 with self.assertRaisesRegex(ValueError, "catalog projection append selection differs"):
@@ -569,9 +577,11 @@ class CatalogCompletionTests(unittest.TestCase):
                 )
             )
             request["source_additions"] = dict(metadata=pin(source), locations=[2])
+            request["required_routes"] = [dict(key="ghost-guid", type=original["type"], location=2)]
             path.write_text(json.dumps(request))
             result = C.produce(path, root / "output")
             self.assertEqual(result["checks"]["locations"], 2)
+            self.assertEqual(result["checks"]["required_routes"], 1)
             emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
             self.assertEqual([(row["id"], row["bundle"]) for row in emitted["locations"]], [(1, "generated-android-data"), (2, "generated-android-data")])
             self.assertEqual([(row["key"], row["locations"]) for row in emitted["keys"]], [("group", [1, 2]), ("ghost-guid", [2])])
@@ -579,6 +589,26 @@ class CatalogCompletionTests(unittest.TestCase):
             path.write_text(json.dumps(request))
             with self.assertRaisesRegex(ValueError, "location selection differs"):
                 C.produce(path, root / "missing")
+
+    def test_required_routes_reject_missing_wrong_and_ambiguous_typed_endpoints(self):
+        shader = "UnityEngine.Shader, UnityEngine.CoreModule"
+        metadata = dict(
+            locations=[dict(id=1, type=shader), dict(id=2, type="UnityEngine.Material, UnityEngine.CoreModule"), dict(id=3, type=shader)],
+            keys=[
+                dict(key="camera", locations=[2, 1]),
+                dict(key="number", keyType="System.Int32", locations=[1]),
+                dict(key="ambiguous", keyType="System.String", locations=[1, 3]),
+            ],
+        )
+        C.validate_required_routes(metadata, [dict(key="camera", type=shader, location=1)])
+        for key, location, expected in (
+            ("missing", 1, "found \\[\\]"),
+            ("number", 1, "found \\[\\]"),
+            ("camera", 2, "found \\[1\\]"),
+            ("ambiguous", 1, "found \\[1, 3\\]"),
+        ):
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, expected):
+                C.validate_required_routes(metadata, [dict(key=key, type=shader, location=location)])
 
     def test_source_root_additions_restore_catalog_membership_and_alias_order(self):
         identity = dict(input_id="fixture", source_catalog_sha256="source-catalog", providers=["provider"])

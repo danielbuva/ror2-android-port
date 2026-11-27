@@ -64,6 +64,19 @@ class SanitizeTest(unittest.TestCase):
 
 
 class BatteryRuleTest(unittest.TestCase):
+    def test_strict_battery_applies_to_runner_and_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            config = repo / "work/config/lab-runner.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(json.dumps({"battery_charge_override": True}))
+            runner = lab_runner.Runner(repo, {}, strict_battery=True)
+            with mock.patch.object(runner, "battery", return_value=(86, 0, 300)):
+                self.assertIn("> 85 %", runner.admit_battery("synthetic"))
+            with mock.patch.dict(os.environ, {"LAB_BATTERY_CHARGE_OVERRIDE": "1"}), mock.patch.object(lab_runner.subprocess, "run") as child:
+                runner.run(["probe"], repo)
+                self.assertNotIn("LAB_BATTERY_CHARGE_OVERRIDE", child.call_args.kwargs["env"])
+
     def test_explicit_toolhost_cooldown_honors_owner_override(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
@@ -152,14 +165,17 @@ class RefusedLeaseTest(unittest.TestCase):
     def test_local_packaging_refuses_without_a_grant_and_preserves_checkout(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory).resolve()
+            checkout = repo / ".local/worktrees/fixture"
+            checkout.mkdir(parents=True)
             runner = lab_runner.Runner(repo, {})
             runner.devices = {"nova-b": "fixture"}
             command = lab_runner.parse_command("/lab script device=nova-b -- scripts/lab-alpha-packaging.py --package-only")
             with mock.patch.object(runner, "run", return_value=0) as run, mock.patch.object(runner, "battery") as battery:
                 with self.assertRaisesRegex(lab_runner.CommandError, "grant required"):
-                    runner.execute(command, local_checkout=repo, workstream="fixture-worker")
+                    runner.execute(command, local_checkout=checkout, workstream="fixture-worker")
             battery.assert_not_called()
-            self.assertEqual(run.call_args.args[0][1:], ["scripts/prune-generated.py", "--apply"])
+            run.assert_called_once_with([lab_runner.sys.executable, "scripts/prune-generated.py", "--apply", "--aggressive"], checkout, timeout=1800)
+            self.assertTrue(checkout.is_dir())
 
     def test_local_packaging_publishes_terminal_after_shared_runner_failure(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -169,13 +185,26 @@ class RefusedLeaseTest(unittest.TestCase):
             config.write_text(json.dumps({"devices": {"nova-b": "fixture"}}))
             request = repo / "request.json"
             done = repo / "work/terminal.json"
-            request.write_text(json.dumps(dict(repo=str(repo), checkout=str(repo), workstream="fixture-worker", device="nova-b", done_file=str(done))))
+            source_commit = "a" * 40
+            request.write_text(
+                json.dumps(
+                    dict(
+                        repo=str(repo),
+                        checkout=str(repo),
+                        workstream="fixture-worker",
+                        device="nova-b",
+                        done_file=str(done),
+                        toolhost_source_commit=source_commit,
+                    )
+                )
+            )
             with (
                 mock.patch.object(lab_runner.subprocess, "check_output", return_value=str(repo / ".git")),
                 mock.patch.object(lab_runner.Runner, "execute", side_effect=lab_runner.CommandError("fixture failure")) as execute,
             ):
                 self.assertEqual(lab_runner.local_packaging(request), 1)
             self.assertEqual(execute.call_args.kwargs, dict(local_checkout=repo, workstream="fixture-worker"))
+            self.assertEqual(execute.call_args.args[0]["args"][-2:], ["--toolhost-source-commit", source_commit])
             self.assertEqual(json.loads(done.read_bytes())["error"], "fixture failure")
 
     def test_explicit_toolhost_plan_is_validated_and_cached_by_input_pin(self):

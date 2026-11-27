@@ -49,8 +49,9 @@ class SirenNativeEncounterContinuationTests(unittest.TestCase):
         owner = OWNER.read_text()
         continuation = extract_declaration(owner, "public static class SirenNativeEncounterContinuationContract")
         witness = extract_declaration(owner, "public bool TryGetExactNativeBossNetworkIds(out uint[] networkIds)")
+        body_contract = extract_declaration(owner, "bool HasNativeActorBodyPrefab(")
         fixture = FIXTURE.read_text()
-        source = fixture.replace("__PRODUCTION_CONTRACT__", continuation).replace("__PRODUCTION_METHOD__", witness)
+        source = fixture.replace("__PRODUCTION_CONTRACT__", continuation).replace("__PRODUCTION_METHOD__", witness + "\n" + body_contract)
         self.assertNotIn("__PRODUCTION_", source)
 
         with tempfile.TemporaryDirectory(prefix="siren-continuation-", dir=HOST_TEMP) as temporary_directory:
@@ -75,6 +76,13 @@ class SirenNativeEncounterContinuationTests(unittest.TestCase):
             run = subprocess.run([str(self.mono), str(executable)], capture_output=True, text=True)
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
             self.assertIn("siren-native-boss-production-witness-all-passed", run.stdout)
+
+    def test_source_reward_table_refreshes_before_encounter_activation(self):
+        attach = extract_declaration(OWNER.read_text(), "public static SirenEncounterSession Attach(")
+        refresh = attach.index("rewards.RegenerateDropTable(Run.instance);")
+        self.assertLess(attach.index("owner.bossGroup.dropTable is BasicPickupDropTable rewards"), refresh)
+        self.assertLess(attach.index("SirenEncounterContract.RetainOwnerAfterPreflight("), refresh)
+        self.assertLess(refresh, attach.index("selected.SetActive(true);"))
 
     def test_selector_defaults_and_world_clock_wiring_remain_scoped(self):
         session = SESSION.read_text()

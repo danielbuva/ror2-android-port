@@ -31,12 +31,25 @@ wait for the enabled Play button and tap its observed bounds on display zero.
 If the accessibility hierarchy cannot expose the button, provide
 `bootstrap_play_reference` with `png` (a private Ready screenshot under
 `work/` at the same viewport) and `bounds` (four pixel coordinates enclosing
-the visible Play label). The runner requires an exact match before tapping.
+the visible Play label). The runner matches the label at the same viewport
+before tapping, including the 70% dimmed rendering observed on Nova.
 The runner then waits for the owned native menu, taps its reported Start button
 and waits for a ready world before the clock begins. The lab and converted packages
 use their respective gameplay reports. For a lab stage-transition memory
 soak, pair it with an explicit auto-route selector. Physical input
 qualification remains separate.
+`capture_video: true` records up to 180 seconds after the owned world is
+ready. For a direct lab survivor launch, use an explicit spine report ID in
+`selection` and `developerSurvivorOverride: true` without `start_from_menu`.
+Schedule any touches after the recording starts with `input_schedule`.
+For one bounded native stage exit, include
+`"stage_transition": {"from": "golemplains", "to": "goolake"}` with
+`start_from_menu` and the `body-state-spawn-state-auto-nova-spine-bringup`
+selector. The runner requires the declared first stage, one completed
+transition in the same session, and ten seconds of live destination play
+within `duration_seconds`. It saves the qualifying report as
+`stage-transition.json`. `enforce_soc_ceiling: true` stops the session on
+the first CPU, GPU or SoC temperature sample at or above 90 C.
 For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
 The selector uses the stored loadout and existing integrated stage loader.
@@ -268,7 +281,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 | `./dev prototype --action apk-member-compare` | Host verification: --compare FIRST_RECEIPT SECOND_RECEIPT requires same source/input/API and verified APK hashes, then compares every unsigned APK member. Records all differences, including build GUIDs; does not install or promote acceptance. |
 | `./dev prototype --action whole-catalog-run` | Install, sync and run the catalog-registration check. |
 | `./dev prototype --action shader-outline-candidate` | Host-only: --target outline-highlight generates the original two-pass shader candidate at a stable ignored path; editor compilation and Android appearance remain unverified. |
-| `./dev prototype --action shader-ramp-fog` | Current host-only native single-pass reconstruction: optional --target ramp-fog (default), sobel-buffer or sobel-outline. Refuses source/tool drift and existing output; editor compilation, Android execution and appearance remain separate gates. |
+| `./dev prototype --action shader-ramp-fog` | Current host-only native single-pass reconstruction. Targets: ramp-fog (default), sobel-buffer, sobel-outline, vision-limit. Refuses source/tool drift and existing output. Editor compilation, Android execution and appearance remain separate gates. |
 | `./dev prototype --action shader-screen-damage` | Host-only: reconstruct the accepted native ScreenDamage pass at a stable ignored path; refuses source/tool drift and overwrites. Editor compilation, Android execution and appearance are separate gates. |
 | `./dev prototype --action shader-translucent` | Host-only: generate four source-bound camera blur/crop shader candidates under ignored work/. Refuses input, tool, helper or output drift. No catalog activation, Unity compilation, Android rendering or visual parity is implied. |
 

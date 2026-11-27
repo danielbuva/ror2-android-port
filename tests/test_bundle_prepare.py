@@ -9,6 +9,7 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"))
@@ -30,6 +31,203 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(actual[("pack", "CAB-pack", 7)], {("original.bundle", "CAB-source", 11), ("original.bundle", "CAB-source", 12)})
             self.assertEqual(actual[("pack", "CAB-pack", 8)], {("original.bundle", "CAB-source", 11)})
             self.assertEqual(source_files, {"original.bundle": "a" * 64})
+
+    def test_prefab_shader_supplier_uses_original_body_identity(self):
+        root_repo = Path(__file__).resolve().parents[1]
+        G = P.O.module("_prefab_shader_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "recipe/owner-shader.json"
+            path.parent.mkdir()
+            source = ("shaders.bundle", "CAB-source", 11)
+            destination = ("content", "CAB-content", 7)
+            original = dict(zip(("path", "member", "path_id"), source), sha256="a" * 64)
+            output = dict(zip(("bundle", "member", "path_id"), destination))
+            local_output = dict(output, path_id=8)
+            original_fallback = dict(original, path_id=12)
+            profile = dict(
+                shader_links=[dict(sdk_shader=6, to=[3, 6]), dict(sdk_shader=34, to=[0, 41])],
+                records=[
+                    dict(original=original, outputs=[output]),
+                    dict(original=original, outputs=[local_output], fallback_original=[dict(original=original_fallback, to=[0, 42])]),
+                ],
+            )
+            path.write_text(json.dumps(profile))
+
+            pin = P.O.B.sha(path)
+            local = "content", "CAB-content", 8
+            self.assertEqual(G.Graph(root, {}).source_suppliers([pin], {source}), {source: {(pin, destination), (pin, local)}})
+            source_files = {}
+            dependencies = {}
+            self.assertEqual(
+                P.module("bundle_prepare").original_identities(P, path, source_files, shader_dependencies=dependencies),
+                {destination: {source}, local: {source}},
+            )
+            self.assertEqual(source_files, {source[0]: original["sha256"]})
+            self.assertEqual(
+                dependencies,
+                {
+                    (destination, source): {(3, 6): ("sdk", "Resources/unity_builtin_extra", 6), (0, 41): ("sdk", "Resources/unity_builtin_extra", 34)},
+                    (local, source): {(0, 42): ("shaders.bundle", "CAB-source", 12)},
+                },
+            )
+            with self.assertRaisesRegex(ValueError, "original source file pins disagree"):
+                P.module("bundle_prepare").original_identities(P, path, {source[0]: "b" * 64})
+
+    def test_payload_shader_suppliers_use_pinned_original_selectors(self):
+        source = dict(path="shaders.bundle", member="CAB-source", sha256="a" * 64)
+        output = dict(bundle="content", member="CAB-content", path_id=7)
+        other = dict(output, path_id=8)
+        profiles = {
+            "template": (
+                dict(source=source, template_inputs={}, shaders=[dict(path_id=11, outputs=[output]), dict(path_id=12, outputs=[other])]),
+                {7: 11, 8: 12},
+            ),
+            "sdk": (dict(source_type=dict(source, path_id=13), compiler_sdk={}, materials=[], outputs=[output, other]), {7: 13, 8: 13}),
+        }
+        original_identities = P.module("bundle_prepare").original_identities
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "profile.json"
+            for name, (profile, outputs) in profiles.items():
+                with self.subTest(name=name):
+                    path.write_text(json.dumps(profile))
+                    source_files = {}
+                    expected = {
+                        ("content", "CAB-content", output_id): {("shaders.bundle", "CAB-source", original_id)} for output_id, original_id in outputs.items()
+                    }
+                    self.assertEqual(original_identities(P, path, source_files), expected)
+                    self.assertEqual(source_files, {source["path"]: source["sha256"]})
+                    with self.assertRaisesRegex(ValueError, "original source file pins disagree"):
+                        original_identities(P, path, {source["path"]: "b" * 64})
+
+    def test_generated_material_prepares_from_object_pack_without_original_alias(self):
+        root_repo = Path(__file__).resolve().parents[1]
+        G = P.O.module("_generated_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, _, pin = self.fixture(root)
+            M = P.module("bundle_manifest")
+            nodes = [M.S._node("Material", "Base", -1, level=0), M.S._node("int", "value", 4)]
+            layout = dict(class_id=21, stripped=0, script_type=-1, hash=b"m" * 16, tree=M.S._tree(nodes), dependencies=[])
+            body = struct.pack("<i", 73)
+            original = root / "original" / "type.assets"
+            renderer_nodes = [
+                M.S._node("MeshRenderer", "Base", -1, level=0),
+                M.S._node("PPtr<Material>", "m_Material", 12),
+                M.S._node("int", "m_FileID", 4, level=2),
+                M.S._node("SInt64", "m_PathID", 8, level=2),
+            ]
+            renderer_type = dict(class_id=23, stripped=0, script_type=-1, hash=b"r" * 16, tree=M.S._tree(renderer_nodes), dependencies=[])
+            renderer = struct.pack("<iq", 0, 10)
+            original.write_bytes(self.serialized([dict(path_id=10, type=layout, body=body)]))
+            source_bundle = original.with_name("renderer.bundle")
+            source_member = "CAB-renderer"
+            source_bytes = self.serialized([dict(path_id=10, type=layout, body=body), dict(path_id=11, type=renderer_type, body=renderer)], platform=19)
+            with source_bundle.open("wb") as stream:
+                P.O.W.write_bundle(stream, [(source_member, 4, len(source_bytes), lambda: io.BytesIO(source_bytes))], lambda block, method: block, flags=0x40)
+            profile = root / "recipe/owner-material.json"
+            profile.parent.mkdir()
+            destination = ["content", "CAB-content", 100]
+            profile.write_text(
+                json.dumps(
+                    dict(
+                        input_id=P.O.M.INPUT_ID,
+                        pack_only=True,
+                        bundle=dict(name=destination[0], member=destination[1], externals=[], comparison="diagnostic"),
+                        sources=[dict(path=original.name, member=original.name, sha256=P.O.B.sha(original))],
+                        objects=[
+                            dict(path_id=100, generate="DefaultMaterial", type_source=[0, 10], bytes=len(body), sha256=P.hashlib.sha256(body).hexdigest())
+                        ],
+                    )
+                )
+            )
+            pack = root / "material"
+            codec = Path(request["codec"]["path"])
+            with patch.object(P.O, "default_material", return_value=body):
+                result = P.O.produce(profile, P.O.B.sha(profile), original.parent, pack, codec, P.O.B.sha(codec))
+            index = json.loads((pack / "index.jsonl").read_text())
+            self.assertTrue(result["success"])
+            self.assertEqual(json.loads((pack / "types.json").read_text())[index["type_id"]], P.O.json_layout(layout))
+            binding = dict(destination=destination, record_source=destination, generated="sdk_material", pointer_namespace=[destination[:2]])
+            graph = G.Graph(root, {})
+            compiled = graph.bundle_bindings([dict(binding, record=P.O.B.sha(profile))], *destination[:2])
+            self.assertEqual(compiled["unresolved"], [])
+            self.assertEqual(compiled["bindings"], [dict(binding, supplier=P.O.B.sha(profile))])
+            job = graph.jobs["recipe/jobs/owner-material.json"]
+            self.assertEqual(job["outputs"], {})
+            self.assertNotIn("catalog_bundle", job["artifacts"])
+            binding["supplier"] = "material"
+            reference = {"offset": 0, "from": [0, 10], "to": [0, 100]}
+            renderer_destination = [*destination[:2], 101]
+            renderer_output = dict(
+                bundle=destination[0],
+                member=destination[1],
+                path_id=101,
+                bytes=len(renderer),
+                sha256=P.hashlib.sha256(P.O.remap(renderer, [reference])).hexdigest(),
+                transform=dict(references=[reference]),
+            )
+            renderer_record = dict(path_id=11, class_id=23, sha256=P.hashlib.sha256(renderer).hexdigest(), outputs=[renderer_output])
+            renderer_source = dict(
+                path=source_bundle.name,
+                sha256=P.O.B.sha(source_bundle),
+                members=[dict(name=source_member, objects=[renderer_record])],
+            )
+            renderer_profile = root / "renderer.json"
+            renderer_profile.write_text(json.dumps(dict(input_id=P.O.M.INPUT_ID, bundles=[renderer_source])))
+            renderer_pack = root / "renderer"
+            P.A.produce(renderer_profile, P.O.B.sha(renderer_profile), original.parent, renderer_pack)
+            renderer_binding = dict(destination=renderer_destination, record_source=renderer_destination, supplier="renderer")
+            policy = root / "policy.json"
+            request.update(
+                staged=[],
+                suppliers=[
+                    dict(
+                        name="material",
+                        profile=pin(profile),
+                        **{
+                            key: pin(pack / filename)
+                            for key, filename in (("receipt", "result.json"), ("index", "index.jsonl"), ("objects", "objects.bin"), ("types", "types.json"))
+                        },
+                    ),
+                    dict(
+                        name="renderer",
+                        profile=pin(renderer_profile),
+                        **{
+                            key: pin(renderer_pack / filename)
+                            for key, filename in (("receipt", "result.json"), ("index", "index.jsonl"), ("objects", "objects.bin"), ("types", "types.json"))
+                        },
+                    ),
+                ],
+            )
+            for wrong_source in (False, True):
+                row = dict(binding, source=[original.name, original.name, 10]) if wrong_source else binding
+                policy.write_text(
+                    json.dumps(
+                        dict(
+                            bundle=destination[0],
+                            member=destination[1],
+                            bindings=[row, renderer_binding],
+                            asset_groups=[dict(guid="12" * 16, path="Assets/Renderer.asset", roots=[101])],
+                            assets=[dict(name="assets/renderer.asset", type="MeshRenderer")],
+                        )
+                    )
+                )
+                request["policy"] = pin(policy)
+                inputs.write_text(json.dumps(request))
+                if wrong_source:
+                    with self.assertRaisesRegex(ValueError, "generated binding requires"):
+                        P.prepare_request(inputs, root / "invalid")
+                    continue
+                prepared = P.prepare_request(inputs, root / "prepared")
+                emitted = P.produce_request(prepared["request"]["path"], root / "emitted")
+                self.assertTrue(emitted["success"])
+                records = list(P.json_rows(root / "prepared/selected-records.jsonl"))
+                self.assertEqual([item["destination"] for item in records], [destination, renderer_destination])
+                record = records[0]
+                self.assertEqual(record["generated"], "sdk_material")
+                self.assertEqual(record["pointer_namespace"], binding["pointer_namespace"])
+                self.assertNotIn("source", record)
 
     def test_source_registry_remap_restores_original_layout_without_copying_original_body(self):
         root_repo = Path(__file__).resolve().parents[1]
@@ -360,7 +558,7 @@ class BundlePreparationTests(unittest.TestCase):
         P.O.W.write_serialized(stream, layout, lambda row: io.BytesIO(packed[row["path_id"]]))
         return stream.getvalue()
 
-    def fixture(self, root):
+    def fixture(self, root, *, relocate_duplicate=None):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
         original = root / "original"
         original.mkdir()
@@ -397,6 +595,14 @@ class BundlePreparationTests(unittest.TestCase):
             for pid, raw in bodies.items():
                 target = dict(bundle="pack-" + name, member="packed-" + name, path_id=pid, bytes=len(raw), sha256=P.hashlib.sha256(raw).hexdigest())
                 objects.append(dict(path_id=pid, class_id=134, sha256=target["sha256"], outputs=[target]))
+                if relocate_duplicate is not None and (name, pid) == ("a", 10):
+                    references = [{"offset": 24, "from": [0, 40], "to": relocate_duplicate}]
+                    target.update(
+                        bundle="content",
+                        member="CAB-content",
+                        sha256=P.hashlib.sha256(P.O.remap(raw, references)).hexdigest(),
+                        transform=dict(references=references),
+                    )
                 destination = {("a", 10): 100, ("b", 10): 200, ("a", 30): 300, ("a", 40): 400}[name, pid]
                 bindings.append(
                     dict(
@@ -588,6 +794,41 @@ class BundlePreparationTests(unittest.TestCase):
             profile = json.loads(Path(second["catalog_profile"]["path"]).read_bytes())
             self.assertEqual(profile["bundle"]["asset_groups"][0]["roots"], [100, 200])
             self.assertEqual(second["catalog_bundle"]["sha256"], second["sha256"])
+
+    def test_preparation_resolves_relocated_pointer_by_original_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            # The retained output PathID also names an unrelated PC object.
+            inputs, _, _, _ = self.fixture(root, relocate_duplicate=[0, 30])
+            prepared = P.prepare_request(inputs, root / "prepared")
+            first = next(P.json_rows(root / "prepared/routes.jsonl"))
+            self.assertIn(dict(field=["duplicate"], pointer=[0, 400], target=["content", "CAB-content", 400]), first["edges"])
+            self.assertTrue(P.produce_request(prepared["request"]["path"], root / "emitted")["success"])
+
+    def test_checked_producer_patch_selects_only_an_alias_of_the_original_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root, relocate_duplicate=[0, 401])
+            policy.pop("canonical")
+            original = next(row for row in policy["bindings"] if row["destination"][2] == 400)
+            alias = ["content", "CAB-content", 401]
+            policy["bindings"].extend([dict(original, destination=alias), dict(original, destination=["content", "CAB-content", 402])])
+            policy_path = root / "policy.json"
+            policy_path.write_text(json.dumps(policy))
+            request["policy"] = pin(policy_path)
+            inputs.write_text(json.dumps(request))
+
+            P.prepare_request(inputs, root / "prepared")
+            first = next(P.json_rows(root / "prepared/routes.jsonl"))
+            self.assertIn(dict(field=["duplicate"], pointer=[0, 401], target=alias), first["edges"])
+
+            unrelated = next(row for row in policy["bindings"] if row["destination"][2] == 300)
+            policy["bindings"][-2] = dict(unrelated, destination=alias)
+            policy_path.write_text(json.dumps(policy))
+            request["policy"] = pin(policy_path)
+            inputs.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "source endpoint absent or ambiguous"):
+                P.prepare_request(inputs, root / "wrong-alias")
 
     def test_fresh_preparation_keeps_distinct_routes_for_shared_supplier_record(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -8,6 +8,7 @@ stay under ignored work/. A terminal producer failure retains its app and cache.
 
 from bisect import bisect_left, bisect_right
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -19,11 +20,19 @@ import uuid
 import zipfile
 import tarfile
 
+from evidence_files import open_evidence
 
 SIGNED_CODE = "signed-code"
 SIGNED_NATIVE = "signed-native"
 CODE_OPERATIONS = (SIGNED_CODE, SIGNED_NATIVE)
 BUNDLE_DECODE = "bundle-decode"
+CONVERTER_STAGE = "converter-stage"
+STAGE_OWNER = "tools/phone-build/owner-apk/lab_stage.py"
+STAGE_SUPPORT = {
+    STAGE_OWNER,
+    "tools/phone-build/accepted-output/phone_runner.py",
+    *("tools/phone-build/owner-apk/" + name + ".py" for name in ("release_jobs", "updates", "release", "release_source", "alpha_policy", "atomic_io")),
+}
 DECODE_OWNER = "repo/tools/phone-build/accepted-output/"
 DECODE_BASELINE = "baseline-unity_bundle.py"
 DECODE_FILES = {DECODE_BASELINE, *(DECODE_OWNER + name for name in ("bundle_decode_benchmark.py", "unity_bundle.py", "phone_runner.py"))}
@@ -68,6 +77,7 @@ def load_request(path, *, refresh_repo=False):
     operation = request.get("operation")
     signed_code = operation in CODE_OPERATIONS
     decode = operation == BUNDLE_DECODE
+    stage = operation == CONVERTER_STAGE
     count = "expected_managed_providers" if signed_code else "expected_blocks" if decode else "expected_records"
     if signed_code or decode:
         required = (required - {"expected_records"}) | {"operation", count}
@@ -77,6 +87,8 @@ def load_request(path, *, refresh_repo=False):
         required.add("profile_resources")
     if decode:
         required |= {"expected_decoded_sha256", "retained_tool_sha256"}
+    if stage:
+        required = (required - {"expected_records"}) | {"operation", "retained_tool_sha256"}
     if "retained_tool_sha256" in request:
         required.add("retained_tool_sha256")
         previous = request["retained_tool_sha256"]
@@ -92,7 +104,7 @@ def load_request(path, *, refresh_repo=False):
         pin = request[key]
         if set(pin) != {"path", "sha256"} or digest(pin["path"]) != pin["sha256"]:
             raise ValueError("emission-input-pin")
-    for name in (count, "estimated_output_bytes", "timeout_seconds"):
+    for name in ("estimated_output_bytes", "timeout_seconds", *(() if stage else (count,))):
         if type(request[name]) is not int or request[name] <= 0:
             raise ValueError("emission-positive-budget-required")
     relative(request["request"])
@@ -102,6 +114,8 @@ def load_request(path, *, refresh_repo=False):
         raise ValueError("emission-request-not-staged")
     if decode and not DECODE_FILES <= files.keys():
         raise ValueError("emission-decode-producer-not-staged")
+    if stage and (request["request"] != "stage.json" or any(name != "stage.json" and not name.startswith("repo/") for name in files)):
+        raise ValueError("converter-stage-must-transfer-only-producers-and-descriptor")
     for name, pin in files.items():
         relative(name)
         if refresh_repo and name.startswith("repo/"):
@@ -124,9 +138,7 @@ def load_request(path, *, refresh_repo=False):
     return request, files
 
 
-def refresh_manifest(path, checkout):
-    """Explicit host-only producer update; retain every pinned non-repo input."""
-    request, files = load_request(path, refresh_repo=True)
+def repin_producers(files, checkout):
     checkout = Path(checkout).resolve()
 
     def git(*arguments):
@@ -147,6 +159,13 @@ def refresh_manifest(path, checkout):
             source = checkout / local
             files[name] = dict(source=str(source), bytes=source.stat().st_size, sha256=digest(source))
             replaced += 1
+    return checkout, commit, replaced
+
+
+def refresh_manifest(path, checkout):
+    """Explicit host-only producer update; retain every pinned non-repo input."""
+    request, files = load_request(path, refresh_repo=True)
+    checkout, commit, replaced = repin_producers(files, checkout)
     manifest_path = Path(request["manifest"]["path"])
     manifest = json.loads(manifest_path.read_bytes())
     manifest.update(files=files, bytes=sum(pin["bytes"] for pin in files.values()), source_checkout=str(checkout), source_commit=commit)
@@ -155,6 +174,46 @@ def refresh_manifest(path, checkout):
     request["runner"]["ref"] = commit
     write(path, request)
     return dict(success=True, refreshed_repo_files=replaced, input_bytes=manifest["bytes"], source_commit=commit)
+
+
+def prepare_stage(path, checkout, name, *, dry_run):
+    request, files = load_request(path, refresh_repo=True)
+    if request.get("operation") != CONVERTER_STAGE:
+        raise ValueError("converter-stage-request-required")
+    spec = importlib.util.spec_from_file_location("phone_lab_stage", checkout / STAGE_OWNER)
+    owner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(owner)
+    stage = owner.load_stage(files["stage.json"]["source"])
+    if Path(stage["producer"]).stem.replace("_", "-") != name:
+        raise ValueError("converter-stage-name-mismatch")
+    for producer in (*STAGE_SUPPORT, stage["producer"]):
+        files["repo/" + producer] = {}
+    checkout, commit, _ = repin_producers(files, checkout)
+    done = Path(request["done_file"])
+    canonical = Path(request["runner"]["repo"]).resolve()
+    if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(canonical / "work") or done.exists():
+        raise ValueError("emission-new-absolute-work-done-file-required")
+    if dry_run:
+        print(
+            json.dumps(
+                dict(
+                    success=True,
+                    dry_run=True,
+                    producer=name,
+                    source_commit=commit,
+                    files=len(files),
+                    transfer_bytes=sum(pin["bytes"] for pin in files.values()),
+                )
+            )
+        )
+        return None
+    manifest = done.with_suffix(".manifest.json")
+    write(manifest, dict(files=files, source_commit=commit))
+    request.update(manifest=dict(path=str(manifest), sha256=digest(manifest)))
+    request["runner"].update(ref=commit, local_ref=True)
+    prepared = done.with_suffix(".request.json")
+    write(prepared, request)
+    return prepared
 
 
 def transfer(phone, apk, files, remote, native, *, signed_code=False, signed_native=False):
@@ -218,12 +277,24 @@ def transfer(phone, apk, files, remote, native, *, signed_code=False, signed_nat
             process.stderr.close()
 
 
-def invocation(remote, native, request, attempt):
+def invocation(remote, native, request, attempt, *, owner_input=None):
     runtime = remote + "/runtime"
     python = [native + "/libpythonhost.so", native + "/libpython3.14.so", runtime + "/python"]
     owner = remote + "/repo/tools/phone-build/"
     environment = ["LD_LIBRARY_PATH=" + native + ":" + runtime + "/native-links"]
-    if request.get("operation") in CODE_OPERATIONS:
+    if request.get("operation") == CONVERTER_STAGE:
+        producer = [
+            remote + "/repo/" + STAGE_OWNER,
+            remote + "/" + request["request"],
+            remote + "/repo",
+            owner_input,
+            remote + "/" + attempt + "/artifacts",
+            native,
+            runtime,
+            remote + "/" + attempt + "/stage.json",
+            *python,
+        ]
+    elif request.get("operation") in CODE_OPERATIONS:
         environment += [
             "ROR2LAB_BUILD_DOTNET_ROOT=" + runtime + "/dotnet",
             "ROR2LAB_BUILD_HOSTFXR=" + native + "/libhostfxr10.so",
@@ -278,12 +349,14 @@ def invocation(remote, native, request, attempt):
     ]
 
 
-def collect(phone, state, destination, *, code_output=None, decode=False, signed_native=False, failed=False):
+def collect(phone, state, destination, *, code_output=None, decode=False, stage=False, signed_native=False, failed=False):
     """Small receipts only; generated bundles remain on their device filesystem."""
     result = {}
     attempt = state["attempt"]
     receipts = {"thermal": attempt + "/thermal.json"}
-    if decode:
+    if stage:
+        receipts.update(stage=attempt + "/stage.json", scoreboard=attempt + "/scoreboard.json")
+    elif decode:
         receipts["decode"] = attempt + "/decode.json"
     elif code_output is None:
         receipts.update(emission=attempt + "/output/result.json", progress=attempt + "/output/emitted/progress.json")
@@ -369,7 +442,7 @@ done
 
 def summarize_resources(trace, code_output):
     """Join captured producer-tree samples to subprocess BOOTTIME windows."""
-    with trace.open() as stream:
+    with open_evidence(trace) as stream:
         samples = [json.loads(line) for line in stream]
     ticks = [sample["boottime_seconds"] for sample in samples]
     if any(left > right for left, right in zip(ticks, ticks[1:])):
@@ -423,6 +496,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     signed_native = request.get("operation") == SIGNED_NATIVE
     signed_code = request.get("operation") in CODE_OPERATIONS
     decode = request.get("operation") == BUNDLE_DECODE
+    stage = request.get("operation") == CONVERTER_STAGE
     done = Path(request["done_file"])
     root = Path(os.environ["LAB_CANONICAL_ROOT"]).resolve()
     if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(root / "work"):
@@ -437,7 +511,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     (destination / ".prune-keep").touch()
     state_path = destination / "device-state.json"
     result = dict(success=False, device_accepted=False)
-    if signed_code or decode:
+    if signed_code or decode or stage:
         result["operation"] = request["operation"]
     else:
         result.update(typed_load_accepted=False, record_workers=1)
@@ -473,7 +547,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         if resume:
             state = json.loads(state_path.read_bytes())
         active = bool(state and state.get("job") and state.get("terminal") is None)
-        if signed_code and (restage or (resume and not active)):
+        if (signed_code or stage) and (restage or (resume and not active)):
             raise RuntimeError("signed-code-resume-requires-active-handle")
         if state and state.get("retained_tool") and not active:
             raise RuntimeError("emission-retained-tool-requires-fresh-request")
@@ -488,7 +562,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
         # Only cooldown observation is reused here; gameplay start/stop methods
         # are never called. The on-phone tool supervisor owns production heat.
         if not active:
-            admission = _GameThermalOwner(device, None, destination / "admission.jsonl", time.monotonic() + 1800)
+            admission_options = {"charge_override": False} if stage else {}
+            admission = _GameThermalOwner(device, None, destination / "admission.jsonl", time.monotonic() + 1800, **admission_options)
             admission.cool()
             result["admission_battery"] = admission.admission_battery
         result["reattached_without_launch"] = active
@@ -577,8 +652,9 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 write(state_path, state)
                 write(lease / "retain.json", dict(reason="emission-remote-outcome-unknown", job=handle, state=str(state_path)))
 
+            invocation_options = {"owner_input": str(Path(state["remote"]).parent)} if stage else {}
             job = phone.transport.start_detached(
-                invocation(state["remote"], state["native"], request, state["attempt"]),
+                invocation(state["remote"], state["native"], request, state["attempt"], **invocation_options),
                 root=state["remote"],
                 shell_prefix=("run-as", installer.PACKAGE),
                 persist=persist,
@@ -591,7 +667,18 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
             code_request = json.loads(Path(files[request["request"]]["source"]).read_bytes())
             code_output = (relative(request["request"]).parent / "work" / relative(code_request["output"])).as_posix()
         try:
-            if signed_native:
+            if stage:
+                result.update(collect(phone, state, destination, stage=True))
+                report = result.get("stage", {})
+                result["transfer_bytes"] = sum(pin["bytes"] for pin in files.values())
+                result["success"] = observed.returncode == 0 and report.get("success") is True and "thermal" in result
+                if not result["success"]:
+                    result["first_failure"] = (
+                        report.get("first_failure")
+                        or result.get("thermal", {}).get("error")
+                        or f"converter stage exit {observed.returncode} or missing receipt"
+                    )
+            elif signed_native:
                 result.update(collect(phone, state, destination, code_output=code_output, signed_native=True, failed=observed.returncode != 0))
                 report = result.get("native_release", {})
                 result["success"] = (
@@ -637,7 +724,8 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
                 result["bundle"] = {key: emission.get(key) for key in ("bundle", "bytes", "sha256")}
         finally:
             jobs_root = (relative(request["request"]).parent / "work/releases/jobs").as_posix() if signed_native else None
-            collect_evidence(phone, installer.PACKAGE, state, destination, code_output=code_output, failed=not result["success"], jobs_root=jobs_root)
+            if not stage:
+                collect_evidence(phone, installer.PACKAGE, state, destination, code_output=code_output, failed=not result["success"], jobs_root=jobs_root)
             if request.get("profile_resources"):
                 evidence = destination / "logs/producer"
                 try:

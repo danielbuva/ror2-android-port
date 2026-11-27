@@ -1,4 +1,5 @@
 import hashlib
+from contextlib import nullcontext
 from io import BytesIO
 import json
 from pathlib import Path
@@ -248,6 +249,83 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertFalse(lease.path.exists())
         self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
 
+    def test_interrupted_preinstall_hash_can_finish_verified_cleanup(self):
+        lease_path = runner.Lease(self.request).path
+        package_path = "/fixture/base.apk"
+        target = mock.Mock()
+        target.exists.return_value = True
+        target.owned.return_value = dict(package_path="package:" + package_path, apk_sha256=self.digest)
+        target.storage.return_value = dict(mode="adopted")
+        hashes = iter([RuntimeError("adb exited -9"), self.digest, self.digest])
+
+        def shell(*args, **kwargs):
+            self.assertTrue(lease_path.is_dir())
+            if args == ("sha256sum", package_path):
+                digest = next(hashes)
+                if isinstance(digest, RuntimeError):
+                    raise digest
+                return digest + "  " + package_path
+            self.assertEqual(args, ("am", "force-stop", target.package))
+            return ""
+
+        target.sh.side_effect = shell
+
+        def idle(device, expected):
+            self.assertTrue(lease_path.is_dir())
+            self.assertEqual(expected, self.digest)
+            return dict(apk_sha256=expected, process_absent=True)
+
+        def display(awake):
+            self.assertTrue(lease_path.is_dir())
+            self.assertFalse(awake)
+            return True
+
+        target.display.side_effect = display
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
+            mock.patch.object(device_module, "Device", return_value=target) as discover,
+            mock.patch.object(runner, "reset_other_lab"),
+            mock.patch.object(runner, "reset_idle") as reset,
+            mock.patch.object(batch, "_idle_readback", side_effect=idle),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(self.request)
+
+        self.assertFalse(result["success"])
+        self.assertIn("adb exited -9", result["error"])
+        target.install.assert_not_called()
+        reset.assert_called_once()
+        self.assertEqual(discover.call_count, 2)
+        self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertTrue(result["lease_released"])
+        self.assertFalse(lease_path.exists())
+
+    def test_storage_rejection_with_absent_package_releases_after_verified_sleep(self):
+        lease_path = runner.Lease(self.request).path
+        target, independent = mock.Mock(), mock.Mock()
+        target.exists.return_value = False
+        independent.exists.return_value = False
+        independent.storage.return_value = dict(mode="internal")
+        independent.display.return_value = True
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
+            mock.patch.object(device_module, "Device", side_effect=[target, independent]),
+            mock.patch.object(runner, "reset_other_lab"),
+            mock.patch.object(runner, "placement", side_effect=RuntimeError("This request requires adopted storage")),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(self.request)
+
+        target.install.assert_not_called()
+        independent.display.assert_called_once_with(False)
+        self.assertFalse(result["success"])
+        self.assertIn("requires adopted storage", result["error"])
+        self.assertEqual(result["terminal_readback"], dict(installed=False, oled_asleep=True))
+        self.assertTrue(result["lease_released"])
+        self.assertFalse(lease_path.exists())
+
     def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
         target, thermal = mock.Mock(package=self.request["package"]), mock.Mock(error=None)
         target.sh.return_value = process_snapshot(("12", "03:19:58", target.package))
@@ -358,6 +436,48 @@ class DeviceSessionTests(unittest.TestCase):
             ],
         )
 
+    def test_converted_stage_transition_uses_the_selected_run_and_stops_in_destination(self):
+        from session_cleanup_check import SPINE_ID
+
+        route = {"from": "golemplains", "to": "goolake"}
+        request = dict(self.request, start_from_menu=True, stage_transition=route, selection={"id": SPINE_ID})
+        device, thermal = mock.Mock(package="dev.ror2lab.converted"), mock.Mock()
+        device.sh.return_value = "7"
+        device.read_receipt.return_value = {"persistentDataPath": "/owned"}
+        thermal.cancelled.is_set.return_value = False
+        world = dict(pid=7, id=SPINE_ID, attempt="converted-attempt", session=1, stage={"scene": "golemplains"}, stageProgress={"transitions": 0})
+        destination = dict(
+            world,
+            phase="integrated-world-playing",
+            stage={"scene": "goolake"},
+            stageProgress={
+                "transitions": 1,
+                "actualScene": "goolake",
+                "actualSceneDef": "goolake",
+                "requested": "goolake",
+                "transporting": False,
+                "activeSceneVerified": True,
+                "enteredAt": 100,
+            },
+            world={"seconds": 110, "ready": True},
+        )
+        result = {}
+        with (
+            mock.patch.object(runner, "start_from_menu", return_value=world) as menu,
+            mock.patch.object(runner, "capture") as capture,
+            mock.patch("session_cleanup_check._read_json", side_effect=[dict(destination, session=2), destination]) as read_report,
+            mock.patch.object(runner.time, "sleep"),
+        ):
+            runner.observe_launch(device, thermal, request, self.output, result, "7", start_attempt="converted-attempt")
+        self.assertEqual(menu.call_args.kwargs["report_id"], SPINE_ID)
+        self.assertEqual(read_report.call_count, 2)
+        self.assertEqual(capture.call_args.args[1], self.output / "final")
+        self.assertEqual(result["stage_transition"], route)
+        self.assertEqual(json.loads((self.output / "stage-transition.json").read_text()), destination)
+        self.assertFalse(runner.stage_transition_ready(dict(destination, world={"seconds": 109, "ready": True}), route))
+        with self.assertRaisesRegex(RuntimeError, "Expected one completed transition"):
+            runner.stage_transition_ready(dict(destination, stageProgress=dict(destination["stageProgress"], transitions=2)), route)
+
     def test_converted_menu_workload_waits_for_visible_bootstrap_play(self):
         package = "dev.ror2lab.converted"
         request = dict(self.request, package=package, start_from_menu=True)
@@ -401,9 +521,11 @@ class DeviceSessionTests(unittest.TestCase):
     def test_bootstrap_play_reference_waits_for_label_at_matching_viewport(self):
         from PIL import Image, ImageDraw
 
-        def screen(label, size=(128, 96)):
+        def screen(label, size=(128, 96), *, dimmed=False):
             frame = Image.new("RGB", size, "gold")
             ImageDraw.Draw(frame).text((40, 51), label, fill="black")
+            if dimmed:
+                frame = frame.point(lambda value: (7 * value) // 10)
             buffer = BytesIO()
             frame.save(buffer, format="PNG")
             return buffer.getvalue()
@@ -428,16 +550,17 @@ class DeviceSessionTests(unittest.TestCase):
         device = mock.Mock(package=request["package"], base=["adb", "-s", "synthetic-device"])
         device.sh.return_value = "7"
         thermal = mock.Mock(error=None)
-        frames = [mock.Mock(stdout=image) for image in (screen("Pause"), screen("Play", (140, 96)), ready)]
+        dimmed_ready = screen("Play", dimmed=True)
+        frames = [mock.Mock(stdout=image) for image in (screen("Pause"), screen("Pause", dimmed=True), screen("Play", (140, 96)), dimmed_ready)]
         with (
             mock.patch.object(runner.subprocess, "run", side_effect=frames) as capture,
             mock.patch.object(runner.time, "sleep"),
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
         ):
             runner.play_from_bootstrap(device, thermal, "7", self.output, request["bootstrap_play_reference"])
-        self.assertEqual(capture.call_count, 3)
+        self.assertEqual(capture.call_count, 4)
         self.assertEqual([call.args for call in device.sh.call_args_list if call.args[0] == "input"], [("input", "-d", "0", "tap", "52", "56")])
-        self.assertEqual((self.output / "bootstrap-play.png").read_bytes(), ready)
+        self.assertEqual((self.output / "bootstrap-play.png").read_bytes(), dimmed_ready)
         self.assertEqual(json.loads((self.output / "bootstrap-play.json").read_text())["observed_by"], "screenshot")
 
     def test_combat_capture_is_opt_in_for_native_lab_launch(self):
@@ -452,6 +575,126 @@ class DeviceSessionTests(unittest.TestCase):
                     runner.save(self.request_file, dict(request, **{field: value}))
                     with self.assertRaises(ValueError):
                         runner.load_request(self.request_file)
+
+    def test_video_requires_a_bounded_menu_or_direct_survivor_observation(self):
+        from session_cleanup_check import SPINE_ID
+
+        with (
+            mock.patch.object(device_module, "validate_apk_identity"),
+            mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"),
+        ):
+            request = dict(self.request, start_from_menu=True, capture_video=True)
+            runner.save(self.request_file, request)
+            self.assertTrue(runner.load_request(self.request_file)["capture_video"])
+            selection = dict(attempt="embedded", id=SPINE_ID.removesuffix("-bringup"), developerSurvivorOverride=True)
+            direct = dict(request, start_from_menu=False, selection=selection)
+            runner.save(self.request_file, direct)
+            self.assertTrue(runner.load_request(self.request_file)["capture_video"])
+            for changes in (
+                dict(start_from_menu=False),
+                dict(duration_seconds=181),
+                dict(stage_transition={"from": "blackbeach2", "to": "golemplains"}),
+            ):
+                with self.subTest(changes=changes):
+                    runner.save(self.request_file, dict(request, **changes))
+                    with self.assertRaisesRegex(ValueError, "capture_video requires"):
+                        runner.load_request(self.request_file)
+            for changes in (
+                dict(package="dev.ror2lab.converted"),
+                dict(mode="sustained"),
+                dict(selection=dict(selection, id="unrelated-route")),
+                dict(selection=dict(selection, developerSurvivorOverride=False)),
+            ):
+                with self.subTest(changes=changes):
+                    runner.save(self.request_file, dict(direct, **changes))
+                    with self.assertRaisesRegex(ValueError, "capture_video requires"):
+                        runner.load_request(self.request_file)
+            runner.save(self.request_file, dict(direct, selection=dict(selection, attempt="stale")))
+            with self.assertRaisesRegex(ValueError, "selector attempt must match.*embedded"):
+                runner.load_request(self.request_file)
+
+    def test_direct_survivor_video_waits_for_its_world_before_scheduled_input(self):
+        from session_cleanup_check import SPINE_ID
+
+        gesture = self.root / "gesture.json"
+        runner.save(gesture, dict(width=1280, height=960, steps=[dict(action="wait", ms=100)]))
+        report_id = SPINE_ID.removesuffix("-bringup")
+        request = dict(
+            self.request, selection={"id": report_id}, capture_video=True, duration_seconds=0, input_schedule=[dict(at_seconds=0, script=str(gesture))]
+        )
+        device = mock.Mock(package=request["package"])
+        device.sh.return_value = "7"
+        thermal = mock.Mock()
+        thermal.cancelled.is_set.return_value = False
+        result = {}
+        calls = mock.Mock()
+        calls.video.return_value = nullcontext()
+        calls.input.return_value = {"success": True}
+        with (
+            mock.patch.object(runner, "wait_for_world_start", calls.world),
+            mock.patch.object(runner, "start_from_menu", calls.menu),
+            mock.patch.object(runner, "capture_launch_video", calls.video),
+            mock.patch("touch_gesture.run", calls.input),
+            mock.patch.object(runner, "capture"),
+        ):
+            runner.observe_launch(device, thermal, request, self.output, result, "7", start_attempt="embedded")
+        self.assertEqual(
+            calls.mock_calls,
+            [
+                mock.call.world(device, thermal, "7", self.output, report_id=report_id, attempt="embedded"),
+                mock.call.video(device, thermal, "7", self.output, 0, result),
+                mock.call.input(self.output / "scheduled-input-0.json", self.digest, device=device),
+            ],
+        )
+
+    def test_video_retains_its_recording_and_stops_only_its_recorder_on_abort(self):
+        for abort in (False, True):
+            with self.subTest(abort=abort):
+                target = mock.Mock(package=self.request["package"])
+                target.read_receipt.return_value = {"persistentDataPath": "/sdcard/owned"}
+                started, stopped = runner.threading.Event(), runner.threading.Event()
+
+                def shell(*args, **kwargs):
+                    if args[0] == "screenrecord":
+                        started.set()
+                        if abort and not stopped.wait(5):
+                            raise RuntimeError("recorder did not receive its stop")
+                    if args[0] == "pkill":
+                        stopped.set()
+                    return "12"
+
+                target.sh.side_effect = shell
+                result = {"device_cleanup": {}}
+                thermal = mock.Mock(error=None)
+                with (
+                    mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
+                    mock.patch.object(device_module, "retain_device_file", return_value="digest") as retain,
+                    mock.patch.object(device_module, "remove_device_file") as remove,
+                ):
+                    try:
+                        with runner.capture_launch_video(target, thermal, "12", self.output, 35, result):
+                            self.assertTrue(started.wait(5))
+                            if abort:
+                                raise RuntimeError("thermal abort")
+                    except RuntimeError as error:
+                        if not abort:
+                            raise
+                        self.assertEqual(str(error), "thermal abort")
+
+                command = next(call.args for call in target.sh.call_args_list if call.args[0] == "screenrecord")
+                remote = command[-1]
+                self.assertEqual(command[1:-1], ("--bit-rate", "5000000", "--time-limit", "35"))
+                if abort:
+                    self.assertTrue(stopped.is_set())
+                    self.assertNotIn("video", result)
+                    retain.assert_not_called()
+                    remove.assert_called_once_with(target, remote, {}, missing_ok=True)
+                else:
+                    self.assertFalse(stopped.is_set())
+                    video = result["video"]
+                    self.assertEqual((video["pid"], video["sha256"]), (12, "digest"))
+                    retain.assert_called_once_with(target, remote, self.output / video["file"], {})
+                    remove.assert_not_called()
 
     def test_attack_capture_uses_matching_native_state_and_open_display(self):
         self.output.mkdir(parents=True)
@@ -980,10 +1223,12 @@ class DeviceSessionTests(unittest.TestCase):
         workload_error=False,
         terminal_error=False,
         thermal_error=False,
+        thermal_finish_error=None,
         payload=False,
         exception_rows="",
         signature_failure=False,
         start_from_menu=False,
+        launch_snapshot_pid=None,
     ):
         events = []
         transient_paths = {"/owned/" + suffix for suffix in runner.TRANSIENTS}
@@ -1053,8 +1298,13 @@ class DeviceSessionTests(unittest.TestCase):
 
         def shell(*args, **kwargs):
             if args[:2] == ("sh", "-c") and "ps -A" in args[2]:
+                launching = events[-1:] == ["launching"]
                 events.append("process-checkpoint")
+                if launching:
+                    return process_snapshot((launch_snapshot_pid, "03:19:58", target.package))
                 return process_snapshot()
+            if args[0] == "pidof":
+                return ""  # The launched process has exited by terminal capture.
             if args[0] == "sha256sum":
                 return target.owned()["apk_sha256"] + "  /fixture/base.apk"
             if args[:2] == ("pm", "uninstall"):
@@ -1086,8 +1336,11 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.side_effect = shell
         thermal = mock.Mock(error="safety stop" if thermal_error else None, peak_cpu_gpu_celsius=81, time_above_80_seconds=3, admission_battery={})
         thermal.thread = thermal.stopper = None
-        thermal.finish.side_effect = RuntimeError("safety stop") if thermal_error else lambda: events.append("thermal-finish")
+        finish_error = thermal.error or thermal_finish_error
+        thermal.finish.side_effect = RuntimeError(finish_error) if finish_error else lambda: events.append("thermal-finish")
         thermal.start.side_effect = lambda: events.append("thermal-start")
+        thermal.launch.side_effect = lambda _: events.append("launching") or {"pid": "73"}
+        target.cmd.return_value = "Unity fatal tail"
 
         if start_from_menu:
             self.request["start_from_menu"] = True
@@ -1097,14 +1350,16 @@ class DeviceSessionTests(unittest.TestCase):
             events.append("read-attempt")
             return "owned-attempt"
 
-        def workload(*args, **kwargs):
+        def workload(current, owner, request, output, result, **kwargs):
             self.assertTrue(lease_path.is_dir())
             self.assertIsNotNone(kwargs["_reset_idle"])
             self.assertEqual(kwargs["start_attempt"], "owned-attempt" if start_from_menu else None)
-            if self.request["mode"] == "sustained":
+            if request["mode"] == "sustained":
                 self.assertFalse(any(call.args[0] == "push" and call.args[-1].endswith("movement-batch-selection.json") for call in target.cmd.call_args_list))
             events.append("workload")
             live_transients.update(transient_paths)
+            if launch_snapshot_pid is not None:
+                runner.launch(current, owner, process_checks=result["process_checkpoints"])
             if workload_error:
                 raise RuntimeError("observed workload failure")
 
@@ -1146,7 +1401,10 @@ class DeviceSessionTests(unittest.TestCase):
             result = runner.execute(self.request)
         self.assertEqual(placement.call_args_list[0].args[1], self.apk.stat().st_size + payload_size + 20 * 1024**3)
         self.assertIn("prelaunch", result, result.get("error"))
-        self.assertEqual([checkpoint["phase"] for checkpoint in result["process_checkpoints"]], ["before-install", "install"])
+        phases = ["before-install", "install"]
+        if launch_snapshot_pid is not None:
+            phases += ["before-launch", "launch"]
+        self.assertEqual([checkpoint["phase"] for checkpoint in result["process_checkpoints"]], phases)
         prepare.assert_called_once_with(target, result["prelaunch"])
         if payload:
             target.sync.assert_called_once_with(self.root / "payload", replace_previous=True, cleanup=result["device_cleanup"])
@@ -1239,10 +1497,32 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertIn("observed workload failure", result["error"])
 
+    def test_terminal_capture_retains_logcat_after_verified_process_exits(self):
+        result = self.run_case(workload_error=True, launch_snapshot_pid="73")
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertEqual(result["process_checkpoints"][-1]["verified_launch_pid"], "73")
+        self.assertEqual((self.output / "terminal-capture/unity.log").read_text(), "Unity fatal tail")
+
+    def test_terminal_capture_ignores_unverified_launch_snapshot(self):
+        result = self.run_case(launch_snapshot_pid="72")
+        self.assertIn("Unexpected owned lab process at launch", result["error"])
+        self.assertTrue(result["lease_released"])
+        self.assertNotIn("verified_launch_pid", result["process_checkpoints"][-1])
+        self.assertFalse((self.output / "terminal-capture").exists())
+
     def test_safety_stop_does_not_strand_clean_device_lease(self):
         result = self.run_case(thermal_error=True)
         self.assertFalse(result["success"])
         self.assertTrue(result["lease_released"])
+
+    def test_thermal_stop_pid_ambiguity_releases_after_verified_idle(self):
+        result = self.run_case(workload_error=True, thermal_finish_error="Ambiguous game PID; refuse thermal stop")
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertIn("Ambiguous game PID", result["thermal_finish_error"])
+        self.assertEqual(result["cleanup_errors"], [])
 
     def test_failed_terminal_still_sleeps_and_publishes_but_retains_lease(self):
         result = self.run_case(terminal_error=True)

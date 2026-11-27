@@ -39,7 +39,8 @@ EXTRA = {
             b.putString("snapshot","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");return b;}}""",
     "android/content/pm/ApplicationInfo.java": """package android.content.pm; public class ApplicationInfo {public String sourceDir;public boolean enabled=true;}""",
     "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
-        import org.json.JSONObject;import java.io.*;public class ToolHostActivity {
+        import org.json.JSONObject;import java.io.*;public class ToolHostActivity extends android.content.Context {
+        public static ToolHostActivity activeForConfirmation(){return null;}
         static java.util.Map<String,JSONObject> values=new java.util.HashMap<>();public static String checkpointState;
         public static void updateInstallCheckpoint(android.content.Context c,String s,String m){checkpointState=s;}
         public static void updateInstallDiagnostic(android.content.Context c,String stage,String callback,boolean match){}

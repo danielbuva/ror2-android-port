@@ -42,10 +42,12 @@ public sealed partial class PortSession
     }
     void OnApplicationFocus(bool focused)
     {
+        if (!focused) CancelTouchLayoutGesture();
         GetOfflineApplicationSession().OnApplicationFocus(focused);
     }
     void OnApplicationPause(bool paused)
     {
+        if (paused) CancelTouchLayoutGesture();
         GetOfflineApplicationSession().OnApplicationPause(paused);
     }
     void ApplyOfflineDisplayPreference()

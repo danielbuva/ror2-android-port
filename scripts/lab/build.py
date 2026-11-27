@@ -241,6 +241,10 @@ def editor(target="lab", action="inspect"):
                     raise RuntimeError("Stage the current committed runtime through a build before this editor fixture: " + owner)
             copy_catalog_asset(ROOT / "tools/catalog" / fixture, WORK / "lab-project/Assets/Editor" / fixture)
             if action == "commando-animation-host":
+                from animation_bindings import stage_additive_reference_poses
+                from composition_io import StageIO
+
+                stage_additive_reference_poses(StageIO())
                 copy_catalog_asset(ROOT / "tools/catalog/WholeCatalogBuild.cs", WORK / "lab-project/Assets/Editor/WholeCatalogBuild.cs")
             editor("lab", "refresh")
         env = os.environ.copy()

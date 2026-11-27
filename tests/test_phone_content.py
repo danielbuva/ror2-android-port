@@ -19,6 +19,7 @@ from phone_content import (
     validate_ambient_capture,
     validate_linker_capture,
     validate_native_content,
+    validate_native_scene,
     validate_oracle,
 )
 
@@ -35,9 +36,47 @@ class PhoneContentTests(unittest.TestCase):
             args = [str(mono), str(compiler), "/nologo", "/target:library", "/define:UNITY_EDITOR", "/out:" + str(Path(root) / "fixture.dll")]
             args += ["/r:" + str(path) for path in sorted((sdk / "Managed/UnityEngine").glob("UnityEngine*.dll"))]
             args += ["/r:" + str(sdk / "Managed/UnityEditor.dll")]
-            args += [str(source / name) for name in ("ContentFixtureBuilder.cs", "ContentFixture.cs", "NativeScriptSchemaFixture.cs")]
+            args += [
+                str(source / name) for name in ("ContentFixtureBuilder.cs", "ContentFixtureSceneCheck.cs", "ContentFixture.cs", "NativeScriptSchemaFixture.cs")
+            ]
             result = subprocess.run(args, capture_output=True, text=True, timeout=45)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_native_scene_requires_loaded_roots_occlusion_data_and_unload(self):
+        with tempfile.TemporaryDirectory() as root:
+            attempt = Path(root).resolve()
+            bundle = attempt / "authored.bundle"
+            bundle.write_bytes(b"authored scene request control")
+            request_path = attempt / "request.json"
+            scene = "Assets/Fixture.unity"
+            request = dict(path=str(bundle), sha256=hashlib.sha256(bundle.read_bytes()).hexdigest(), scene=scene)
+            request_path.write_text(json.dumps(request))
+            self.assertEqual(native_content_request(request_path), request)
+            report = dict(
+                unity="2021.3.45f2",
+                sourceCommit="c" * 40,
+                bundleSha256=request["sha256"],
+                scenePath=scene,
+                roots=2,
+                occlusionDataResolved=True,
+                unloaded=True,
+            )
+            validate_native_scene(report, request, "c" * 40)
+            single = request | {"loadMode": "Single"}
+            request_path.write_text(json.dumps(single))
+            self.assertEqual(native_content_request(request_path), single)
+            validate_native_scene(report | {"loadMode": "Single"}, single, "c" * 40)
+            with self.assertRaisesRegex(RuntimeError, "native scene contract"):
+                validate_native_scene(report, single, "c" * 40)
+            request_path.write_text(json.dumps(request | {"loadMode": "Unknown"}))
+            with self.assertRaisesRegex(RuntimeError, "loadMode"):
+                native_content_request(request_path)
+            for change in (dict(roots=0), dict(occlusionDataResolved=False), dict(scenePath="Assets/Other.unity"), dict(unloaded=False)):
+                with self.assertRaisesRegex(RuntimeError, "native scene contract"):
+                    validate_native_scene(report | change, request, "c" * 40)
+            request_path.write_text(json.dumps(request | {"assets": []}))
+            with self.assertRaisesRegex(RuntimeError, "Native scene"):
+                native_content_request(request_path)
 
     def test_native_content_requires_each_typed_load_and_bound_bundle_destruction(self):
         with tempfile.TemporaryDirectory() as root:
@@ -49,6 +88,8 @@ class PhoneContentTests(unittest.TestCase):
                 "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
                 "assets": [*({"name": name.lower(), "type": name} for name in sorted(NATIVE_CONTENT_TYPES))],
             }
+            sprite = next(asset for asset in request["assets"] if asset["type"] == "Sprite")
+            sprite.update(name="texture2d", subasset="icon")
             manifest_asset = next(asset for asset in request["assets"] if asset["type"] == "AssetBundleManifest")
             manifest_asset["manifest"] = [
                 {"name": "content", "hash": "a" * 32, "dependencies": ["shared"]},
@@ -64,7 +105,7 @@ class PhoneContentTests(unittest.TestCase):
                 "sha256": request["sha256"],
                 "count": len(NATIVE_CONTENT_TYPES),
                 "unloaded": True,
-                "assets": [asset | {"loaded_name": "", "loaded_type": "UnityEngine." + asset["type"]} for asset in request["assets"]],
+                "assets": [asset | {"loaded_name": asset.get("subasset", ""), "loaded_type": "UnityEngine." + asset["type"]} for asset in request["assets"]],
             }
             output = attempt / "native-content-check.json"
             output.write_text(json.dumps(report))
@@ -78,6 +119,7 @@ class PhoneContentTests(unittest.TestCase):
                 lambda r: r["assets"].pop(),
                 lambda r: r["assets"][0].update(loaded_type="UnityEngine.Object"),
                 lambda r: r["assets"][1].update(name="wrong-address"),
+                lambda r: next(asset for asset in r["assets"] if asset["type"] == "Sprite").update(loaded_name="different-icon"),
             ):
                 changed = copy.deepcopy(report)
                 mutate(changed)
@@ -151,19 +193,30 @@ class PhoneContentTests(unittest.TestCase):
     def test_editor_runner_requires_native_content_report_when_requested(self):
         def launched(args, *, env, **kwargs):
             oracle = Path(env["ROR2_PHONE_ORACLE_REPORT"])
-            self.assertEqual(Path(env["ROR2_PHONE_NATIVE_CONTENT_CHECK"]), oracle.parent / "native-content-request.json")
+            editor_request = Path(env["ROR2_PHONE_NATIVE_CONTENT_CHECK"])
+            self.assertEqual(editor_request, oracle.parent / "native-content-request.json")
+            staged = json.loads(editor_request.read_text())
+            self.assertEqual(Path(staged["path"]), bundle.resolve())
+            self.assertEqual(Path(staged["dependencies"][0]["path"]), dependency.resolve())
             oracle.write_text(json.dumps({"unity": "2021.3.45f2", "bundleLoaded": True, "textMatched": True, "unloaded": True}))
             return subprocess.CompletedProcess(args, 0, b"", b"")
 
         with tempfile.TemporaryDirectory() as root:
             bundle = Path(root) / "control.bundle"
             bundle.write_bytes(b"authored control")
+            dependency = Path(root) / "dependency.bundle"
+            dependency.write_bytes(b"authored dependency")
+            bundle_alias = Path(root) / "bundle-alias"
+            bundle_alias.symlink_to(bundle)
+            dependency_alias = Path(root) / "dependency-alias"
+            dependency_alias.symlink_to(dependency)
             request = Path(root) / "request.json"
             request.write_text(
                 json.dumps(
                     {
-                        "path": str(bundle),
+                        "path": str(bundle_alias),
                         "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
+                        "dependencies": [{"path": str(dependency_alias), "sha256": hashlib.sha256(dependency.read_bytes()).hexdigest()}],
                         "assets": [{"name": "lighting", "type": "LightingSettings"}],
                     }
                 )

@@ -87,7 +87,301 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(list(rows), [key])
             self.assertEqual(dict(rows.items()), {key: {"edges": [[0, 2**63 - 1]]}})
 
-    def canonical_fixture(self, root, broken=None):
+    def test_expose_local_assets_keeps_existing_rows_and_resource_member(self):
+        W, C = P.module("unity_write"), P.module("catalog_complete")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            required = inputs["required"]
+            name, member = required["name"], required["member"]
+            source = inputs["source"]
+            groups = [dict(guid="34" * 16, path="Assets/Added.asset", roots=[dict(path_id=50, class_id=108), dict(path_id=40, class_id=1)])]
+            result = P.expose_local_assets(source, root / "extended", name, member, groups, codec=None, codec_sha256=None)
+            self.assertEqual(result["local_objects"], 2)
+
+            def read_bundle(path):
+                bundle = W.B.Bundle(path)
+                with bundle.member(member) as stream:
+                    layout = W.read_serialized(stream)
+                    bodies = {}
+                    for row in layout["objects"]:
+                        stream.seek(layout["data_offset"] + row["offset"])
+                        bodies[row["path_id"]] = W.B.exact(stream, row["bytes"])
+                with bundle.member(member + ".resS") as stream:
+                    return layout, bodies, stream.read()
+
+            before, old_bodies, old_resource = read_bundle(source)
+            after, new_bodies, new_resource = read_bundle(Path(result["bundle"]))
+            self.assertEqual(old_resource, new_resource)
+            self.assertEqual(before["types"], after["types"])
+            self.assertEqual(before["externals"], after["externals"])
+            previous_rows, _ = C.containers(old_bodies.pop(1))
+            actual_rows, _ = C.containers(new_bodies.pop(1))
+            self.assertEqual(old_bodies, new_bodies)
+            self.assertEqual(
+                actual_rows,
+                [("assets/added.asset", (0, pid), [(0, 40), (0, 50)]) for pid in (50, 40)] + previous_rows,
+            )
+            groups[0]["roots"][0]["class_id"] = 28
+            with self.assertRaisesRegex(ValueError, "different native type"):
+                P.expose_local_assets(source, root / "invalid", name, member, groups, codec=None, codec_sha256=None)
+
+    def test_closed_local_type_allocation_preserves_existing_script_slots(self):
+        M = P.module("bundle_manifest")
+        tree = M.S._tree(
+            [
+                dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1)
+                for kind, name, size, level in (
+                    ("MonoBehaviour", "Base", -1, 0),
+                    ("PPtr<MonoScript>", "m_Script", 12, 1),
+                    ("int", "m_FileID", 4, 2),
+                    ("SInt64", "m_PathID", 8, 2),
+                )
+            ]
+        )
+        original = dict(class_id=114, stripped=0, script_type=1, hash=b"a" * 16, script_id=b"b" * 16, tree=tree, dependencies=[])
+        source_type = dict(original, script_type=7, hash=b"c" * 16, script_id=b"d" * 16)
+        existing_body, new_body = struct.pack("<iq", 0, 10), struct.pack("<iq", 0, 15)
+        layout = dict(types=[original], scripts=[(0, 20), (0, 10)])
+        managed = {"1": dict(pointer=[0, 10]), "2": dict(pointer=[0, 15])}
+        records = {1: (existing_body, dict(original, script_type=9)), 2: (new_body, source_type)}
+
+        self.assertEqual(list(P.append_closed_local_types(layout, records, managed, {})), [(1, existing_body, 0), (2, new_body, 1)])
+        self.assertEqual(layout["scripts"], [(0, 20), (0, 10), (0, 15)])
+        self.assertEqual(layout["types"], [original, dict(source_type, script_type=2)])
+        self.assertEqual(P.qualified_final_type(new_body, layout["types"][1], layout["scripts"], source_type), source_type)
+        managed["2"]["pointer"] = [0, 10]
+        with self.assertRaisesRegex(ValueError, "script differs"):
+            list(P.append_closed_local_types(layout, records, managed, {}))
+
+    def test_closed_local_scene_consumer_checks_native_class_and_pointer(self):
+        M = P.module("bundle_manifest")
+        field = "m_OcclusionCullingData"
+        tree = M.S._tree(
+            [
+                dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1)
+                for kind, name, size, level in (
+                    ("OcclusionCullingSettings", "Base", -1, 0),
+                    ("PPtr<OcclusionCullingData>", field, 12, 1),
+                    ("int", "m_FileID", 4, 2),
+                    ("SInt64", "m_PathID", 8, 2),
+                )
+            ]
+        )
+        settings = dict(class_id=29, tree=tree)
+        data_tree = M.S._tree([dict(type="OcclusionCullingData", name="Base", size=0, level=0, meta=0, flags=0, version=1)])
+        records = {7: (b"", dict(class_id=363, tree=data_tree))}
+        consumer = dict(member="BuildPlayer-scene", path_id=10, class_id=29)
+        scene = dict(types=[settings], externals=[dict(path="archive:/CAB-donor/CAB-donor")])
+        native = Node(
+            members={consumer["member"]: (None, scene, {10: dict(type_id=0)})},
+            record=lambda *_: (consumer["member"], settings, struct.pack("<iq", 1, 7)),
+        )
+        witness = dict(managed_bindings={}, external_endpoints=[], scene_roots={field: [1, 7]})
+        self.assertEqual(P.qualify_closed_local(native, "CAB-donor", records, witness, consumer, None, {}), [7])
+        with self.assertRaisesRegex(ValueError, "native consumer differs"):
+            P.qualify_closed_local(native, "CAB-donor", records, witness, dict(consumer, class_id=114), None, {})
+        witness["scene_roots"][field] = [1, 8]
+        with self.assertRaisesRegex(ValueError, "consumer route differs"):
+            P.qualify_closed_local(native, "CAB-donor", records, witness, consumer, None, {})
+
+    def test_expose_local_assets_supplies_an_external_mesh_without_a_catalog_root(self):
+        M, W = P.module("bundle_manifest"), P.module("unity_write")
+
+        def native(cid, fields):
+            tree = M.S._tree([dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1) for kind, name, size, level in fields])
+            return dict(class_id=cid, stripped=0, script_type=-1, hash=b"m" * 16, tree=tree, dependencies=[])
+
+        mesh = native(43, [("Mesh", "Base", -1, 0), ("int", "authored", 4, 1)])
+        mesh_filter = native(
+            33,
+            [("MeshFilter", "Base", -1, 0), ("PPtr<Mesh>", "m_Mesh", 12, 1), ("int", "m_FileID", 4, 2), ("SInt64", "m_PathID", 8, 2)],
+        )
+        body = struct.pack("<i", 91)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root, extra_records=[(60, mesh, body)])
+            source = inputs["source"]
+            name, member = inputs["required"]["name"], inputs["required"]["member"]
+            consumer, consumer_member = root / "scene.bundle", "BuildPlayer-authored"
+            layout, bodies = P.O.make_layout(
+                dict(externals=[member]),
+                [dict(path_id=1, type=mesh_filter, body=struct.pack("<iq", 1, -22))],
+            )
+            serialized = io.BytesIO()
+            W.write_serialized(serialized, layout, lambda obj: io.BytesIO(bodies[obj["path_id"]]))
+            data = serialized.getvalue()
+            with consumer.open("wb") as stream:
+                W.write_bundle(stream, [(consumer_member, 4, len(data), lambda: io.BytesIO(data))], lambda block, method: block, flags=0x40)
+            objects = root / "mesh.bin"
+            objects.write_bytes(body)
+            index = root / "mesh.jsonl"
+            row = dict(bundle=name, member=member, path_id=-22, type_id=0, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+            index.write_text(json.dumps(row) + "\n")
+            pack = {"types": [P.O.json_layout(mesh)], "index.jsonl": index, "objects.bin": objects}
+
+            def expose(destination, consumers):
+                return P.expose_local_assets(
+                    source, root / destination, name, member, [], codec=None, codec_sha256=None, packs=[pack], mesh_consumers=consumers
+                )
+
+            def pin(path):
+                return dict(path=str(path), bytes=path.stat().st_size, sha256=W.B.sha(path))
+
+            types = root / "types.json"
+            types.write_text(json.dumps(pack["types"]))
+            pack_pins = {"objects.bin": pin(objects), "index.jsonl": pin(index), "types.json": pin(types)}
+            receipt = root / "pack-receipt.json"
+            receipt.write_text(json.dumps(dict(success=True, outputs=pack_pins)))
+            request = root / "release.json"
+            request.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-bundle-preload-release-v1",
+                        profiles=[],
+                        request=dict(policy=dict(bundle=name, member=member), codec=None),
+                        mesh_append=dict(packs=[dict(pack_pins, receipt=pin(receipt))], mesh_consumers=[dict(bundle=pin(consumer), member=consumer_member)]),
+                    )
+                )
+            )
+            output = root / "release"
+            prepared = dict(request=dict(path="synthetic"))
+            with (
+                patch.object(P, "prepare_request", return_value=prepared),
+                patch.object(P, "produce_request", return_value=P.catalog_artifacts(inputs["required"], dict(bundle=source), root)),
+            ):
+                release = P.produce_release_request(request, output)
+            result = release["mesh_append"]
+            self.assertEqual(Path(result["bundle"]).parent, (output / "mesh-complete").resolve())
+            self.assertEqual(release["catalog_bundle"], pin(Path(result["bundle"])))
+            self.assertEqual((result["added_objects"], result["external_mesh_endpoints"]), (1, [-22]))
+            with W.B.Bundle(Path(result["bundle"])).member(member) as stream:
+                final = W.read_serialized(stream)
+                obj = next(row for row in final["objects"] if row["path_id"] == -22)
+                stream.seek(final["data_offset"] + obj["offset"])
+                self.assertEqual((final["types"][obj["type_id"]], stream.read(obj["bytes"])), (mesh, body))
+            row["path_id"] = -23
+            index.write_text(json.dumps(row) + "\n")
+            with self.assertRaisesRegex(ValueError, "outside the checked preload closure"):
+                expose("unreferenced", [(consumer, consumer_member)])
+
+    def test_expose_local_assets_rebases_appended_texture_stream(self):
+        W, C = P.module("unity_write"), P.module("catalog_complete")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types = self.streamed_graph(root)
+            name, member = "authored", "CAB-authored"
+            original = P.emit_closed_native(graph, [types], root / "emitted", name, member)
+            source = Path(original["bundle"])
+            bundle = W.B.Bundle(source)
+            resource_name = member + ".resS"
+            with bundle.member(resource_name) as stream:
+                resource_before = stream.read()
+            with bundle.member(member) as stream:
+                layout = W.read_serialized(stream)
+            native = next(typ for typ in layout["types"] if typ["class_id"] == 28)
+            provider = root / "60"
+            row = json.loads((provider / "index.jsonl").read_text())
+            row.update(bundle=name, member=member, path_id=-22, type_id=0)
+            index = root / "append.jsonl"
+            index.write_text(json.dumps(row) + "\n")
+            pack = {
+                "types": [P.O.json_layout(native)],
+                "index.jsonl": index,
+                "objects.bin": provider / "objects.bin",
+                "resources.bin": provider / "resources.bin",
+            }
+            groups = [dict(guid="34" * 16, path="Assets/Added.asset", roots=[dict(path_id=-22, class_id=28)])]
+            result = P.expose_local_assets(source, root / "extended", name, member, groups, codec=None, codec_sha256=None, packs=[pack])
+            self.assertEqual((result["local_objects"], result["added_objects"]), (3, 1))
+            offset = (len(resource_before) + 7) & ~7
+            self.assertEqual(result["resources"], [dict(offset=offset, size=19, path=f"archive:/{member}/{resource_name}")])
+            revised = W.B.Bundle(Path(result["bundle"]))
+            with revised.member(resource_name) as stream:
+                self.assertEqual(stream.read(), resource_before.ljust(offset, b"\x00") + bytes([60]) * 19)
+            with revised.member(member) as stream:
+                after = W.read_serialized(stream)
+                self.assertEqual(after["types"], layout["types"])
+                self.assertEqual({row["path_id"] for row in after["objects"]} - {row["path_id"] for row in layout["objects"]}, {-22})
+                container = next(row for row in after["objects"] if after["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(after["data_offset"] + container["offset"])
+                rows, _ = C.containers(W.B.exact(stream, container["bytes"]))
+                self.assertIn(("assets/added.asset", (0, -22), [(0, -22), (0, 10), (0, 20)]), rows)
+
+    def test_component_preloads_extend_shared_extents_and_preserve_other_rows(self):
+        C = P.module("catalog_complete")
+        root = (0, 30)
+        local_script = (0, 60)
+        bank = (1, 70)
+        body = io.BytesIO()
+        P.O.aligned_string(body, "authored")
+        body.write(struct.pack("<IiqiqiqI", 3, *root, *local_script, 0, 80, 3))
+        for name, start, size, path_id in [("body", 0, 2, 30), ("skin", 0, 2, 40), ("other", 1, 2, 80)]:
+            P.O.aligned_string(body, name)
+            body.write(struct.pack("<iiiq", start, size, 0, path_id))
+        body.write(bytes(33))
+
+        revised, groups = P.extend_component_preloads(body.getvalue(), root, {local_script, bank})
+        self.assertEqual(groups, ["body", "skin"])
+        self.assertEqual(struct.unpack_from("<I", revised, 12)[0], 6)
+        self.assertEqual(
+            C.containers(revised),
+            (
+                [
+                    ("body", root, [root, local_script, bank]),
+                    ("skin", (0, 40), [root, local_script, bank]),
+                    ("other", (0, 80), [local_script, (0, 80)]),
+                ],
+                False,
+            ),
+        )
+
+    def test_expose_local_assets_appends_sprite_with_local_texture(self):
+        M, W, C = P.module("bundle_manifest"), P.module("unity_write"), P.module("catalog_complete")
+
+        def native(class_id, nodes):
+            tree = M.S._tree([dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1) for kind, name, size, level in nodes])
+            return dict(class_id=class_id, stripped=0, script_type=-1, hash=b"s" * 16, tree=tree, dependencies=[])
+
+        sprite = native(
+            213,
+            [
+                ("Sprite", "Base", -1, 0),
+                ("SpriteRenderData", "m_RD", -1, 1),
+                ("PPtr<Texture2D>", "texture", 12, 2),
+                ("int", "m_FileID", 4, 3),
+                ("SInt64", "m_PathID", 8, 3),
+            ],
+        )
+        texture = native(28, [("Texture2D", "Base", -1, 0), ("int", "fixture", 4, 1)])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            records = [(60, texture, bytes(4)), (70, sprite, struct.pack("<iq", 0, 60))]
+            inputs, _ = self.canonical_fixture(root, extra_records=records)
+            name, member = inputs["required"]["name"], inputs["required"]["member"]
+            groups = [dict(guid="34" * 16, path="Assets/Icon.png", roots=[dict(path_id=60, class_id=28), dict(path_id=71, class_id=213)])]
+            pack = dict(types=[P.O.json_layout(sprite)], **{"index.jsonl": root / "append.jsonl", "objects.bin": root / "append.bin"})
+
+            def append(texture_id, destination):
+                body = struct.pack("<iq", 0, texture_id)
+                row = dict(bundle=name, member=member, path_id=71, type_id=0, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+                pack["objects.bin"].write_bytes(body)
+                pack["index.jsonl"].write_text(json.dumps(row) + "\n")
+                return P.expose_local_assets(inputs["source"], root / destination, name, member, groups, codec=None, codec_sha256=None, packs=[pack])
+
+            result = append(60, "extended")
+            self.assertEqual((result["local_objects"], result["added_objects"]), (2, 1))
+            bundle = W.B.Bundle(Path(result["bundle"]))
+            with bundle.member(member) as stream:
+                layout = W.read_serialized(stream)
+                container = next(row for row in layout["objects"] if layout["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(layout["data_offset"] + container["offset"])
+                rows, _ = C.containers(W.B.exact(stream, container["bytes"]))
+                self.assertEqual([row for row in rows if row[0] == "assets/icon.png"], [("assets/icon.png", (0, pid), [(0, 60), (0, 71)]) for pid in (60, 71)])
+            with self.assertRaisesRegex(ValueError, "Sprite names an unqualified Texture2D"):
+                append(70, "invalid")
+
+    def canonical_fixture(self, root, broken=None, *, extra_records=()):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 
         def typ(cid, field):
@@ -114,6 +408,9 @@ class BundlePreloadTests(unittest.TestCase):
         bodies, native_types = {}, {}
         for pid, target, native in [(10, 20, go), (20, 10, component), (30, 10, consumer), (40, 50, go), (50, 40, component)]:
             bodies[pid] = struct.pack("<iqi", 0, 40 if broken == "duplicate" and pid == 20 else target, 73)
+            native_types[pid] = native
+        for pid, native, body in extra_records:
+            bodies[pid] = body
             native_types[pid] = native
         cbodies = {
             pid: struct.pack("<iqi", 0, 101 if broken == "canonical" and pid == 200 else target, 73)

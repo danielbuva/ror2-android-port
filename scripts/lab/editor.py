@@ -117,13 +117,22 @@ async def _main():
                     },
                 )
             elif action == "commando-animation-host":
+                # Keep the pose sampling below the pinned MCP command deadline.
+                lifecycle = await call(
+                    "execute_code",
+                    {
+                        "action": "execute",
+                        "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");try { return new { references=WholeCatalogBuild.RestoreSourceAdditiveReferencePoses(), animation=SurvivorSkillInputHost.VerifyAnimatorBeforeMainState() }; } catch(System.Exception error) { UnityEngine.Debug.LogException(error); throw; }',
+                    },
+                )
                 evidence["result"] = await call(
                     "execute_code",
                     {
                         "action": "execute",
-                        "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return new { references=WholeCatalogBuild.RestoreSourceAdditiveReferencePoses(), aim=SurvivorSkillInputHost.SampleCommandoAim(), animation=SurvivorSkillInputHost.VerifyAnimatorBeforeMainState(), touch=SurvivorSkillInputHost.VerifyTouchWithoutPhysicalController() };',
+                        "code": "return new { artificer=SurvivorSkillInputHost.SampleArtificerGestures(), aim=SurvivorSkillInputHost.SampleCommandoAim(), huntress=SurvivorSkillInputHost.SampleHuntressGestures(), captain=SurvivorSkillInputHost.SampleCaptainGestures(), bandit=SurvivorSkillInputHost.SampleBanditGestures(), banditWeaponLocomotion=SurvivorSkillInputHost.SampleBanditWeaponLocomotion(), touch=SurvivorSkillInputHost.VerifyTouchWithoutPhysicalController() };",
                     },
                 )
+                evidence["result"]["data"]["result"].update(lifecycle["data"]["result"])
             elif action == "siren-input-host":
                 evidence["result"] = await call(
                     "execute_code",

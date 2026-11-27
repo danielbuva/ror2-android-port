@@ -30,6 +30,8 @@ public final class ToolHostActivity extends Activity {
     private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
     private TextView statusView;
     private final OwnerUpdateState.StatusRender statusRender = new OwnerUpdateState.StatusRender();
+    private Button permissionButton, confirmationButton;
+    private static ToolHostActivity resumedActivity;
     private Button checkButton, rollbackButton, recoveryButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
     private static final int PICK_TREE = 120, PICK_ZIP = 121;
     private String flowDetail = "";
@@ -54,6 +56,8 @@ public final class ToolHostActivity extends Activity {
         statusView = new TextView(this); layout.addView(statusView);
         graphicsPicker = new OwnerGraphicsPicker(this);
         button(layout, "Graphics drivers", new Runnable() { public void run() { graphicsPicker.show(); } });
+        permissionButton = button(layout, "Allow installs from this app in Android settings", new Runnable() { public void run() { requestInstallPermission(); } });
+        confirmationButton = button(layout, "Open Android install confirmation", new Runnable() { public void run() { OwnerInstaller.openConfirmation(ToolHostActivity.this); refreshStatus(); } });
         checkButton = button(layout, "Check for updates", new Runnable() { public void run() { startUpdate("release-check"); } });
         rollbackButton = button(layout, "Rebuild and install previous release (same key)", new Runnable() { public void run() { startUpdate("release-rollback"); } });
         recoveryButton = button(layout, "Recover and verify retained profile/settings", new Runnable() { public void run() { OwnerBuildService.launch(ToolHostActivity.this, "profile-recover"); } });
@@ -133,7 +137,7 @@ public final class ToolHostActivity extends Activity {
         refreshStatus();
     }
     private void control(String action) {
-        try { if (OwnerBuildService.isRunning()) OwnerBuildService.control(this, action); }
+        try { if (OwnerBuildService.hasLiveControls()) OwnerBuildService.control(this, action); }
         catch (Exception error) { updateStatus(this, "ERROR", error.getMessage()); }
     }
     private void resume(boolean retry) {
@@ -151,13 +155,33 @@ public final class ToolHostActivity extends Activity {
     }
     @Override public void onResume() {
         super.onResume();
+        resumedActivity = this;
         getSharedPreferences(OwnerInstaller.STATUS, 0).registerOnSharedPreferenceChangeListener(installObserver);
         handler.removeCallbacks(refresh); handler.post(refresh);
     }
     @Override public void onPause() {
+        if (resumedActivity == this) resumedActivity = null;
         handler.removeCallbacks(refresh);
         getSharedPreferences(OwnerInstaller.STATUS, 0).unregisterOnSharedPreferenceChangeListener(installObserver);
         super.onPause();
+    }
+    static ToolHostActivity activeForConfirmation() {
+        ToolHostActivity active = resumedActivity;
+        return active != null && !active.isFinishing() && active.hasWindowFocus() ? active : null;
+    }
+    private boolean installPermissionGranted() {
+        return android.os.Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls();
+    }
+    private boolean requestInstallPermission() {
+        if (installPermissionGranted()) return true;
+        try {
+            startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null)));
+        } catch (RuntimeException unavailable) {
+            updateStatus(this, "ERROR", "Android install settings could not open. Allow installs from this app in Android Settings, then return and retry.");
+            refreshStatus();
+        }
+        // The OS owns the grant. Returning from Settings never starts conversion.
+        return false;
     }
     static JSONObject readJson(File file) throws Exception {
         if (file.length() > 4 * 1024 * 1024) throw new IOException("Private status is too large");
@@ -226,6 +250,7 @@ public final class ToolHostActivity extends Activity {
         if (OwnerBuildService.isRunning() || OwnerInstaller.busy(app) || OwnerAlphaInstall.pending(app)) {
             checkDiagnostic(app, action, "blocked-busy", null); return;
         }
+        if (OwnerUpdateState.requiresInstallPermission(action) && !requestInstallPermission()) return;
         String checkStage = "clear-status";
         try {
             OwnerInstaller.clearTerminalStatus(app);
@@ -250,9 +275,7 @@ public final class ToolHostActivity extends Activity {
         if (OwnerBuildService.isRunning() || OwnerInstaller.busy(this)) return;
         try {
             if (!model.canInstall() && !"ERROR".equals(OwnerInstaller.state(this))) throw new IOException("Reconstruct and verify the release first");
-            if (android.os.Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
-                startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))); return;
-            }
+            if (!requestInstallPermission()) return;
             OwnerBuildService.launch(this, "install");
         } catch (Exception error) { updateStatus(this, "ERROR", error.getMessage()); }
         refreshStatus();
@@ -471,8 +494,12 @@ public final class ToolHostActivity extends Activity {
         String previous = OwnerBuildService.action(this);
         if ("ERROR".equals(OwnerInstaller.state(this))) previous = getSharedPreferences(OwnerBuildService.PREFERENCES, 0).getString("last_build_action", "release-build");
         OwnerUpdateState.Screen screen = model.screen(OwnerBuildService.isRunning(), OwnerInstaller.busy(this), OwnerAlphaInstall.pending(this),
-            new File(getFilesDir(), "owner-input/install-inputs.json").isFile(), importState, OwnerAlphaInstall.canRollback(this), OwnerUpdateState.resumableAction(previous));
-        String statusText = screen.text + flowDetail;
+            new File(getFilesDir(), "owner-input/install-inputs.json").isFile(), importState, OwnerAlphaInstall.canRollback(this),
+            OwnerUpdateState.resumableAction(previous), OwnerBuildService.hasLiveControls());
+        boolean needsPermission = !installPermissionGranted() && !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this);
+        permissionButton.setVisibility(needsPermission ? android.view.View.VISIBLE : android.view.View.GONE);
+        confirmationButton.setVisibility(OwnerInstaller.hasConfirmation(this) ? android.view.View.VISIBLE : android.view.View.GONE);
+        String statusText = screen.text + (needsPermission ? "\nAndroid install permission is required before reconstruction." : "") + flowDetail;
         if (statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())) statusView.setText(statusText);
         rollbackButton.setEnabled(screen.rollback); recoveryButton.setEnabled(screen.recover);
         prepareButton.setEnabled(screen.prepare); treeButton.setEnabled(screen.selectInputs); zipButton.setEnabled(screen.selectInputs);

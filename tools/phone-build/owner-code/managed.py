@@ -326,9 +326,7 @@ def target_source_order(public, support, maps):
     return [public[-1], *sorted(public[:-1] + maps, key=lambda path: path.name.casefold()), *support]
 
 
-def gameplay(
-    out, sdk, inputs, original, ordinary, raw, package_output, audio_outputs, maps, support, *, source_root=None, android_tools=None, sdk_compiler=None
-):
+def gameplay(out, sdk, inputs, original, ordinary, package_output, audio_outputs, maps, support, *, source_root=None, android_tools=None, sdk_compiler=None):
     destination = out / "gameplay"
     destination.mkdir()
     if source_root:
@@ -353,8 +351,6 @@ def gameplay(
         if native.sha(source) != transformed.get(name, row["sha256"]):
             raise ValueError("original player reference drift: " + name)
         plugins[name] = source
-    if raw is not None:
-        plugins.update({"AK.Wwise.Unity.API.dll": raw / "api-instrumented-composed.dll", "RoR2.dll": raw / "game-original-owner-point-sound-composed.dll"})
     for row in json.loads((package_output / "result.json").read_text())["packages"]:
         path = package_output / "postprocessed" / (row["name"] + ".dll")
         if native.sha(path) != row["sha256"]:
@@ -499,7 +495,6 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
             inputs,
             state[1] / "Risk of Rain 2_Data/Managed",
             ordinary,
-            None,
             packages,
             {},
             maps,
@@ -591,6 +586,7 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pc
                 inputs["dotnet"],
                 "--netstandard-ref",
                 inputs["netstandard_ref"],
+                "--observe-audio",
                 "--output-dir",
                 raw,
             ],
@@ -650,6 +646,10 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pc
             sdk_compiler=compiler,
             pcm_after_skill=pcm_after_skill,
         )
+        observed_game = raw / "game-original-owner-audio-observed.dll"
+        if observed_game not in managed_paths.values():
+            raise ValueError("managed producer omitted the original audio lifecycle and post observers")
+        audio_outputs.update({"AK.Wwise.Unity.API.dll": raw / "api-instrumented-composed.dll", "RoR2.dll": observed_game})
         unchanged(bound)
         result["phase"] = "original-sources-and-maps"
         maps, support = maps_and_support(
@@ -669,7 +669,6 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pc
             inputs,
             state[1] / "Risk of Rain 2_Data/Managed",
             ordinary,
-            raw,
             package_output,
             audio_outputs,
             maps,
@@ -678,9 +677,7 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pc
             sdk_compiler=compiler,
         )
         produced = {
-            "AK.Wwise.Unity.API.dll": raw / "api-instrumented-composed.dll",
             "AK.Wwise.Unity.MonoBehaviour.dll": ordinary["AK.Wwise.Unity.MonoBehaviour.dll"],
-            "RoR2.dll": raw / "game-original-owner-point-sound-composed.dll",
             "Assembly-CSharp.dll": game,
             "Newtonsoft.Json.dll": inputs["newtonsoft"],
             **audio_outputs,

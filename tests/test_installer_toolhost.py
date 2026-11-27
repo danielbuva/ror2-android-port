@@ -15,6 +15,26 @@ SPEC.loader.exec_module(fixture)
 
 
 class InstallerToolhostTest(unittest.TestCase):
+    def test_repack_accepts_updated_repo_pins_and_refuses_runtime_or_source_drift(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            source = root / "recipe" / "fixture.json"
+            source.parent.mkdir()
+            source.write_bytes(b"current source")
+            name = "recipe/fixture.json"
+            runtime = {"natives": ["retained-library"]}
+            base = json.dumps(dict(runtime, public_profile_source_hashes={name: "a" * 64}))
+            staging = mock.Mock()
+            profile = dict(runtime, public_profile_source_hashes={name: fixture.digest(source)})
+            with mock.patch.object(fixture, "git", side_effect=["", base, name] * 2 + ["", base]):
+                staging.load_metadata.side_effect = [profile.copy(), profile.copy(), dict(profile, natives=[])]
+                fixture.verify_runtime_inputs(root, "old", "new", staging)
+                source.write_bytes(b"source drift")
+                with self.assertRaisesRegex(ValueError, "public fixture source differs"):
+                    fixture.verify_runtime_inputs(root, "old", "new", staging)
+                with self.assertRaisesRegex(ValueError, "retained Android tool profile differs"):
+                    fixture.verify_runtime_inputs(root, "old", "new", staging)
+
     def test_base_receipt_binds_request_key_and_source_commit(self):
         with tempfile.TemporaryDirectory() as directory:
             commit, key = "a" * 40, "b" * 64
