@@ -365,4 +365,5 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1531](PORTING_JOURNAL.md#j1531--restore-artificer-charge-and-flame-materials) | 2026-11-27 | Restore Artificer charge and flame materials | 2026-11-27. |
 | [J1532](PORTING_JOURNAL.md#j1532--exclude-detached-player-hurtboxes-from-touch-aim) | 2026-11-27 | Exclude detached player HurtBoxes from touch aim | 2026-11-27. |
 | [J1533](PORTING_JOURNAL.md#j1533--admit-shipped-first-stages-on-converted-ordinary-start) | 2026-11-27 | Admit shipped first stages on converted ordinary Start | 2026-11-27. |
-| [J1534](PORTING_JOURNAL.md#j1534--activate-the-native-commencement-mission-on-entry) | 2026-11-27 | Activate the native Commencement mission on entry | 2026-11-26. |
+| [J1534](PORTING_JOURNAL.md#j1534--recover-artificer-nano-bomb-release-materials) | 2026-11-27 | Recover Artificer Nano-Bomb release materials | 2026-11-27. |
+| [J1535](PORTING_JOURNAL.md#j1535--activate-the-native-commencement-mission-on-entry) | 2026-11-27 | Activate the native Commencement mission on entry | 2026-11-26. |

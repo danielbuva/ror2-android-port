@@ -2189,6 +2189,10 @@ bodies, conflicting source destinations, stale type tables and mismatching or
 unused overrides. Preparation is host qualification support; signed dispatch and
 the phone conversion experience remain unqualified.
 
+Standalone Sprite recipes declare PPtr relocations by source offset.
+Preparation matches them to the assembled record's typed fields and checks
+the original and produced pointer values before resolving their endpoints.
+
 SDK staged rows declare `bundle: "sdk"`, the canonical `member`, the serialized
 `file` pin and optional `leaves`/`full` witness pins. Preparation retains moved
 file aliases and checks actual bodies/native metadata. SDK members enter the

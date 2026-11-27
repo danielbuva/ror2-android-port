@@ -7486,6 +7486,11 @@ Audit 2026-11-26. The assisted Gold shrine route refreshes the reviewed
 build-hook consumers. The authored change expires a terrain recovery timer
 when the objective changes. The refresh contains only authored source hashes.
 
+Audit 2026-11-27. The optional lab presentation capture adds two selector fields
+to `PortSession.cs` and refreshes its audio-owner source pin and build-hook
+bindings. These recipe changes contain authored source hashes only. Captured
+images and session evidence remain private.
+
 Audit 2026-11-27. `owner-goolake-scene-mesh-endpoints.json` selects five
 existing `owner-meshes.json` transforms for MeshFilter and MeshCollider
 references in Goolake. The provenance, privacy, licensing and sensitive-content

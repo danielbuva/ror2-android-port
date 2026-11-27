@@ -17,6 +17,45 @@ P = importlib.import_module("bundle_preload")
 
 
 class BundlePreparationTests(unittest.TestCase):
+    def test_sprite_relocations_follow_typed_field_after_layout_change(self):
+        manifest = P.module("bundle_manifest")
+        node = manifest.S._node
+        typ = dict(
+            class_id=213,
+            tree=manifest.S._tree(
+                [
+                    node("Sprite", "Base", -1, level=0),
+                    node("string", "m_Name", -1, level=1, meta=0x4000),
+                    node("Array", "Array", -1, level=2, flags=1),
+                    node("int", "size", 4, level=3),
+                    node("char", "data", 1, level=3),
+                    node("PPtr<Texture2D>", "texture", 12, level=1),
+                    node("int", "m_FileID", 4, level=2),
+                    node("SInt64", "m_PathID", 8, level=2),
+                ]
+            ),
+        )
+        source_body = struct.pack("<iiq", 0, 0, 10)
+        output_body = struct.pack("<i4siq", 4, b"Icon", 0, 20)
+        reference = dict(offset=4, **{"from": [0, 10], "to": [0, 20]})
+        schemas = {}
+        fields = list(P.pointer_fields(output_body, typ, schemas))
+        qualify = P.module("bundle_prepare").qualify_sprite_relocations
+        self.assertEqual(qualify(P, (source_body, typ, None), fields, [reference], schemas), {8: reference})
+        with self.assertRaisesRegex(ValueError, "source PPtr differs"):
+            qualify(P, (source_body, typ, None), fields, [dict(reference, offset=8)], schemas)
+        with self.assertRaisesRegex(ValueError, "output PPtr differs"):
+            qualify(P, (source_body, typ, None), fields, [dict(reference, to=[0, 21])], schemas)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "sprite.json"
+            output = dict(bundle="content", member="CAB-content", path_id=9, references=[reference])
+            sprite = dict(path_id=7, texture=dict(path_id=10), importer_guid="a" * 32, outputs=[output])
+            member = dict(name="CAB-source", objects=[sprite])
+            path.write_text(json.dumps(dict(bundles=[dict(path="original.bundle", sha256="b" * 64, members=[member])])))
+            relocations = {}
+            P.module("bundle_prepare").original_identities(P, path, sprite_relocations=relocations)
+            self.assertEqual(relocations, {(("content", "CAB-content", 9), ("original.bundle", "CAB-source", 7)): [reference]})
+
     def test_original_identities_cover_texture_avatar_and_shared_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "profile.json"
