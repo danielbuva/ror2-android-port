@@ -3,6 +3,7 @@
 import struct
 import unittest
 import importlib.util
+from itertools import combinations
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -53,7 +54,146 @@ class CompilerHosting(unittest.TestCase):
         self.assertEqual(call.kwargs["authored_files"], ["first", "second"])
 
 
+class TranslatedShaderPack(unittest.TestCase):
+    def test_profile_receipt_admits_two_original_records(self):
+        import hashlib
+        import json
+        import tempfile
+
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            from bundle_preload import ProducerRecords
+            import shader_translate as translator
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            pc = root / "pc"
+            pc.mkdir()
+            source = pc / "test.assets"
+            source.write_bytes(b"ab")
+            profile = root / "profile.json"
+            records = []
+            for path_id, body in ((1, b"a"), (2, b"b")):
+                records.append(
+                    {
+                        "source": {
+                            "path": source.name,
+                            "member": source.name,
+                            "path_id": path_id,
+                            "bytes": 2,
+                            "sha256": N.sha(source),
+                            "body_sha256": hashlib.sha256(body).hexdigest(),
+                        },
+                        "output": {"bundle": "test", "member": "target", "path_id": path_id + 10},
+                    }
+                )
+            profile.write_text(json.dumps({"typed_records": records}))
+            output = root / "translated"
+            request = {"pc": pc, "output": output, "tools": {}, "profile": {"path": profile, "bytes": profile.stat().st_size, "sha256": N.sha(profile)}}
+            metadata = {
+                "data_offset": 0,
+                "objects": [{"path_id": path_id, "type_id": 0, "offset": path_id - 1, "bytes": 1} for path_id in (1, 2)],
+                "types": [{"class_id": 48, "tree": b"test"}],
+            }
+            writer = translator.objects.W
+            with (
+                patch.object(writer, "read_serialized", return_value=metadata) as read_member,
+                patch.object(writer, "shader_node"),
+                patch.object(writer, "read_shader_body", side_effect=lambda node, body: body),
+                patch.object(writer, "write_shader_body", side_effect=lambda node, body: body),
+                patch.object(translator, "translate_tree", side_effect=lambda body, *_: body.upper()),
+            ):
+                receipt = translator.produce(request)
+            read_member.assert_called_once()
+            self.assertEqual(receipt["records"], 2)
+            self.assertEqual(len(json.loads((output / "types.json").read_bytes())), 1)
+            providers = ProducerRecords()
+            for index, body in enumerate((b"A", b"B")):
+                row, admitted = providers.record(
+                    {"provider": output, "record_source": ("test", "target", 11 + index), "record": N.sha(profile), "sha256": hashlib.sha256(body).hexdigest()}
+                )
+                self.assertEqual((row["offset"], row["type_id"], admitted), (index, 0, body))
+
+
+class NativeUI(unittest.TestCase):
+    def test_original_shader_recovers_every_keyword_combination_from_pass_zero(self):
+        axes = ["DOUBLESAMPLE", "UNITY_UI_CLIP_RECT", "UNITY_UI_ALPHACLIP"]
+        tags = {"tags": []}
+        state = {"m_Name": "Default", "m_Tags": tags}
+        form = {
+            "m_Name": "Fixture/UI",
+            "m_KeywordNames": [f"Stereo{i}" for i in range(4)] + axes,
+            "m_SubShaders": [{"m_Tags": tags, "m_LOD": 5, "m_Passes": [{"m_State": state}]}],
+        }
+        recovered = []
+
+        def pair(context, index, keywords):
+            self.assertEqual((context, index), ("fixture", 0))
+            recovered.append(frozenset(keywords))
+            return "vertex", "fragment"
+
+        def block(context, pairs, directives):
+            self.assertEqual(len({condition for condition, _, _ in pairs}), 8)
+            return directives
+
+        source = N.ui_original_source(form, "fixture", SimpleNamespace(pair=pair, block=block), lambda _: "")
+        expected = {frozenset(keys) for length in range(4) for keys in combinations(axes, length)}
+        self.assertEqual(set(recovered), expected)
+        self.assertIn('Shader "Fixture/UI"', source)
+        self.assertIn('Name "Default"', source)
+        for axis in axes:
+            self.assertIn(f"#pragma multi_compile __ {axis}", source)
+
+
 class ComputeRecords(unittest.TestCase):
+    def test_dxbc_compute_metadata_matches_storage_descriptor_bindings(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+
+        def resource(name, dimension):
+            return dict(name=name, generatedName="", bindPoint=0, samplerBindPoint=-1, texDimension=dimension)
+
+        original = {
+            "m_Name": "Fixture",
+            "variants": [
+                dict(
+                    targetRenderer=2,
+                    targetLevel=0,
+                    resourcesResolved=True,
+                    kernels=[
+                        dict(
+                            name="Accumulate",
+                            globalKeywords=[],
+                            localKeywords=[],
+                            variantMap=[
+                                (
+                                    "",
+                                    dict(
+                                        cbs=[resource("Params", -1)],
+                                        textures=[resource("Image", 2)],
+                                        builtinSamplers=[],
+                                        inBuffers=[],
+                                        outBuffers=[resource("Counters", -1)],
+                                        code=b"DXBC",
+                                        threadGroupSize=[4, 4, 1],
+                                    ),
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ],
+        }
+        with patch.object(translator, "compile_spirv", return_value=b"SPIR-V") as compile_spirv:
+            tree = translator.translate_compute(original, Path("fixture"), {})
+        compile_spirv.assert_called_once_with({}, Path("fixture"), 0, b"DXBC", ["texture", "0", "0", "0", "storage", "0", "0", "1", "cbv", "0", "1", "0"])
+        variant = tree["variants"][0]
+        kernel = variant["kernels"][0]["variantMap"][0][1]
+        self.assertEqual(variant["targetRenderer"], 21)
+        self.assertEqual([kernel[key][0]["bindPoint"] for key in ("cbs", "textures", "outBuffers")], [0x10000, 0, 0x2000001])
+        self.assertEqual(kernel["code"], b"SPIR-V")
+        self.assertEqual(kernel["threadGroupSize"], [4, 4, 1])
+        self.assertEqual(original["variants"][0]["targetRenderer"], 2)
+
     def test_same_buffer_name_can_have_distinct_kernel_layouts(self):
         compute = N.module("_compute_fixture", Path(N.__file__).with_name("shader_compute.py"))
         names = {"First": 16, "Second": 32, "Third": 16}
@@ -130,6 +270,17 @@ class AuthoredSelection(unittest.TestCase):
 
 
 class NativeRecords(unittest.TestCase):
+    def test_linked_vulkan_envelope_preserves_stage_extents(self):
+        vertex = b"LOMS" + b"v" * 23
+        fragment = b"LOMS" + b"f" * 25
+        result = N.linked_vulkan_program(vertex, fragment, alpha_clip=True)
+        marker, vertex_offset, vertex_size, fragment_offset, fragment_size = struct.unpack_from("<5I", result)
+        self.assertEqual((marker, fragment_offset), (0x02000021, 176))
+        self.assertEqual(vertex_offset, fragment_offset + fragment_size)
+        self.assertEqual(result[fragment_offset:vertex_offset], fragment)
+        self.assertEqual(result[vertex_offset : vertex_offset + vertex_size], vertex)
+        self.assertEqual(struct.unpack_from("<I", result, 76), (1,))
+
     def test_inline_sampler_is_written_to_serialized_common_parameters(self):
         compilation = {"reflection": ["sampler: 85 42"], "data": b"gpu", "gpu_program_type": 25}
         _, table, programs, parameters = N.variant_records([{"compilation": compilation, "requirements": 1, "keywords": []}], [])
