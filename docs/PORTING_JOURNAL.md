@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1525 — Measure two-worker native compilation on Android
+
+2026-11-27. The opt-in native compiler uses two workers and keeps serial as
+the default. On Thor both widths compiled all 826 units from one conversion.
+Compile wall time fell from 7,050.364 to 3,559.947 s. Stripped IL2CPP matched,
+SHA-256 `0b6bfe34196b2d584deea75566029844479505d2235e5d04b8575762e708f027`.
+Global metadata matched and both used the same Burst output. 825 intermediate
+objects matched. Peak CPU/GPU rose from 66.1 to 69.2 °C during compilation.
+The overall run completed with no thermal pauses. Device cleanup passed.
+Evidence under `work/coordination/alpha-record-pass-thor-20261126/paired-native-662/debug-path-control/run/`.
+APK assembly, installation and play remain open.
+
 ## J1524 — Restore converted Goolake's native Mesh references
 
 2026-11-27. Pack five source Mesh records into Goolake's dependency donor and
