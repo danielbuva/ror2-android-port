@@ -128,6 +128,7 @@ class TextureNativeProfileTests(unittest.TestCase):
                         ("CAB-test", serialized(clean, schema, path_id=6, class_id=28), 4),
                         ("CAB-blob", serialized(custom, schema, path_id=7, class_id=28), 4),
                         ("CAB-normal", serialized(normal, schema, path_id=8, class_id=28), 4),
+                        ("CAB-normal-covered", serialized(normal, schema, path_id=8, class_id=28), 4),
                         ("CAB-colour", serialized(colour, schema, path_id=9, class_id=28), 4),
                         *((f"CAB-native-{fmt}", serialized(body, schema, path_id=fmt, class_id=28), 4) for fmt, (body, _) in native_colours.items()),
                     ]
@@ -146,6 +147,8 @@ class TextureNativeProfileTests(unittest.TestCase):
                         ("CAB-native-4", 4),
                     )
                 )
+                + json.dumps(dict(source=[source.name, "CAB-normal-covered", 8], status="exact", record_source=["ignored.bundle", "CAB-other", 8]))
+                + "\n"
             )
             output = root / "profile.json"
             result = subprocess.run(
@@ -178,6 +181,15 @@ class TextureNativeProfileTests(unittest.TestCase):
             target = record["outputs"][0]
             self.assertEqual((target["sha256"], target["pixel_sha256"]), (None, None))
             self.assertEqual((target["bytes"], target["pixel_bytes"], target["usage"], target["alpha_optional"]), (len(normal) - 16, 16, 4, True))
+            output = root / "all-bc3.json"
+            subprocess.run(
+                [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--source-bc3", "--all-originals", "--output", str(output)],
+                check=True,
+            )
+            originals = json.loads(output.read_text())["bundles"][0]["members"]
+            self.assertEqual([member["name"] for member in originals], ["CAB-normal", "CAB-normal-covered"])
+            self.assertEqual(originals[0], members[0])
+            self.assertEqual(originals[1]["textures"][0]["sha256"], record["sha256"])
             output = root / "bc1.json"
             result = subprocess.run(
                 [sys.executable, "-I", "-S", "-B", str(TOOL), str(pc), str(coverage), "--source-bc1", "--output", str(output)], capture_output=True, text=True
