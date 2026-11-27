@@ -3305,6 +3305,12 @@ historical staging pipelines. Their selections are recorded in preparation
 receipts; source-byte and runtime acceptance checks are unchanged. Registration
 contracts are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-scene-runtime-evidence).
 
+`scripts/worker-yield.py` (current) sizes the orchestrated worker set. It reads
+the ignored `.local/orchestrator` logs, status lines, device grants and parks plus
+squash merges on `origin/main`, and reports per workstream tokens, merged PRs,
+cost per PR, device grants and a KEEP/WATCH/PARK verdict, with quota, budget
+(`budget-daily`) and device-contention notes (AGENTS.md "Working speed").
+
 `scripts/prune-generated.py` (current) discards rebuildable build outputs under
 `work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
 device receipts and the coordination lock; agents run it after each build/run task
