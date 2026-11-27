@@ -124,11 +124,16 @@ class BuildLaneTests(unittest.TestCase):
 
         with host_build_lock(self.work / "coordination/unity-build.lock", operation="canonical busy"):
             with (
+                patch.object(lanes, "check_space", side_effect=RuntimeError("full-build space floor")) as check_space,
                 patch.object(lanes, "start_server"),
                 patch.object(lanes, "publish", return_value={"apk": "published", "payload_directory": "payload"}),
                 patch.object(subprocess, "run", side_effect=invoke),
             ):
                 self.assertEqual(lanes.dispatch("second", ["prototype", "--action", "whole-catalog-code-build"], root=self.root), 0)
+                check_space.assert_not_called()
+                with self.assertRaisesRegex(RuntimeError, "full-build space floor"):
+                    lanes.dispatch("second", ["prototype", "--action", "whole-catalog-build"], root=self.root)
+                check_space.assert_called_once_with(self.root)
         self.assertEqual(len(calls), 1)
 
     def test_device_dispatch_refuses_and_teardown_preserves_canonical_and_lock(self):
