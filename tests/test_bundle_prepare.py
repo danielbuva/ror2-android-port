@@ -1010,6 +1010,25 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(gaps[("next",)]["target_member"], "CAB-b")
             self.assertFalse((output / "inputs.json").exists())
 
+    def test_failed_preparation_reports_unconsumed_exceptional_routes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root)
+            used = policy["field_routes"][0]
+            unused = dict(used, field=["removed"])
+            policy["field_routes"].append(unused)
+            policy_path = root / "policy.json"
+            policy_path.write_text(json.dumps(policy))
+            request["policy"] = pin(policy_path)
+            inputs.write_text(json.dumps(request))
+            output = root / "prepared"
+
+            with self.assertRaisesRegex(ValueError, "1 unused exceptional field routes"):
+                P.prepare_request(inputs, output)
+
+            self.assertEqual(json.loads((output / "unused-field-routes.json").read_bytes()), [unused])
+            self.assertFalse((output / "inputs.json").exists())
+
     def test_extend_prepared_selection_with_measured_external_routes(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

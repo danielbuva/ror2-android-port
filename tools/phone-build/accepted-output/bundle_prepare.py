@@ -806,8 +806,9 @@ def prepare(owner, inputs, output):
                 f"source endpoint absent or ambiguous: {(first['source'], first['pointer'], (first['owner'], first['field']))}. "
                 f"{len(unresolved)} unresolved original PPtrs in {report['path']}"
             )
-        if used != overrides.keys():
-            raise ValueError("unused exceptional field route")
+        if unused := overrides.keys() - used:
+            report = write("unused-field-routes.json", [overrides[key] for key in sorted(unused)])
+            raise ValueError(f"{len(unused)} unused exceptional field routes in {report['path']}")
         # The emitted endpoint index contains only the reachable SDK witnesses.
         for row in normalized_staged:
             if row["bundle"] != "sdk":
