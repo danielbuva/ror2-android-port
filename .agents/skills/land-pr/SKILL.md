@@ -21,12 +21,10 @@ description: Use when updating, verifying and merging a branch or draft PR of th
 3. `python3 scripts/audit-public.py` on staged content; manually confirm no game-derived bytes, device serials, private paths or credentials.
 4. Push. The pre-push hook runs `scripts/ci-local.sh` with affected test selection in a fresh clone. GitHub runs the full suite.
 5. Journal shipped device-verified behaviour and closed readiness or alpha gates. Cite the device run for device claims. Record routine host-only fixes in their PR.
-6. After opening the PR, immediately arm auto-merge with
-   `gh -R danielbuva/ror2-android-port pr merge <n> --auto --squash --delete-branch --author-email "$(git config user.email)"`.
-   Use the configured GitHub noreply address. `-R` keeps the CLI from deleting or switching the local
-   branch in the assigned worktree. GitHub merges when the required `host-tests` check passes and
-   deletes the remote head branch. Start the next item from `origin/main` while CI runs. Use
-   `WAITING ci-pr <n>` only when the next step requires the merge.
+6. After opening the PR, append `AUTOMERGE <n>` to the workstream status file. The orchestrator's
+   merge bot waits for the required `host-tests` check and squash-merges with the GitHub noreply
+   author address. GitHub deletes the remote head branch. Start the next item from `origin/main`
+   while CI runs. Use `WAITING ci-pr <n>` only when the next step requires the merge.
 7. After the merge, fetch updates and switch off the topic branch before deleting it locally with
    `git branch -D <branch>` (squash merges create a new commit). Keep the assigned worktree and its
    symlinks. Remove any extra worktree you created and run `python3 scripts/prune-generated.py --apply --aggressive`
