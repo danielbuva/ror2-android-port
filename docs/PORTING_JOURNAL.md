@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1539 — Recover Beetle Queen acid ghost materials
+
+2026-11-27. The existing native effect owner resolves the Queen's addressed
+spit and follows its enabled impact-child projectile to prepare Acid Ghost.
+Assisted Loader combat on Distant Roost kept the native Queen encounter and
+live Gas and Spittle particles on Android variants 105 and 36, queue 3000.
+At 21–22% teleporter charge, paired captures show the large white sheets clear
+while green acid and fizz remain. Other brief cards and distortion remain open.
+APK SHA-256 `a166df7f4e2d17de25c7aad1658843d4cf2b7a057e3e0e6177d771b17baf2035` (source `1e7a4b31`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/queen-acid-child-main-nova/`
+includes paired screenshots, same-process log and the frame 4170 renderer census.
+SoC peaked at 93.5 °C with 18.196 s above 80 °C. Admission battery was 29 °C.
+Adopted placement, scratch cleanup, OLED sleep and lease release passed.
+
 ## J1538 — Draw a translated source Shader on Android Vulkan
 
 2026-11-27. Wine vkd3d-shader translated all eight Animate Alpha DXBC
