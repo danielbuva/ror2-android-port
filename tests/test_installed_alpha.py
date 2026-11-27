@@ -9,6 +9,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import installed_alpha
+import staged_alpha_update
 from test_public_release import release_body
 
 
@@ -200,3 +201,34 @@ class InstalledAlphaTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "trusted"):
                 installed_alpha.preflight_update(apk, digest, version, baseline, update)
             validate.assert_not_called()
+
+    def test_staged_install_selection_keeps_production_package_boundary(self):
+        args = (installed_alpha.PACKAGE, "dev.ror2lab.installertest", self.installer_sha, self.source_sha)
+        installed_alpha.validate_selection(*args, staged=True)
+        with self.assertRaisesRegex(ValueError, "production"):
+            installed_alpha.validate_selection(*args)
+        with self.assertRaisesRegex(ValueError, "staged"):
+            installed_alpha.validate_selection(installed_alpha.PACKAGE, self.installer, self.installer_sha, self.source_sha, staged=True)
+
+    def test_staged_update_binds_entry_coverage_and_producer_execution(self):
+        receipt = {
+            "incremental": {
+                "rebuilt": ["changed"],
+                "reused": ["byte-identical", "unchanged"],
+                "producer_jobs": {"changed-job": "executed", "unchanged-job": "reused"},
+            }
+        }
+        source = {"jobs": ["changed-job", "unchanged-job"]}
+
+        def require(condition, reason):
+            if not condition:
+                raise ValueError(reason)
+
+        changed, unchanged = ["changed", "byte-identical"], ["unchanged"]
+        self.assertEqual(staged_alpha_update.verify_incremental(receipt, source, changed, unchanged, 1, require), receipt["incremental"])
+        with self.assertRaisesRegex(ValueError, "staged-producer-execution-count"):
+            staged_alpha_update.verify_incremental(receipt, source, changed, unchanged, 2, require)
+        receipt["incremental"]["rebuilt"].append("unchanged")
+        receipt["incremental"]["reused"].remove("unchanged")
+        with self.assertRaisesRegex(ValueError, "staged-rebuild-entry-coverage"):
+            staged_alpha_update.verify_incremental(receipt, source, changed, unchanged, 1, require)

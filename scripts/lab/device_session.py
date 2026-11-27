@@ -1281,7 +1281,9 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
         tour["bootstrap_play"] = True
         tour["phase"] = "player-activity"
         observe_alpha_player(device, thermal, pid, output, request["duration_seconds"])
-        observe_alpha_tour(device, thermal, pid, output, tour, start_attempt, request["duration_seconds"])
+        observe_alpha_tour(
+            device, thermal, pid, output, tour, start_attempt, request["duration_seconds"], retain_native_loss=request.get("retain_native_loss", False)
+        )
         return
     if request.get("start_from_menu") and "input_script" not in request:
         reference = request.get("bootstrap_play_reference")
@@ -1315,7 +1317,7 @@ def observe_alpha_player(device, thermal, pid, output, duration):
     raise RuntimeError("Unity player did not gain focus after bootstrap Play")
 
 
-def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
+def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration, *, retain_native_loss=False):
     from session_cleanup_check import _read_json, abandon_control_coordinates, matches_run, menu_start_coordinates
     from touch_gesture import owned_display_zero_focus
 
@@ -1337,16 +1339,19 @@ def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
             report_id=report_id,
             attempt=attempt,
             runtime=runtime,
-            stop_phases=("commando-defeated",),
+            stop_phases=() if retain_native_loss else ("commando-defeated",),
         )
 
-    def tap(control, coordinates, windows):
+    def require_focus(control, windows):
         if thermal.error:
             raise RuntimeError(thermal.error)
         if device.sh("pidof", device.package, check=False, timeout=5) != pid or not owned_display_zero_focus(
             windows, device.package, activity="com.unity3d.player.UnityPlayerActivity"
         ):
             raise RuntimeError("Owned Unity display or process changed before " + control)
+
+    def tap(control, coordinates, windows):
+        require_focus(control, windows)
         if coordinates is None:
             raise RuntimeError("Current native geometry unavailable for " + control)
         device.sh("input", "-d", "0", "tap", *map(str, coordinates), timeout=5)
@@ -1354,6 +1359,17 @@ def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
     menu = wait("character-select", lambda r: r.get("phase") == "offline-start-menu" and (r.get("hud") or {}).get("survivorSelectableCount", 0) > 0)
     save(output / "start-menu.json", menu)
     tour["character_select"] = True
+    if retain_native_loss:
+        settings = menu["settings"]
+        tap("Settings", (settings["buttonX"], settings["buttonY"]), device.sh("dumpsys", "window", "displays", timeout=5))
+        settings = wait("native-settings", lambda r: r.get("settings", {}).get("visible") is True)["settings"]
+        tap(
+            "Save settings",
+            (int(settings["screenWidth"] / 2 - 110), int(settings["screenHeight"] / 2 + 48)),
+            device.sh("dumpsys", "window", "displays", timeout=5),
+        )
+        menu = wait("native-settings-closed", lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("visible") is False)
+        device.sh("test", "-s", runtime + "/offline-settings-v1/preferences.json", timeout=5)
     session = menu["session"]
     tap("Start", menu_start_coordinates(menu), device.sh("dumpsys", "window", "displays", timeout=5))
     report = wait(
@@ -1365,6 +1381,24 @@ def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
     )
     save(output / "world-start.json", report)
     tour["first_stage"] = report["stage"]["scene"]
+    if retain_native_loss:
+        from settings_write_interrupt_check import new_native_loss
+
+        ended = wait(
+            "native-persisted-defeat",
+            lambda r: r.get("session") == session
+            and r.get("phase") == "commando-defeated"
+            and all(r.get("results", {}).get(key) is True for key in ("persisted", "serverEnding", "clientEnding", "reportReloaded")),
+        )
+        ledger = _read_json(device, runtime + "/offline-run-results-v1/profile.json")
+        new_native_loss([], ledger["runs"])
+        save(output / "persisted-defeat.json", ended)
+        require_focus("Results Continue", device.sh("dumpsys", "window", "displays", timeout=5))
+        device.sh("input", "-d", "0", "keyboard", "keyevent", "KEYCODE_ESCAPE", timeout=5)
+        returned = wait("native-defeat-return", lambda r: r.get("session") == session + 1 and r.get("phase") == "offline-start-menu")
+        save(output / "returned-menu.json", returned)
+        tour.update(phase="completed", returned=True, persisted_native_loss=True)
+        return
     for control, phase, condition in (
         (
             "button",

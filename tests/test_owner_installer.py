@@ -355,7 +355,7 @@ public class Harness {
         check(OwnerUpdateState.backgroundDetail(true,true,"running",false,false,"").contains("foreground service"));
         check(OwnerUpdateState.backgroundDetail(true,true,"paused",true,false,"").contains("Paused by you"));
         String cooling=OwnerUpdateState.backgroundDetail(true,true,"paused",false,true,"");
-        check(cooling.contains("85 C")&&cooling.contains("below 70 C")&&cooling.contains("normal duty gate")&&cooling.contains("cannot bypass"));
+        check(cooling.contains("90 C")&&cooling.contains("below 70 C")&&cooling.contains("normal duty gate")&&cooling.contains("cannot bypass"));
         check(OwnerUpdateState.backgroundDetail(true,true,"cooling",true,true,"").contains("Paused by you and cooling"));
         check(OwnerUpdateState.backgroundDetail(false,true,"running",false,false,"").contains("not live"));
         check(OwnerUpdateState.backgroundDetail(true,false,"running",false,false,"").contains("not live"));
