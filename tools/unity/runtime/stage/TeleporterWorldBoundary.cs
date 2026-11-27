@@ -408,6 +408,8 @@ public sealed partial class PortSession
             new HashSet<AssetOrDirectReference<GameObject>>();
         readonly Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]> nativeTeamAreaMaterials =
             new Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]>();
+        readonly Dictionary<OmniEffect.OmniEffectElement, Material> nativeOmniEffectMaterials =
+            new Dictionary<OmniEffect.OmniEffectElement, Material>();
         readonly List<CharacterMaster> pendingObjectiveActors = new List<CharacterMaster>();
         readonly Dictionary<CharacterMaster, int> objectiveAmbientExpected = new Dictionary<CharacterMaster, int>();
         readonly HashSet<CharacterMaster> objectiveDirectorActors = new HashSet<CharacterMaster>();
@@ -538,6 +540,9 @@ public sealed partial class PortSession
                 if (pair.Key)
                     pair.Key.teamMaterialPairs = pair.Value;
             nativeTeamAreaMaterials.Clear();
+            foreach (var pair in nativeOmniEffectMaterials)
+                pair.Key.particleSystemOverrideMaterial = pair.Value;
+            nativeOmniEffectMaterials.Clear();
         }
         void PrepareNativeTeamAreaMaterials(TeamAreaIndicator indicator)
         {
@@ -563,6 +568,23 @@ public sealed partial class PortSession
                 indicator.teamMaterialPairs = prepared;
             }
         }
+        void PrepareNativeOmniEffectMaterials(OmniEffect effect)
+        {
+            // Native Start selects a radius group and overwrites prepared renderer slots.
+            foreach (var group in effect.omniEffectGroups ?? Array.Empty<OmniEffect.OmniEffectGroup>())
+                foreach (var element in group.omniEffectElements)
+                {
+                    if (nativeOmniEffectMaterials.ContainsKey(element))
+                        continue;
+                    var source = element.particleSystemOverrideMaterial;
+                    var material = AndroidMaterialPresentation.RecoverMaterial(source, coordinator.worldMaterials, includeIntersection: true);
+                    if (material == source)
+                        continue;
+                    nativeOmniEffectMaterials.Add(element, source);
+                    element.particleSystemOverrideMaterial = material;
+                    coordinator.nativeEffectSourceMaterials++;
+                }
+        }
         public void PresentNativeEffectSource(GameObject source)
         {
             var visited = new HashSet<GameObject>();
@@ -572,6 +594,8 @@ public sealed partial class PortSession
                     return;
                 foreach (var indicator in root.GetComponentsInChildren<TeamAreaIndicator>(true))
                     PrepareNativeTeamAreaMaterials(indicator);
+                foreach (var effect in root.GetComponentsInChildren<OmniEffect>(true))
+                    PrepareNativeOmniEffectMaterials(effect);
                 foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
                 {
                     if (coordinator.worldLootSourceMaterials.ContainsKey(renderer))

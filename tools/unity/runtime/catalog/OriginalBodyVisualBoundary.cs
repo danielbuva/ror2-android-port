@@ -124,6 +124,9 @@ public sealed partial class PortSession
                                           "Mage Flamethrower", unavailable);
             PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.ChargeNovabomb().chargeEffectPrefab,
                                           "Mage Nano-Bomb charge", unavailable);
+            // The projectile controller creates the detached ghost outside EffectCatalog.
+            PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.ThrowNovabomb().projectilePrefab,
+                                          "Mage Nano-Bomb projectile", unavailable);
 
             // The native GroundLight static configuration is populated after this setup.
             var mercNormal = WholeCatalogComposed.LoadOwnedContent<GameObject>(MercNormalSwingVisualPath);

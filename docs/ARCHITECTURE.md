@@ -5257,11 +5257,16 @@ For native team area indicators on these roots, the session prepares the
 intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
 startup selects a team entry. The original table is restored with the effect
 callbacks before world cleanup destroys the owned copies.
+The same owner prepares `OmniEffect` particle overrides before native Start
+selects a radius group and assigns its material. It restores the original
+override references with the renderer and trail sources.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
 for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, which
-instantiate their prefabs directly. It holds the Acrid
+instantiate their prefabs directly. Artificer's configured Nano-Bomb projectile
+also enters this owner so the projectile controller's detached ghost takes the
+same material recovery path. It holds the Acrid
 finisher's typed provider lease through the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
