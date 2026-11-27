@@ -102,6 +102,20 @@ class InstallInputTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, "invalid acquired-tool inventory entry"):
                 INPUTS.acquired_inventory(value)
 
+    def test_whole_game_tool_inventory_fits_bounded_install_description(self):
+        self.plan["acquired_inputs"] = "recipe/acquired.json"
+        self.plan["configuration"]["bindings"]["tool_root"] = "acquired/sdk"
+        pin = {"bytes": 1, "sha256": "b" * 64}
+        shelf = "acquired/sdk/PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-arm64/sysroot/usr/include/"
+        tools = {f"{shelf}group{row:05d}/detail/implementation/header.h": pin for row in range(23_000)}
+        description = INPUTS.input_description(self.plan, self.manifest, tools)
+        INPUTS.write_description(self.inputs, description)
+        path = self.inputs / "install-inputs.json"
+        self.assertGreater(path.stat().st_size, 4 * 1024**2)
+        self.assertEqual(path.read_bytes(), INPUTS.UPDATES.RELEASE.signed_bytes(description))
+        with self.assertRaisesRegex(ValueError, "exceeds bounded UI metadata limit"):
+            INPUTS.input_description(self.plan, self.manifest, tools | {name + ".other": pin for name in tools})
+
     def test_signed_tool_urls_are_limited_to_reviewed_provider_paths(self):
         revision = "a" * 40
         source = f"acquired/asset-ripper/{revision}/LICENSE.md"
