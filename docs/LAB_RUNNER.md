@@ -102,6 +102,11 @@ sources and verifies every retained runtime asset and Android library.
 The build refuses changed native/runtime inputs and records the base commit
 and hash next to the new APK. The repack verifies current authored source pins
 against the tracked files it embeds and caches the APK by checkout commit.
+For a local staged-release check, pass `--release-trust <public-key-config.json>`.
+Use the retained repository and application ID with the publisher RSA public
+keys in `keys`. The repack records the trust hash and prints a separate cache
+key. Use `signed.apk` from that entry and its receipt hash as `installer_apk`
+and `installer_sha256` in the staged-update request.
 An explicitly staged Android build can also seed this rebuild. Use its
 request-keyed cache directory. For an older receipt without source and signer
 fields, replay its original packaging request against the original checkout with

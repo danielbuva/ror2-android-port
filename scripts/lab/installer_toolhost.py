@@ -20,6 +20,7 @@ MANAGED = Path("tools/phone-build/managed-host")
 SIGNER = Path("tools/phone-build/owner-apk/build_owner_apk.py")
 REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "dev")
 HOST_TOOL_PROFILE = "recipe/owner-app-host-tools.json"
+RELEASE_TRUST = "assets/release-trust.json"
 RUNTIME_INPUTS = (
     MANAGED / "stage.py",
     MANAGED / "build_fixture.py",
@@ -178,7 +179,23 @@ def assemble(base, output, manifest, dex, sources, native_hashes, obsolete_signa
     return assets
 
 
-def build(checkout, base, zipalign, check=False):
+def provisioned_trust(checkout, source, retained):
+    public = load_module("toolhost_public_release", checkout / SIGNER.with_name("public_release.py"))
+    trust = public.load_json(source.read_bytes())
+    if (
+        not isinstance(trust, dict)
+        or set(trust) != {"repository", "application_id", "keys"}
+        or any(trust[field] != retained[field] for field in ("repository", "application_id"))
+        or not isinstance(trust["keys"], dict)
+        or not trust["keys"]
+    ):
+        raise ValueError("installer-test release trust requires publisher keys for the retained repository and application")
+    for pem in trust["keys"].values():
+        public.public_numbers(pem)
+    return public.RELEASE.signed_bytes(trust)
+
+
+def build(checkout, base, zipalign, check=False, *, release_trust=None):
     checkout = checkout.resolve(strict=True)
     version = git(checkout, "rev-parse", "HEAD")
     work = (checkout / "work").resolve(strict=True)
@@ -196,10 +213,17 @@ def build(checkout, base, zipalign, check=False):
     keys = work / KEY_DIR
     if signing_certificate(keys, java) != receipt["signer_sha256"]:
         raise ValueError("host key does not match the retained installer-test certificate")
+    with zipfile.ZipFile(base / "signed.apk") as original:
+        retained_trust = json.loads(original.read(RELEASE_TRUST))
+    trust_data = provisioned_trust(checkout, release_trust, retained_trust) if release_trust is not None else None
+    cache_key = version
+    if trust_data is not None:
+        trust_sha256 = hashlib.sha256(trust_data).hexdigest()
+        cache_key = hashlib.sha256(f"{version}\n{receipt['apk_sha256']}\n{trust_sha256}".encode()).hexdigest()
     if check:
         return
-    if (cache / version).exists():
-        raise ValueError("installer-test output already exists for this commit")
+    if (cache / cache_key).exists():
+        raise ValueError("installer-test output already exists for this build")
     signer = load_module("toolhost_signing", checkout / SIGNER)
     android = sdk / "platforms/android-33/android.jar"
     with tempfile.TemporaryDirectory(prefix=".installer-build-", dir=cache) as directory:
@@ -229,8 +253,7 @@ def build(checkout, base, zipalign, check=False):
                 archive.write(path, path.relative_to(classes).as_posix())
         run(java, "-cp", tools / "lib/d8.jar", "com.android.tools.r8.D8", "--min-api", "24", "--lib", android, "--output", output, jar)
         manifest = output / "AndroidManifest.xml"
-        with zipfile.ZipFile(base / "signed.apk") as original:
-            game_package = json.loads(original.read("assets/release-trust.json"))["application_id"]
+        game_package = retained_trust["application_id"]
         staging.tool_manifest(checkout / MANAGED / manifest.name, manifest, PACKAGE, game_package=game_package)
         wire = "{http://schemas.android.com/apk/res/android}"
         fields = ET.parse(manifest).getroot().attrib
@@ -239,6 +262,10 @@ def build(checkout, base, zipalign, check=False):
         names = git(checkout, "ls-tree", "-rz", "--name-only", version, "--", *REPO_ASSETS).split("\0")
         source_assets = {"assets/repo/" + name: checkout / name for name in names if name}
         source_assets["assets/run_profile.py"] = checkout / MANAGED / "run_profile.py"
+        if trust_data is not None:
+            trust_file = output / "release-trust.json"
+            trust_file.write_bytes(trust_data)
+            source_assets[RELEASE_TRUST] = trust_file
         unsigned = output / "unsigned.apk"
         with zipfile.ZipFile(compiled) as archive:
             assets = assemble(
@@ -281,6 +308,8 @@ def build(checkout, base, zipalign, check=False):
             "apk_sha256": digest(apk),
             "apk_bytes": apk.stat().st_size,
         }
+        if trust_data is not None:
+            evidence.update(cache_key=cache_key, release_trust_sha256=trust_sha256)
         save(
             published / "result.json",
             dict(
@@ -294,8 +323,10 @@ def build(checkout, base, zipalign, check=False):
         save(published / "build-receipt.json", dict(evidence, native_hashes=native_hashes, asset_count=len(assets)))
         save(published / "stage-receipt.json", dict(evidence, files=assets))
         (published / ".prune-keep").touch()
-        published.rename(cache / version)
+        published.rename(cache / cache_key)
     print("Installer-test APK built with the retained signing certificate.")
+    if trust_data is not None:
+        print("Provisioned installer-test cache entry: " + cache_key)
 
 
 if __name__ == "__main__":
@@ -303,5 +334,6 @@ if __name__ == "__main__":
     parser.add_argument("--base", type=Path, required=True, help="previous installer-test entry in the private toolhost cache")
     parser.add_argument("--zipalign", type=Path, required=True, help="Mac Android Build Tools zipalign with -P 16 support")
     parser.add_argument("--check", action="store_true", help="validate the base, tracked source and local fixture certificate")
+    parser.add_argument("--release-trust", type=Path, help="explicit public publisher key configuration for a local staged release")
     args = parser.parse_args()
-    build(Path(__file__).resolve().parents[2], args.base, args.zipalign, args.check)
+    build(Path(__file__).resolve().parents[2], args.base, args.zipalign, args.check, release_trust=args.release_trust)

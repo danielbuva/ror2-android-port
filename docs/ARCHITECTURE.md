@@ -1427,6 +1427,10 @@ It checks native schemas, platform data, references and complete mip extents,
 then writes a private profile. Source-derived BC profiles pin original bytes and
 expected output extents and leave reference output hashes empty. BC1 colour
 retains usage and encodes each original mip as ETC1 RGB after checking opacity.
+The same path processes all six original face-major mip chains for opaque BC1
+and BC7 Cubemaps, preserving per-face image size and the full stream extent.
+`source-bc3-crunch-etc` unpacks the original DXT5Crunched mip chain into BC3
+blocks and reuses the per-level Android encoder without generating new mips.
 BC1-only jobs pin the native pixel decoder and ETC encoder directly.
 The producer's setup, stream checks and output ownership apply to these packs.
 `build_texture_jpeg.py` owns
@@ -1563,8 +1567,10 @@ exact-editor host controls; game-cohort and Android admission remain separate.
 `etc1-mips` extends that texture owner with full-chain filtering, logical-tail
 tiling and destination normal-metric selection. `owner-rgb-mip-textures.json`
 provides the original/destination field and import relationships. The existing
-public ETC tool also owns bounded Unity Crunch top-level decompression using
-unchanged pinned Zlib headers, built by `build_texture_etc.py`. The SDK toolchain
+public ETC tool also owns bounded Unity Crunch decompression using unchanged
+pinned Zlib headers, built by `build_texture_etc.py`. The top-level modes are
+used by the legacy mip-generation routes. The full-chain BC3 mode emits the
+original levels in order for the source-mip route. The SDK toolchain
 supplies its native pixel helper; ETC1 mip production executes no SDK encoder.
 J1110 qualifies all 1,589 records on the host; Android cohort qualification
 remains open.

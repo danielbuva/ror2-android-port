@@ -324,6 +324,7 @@ def main(argv=None):
             diagnostics_root = Path(request["done_file"]).parent.resolve()
             require(diagnostics_root.is_relative_to((ROOT / "work/coordination/p1-nightly").resolve()), "nightly-dated-output-required")
         INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(diagnostics_root)
+        print("INFO alpha-packaging evidence=" + INSTALLER.DIAGNOSTICS.directory.relative_to(ROOT).as_posix(), flush=True)
         if staged_request:
             phase = "staged-update-host-preflight"
             acquisition = StagedUpdate(INSTALLER, require, request, nightly=nightly)
