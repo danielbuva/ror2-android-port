@@ -1811,7 +1811,9 @@ normal GitHub acquisition. Signature, archive, issuance and install checks are
 unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
-Its runner-provided toolhost and generated binaries/keys never leave the lab.
+The fixture checks that one changed output rebuilds, the unchanged producer is
+reused, the profile and settings survive, and the next check reports the installed
+release is current. Its toolhost and generated binaries/keys stay in the lab.
 `scripts/lab-alpha-packaging.py` extends that owner with synthetic package issuance,
 installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending

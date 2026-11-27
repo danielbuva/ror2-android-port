@@ -196,14 +196,15 @@ class AlphaPackagingTests(unittest.TestCase):
         self.assertIn("FAIL install-prompt-mode-conflict", output.getvalue())
 
     def test_prompt_mode_delegates_and_accepts_only_explicit_prompt_cases(self):
-        def accept(phone, config, temporary, passed, *, qualify_install_prompts):
+        def accept(phone, config, temporary, passed, *, qualify_install_prompts, record_metrics):
             self.assertTrue(qualify_install_prompts)
+            self.assertTrue(record_metrics)
             for case in A.INSTALLER.PROMPT_CASES:
                 passed(case)
 
         with (
             patch.dict("os.environ", {"LAB_DEVICE_SERIAL": "synthetic-test-device"}),
-            patch.object(A.INSTALLER, "PrivateDiagnostics"),
+            patch.object(A.INSTALLER, "PrivateDiagnostics") as diagnostics,
             patch.object(A.INSTALLER, "read_context", return_value={}),
             patch.object(A, "Phone") as phone,
             patch.object(A, "compile_import_harness", return_value=b"synthetic-dex"),
@@ -213,11 +214,13 @@ class AlphaPackagingTests(unittest.TestCase):
             patch("sys.stdout", new_callable=io.StringIO) as output,
         ):
             phone.return_value.cleanup.return_value = "verified-absent"
+            phone.return_value.flow_metrics.report.return_value = {"stages": []}
             self.assertEqual(A.main(["--qualify-install-prompts"]), 0)
         phone.assert_called_once_with("synthetic-test-device", 1200, allow_test_installs=False)
         for case in A.INSTALLER.PROMPT_CASES:
             self.assertIn("PASS " + case, output.getvalue())
         phone.return_value.cleanup.assert_called_once_with()
+        diagnostics.return_value.write.assert_called_once_with("phone-flow-metrics.json", b'{"stages":[]}\n')
 
     def test_cold_restart_checks_ledger_and_installed_hash(self):
         first = bound()

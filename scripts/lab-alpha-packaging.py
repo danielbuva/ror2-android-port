@@ -299,7 +299,12 @@ def main(argv=None):
                 INSTALLER.set_phase(phase)
                 with phone.observe_thermal():
                     phase = "installer-acceptance"
-                    INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts)
+                    try:
+                        INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts, record_metrics=True)
+                    finally:
+                        metrics, phone.flow_metrics = phone.flow_metrics, None
+                        if metrics is not None:
+                            INSTALLER.DIAGNOSTICS.write("phone-flow-metrics.json", INSTALLER.encoded(metrics.report(include_samples=True)))
                     phase = "alpha-receipt-acceptance"
                     INSTALLER.set_phase(phase)
                     check_packaging_history(phone, passed)
