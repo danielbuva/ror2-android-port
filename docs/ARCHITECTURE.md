@@ -1407,10 +1407,16 @@ decoding, raw copying, fixed source-coordinate color extension and public
 JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
 original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
 colour space and usage. It checks source extents and preserves metadata rather
-than generating replacement mip levels. `texture_native_profile.py` selects
-original Alpha8 and HDR Cubemap records from the PC texture coverage ledger.
+than generating replacement mip levels. `source-bc3-etc` likewise reads each
+original mip, including the texels stored in its boundary blocks. It writes
+ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
+normal maps. It uses the existing pinned native decoder, ETC2 colour and
+EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
+use the same codec pins and output checks. `texture_native_profile.py` selects
+original Alpha8, HDR Cubemap and BC3 records from the PC texture coverage ledger.
 It checks native schemas, platform data, references and complete mip extents,
-then writes a private profile for the producer's existing copy operations.
+then writes a private profile. Source-derived BC3 profiles pin the original
+bytes and expected output extents and leave reference output hashes empty.
 The producer's setup, stream checks and output ownership apply to these packs.
 `build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
@@ -8354,6 +8360,15 @@ and writes bare Vulkan SPIR-V into the native kernel. The original histogram
 clear and gather modules pass Vulkan 1.0 validation. The Android Vulkan
 fixture clears all 256 bins and gathers all 256 solid-red pixels into the
 highest bin using those original kernels. Other compute shapes remain open.
+
+The signed release graph accepts `owner-compute-shader-translation-v1` packs
+as explicit bundle suppliers. The Histogram profile binds the original PC
+record and destination, and `shader_translate.py` verifies the installed
+translator and validator before producing its typed pack receipt. Managed-host
+`build_shader_tools.py` builds the two ARM64 API 24 native executables from
+pinned public archives and retains corresponding source, notices and relink
+materials. The existing native provider plan stages the executables. Android
+execution of the signed producer remains open.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the

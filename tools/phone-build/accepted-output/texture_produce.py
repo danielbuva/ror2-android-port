@@ -195,7 +195,8 @@ def field(body, fields, name):
 def body_output(body, fields, pixels, target, operation):
     required = {"m_Name", "m_CompleteImageSize", "m_TextureFormat", "m_IsAlphaChannelOptional", "m_LightmapFormat", "image data", "m_StreamData"}
     cube = operation in {"cube-mips", "cube-hdr", "cube-rgba-mips", "cube-preserve"}
-    if operation in {"etc1-mips", "sdk-rgba-mips", "source-rgba-mips"} or cube:
+    has_mips = operation in {"etc1-mips", "sdk-rgba-mips", "source-rgba-mips", "source-bc3-etc"} or cube
+    if has_mips:
         required |= {"m_MipCount", "m_ColorSpace"}
     if set(fields) != required:
         raise ValueError("unknown texture field selection")
@@ -214,9 +215,23 @@ def body_output(body, fields, pixels, target, operation):
         replacements["m_TextureFormat"] = struct.pack("<i", 47)
     elif operation in {"etc1", "etc1-mips", "cube-mips", "cube-hdr"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 34)
-    if operation in {"etc1-mips", "sdk-rgba-mips", "source-rgba-mips"} or cube:
+    if has_mips:
         replacements["m_MipCount"] = struct.pack("<i", target["mips"])
         replacements["m_ColorSpace"] = struct.pack("<i", target["colour_space"])
+    if operation == "source-bc3-etc":
+        usage = struct.unpack("<i", field(body, fields, "m_LightmapFormat"))[0]
+        normal = usage == 3
+        original_mips = struct.unpack("<i", field(body, fields, "m_MipCount"))[0]
+        original_colour_space = struct.unpack("<i", field(body, fields, "m_ColorSpace"))[0]
+        original_alpha_optional = bool(field(body, fields, "m_IsAlphaChannelOptional")[0])
+        if (target["mips"], target["colour_space"], target["usage"], target["alpha_optional"]) != (
+            original_mips,
+            original_colour_space,
+            4 if normal else usage,
+            normal or original_alpha_optional,
+        ):
+            raise ValueError("source BC3 texture output metadata differs")
+        replacements["m_TextureFormat"] = struct.pack("<i", 34 if normal else 47)
     if operation == "source-rgba-mips":
         replacements["m_TextureFormat"] = struct.pack("<i", 4)
     if operation in {"cube-preserve", "source-rgba-mips"}:
@@ -313,8 +328,7 @@ def source_rgba(pixels, width, height, fmt, sdk):
     return rgba_source(pixels, width, height, fmt)
 
 
-def source_rgba_mips(pixels, width, height, fmt, mips, sdk=None):
-    """Decode each original BC mip, preserving its pixels, alpha and dimensions."""
+def source_bc_extents(pixel_bytes, width, height, fmt, mips):
     if (
         type(width) is not int
         or type(height) is not int
@@ -325,17 +339,46 @@ def source_rgba_mips(pixels, width, height, fmt, mips, sdk=None):
         or fmt not in (10, 12)
     ):
         raise ValueError("unqualified source BC mip chain")
-    sizes = [((max(1, width >> mip) + 3) // 4) * ((max(1, height >> mip) + 3) // 4) * (8 if fmt == 10 else 16) for mip in range(mips)]
-    if len(pixels) != sum(sizes):
+    extents = [(max(1, width >> mip), max(1, height >> mip)) for mip in range(mips)]
+    sizes = [((w + 3) // 4) * ((h + 3) // 4) * (8 if fmt == 10 else 16) for w, h in extents]
+    if pixel_bytes != sum(sizes):
         raise ValueError("source BC mip chain extent differs")
-    if sum(max(1, width >> mip) * max(1, height >> mip) * 4 for mip in range(mips)) > BUNDLE.LIMIT:
+    return extents, sizes
+
+
+def source_rgba_mips(pixels, width, height, fmt, mips, sdk=None):
+    """Decode each original BC mip, preserving its pixels, alpha and dimensions."""
+    extents, sizes = source_bc_extents(len(pixels), width, height, fmt, mips)
+    if sum(w * h * 4 for w, h in extents) > BUNDLE.LIMIT:
         raise ValueError("decoded source mip chain exceeds limit")
     parts = []
     offset = 0
-    for mip, size in enumerate(sizes):
-        parts.append(source_rgba(pixels[offset : offset + size], max(1, width >> mip), max(1, height >> mip), fmt, sdk))
+    for (w, h), size in zip(extents, sizes):
+        parts.append(source_rgba(pixels[offset : offset + size], w, h, fmt, sdk))
         offset += size
     return b"".join(parts)
+
+
+def source_bc3_etc(pixels, width, height, mips, normal, sdk, etc_codec):
+    """Encode the original BC3 mip blocks with the Android colour or normal route."""
+    extents, sizes = source_bc_extents(len(pixels), width, height, 12, mips)
+    output = bytearray()
+    offset = 0
+    for (w, h), size in zip(extents, sizes):
+        # BC3 already stores the padding texels in its final rows and columns.
+        encoded_width, encoded_height = (w + 3) & ~3, (h + 3) & ~3
+        rgba = source_rgba(pixels[offset : offset + size], encoded_width, encoded_height, 12, sdk)
+        if normal:
+            result = subprocess.run(
+                [str(etc_codec), str(encoded_width), str(encoded_height), "normal"], input=normal_rgb(rgba), capture_output=True, timeout=120
+            )
+            if result.returncode or len(result.stdout) != size // 2:
+                raise ValueError("public ETC normal codec failed or returned a different extent")
+            output.extend(result.stdout)
+        else:
+            output.extend(sdk_encode_rgba(rgba, encoded_width, encoded_height, sdk, etc_codec))
+        offset += size
+    return bytes(output)
 
 
 def sdk_rgba_mips(rgba, width, height, selected, sdk, etc_codec):
@@ -458,9 +501,14 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
         return preserve_cube_mips(pixels, body, selected)
     if operation == "copy":
         return pixels
-    if operation == "source-rgba-mips":
+    if operation in {"source-rgba-mips", "source-bc3-etc"}:
         fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
         mips = struct.unpack("<i", field(body, selected["fields"], "m_MipCount"))[0]
+        if operation == "source-bc3-etc":
+            if fmt != 12 or sdk is None or etc_codec is None:
+                raise ValueError("source BC3 and pinned ETC tools required")
+            normal = struct.unpack("<i", field(body, selected["fields"], "m_LightmapFormat"))[0] == 3
+            return source_bc3_etc(pixels, selected["width"], selected["height"], mips, normal, sdk, etc_codec)
         return source_rgba_mips(pixels, selected["width"], selected["height"], fmt, mips, sdk)
     if operation in {"sdk-rgba", "sdk-rgba-mips"}:
         if sdk is None:
@@ -606,6 +654,8 @@ def texture_resume(output, profile, pins):
             if expected is not None:
                 expected["type_id"] = type_id
             if expected is not None and pins.get("comparison") == "diagnostic":
+                if target["sha256"] is None and row["bytes"] != target["bytes"]:
+                    raise ValueError("texture checkpoint source-derived body extent differs")
                 expected.update(bytes=row["bytes"], sha256=row["sha256"], historical_raw_exact=row["historical_raw_exact"])
                 if "resource" in expected:
                     expected["resource"].update(sha256=row["resource"]["sha256"])
@@ -652,7 +702,7 @@ def produce(
         raise ValueError("unknown texture input")
     pc = pc.resolve(strict=True)
     needs_sdk = any(
-        texture["operation"] in {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}
+        texture["operation"] in {"sdk-rgba", "sdk-rgba-mips", "source-bc3-etc", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}
         for bundle in profile["bundles"]
         for member in bundle["members"]
         for texture in member["textures"]
@@ -671,7 +721,7 @@ def produce(
         if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec drift or overlap with original input")
     needs_etc = any(
-        texture["operation"] in {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}
+        texture["operation"] in {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "source-bc3-etc", "cube-mips", "cube-hdr", "cube-rgba-mips"}
         for bundle in profile["bundles"]
         for member in bundle["members"]
         for texture in member["textures"]
@@ -766,10 +816,14 @@ def produce(
                         pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"][completed:]:
+                            if target["pixel_sha256"] is None and len(pixels) != target["pixel_bytes"]:
+                                raise ValueError("source-derived texture pixel extent differs")
                             if comparison == "exact" and (pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]):
                                 raise ValueError("produced texture pixels differ from accepted hash")
                             result = body_output(body, selected["fields"], pixels, target, selected["operation"])
                             digest = hashlib.sha256(result).hexdigest()
+                            if target["sha256"] is None and len(result) != target["bytes"]:
+                                raise ValueError("source-derived texture body extent differs")
                             if comparison == "exact" and (len(result) != target["bytes"] or digest != target["sha256"]):
                                 raise ValueError("produced texture body differs from accepted hash")
                             actual = dict(target, bytes=len(result), sha256=digest, pixel_bytes=len(pixels), pixel_sha256=pixel_sha)

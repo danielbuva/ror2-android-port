@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import call, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -132,6 +133,24 @@ class TextureProducerTests(unittest.TestCase):
     def test_normal_unpack_uses_ag_coordinates_and_integer_blue(self):
         source = bytes([19, 128, 49, 128, 31, 128, 29, 255, 0, 128, 0, 0, 6, 0, 12, 128])
         self.assertEqual(T.normal_rgb(source), bytes([128, 128, 254, 255, 128, 127, 0, 128, 127, 128, 0, 127]))
+
+    def test_source_bc3_etc_encodes_each_original_mip_and_preserves_block_padding(self):
+        red = bytes([173, 0]) + bytes(6) + struct.pack("<HHI", 0xF800, 0, 0)
+        green = bytes([211, 0]) + bytes(6) + struct.pack("<HHI", 0x07E0, 0, 0)
+        source = red * 4 + green
+        sdk, etc = {}, "authored-etc"
+        with patch.object(T, "sdk_encode_rgba", side_effect=[b"R" * 64, b"G" * 16]) as encode:
+            self.assertEqual(T.source_bc3_etc(source, 7, 5, 2, False, None, etc), b"R" * 64 + b"G" * 16)
+        self.assertEqual(
+            encode.call_args_list,
+            [call(bytes([255, 0, 0, 173]) * 64, 8, 8, None, etc), call(bytes([0, 255, 0, 211]) * 16, 4, 4, None, etc)],
+        )
+        with patch.object(T.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, b"N" * 8)) as encode:
+            self.assertEqual(T.source_bc3_etc(green, 3, 2, 1, True, None, etc), b"N" * 8)
+        self.assertEqual(encode.call_args.args[0], [etc, "4", "4", "normal"])
+        self.assertEqual(encode.call_args.kwargs["input"], T.normal_rgb(bytes([0, 255, 0, 211]) * 16))
+        with self.assertRaisesRegex(ValueError, "source BC mip chain extent"):
+            T.source_bc3_etc(source[:-1], 7, 5, 2, False, sdk, etc)
 
     def test_public_alpha_source_provider_drift_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:

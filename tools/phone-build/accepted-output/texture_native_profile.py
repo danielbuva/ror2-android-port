@@ -1,4 +1,4 @@
-"""Discover original texture bodies the existing producer can preserve verbatim."""
+"""Discover original texture bodies for native copy or BC3 transcoding."""
 
 import argparse
 from collections import defaultdict
@@ -12,7 +12,7 @@ import bundle_preload as preload
 import texture_produce as texture
 
 
-def preserved_record(bundle, body, typ, position, identity, relative, member, trees):
+def texture_record(bundle, body, typ, position, identity, relative, member, trees, source_bc3):
     tree = typ["tree"]
     if tree not in trees:
         trees[tree] = preload.A.SCHEMA.type_tree(io.BytesIO(tree))
@@ -26,7 +26,9 @@ def preserved_record(bundle, body, typ, position, identity, relative, member, tr
 
     fmt = integer("m_TextureFormat")
     cube = typ["class_id"] == 89
-    if fmt not in ((17, 24) if cube else (1,)):
+    if source_bc3 and (cube or fmt != 12):
+        return None
+    if not source_bc3 and fmt not in ((17, 24) if cube else (1,)):
         return None
     width, height, mips = map(integer, ("m_Width", "m_Height", "m_MipCount"))
     if min(width, height) < 1 or not 1 <= mips <= max(width, height).bit_length():
@@ -45,7 +47,13 @@ def preserved_record(bundle, body, typ, position, identity, relative, member, tr
     if (size and (image_size or not path)) or (not size and (offset or path)):
         return None
     stride = integer("m_CompleteImageSize")
-    if cube:
+    if source_bc3:
+        try:
+            texture.source_bc_extents(stride, width, height, fmt, mips)
+        except ValueError:
+            return None
+        expected = stride
+    elif cube:
         expected = sum(((max(1, width >> level) + 3) // 4) ** 2 * 16 if fmt == 24 else max(1, width >> level) ** 2 * 8 for level in range(mips))
         if width != height or width > 8192 or width & (width - 1):
             return None
@@ -65,9 +73,9 @@ def preserved_record(bundle, body, typ, position, identity, relative, member, tr
     digest = sha256(body).hexdigest()
     pixel_digest = sha256(pixels).hexdigest()
     fields = {}
-    operation = "cube-preserve" if cube else "copy"
+    operation = "source-bc3-etc" if source_bc3 else "cube-preserve" if cube else "copy"
     names = ["m_Name", "m_CompleteImageSize", "m_TextureFormat", "m_IsAlphaChannelOptional", "m_LightmapFormat", "image data", "m_StreamData"]
-    if cube:
+    if cube or source_bc3:
         names.extend(("m_MipCount", "m_ColorSpace"))
     for name in names:
         start, end = spans[(image_key if name == "image data" else name,)]
@@ -87,9 +95,19 @@ def preserved_record(bundle, body, typ, position, identity, relative, member, tr
         alpha_optional=bool(field("m_IsAlphaChannelOptional")[0]),
         usage=integer("m_LightmapFormat"),
     )
-    if cube:
+    if cube or source_bc3:
         target.update(mips=mips, colour_space=integer("m_ColorSpace"))
-    if texture.body_output(body, fields, pixels, target, operation) != body:
+    if source_bc3:
+        normal = target["usage"] == 3
+        target_bytes = expected // 2 if normal else expected
+        target.update(sha256=None, pixel_sha256=None, pixel_bytes=target_bytes)
+        if normal:
+            target.update(usage=4, alpha_optional=True)
+        if size:
+            target["stream"]["size"] = target_bytes
+        else:
+            target["bytes"] += target_bytes - expected
+    elif texture.body_output(body, fields, pixels, target, operation) != body:
         return None
     return dict(
         path_id=identity,
@@ -105,7 +123,7 @@ def preserved_record(bundle, body, typ, position, identity, relative, member, tr
     )
 
 
-def discover(pc, coverage):
+def discover(pc, coverage, source_bc3=False):
     candidates = defaultdict(lambda: defaultdict(set))
     for row in preload.json_rows(coverage):
         relative, member, identity = row["source"]
@@ -129,7 +147,7 @@ def discover(pc, coverage):
                 position = metadata["data_offset"] + obj["offset"]
                 stream.seek(position)
                 body = texture.BUNDLE.exact(stream, obj["bytes"])
-                record = preserved_record(bundle, body, typ, position, identity, relative, member, trees)
+                record = texture_record(bundle, body, typ, position, identity, relative, member, trees, source_bc3)
                 if record is not None:
                     selected.append(record)
             if selected:
@@ -144,11 +162,12 @@ if __name__ == "__main__":
     parser.add_argument("pc", type=Path)
     parser.add_argument("coverage", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-bc3", action="store_true", help="select BC3 originals for Android ETC production")
     args = parser.parse_args()
     pc = args.pc.resolve(strict=True)
     if args.output.resolve().is_relative_to(pc):
         raise ValueError("Texture profile output overlaps original input")
-    profile = discover(pc, args.coverage)
+    profile = discover(pc, args.coverage, args.source_bc3)
     with args.output.open("x") as output:
         json.dump(profile, output)
         output.write("\n")

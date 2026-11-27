@@ -56,6 +56,7 @@ TEXTURE_NATIVE = {
     "jpeg_codec": "libtexture-jpeg.so",
     "etc_codec": "libtexture-etc.so",
 }
+COMPUTE_NATIVE = {"dxbc": "libshader-dxbc.so", "spirv_val": "libspirv-val.so"}
 PIXEL_DECODER = "libtexture-pixels.so"
 TEXTURE_GUEST = "${installed_runtime}/texture-sdk/"
 TEXTURE_GUEST_LIB = "linux/lib/x86_64-linux-gnu/"
@@ -96,6 +97,8 @@ def owner(profile):
         return "bundle_endpoints"
     if profile.get("schema") == "owner-bundle-preload-release-v1":
         return "bundle_preload"
+    if profile.get("schema") == "owner-compute-shader-translation-v1":
+        return "shader_translate"
     if "project_assemblies" in profile and "outputs" in profile:
         return "player_data"
     if "shaders" in profile and "authored_inputs" in profile and "includes_sha256" in profile:
@@ -328,6 +331,17 @@ class Graph:
                 "--native-sha256",
                 "${input_sha256:" + binding + "}",
             ]
+        if producer == "shader_translate":
+            arguments = ["--request", "${request}"]
+            request = {
+                "pc": "${input:pc}",
+                "output": "${output}",
+                "profile": {"path": "${repo}/" + path, "sha256": pin, "bytes": (self.repo / path).stat().st_size},
+                "tools": {
+                    name: {"path": "${native}/" + installed, "sha256": "${native_sha256:" + installed + "}", "bytes": "${native_bytes:" + installed + "}"}
+                    for name, installed in COMPUTE_NATIVE.items()
+                },
+            }
         if producer == "shader_produce":
             arguments += ["--sdk", self.sdk_contents()]
             camera_selection = next((key for key in ("camera_compute", "camera_shader") if key in profile), None)
@@ -378,9 +392,9 @@ class Graph:
             bindings = []
             if operations & {"rgb-jpeg", "dxt1-rgb-jpeg"} or any(texture["operation"] in {"etc1", "etc1-mips"} and texture["jpeg"] for texture in textures):
                 bindings.append("jpeg_codec")
-            if operations & {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}:
+            if operations & {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "source-bc3-etc", "cube-mips", "cube-hdr", "cube-rgba-mips"}:
                 bindings.append("etc_codec")
-            if operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}:
+            if operations & {"sdk-rgba", "sdk-rgba-mips", "source-bc3-etc", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}:
                 bindings.append("sdk_toolchain")
             for binding in bindings:
                 flag = "--" + binding.replace("_", "-")
@@ -462,6 +476,7 @@ class Graph:
             "sprite_produce",
             "shader_context",
             "shader_prefab",
+            "shader_translate",
             "payload_shader_records",
         } or (producer == "shader_produce" and "typed_records" in profile):
             artifacts["types"] = "types.json"
@@ -583,7 +598,7 @@ class Graph:
                 profile = json.loads(path.read_bytes())
                 producer = owner(profile)
                 direct = {"record_produce", "mesh_produce", "avatar_produce", "texture_produce", "sprite_produce", "shader_prefab"}
-                typed_shaders = producer == "shader_produce" and "typed_records" in profile
+                typed_shaders = producer in {"shader_produce", "shader_translate"} and "typed_records" in profile
                 registry_remap = producer == "record_remap" and "original_sources" in profile
                 if producer not in direct and not typed_shaders and not registry_remap:
                     raise ValueError("source lookup requires direct typed record selectors: " + pin)
