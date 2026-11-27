@@ -699,6 +699,7 @@ public final class ToolHostActivity extends Activity {
         }
         for(String key:new ArrayList<>(env.keySet())) if(key.startsWith("DOTNET_") || key.startsWith("MONO_") || key.startsWith("CORECLR_") || key.startsWith("COMPlus_")) env.remove(key);
         env.put("LD_LIBRARY_PATH",nativeDir.getCanonicalPath()+":"+links.getCanonicalPath());
+        env.put("ROR2LAB_NATIVE_CACHE_DIR", new File(getFilesDir(), "native-ccache").getCanonicalPath());
         env.put("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT","1"); env.put("DOTNET_MULTILEVEL_LOOKUP","0");
         env.put("DOTNET_CLI_TELEMETRY_OPTOUT","1"); env.put("DOTNET_CLI_HOME",new File(directory,"home").getPath());
         env.put("TMPDIR",getCacheDir().getPath());
