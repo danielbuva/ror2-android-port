@@ -654,6 +654,8 @@ def texture_resume(output, profile, pins):
             if expected is not None:
                 expected["type_id"] = type_id
             if expected is not None and pins.get("comparison") == "diagnostic":
+                if target["sha256"] is None and row["bytes"] != target["bytes"]:
+                    raise ValueError("texture checkpoint source-derived body extent differs")
                 expected.update(bytes=row["bytes"], sha256=row["sha256"], historical_raw_exact=row["historical_raw_exact"])
                 if "resource" in expected:
                     expected["resource"].update(sha256=row["resource"]["sha256"])
@@ -814,10 +816,14 @@ def produce(
                         pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"][completed:]:
+                            if target["pixel_sha256"] is None and len(pixels) != target["pixel_bytes"]:
+                                raise ValueError("source-derived texture pixel extent differs")
                             if comparison == "exact" and (pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]):
                                 raise ValueError("produced texture pixels differ from accepted hash")
                             result = body_output(body, selected["fields"], pixels, target, selected["operation"])
                             digest = hashlib.sha256(result).hexdigest()
+                            if target["sha256"] is None and len(result) != target["bytes"]:
+                                raise ValueError("source-derived texture body extent differs")
                             if comparison == "exact" and (len(result) != target["bytes"] or digest != target["sha256"]):
                                 raise ValueError("produced texture body differs from accepted hash")
                             actual = dict(target, bytes=len(result), sha256=digest, pixel_bytes=len(pixels), pixel_sha256=pixel_sha)

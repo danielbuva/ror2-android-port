@@ -713,6 +713,13 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
 Feed the profile and pack receipt back into the texture readback request.
 Android GPU support and canonical package integration remain separate checks.
 
+Use `--source-bc3` on the same discovery command to select missing BC3
+Texture2Ds. Run the producer with the pinned ETC helper and SDK descriptor
+from the encoder comparison setup and pass `--comparison diagnostic`. The
+producer transcodes the original mip chain, retains the source hashes and
+checks output extents. The pack records actual output hashes without a
+reference APK byte-match claim.
+
 The producer copies original raw pixel/mip bytes, decodes BC1 top mips to RGB,
 extends transparent RGB with fixed cardinal Manhattan jump flooding, or applies
 the source export's JPEG roundtrip. Dilation propagates original nonzero-alpha
