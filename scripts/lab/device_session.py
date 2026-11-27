@@ -344,7 +344,7 @@ def lab_process_snapshot(device, checkpoints, phase):
             continue
         name = columns[-1]
         package = name.partition(":")[0]
-        if package not in PACKAGES:
+        if package != device.package and package not in PACKAGES:
             continue
         if len(columns) != 4:
             raise RuntimeError("Invalid owned process identity at " + phase)

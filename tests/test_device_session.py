@@ -388,6 +388,18 @@ class DeviceSessionTests(unittest.TestCase):
                 runner.start_from_menu(target, thermal, "12", self.output, process_checks=process_checks)
         self.assertFalse(any(call.args[:1] == ("input",) for call in target.sh.call_args_list))
 
+    def test_process_check_scopes_installer_alpha_to_the_selected_package(self):
+        alpha = "dev.ror2lab.alpha"
+        target = mock.Mock(package=alpha)
+        target.sh.return_value = process_snapshot(("42", "03:19:58", alpha))
+        checks = []
+        runner.check_lab_processes(target, checks, "launch", "42")
+        self.assertEqual([row["package"] for row in checks[0]["processes"]], [alpha])
+
+        target.package = self.request["package"]
+        runner.check_lab_processes(target, checks, "before-launch")
+        self.assertEqual(checks[1]["processes"], [])
+
     def test_menu_start_records_second_lab_process_and_blocks_input(self):
         target, thermal = mock.Mock(package="dev.ror2lab.converted"), mock.Mock(error=None)
         target.sh.return_value = process_snapshot(
