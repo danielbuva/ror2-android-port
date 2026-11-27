@@ -2791,6 +2791,16 @@ local. Provenance, privacy, licensing and sensitive-content review completed
 | --- | --- |
 | `owner-cloud-remap-graphics-translation.json` | `59fe8c20139b0b1763f13e4eb84f4cd3c45b2e67f8d93c5a8839410878c045c1` |
 
+The Terrain detail graphics profile selects two original WavingDoublePass
+Shader records for the signed graphics translator. It reuses the Terrain detail
+source pins and destinations. It contains only provenance and routing metadata.
+Original programs, translated bodies and raw evidence stay local. Provenance,
+privacy, licensing and sensitive-content review completed 2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-terrain-detail-graphics-translation.json` | `188503c1e3ea62346ad84f614174720990d62785a26297da1ee92f424df0ace6` |
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP

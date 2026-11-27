@@ -55,6 +55,36 @@ class CompilerHosting(unittest.TestCase):
 
 
 class TranslatedShaderPack(unittest.TestCase):
+    def test_vertex_light_variants_share_the_original_fragment(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_segments
+            import shader_translate as translator
+
+        def stage(*indices):
+            entries = [{"m_BlobIndex": index, "m_ShaderRequirements": 1 << index} for index in indices]
+            return {"m_PlayerSubPrograms": [[], [], [], entries]}
+
+        shader_pass = {"progVertex": stage(0, 1), "progFragment": stage(2)}
+        records = [{"keywords": keys} for keys in [("FOG_LINEAR",), ("FOG_LINEAR", "VERTEXLIGHT_ON"), ("FOG_LINEAR",), ("UNKNOWN",)]]
+        programs = [b"vertex", b"vertex_lit", b"fragment", b"unknown"]
+        layout = {"buffers": [], "textures": []}
+        tools = {"smolv": "fixture-encoder"}
+        with (
+            patch.object(shader_segments, "selected_layout", return_value=layout),
+            patch.object(translator, "vertex_channels", return_value=[]),
+            patch.object(translator, "compile_spirv", side_effect=lambda _tools, _directory, _index, program, *_args, **_kwargs: program) as compile_spirv,
+            patch.object(translator.subprocess, "run", side_effect=lambda _args, *, input, **_kwargs: SimpleNamespace(stdout=input)),
+            patch.object(translator.shader, "linked_vulkan_program", side_effect=lambda vertex, fragment, **_kwargs: vertex + fragment),
+        ):
+            variants = translator.translate_pass({}, shader_pass, b"", records, programs, Path("fixture"), tools)
+            for indices, error in [((3,), "requires paired"), ((2, 3), "requires paired"), ((2, 2), "duplicate progFragment")]:
+                with self.subTest(indices=indices), self.assertRaisesRegex(ValueError, error):
+                    translator.translate_pass({}, dict(shader_pass, progFragment=stage(*indices)), b"", records, programs, Path("fixture"), tools)
+        self.assertEqual([call.args[2] for call in compile_spirv.call_args_list], [0, 2, 1, 2])
+        self.assertEqual([variant["keywords"] for variant in variants], [("FOG_LINEAR",), ("FOG_LINEAR", "VERTEXLIGHT_ON")])
+        self.assertEqual([variant["requirements"] for variant in variants], [5, 6])
+        self.assertEqual([variant["compilation"]["data"] for variant in variants], [b"vertexfragment", b"vertex_litfragment"])
+
     def test_multipass_translation_preserves_pass_state_and_relocates_both_indices(self):
         from copy import deepcopy
         import tempfile
