@@ -8571,8 +8571,11 @@ runner verified the signed Histogram producer on Android. Its output hash
 matched the object dispatched in the Vulkan fixture.
 
 The signed `owner-graphics-shader-translation-v1` profiles route the original
-Outline, Cloud Intersection Remap, PaintHeight, Cutout/VertexLit and
-TerrainLayerUtils records to their canonical bundle identities.
+Outline, Cloud Intersection Remap, PaintHeight, Cutout/VertexLit,
+TerrainLayerUtils, Cloud Remap and its VertexLit fallback to their canonical
+bundle identities. The translator keeps the original Shader fallback name
+and dependency pointers. Bundle preparation resolves those pointers through
+the original source identities of the bound typed suppliers.
 The translator binds SMOL-V encoding,
 SPIRV-Cross and glslang alongside DXBC translation and SPIR-V validation.
 The managed-host builder builds five Android executables and retains their
