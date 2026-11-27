@@ -565,30 +565,30 @@ static partial class Fixture
         foreach (var copy in session.worldMaterials) UnityEngine.Object.Destroy(copy);
         Check(indicator.teamMaterialPairs == pairs && enemy && unrelated && unrenderable, "team material source ownership did not unwind");
     }
-    static void CheckMortarImpactIdentity()
+    static void CheckNativeImpactIdentity()
     {
         var prefab = new GameObject();
         var instance = new GameObject { scene = new GameObject.Scene { valid = true }, activeInHierarchy = true };
         var pool = new EffectPool { PrefabObject = prefab };
         var helper = new EffectManagerHelper { OwningPool = pool };
         var effect = new EffectComponent { gameObject = instance, helper = helper };
-        Check(MortarImpactIdentity(effect, prefab, 275) == "pool prefab", "unindexed pooled impact was missed");
+        Check(NativeImpactIdentity(effect, prefab, 275) == "pool prefab", "unindexed pooled impact was missed");
         pool.PrefabObject = new GameObject();
         effect.effectIndex = 275;
-        Check(MortarImpactIdentity(effect, prefab, 275) == null, "foreign pool matched the impact");
+        Check(NativeImpactIdentity(effect, prefab, 275) == null, "foreign pool matched the impact");
         helper.OwningPool = null;
-        Check(MortarImpactIdentity(effect, prefab, 275) == "instance index", "direct impact was missed");
-        Check(MortarImpactIdentity(effect, prefab, 276) == null, "unrelated direct instance matched the impact");
+        Check(NativeImpactIdentity(effect, prefab, 275) == "instance index", "direct impact was missed");
+        Check(NativeImpactIdentity(effect, prefab, 276) == null, "unrelated direct instance matched the impact");
         instance.activeInHierarchy = false;
-        Check(MortarImpactIdentity(effect, prefab, 275) == null, "inactive impact was observed");
+        Check(NativeImpactIdentity(effect, prefab, 275) == null, "inactive impact was observed");
         instance.activeInHierarchy = true;
         instance.scene.valid = false;
-        Check(MortarImpactIdentity(effect, prefab, 275) == null, "asset was observed as a live impact");
+        Check(NativeImpactIdentity(effect, prefab, 275) == null, "asset was observed as a live impact");
     }
 
     static void Main()
     {
-        CheckMortarImpactIdentity();
+        CheckNativeImpactIdentity();
         var body = new Material("Hopoo Games/Deferred/Standard", "source tint/textures/queue/keywords");
         var trail = new Material("Hopoo Games/FX/Cloud Remap", "source trail properties");
         var unknown = new Material("Unknown shader", "untouched");
