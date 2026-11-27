@@ -7,6 +7,10 @@ component layout with two distinct owner bindings. The provenance, privacy,
 licensing and sensitive-content review covered the source selectors, pointer
 relationships and hashes. Serialized bodies, SDK files and receipts stay local.
 
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-generated-objects.json` | `17b749a42b9dd50d322eaac5708ed45cdfbd09a94c463e52c21633ebeb3c1eaf` |
+
 The objective-support recipe follows the staged canonical bundle for five
 references to camera parameters, materials, a pickup effect and a physics
 material. It also preserves the corresponding container preloads. The Commando
