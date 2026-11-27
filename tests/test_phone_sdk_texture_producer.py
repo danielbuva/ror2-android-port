@@ -505,11 +505,12 @@ class SdkTextureTests(unittest.TestCase):
             value = self.tools(tools)
             rgba = b"".join(bytes([marker, 31, 73, 255]) * 16 for marker in (17, 29, 73, 99))
             expected = b"".join(bytes([255]) * 8 + bytes([marker, 31, 73, 255]) * 2 for marker in (17, 29, 73, 99))
-            self.assertEqual(T.sdk_encode_rgba(rgba, 4, 16, value, self.alpha), expected)
-            with self.assertRaisesRegex(ValueError, "codec failed"):
-                T.sdk_encode_rgba(rgba[:64] + bytes([42]) + rgba[65:], 4, 16, value, self.alpha)
-            with self.assertRaisesRegex(ValueError, "codec failed"):
-                T.sdk_encode_rgba(rgba[:-1], 4, 16, value, self.alpha)
+            for sdk in (value, {**value, "batch_bands": True}):
+                self.assertEqual(T.sdk_encode_rgba(rgba, 4, 16, sdk, self.alpha), expected)
+                with self.assertRaisesRegex(ValueError, "codec failed"):
+                    T.sdk_encode_rgba(rgba[:64] + bytes([42]) + rgba[65:], 4, 16, sdk, self.alpha)
+                with self.assertRaisesRegex(ValueError, "codec failed"):
+                    T.sdk_encode_rgba(rgba[:-1], 4, 16, sdk, self.alpha)
 
     def test_unqualified_sdk_provider_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:
