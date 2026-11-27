@@ -6608,9 +6608,13 @@ The current `./dev converter-stage` action uses the same emission runner and
 the installed toolhost's Python runtime. `owner-apk/lab_stage.py` runs one
 registered content producer against a pinned request under the toolhost's
 existing owner-input tree. The host stages the current committed producer
-closure and a small descriptor. The phone checks the input pins, hashes the
-declared artifacts, and returns the stage and thermal receipts with an optional
-scoreboard. The runner removes attempt scratch and preserves the input tree.
+closure and a small descriptor. For a producer fixture, the private manifest
+can also supply `inputs/<input_root>/<pinned relative path>` entries with the
+usual `source`, `bytes` and `sha256` pins. These entries must cover exactly the
+descriptor's `input_pins`. The runner streams them into its own scratch instead
+of using retained inputs. The phone checks the input pins, hashes the declared
+artifacts, and returns the stage and thermal receipts with an optional
+scoreboard. The runner removes attempt scratch and preserves retained inputs.
 The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
 accessible to the retained toolhost. The same scoreboard owner runs on the
 host and phone with the same request pins and JSON schema.
@@ -8051,6 +8055,14 @@ The whole-game Meridian Material profile
 relocating schema-checked Shader/texture relationships. Its four persisted
 records are host raw-exact; shared Shader and complete bundle/device gates
 remain separate. It owns no runtime state or teardown.
+
+`recipe/owner-whole-game-void-fbx-material-records.json` supplies eight
+original Materials to the Void Stage and Scrap Void FBX cohort through
+`record_produce.py`. The record pack retains the native class-21 schema
+and source fields. During preparation, `bundle_preload.py` resolves
+original member references to Shader and texture providers. The isolated
+fixture checks the typed bindings and unloads the Material bundle and its
+dependencies after the check.
 
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
