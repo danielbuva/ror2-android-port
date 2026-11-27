@@ -8485,6 +8485,12 @@ pins the source object and stream used by the Android RGBA mip conversion.
 The release graph binds both alongside the existing root and media
 suppliers. The scoped preparation owns endpoint and script validation.
 
+For the retained startup pickup prefabs, `owner-startup-pickup-component-records.json`
+feeds the original Transform, MeshFilter, MeshRenderer and Material bodies to
+`record_produce.py`. Canonical bundle preparation relocates their PPtrs using
+the original serialized file and PathID, including the two same-PathID
+Materials from distinct files.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
