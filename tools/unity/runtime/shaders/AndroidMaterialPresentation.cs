@@ -74,6 +74,21 @@ public static class AndroidMaterialPresentation
         report.surfaces++;
         return true;
     }
+    public static Material RecoverMaterial(Material source, List<Material> owned, bool includeIntersection = false)
+    {
+        if (includeIntersection && IsIntersectionMaterial(source))
+            return RecoverIntersectionMaterial(source, owned);
+        if (!AndroidNativeDeferredPresentation.IsSourceFamily(source))
+            return source;
+        var copy = new Material(source);
+        if (!ApplyNative(source, copy))
+        {
+            UnityEngine.Object.Destroy(copy);
+            return source;
+        }
+        owned.Add(copy);
+        return copy;
+    }
     // Actor callbacks can add renderers after template preparation. Adapt only
     // recovered source families; already-owned and unknown materials stay intact.
     public static int ApplyRecovered(Renderer renderer, List<Material> owned, bool includeIntersection = false)
@@ -81,17 +96,9 @@ public static class AndroidMaterialPresentation
         int count = 0;
         Material Recover(Material source)
         {
-            bool intersection = includeIntersection && IsIntersectionMaterial(source);
-            if (!intersection && !AndroidNativeDeferredPresentation.IsSourceFamily(source))
-                return source;
-            var copy = new Material(source);
-            if (!(intersection ? Apply(source, copy) : ApplyNative(source, copy)))
-            {
-                UnityEngine.Object.Destroy(copy);
-                return source;
-            }
-            owned.Add(copy);
-            count++;
+            var copy = RecoverMaterial(source, owned, includeIntersection);
+            if (copy != source)
+                count++;
             return copy;
         }
         var originals = renderer.sharedMaterials;

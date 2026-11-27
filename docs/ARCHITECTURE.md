@@ -3104,6 +3104,10 @@ in `scripts/lab/actions.py` owns each prototype action's current/historical labe
 shown by `./dev prototype --action list`, including the historical `inspect`
 default and unknown-name fallback. The listing action itself is current.
 `./dev lane --help` labels its explicit create/list/remove actions as current.
+`./dev pc-reference` is the current host recorder for stock Steam PC captures.
+`scripts/lab/pc_reference.py` owns the separate CrossOver clone, launch and
+capture manifest. `tools/pc-reference/Recorder.cs` owns its isolated profile,
+local run, camera and capture lifecycle. See the [PC reference recorder](../tools/pc-reference/README.md).
 The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
@@ -5299,11 +5303,16 @@ For native team area indicators on these roots, the session prepares the
 intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
 startup selects a team entry. The original table is restored with the effect
 callbacks before world cleanup destroys the owned copies.
+The same owner prepares `OmniEffect` particle overrides before native Start
+selects a radius group and assigns its material. It restores the original
+override references with the renderer and trail sources.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
 for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, which
-instantiate their prefabs directly. It holds the Acrid
+instantiate their prefabs directly. Artificer's configured Nano-Bomb projectile
+also enters this owner so the projectile controller's detached ghost takes the
+same material recovery path. It holds the Acrid
 finisher's typed provider lease through the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
@@ -6496,6 +6505,9 @@ existing owner-input tree. The host stages the current committed producer
 closure and a small descriptor. The phone checks the input pins, hashes the
 declared artifacts, and returns the stage and thermal receipts with an optional
 scoreboard. The runner removes attempt scratch and preserves the input tree.
+The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
+accessible to the retained toolhost. The same scoreboard owner runs on the
+host and phone with the same request pins and JSON schema.
 
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
@@ -8407,6 +8419,13 @@ texture state; particle renderers also report all meshes. The existing screen
 coverage ordering and 128-view limit remain: this is a sampled attribution tool,
 not proof that every prefab rendered. Session teardown discards the report with
 the other objective observations; it never changes materials or simulation.
+`IntegratedWorldSession` also owns the opt-in `diagnosticMageBombRelease`
+trace. It samples the first native Nano-Bomb charge-to-throw transition at
+end of frame and follows the configured projectile, its detached ghost and the
+configured muzzle and impact effects by catalog identity. It retains camera
+projected screen bounds and material slots for up to 1.25 seconds or 120 frames.
+The report belongs to the current world and holds only observations. Projected
+bounds and effect identity identify candidates for comparison with the video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
@@ -8424,6 +8443,18 @@ the existing five-second report cadence. The latest `NovaReport` sample records
 the display camera, renderer state, projected bounds, mesh and first shared
 material. The sample holds no Unity references and works with native skin
 diagnostics disabled.
+
+The integrated lab route can request a same-frame presentation capture with
+`frameCaptureScene` and `frameCaptureRunSeconds` in its session selector.
+`NovaInputBoundary` arms `AndroidPresentationCamera` on the lab view. It samples
+the camera source and the composited screen in the same Unity frame within
+12 s of the requested native run stopwatch, at most 48 times. The existing
+private camera report retains the first pair of 160 × 90 PNGs, camera and target
+state, and the collider from the view's own obstruction cast. The first sample
+with at least 5% flat mid-gray replaces that pair and ends sampling. The camera
+releases capture textures at teardown. The collider describes camera placement,
+and the PNGs can localize a presentation stage. Identifying a draw requires
+pixel-event evidence.
 
 
 ## Host-only owner layout models

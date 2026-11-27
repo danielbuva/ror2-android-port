@@ -2182,12 +2182,18 @@ For a retained supplier with already-relocated PPtrs, a binding's explicit
 `pointer_namespace` lists `[bundle, member]` pairs, starting with the local
 member and then each external slot. Ordinary suppliers resolve through their
 original member tables. A checked local producer patch can choose an emitted
-alias when that alias is bound to the same original endpoint. Preparation
-preserves supplier record identities through
+alias when that alias is bound to the same original endpoint. An unbound
+`m_Mesh` target can use the producer's checked alias if both originals have
+identical native types and bodies with no external data or nonzero PPtrs.
+Preparation preserves supplier record identities through
 retained lineage while relocating only qualified PPtr fields. It refuses missing
 bodies, conflicting source destinations, stale type tables and mismatching or
 unused overrides. Preparation is host qualification support; signed dispatch and
 the phone conversion experience remain unqualified.
+
+Standalone Sprite recipes declare PPtr relocations by source offset.
+Preparation matches them to the assembled record's typed fields and checks
+the original and produced pointer values before resolving their endpoints.
 
 SDK staged rows declare `bundle: "sdk"`, the canonical `member`, the serialized
 `file` pin and optional `leaves`/`full` witness pins. Preparation retains moved
