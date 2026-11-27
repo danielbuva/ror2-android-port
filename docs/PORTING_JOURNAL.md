@@ -4777,7 +4777,7 @@ snapshot was 33.79 FPS / 29.60 ms. SoC peaked at 88.4 °C with 19.907 s above
 80 °C. Battery held 26 °C. Scratch removal, OLED sleep and lease release passed.
 Black quads in the terminal screenshot and matched finisher pixels remain open.
 
-## J1534 — Replay a pinned converter stage on Android
+## J1535 — Replay a pinned converter stage on Android
 
 2026-11-27. The shared runner executes the committed bundle preload producer
 against an already staged 27-record request. The seed and the detached replay

@@ -10,7 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1534](PORTING_JOURNAL.md#j1534--replay-a-pinned-converter-stage-on-android) | 2026-11-27 | Replay a pinned converter stage on Android | 2026-11-27. |
+| [J1535](PORTING_JOURNAL.md#j1535--replay-a-pinned-converter-stage-on-android) | 2026-11-27 | Replay a pinned converter stage on Android | 2026-11-27. |
 | [J1492](PORTING_JOURNAL.md#j1492--restore-acrids-native-normal-and-finisher-swing-bindings) | 2026-11-17 | Restore Acrid's native normal and finisher swing bindings | 2026-11-18. |
 | [J1491](PORTING_JOURNAL.md#j1491--recover-native-materials-when-baked-effects-load) | 2026-11-17 | Recover native materials when baked effects load | 2026-11-18. |
 | [J1489](PORTING_JOURNAL.md#j1489--restore-source-texture-alpha-and-bison-smoke-rings) | 2026-11-17 | Restore source texture alpha and Bison smoke rings | 2026-11-18. |
