@@ -15,7 +15,7 @@ evidence rules. Required request fields are `canonical_root`, `output` (under
 its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
 `adopted_install: true` and `duration_seconds`. Optional fields are
 `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
-`settings-save-failure`),
+`settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
 the runner), `input_schedule` (launch-mode list of `{ "at_seconds": 5,
 "script": "touch.json" }`, ordered within the observation duration),
@@ -71,6 +71,10 @@ settings failure workload owns its attempt-bound selector and injects one
 write failure and one rename failure in the lab settings writer, checking
 visible retry, retained generations and cold recovery without filling storage.
 It requires the lab package and does not accept a custom `selection`.
+The profile workloads also own their selectors and require the lab package.
+`profile-save-failure` injects ENOSPC into the profile commit of a native loss,
+checks that the process and prior generations survive, then verifies one replay
+across two cold Starts.
 The device free-space reservation includes the requested payload size.
 Requests and results stay private.
 
