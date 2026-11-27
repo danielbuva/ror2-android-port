@@ -201,7 +201,15 @@ namespace RoR2.ContentManagement
         }
     }
 }
-namespace RoR2.Projectile { public class ProjectileController : UnityEngine.Object { public GameObject ghostPrefab; } }
+namespace RoR2.Projectile
+{
+    public class ProjectileController : UnityEngine.Object { public GameObject ghostPrefab; }
+    public class ProjectileExplosion : UnityEngine.Object
+    {
+        public bool fireChildren;
+        public GameObject childrenProjectilePrefab;
+    }
+}
 public static class PortSession
 {
     public static FieldInfo RewardField(Type type, string name) => type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
@@ -345,16 +353,19 @@ static class Fixture
         var operation = new AsyncOperationHandle<GameObject> { Result = new GameObject { components = new[] { finisher } } };
         var queenGas = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
         var queenSpittle = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
-        var queenProjectile = new GameObject { components = new[] {
+        var queenAcid = new GameObject { components = new[] {
             new RoR2.Projectile.ProjectileController {
                 ghostPrefab = new GameObject { components = new[] { queenGas, queenSpittle } }
             }
         } };
+        var queenSpit = new GameObject { components = new[] {
+            new RoR2.Projectile.ProjectileExplosion { fireChildren = true, childrenProjectilePrefab = queenAcid }
+        } };
         var queenReference = new EntityStateGameObject {
-            addressableReference = new AssetReference { RuntimeKey = "native-queen-acid" }
+            addressableReference = new AssetReference { RuntimeKey = "native-queen-spit" }
         };
         EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab = queenReference;
-        var queenOperation = new AsyncOperationHandle<GameObject> { Result = queenProjectile };
+        var queenOperation = new AsyncOperationHandle<GameObject> { Result = queenSpit };
         Addressables.operation = operation;
         var session = new SourceSession();
         var unavailable = new List<string>();
@@ -385,7 +396,7 @@ static class Fixture
         Check(prepare.MoveNext() && finisher.sharedMaterials[0] != original &&
               queenGas.sharedMaterials[0] == original && queenSpittle.sharedMaterials[0] == original,
               "native finisher should be prepared while the Queen projectile loads");
-        Check((string)Addressables.requestedKey == "native-queen-acid" &&
+        Check((string)Addressables.requestedKey == "native-queen-spit" &&
               session.ownedOriginalVisualHandles[1] == queenOperation,
               "native Queen projectile address and ownership must be preserved");
         queenOperation.Status = AsyncOperationStatus.Succeeded;
@@ -395,7 +406,7 @@ static class Fixture
         foreach (var renderer in new[] { queenGas, queenSpittle })
             Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
                   session.worldLootSourceMaterials[renderer][0] == original,
-                  "Queen ghost must inherit the prepared material and retain its original slot for teardown");
+                  "Queen acid child ghost must inherit the prepared material and retain its original slot for teardown");
     }
     static void CheckIntersectionEffectAdmission()
     {

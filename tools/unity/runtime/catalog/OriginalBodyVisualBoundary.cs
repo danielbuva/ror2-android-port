@@ -144,10 +144,10 @@ public sealed partial class PortSession
             while (finisher.MoveNext())
                 yield return finisher.Current;
 
-            // FireSpit makes the projectile through its configured native address.
-            // Present the detached ghost before the first combat director spawn.
+            // FireSpit resolves the spit prefab by address. Its impact spawns a
+            // separate acid projectile with a detached ghost.
             var queenSpit = PrepareReferencedNativeEffect(EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab,
-                                                          "Beetle Queen acid projectile", unavailable);
+                                                          "Beetle Queen spit projectile", unavailable);
             while (queenSpit.MoveNext())
                 yield return queenSpit.Current;
         }

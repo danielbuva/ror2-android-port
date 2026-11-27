@@ -8443,8 +8443,9 @@ prefabs through the owned content loader before the native state configuration
 populates the GroundLight fields. Native GroundLight selects and spawns each
 effect. The native effect owner restores the prefabs' material slots at teardown.
 The same session retains the projectile at Beetle Queen's configured FireSpit
-address. The native effect owner prepares its detached ghost before the director
-spawns enemies and restores the ghost's material slots at teardown.
+address. The native effect owner follows the explosion's enabled child projectile
+reference and prepares both detached ghosts before the director spawns enemies.
+Teardown restores the original material slots.
 `IntegratedWorldSession` sends the owned Engineer shield template through the
 same presentation owner before native deployment. The center and edge renderers
 inherit the prepared materials, and world teardown restores the template slots.
