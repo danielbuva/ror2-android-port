@@ -326,6 +326,24 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertFalse(lease_path.exists())
 
+    def test_menu_observation_records_owned_roster_without_starting(self):
+        target, thermal = mock.Mock(package="dev.ror2lab.alpha"), mock.Mock(error=None)
+        menu = dict(
+            phase="offline-start-menu",
+            pid=12,
+            attempt="owned-attempt",
+            selectedSurvivor="Commando",
+            hud=dict(survivorRosterCount=20, survivorSelectableCount=2),
+        )
+        with mock.patch.object(runner, "wait_for_settings_report", return_value=menu) as observe:
+            result = runner.observe_start_menu(target, thermal, "12", self.output, report_id="ordinary", attempt=menu["attempt"])
+        self.assertEqual(result, menu)
+        self.assertEqual(json.loads((self.output / "start-menu.json").read_text()), menu)
+        self.assertTrue(observe.call_args.args[3](menu))
+        self.assertFalse(observe.call_args.args[3]({"phase": "integrated-world-playing"}))
+        self.assertEqual(observe.call_args.kwargs["attempt"], menu["attempt"])
+        self.assertEqual(target.mock_calls, [])
+
     def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
         target, thermal = mock.Mock(package=self.request["package"]), mock.Mock(error=None)
         target.sh.return_value = process_snapshot(("12", "03:19:58", target.package))

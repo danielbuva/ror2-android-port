@@ -1003,13 +1003,19 @@ def check_player_screens(device, thermal, request, output, process_checks):
     raise RuntimeError("Confirmed Quit did not exit")
 
 
+def observe_start_menu(device, thermal, pid, output, *, report_id=None, attempt=None):
+    """Record the character-select phase for the owned process before input."""
+    menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240, report_id=report_id, attempt=attempt)
+    save(output / "start-menu.json", menu)
+    return menu
+
+
 def start_from_menu(device, thermal, pid, output, *, process_checks, report_id=None, tap_start=False, attempt=None):
     """Start the observed owned menu and return the current world report."""
     from session_cleanup_check import menu_start_coordinates
     from touch_gesture import owned_display_zero_focus
 
-    menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240, report_id=report_id, attempt=attempt)
-    save(output / "start-menu.json", menu)
+    menu = observe_start_menu(device, thermal, pid, output, report_id=report_id, attempt=attempt)
     if thermal.error:
         raise RuntimeError(thermal.error)
     check_lab_processes(device, process_checks, "start", pid)
