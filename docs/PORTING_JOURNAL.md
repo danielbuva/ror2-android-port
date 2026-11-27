@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1546 — Verify signed Histogram conversion on Android
+
+2026-11-27. The shared toolhost runner verified the signed release and original
+input, dispatched the Histogram conversion, and checked the emitted object.
+Its SHA-256 matched the record dispatched on Android Vulkan in J1540:
+`663371390e3a8e615132297292a2af9feda2cd7688707756f270669c9f8715d3`.
+Conversion took 3.77 s, with 36.16 MiB peak child RSS and 6.84 MiB net storage
+use during the producer. Peak CPU/GPU was 61.3 °C with 0 s above 80 °C.
+Toolhost APK SHA-256 `b3e13fa55742c30890b429a7a452046f12253c0fd488df46798165ad85cbd105`.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`signed-histogram-device-01/terminal.done.json`. The runner removed its package.
+Whole-game coverage and two-release installer qualification remain open.
+
 ## J1544 — Recover Beetle Queen acid ghost materials
 
 2026-11-27. The existing native effect owner resolves the Queen's addressed
