@@ -97,6 +97,14 @@ Existing stage and run cleanup own teardown. On a return to the offline menu,
 `IntegratedWorldSession` starts the next session without the direct-stage launch
 selector or its assistance. The device runner still owns removing the selector.
 
+On ordinary Start, the converted player reads `generated-android-data` from
+the verified payload as its release bundle manifest. `StageGeometrySession`
+retains the native `sgStage1` choices whose geometry bundles are declared there,
+preserving their order and relative weights. It unloads the manifest after
+filtering and consumes the existing single stage RNG draw. An unreadable
+manifest, an empty eligible scope or a failed selected bundle load stops Start.
+The lab package continues to use the full eligible native selection.
+
 `ActiveClientSession` checks each native SkillLocator cache against that
 identity's ordered GenericSkill components and cached NetworkIdentity before
 initial serialization. The minimum skill count applies to the controlled body.
@@ -3515,6 +3523,9 @@ unsecured keyguard (with one swipe fallback) and verifies the window-policy
 lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
 a credential lock or unknown lock state aborts before launch. Cleanup still
 stops the owned packages, sleeps the display and releases the lease.
+On request the same owner checks the active USB chooser after unlock,
+verifies that Back closes it, and removes its temporary accessibility dumps
+from the verified runtime volume. The terminal records chooser visibility.
 After keyguard dismissal a converted session records any resumed lab process.
 If only the separate lab package resumed, the runner retains matching Android
 process-start events and uses its existing receipt-verified idle reset. The
