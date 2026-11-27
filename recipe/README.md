@@ -7447,3 +7447,7 @@ references in Goolake. The provenance, privacy, licensing and sensitive-content
 review covered original bundle and member selectors, object IDs, transform
 settings and hashes. The producer reads owned inputs locally. Mesh bodies and
 device evidence stay under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-goolake-scene-mesh-endpoints.json` | `b9013e5afd13edd54d0c8298f597e147efae0457549d08ec109c19b7e3409060` |
