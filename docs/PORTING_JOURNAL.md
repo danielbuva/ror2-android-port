@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1521 — Complete the assisted converted Titanic Plains teleporter exit
+
+2026-11-27. The assisted driver chooses the charged native teleporter for exit.
+The converted Commando run defeated the boss, collected the reward and
+completed native transport with one counted clear. Nine of ten repaired
+pickup and enemy skin preload roots completed typed Android loads.
+APK SHA-256 `16b243d8ccf7747d7b3d70444510fe558fcb381c486b91e44fabb8e44b8173d8` (source `0ffee31b`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v39-preload-exit/v39-native-goolake-transition/`.
+Plains ran 56.39 s at 57.62 FPS by frame count. SoC peaked at 85.6 °C
+with 9.62 s above 80 °C and a 31 °C start battery. Adopted placement,
+scratch removal and OLED sleep passed. Live Goolake entry and the unrequested
+Red Whip GameObject preload remain open.
+
 ## J1520 — Restore the native Gold Shores boss reward
 
 2026-11-27. Gold Shores regenerates the native reward selector before mission

@@ -99,10 +99,10 @@ class OwnerCodeManagedTests(unittest.TestCase):
             root = Path(temporary)
             with patch.object(MANAGED.phone_unity_compile, "references", side_effect=ReferencesReached):
                 with self.assertRaises(ReferencesReached):
-                    MANAGED.gameplay(root, root, {}, root, {}, None, root, {}, [root] * 3, [root] * 14)
+                    MANAGED.gameplay(root, root, {}, root, {}, root, {}, [root] * 3, [root] * 14)
                 (root / "gameplay").rmdir()
                 with self.assertRaisesRegex(ValueError, "source membership changed"):
-                    MANAGED.gameplay(root, root, {}, root, {}, None, root, {}, [], [root] * 14)
+                    MANAGED.gameplay(root, root, {}, root, {}, root, {}, [], [root] * 14)
 
     def test_fixed_target_uses_staged_paths_and_case_insensitive_source_order(self):
         public = [Path(n) for n in ("TeleportMaterialBoundary.cs", "TeleporterWorldBoundary.cs", "ActiveClientBoundary.cs", "LabDiagnostics.cs")]

@@ -26,6 +26,13 @@ and reads back every object, member flag, resource and serialized table before
 publishing the output bundle. Fresh prefab production uses the same fieldless
 component recipe through `object_produce.py`.
 
+For staged converted prefabs, `accepted-output/bundle_preload.py` restores
+source AkBank component slots and their local MonoScript from pinned original
+records. It verifies the existing external bank references against their
+original records, extends every container extent that reaches the changed
+prefab, and reads back the serialized member and resource bytes. The original
+AkBank component retains its native load and unload callbacks.
+
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
 `OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns
@@ -613,6 +620,15 @@ their pinned cohort. Current scripting assembly metadata also reads the
 successful managed producer's pinned provider manifest. It registers the
 authored audio and observation assemblies for Unity serialization and retains
 the editor integration assembly only when the compiler supplies it.
+The current `owner-code/managed.py` path composes the original music lifecycle
+and Commando post observers on the source-derived `RoR2.dll`. The music owner
+uses the original AddOutput result before enabling the intro trigger. The
+Commando observer records the playing ID returned by the original sound call
+when passive PCM qualification is requested. The converter shares the lab's
+Cecil transforms and compiles against the same provider it passes to IL2CPP.
+The converted-body editor fixture can verify both source Commando AkBank
+components, their typed references and their load and unload triggers before
+releasing the loaded bundles.
 Existing importer GUIDs survive; first-import owners use
 stable converter path identities. The registry and all dependent writers share
 the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
@@ -3382,6 +3398,10 @@ native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage
 selector is separate. Existing shared cleanup stops the process and removes the
 selector. These measurements do not certify physical or ordinary play.
+The optional `stage_transition` route binds the starting scene and the native
+destination to that same attempt, PID and session. The runner stops once the
+transport owner confirms a single transition and the destination has been
+live for ten seconds. It retains the qualifying report and final capture.
 
 The shared runner records the cumulative exception log's byte offset before
 launch. After stopping the owned package, it captures only the appended rows

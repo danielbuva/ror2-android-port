@@ -31,12 +31,21 @@ wait for the enabled Play button and tap its observed bounds on display zero.
 If the accessibility hierarchy cannot expose the button, provide
 `bootstrap_play_reference` with `png` (a private Ready screenshot under
 `work/` at the same viewport) and `bounds` (four pixel coordinates enclosing
-the visible Play label). The runner requires an exact match before tapping.
+the visible Play label). The runner matches the label at the same viewport
+before tapping, including the 70% dimmed rendering observed on Nova.
 The runner then waits for the owned native menu, taps its reported Start button
 and waits for a ready world before the clock begins. The lab and converted packages
 use their respective gameplay reports. For a lab stage-transition memory
 soak, pair it with an explicit auto-route selector. Physical input
 qualification remains separate.
+For one bounded native stage exit, include
+`"stage_transition": {"from": "golemplains", "to": "goolake"}` with
+`start_from_menu` and the `body-state-spawn-state-auto-nova-spine-bringup`
+selector. The runner requires the declared first stage, one completed
+transition in the same session, and ten seconds of live destination play
+within `duration_seconds`. It saves the qualifying report as
+`stage-transition.json`. `enforce_soc_ceiling: true` stops the session on
+the first CPU, GPU or SoC temperature sample at or above 90 C.
 For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
 The selector uses the stored loadout and existing integrated stage loader.

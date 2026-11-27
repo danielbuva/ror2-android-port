@@ -275,6 +275,7 @@ def main() -> None:
     )
     parser.add_argument("--dotnet", type=Path, default=Path(shutil.which("dotnet")) if shutil.which("dotnet") else None)
     parser.add_argument("--netstandard-ref", type=Path, help="explicit NETStandard.Library.Ref 2.1.0 package; default retains the existing host cache")
+    parser.add_argument("--observe-audio", action="store_true", help="observe original music and Commando post results in the converted player")
     parser.add_argument("--output-dir", required=True, type=Path)
     args = parser.parse_args()
 
@@ -565,6 +566,62 @@ def main() -> None:
     )
 
     require(sha(point_sound_game) == EXPECTED["point_sound_composed_game"], "point-sound composed output differs from its exact R3 source pin")
+    audio_sources = []
+    audio_hashes = {}
+    if args.observe_audio:
+        project = ROOT / "tools/assembly-transforms/MusicOutputObserverCecilTransform.csproj"
+        post_project = project.with_name("NativeViewCameraCecilTransform.csproj")
+        post_marker_source = project.with_name("CommandoPostObserverMarker.cs")
+        audio_sources = [project, project.with_suffix(".cs"), post_project, post_project.with_suffix(".cs"), post_marker_source]
+        source_pins = json.loads((ROOT / "recipe/assembly-transforms.json").read_text())["tool_sources"]
+        for source in audio_sources:
+            require(sha(source) == source_pins[source.relative_to(ROOT).as_posix()], "audio observer transform source pin changed")
+        tool_dir = out / "compiled/music-observer-transform"
+        build_transform(project, tool_dir)
+        observed_game = out / "game-original-owner-music-observed.dll"
+        run(
+            [str(dotnet), str(tool_dir / (project.stem + ".dll")), "transform", str(point_sound_game), str(core_observer), str(managed), str(observed_game)],
+            cwd=ROOT,
+            env=tool_env,
+            log=out / "logs/music-observer.log",
+        )
+        audio_hashes["music_observed_game"] = sha(observed_game)
+        require(
+            audio_hashes["music_observed_game"] == "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
+            "music observer output differs from the qualified R3 transform",
+        )
+        post_dir = out / "compiled/commando-post-transform"
+        build_transform(post_project, post_dir)
+        post_marker = post_dir / "CommandoPostObserverMarker.dll"
+        if compiler:
+            compiler.compile(post_marker, [post_marker_source], [compiler.corelib], ["-target:library"], env=env)
+        else:
+            run(
+                [str(mono), str(csc), "-target:library", "-out:" + str(post_marker), str(post_marker_source)],
+                cwd=ROOT,
+                env=env,
+                log=out / "logs/commando-post-marker.log",
+            )
+        audio_game = out / "game-original-owner-audio-observed.dll"
+        run(
+            [
+                str(dotnet),
+                str(post_dir / (post_project.stem + ".dll")),
+                "commando-post-only",
+                str(observed_game),
+                str(post_marker),
+                str(audio_game),
+                str(managed),
+            ],
+            cwd=ROOT,
+            env=tool_env,
+            log=out / "logs/commando-post-observer.log",
+        )
+        audio_hashes["audio_observed_game"] = sha(audio_game)
+        require(
+            audio_hashes["audio_observed_game"] == "388a369eb53a75faaa7380427023f88d88aa573fad0a1a5d6973dd53b6dc53a1",
+            "Commando post observer output differs from the qualified R3 transform",
+        )
     if compiler:
         compiler.verify()
     manifest = {
@@ -580,6 +637,7 @@ def main() -> None:
             "guarded_game": sha(guarded_game),
             "composed_game": sha(composed_game),
             "point_sound_composed_game": sha(point_sound_game),
+            **audio_hashes,
         },
         "android_abi_input_hashes": {
             "generated_android_source": sha(args.android_source.resolve(strict=True)),
@@ -610,6 +668,7 @@ def main() -> None:
                 lightning_owner_source,
                 HERE / "tools/composed/ComposedGameCecilTransform.cs",
                 HERE / "tools/composed/ComposedGameCecilTransform.csproj",
+                *audio_sources,
             )
         },
         "abi_policy": {
