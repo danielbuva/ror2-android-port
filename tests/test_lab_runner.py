@@ -159,7 +159,7 @@ class RefusedLeaseTest(unittest.TestCase):
                 with self.assertRaisesRegex(lab_runner.CommandError, "grant required"):
                     runner.execute(command, local_checkout=repo, workstream="fixture-worker")
             battery.assert_not_called()
-            self.assertEqual(run.call_args.args[0][1:], ["scripts/prune-generated.py", "--apply"])
+            self.assertEqual(run.call_args.args[0][1:], ["scripts/prune-generated.py", "--apply", "--aggressive"])
 
     def test_local_packaging_publishes_terminal_after_shared_runner_failure(self):
         with tempfile.TemporaryDirectory() as directory:

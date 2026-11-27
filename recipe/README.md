@@ -6760,6 +6760,24 @@ Saved residual 7 to 6 is selector subtraction; file readiness remains unchanged.
 Complete bundle, phone production, installation/update and runtime stay open.
 
 
+### Whole-game original animation clips
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-original-animation-clips.json` | `f1032fddd96303118582d22650d30c3df75e61cb3a36867fedff73ad20f77005` |
+
+Audit 2026-11-27. The original VultureHunter `death_fly` and Champrush
+`AcoHang_HeadRise` supply the two remaining J1347 clip selectors. Pinned
+AssetRipper `StreamedCurveKey` and `CustomCurveResolver` inform the native
+curve and binding review. The generic record producer retains both original
+bodies and the native type. A persisted bundle readback verified both bodies,
+their destination PathIDs and both pointers in the generated AssetBundle
+container and preload table. Unity 2021.3.45f2 typed-loaded both named clips
+through the scoped bundle. The recipe contains only source selectors, hashes,
+sizes and destination relationships. Generated records and the bundle stay
+local. Complete-catalog assembly remains open.
+
+
 ### Whole-game CustomRenderTexture records
 
 | Recipe | SHA-256 |

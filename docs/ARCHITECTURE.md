@@ -1088,6 +1088,12 @@ before graph preparation. The release graph exposes these type tables and the
 object producer's existing final `layout.json` as cached artifacts. Readers close
 on exit; receipts and metadata persist with their packs. Current whole-content
 preparation and phone qualification remain open.
+`recipe/owner-whole-game-original-animation-clips.json` supplies `death_fly`
+and `AcoHang_HeadRise` at their whole-game member PathIDs. Source and native type
+hashes pin the original clips, and the record owner preserves both bodies. The
+`bundle_preload.py` owner generates the AssetBundle container and preload pointers
+from the requested groups. The exact-editor fixture typed-loads both clips
+through a scoped container. Complete-catalog assembly remains open.
 `recipe/owner-whole-game-source-records.json` selects original managed/native
 records through this owner; all 198 are host raw-exact. Setup takes pinned
 original/SDK inputs and a fresh pack; persisted receipts remain after exit.
@@ -2035,7 +2041,11 @@ SDK wrapper root after relocation. An optional independently written pause
 clock lets its process wait count active time while the entire tool UID is
 stopped; malformed/reset clocks fail closed. Selected-job measurement compiles
 only requested units, records timings and skips linking, with a distinct
-`native-measured` terminal phase. Setup and controller clock ordering are in the
+`native-measured` terminal phase. The Android Clang plan maps its job directory
+out of DWARF so equivalent builds can share a linker build ID across output
+paths. Explicit worker comparisons and selected measurements collect the
+existing object digests in one private log before linking or teardown.
+Setup and controller clock ordering are in the
 [native owner contract](../tools/phone-build/owner-code/README.md).
 The normal linker/stripper then use the selected profile order. Neither owner
 reads an accepted ELF as a supplier.
@@ -3128,6 +3138,23 @@ keeps and `.prune-keep` still win; receipts, logs and authored files stay.
 Planning checks eligibility once per marked run, not per descendant directory.
 Marking never deletes; normal dry-run/apply owns pruning and rechecks eligibility
 before the first deletion of each marked run. No symlinked runs are eligible.
+
+`--aggressive` applies a 48-hour minimum to stand-alone APKs and evidence
+and covers APK copies in device and lab-build output roots. It also retires
+receipted R9 Unity bundle copies and isolated Gradle caches from old unpinned
+attempts. The manifests, logs and receipts stay. Active projects, immutable
+history and `.prune-keep` trees are protected. Cache ownership and age rules
+remain as described above, with explicit keeps also honored in aggressive mode.
+Older thermal, exception, input and resource traces and heap snapshots can be
+stored losslessly as `.zst`. The pruner skips evidence with shared APFS
+allocation and publishes an archive only after checksum testing and a reduction
+in allocated bytes. Converter indexes and protocol JSONL retain their original
+paths. `scripts/lab/evidence_files.py` opens raw or compressed trace bytes for
+retained reports and heap analysis. The heap export owner materializes one
+snapshot at a time in its existing temporary directory and preserves capture
+identity. Apply is serialized and writes its ledger under `work/cleanup-analysis`.
+The ledger distinguishes logical candidate bytes from the signed change in
+volume-available bytes measured by `df`, which includes concurrent host activity.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
