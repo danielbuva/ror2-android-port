@@ -161,6 +161,17 @@ class AuthoredSelection(unittest.TestCase):
 
 
 class NativeRecords(unittest.TestCase):
+    def test_linked_vulkan_envelope_preserves_stage_extents(self):
+        vertex = b"LOMS" + b"v" * 23
+        fragment = b"LOMS" + b"f" * 25
+        result = N.linked_vulkan_program(vertex, fragment, alpha_clip=True)
+        marker, vertex_offset, vertex_size, fragment_offset, fragment_size = struct.unpack_from("<5I", result)
+        self.assertEqual((marker, fragment_offset), (0x02000021, 176))
+        self.assertEqual(vertex_offset, fragment_offset + fragment_size)
+        self.assertEqual(result[fragment_offset:vertex_offset], fragment)
+        self.assertEqual(result[vertex_offset : vertex_offset + vertex_size], vertex)
+        self.assertEqual(struct.unpack_from("<I", result, 76), (1,))
+
     def test_inline_sampler_is_written_to_serialized_common_parameters(self):
         compilation = {"reflection": ["sampler: 85 42"], "data": b"gpu", "gpu_program_type": 25}
         _, table, programs, parameters = N.variant_records([{"compilation": compilation, "requirements": 1, "keywords": []}], [])

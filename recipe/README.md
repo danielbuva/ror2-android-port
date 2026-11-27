@@ -2709,6 +2709,14 @@ bytes, original expression or protected content is published. Public smol-v
 source is acquired privately for validation only, at its cited revision.
 Provenance/privacy/licensing and sensitive-content audit: 2026-10-24.
 
+The Animate Alpha translation diagnostic uses an authored binding adapter for
+Wine vkd3d-shader 2.0 and a stream encoder for public SMOL-V revision
+`55000efe742f56d8b51223b9ea7775a8f0501881`. The original bundle supplies all
+program code, pass state, keywords and constant layouts. Both open dependencies,
+tool binaries, translated modules, packed outputs and device evidence remain
+local. The tracked diagnostic contains format metadata and authored glue.
+Provenance/privacy/licensing and sensitive-content audit: 2026-11-27.
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP

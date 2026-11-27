@@ -8215,6 +8215,13 @@ state and keyword registry, with all eight keyword combinations in the Vulkan
 pass. The typed pack binds the replacement to its existing Commando prefab
 bundle member and path ID so that Material references keep their target.
 
+The bounded `shader_translate.py` host diagnostic takes a request for one
+original leaf with a single vertex/fragment UI pass. It translates both source
+DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform with
+SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
+linked envelope. It feeds source layouts through the existing
+`shader_produce.py` parameter writer and emits a typed replacement pack.
+
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
 produced Android body through the pack receipt and type table. Shader fallback
