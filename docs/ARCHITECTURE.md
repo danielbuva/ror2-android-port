@@ -1088,6 +1088,12 @@ before graph preparation. The release graph exposes these type tables and the
 object producer's existing final `layout.json` as cached artifacts. Readers close
 on exit; receipts and metadata persist with their packs. Current whole-content
 preparation and phone qualification remain open.
+`recipe/owner-whole-game-original-animation-clips.json` supplies `death_fly`
+and `AcoHang_HeadRise` at their whole-game member PathIDs. Source and native type
+hashes pin the original clips, and the record owner preserves both bodies. The
+`bundle_preload.py` owner generates the AssetBundle container and preload pointers
+from the requested groups. The exact-editor fixture typed-loads both clips
+through a scoped container. Complete-catalog assembly remains open.
 `recipe/owner-whole-game-source-records.json` selects original managed/native
 records through this owner; all 198 are host raw-exact. Setup takes pinned
 original/SDK inputs and a fresh pack; persisted receipts remain after exit.
