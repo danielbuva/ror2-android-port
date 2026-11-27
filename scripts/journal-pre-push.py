@@ -27,7 +27,7 @@ def git(root, *args, **kwargs):
     return subprocess.run(["git", *args], cwd=root, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs).stdout
 
 
-def repair(root, ref, tip, destination):
+def repair(root, ref, tip, destination, *, prepare=False):
     try:
         head_ref = git(root, "symbolic-ref", "-q", "HEAD").decode().strip()
         main = git(root, "rev-parse", "--verify", "origin/main^{commit}").decode().strip()
@@ -93,7 +93,10 @@ def repair(root, ref, tip, destination):
         raise
     for line, old, new in changes:
         print(f"pre-push: journal line {line}: {old} -> {new} (body references unchanged)", file=sys.stderr)
-    print("pre-push: repaired the journal in a new local commit. Run git push again to include it.", file=sys.stderr)
+    print("Journal repaired in a new local commit.", file=sys.stderr)
+    if prepare:
+        return 0
+    print("pre-push: Run git push again to include the repair.", file=sys.stderr)
     return 3
 
 
@@ -101,9 +104,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for key in ("ref", "tip", "destination"):
         parser.add_argument(key)
+    parser.add_argument("--prepare", action="store_true", help="repair before starting a push")
     args = parser.parse_args()
     try:
-        return repair(ROOT, args.ref, args.tip, args.destination)
+        return repair(ROOT, args.ref, args.tip, args.destination, prepare=args.prepare)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         detail = error.stderr.decode(errors="replace").strip() if isinstance(error, subprocess.CalledProcessError) else str(error)
         print(f"pre-push: journal repair refused: {detail}", file=sys.stderr)
