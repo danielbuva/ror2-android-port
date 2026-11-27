@@ -65,6 +65,9 @@ def build(sources, ndk, bison, output, jobs):
             with tarfile.open(archive_path) as archive:
                 archive.extractall(scratch, filter="data")
         vkd3d, spirv, headers, vulkan = (scratch / top for top, _ in SOURCES.values())
+        patch = material / "vkd3d-structured-srv.patch"
+        copy2(root / patch.name, patch)
+        run("vkd3d-patch", ["patch", "-f", "-F", "0", "-p1", "-i", patch], cwd=vkd3d)
 
         env = dict(
             os.environ,
@@ -109,7 +112,7 @@ def build(sources, ndk, bison, output, jobs):
             "Relink shader-dxbc with the API 24 ARM64 clang++ from Android NDK 21.3.6528147.\n"
             "Run in this directory, replacing the vkd3d archives with modified versions if desired:\n\n"
             + shlex.join([cxx.name, *link_flags, "-o", translator.name])
-            + "\n\nExact upstream source and dependency archives are in ../public-sources.\n"
+            + "\n\nExact upstream source, the vkd3d patch and dependency archives are in ../public-sources.\n"
         )
 
         cmake_output = scratch / "spirv-build"

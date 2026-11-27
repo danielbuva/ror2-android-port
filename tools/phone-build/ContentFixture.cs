@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -10,7 +11,7 @@ using UnityEngine.Rendering;
 public sealed class ContentFixture : MonoBehaviour
 {
     public string shaderAddress;
-    public bool computeHistogram;
+    public string[] computeAddresses;
 
     [Serializable] sealed class HistogramReport
     {
@@ -21,6 +22,8 @@ public sealed class ContentFixture : MonoBehaviour
         public int nonZeroAfterClear;
         public int nonZeroAfterGather;
         public uint lastBin;
+        public uint clampedSampleCount;
+        public uint blendedSampleCount;
         public bool passed;
         public string failure;
     }
@@ -34,6 +37,70 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32[] outlineSamples;
         public bool passed;
         public string failure;
+    }
+
+    [Serializable] sealed class AutoExposureReport
+    {
+        public string graphics;
+        public float fixedExposure;
+        public float risingExposure;
+        public float fallingExposure;
+        public bool passed;
+        public string failure;
+    }
+
+    [Serializable] sealed class DownsampleReport
+    {
+        public string graphics;
+        public int regularComponents;
+        public int msaaComponents;
+        public bool passed;
+        public string failure;
+    }
+
+    [Serializable] sealed class ScopeReport
+    {
+        public string shader;
+        public int nonZeroAfterClear;
+        public int nonZeroAfterGather;
+        public int mismatchedAfterGather;
+        public string failure;
+
+        public bool Passed => failure == null && nonZeroAfterClear == 0 && mismatchedAfterGather == 0;
+    }
+
+    [Serializable] sealed class ScopesReport
+    {
+        public string graphics;
+        public ScopeReport waveform;
+        public ScopeReport vectorscope;
+        public bool passed;
+        public string failure;
+    }
+
+    [Serializable] sealed class VolumeKernelReport
+    {
+        public string kernel;
+        public int components;
+        public int mismatches;
+        public string failure;
+
+        public bool Passed => failure == null && mismatches == 0;
+    }
+
+    [Serializable] sealed class VolumeReport
+    {
+        public string graphics;
+        public VolumeKernelReport[] original;
+        public VolumeKernelReport[] sdk;
+        public bool passed;
+        public string failure;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct WaveformBin
+    {
+        public uint red, green, blue, alpha;
     }
 
     [Serializable] public sealed class Report
@@ -86,7 +153,7 @@ public sealed class ContentFixture : MonoBehaviour
 
     IEnumerator Start()
     {
-        if (!String.IsNullOrEmpty(shaderAddress))
+        if (!String.IsNullOrEmpty(shaderAddress) || computeAddresses?.Length > 0)
         {
             yield return CheckShader();
             yield break;
@@ -162,14 +229,54 @@ public sealed class ContentFixture : MonoBehaviour
     void CheckShaderBundle(AssetBundle bundle, string loadError)
     {
         string graphics = SystemInfo.graphicsDeviceType.ToString();
-        if (computeHistogram)
+        if (computeAddresses?.Length == 2)
+        {
+            var scopes = new ScopesReport { graphics = graphics };
+            try
+            {
+                var first = LoadComputeShader(bundle, computeAddresses[0], loadError);
+                var second = LoadComputeShader(bundle, computeAddresses[1], loadError);
+                if (first.name == "Texture3DLerp" && second.name == first.name)
+                {
+                    CheckVolumePair(first, second, graphics);
+                    return;
+                }
+                foreach (var shader in new[] { first, second })
+                {
+                    switch (shader.name)
+                    {
+                        case "Waveform" when scopes.waveform == null:
+                            scopes.waveform = CheckScope(shader, true);
+                            break;
+                        case "Vectorscope" when scopes.vectorscope == null:
+                            scopes.vectorscope = CheckScope(shader, false);
+                            break;
+                        default:
+                            throw new Exception("Unexpected scope shader: " + shader.name);
+                    }
+                }
+                scopes.passed = graphics == "Vulkan" && scopes.waveform.Passed && scopes.vectorscope.Passed;
+            }
+            catch (Exception error) { scopes.failure = error.Message; }
+            Debug.Log("PHONE_SHADER_COMPUTE " + JsonUtility.ToJson(scopes));
+            return;
+        }
+        if (computeAddresses?.Length == 1)
         {
             var histogram = new HistogramReport { graphics = graphics };
             try
             {
-                if (bundle == null) throw new Exception(loadError ?? "ComputeShader bundle did not load");
-                var shader = bundle.LoadAsset<ComputeShader>(shaderAddress);
-                if (shader == null || !SystemInfo.supportsComputeShaders) throw new Exception("ComputeShader is unavailable or unsupported");
+                var shader = LoadComputeShader(bundle, computeAddresses[0], loadError);
+                if (shader.name == "AutoExposure")
+                {
+                    CheckAutoExposure(shader, graphics);
+                    return;
+                }
+                if (shader.name == "MultiScaleVODownsample2")
+                {
+                    CheckDownsample2(shader, graphics);
+                    return;
+                }
                 histogram.shader = shader.name;
                 DispatchHistogram(shader, histogram);
             }
@@ -192,6 +299,15 @@ public sealed class ContentFixture : MonoBehaviour
         Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(report));
     }
 
+    static ComputeShader LoadComputeShader(AssetBundle bundle, string address, string loadError)
+    {
+        if (bundle == null) throw new Exception(loadError ?? "ComputeShader bundle did not load");
+        var shader = bundle.LoadAsset<ComputeShader>(address);
+        if (shader == null || !SystemInfo.supportsComputeShaders)
+            throw new Exception("ComputeShader is unavailable or unsupported: " + address);
+        return shader;
+    }
+
     static uint[] KernelThreads(ComputeShader shader, int kernel)
     {
         shader.GetKernelThreadGroupSizes(kernel, out uint x, out uint y, out uint z);
@@ -205,45 +321,242 @@ public sealed class ContentFixture : MonoBehaviour
         return count;
     }
 
-    static void DispatchHistogram(ComputeShader shader, HistogramReport report)
+    static void CheckAutoExposure(ComputeShader shader, string graphics)
     {
-        const int width = 16;
-        const int binCount = 256;
-        int clear = shader.FindKernel("KHistogramClear");
-        int gather = shader.FindKernel("KHistogramGather");
-        report.clearThreads = KernelThreads(shader, clear);
-        report.gatherThreads = KernelThreads(shader, gather);
-        if (report.clearThreads[0] != 16 || report.clearThreads[1] != 1 || report.clearThreads[2] != 1 ||
-            report.gatherThreads[0] != width || report.gatherThreads[1] != width || report.gatherThreads[2] != 1)
-            throw new Exception("Unexpected histogram kernel thread group sizes");
-
-        var source = new Texture2D(width, width, TextureFormat.RGBA32, false, true);
+        var report = new AutoExposureReport { graphics = graphics };
+        Texture2D previous = null;
+        RenderTexture destination = null;
         try
         {
-            var red = new Color32[width * width];
+            previous = new Texture2D(1, 1, TextureFormat.RFloat, false, true);
+            destination = new RenderTexture(1, 1, 0, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear) {
+                enableRandomWrite = true
+            };
+            if (!destination.Create()) throw new Exception("RFloat exposure target allocation failed");
+            var bins = new uint[128];
+            bins[32] = 4;
+            bins[64] = 8;
+            bins[96] = 4;
+            using (var histogram = new ComputeBuffer(bins.Length, sizeof(uint)))
+            {
+                histogram.SetData(bins);
+                shader.SetVector("_Params1", new Vector4(0.125f, 0.875f, 0.125f, 8f));
+                shader.SetVector("_Params2", new Vector4(1f, 2f, 1.625f, 1f));
+                shader.SetVector("_ScaleOffsetRes", new Vector4(0.25f, 0.5f, 0f, 0f));
+                int fixedKernel = shader.FindKernel("KAutoExposureAvgLuminance_fixed");
+                int progressive = shader.FindKernel("KAutoExposureAvgLuminance_progressive");
+                foreach (int kernel in new[] { fixedKernel, progressive })
+                {
+                    var threads = KernelThreads(shader, kernel);
+                    if (threads[0] != 16 || threads[1] != 8 || threads[2] != 1)
+                        throw new Exception("Unexpected exposure workgroup dimensions");
+                    shader.SetBuffer(kernel, "_HistogramBuffer", histogram);
+                    shader.SetTexture(kernel, "_Destination", destination);
+                }
+
+                report.fixedExposure = DispatchExposure(shader, fixedKernel, destination);
+                previous.SetPixelData(new[] { 0.25f }, 0);
+                previous.Apply();
+                shader.SetTexture(progressive, "_Source", previous);
+                report.risingExposure = DispatchExposure(shader, progressive, destination);
+                previous.SetPixelData(new[] { 2f }, 0);
+                previous.Apply();
+                report.fallingExposure = DispatchExposure(shader, progressive, destination);
+            }
+            // The 12.5% and 87.5% cut points leave counts 2, 8 and 2.
+            // The luminances 0.5, 1 and 2 give a weighted mean of 13/12.
+            // Compensation 13/8 gives 1.5. The rising and falling steps cover 1/2 and 3/4 of the delta.
+            const float tolerance = 0.00001f;
+            report.passed = graphics == "Vulkan" &&
+                Mathf.Abs(report.fixedExposure - 1.5f) <= tolerance &&
+                Mathf.Abs(report.risingExposure - 0.875f) <= tolerance &&
+                Mathf.Abs(report.fallingExposure - 1.625f) <= tolerance;
+        }
+        catch (Exception error) { report.failure = error.Message; }
+        finally
+        {
+            if (destination != null) { destination.Release(); Destroy(destination); }
+            Destroy(previous);
+        }
+        Debug.Log("PHONE_SHADER_COMPUTE " + JsonUtility.ToJson(report));
+    }
+
+    static float DispatchExposure(ComputeShader shader, int kernel, RenderTexture destination)
+    {
+        shader.Dispatch(kernel, 1, 1, 1);
+        var readback = AsyncGPUReadback.Request(destination, 0);
+        readback.WaitForCompletion();
+        if (readback.hasError || readback.layerCount != 1 || readback.layerDataSize != sizeof(float))
+            throw new Exception("Unexpected RFloat exposure readback shape or status");
+        return readback.GetData<float>()[0];
+    }
+
+    const int DownsampleInputSize = 16;
+
+    static float DownsampleDepth(int x, int y, int channel)
+    {
+        float depth = (1 + x + DownsampleInputSize * y) / 512f;
+        return channel == 0 ? depth : 1f - depth;
+    }
+
+    static void CheckDownsample2(ComputeShader shader, string graphics)
+    {
+        var report = new DownsampleReport { graphics = graphics };
+        try
+        {
+            report.regularComponents = DispatchDownsample2(shader, false);
+            report.msaaComponents = DispatchDownsample2(shader, true);
+            report.passed = graphics == "Vulkan" && report.regularComponents == 160 && report.msaaComponents == 320;
+        }
+        catch (Exception error) { report.failure = error.Message; }
+        Debug.Log("PHONE_SHADER_COMPUTE " + JsonUtility.ToJson(report));
+    }
+
+    static int DispatchDownsample2(ComputeShader shader, bool msaa)
+    {
+        // Post Processing 2.3.0 passes a single-sample DS4x plane with one or two depth channels.
+        int channels = msaa ? 2 : 1;
+        string kernelName = msaa ? "MultiScaleVODownsample2_MSAA" : "MultiScaleVODownsample2";
+        int kernel = shader.FindKernel(kernelName);
+        var threads = KernelThreads(shader, kernel);
+        if (threads[0] != 8 || threads[1] != 8 || threads[2] != 1)
+            throw new Exception("Unexpected downsample workgroup dimensions: " + kernelName);
+
+        string[] names = { "DS8x", "DS8xAtlas", "DS16x", "DS16xAtlas" };
+        var outputs = new RenderTexture[names.Length];
+        var source = new Texture2D(DownsampleInputSize, DownsampleInputSize,
+            msaa ? TextureFormat.RGFloat : TextureFormat.RFloat, false, true);
+        try
+        {
+            var pixels = new float[DownsampleInputSize * DownsampleInputSize * channels];
+            for (int y = 0, i = 0; y < DownsampleInputSize; ++y)
+                for (int x = 0; x < DownsampleInputSize; ++x)
+                    for (int channel = 0; channel < channels; ++channel)
+                        pixels[i++] = DownsampleDepth(x, y, channel);
+            source.SetPixelData(pixels, 0);
+            source.Apply();
+            shader.SetTexture(kernel, "DS4x", source);
+
+            for (int i = 0; i < outputs.Length; ++i)
+            {
+                bool atlas = (i & 1) != 0;
+                int size = (i < 2 ? 8 : 4) / (atlas ? 4 : 1);
+                var format = atlas ? (msaa ? RenderTextureFormat.RGHalf : RenderTextureFormat.RHalf)
+                    : (msaa ? RenderTextureFormat.RGFloat : RenderTextureFormat.RFloat);
+                var output = new RenderTexture(new RenderTextureDescriptor(size, size, format, 0) {
+                    dimension = atlas ? TextureDimension.Tex2DArray : TextureDimension.Tex2D,
+                    volumeDepth = atlas ? 16 : 1, enableRandomWrite = true, sRGB = false
+                });
+                outputs[i] = output;
+                if (!output.Create()) throw new Exception("Downsample target allocation failed: " + names[i]);
+                shader.SetTexture(kernel, names[i], output);
+            }
+            shader.Dispatch(kernel, 1, 1, 1);
+
+            int components = 0;
+            for (int i = 0; i < outputs.Length; ++i)
+                components += CheckDownsampleOutput(outputs[i], names[i], i < 2 ? 2 : 4, channels);
+            return components;
+        }
+        finally
+        {
+            foreach (var output in outputs)
+                if (output != null) { output.Release(); Destroy(output); }
+            Destroy(source);
+        }
+    }
+
+    static int CheckDownsampleOutput(RenderTexture output, string name, int scale, int channels)
+    {
+        var readback = AsyncGPUReadback.Request(output, 0);
+        readback.WaitForCompletion();
+        bool atlas = output.dimension == TextureDimension.Tex2DArray;
+        int components = output.width * output.height * channels;
+        if (readback.hasError || readback.layerCount != output.volumeDepth ||
+            readback.layerDataSize != components * (atlas ? sizeof(ushort) : sizeof(float)))
+            throw new Exception("Unexpected downsample readback shape or status: " + name);
+
+        // Each atlas layer selects one pixel from every 4 by 4 tile of the plane.
+        for (int layer = 0; layer < readback.layerCount; ++layer)
+        {
+            var halves = atlas ? readback.GetData<ushort>(layer) : default;
+            var singles = atlas ? default : readback.GetData<float>(layer);
+            for (int y = 0, i = 0; y < output.height; ++y)
+                for (int x = 0; x < output.width; ++x)
+                    for (int channel = 0; channel < channels; ++channel, ++i)
+                    {
+                        int sourceX = scale * (atlas ? 4 * x + (layer & 3) : x);
+                        int sourceY = scale * (atlas ? 4 * y + (layer >> 2) : y);
+                        float expected = DownsampleDepth(sourceX, sourceY, channel);
+                        bool matches = atlas ? halves[i] == Mathf.FloatToHalf(expected) : singles[i] == expected;
+                        if (!matches)
+                            throw new Exception($"Downsample mismatch: {name}, layer {layer}, ({x}, {y}), channel {channel}");
+                    }
+        }
+        return components * readback.layerCount;
+    }
+
+    static void DispatchHistogram(ComputeShader shader, HistogramReport report)
+    {
+        const int threads = 16;
+        bool exposure = shader.name == "ExposureHistogram";
+        int width = exposure ? 4 : threads;
+        int binCount = exposure ? 128 : 256;
+        int clear = shader.FindKernel(exposure ? "KEyeHistogramClear" : "KHistogramClear");
+        int gather = shader.FindKernel(exposure ? "KEyeHistogram" : "KHistogramGather");
+        report.clearThreads = KernelThreads(shader, clear);
+        report.gatherThreads = KernelThreads(shader, gather);
+        if (report.clearThreads[0] != threads || report.clearThreads[1] != 1 || report.clearThreads[2] != 1 ||
+            report.gatherThreads[0] != threads || report.gatherThreads[1] != threads || report.gatherThreads[2] != 1)
+            throw new Exception("Unexpected histogram kernel thread group sizes");
+
+        var format = exposure ? TextureFormat.RGBAFloat : TextureFormat.RGBA32;
+        var source = new Texture2D(width, width, format, false, true);
+        try
+        {
+            if (exposure)
+            {
+                var pixels = new Color[width * width];
+                for (int i = 0; i < pixels.Length; ++i)
+                    pixels[i] = i % 2 == 0 ? new Color(0.25f, 0.25f, 0.25f, 1) : Color.white;
+                source.filterMode = FilterMode.Point;
+                source.SetPixelData(pixels, 0);
+            }
+            else
+            {
+                var red = new Color32[width * width];
+                for (int i = 0; i < red.Length; ++i) red[i] = new Color32(255, 0, 0, 255);
+                source.SetPixels32(red);
+            }
             var bins = new uint[binCount];
-            for (int i = 0; i < red.Length; ++i) red[i] = new Color32(255, 0, 0, 255);
             for (int i = 0; i < bins.Length; ++i) bins[i] = 1;
-            source.SetPixels32(red);
             source.Apply();
             using (var histogram = new ComputeBuffer(binCount, sizeof(uint)))
             {
                 histogram.SetData(bins);
                 shader.SetBuffer(clear, "_HistogramBuffer", histogram);
-                shader.Dispatch(clear, binCount / 16, 1, 1);
+                shader.Dispatch(clear, binCount / threads, 1, 1);
                 histogram.GetData(bins);
                 report.nonZeroAfterClear = CountNonZero(bins);
 
                 shader.SetBuffer(gather, "_HistogramBuffer", histogram);
                 shader.SetTexture(gather, "_Source", source);
-                shader.SetVector("_Params", new Vector4(width, width, 0, 0));
+                if (exposure) shader.SetVector("_ScaleOffsetRes", new Vector4(0.2f, 0.5f, width, width));
+                else shader.SetVector("_Params", new Vector4(width, width, 0, 0));
                 shader.Dispatch(gather, 1, 1, 1);
                 histogram.GetData(bins);
                 report.nonZeroAfterGather = CountNonZero(bins);
                 report.lastBin = bins[binCount - 1];
             }
-            report.passed = report.graphics == "Vulkan" && report.nonZeroAfterClear == 0 &&
-                report.nonZeroAfterGather == 1 && report.lastBin == width * width;
+            // LinearClamp reads .25 at the edge and .625 between adjacent columns.
+            report.clampedSampleCount = exposure ? bins[12] : 0;
+            report.blendedSampleCount = exposure ? bins[46] : 0;
+            // Each axis steps by two texels. The four samples at (0,0), (0,2),
+            // (2,0), (2,2) have radial weights 16, 36, 36 and 64.
+            bool gatherMatches = exposure
+                ? report.nonZeroAfterGather == 2 && report.clampedSampleCount == 52 && report.blendedSampleCount == 100
+                : report.nonZeroAfterGather == 1 && report.lastBin == width * width;
+            report.passed = report.graphics == "Vulkan" && report.nonZeroAfterClear == 0 && gatherMatches;
         }
         finally { Destroy(source); }
     }
@@ -307,6 +620,178 @@ public sealed class ContentFixture : MonoBehaviour
             Destroy(mesh);
             Destroy(pixels);
         }
+    }
+
+    const int ScopeWidth = 16;
+    const int ScopeBinCount = ScopeWidth * ScopeWidth;
+
+    static ScopeReport CheckScope(ComputeShader shader, bool waveform)
+    {
+        var report = new ScopeReport { shader = shader.name };
+        var source = new Texture2D(ScopeWidth, ScopeWidth, TextureFormat.RGBA32, false, true);
+        try
+        {
+            var red = new Color32[ScopeBinCount];
+            for (int i = 0; i < red.Length; ++i) red[i] = new Color32(128, 0, 0, 255);
+            source.SetPixels32(red);
+            source.Apply();
+            if (waveform) DispatchWaveform(shader, source, report);
+            else DispatchVectorscope(shader, source, report);
+        }
+        catch (Exception error) { report.failure = error.Message; }
+        finally { Destroy(source); }
+        return report;
+    }
+
+    static void DispatchScope(ComputeShader shader, Texture source, ComputeBuffer buffer, bool waveform, bool clear)
+    {
+        int kernel = shader.FindKernel("K" + shader.name + (clear ? "Clear" : "Gather"));
+        shader.SetVector("_Params", new Vector4(ScopeWidth, ScopeWidth, waveform ? 0 : ScopeWidth, 0));
+        shader.SetBuffer(kernel, "_" + shader.name + "Buffer", buffer);
+        if (!clear) shader.SetTexture(kernel, "_Source", source);
+        shader.Dispatch(kernel, waveform && !clear ? ScopeWidth : 1, 1, 1);
+    }
+
+    static void DispatchVectorscope(ComputeShader shader, Texture source, ScopeReport report)
+    {
+        var bins = new uint[ScopeBinCount];
+        for (int i = 0; i < bins.Length; ++i) bins[i] = 1;
+        using (var buffer = new ComputeBuffer(bins.Length, sizeof(uint)))
+        {
+            buffer.SetData(bins);
+            DispatchScope(shader, source, buffer, false, true);
+            buffer.GetData(bins);
+            report.nonZeroAfterClear = CountNonZero(bins);
+            DispatchScope(shader, source, buffer, false, false);
+            buffer.GetData(bins);
+        }
+        report.nonZeroAfterGather = CountNonZero(bins);
+        // Mid-red maps to U=6, V=12 on this 16 × 16 grid.
+        for (int i = 0; i < bins.Length; ++i)
+            if (bins[i] != (i == 12 * ScopeWidth + 6 ? ScopeBinCount : 0))
+                ++report.mismatchedAfterGather;
+    }
+
+    static void DispatchWaveform(ComputeShader shader, Texture source, ScopeReport report)
+    {
+        var bins = new WaveformBin[ScopeBinCount];
+        for (int i = 0; i < bins.Length; ++i)
+            bins[i] = new WaveformBin { red = 1, green = 1, blue = 1, alpha = 1 };
+        using (var buffer = new ComputeBuffer(bins.Length, 4 * sizeof(uint)))
+        {
+            buffer.SetData(bins);
+            DispatchScope(shader, source, buffer, true, true);
+            buffer.GetData(bins);
+            foreach (var bin in bins)
+                if ((bin.red | bin.green | bin.blue | bin.alpha) != 0) ++report.nonZeroAfterClear;
+            DispatchScope(shader, source, buffer, true, false);
+            buffer.GetData(bins);
+        }
+        for (int i = 0; i < bins.Length; ++i)
+        {
+            var bin = bins[i];
+            if ((bin.red | bin.green | bin.blue | bin.alpha) != 0) ++report.nonZeroAfterGather;
+            // Each column has 16 red samples at row 8. The kernel skips absolute bin 0.
+            int row = i % ScopeWidth;
+            int red = row == 8 ? ScopeWidth : 0;
+            int other = row == 0 && i > 0 ? ScopeWidth : 0;
+            if (bin.red != red || bin.green != other || bin.blue != other || bin.alpha != 0)
+                ++report.mismatchedAfterGather;
+        }
+    }
+
+    const int VolumeSize = 4;
+
+    static ushort[] VolumePixels(bool second)
+    {
+        var pixels = new ushort[4 * VolumeSize * VolumeSize * VolumeSize];
+        for (int z = 0, i = 0; z < VolumeSize; ++z)
+            for (int y = 0; y < VolumeSize; ++y)
+                for (int x = 0; x < VolumeSize; ++x)
+                {
+                    var value = second ? new Vector4(1 - z / 4f, 1 - x / 4f, 1 - y / 4f, 0)
+                        : new Vector4(x / 4f, y / 4f, z / 4f, 1);
+                    for (int channel = 0; channel < 4; ++channel)
+                        pixels[i++] = Mathf.FloatToHalf(value[channel]);
+                }
+        return pixels;
+    }
+
+    static void CheckVolumePair(ComputeShader first, ComputeShader second, string graphics)
+    {
+        var report = new VolumeReport { graphics = graphics };
+        Texture3D from = null, to = null;
+        try
+        {
+            var fromPixels = VolumePixels(false);
+            var toPixels = VolumePixels(true);
+            from = new Texture3D(VolumeSize, VolumeSize, VolumeSize, TextureFormat.RGBAHalf, false);
+            to = new Texture3D(VolumeSize, VolumeSize, VolumeSize, TextureFormat.RGBAHalf, false);
+            from.SetPixelData(fromPixels, 0);
+            to.SetPixelData(toPixels, 0);
+            from.Apply();
+            to.Apply();
+            var targetColor = new Vector4(1, 0.5f, 0, 0.5f);
+            VolumeKernelReport[] Compare(ComputeShader shader) => new[] {
+                DispatchVolume(shader, from, to, fromPixels, toPixels, targetColor, false),
+                DispatchVolume(shader, from, to, fromPixels, toPixels, targetColor, true)
+            };
+            report.original = Compare(first);
+            report.sdk = Compare(second);
+            report.passed = graphics == "Vulkan" && Array.TrueForAll(report.original, row => row.Passed) &&
+                Array.TrueForAll(report.sdk, row => row.Passed);
+        }
+        catch (Exception error) { report.failure = error.Message; }
+        finally
+        {
+            if (to != null) Destroy(to);
+            if (from != null) Destroy(from);
+        }
+        Debug.Log("PHONE_SHADER_COMPUTE " + JsonUtility.ToJson(report));
+    }
+
+    static VolumeKernelReport DispatchVolume(ComputeShader shader, Texture3D from, Texture3D to,
+        ushort[] fromPixels, ushort[] toPixels, Vector4 targetColor, bool toColor)
+    {
+        var report = new VolumeKernelReport { kernel = toColor ? "KTexture3DLerpToColor" : "KTexture3DLerp" };
+        var output = new RenderTexture(new RenderTextureDescriptor(VolumeSize, VolumeSize, RenderTextureFormat.ARGBHalf, 0) {
+            dimension = TextureDimension.Tex3D, volumeDepth = VolumeSize, enableRandomWrite = true, sRGB = false
+        });
+        try
+        {
+            if (!output.Create()) throw new Exception("ARGBHalf volume allocation failed");
+            int kernel = shader.FindKernel(report.kernel);
+            var threads = KernelThreads(shader, kernel);
+            if (threads[0] != VolumeSize || threads[1] != VolumeSize || threads[2] != VolumeSize)
+                throw new Exception("Unexpected volume workgroup dimensions");
+            shader.SetVector("_DimensionsAndLerp", new Vector4(VolumeSize, VolumeSize, VolumeSize, 0.5f));
+            shader.SetTexture(kernel, "_From", from);
+            shader.SetTexture(kernel, "_Output", output);
+            if (toColor) shader.SetVector("_TargetColor", targetColor);
+            else shader.SetTexture(kernel, "_To", to);
+            shader.Dispatch(kernel, 1, 1, 1);
+
+            var readback = AsyncGPUReadback.Request(output, 0);
+            readback.WaitForCompletion();
+            if (readback.hasError || readback.layerCount * readback.layerDataSize != fromPixels.Length * sizeof(ushort))
+                throw new Exception("Unexpected ARGBHalf readback shape or status");
+            for (int layer = 0; layer < readback.layerCount; ++layer)
+                foreach (ushort actual in readback.GetData<ushort>(layer))
+                {
+                    int i = report.components++;
+                    float right = toColor ? targetColor[i % 4] : Mathf.HalfToFloat(toPixels[i]);
+                    ushort expected = Mathf.FloatToHalf((Mathf.HalfToFloat(fromPixels[i]) + right) * 0.5f);
+                    if (actual != expected) ++report.mismatches;
+                }
+            if (report.components != fromPixels.Length) throw new Exception("Incomplete ARGBHalf readback");
+        }
+        catch (Exception error) { report.failure = error.Message; }
+        finally
+        {
+            output.Release();
+            Destroy(output);
+        }
+        return report;
     }
 
     static void DrawAnimateAlpha(Shader shader, ShaderDrawReport report)
