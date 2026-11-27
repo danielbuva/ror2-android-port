@@ -1469,6 +1469,12 @@ supply 75 original BC6H Cubemaps for staged scene probes. The texture pack
 retains each complete chain and exposes its typed body and stream for bundle
 assembly. The scene owner binds original probe pointers to the emitted
 records and qualifies in-game rendering.
+`texture_catalog.py` owns the host coverage fixture for original Texture2D and
+Cubemap identities. It joins the current PC census to receipt-pinned texture
+packs and writes the record graph and coverage ledger. The native bundle
+emitter materializes the graph for exact-editor typed load and unload. The
+fixture's addresses and PathIDs are local to that bundle. The canonical graph
+owner supplies the gameplay endpoints.
 Complete original-lighting alternatives for Promo and Snowy Forest use
 `owner-<stage>-source-lighting-objects.json` and the corresponding texture,
 shader and (Promo only) Timeline recipes. The existing object owner emits
