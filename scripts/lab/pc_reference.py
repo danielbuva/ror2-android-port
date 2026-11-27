@@ -243,7 +243,6 @@ def run_plan(args, clone, identity, command, plan, scenarios):
                         "winhttp=n,b",
                         "--workdir",
                         clone,
-                        "--cx-app",
                         clone / GAME_EXE,
                         "-force-d3d11",
                         "-screen-fullscreen",
