@@ -320,8 +320,9 @@ registers ordered, typed roots already present in a pinned Android bundle.
 It derives the new preload intervals from their local PPtrs and preserves the
 old rows, dependency metadata, object bodies and resource members. Catalog
 production still checks each advertised address against the resulting bundle.
-The request can also supply pinned producer packs for absent Material and
-Texture2D IDs. They must match existing native types. The repacker checks
+The request can also supply pinned producer packs for absent Material,
+Texture2D and Sprite IDs. They must match existing native types. A Sprite
+must resolve its render texture to a local Texture2D. The repacker checks
 texture references and the Shader's pinned external member, extends the
 existing resource stream, and reopens the output to check the new bodies
 and extents before writing a receipt. Temporary repack files are removed

@@ -197,7 +197,52 @@ class BundlePreloadTests(unittest.TestCase):
             ),
         )
 
-    def canonical_fixture(self, root, broken=None):
+    def test_expose_local_assets_appends_sprite_with_local_texture(self):
+        M, W, C = P.module("bundle_manifest"), P.module("unity_write"), P.module("catalog_complete")
+
+        def native(class_id, nodes):
+            tree = M.S._tree([dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1) for kind, name, size, level in nodes])
+            return dict(class_id=class_id, stripped=0, script_type=-1, hash=b"s" * 16, tree=tree, dependencies=[])
+
+        sprite = native(
+            213,
+            [
+                ("Sprite", "Base", -1, 0),
+                ("SpriteRenderData", "m_RD", -1, 1),
+                ("PPtr<Texture2D>", "texture", 12, 2),
+                ("int", "m_FileID", 4, 3),
+                ("SInt64", "m_PathID", 8, 3),
+            ],
+        )
+        texture = native(28, [("Texture2D", "Base", -1, 0), ("int", "fixture", 4, 1)])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            records = [(60, texture, bytes(4)), (70, sprite, struct.pack("<iq", 0, 60))]
+            inputs, _ = self.canonical_fixture(root, extra_records=records)
+            name, member = inputs["required"]["name"], inputs["required"]["member"]
+            groups = [dict(guid="34" * 16, path="Assets/Icon.png", roots=[dict(path_id=60, class_id=28), dict(path_id=71, class_id=213)])]
+            pack = dict(types=[P.O.json_layout(sprite)], **{"index.jsonl": root / "append.jsonl", "objects.bin": root / "append.bin"})
+
+            def append(texture_id, destination):
+                body = struct.pack("<iq", 0, texture_id)
+                row = dict(bundle=name, member=member, path_id=71, type_id=0, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+                pack["objects.bin"].write_bytes(body)
+                pack["index.jsonl"].write_text(json.dumps(row) + "\n")
+                return P.expose_local_assets(inputs["source"], root / destination, name, member, groups, codec=None, codec_sha256=None, packs=[pack])
+
+            result = append(60, "extended")
+            self.assertEqual((result["local_objects"], result["added_objects"]), (2, 1))
+            bundle = W.B.Bundle(Path(result["bundle"]))
+            with bundle.member(member) as stream:
+                layout = W.read_serialized(stream)
+                container = next(row for row in layout["objects"] if layout["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(layout["data_offset"] + container["offset"])
+                rows, _ = C.containers(W.B.exact(stream, container["bytes"]))
+                self.assertEqual([row for row in rows if row[0] == "assets/icon.png"], [("assets/icon.png", (0, pid), [(0, 60), (0, 71)]) for pid in (60, 71)])
+            with self.assertRaisesRegex(ValueError, "Sprite names an unqualified Texture2D"):
+                append(70, "invalid")
+
+    def canonical_fixture(self, root, broken=None, *, extra_records=()):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 
         def typ(cid, field):
@@ -224,6 +269,9 @@ class BundlePreloadTests(unittest.TestCase):
         bodies, native_types = {}, {}
         for pid, target, native in [(10, 20, go), (20, 10, component), (30, 10, consumer), (40, 50, go), (50, 40, component)]:
             bodies[pid] = struct.pack("<iqi", 0, 40 if broken == "duplicate" and pid == 20 else target, 73)
+            native_types[pid] = native
+        for pid, native, body in extra_records:
+            bodies[pid] = body
             native_types[pid] = native
         cbodies = {
             pid: struct.pack("<iqi", 0, 101 if broken == "canonical" and pid == 200 else target, 73)

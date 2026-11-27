@@ -2043,8 +2043,8 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
                 type_id = type_ids[full_type_key(typ)]
                 typ = layout["types"][type_id]
                 body = O.record_extent(pack["objects.bin"], row)
-                if typ["class_id"] not in (21, 28):
-                    raise ValueError("Appended assets require a native Material or Texture2D")
+                if typ["class_id"] not in (21, 28, 213):
+                    raise ValueError("Appended assets require a native Material, Texture2D or Sprite")
                 if "resource" in row:
                     resource = row["resource"]
                     resource_end = (resource_end + 7) & ~7
@@ -2100,6 +2100,10 @@ def expose_local_assets(source, output, name, member, groups, *, codec, codec_sh
                 raise ValueError(f"Local asset dependency is absent or names the bundle container: {pid}")
             body, typ = read(pid)
             fields = pointers(body, typ, schemas)
+            if pid in replacements and typ["class_id"] == 213:
+                file_id, texture = fields.get(("m_RD", "texture"), (0, 0))
+                if file_id or texture not in objects or layout["types"][objects[texture]["type_id"]]["class_id"] != 28:
+                    raise ValueError(f"Appended Sprite names an unqualified Texture2D: {pid}")
             for field, (file_id, other) in fields.items():
                 if (
                     file_id
