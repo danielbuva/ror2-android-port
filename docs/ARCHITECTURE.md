@@ -8063,6 +8063,14 @@ relocating schema-checked Shader/texture relationships. Its four persisted
 records are host raw-exact; shared Shader and complete bundle/device gates
 remain separate. It owns no runtime state or teardown.
 
+`recipe/owner-whole-game-void-fbx-material-records.json` supplies eight
+original Materials to the Void Stage and Scrap Void FBX cohort through
+`record_produce.py`. The record pack retains the native class-21 schema
+and source fields. During preparation, `bundle_preload.py` resolves
+original member references to Shader and texture providers. The isolated
+fixture checks the typed bindings and unloads the Material bundle and its
+dependencies after the check.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
