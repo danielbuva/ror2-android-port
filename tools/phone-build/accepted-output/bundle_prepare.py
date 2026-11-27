@@ -13,6 +13,19 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
+def identical_inline_mesh(owner, first, second, schemas):
+    """Check source duplicates without borrowing either member's other data."""
+    body, typ, _ = first
+    other_body, other_type, _ = second
+    if typ["class_id"] != 43 or typ != other_type or body != other_body:
+        return False
+    if any(pointer[1] for _, _, pointer in owner.pointer_fields(body, typ, schemas)):
+        return False
+    _, spans = owner.A.fields(body, schemas[typ["tree"]])
+    start, end = spans.get(("m_StreamData",), (0, 0))
+    return body[start:end] == bytes(16)
+
+
 def record_descriptor(owner, types, target, body, typ, **extra):
     full = owner.full_type_key(typ)
     types[full] = owner.O.json_layout(typ)
@@ -600,6 +613,17 @@ def prepare(owner, inputs, output):
             candidates = external_sources.get((target_member, pid), ()) if fid else sources.get((source[0], target_member, pid), ())
             if checked_destination in candidates:
                 return checked_destination
+            if not candidates and owner_field[1] == ("m_Mesh",):
+                bound_source = bindings.get(checked_destination, {}).get("source")
+                original_files = source_files_by_member.get(target_member, ()) if fid else (source[0],)
+                if bound_source is not None and len(original_files) == 1:
+                    unbound_source = (next(iter(original_files)), target_member, pid)
+                    try:
+                        unbound = original(unbound_source)
+                    except KeyError:
+                        unbound = None
+                    if unbound is not None and identical_inline_mesh(owner, unbound, original(bound_source), parsed):
+                        return checked_destination
             if len(candidates) != 1:
                 raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer, owner_field)))
             return next(iter(candidates))
