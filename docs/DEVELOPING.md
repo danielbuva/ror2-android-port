@@ -9,12 +9,16 @@ Current independent prepared builds use [build lanes](build-lanes.md):
 `./dev lane --action create --name NAME`, then `LAB_LANE=NAME ./dev …`.
 
 Shared device runs use the current `./dev device-session --request <JSON>`
-entry point. Validate with `--dry-run`, then use `--detach` after the dispatcher
-grants the device. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
+entry point. Validate with `--device SERIAL --queue --dry-run`, then submit
+with `--device SERIAL --queue --detach`. The detached job takes its turn in
+the device FIFO and prints the absolute terminal receipt path. Existing grants
+continue to work with `--device SERIAL --detach`. See
+[the lifecycle owner](ARCHITECTURE.md) for cleanup and
 evidence rules. Required request fields are `canonical_root`, `output` (under
-its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
-`adopted_install: true` and `duration_seconds`. Optional fields are
-`cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
+its `work/`), `workstream`, `package`, `apk`, `apk_sha256` and
+`duration_seconds`. `--device` can supply the serial in place of the request's
+`serial`. Optional fields are `adopted_install: true`, `cooldown_seconds`
+(default 3600), `mode` (`launch`, lab-only `sustained` or
 `settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
 the runner), `input_schedule` (launch-mode list of `{ "at_seconds": 5,

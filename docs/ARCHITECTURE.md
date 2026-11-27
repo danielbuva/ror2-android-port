@@ -3566,11 +3566,20 @@ package; no parser or third-party implementation is vendored into the lab/player
 
 `scripts/lab/device_session.py` owns the current shared device lifecycle via
 `./dev device-session --request <private JSON> --device SERIAL --dry-run` and
-`--detach`. Use the serial from the workstream's queue grant for both commands.
+`--detach`. Add `--queue` to both commands to submit directly to the device
+FIFO. Without it, use the serial from the workstream's dispatcher grant.
 Portable requests can omit `serial` and `adopted_install`. Existing requests
 can embed `serial` and assert adopted-only placement with `adopted_install: true`.
-The dispatcher grants a device. The child takes the canonical atomic lease
-before ADB and sources the pinned environment. If discovery fails before the
+`scripts/lab/device_queue.py` owns ordering for detached jobs and legacy
+workstream rows in the canonical `devqueue/<serial>.queue`. It serializes
+head transitions per device and advances a cursor so shell appends remain
+intact. The local dispatcher calls
+`python3 scripts/lab/device_queue.py --dispatch ORCHESTRATOR_DIR` in place of
+its queue loop and uses the emitted serial/workstream pairs to notify legacy
+grantees. This activation enables detached jobs to claim their own turn.
+Legacy reservations block later jobs until taken and released or expired.
+The child sources the pinned environment and takes the canonical atomic lease
+before ADB. If discovery fails before the
 device context opens, the runner releases its lease and writes a failed receipt.
 Once a device context opens,
 the runner requires verified idle cleanup before releasing the lease.
