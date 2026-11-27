@@ -337,17 +337,20 @@ public class Harness {
             OwnerUpdateState fresh=new OwnerUpdateState();fresh.observe(phase,"journey");
             boolean active=phase.equals("VALIDATING")||phase.equals("IMPORTING")||phase.equals("BUILDING")||phase.equals("PAUSED");
             boolean consent=phase.equals("AWAITING_CONFIRMATION"),recovery=phase.equals("RECOVERY_REQUIRED");
-            OwnerUpdateState.Screen screen=fresh.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true);
+            OwnerUpdateState.Screen screen=fresh.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true,active);
             check(screen.install==phase.equals("READY"));check(screen.recover==recovery);
             check(screen.retry==phase.equals("ERROR"));check(screen.build==phase.equals("IMPORTED"));
             if(phase.equals("ERROR"))check(!screen.resume);
             if(consent||recovery)check(!screen.resume&&!screen.cancel&&!screen.build&&!screen.install);
             OwnerUpdateState recreated=new OwnerUpdateState();recreated.observe(phase,"journey");
-            check(recreated.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true).text.equals(screen.text));
+            check(recreated.screen(active,consent,recovery,true,phase.equals("IMPORTED")?"IMPORTED":"",false,true,active).text.equals(screen.text));
         }
-        retryModel.observe("ERROR","import failed");check(!retryModel.screen(false,false,false,true,"ERROR",false,true).build);
-        check(!retryModel.screen(false,false,true,true,"IMPORTED",true,true).resume);
-        retryModel.observe("INTERRUPTED","stopped");check(retryModel.screen(false,false,false,true,"",false,true).text.contains("may continue to Android installation"));
+        retryModel.observe("ERROR","import failed");check(!retryModel.screen(false,false,false,true,"ERROR",false,true,false).build);
+        check(!retryModel.screen(false,false,true,true,"IMPORTED",true,true,false).resume);
+        retryModel.observe("INTERRUPTED","stopped");check(retryModel.screen(false,false,false,true,"",false,true,false).text.contains("may continue to Android installation"));
+        retryModel.observe("INSTALLING","Android handoff");
+        OwnerUpdateState.Screen handoff=retryModel.screen(true,false,false,true,"",false,true,false);
+        check(!handoff.pause&&!handoff.resume&&!handoff.cancel&&!handoff.install);
         check(!OwnerUpdateState.resumableAction("install"));check(OwnerUpdateState.resumableAction("release-build"));
         check(OwnerUpdateState.backgroundDetail(true,true,"running",false,false,"").contains("foreground service"));
         check(OwnerUpdateState.backgroundDetail(true,true,"paused",true,false,"").contains("Paused by you"));
