@@ -4032,7 +4032,7 @@ separately qualified source-produced packs.
 | `owner-ancientloft-source-lab-postprocess-shaders.json` | `eda9e4b0c2dccfdb6b0a15c6299deb4ec6c01a8f551d8f5b97254083ceaa7ec7` |
 | `owner-habitat-source-objects.json` | `dce1bd3a7e624c3e320f86ad3f29f3dddfd20f7954ef514909bd6aa77b6f2316` |
 | `owner-habitat-source-lab-postprocess-shaders.json` | `ef701e0931128d559ff0e6621d44ab56d5ca3d8def2b1ca22375dc8eff7f60df` |
-| `owner-blackbeach-source-objects.json` | `20ce8f218ca27c732f2d486791c623031f0af7234bdd5b15b93ac11077964232` |
+| `owner-blackbeach-source-objects.json` | `605591d734defbf8ed33ba6d1a661de83d03ce8109aeccfccb7121aa396c6db9` |
 | `owner-blackbeach-source-lab-standard-shaders.json` | `ad46d5531f503361f8e9db24c2019d7979281ca22deb8052abb9d109190e06bb` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these
@@ -4189,7 +4189,7 @@ production and runtime qualification remain open.
 
 | Profile | SHA-256 |
 | --- | --- |
-| `owner-golemplains-source-objects.json` | `3bc05216bfa7e6f5e0f364e7d422b1b710354af7e70fe3b5e9fbd0693a683232` |
+| `owner-golemplains-source-objects.json` | `035e62f905020c8d94764c66409fda12bffded3c1f29da02a273ba38913c2b3f` |
 | `owner-golemplains-source-lab-standard-shaders.json` | `96e031413ee2d338eb00e56302249674ae029d663daa2a42045f09e7ed6ce99d` |
 | `owner-golemplains-source-lab-postprocess-shaders.json` | `fc9a9db1781e05cdb2de065893e5e742cafa248178ee81db6362d9b7c56e7485` |
 
@@ -4495,7 +4495,7 @@ is separate from phone production, installation and runtime.
 
 | Profile | SHA-256 |
 | --- | --- |
-| `owner-goolake-source-objects.json` | `6193e1a8f15a8cac28be940941f7973b9cb25099261b3805d3c735862d868609` |
+| `owner-goolake-source-objects.json` | `2defbc5b4c00740f57dd41c60423c024ed0991c8f5cd6cf5d1b7873bfba46dfa` |
 | `owner-goolake-source-lab-shader-remap.json` | `02fdd8eda8b9b3e1b20e7398c15aaf46d165852b1e7e8884430b2561d7c708a9` |
 
 ## Voidraid complete scene selections (2026-10-27)
@@ -7507,3 +7507,21 @@ inputs. Generated bodies, type tables and evidence stay under ignored `work/`.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-goolake-shrine-script-bindings.json` | `a80f281cc3383dc24e113086657345ad77c466a380854ffd77d29884c8e76e4b` |
+
+## Staged scene occlusion
+
+The Plains, Roost and Goolake source object recipes preserve the original
+OcclusionCullingSettings renderer slots and their null entries. Checked PPtr
+remaps bind each occupied slot to its corresponding staged local MeshRenderer.
+The original scene GUID, data pointer alias and portal table are retained.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-goolake-occlusion-record.json` | `03aaaa541245bc93ad33e61329a21f407451edfe2c2fb3f0bb37cf26cfde52dd` |
+
+The Goolake record profile selects the current original native class 363 and
+its existing whole-game destination. A 2026-11-27 provenance, privacy, license
+and sensitive-content review found only the necessary asset selectors, native
+identity, output extent and hash pins. The producer reads the visibility data
+from the owner’s PC installation. The recipe contains no bake data, type tree,
+program bytes, private paths or identifiers.
