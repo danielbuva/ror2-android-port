@@ -214,6 +214,18 @@ def native_executable(payload, gpu_type, reflect, keywords=()):
     return head + payload + bytes(-len(payload) % 4) + words(mask, len(channels)) + b"".join(words(*row) for row in channels)
 
 
+def linked_vulkan_program(vertex, fragment, *, alpha_clip):
+    """Pack the measured Unity 2021.3 linked envelope around two SMOL-V stages."""
+    if any(len(stage) < 24 or stage[:4] != b"LOMS" for stage in (vertex, fragment)):
+        raise ValueError("linked Vulkan stages must be SMOL-V")
+    fragment_offset = 176
+    vertex_offset = fragment_offset + len(fragment)
+    header = words(0x02000020 | int(alpha_clip), vertex_offset, len(vertex), fragment_offset, len(fragment))
+    # The measured control uses a stage-specific 16-byte pair after word 19.
+    # Leave the fields empty for the independent player qualification.
+    return header + bytes(56) + words(1) + bytes(96) + fragment + vertex
+
+
 def segment(records):
     cursor = 4 + 12 * len(records)
     table = []
@@ -763,6 +775,35 @@ def native_state(source_state, gpu_program_id, ui):
     return state
 
 
+UI_ALPHA_KEYWORDS = frozenset(("DOUBLESAMPLE", "UNITY_UI_CLIP_RECT", "UNITY_UI_ALPHACLIP"))
+
+
+def ui_original_source(form, context, emitter, tags):
+    (sub,) = form["m_SubShaders"]
+    (shader_pass,) = sub["m_Passes"]
+    axes = form["m_KeywordNames"][4:]
+    if len(axes) != len(UI_ALPHA_KEYWORDS) or set(axes) != UI_ALPHA_KEYWORDS:
+        raise ValueError("native UI original keyword axes differ")
+    pairs = []
+    for enabled in itertools.product((False, True), repeat=len(axes)):
+        switches = list(zip(axes, enabled, strict=True))
+        keywords = {name for name, active in switches if active}
+        condition = " && ".join(("" if active else "!") + f"defined({name})" for name, active in switches)
+        vertex, fragment = emitter.pair(context, 0, keywords)
+        pairs.append((condition, vertex, fragment))
+    directives = "".join(f"#pragma multi_compile __ {name}\n" for name in axes)
+    state = shader_pass["m_State"]
+    return (
+        f"Shader {json.dumps(form['m_Name'])} {{\nSubShader {{\n"
+        + tags(sub["m_Tags"]["tags"])
+        + f"LOD {sub['m_LOD']}\nPass {{\n"
+        + f"Name {json.dumps(state['m_Name'])}\n"
+        + tags(state["m_Tags"]["tags"])
+        + emitter.block(context, pairs, directives)
+        + "}\n}\n}\n"
+    )
+
+
 def native_ui_sources(root, pc, selected, tool, output):
     """Recover the bounded original UI cohort without retained analysis inputs."""
     import UnityPy
@@ -786,6 +827,10 @@ def native_ui_sources(root, pc, selected, tool, output):
     raw, records, programs = read_segments(tree, bytes(tree["compressedBlob"]))
     context = tree, raw, records, programs, {}
     form = tree["m_ParsedForm"]
+    emitter = NativePrograms(output, {"programs": []}, tool, allow_independent=False)
+    if selected.get("original_shader"):
+        return tree, {"NativeUIOriginal": ui_original_source(form, context, emitter, shader_materials.tags)}
+
     features = set(form["m_KeywordNames"]) - shader_materials.ENGINE - {"UNITY_UI_CLIP_RECT", "UNITY_UI_ALPHACLIP"}
     keys = []
     for source in selected["materials"]:
@@ -793,8 +838,6 @@ def native_ui_sources(root, pc, selected, tool, output):
         if material["m_Shader"]["m_PathID"] != selected["source"]["path_id"]:
             raise ValueError("native UI material shader identity differs")
         keys.append(tuple(sorted(set(material["m_ValidKeywords"]) & features)))
-    result = {"programs": []}
-    emitter = NativePrograms(output, result, tool, allow_independent=False)
     sources = {
         "AndroidNativeFamily6Variant" + str(index): shader_materials.ui_source(context, values, "AndroidNativeFamily6Variant" + str(index), emitter)
         for index, values in enumerate(sorted(set(keys)))
@@ -1469,13 +1512,14 @@ def camera_shader_tree(connection, filename, original, node, settings, image, co
 
 def typed_shader_pack(root, sdk, profile, output, connection, compress, image, common, native_type, node, package_bodies, camera_sources):
     """Write source-compiled Shader and ComputeShader leaves for bundle preparation."""
-    import shader_sdk
-
     O = module("_typed_shader_objects", Path(__file__).with_name("object_produce.py"))
     rows, types, type_ids = [], [], {}
-    graphics = profile["authored_inputs"]["smoke/ProjectSettings/GraphicsSettings.asset"]
-    tiers = project_tiers(root, profile["settings"], graphics)
-    sdk_pin = profile["sdk"]["Resources/unity_builtin_extra"]["sha256"]
+    if any("sdk_shader" in entry for entry in profile["typed_records"]):
+        import shader_sdk
+
+        graphics = profile["authored_inputs"]["smoke/ProjectSettings/GraphicsSettings.asset"]
+        tiers = project_tiers(root, profile["settings"], graphics)
+        sdk_pin = profile["sdk"]["Resources/unity_builtin_extra"]["sha256"]
     compute = module("_shader_compute", Path(__file__).with_name("shader_compute.py")) if "camera_compute" in profile else None
     with (output / "objects.bin").open("xb") as stream:
         for record in profile["typed_records"]:
@@ -1704,7 +1748,9 @@ def produce(
             directory = output / "native-ui"
             directory.mkdir()
             tree, texts = native_ui_sources(root, pc, profile["native_ui"], d3dasm_path, directory)
-            native_sources.update({name: (tree, text, "ui-alpha", native_type) for name, text in texts.items()})
+            native_sources.update(
+                {name: (tree, text, "ui-original" if name == "NativeUIOriginal" else "ui-alpha", native_type) for name, text in texts.items()}
+            )
         if "native_materials" in profile:
             directory = output / "native-materials"
             directory.mkdir()
@@ -1803,7 +1849,30 @@ def produce(
                 original, kind, typ = None, None, native_type
                 if "native_resource" in shader:
                     original, _, kind, typ = native_sources[shader["native_resource"]]
-                tree = construct(node, text, pre, compiled_passes, compress, registry, original, kind == "ui-alpha", kind == "intersection")
+                shader_registry = registry
+                if kind == "ui-original":
+                    form = original["m_ParsedForm"]
+                    shader_registry = form["m_KeywordNames"][:4], form["m_KeywordFlags"][:4]
+                tree = construct(
+                    node,
+                    text,
+                    pre,
+                    compiled_passes,
+                    compress,
+                    shader_registry,
+                    original,
+                    kind == "ui-alpha",
+                    kind == "intersection",
+                    preserve_state=kind == "ui-original",
+                )
+                if kind == "ui-original":
+                    compiled_form = tree["m_ParsedForm"]
+                    if any(compiled_form[key] != form[key] for key in ("m_KeywordNames", "m_KeywordFlags")):
+                        raise ValueError("compiled UI keyword registry differs from original")
+                    (compiled_pass,) = compiled_passes.values()
+                    pass_keywords = {frozenset(variant["keywords"]) for variant in compiled_pass["variants"]}
+                    if len(pass_keywords) != 2 ** len(UI_ALPHA_KEYWORDS) or any(keys - UI_ALPHA_KEYWORDS for keys in pass_keywords):
+                        raise ValueError("compiled UI keyword variants differ from original")
                 externals = fallback_externals(tree, names_to_files)
                 body = W.write_shader_body(node, tree)
                 if typed:

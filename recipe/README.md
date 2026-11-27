@@ -2709,6 +2709,14 @@ bytes, original expression or protected content is published. Public smol-v
 source is acquired privately for validation only, at its cited revision.
 Provenance/privacy/licensing and sensitive-content audit: 2026-10-24.
 
+The Animate Alpha translation diagnostic uses an authored binding adapter for
+Wine vkd3d-shader 2.0 and a stream encoder for public SMOL-V revision
+`55000efe742f56d8b51223b9ea7775a8f0501881`. The original bundle supplies all
+program code, pass state, keywords and constant layouts. Both open dependencies,
+tool binaries, translated modules, packed outputs and device evidence remain
+local. The tracked diagnostic contains format metadata and authored glue.
+Provenance/privacy/licensing and sensitive-content audit: 2026-11-27.
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP
@@ -7282,6 +7290,24 @@ local.
 | `owner-whole-game-v30-platform-materials.json` | `6f0d6d5e48e5c6652d3ef0655ac9132f00c878279f1b3ece8132555422b1cd0b` |
 | `owner-whole-game-v30-platform-registry.json` | `ada74f495702d32651f4b09e73e4b39f3f19b50361bb485e2d3e7f4defb07003` |
 
+## Commando Animate Alpha Shader (2026-11-27)
+
+`owner-commando-ui-animate-alpha.json` selects one original Shader and its
+staged destination. The standalone Unity compiler and the pinned, open DXBC
+disassembler use the owner's acquired inputs to build the Vulkan programs.
+The compiler keeps the original name, serialized render state and keyword
+registry. All eight linked program and binding records matched the previously
+accepted Vulkan wrappers in a host comparison.
+
+Manual provenance, licensing, privacy and sensitive-content review covered
+source and destination selectors, hashes, SDK and tool pins, and the authored
+compile request. Original shader bytes, recovered code, compiler output and
+test captures stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-ui-animate-alpha.json` | `33acddd1c461921fc51aa63542cc54b98b5d10d37ede90ed1d80fe5803173de9` |
+
 ## Current-script bundle comparison (2026-11-04)
 
 Objective support and Commando use the existing diagnostic bundle comparison
@@ -7556,3 +7582,13 @@ bundle identities used by existing scenes. The 2026-11-27 audit matched
 each destination to one PC source body and checked the class schema, byte
 extent and absence of PPtrs. The same provenance, privacy, license and
 sensitive-content review applies to this profile.
+
+Audit 2026-11-27. `owner-whole-game-mesh-frontier.json` selects two original
+inline Meshes for the canonical graph. The provenance, privacy, licensing and
+sensitive-content review covered original and destination identities, body
+lengths and hashes. The existing Mesh producer reads the original installation
+locally. Geometry, collision data and Unity evidence stay under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-mesh-frontier.json` | `82f6cf1f4166edee7095a990829180de4be75dbe223524f395cad9e674fdad2d` |

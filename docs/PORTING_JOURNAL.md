@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1538 — Draw a translated source Shader on Android Vulkan
+
+2026-11-27. Wine vkd3d-shader translated all eight Animate Alpha DXBC
+variant pairs. The record producer kept source state, keywords and bindings
+under the original Shader name. Unity typed-loaded the resulting leaf.
+The Android Vulkan fixture sampled opaque red and green, matching the SDK
+compiler control at both ramp endpoints. SoC peaked at 70.8 °C with no time
+above 80 °C. Fixture removal, OLED sleep and lease release passed.
+APK SHA-256 `267913901faf8778caafbdf33f4b45c409e38e699bced633e9d655c0981fd4dd`.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`vulkan-wine-device-01/terminal.done.json` and the `vulkan-control-device-02/` receipt.
+Other shader passes, ComputeShader dispatch and normal gameplay remain open.
+
 ## J1537 — Activate the native Commencement mission on entry
 
 2026-11-26. The lab verifies the 730-component Moon2 scene contract,
@@ -4802,7 +4815,7 @@ Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
 The runner removed its attempt scratch, preserved staged inputs, slept the
 display and released the lease. Typed load and gameplay remain open.
 
-## J1538 — Recover a native profile save after injected ENOSPC
+## J1539 — Recover a native profile save after injected ENOSPC
 
 2026-11-27. The shared lab runner injected ENOSPC before the live profile
 pending-file write on Secondary Nova, after one unassisted native loss and its
@@ -4815,7 +4828,7 @@ APK SHA-256 `82e49513ca58aba8a002d15cf14365f3db1ceac4b69a7e9d2ec4e42215368845`
 `work/coordination/alpha-saf-stability-20261127/nova-b-profile-save-failure/`.
 Physical volume exhaustion, power loss and production-alpha retention remain open.
 
-## J1539 — Record sustained assisted combat on Secondary Nova
+## J1540 — Record sustained assisted combat on Secondary Nova
 
 2026-11-27. The shared runner captured 1,800.011 s of bounded native primary fire.
 The reconciled window recorded 106,604 frames, 59.311 FPS and 14 frames above
