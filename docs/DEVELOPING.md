@@ -196,6 +196,7 @@ authentication is needed to inspect the supplied installation.
 | --- | --- |
 | `./dev test` | Host tests in the lab venv. |
 | `./dev doctor [--json]` | Toolchain, inventory and dependency-pin health. |
+| `./dev pins check` / `./dev pins refresh` | Current host checks and refreshes for tracked producer and recipe hashes. `--show-external` lists recipes with pins that need their original input or output witness. |
 | `./dev preflight [--device SERIAL] [--host-only]` | Current: host/input gates plus selected-device storage; `--host-only` omits device access. |
 | `./dev build-hook-pins [--action check\|refresh]` | Current: check reviewed camera and audio-owner source pins and manifest bindings without local inputs (default); after reviewing source changes, refresh source hashes and bindings. Format Python before refreshing: the hook pins itself. Host preflight checks these pins before reading local configuration. |
 | `./dev check-baseline` | The standard device check on the installed APK: 35 s of assisted Lakes play, no report error, profile run count unchanged ([docs/BASELINE.md](BASELINE.md)). |
