@@ -29,7 +29,11 @@ GROUPS = {
 }
 REFERENCE_SHA = "5ed7d9fffe181c489ad8bbce79bbc9d35eafdbbad23e65a613391a8711dd951a"
 PACKAGE_SHA = "f921be2dc22b03528b429772228b229bac2af92b483e0103a4124b121c13f58f"
-MANIFEST = {"dependencies": {"com.unity.modules." + name: "1.0.0" for name in ("androidjni", "assetbundle", "jsonserialize", "unitywebrequest")}}
+MANIFEST = {
+    "dependencies": {
+        "com.unity.modules." + name: "1.0.0" for name in ("androidjni", "assetbundle", "jsonserialize", "unitywebrequest", "unitywebrequestassetbundle")
+    }
+}
 SUPPORT_SHA = {
     "phone_managed_compile": "ab8693a0a8854c315cd745c6552b77714ecbbd5b31705b06e902560111784efb",
     "phone_module_policy": "6d2b830b437e417530d41ab96fee3a2572247ea3752083dee7d10533229e0649",

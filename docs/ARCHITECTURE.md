@@ -3001,7 +3001,7 @@ no build consumer normalizes away that evidence.
 `phone_unity_compile.py` owns a separate current experimental compilation of
 the public `ContentFixture.cs` Unity API fixture. It stages pinned SDK compiler,
 target managed modules, standard-library references, builtin package metadata
-and the authored four-package manifest. It reuses `phone_module_policy.py` to
+and the authored five-package manifest. It reuses `phone_module_policy.py` to
 derive references on the selected host, excluding package-disabled modules;
 captured Bee response files and editor reports are comparison evidence only.
 The standalone runner verifies its authored sibling helpers before importing
