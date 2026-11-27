@@ -413,7 +413,7 @@ public final class ToolHostActivity extends Activity {
             if (!debuggable(this)) detail.append("\n\nTEST RELEASE OVERRIDE REJECTED — installer is not debuggable.");
             else {
                 JSONObject override = readJson(debugSource);
-                detail.append("\n\nTEST RELEASE SOURCE — additional test publisher trust requested. NOT A PRODUCTION RELEASE.\n")
+                detail.append("\n\nTEST RELEASE SOURCE — using the local release endpoint.\n")
                     .append(override.optString("base_url", "Invalid override; release work will refuse."));
             }
         }
