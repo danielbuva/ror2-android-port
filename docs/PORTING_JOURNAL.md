@@ -5066,3 +5066,16 @@ in `whole-game-storage-image/ao-downsample2-device-01/terminal.done.json`.
 Peak SoC was 56.1 °C, with 0 s above 80 °C and a 29 °C admission battery.
 Fixture removal, OLED sleep and lease release passed. Camera integration
 and in-game ambient occlusion remain open.
+
+## J1563 — Acquire signed SDK tools inside the Android installer
+
+2026-11-27. On Secondary Nova, the installer copied Android SDK 33 `android.jar`
+from an owner-selected folder and downloaded ASM 9.2 over HTTPS. The signed
+size and SHA-256 pins matched both files in private storage, and the installer
+displayed the verified-tools status.
+The acquisition stage took 151.597 s and sampled 74.3 MiB installer PSS.
+Battery started at 28 °C. Peak SoC was 73.2 °C, with 0 s above 80 °C.
+Installer APK SHA-256 `e1d1ad492522bd6c7cef1381da3810719b3fde5ccf6e7ca80316292d819a76ca`.
+Evidence is under `work/coordination/alpha-packaging-acceptance/run-l6dfyzhs/`.
+The runner removed its fixture, installer and reverse mapping, slept the OLED
+and released the lease. Complete playable-release acquisition remains open.

@@ -108,8 +108,15 @@ class InstallInputTests(unittest.TestCase):
         raw = f"https://raw.githubusercontent.com/AssetRipper/AssetRipper/{revision}/LICENSE.md"
         jar = "acquired/android-sdk/jars/asm-9.2.jar"
         maven = "https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.2/asm-9.2.jar"
+        zipflinger = "acquired/android-sdk/jars/zipflinger-7.4.2.jar"
+        google_maven = "https://dl.google.com/dl/android/maven2/com/android/zipflinger/7.4.2/zipflinger-7.4.2.jar"
         pin = {"bytes": 1, "sha256": "b" * 64}
-        accepted = {source: dict(pin, url=raw), jar: dict(pin, url=maven), "acquired/unity-android-support.pkg": pin}
+        accepted = {
+            source: dict(pin, url=raw),
+            jar: dict(pin, url=maven),
+            zipflinger: dict(pin, url=google_maven),
+            "acquired/unity-android-support.pkg": pin,
+        }
         self.assertEqual(INPUTS.acquired_inventory(accepted), accepted)
         for name, url in (
             (source, raw.replace(revision, "main")),
@@ -118,6 +125,8 @@ class InstallInputTests(unittest.TestCase):
             (jar, maven.replace("https:", "http:")),
             (jar, maven.replace("asm/9.2", "asm/../9.2")),
             (jar, raw),
+            (zipflinger, google_maven.replace("/zipflinger/", "/zipflinger-other/")),
+            (zipflinger, google_maven.replace("zipflinger-7.4.2.jar", "zipflinger-7.4.3.jar")),
             ("acquired/unity-android-support.pkg", "https://download.unity3d.com/component.pkg"),
         ):
             with self.subTest(name=name, url=url), self.assertRaises(ValueError):
