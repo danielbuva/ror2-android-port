@@ -3657,6 +3657,10 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Reported CPU/GPU exposure above 80 C uses only the left sample of intervals
+up to one second. One hot group establishes an exceedance; classifying an
+interval as non-hot requires both groups. Missing coverage stays unclassified,
+and no classifiable interval yields unavailable exposure rather than zero.
 Reconciled raw windows also report strictly >50 ms consecutive hitch bursts,
 longest within-window run and worst absolute frame index (earliest on ties).
 Incomplete raw windows remain unavailable; boundary bursts may extend outside
