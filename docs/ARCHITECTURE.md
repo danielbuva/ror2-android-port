@@ -8493,6 +8493,10 @@ configured muzzle and impact effects by catalog identity. It retains camera
 projected screen bounds and material slots for up to 1.25 seconds or 120 frames.
 The report belongs to the current world and holds only observations. Projected
 bounds and effect identity identify candidates for comparison with the video.
+With detailed visual diagnostics enabled, the same owner follows the first
+native REX Disperse cast. It reads the charge state's live instance and then
+matches the release by catalog identity. Each phase records end-of-frame
+renderer slots for up to 1.25 seconds or 120 frames in the world report.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
