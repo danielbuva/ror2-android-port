@@ -8337,6 +8337,12 @@ recorded sizes and hashes. Native producer lineages retain their existing
 roots through actual staged member tables and retains the supplied SDK proofs.
 The command closes its staged readers and returns descriptor and schema pins
 for the existing emitter to qualify against actual bytes.
+The preparation policy can seed `retained_path_ids` for records referenced by
+other bundles. These records and their dependencies enter the same checked
+closure without adding entries to the bundle's catalog or container.
+Preparation uses the pinned current MonoScript body and CLR schema to repair
+stale native managed type hashes in its retained pack. Emission independently
+checks the relocated records and final member table against the same providers.
 This host/converter qualification does not admit Unity loadability or play.
 
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
