@@ -31,6 +31,27 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(actual[("pack", "CAB-pack", 8)], {("original.bundle", "CAB-source", 11)})
             self.assertEqual(source_files, {"original.bundle": "a" * 64})
 
+    def test_prefab_shader_supplier_uses_original_body_identity(self):
+        root_repo = Path(__file__).resolve().parents[1]
+        G = P.O.module("_prefab_shader_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "recipe/owner-shader.json"
+            path.parent.mkdir()
+            source = ("shaders.bundle", "CAB-source", 11)
+            destination = ("content", "CAB-content", 7)
+            original = dict(zip(("path", "member", "path_id"), source), sha256="a" * 64)
+            output = dict(zip(("bundle", "member", "path_id"), destination))
+            path.write_text(json.dumps(dict(shader_links=[dict(sdk_shader=1, to=[3, 6])], records=[dict(original=original, outputs=[output])])))
+
+            pin = P.O.B.sha(path)
+            self.assertEqual(G.Graph(root, {}).source_suppliers([pin], {source}), {source: {(pin, destination)}})
+            source_files = {}
+            self.assertEqual(P.module("bundle_prepare").original_identities(P, path, source_files), {destination: {source}})
+            self.assertEqual(source_files, {source[0]: original["sha256"]})
+            with self.assertRaisesRegex(ValueError, "original source file pins disagree"):
+                P.module("bundle_prepare").original_identities(P, path, {source[0]: "b" * 64})
+
     def test_source_registry_remap_restores_original_layout_without_copying_original_body(self):
         root_repo = Path(__file__).resolve().parents[1]
         G = P.O.module("_registry_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
