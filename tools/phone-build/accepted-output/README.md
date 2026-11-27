@@ -696,11 +696,12 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
   --jpeg-codec PUBLIC_JPEG_TOOL --jpeg-codec-sha256 TOOL_SHA256
 ```
 
-For native Alpha8, RGB24 and RGBA32 Texture2D originals and BC6H/RGBAHalf Cubemaps, use
+For native Alpha8, RGB24, RGBA32 and ARGB32 Texture2D originals and BC6H/RGBAHalf Cubemaps, use
 `texture_native_profile.py` with the PC coverage ledger from `texture_catalog.py`.
 The resulting local profile selects previously missing bundle identities that
 have complete mip chains, empty platform data and no external references. It
-pins original bodies and pixels and keeps their names and metadata intact.
+pins original bodies and pixels and keeps their names and metadata intact,
+including original Alpha8 and RGBA32 zero-pixel placeholders.
 
 ```sh
 python3 -B tools/phone-build/accepted-output/texture_native_profile.py \
@@ -713,14 +714,20 @@ python3 -I -S -B tools/phone-build/accepted-output/texture_produce.py \
 Feed the profile and pack receipt back into the texture readback request.
 Android GPU support and canonical package integration remain separate checks.
 
+Add `--schema-witnesses FILE` to include standalone player records. The JSON
+array contains `source` triples (PC-relative bundle path, member, PathID),
+`class_id` and original bundle `sha256` for embedded type trees. The producer
+checks the witness against the standalone type identity and pins any sibling
+`.resS` streams read by the profile.
+
 Use `--source-bc3` or `--source-bc1` on the same discovery command to
 select missing BC3 or BC1 Texture2Ds. BC1 colour uses ETC1 RGB and requires
-opaque texels, including the original block padding. Run the producer
-with the pinned ETC helper and SDK descriptor
-from the encoder comparison setup and pass `--comparison diagnostic`. The
-producer transcodes the original mip chain, retains the source hashes and
-checks output extents. The pack records actual output hashes without a
-reference APK byte-match claim.
+opaque texels, including the original block padding. Use a pinned ETC helper
+and pass `--comparison diagnostic`. For BC1, pin the native decoder with
+`--pixels-codec` and `--pixels-codec-sha256`. The encoder comparison's pinned
+SDK descriptor supplies the decoder too and is required for BC3. The producer
+retains the source hashes, checks output extents and records actual output
+hashes for the original mip transcode.
 
 The producer copies original raw pixel/mip bytes, decodes BC1 top mips to RGB,
 extends transparent RGB with fixed cardinal Manhattan jump flooding, or applies
