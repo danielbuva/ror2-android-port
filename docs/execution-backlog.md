@@ -44,8 +44,8 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
       does not establish this complete flow.
 - [ ] Qualify the [prepared-lab playtest checklist](PLAYTESTING.md) from fresh public
       inputs, then final player install, controls and update/rollback steps.
-- [ ] Prepare reviewable release, announcement, repository-setting and issue-template
-      changes and obtain the explicit approval required by
+- [ ] Review the [draft release, announcement, repository settings and issue templates](alpha-publication-draft/README.md)
+      and obtain the explicit approval required by
       [publication policy](ALPHA_POLICY.md#distribution-and-feedback).
 
 ## Stability and performance
