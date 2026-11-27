@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1520 — Restore the native Gold Shores boss reward
+
+2026-11-27. Gold Shores regenerates the native reward selector before mission
+activation. Assisted input targets the scripted boss through its native squad.
+APK SHA-256 `2b26289f0b5697b7a7b1e40ad59118c41cf667ae6c667e9799b75b603208205d` (source `72199696`).
+Evidence under `work/coordination/gameplay-coverage-20261126/gold-native-reward-selector-nova-b-shared-adb/`.
+Sample 260 shows the selector recover from zero to one pickup. Sample 400
+shows all seven beacons active, native boss defeat and `TitanGoldDuringTP`
+droplet 303. Sample 410 shows the grounded native return to `foggyswamp`.
+Screenshots and Unity logs are retained. The low-load snapshots were 57.95 FPS
+at defeat and 58.95 FPS on return. SoC peaked at 88.0 °C with 71.25 s above
+80 °C. Battery was 30–35 °C. Scratch removal, OLED sleep and lease release
+passed. Ordinary player input and matched PC rendering remain open.
+
 ## J1519 — Bind direct-selected survivor Animators before native locomotion
 
 2026-11-26. Bind source controllers and avatars before native main-state entry.
