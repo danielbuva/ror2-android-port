@@ -8331,6 +8331,9 @@ material values for missing properties. The original material rows are retained.
 prefabs through the owned content loader before the native state configuration
 populates the GroundLight fields. Native GroundLight selects and spawns each
 effect. The native effect owner restores the prefabs' material slots at teardown.
+`IntegratedWorldSession` sends the owned Engineer shield template through the
+same presentation owner before native deployment. The center and edge renderers
+inherit the prepared materials, and world teardown restores the template slots.
 On the same opt-in selector, `NovaDiagnosticDisplay` samples up to 32 renderers
 of the presented player model, including inactive and disabled renderers, on
 the existing five-second report cadence. The latest `NovaReport` sample records
