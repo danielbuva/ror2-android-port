@@ -126,6 +126,34 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "different native type"):
                 P.expose_local_assets(source, root / "invalid", name, member, groups, codec=None, codec_sha256=None)
 
+    def test_closed_local_type_allocation_preserves_existing_script_slots(self):
+        M = P.module("bundle_manifest")
+        tree = M.S._tree(
+            [
+                dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1)
+                for kind, name, size, level in (
+                    ("MonoBehaviour", "Base", -1, 0),
+                    ("PPtr<MonoScript>", "m_Script", 12, 1),
+                    ("int", "m_FileID", 4, 2),
+                    ("SInt64", "m_PathID", 8, 2),
+                )
+            ]
+        )
+        original = dict(class_id=114, stripped=0, script_type=1, hash=b"a" * 16, script_id=b"b" * 16, tree=tree, dependencies=[])
+        source_type = dict(original, script_type=7, hash=b"c" * 16, script_id=b"d" * 16)
+        existing_body, new_body = struct.pack("<iq", 0, 10), struct.pack("<iq", 0, 15)
+        layout = dict(types=[original], scripts=[(0, 20), (0, 10)])
+        managed = {"1": dict(pointer=[0, 10]), "2": dict(pointer=[0, 15])}
+        records = {1: (existing_body, dict(original, script_type=9)), 2: (new_body, source_type)}
+
+        self.assertEqual(list(P.append_closed_local_types(layout, records, managed, {})), [(1, existing_body, 0), (2, new_body, 1)])
+        self.assertEqual(layout["scripts"], [(0, 20), (0, 10), (0, 15)])
+        self.assertEqual(layout["types"], [original, dict(source_type, script_type=2)])
+        self.assertEqual(P.qualified_final_type(new_body, layout["types"][1], layout["scripts"], source_type), source_type)
+        managed["2"]["pointer"] = [0, 10]
+        with self.assertRaisesRegex(ValueError, "script differs"):
+            list(P.append_closed_local_types(layout, records, managed, {}))
+
     def test_expose_local_assets_supplies_an_external_mesh_without_a_catalog_root(self):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 

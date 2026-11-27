@@ -243,6 +243,14 @@ repacker checks those references and full native types after emission or
 canonical repack. Only the final bundle is published as payload and consumed
 by the catalog and native manifest. The catalog projection keeps original or
 authored relocation path spelling while matching Unity's case-folded inventory.
+The local asset repacker also accepts a pinned native source closure with
+scene consumer fields and original prefab registrations. It reads the selected
+typed record extents, checks actual external endpoints and signed script bodies,
+and appends only needed native type and script slots. Retained objects and their
+registrations keep their original slots and preload ranges. The writer rereads
+the persisted metadata, appended bodies and their script-slot relationships.
+The editor fixture checks registered prefab roots as Unity GameObjects. The
+converted device run owns stage population qualification.
 For SDK resource endpoints, preparation can generate full witnesses from pinned
 original type layouts and the produced resource bodies. The endpoint checker
 verifies native type metadata, body extents and recursively resolved pointers
