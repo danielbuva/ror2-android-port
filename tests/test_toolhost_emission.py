@@ -116,6 +116,7 @@ class EmissionTests(unittest.TestCase):
         (producer,) = self.phone.transport.start_detached.call_args.args
         self.assertIn("/data/user/0/dev.ror2lab.installertest/files/owner-input", producer)
         self.assertEqual(result["transfer_bytes"], files["request.json"]["bytes"])
+        self.assertFalse(self.phone.transport.wait_detached.call_args.kwargs["transfer_logs"])
         self.phone.install.assert_not_called()
 
     def test_converter_stage_hashes_device_artifact_and_keeps_input(self):

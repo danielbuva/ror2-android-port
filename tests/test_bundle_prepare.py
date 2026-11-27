@@ -56,6 +56,22 @@ class BundlePreparationTests(unittest.TestCase):
             P.module("bundle_prepare").original_identities(P, path, sprite_relocations=relocations)
             self.assertEqual(relocations, {(("content", "CAB-content", 9), ("original.bundle", "CAB-source", 7)): [reference]})
 
+    def test_mesh_duplicate_requires_inline_data_and_identical_typed_bodies(self):
+        sample = [("Mesh", "Base", -1, 0), ("StreamingInfo", "m_StreamData", -1, 1)]
+        sample.extend((kind, name, 4, 2) for kind, name in (("int", "offsetLow"), ("int", "offsetHigh"), ("int", "size"), ("int", "path")))
+        sample.extend((("PPtr<Object>", "dependency", 12, 1), ("int", "m_FileID", 4, 2), ("SInt64", "m_PathID", 8, 2)))
+        nodes = [dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1) for kind, name, size, level in sample]
+        schema = P.module("bundle_manifest").S._tree(nodes)
+        typ = dict(class_id=43, tree=schema)
+        mesh = bytes(28), typ, None
+        aliases = P.module("bundle_prepare").identical_inline_mesh
+        self.assertTrue(aliases(P, mesh, mesh, {}))
+        for body in (struct.pack("<QIIiq", 0, 1, 0, 0, 0), struct.pack("<QIIiq", 0, 0, 0, 0, 7)):
+            nonlocal_mesh = body, typ, None
+            self.assertFalse(aliases(P, nonlocal_mesh, nonlocal_mesh, {}))
+            self.assertFalse(aliases(P, mesh, nonlocal_mesh, {}))
+        self.assertFalse(aliases(P, mesh, (mesh[0], dict(typ, class_id=134), None), {}))
+
     def test_original_identities_cover_texture_avatar_and_shared_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "profile.json"

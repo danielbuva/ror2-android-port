@@ -1,6 +1,7 @@
 """Scoreboard coverage for standalone files, bundle members and attempt evidence."""
 
 import importlib
+import importlib.util
 import io
 import json
 from pathlib import Path
@@ -9,8 +10,12 @@ import tempfile
 import unittest
 from zipfile import ZipFile
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools/phone-build/accepted-output"))
 S = importlib.import_module("whole_game_scoreboard")
+STAGE_SPEC = importlib.util.spec_from_file_location("scoreboard_lab_stage", ROOT / "tools/phone-build/owner-apk/lab_stage.py")
+STAGE = importlib.util.module_from_spec(STAGE_SPEC)
+STAGE_SPEC.loader.exec_module(STAGE)
 
 
 def pin(path):
@@ -32,6 +37,45 @@ def bundle(path, raw):
 
 
 class WholeGameScoreboardTests(unittest.TestCase):
+    def test_lab_stage_returns_scoreboard_for_pinned_phone_local_apks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            owner_input = root / "owner-input"
+            inputs = owner_input / "staged"
+            inputs.mkdir(parents=True)
+            pins = {}
+            for name, body in (("candidate", b"a"), ("reference", b"b")):
+                apk = inputs / (name + ".apk")
+                with ZipFile(apk, "w") as archive:
+                    archive.writestr(S.PLAYER + "level0", serialized([(1, 0, b"x"), (2, 1, body)]))
+                pins[name] = {"apk": dict(path=apk.name, sha256=pin(apk)["sha256"])}
+            request = inputs / "request.json"
+            request.write_text(json.dumps(dict(schema="whole-game-scoreboard-request-v1", **pins)))
+            descriptor = root / "stage.json"
+            descriptor.write_text(
+                json.dumps(
+                    dict(
+                        producer=STAGE.SCOREBOARD,
+                        input_root="staged",
+                        input_pins={"request.json": pin(request)["sha256"]},
+                        arguments=[{"inputs": "request.json"}, "--output", {"output": "scoreboard.json"}],
+                        artifacts={"scoreboard": "scoreboard.json"},
+                        scoreboard="scoreboard.json",
+                    )
+                )
+            )
+            output = root / "output"
+            receipt = root / "result.json"
+            self.assertEqual(STAGE.run(STAGE.load_stage(descriptor), ROOT, owner_input, output, ROOT, ROOT, [sys.executable], receipt), 0)
+            result = json.loads(receipt.read_bytes())
+            scoreboard = json.loads((root / "scoreboard.json").read_bytes())
+            self.assertTrue(result["success"])
+            self.assertEqual(result["artifacts"]["scoreboard"]["sha256"], pin(output / "scoreboard.json")["sha256"])
+            self.assertEqual(scoreboard["apk_sha256"], pins["candidate"]["apk"]["sha256"])
+            self.assertEqual(scoreboard["reference_apk_sha256"], pins["reference"]["apk"]["sha256"])
+            self.assertEqual(scoreboard["totals"], dict(exact=1, approximate=1, missing=0, unverified=0))
+            self.assertEqual(scoreboard["device"]["launch"], "unobserved")
+
     def test_full_inventory_and_apk_bound_device_observations(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

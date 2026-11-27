@@ -4789,3 +4789,15 @@ Native authority held 96.536 s with all four skill callbacks paired. Terminal
 snapshot was 33.79 FPS / 29.60 ms. SoC peaked at 88.4 °C with 19.907 s above
 80 °C. Battery held 26 °C. Scratch removal, OLED sleep and lease release passed.
 Black quads in the terminal screenshot and matched finisher pixels remain open.
+
+## J1535 — Replay a pinned converter stage on Android
+
+2026-11-27. The shared runner executes the committed bundle preload producer
+against an already staged 27-record request. The seed and the detached replay
+emitted the same 10,258-byte bundle, SHA-256
+`5df987cd43526a18e9e415cdebfbd5e9e1103c27a6a7d029f9561cf1bdf3d8f5`.
+The stage ran in 4.82 s with 47.7 MiB peak child RSS. The supervisor recorded
+59.3 °C peak CPU/GPU and 0 s above 80 °C. Admission battery was 28 °C at 80%.
+Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
+The runner removed its attempt scratch, preserved staged inputs, slept the
+display and released the lease. Typed load and gameplay remain open.
