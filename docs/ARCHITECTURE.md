@@ -1413,10 +1413,11 @@ ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
 normal maps. It uses the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
 use the same codec pins and output checks. `texture_native_profile.py` selects
-original Alpha8, HDR Cubemap and BC3 records from the PC texture coverage ledger.
+original Alpha8, HDR Cubemap, BC1 and BC3 records from the PC texture coverage ledger.
 It checks native schemas, platform data, references and complete mip extents,
-then writes a private profile. Source-derived BC3 profiles pin the original
-bytes and expected output extents and leave reference output hashes empty.
+then writes a private profile. Source-derived BC profiles pin original bytes and
+expected output extents and leave reference output hashes empty. BC1 colour
+retains usage and encodes each original mip as ETC1 RGB after checking opacity.
 The producer's setup, stream checks and output ownership apply to these packs.
 `build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
