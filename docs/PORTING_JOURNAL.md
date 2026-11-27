@@ -19,6 +19,18 @@ Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-cast-e
 Launch peaked at 91.9 °C, with 11.102 s above 80 °C and battery at 32 °C.
 Adopted placement, scratch removal and OLED sleep passed. Host pruning was
 completed separately. The upward flame and bomb release flash remain open.
+## J1530 — Restore converted Sandy shrine scripts for native Goolake entry
+
+2026-11-27. The source record producer binds three Sandy shrine behaviours
+to canonical MonoScripts in the existing Commando donor. The assisted Plains
+exit reached the verified Abandoned Aqueduct scene with original population
+active and 15.21 s of live authority after entry. All 26 template clone pairs
+completed, including the four Sandy shrines. No missing-script warnings appeared.
+APK SHA-256 `f253da007ce68cd24271540dc958a07a21ce7a0f494274590b5243b1cd5b9b14` (runtime `fda0dd4a`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v44-canonical-scripts/v44-native-goolake-transition/`.
+Launch SoC peaked at 88.4 °C, with 21.31 s above 80 °C and a 30 °C start battery.
+Final snapshot was 41.20 FPS. Adopted placement, scratch removal and OLED sleep
+passed. Magenta terrain, a decal shader error and unassisted play remain open.
 ## J1529 — Qualify external SAF validation and import resume
 
 2026-11-27. Android DocumentsUI and its external storage provider passed picker

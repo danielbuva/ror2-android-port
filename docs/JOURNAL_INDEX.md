@@ -362,3 +362,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1527](PORTING_JOURNAL.md#j1527--restore-transparency-to-the-native-engineer-shield) | 2026-11-27 | Restore transparency to the native Engineer shield | 2026-11-27. |
 | [J1529](PORTING_JOURNAL.md#j1529--qualify-external-saf-validation-and-import-resume) | 2026-11-27 | Qualify external SAF validation and import resume | 2026-11-27. |
 | [J1531](PORTING_JOURNAL.md#j1531--restore-artificer-charge-and-flame-materials) | 2026-11-27 | Restore Artificer charge and flame materials | 2026-11-27. |
+| [J1530](PORTING_JOURNAL.md#j1530--restore-converted-sandy-shrine-scripts-for-native-goolake-entry) | 2026-11-27 | Restore converted Sandy shrine scripts for native Goolake entry | 2026-11-27. |
