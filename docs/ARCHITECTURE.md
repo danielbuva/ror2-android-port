@@ -8619,6 +8619,9 @@ The same session retains the projectile at Beetle Queen's configured FireSpit
 address. The native effect owner follows the explosion's enabled child projectile
 reference and prepares both detached ghosts before the director spawns enemies.
 Teardown restores the original material slots.
+The body visual owner also prepares Acrid's configured Leap projectile.
+The same native effect owner follows its controller's detached acid ghost
+and restores the particle material slots during world teardown.
 `IntegratedWorldSession` sends the owned Engineer shield template through the
 same presentation owner before native deployment. The center and edge renderers
 inherit the prepared materials, and world teardown restores the template slots.

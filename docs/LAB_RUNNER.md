@@ -134,9 +134,12 @@ ZIP. Use a disposable installer with the publisher key in its packaged trust.
 The dry-run verifies both signed source graphs and checks that both support the
 current inventory. The detached run serves the releases over local ADB reverse,
 imports the staged originals through Android's picker, and checks native save
-retention across a same-key update. Its cleanup removes only the scoped stage
-and the packages it installed. Import and each reconstruction have a four-hour
-limit to accommodate the measured signed native build.
+retention across a same-key update. Each play phase writes a
+`terminal.done.json` bound to the live APK hash and signed runtime attempt.
+The whole-game scoreboard can join those receipts to a census of the same APK.
+Cleanup removes the scoped stage and the packages the run installed. Import
+and each reconstruction have a four-hour limit to accommodate the measured
+signed native build.
 
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the

@@ -151,6 +151,8 @@ public sealed partial class PortSession
             while (finisher.MoveNext())
                 yield return finisher.Current;
 
+            PresentConfiguredNativeEffect(EntityStates.Croco.BaseLeap.projectilePrefab, "Croco leap acid projectile", unavailable);
+
             // FireSpit resolves the spit prefab by address. Its impact spawns a
             // separate acid projectile with a detached ghost.
             var queenSpit = PrepareReferencedNativeEffect(EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab,
