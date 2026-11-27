@@ -254,7 +254,16 @@ def extend_selection(owner, member, required, selected, types, routes, extension
 
 
 def original_identities(
-    owner, path, source_files=None, *, destinations=None, generated=None, relocations=None, sprite_relocations=None, shader_dependencies=None
+    owner,
+    path,
+    source_files=None,
+    *,
+    destinations=None,
+    generated=None,
+    relocations=None,
+    sprite_relocations=None,
+    clip_binding_orders=None,
+    shader_dependencies=None,
 ):
     """Reverse original body selectors, Shader packs and MonoScript remaps."""
     result = {}
@@ -359,26 +368,36 @@ def original_identities(
                         add(record, source)
                         if relocations is not None and (references := target.get("transform", {}).get("references")):
                             relocations[record, source] = {reference["offset"]: reference for reference in references}
+                            if clip_binding_orders is not None and row.get("class_id") == 74 and "layout" in target["transform"]:
+                                clip_binding_orders[record, source] = target["transform"]["layout"]["binding_order"]
                         if sprite_relocations is not None and kind == "objects" and "importer_guid" in row and "texture" in row:
                             sprite_relocations[record, source] = target["references"]
     return result
 
 
-def qualify_sprite_relocations(owner, original_record, fields, references, schemas):
-    """Match the Sprite producer's source offsets through the final field layout."""
+def qualify_layout_relocations(owner, original_record, fields, references, schemas, binding_order=None):
+    """Match the producer's original PPtr offsets to final typed fields."""
     body, typ, _ = original_record
-    if typ["class_id"] != 213:
-        raise ValueError("Sprite relocation requires an original Sprite")
+    if typ["class_id"] != (213 if binding_order is None else 74):
+        raise ValueError("layout relocation requires the original Sprite or AnimationClip")
+    binding_positions = {} if binding_order is None else {str(source): str(output) for output, source in enumerate(binding_order)}
     source_fields = {offset: (field, pointer) for field, offset, pointer in owner.pointer_fields(body, typ, schemas)}
     output_fields = {field: (offset, pointer) for field, offset, pointer in fields}
     result = {}
     for reference in references:
         field, pointer = source_fields.get(reference["offset"], (None, None))
-        if pointer != tuple(reference["from"]) or field not in output_fields:
-            raise ValueError("Sprite relocation source PPtr differs")
+        if pointer != tuple(reference["from"]):
+            raise ValueError("layout relocation source PPtr differs")
+        if binding_order is not None and field[:3] == ("m_ClipBindingConstant", "genericBindings", "Array"):
+            output_index = binding_positions.get(field[3])
+            if output_index is None:
+                continue
+            field = (*field[:3], output_index, *field[4:])
+        if field not in output_fields:
+            raise ValueError("layout relocation output field absent")
         offset, pointer = output_fields[field]
         if pointer != tuple(reference["to"]) or offset in result:
-            raise ValueError("Sprite relocation output PPtr differs")
+            raise ValueError("layout relocation output PPtr differs")
         result[offset] = reference
     return result
 
@@ -463,7 +482,7 @@ def prepare(owner, inputs, output):
         if logical in providers and providers[logical] != directory:
             raise ValueError("ambiguous supplier provider")
         providers[logical] = directory
-        generated, relocations, sprite_relocations, shader_dependencies = {}, {}, {}, {}
+        generated, relocations, sprite_relocations, clip_binding_orders, shader_dependencies = {}, {}, {}, {}, {}
         profiles[name] = original_identities(
             owner,
             paths["profile"],
@@ -471,6 +490,7 @@ def prepare(owner, inputs, output):
             generated=generated,
             relocations=relocations,
             sprite_relocations=sprite_relocations,
+            clip_binding_orders=clip_binding_orders,
             shader_dependencies=shader_dependencies,
         )
         suppliers[name] = SimpleNamespace(
@@ -481,6 +501,7 @@ def prepare(owner, inputs, output):
             generated=generated,
             relocations=relocations,
             sprite_relocations=sprite_relocations,
+            clip_binding_orders=clip_binding_orders,
             shader_dependencies=shader_dependencies,
         )
     producer = owner.ProducerRecords(providers)
@@ -717,7 +738,11 @@ def prepare(owner, inputs, output):
                 selector = tuple(binding["record_source"]), tuple(source)
                 references = supplier.relocations.get(selector, {})
                 if sprite_references := supplier.sprite_relocations.get(selector):
-                    references = qualify_sprite_relocations(owner, original(source), fields, sprite_references, parsed)
+                    references = qualify_layout_relocations(owner, original(source), fields, sprite_references, parsed)
+                elif selector in supplier.clip_binding_orders:
+                    references = qualify_layout_relocations(
+                        owner, original(source), fields, references.values(), parsed, supplier.clip_binding_orders[selector]
+                    )
                 shader_dependencies = supplier.shader_dependencies.get(selector)
             edges = []
             for field, offset, pointer in fields:
@@ -781,8 +806,9 @@ def prepare(owner, inputs, output):
                 f"source endpoint absent or ambiguous: {(first['source'], first['pointer'], (first['owner'], first['field']))}. "
                 f"{len(unresolved)} unresolved original PPtrs in {report['path']}"
             )
-        if used != overrides.keys():
-            raise ValueError("unused exceptional field route")
+        if unused := overrides.keys() - used:
+            report = write("unused-field-routes.json", [overrides[key] for key in sorted(unused)])
+            raise ValueError(f"{len(unused)} unused exceptional field routes in {report['path']}")
         # The emitted endpoint index contains only the reachable SDK witnesses.
         for row in normalized_staged:
             if row["bundle"] != "sdk":
