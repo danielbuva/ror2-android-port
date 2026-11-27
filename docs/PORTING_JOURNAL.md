@@ -6,7 +6,7 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
-## J1528 — Restore Artificer charge and flame materials
+## J1531 — Restore Artificer charge and flame materials
 
 2026-11-27. The body visual owner submits the native Nano-Bomb charge and
 Flamethrower prefabs to the existing material owner before instantiation.
