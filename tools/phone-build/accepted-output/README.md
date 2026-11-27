@@ -1347,6 +1347,14 @@ owner-derived bytes; no Crunch image is distributed. The builder pins all three
 headers and their complete license before/after compilation and emits
 `CRUNCH-LICENSE.txt` alongside the existing provider notices.
 
+`uncrunch-bc3-mips` emits every level in the original stream without filtering.
+The native profile selector `--source-bc3-crunch` records the source extent and
+the expected BC3 chain size. The producer validates the decoded chain against
+the serialized mip count and uses the existing BC3-to-Android ETC path.
+`--source-bc1-cube` and `--source-bc7-cube` select six-face Cubemaps for ETC1
+RGB and ETC2 RGBA8 respectively. These keep face order, each original mip,
+and the source colour space.
+
 
 ## Produce RGBA mip chains
 
