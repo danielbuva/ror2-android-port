@@ -2221,6 +2221,10 @@ process IDs against the APK-bound launch record.
 To join a phone census with later runtime evidence on the host, pass the
 saved scoreboard as a `census` `{path, sha256}` pin and include the matching
 `device_receipts` pins. This request needs only the JSON census and receipts.
+For an installed-alpha tour, character select, stage load and End Run return
+also require the signed runtime attempt. `device.alpha_tours` links each tour
+to its terminal receipt hash and records its phase, title observation and first
+failure. The return requires matching completed-session and returned-menu reports.
 
 The output `whole-game-scoreboard-v1` lists numeric Unity class IDs and owners.
 For a comparison, keys are runtime artifact, serialized member, object path ID

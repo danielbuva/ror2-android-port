@@ -185,9 +185,39 @@ def original_audit(pin):
     return dict(sha256=pin["sha256"], scope=data["scope"], objects=data["objects"], totals=totals, classes=classes, unknown_by_owner=dict(unknown_by_owner))
 
 
+def runtime_marker(path, name, pids, attempt=None):
+    marker = path.with_name(name)
+    if not pids or not marker.is_file():
+        return {}
+    value = json.loads(marker.read_bytes())
+    if str(value.get("pid")) not in pids:
+        return {}
+    if attempt is not None and (value.get("attempt") != attempt or value.get("id") != "body-state-spawn-state-auto-player"):
+        return {}
+    return value
+
+
+def alpha_return(path, tour, pids, attempt, observed):
+    session = observed.get("menu", {}).get("session")
+    if tour.get("returned") is not True or type(session) is not int or observed.get("first_stage", {}).get("session") != session:
+        return False
+    completed = runtime_marker(path, "completed-session.json", pids, attempt)
+    returned = runtime_marker(path, "returned-menu.json", pids, attempt)
+    return (
+        completed.get("session") == session
+        and completed.get("success") is True
+        and completed.get("cleanup") is True
+        and not completed.get("firstFailure")
+        and completed.get("settings", {}).get("sessionAbandoned") is True
+        and returned.get("session") == session + 1
+        and returned.get("phase") == "offline-start-menu"
+    )
+
+
 def device_observations(receipts, apk_sha256):
-    results = {name: "unobserved" for name in ("launch", "menu", "first_stage", "stage_transition")}
+    results = {name: "unobserved" for name in ("launch", "menu", "first_stage", "stage_transition", "return")}
     stages = set()
+    tours = []
     for pin in receipts:
         path = pinned(pin)
         row = json.loads(path.read_bytes())
@@ -197,24 +227,43 @@ def device_observations(receipts, apk_sha256):
         pids = {str(check["verified_launch_pid"]) for check in checks if check.get("phase") == "launch" and "verified_launch_pid" in check}
         if pids:
             results["launch"] = "passed"
+        alpha = row.get("mode") == "installed-alpha"
+        tour = row.get("tour", {})
+        attempt = None
+        if alpha:
+            attempt = row.get("installed_release", {}).get("attempt")
+            pids &= {str(tour.get("pid"))} if attempt and tour.get("attempt") == attempt else set()
+        observed = {}
         for key, name, phase in (
             ("menu", "start-menu.json", "offline-start-menu"),
             ("first_stage", "world-start.json", "integrated-world-playing"),
         ):
-            marker = path.with_name(name)
-            if pids and marker.is_file():
-                value = json.loads(marker.read_bytes())
-                if str(value.get("pid")) in pids and value.get("phase") == phase and (key == "menu" or value.get("world", {}).get("ready") is True):
-                    results[key] = "passed"
-                    if key == "first_stage" and value.get("stage", {}).get("scene"):
-                        stages.add(value["stage"]["scene"])
+            value = runtime_marker(path, name, pids, attempt)
+            if value.get("phase") == phase and (key == "menu" or value.get("world", {}).get("ready") is True):
+                observed[key] = value
+                results[key] = "passed"
+                if key == "first_stage" and value.get("stage", {}).get("scene"):
+                    stages.add(value["stage"]["scene"])
         transition = row.get("stage_transition")
-        marker = path.with_name("stage-transition.json")
-        if pids and transition and marker.is_file():
-            value = json.loads(marker.read_bytes())
-            if str(value.get("pid")) in pids:
-                results["stage_transition"] = "passed"
-                stages.add(transition["to"])
+        if transition and runtime_marker(path, "stage-transition.json", pids, attempt):
+            results["stage_transition"] = "passed"
+            stages.add(transition["to"])
+        if alpha:
+            returned = alpha_return(path, tour, pids, attempt, observed)
+            if returned:
+                results["return"] = "passed"
+            tours.append(
+                dict(
+                    receipt_sha256=pin["sha256"],
+                    phase=tour.get("phase"),
+                    bootstrap_play=tour.get("bootstrap_play") is True,
+                    native_title=tour.get("native_title", "unobserved"),
+                    returned=returned,
+                    first_failure=row.get("first_failure"),
+                )
+            )
+    if tours:
+        results["alpha_tours"] = tours
     return dict(results, stages=sorted(stages))
 
 
