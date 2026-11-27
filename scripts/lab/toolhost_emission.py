@@ -331,6 +331,9 @@ def invocation(remote, native, request, attempt, *, owner_input=None):
     python = [native + "/libpythonhost.so", native + "/libpython3.14.so", runtime + "/python"]
     owner = remote + "/repo/tools/phone-build/"
     environment = ["LD_LIBRARY_PATH=" + native + ":" + runtime + "/native-links"]
+    files, _, _ = remote.rpartition("/owner-input/")
+    if files:
+        environment.append("ROR2LAB_NATIVE_CACHE_DIR=" + files + "/native-ccache")
     if request.get("operation") == CONVERTER_STAGE:
         producer = [
             remote + "/repo/" + STAGE_OWNER,

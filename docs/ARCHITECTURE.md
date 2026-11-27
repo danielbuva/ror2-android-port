@@ -2129,6 +2129,10 @@ are checked before new private output setup and again at termination. The
 owner keeps commands, tool logs, object receipts and terminal state; failures
 retain their output. [Setup and teardown](../tools/phone-build/owner-code/README.md)
 cover source-frame expansion, input immutability, child cleanup and capacity.
+The native owner wraps Clang compile jobs with ccache when a verified toolhost
+alias or the host Homebrew executable is available. Each platform owns a
+bounded private cache outside the job output. The native plan, object receipts,
+linker and stripper retain their existing contracts.
 There is no shared project, Editor, device or current game-build consumer.
 J1063 qualifies the complete source-input host command through native execution.
 Independent content/Burst/shader production, licensed native input production
