@@ -145,6 +145,7 @@ public sealed partial class PortSession
     {
         public int instanceId;
         public string role, name;
+        public Vector3 position;
         public ObjectiveRendererObservation[] renderers;
     }
     [Serializable]
@@ -154,15 +155,24 @@ public sealed partial class PortSession
         public float chargeRealSeconds, releaseRealSeconds;
         public string releaseEffect, error;
         public bool completed;
-        public List<TreebotDisperseFrame> chargeFrames = new List<TreebotDisperseFrame>();
-        public List<TreebotDisperseFrame> releaseFrames = new List<TreebotDisperseFrame>();
+        public List<NativeEffectTraceFrame> chargeFrames = new List<NativeEffectTraceFrame>();
+        public List<NativeEffectTraceFrame> releaseFrames = new List<NativeEffectTraceFrame>();
     }
     [Serializable]
-    public sealed class TreebotDisperseFrame
+    public sealed class NativeEffectTraceFrame
     {
         public int frame;
         public float worldSeconds, realSeconds;
         public List<NativeEffectTraceRoot> roots = new List<NativeEffectTraceRoot>();
+    }
+    [Serializable]
+    public sealed class TreebotMortarReport
+    {
+        public int aimFrame, releaseFrame, projectileIndex = -1, impactIndex = -1, screenWidth, screenHeight;
+        public float releaseRealSeconds;
+        public string projectile, impact, error;
+        public bool completed;
+        public List<NativeEffectTraceFrame> frames = new List<NativeEffectTraceFrame>();
     }
     [Serializable]
     public class WorldReport
@@ -172,6 +182,7 @@ public sealed partial class PortSession
         public ObjectiveRendererObservation[] nativeEffectViews;
         public MageBombReleaseReport mageBombRelease;
         public TreebotDisperseReport treebotDisperse;
+        public TreebotMortarReport treebotMortar;
 
         public NovaThirdPersonView.Report camera;
         public WorldEquipmentReport equipment;
@@ -532,6 +543,7 @@ public sealed partial class PortSession
         EffectIndex mageBombMuzzle, mageBombImpact, mageBombExplosion, mageBombBlastImpact;
         FieldInfo treebotChargeEffectField;
         EffectIndex treebotReleaseEffect;
+        FieldInfo treebotMortarEndpointField;
         SirenEggDiagnosticInput sirenEggDiagnosticInput;
         EngineerNativeOutputObserver engiNativeOutputs;
         SurvivorSkillInputCoverage skillInputCoverage;
@@ -2340,7 +2352,7 @@ public sealed partial class PortSession
                     }
                     if (report.chargeFrames.Count == 120 || realSeconds - report.chargeRealSeconds >= 1.25f)
                         return;
-                    var chargeSample = new TreebotDisperseFrame { frame = Time.frameCount, worldSeconds = elapsed,
+                    var chargeSample = new NativeEffectTraceFrame { frame = Time.frameCount, worldSeconds = elapsed,
                                                                  realSeconds = realSeconds };
                     var root = (GameObject)treebotChargeEffectField.GetValue(charge);
                     if (root && root.activeInHierarchy)
@@ -2365,7 +2377,7 @@ public sealed partial class PortSession
                     coordinator.Save();
                     return;
                 }
-                var sample = new TreebotDisperseFrame { frame = Time.frameCount, worldSeconds = elapsed, realSeconds = realSeconds };
+                var sample = new NativeEffectTraceFrame { frame = Time.frameCount, worldSeconds = elapsed, realSeconds = realSeconds };
                 if (treebotReleaseEffect != EffectIndex.Invalid)
                 {
                     foreach (var effect in UnityEngine.Object.FindObjectsOfType<EffectComponent>())
@@ -2394,6 +2406,89 @@ public sealed partial class PortSession
                             phase, Time.frameCount, elapsed, realSeconds);
         }
 
+        void ObserveTreebotMortar(CharacterBody player, float elapsed)
+        {
+            var report = coordinator.r.world.treebotMortar;
+            if (report != null && report.completed)
+                return;
+            var secondary = player.skillLocator ? player.skillLocator.secondary : null;
+            var aim = secondary && secondary.stateMachine ? secondary.stateMachine.state as AimMortar2 : null;
+            if (report == null && aim == null)
+                return;
+
+            int frame = Time.frameCount;
+            float realSeconds = Time.realtimeSinceStartup;
+            try
+            {
+                if (report == null)
+                {
+                    coordinator.r.world.treebotMortar = report = new TreebotMortarReport {
+                        aimFrame = frame, screenWidth = Screen.width, screenHeight = Screen.height
+                    };
+                    // The native state fires on exit, so read its configuration while aiming.
+                    var projectile = aim.projectilePrefab;
+                    var explosion = projectile ? projectile.GetComponent<ProjectileImpactExplosion>() : null;
+                    report.projectile = projectile ? projectile.name : null;
+                    report.projectileIndex = projectile ? ProjectileCatalog.GetProjectileIndex(projectile) : -1;
+                    report.impactIndex = (int)RecordNativeEffect(explosion ? explosion.impactEffect : null, out report.impact);
+                    treebotMortarEndpointField = typeof(AimMortar2).GetField("endpointVisualizerTransform",
+                                                                            BindingFlags.Instance | BindingFlags.NonPublic);
+                    if (treebotMortarEndpointField == null)
+                        throw new MissingFieldException(typeof(AimMortar2).FullName, "endpointVisualizerTransform");
+                }
+
+                var sample = new NativeEffectTraceFrame { frame = frame, worldSeconds = elapsed, realSeconds = realSeconds };
+                if (report.releaseFrame == 0 && aim != null)
+                {
+                    if (frame - report.aimFrame >= 120)
+                        return;
+                    var endpoint = (Transform)treebotMortarEndpointField.GetValue(aim);
+                    if (endpoint && endpoint.gameObject.activeInHierarchy)
+                        sample.roots.Add(ObserveNativeEffectRoot(endpoint.gameObject, "aim endpoint"));
+                }
+                else
+                {
+                    if (report.releaseFrame == 0)
+                    {
+                        report.releaseFrame = frame;
+                        report.releaseRealSeconds = realSeconds;
+                        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null,
+                                        "lab-treebot-mortar-release frame={0} worldSeconds={1:F3} realSeconds={2:F3}", frame,
+                                        elapsed, realSeconds);
+                    }
+                    if (realSeconds - report.releaseRealSeconds >= 2f || frame - report.releaseFrame >= 240)
+                    {
+                        report.completed = true;
+                        coordinator.Save();
+                        return;
+                    }
+                    foreach (var projectile in InstanceTracker.GetInstancesList<ProjectileController>())
+                    {
+                        if (!projectile || projectile.owner != player.gameObject || report.projectileIndex < 0 ||
+                            projectile.catalogIndex != report.projectileIndex)
+                            continue;
+                        sample.roots.Add(ObserveNativeEffectRoot(projectile.gameObject, "projectile"));
+                        if (projectile.ghost)
+                            sample.roots.Add(ObserveNativeEffectRoot(projectile.ghost.gameObject, "ghost"));
+                    }
+                    if (report.impactIndex >= 0)
+                    {
+                        foreach (var effect in UnityEngine.Object.FindObjectsOfType<EffectComponent>())
+                            if ((int)effect.effectIndex == report.impactIndex)
+                                sample.roots.Add(ObserveNativeEffectRoot(effect.gameObject, "impact"));
+                    }
+                }
+                if (sample.roots.Count != 0)
+                    report.frames.Add(sample);
+            }
+            catch (Exception error)
+            {
+                report.error = error.GetBaseException().Message;
+                report.completed = true;
+                coordinator.Save();
+            }
+        }
+
         static EffectIndex RecordNativeEffect(GameObject prefab, out string name)
         {
             name = prefab ? prefab.name : null;
@@ -2404,6 +2499,7 @@ public sealed partial class PortSession
         {
             var surfaceObserver = coordinator.GetTeleporterWorldSession();
             return new NativeEffectTraceRoot { instanceId = root.GetInstanceID(), role = role, name = root.name,
+                                             position = root.transform.position,
                                              renderers = root.GetComponentsInChildren<Renderer>()
                                                              .Where(renderer => renderer.enabled)
                                                              .Select(renderer => surfaceObserver.ObserveOwnedSurface(renderer, false))
@@ -2449,7 +2545,10 @@ public sealed partial class PortSession
             if (coordinator.r.diagnosticMageBombRelease)
                 ObserveMageBombRelease(player, elapsed);
             if (coordinator.r.detailedVisualDiagnostics)
+            {
                 ObserveTreebotDisperse(player, elapsed);
+                ObserveTreebotMortar(player, elapsed);
+            }
             performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             coordinator.Check(coordinator.activeBodyClient.isConnected && player.networkIdentity.hasAuthority &&
                                   player.networkIdentity.clientAuthorityOwner == coordinator.activeBodyOwner &&

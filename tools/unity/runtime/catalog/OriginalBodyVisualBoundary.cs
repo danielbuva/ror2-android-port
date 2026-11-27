@@ -129,6 +129,9 @@ public sealed partial class PortSession
                                                                 "Treebot Disperse charge", unavailable);
             while (disperseCharge.MoveNext())
                 yield return disperseCharge.Current;
+            var mortar = new EntityStates.Treebot.Weapon.AimMortar2();
+            PresentConfiguredNativeEffect(mortar.endpointVisualizerPrefab, "Treebot Mortar endpoint", unavailable);
+            PresentConfiguredNativeEffect(mortar.projectilePrefab, "Treebot Mortar projectile", unavailable);
             // The projectile controller creates the detached ghost outside EffectCatalog.
             PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.ThrowNovabomb().projectilePrefab,
                                           "Mage Nano-Bomb projectile", unavailable);
