@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json.Linq;
 using RoR2;
+using RoR2.AsyncManagement;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -138,8 +139,21 @@ public sealed partial class PortSession
 
             // The normal swing is a configured PPtr. The finisher uses a native
             // address whose prefab must remain resident across stage transitions.
-            var finisher = EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab;
-            var address = finisher?.addressableReference;
+            var finisher = PrepareReferencedNativeEffect(EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab,
+                                                        "Croco combo finisher swing", unavailable);
+            while (finisher.MoveNext())
+                yield return finisher.Current;
+
+            // FireSpit makes the projectile through its configured native address.
+            // Present the detached ghost before the first combat director spawn.
+            var queenSpit = PrepareReferencedNativeEffect(EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab,
+                                                          "Beetle Queen acid projectile", unavailable);
+            while (queenSpit.MoveNext())
+                yield return queenSpit.Current;
+        }
+        IEnumerator PrepareReferencedNativeEffect(EntityStateGameObject reference, string effect, List<string> unavailable)
+        {
+            var address = reference?.addressableReference;
             if (address != null && address.RuntimeKeyIsValid())
             {
                 var handle = Addressables.LoadAssetAsync<GameObject>(address.RuntimeKey);
@@ -148,14 +162,14 @@ public sealed partial class PortSession
                 while (!handle.IsDone && Time.realtimeSinceStartup < deadline)
                     yield return null;
                 if (handle.IsDone && handle.Status == AsyncOperationStatus.Succeeded && handle.Result)
-                    presentation.PresentNativeEffectSource(handle.Result);
+                    coordinator.GetTeleporterWorldSession().PresentNativeEffectSource(handle.Result);
                 else
-                    unavailable.Add("Croco combo finisher swing: native asset load failed or timed out");
+                    unavailable.Add(effect + ": native asset load failed or timed out");
             }
-            else if (finisher?.directReference)
-                presentation.PresentNativeEffectSource(finisher.directReference);
+            else if (reference?.directReference)
+                coordinator.GetTeleporterWorldSession().PresentNativeEffectSource(reference.directReference);
             else
-                unavailable.Add("Croco combo finisher swing: native prefab reference missing");
+                unavailable.Add(effect + ": native prefab reference missing");
         }
         void PresentConfiguredNativeEffect(GameObject source, string effect, List<string> unavailable)
         {
