@@ -1509,6 +1509,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             )
             return receipt
         records, layouts, members = [], [], []
+        pack_types, pack_type_ids = [], {}
         resources = {}
         # Load only when needed: the player owner already shares this writer and
         # owns the qualified standalone Sprite recovery arithmetic.
@@ -1855,6 +1856,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             layout, _ = make_layout(
                 selected_member, member_records, [member["name"] for member in selected_members] if scene else (), engine, include_bodies=False
             )
+            base_type_id = len(pack_types)
+            pack_types.extend(layout["types"])
+            pack_type_ids.update(((selected_member["name"], row["path_id"]), base_type_id + row["type_id"]) for row in layout["objects"])
             by_identity = {row["path_id"]: row for row in member_records}
             serialized_path = stage.allocate()
             with serialized_path.open("xb") as serialized:
@@ -1899,6 +1903,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             "offset": data.tell(),
                             "bytes": row["body_bytes"],
                             "sha256": row["sha256"],
+                            "type_id": pack_type_ids[row["member"], row["path_id"]],
                         },
                         sort_keys=True,
                     )
@@ -1908,6 +1913,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                 receipt["objects"] += 1
                 receipt["object_bytes"] += row["body_bytes"]
         (output / "layout.json").write_text(json.dumps(json_layout({"members": layouts} if scene else layouts[0]), sort_keys=True, indent=2) + "\n")
+        (output / "types.json").write_text(json.dumps(json_layout(pack_types), sort_keys=True) + "\n")
         for selected, (path, before, _, _, _) in zip(profile["sources"], sources, strict=True):
             after = path.stat()
             if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns) or B.sha(path) != selected["sha256"]:
@@ -1923,7 +1929,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     raise ValueError("persisted object extent drift")
         receipt["outputs"] = {
             name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)}
-            for name in ("objects.bin", "index.jsonl", "layout.json", "payload/" + selected_bundle["name"])
+            for name in ("objects.bin", "index.jsonl", "layout.json", "types.json", "payload/" + selected_bundle["name"])
         }
         receipt["serialized_sha256"] = serialized_hashes if scene else serialized_hashes[selected_bundle["member"]]
         if comparison == "diagnostic":

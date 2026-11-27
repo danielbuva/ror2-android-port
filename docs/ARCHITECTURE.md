@@ -18,6 +18,12 @@ report records the completed catalog and loaded bundle digests.
 `accepted-output/catalog_compare.py` groups raw master body pointer changes
 and can join this report after matching those digests to the candidate APK.
 
+The object producer publishes its indexed final type table for bundle
+preparation. Preparation tracks SDK-generated materials, authored fieldless
+components and their current MonoScripts with an explicit pointer namespace.
+The emitter checks managed schema and current registry bytes, including for a
+generated MonoScript with no consumer in the selected closure.
+
 For retained staged prefabs, `accepted-output/staged_projectiles.py` updates the
 projectile components from the current object recipe, original prototype, SDK
 base schema and produced player registry. It checks reciprocal ownership by

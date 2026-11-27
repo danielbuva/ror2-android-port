@@ -1,5 +1,12 @@
 # Build recipes
 
+`owner-whole-game-generated-objects.json` supplies four typed records for
+canonical bundle preparation. It selects the permitted SDK default material,
+the current authored projectile adapter script, and the original fieldless
+component layout with two distinct owner bindings. The provenance, privacy,
+licensing and sensitive-content review covered the source selectors, pointer
+relationships and hashes. Serialized bodies, SDK files and receipts stay local.
+
 The objective-support recipe follows the staged canonical bundle for five
 references to camera parameters, materials, a pickup effect and a physics
 material. It also preserves the corresponding container preloads. The Commando
