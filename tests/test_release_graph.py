@@ -1666,6 +1666,10 @@ android.mkdir(parents=True)
             release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
             progress = []
 
+            def record_completion(name, reused):
+                if reused is not None:
+                    progress.append((name, reused))
+
             def dispatch():
                 return J.Dispatcher(
                     repo,
@@ -1677,7 +1681,7 @@ android.mkdir(parents=True)
                     {"bindings": {}},
                     "a" * 64,
                     python=[sys.executable],
-                    progress=lambda name, reused: progress.append((name, reused)),
+                    progress=record_completion,
                 )
 
             for _ in range(2):
