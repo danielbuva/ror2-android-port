@@ -107,6 +107,10 @@ class PhoneContentTests(unittest.TestCase):
                 {"name": "content", "hash": "a" * 32, "dependencies": ["shared"]},
                 {"name": "shared", "hash": "b" * 32, "dependencies": []},
             ]
+            type_names = {
+                "AnimatorController": "UnityEditor.Animations.AnimatorController",
+                "OcclusionCullingData": "OcclusionCullingData",
+            }
             request_path = attempt / "native-content-request.json"
             request_path.write_text(json.dumps(request))
             report = {
@@ -121,7 +125,7 @@ class PhoneContentTests(unittest.TestCase):
                     asset
                     | {
                         "loaded_name": asset.get("subasset", ""),
-                        "loaded_type": "OcclusionCullingData" if asset["type"] == "OcclusionCullingData" else "UnityEngine." + asset["type"],
+                        "loaded_type": type_names.get(asset["type"], "UnityEngine." + asset["type"]),
                     }
                     for asset in request["assets"]
                 ],

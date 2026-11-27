@@ -2436,6 +2436,9 @@ materials, shaders, textures, sprites and supported native asset roots): snapsho
 and hash the explicit request, load every address with its exact engine type, record the
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
+The editor reports native AnimatorController roots as
+`UnityEditor.Animations.AnimatorController`; their original Addressables
+locations use `UnityEngine.RuntimeAnimatorController`.
 The request may pin dependency bundles in load order. The fixture opens them
 before loading root assets and unloads the full set in reverse order. An
 explicit Material expectation checks the loaded shader name and each saved
