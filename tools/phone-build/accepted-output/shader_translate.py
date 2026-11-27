@@ -1,4 +1,4 @@
-"""Translate a source DXBC vertex/fragment Shader leaf to Unity Vulkan."""
+"""Translate bounded source DXBC Shader and ComputeShader records to Unity Vulkan."""
 
 import argparse
 from collections import defaultdict
@@ -76,7 +76,7 @@ def stage_parameters(layout, vertex):
     return rows, descriptors
 
 
-def compile_stage(tools, directory, index, dxbc, descriptors, *, vertex):
+def compile_spirv(tools, directory, index, dxbc, descriptors, *, vertex=False):
     source = directory / f"{index}.dxbc"
     spirv = directory / f"{index}.spv"
     source.write_bytes(dxbc)
@@ -86,7 +86,7 @@ def compile_stage(tools, directory, index, dxbc, descriptors, *, vertex):
         subprocess.run([tools["spirv_cross"], spirv, "--version", "450", "--vulkan-semantics", "--flip-vert-y", "--output", glsl], check=True)
         subprocess.run([tools["glslang"], "-V", "--target-env", "vulkan1.0", "-o", spirv, glsl], check=True)
     subprocess.run([tools["spirv_val"], "--target-env", "vulkan1.0", spirv], check=True)
-    return subprocess.run([tools["smolv"]], input=spirv.read_bytes(), capture_output=True, check=True).stdout
+    return spirv.read_bytes()
 
 
 def translate_tree(original, directory, tools):
@@ -107,7 +107,8 @@ def translate_tree(original, directory, tools):
             rows, descriptors = stage_parameters(layout, vertex)
             if vertex:
                 rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))
-            code = compile_stage(tools, directory, index, program, descriptors, vertex=vertex)
+            spirv = compile_spirv(tools, directory, index, program, descriptors, vertex=vertex)
+            code = subprocess.run([tools["smolv"]], input=spirv, capture_output=True, check=True).stdout
             stages[stage][tuple(record["keywords"])] = (rows, code, entry["m_ShaderRequirements"])
 
     vertices, fragments = stages["progVertex"], stages["progFragment"]
@@ -149,6 +150,45 @@ def translate_tree(original, directory, tools):
     return tree
 
 
+def translate_compute(original, directory, tools):
+    tree = shader.deepcopy(original)
+    (renderer,) = [row for row in tree["variants"] if row["targetRenderer"] == 2]
+    if renderer["targetLevel"] != 0 or not renderer["resourcesResolved"] or not renderer["kernels"]:
+        raise ValueError("unqualified DXBC compute renderer")
+    renderer["targetRenderer"] = 21
+    tree["variants"] = [renderer]
+    for index, declaration in enumerate(renderer["kernels"]):
+        if declaration["globalKeywords"] or declaration["localKeywords"]:
+            raise ValueError("compute keyword variants require qualification")
+        ((keywords, kernel),) = declaration["variantMap"]
+        if keywords or kernel["inBuffers"] or kernel["builtinSamplers"] or not bytes(kernel["code"]).startswith(b"DXBC"):
+            raise ValueError("unqualified DXBC compute resources or code")
+        textures = kernel["textures"]
+        constants = kernel["cbs"]
+        (storage,) = kernel["outBuffers"]
+        if (
+            len(textures) > 1
+            or any(row["texDimension"] != 2 for row in textures)
+            or len(constants) > 1
+            or storage["texDimension"] != -1
+            or any(row["samplerBindPoint"] != -1 or row["generatedName"] for row in [*textures, *constants, storage])
+        ):
+            raise ValueError("unqualified compute binding layout")
+        # Images and storage share set 0; constants use set 1. Unity encodes
+        # the descriptor set and the writable-buffer flag in bindPoint.
+        descriptors = []
+        for rows, kind, descriptor_set, start, flag in (
+            (textures, "texture", 0, 0, 0),
+            ([storage], "storage", 0, len(textures), 0x2000000),
+            (constants, "cbv", 1, 0, 0),
+        ):
+            for slot, row in enumerate(rows, start):
+                descriptors.extend((kind, str(row["bindPoint"]), str(descriptor_set), str(slot)))
+                row["bindPoint"] = flag | (descriptor_set << 16) | slot
+        kernel["code"] = compile_spirv(tools, directory, index, bytes(kernel["code"]), descriptors)
+    return tree
+
+
 def source_records(root, records):
     files = defaultdict(lambda: defaultdict(list))
     destinations = set()
@@ -176,8 +216,8 @@ def source_records(root, records):
                     if extent is None:
                         raise ValueError(f"original Shader is absent: {path.name}/{member}/{source['path_id']}")
                     typ = metadata["types"][extent["type_id"]]
-                    if typ["class_id"] != 48:
-                        raise ValueError("original record is not Shader48")
+                    if typ["class_id"] not in (48, 72):
+                        raise ValueError("original record is not Shader or ComputeShader")
                     stream.seek(metadata["data_offset"] + extent["offset"])
                     body = objects.B.exact(stream, extent["bytes"])
                     if "body_sha256" in source and hashlib.sha256(body).hexdigest() != source["body_sha256"]:
@@ -208,7 +248,8 @@ def produce(request):
             stage_dir = directory / str(len(rows))
             stage_dir.mkdir()
             node = objects.W.shader_node(typ["tree"])
-            tree = translate_tree(objects.W.read_shader_body(node, original), stage_dir, request["tools"])
+            translate = translate_tree if typ["class_id"] == 48 else translate_compute
+            tree = translate(objects.W.read_shader_body(node, original), stage_dir, request["tools"])
             body = objects.W.write_shader_body(node, tree)
             rows.append(
                 dict(target, offset=stream.tell(), bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), type_id=objects.record_type(typ, types, type_ids))

@@ -145,6 +145,55 @@ class NativeUI(unittest.TestCase):
 
 
 class ComputeRecords(unittest.TestCase):
+    def test_dxbc_compute_metadata_matches_storage_descriptor_bindings(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+
+        def resource(name, dimension):
+            return dict(name=name, generatedName="", bindPoint=0, samplerBindPoint=-1, texDimension=dimension)
+
+        original = {
+            "m_Name": "Fixture",
+            "variants": [
+                dict(
+                    targetRenderer=2,
+                    targetLevel=0,
+                    resourcesResolved=True,
+                    kernels=[
+                        dict(
+                            name="Accumulate",
+                            globalKeywords=[],
+                            localKeywords=[],
+                            variantMap=[
+                                (
+                                    "",
+                                    dict(
+                                        cbs=[resource("Params", -1)],
+                                        textures=[resource("Image", 2)],
+                                        builtinSamplers=[],
+                                        inBuffers=[],
+                                        outBuffers=[resource("Counters", -1)],
+                                        code=b"DXBC",
+                                        threadGroupSize=[4, 4, 1],
+                                    ),
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ],
+        }
+        with patch.object(translator, "compile_spirv", return_value=b"SPIR-V") as compile_spirv:
+            tree = translator.translate_compute(original, Path("fixture"), {})
+        compile_spirv.assert_called_once_with({}, Path("fixture"), 0, b"DXBC", ["texture", "0", "0", "0", "storage", "0", "0", "1", "cbv", "0", "1", "0"])
+        variant = tree["variants"][0]
+        kernel = variant["kernels"][0]["variantMap"][0][1]
+        self.assertEqual(variant["targetRenderer"], 21)
+        self.assertEqual([kernel[key][0]["bindPoint"] for key in ("cbs", "textures", "outBuffers")], [0x10000, 0, 0x2000001])
+        self.assertEqual(kernel["code"], b"SPIR-V")
+        self.assertEqual(kernel["threadGroupSize"], [4, 4, 1])
+        self.assertEqual(original["variants"][0]["targetRenderer"], 2)
+
     def test_same_buffer_name_can_have_distinct_kernel_layouts(self):
         compute = N.module("_compute_fixture", Path(N.__file__).with_name("shader_compute.py"))
         names = {"First": 16, "Second": 32, "Third": 16}

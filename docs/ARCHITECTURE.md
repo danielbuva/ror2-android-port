@@ -8246,8 +8246,8 @@ state and keyword registry, with all eight keyword combinations in the Vulkan
 pass. The typed pack binds the replacement to its existing Commando prefab
 bundle member and path ID so that Material references keep their target.
 
-The bounded `shader_translate.py` host diagnostic takes a single leaf or a
-pinned `typed_records` profile of original vertex/fragment leaves. It reads
+The bounded `shader_translate.py` host diagnostic takes a single record or a
+pinned `typed_records` profile of original Shader and ComputeShader records. It reads
 each source member once and validates the selected object bodies. It translates
 both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform with
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
@@ -8258,7 +8258,11 @@ object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
 matched the two ramp endpoint pixels from the SDK control. The fixture
 owns the temporary draw resources and the shared runner owns package removal
-and display sleep. Whole-game and ComputeShader coverage remain open.
+and display sleep. The ComputeShader path preserves the source kernel and
+workgroup tables, remaps storage, constants and sampler-free 2D image bindings,
+and writes bare Vulkan SPIR-V into the native kernel. The original histogram
+clear and gather modules pass Vulkan 1.0 validation. ComputeShader player
+dispatch and whole-game coverage remain open.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the

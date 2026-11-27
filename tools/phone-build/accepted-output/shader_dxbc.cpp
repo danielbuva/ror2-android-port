@@ -23,6 +23,9 @@ static bool descriptor_argument(std::string_view text, vkd3d_shader_resource_bin
         row.type = VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER;
     } else if (text == "texture") {
         row.type = VKD3D_SHADER_DESCRIPTOR_TYPE_SRV;
+    } else if (text == "storage") {
+        row.type = VKD3D_SHADER_DESCRIPTOR_TYPE_UAV;
+        row.flags = VKD3D_SHADER_BINDING_FLAG_BUFFER;
     } else {
         return false;
     }
@@ -42,6 +45,7 @@ int main(int argc, char **argv)
         return 1;
     }
     std::vector<vkd3d_shader_resource_binding> bindings;
+    bool storage_buffers = false;
     for (int i = 3; i < argc; i += 4) {
         vkd3d_shader_resource_binding row{};
         if (!descriptor_argument(argv[i], row) ||
@@ -53,6 +57,7 @@ int main(int argc, char **argv)
         }
         row.shader_visibility = VKD3D_SHADER_VISIBILITY_ALL;
         row.binding.count = 1;
+        storage_buffers |= row.type == VKD3D_SHADER_DESCRIPTOR_TYPE_UAV;
         bindings.push_back(row);
     }
 
@@ -72,6 +77,13 @@ int main(int argc, char **argv)
     request.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
     request.source_name = argv[1];
     request.log_level = VKD3D_SHADER_LOG_WARNING;
+    const vkd3d_shader_compile_option storage_buffer_option{
+        VKD3D_SHADER_COMPILE_OPTION_BUFFER_UAV, VKD3D_SHADER_COMPILE_OPTION_BUFFER_UAV_STORAGE_BUFFER,
+    };
+    if (storage_buffers) {
+        request.options = &storage_buffer_option;
+        request.option_count = 1;
+    }
     vkd3d_shader_code spirv{};
     char *messages = nullptr;
     const int status = vkd3d_shader_compile(&request, &spirv, &messages);
