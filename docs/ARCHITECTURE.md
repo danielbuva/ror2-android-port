@@ -8437,6 +8437,10 @@ both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform wi
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
 linked envelope. It feeds source layouts through the existing
 `shader_produce.py` parameter writer and emits a typed replacement pack.
+For shaders with ordinary vertex and fragment passes, the translator retains
+subshader and pass order and render state. The shared record writer merges
+the per-pass Vulkan tables and relocates their program and parameter indices
+into the Shader's compressed blob.
 The profile run closes the body stream and pins its index, type table and
 object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
