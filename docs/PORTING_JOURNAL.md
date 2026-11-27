@@ -5156,6 +5156,21 @@ Evidence: `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
 `multipass-terrain-draw-device-02/terminal.done.json` and
 `signed-multipass-device-01/terminal.done.operation.json`. Linked Terrain draws
 and whole-game scoring remain open.
+## J1568 — Verify signed native BC3 texture production on Android
+
+2026-11-27. Three original BC3 Texture2Ds (20 mips) covered colour, UI alpha
+and packed A/G normals. All four pack sizes and SHA-256s matched. The signed
+ARM64 producer took 18.93 s at 55.1 MiB peak child RSS and 3.30 MiB net stage
+use, with 32 °C battery at admission and 64.9 °C peak CPU/GPU (0 s above 80 °C).
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+Evidence `work/coordination/p1-textures/phone-bc3-1127/device-retry/terminal.done.json` (`92e461ea`).
+The 12-record, 72-mip cohort also matched all four pins in 275.37 s at
+36.99 MiB peak child RSS and 6.72 MiB net stage use, with a 33 °C admission
+battery and 68.0 °C peak CPU/GPU (0 s above 80 °C). Cohort evidence
+`work/coordination/p1-textures/phone-bc3-cohort-1127/device/terminal.done.json` (`032003df`).
+The runner removed both toolhost installs and released the leases.
+Whole-game production, canonical integration and in-game visuals remain open.
+
 ## J1567 — Run detached device jobs through the shared FIFO
 
 2026-11-27. Detached sessions waited for the shared lease and completed
