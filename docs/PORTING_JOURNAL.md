@@ -5115,3 +5115,14 @@ and 17.28 MiB net stage use. Peak CPU/GPU was 60.5 °C at admission, with
 Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
 Evidence `work/coordination/p1-phonepipe/2026-11-27/signed-texture-pins/terminal.done.json`.
 Unity typed load and gameplay for this fixture remain open.
+## J1565 — Draw original Cloud Intersection Remap on Android Vulkan
+
+2026-11-27. The exact Unity fixture drew the original-derived directional
+plain and instanced variants with depth fade disabled. Vulkan matched the
+transparent red mask, both opaque green instances, and the untouched blue gap.
+APK SHA-256 `0d5854c11e55776236430b5f76520c20693ca821ef0e9072328d72267f154b5d`
+(source `bf0dedbb`). Evidence is under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `intersection-vulkan-draw-device-01/terminal.done.json`.
+Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
+The runner removed the fixture, slept the OLED and released the lease.
+Linked native Materials and depth-fade rendering remain open.
