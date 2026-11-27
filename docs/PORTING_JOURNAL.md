@@ -5197,3 +5197,17 @@ CPU/GPU peaked at 64.1 °C with zero pauses or time above 80 °C.
 Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
 Evidence `work/coordination/p1-textures/phone-bc3-sdk-bands-1127/device/terminal.done.operation.json`.
 The signed production SDK descriptor and play verification remain open.
+## J1574 — Draw Cloud Remap and reproduce its signed Vulkan pack
+
+2026-11-27. The phone producer retained 992 Cloud Remap and 16 fallback
+VertexLit program pairs. Exact Unity loaded both Shader records. Bundle preparation
+kept the original fallback path ID and relocated its file ID from 1 to 0.
+APK `00cfd49d24966c8947b400d1549c0566776d48579a50da7ed36444e5dc5208d8`
+(source `cf3fb91f`) matched opaque red and green draws and the blue gap on Vulkan.
+The signed Android bundle `bd674ecb57f00d2912ce363288969fa02f885d37dd5b0734bc0c00b8c55983bd`
+matched the three host artifacts in 570.2 s with 132.8 MiB peak child RSS,
+66.7 MiB stage storage and 69.2 °C peak CPU/GPU temperature.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`cloud-remap-draw-device-01/terminal.done.json` and
+`signed-cloud-remap-device-04/signed_artifact.json`. Whole-game scoring and
+linked Material rendering remain open.

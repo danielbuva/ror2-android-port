@@ -36,6 +36,7 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32 high;
         public Color32[] outlineSamples;
         public Color32[] intersectionSamples;
+        public Color32[] cloudRemapSamples;
         public bool passed;
         public string failure;
     }
@@ -296,6 +297,7 @@ public sealed class ContentFixture : MonoBehaviour
             if (shader.name == "Unlit/OutlineHighlightNew") DrawOutline(shader, report);
             else if (shader.name == "Hopoo Games/FX/Cloud Intersection Remap") DrawIntersection(shader, report);
             else if (shader.name == "Hidden/TerrainEngine/TerrainLayerUtils") DrawTerrainLayers(shader, report);
+            else if (shader.name == "Hopoo Games/FX/Cloud Remap") DrawCloudRemap(shader, report);
             else DrawAnimateAlpha(shader, report);
         }
         catch (Exception error) { report.failure = error.Message; }
@@ -712,6 +714,80 @@ public sealed class ContentFixture : MonoBehaviour
             Destroy(mesh);
             Destroy(mainMask);
             Destroy(ramp);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawCloudRemap(Shader shader, ShaderDrawReport report)
+    {
+        const string directional = "DIRECTIONAL";
+        bool previousDirectional = Shader.IsKeywordEnabled(directional);
+        var material = new Material(shader);
+        var transparent = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var ramp = new Texture2D(2, 1, TextureFormat.RGBA32, false, true) {
+            filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp
+        };
+        var mesh = new Mesh();
+        var pixels = new Texture2D(32, 1, TextureFormat.RGBA32, false, true);
+        var target = RenderTexture.GetTemporary(32, 32, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        var previous = RenderTexture.active;
+        try
+        {
+            transparent.SetPixel(0, 0, Color.clear);
+            transparent.Apply();
+            ramp.SetPixels(new[] { Color.red, Color.green });
+            ramp.Apply();
+            material.SetTexture("_RemapTex", ramp);
+            material.SetColor("_TintColor", Color.white);
+            material.SetInt("_SrcBlend", (int)BlendMode.One);
+            material.SetInt("_DstBlend", (int)BlendMode.Zero);
+            material.SetInt("_Cull", (int)CullMode.Off);
+            material.SetInt("_ZTest", (int)CompareFunction.Always);
+            foreach (string property in new[] { "_Boost", "_ExternalAlpha", "_AlphaBoost", "_Fade" })
+                material.SetFloat(property, 1);
+            material.SetFloat("_AlphaBias", 0);
+
+            mesh.vertices = new[] {
+                new Vector3(-0.15f, -0.2f, 0.5f), new Vector3(-0.15f, 0.2f, 0.5f),
+                new Vector3(0.15f, 0.2f, 0.5f), new Vector3(0.15f, -0.2f, 0.5f)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            mesh.uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+            mesh.normals = new[] { Vector3.up, Vector3.up, Vector3.up, Vector3.up };
+            mesh.colors = new[] { Color.white, Color.white, Color.white, Color.white };
+            var low = new MaterialPropertyBlock();
+            var high = new MaterialPropertyBlock();
+            low.SetTexture("_MainTex", transparent);
+            high.SetTexture("_MainTex", Texture2D.whiteTexture);
+            using var commands = new CommandBuffer();
+            commands.SetRenderTarget(target);
+            commands.ClearRenderTarget(true, true, Color.blue);
+            commands.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+            commands.EnableShaderKeyword(directional);
+            commands.DrawMesh(mesh, Matrix4x4.Translate(new Vector3(-0.6f, 0, 0)), material, 0, 0, low);
+            commands.DrawMesh(mesh, Matrix4x4.Translate(new Vector3(0.6f, 0, 0)), material, 0, 0, high);
+            Graphics.ExecuteCommandBuffer(commands);
+
+            RenderTexture.active = target;
+            pixels.ReadPixels(new Rect(0, 16, 32, 1), 0, 0, false);
+            report.cloudRemapSamples = new Color32[] { pixels.GetPixel(6, 0), pixels.GetPixel(25, 0), pixels.GetPixel(16, 0) };
+            var expected = new Color32[] { Color.red, Color.green, Color.blue };
+            for (int i = 0; i < expected.Length; ++i)
+            {
+                if (!report.cloudRemapSamples[i].Equals(expected[i]))
+                    throw new Exception("Cloud Remap sample " + i + " did not match the expected RGBA");
+            }
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            if (!previousDirectional) Shader.DisableKeyword(directional);
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(target);
+            Destroy(material);
+            Destroy(transparent);
+            Destroy(ramp);
+            Destroy(mesh);
             Destroy(pixels);
         }
     }
