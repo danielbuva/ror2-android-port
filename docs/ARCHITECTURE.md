@@ -5779,9 +5779,14 @@ guard, while the unfinished native waypoint still admits the existing stalled-pa
 jump/replan request. `test_siren_gameplay_route_ownership.py` executes this
 policy against the retained Siren detour failure and recovery cases.
 On the assisted Gold Shores route, `GoldshoresBoundary` keeps moving toward the
-shrine while it needs gold and combat has no in-bounds target. When the route
-changes objectives, the existing navigator expires the previous terrain
-recovery window so the new objective can request a native graph route.
+shrine or beacon while it needs gold and combat has no in-bounds target. When
+the route changes objectives, the existing navigator expires the previous
+terrain recovery window so the new objective can request a native graph route.
+Before activating the original mission, the boundary regenerates the encounter's
+explicit reward selector against the live Run and pickup catalog. During the
+assisted fight it aims through normal player input at the scripted squad's boss
+and records the native reward droplet's network ID after defeat. The original
+mission and BossGroup own vulnerability, damage, reward spawn and return.
 The assisted selector retains its approach egg across native detours and combat
 input yields, revalidating membership in the current source cohort each frame.
 An attackable egg still takes priority; a dead or removed target falls back to
