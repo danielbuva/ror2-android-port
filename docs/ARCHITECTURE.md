@@ -6447,6 +6447,14 @@ decoder on each block, tracks CPU time and peak RSS, and returns a decoded hash
 and block count. The runner verifies those against the request and owns thermal
 supervision, receipt collection and scratch cleanup.
 
+The current `./dev converter-stage` action uses the same emission runner and
+the installed toolhost's Python runtime. `owner-apk/lab_stage.py` runs one
+registered content producer against a pinned request under the toolhost's
+existing owner-input tree. The host stages the current committed producer
+closure and a small descriptor. The phone checks the input pins, hashes the
+declared artifacts, and returns the stage and thermal receipts with an optional
+scoreboard. The runner removes attempt scratch and preserves the input tree.
+
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the
 current signed audio roster and fresh private source inputs. The code owner

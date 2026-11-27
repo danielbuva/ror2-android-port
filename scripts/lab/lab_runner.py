@@ -553,6 +553,8 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
         return 0
     result = dict(success=False)
     runner = Runner(repo, {})
+    if request.get("operation") == "converter-stage":
+        runner.charge_override = False
     if resume or restage:
         runner.resume_state = done.parent / "device-state.json"
 
@@ -594,6 +596,42 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
             signal.signal(number, handler)
         print("WAITING done-file " + str(done), flush=True)
     return 0 if result["success"] else 1
+
+
+def converter_stage(argv):
+    import argparse
+
+    from toolhost_emission import prepare_stage
+
+    parser = argparse.ArgumentParser(description="Current lab action: run a converter stage against existing toolhost inputs")
+    parser.add_argument("stage", help="Hyphenated stem of an existing converter producer")
+    parser.add_argument("--request", type=Path, required=True)
+    parser.add_argument("--workstream", required=True, help="Dispatcher device grant owner")
+    parser.add_argument("--dry-run", action="store_true", help="Validate and repin current producer paths without contacting a device")
+    args = parser.parse_args(argv)
+    done = None
+    try:
+        done = Path(json.loads(args.request.read_bytes())["done_file"])
+        path = prepare_stage(args.request, Path.cwd(), args.stage, dry_run=args.dry_run)
+        if path is None:
+            return 0
+        return local_emission(path, workstream=args.workstream)
+    except (KeyError, OSError, ValueError, subprocess.SubprocessError) as error:
+        if (
+            not args.dry_run
+            and done
+            and done.is_absolute()
+            and done == done.resolve()
+            and done.is_relative_to((Path.cwd() / "work").resolve())
+            and not done.exists()
+        ):
+            from toolhost_emission import write
+
+            write(done, dict(success=False, first_failure=str(error)))
+            print("WAITING done-file " + str(done), flush=True)
+        else:
+            print(str(error), file=sys.stderr)
+        return 1
 
 
 def main(env=os.environ):
