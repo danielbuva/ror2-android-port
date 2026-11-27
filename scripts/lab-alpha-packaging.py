@@ -308,6 +308,7 @@ def main(argv=None):
             require("allow_test_notifications" in inspect.signature(INSTALLER.Phone).parameters, "merge-installer-notification-authorization-first")
             kwargs["allow_test_notifications"] = True
         INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(ROOT / "work/coordination/alpha-packaging-acceptance")
+        print("INFO alpha-packaging evidence=" + INSTALLER.DIAGNOSTICS.directory.relative_to(ROOT).as_posix(), flush=True)
         if args.staged_update_request:
             phase = "staged-update-host-preflight"
             acquisition = StagedUpdate(INSTALLER, require, json.loads(args.staged_update_request.read_bytes()))
