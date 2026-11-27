@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Run synthetic update acceptance through the real Android installer UI.
+"""Run synthetic Android update acceptance or preflight a local alpha pair.
 
 Run only through /lab with an explicitly authorized device alias.
 No game, existing alpha installation,
 production key, arbitrary private directory, or remote release is used. The
 runner toolhost job builds the exact-ref public tool APK; this script validates
 that receipt and uses a fresh independent test publisher key.
+The separate host preflight uses the pinned installer's provisioned public trust
+to verify two local signed source graphs. It performs no phone operations.
 All generated binaries/keys stay on the lab host/device, never in GitHub output.
 """
 
@@ -2662,6 +2664,12 @@ def main(argv=None):
     parser.add_argument(
         "--host-only", action="store_true", help="Build/sign synthetic fixtures on the lab host, without any phone operation or phone PASS claim"
     )
+    parser.add_argument(
+        "--preflight-alpha-update",
+        nargs=5,
+        metavar=("INSTALLER_APK", "SHA256", "INSTALLER_VERSION", "BASELINE_DIR", "UPDATE_DIR"),
+        help="Current host-only check of local publisher signatures, runnable APK closures and the signed manifest diff",
+    )
     parser.add_argument("--timeout", type=int, default=1200)
     parser.add_argument(
         "--qualify-phone-flow",
@@ -2699,6 +2707,19 @@ def main(argv=None):
         "--diagnostic-run", help="Inspection selection: UI newest/private run basename, or toolhost numeric lab run ID; never prints paths or raw logs"
     )
     args = parser.parse_args(argv)
+    if args.preflight_alpha_update:
+        if any(value is not None and value is not False for key, value in vars(args).items() if key not in {"preflight_alpha_update", "timeout"}):
+            parser.error("--preflight-alpha-update is a standalone host check")
+        sys.path.insert(0, str(ROOT / "scripts/lab"))
+        from installed_alpha import preflight_update
+
+        apk, digest, version, baseline, update = args.preflight_alpha_update
+        try:
+            result = preflight_update(apk, digest, int(version), baseline, update)
+        except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+            parser.exit(1, f"Alpha update preflight failed: {error}\n")
+        print(json.dumps(result, indent=2))
+        return 0
     if args.emission_request:
         sys.path.insert(0, str(ROOT / "scripts/lab"))
         operation = module("lab_toolhost_emission", ROOT / "scripts/lab/toolhost_emission.py")
