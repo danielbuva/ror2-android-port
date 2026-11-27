@@ -3230,7 +3230,11 @@ the Loader test input and records the stock hook and motor at fixed ticks.
 damage for projectile comparison steps. `FrameBurst.cs` captures rendered frames
 around the cast for timestamped video.
 `tools/pc-reference/compare.py` pairs a hashed PC frame with a selected
-Android capture. See the [PC reference recorder](../tools/pc-reference/README.md).
+Android capture. `./dev pc-reference compare batch` is the current offline
+comparison path: `tools/pc-reference/compare_batch.py` owns frame alignment,
+advisory image metrics, step-aligned audio event comparison, and private
+JSON/Markdown reports. It reads existing captures without launching either
+platform. See the [PC reference recorder](../tools/pc-reference/README.md).
 The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |

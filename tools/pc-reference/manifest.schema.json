@@ -10,6 +10,14 @@
     "error": {"type": "string"},
     "build": {"type": "string", "pattern": "^[0-9]+$"},
     "managed_sha256": {"$ref": "#/$defs/sha256"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "resolution": {
+      "type": "object", "required": ["width", "height"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1}
+      }
+    },
     "scenarios": {"type": "array", "items": {"$ref": "#/$defs/scenario"}}
   },
   "$defs": {
@@ -24,6 +32,7 @@
         "exit_code": {"type": "integer"},
         "scene": {"type": "string"},
         "seed": {"type": "string"},
+        "audio_events": {"type": "string"},
         "route": {"enum": ["native-first-stage", "assisted-direct-entry"]},
         "sha256": {
           "type": "object",
