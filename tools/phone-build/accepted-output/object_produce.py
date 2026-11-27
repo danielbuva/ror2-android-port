@@ -1436,7 +1436,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         raise ValueError("object codec input drift")
     scene = "members" in profile["bundle"]
     required = {"input_id", "sources", "bundle"} | (set() if scene else {"objects"})
-    if set(profile) - {"sdk", "managed"} != required or profile["input_id"] != M.INPUT_ID:
+    if set(profile) - {"sdk", "managed", "pack_only"} != required or profile["input_id"] != M.INPUT_ID:
         raise ValueError("unknown object input profile")
     pc = pc.resolve(strict=True)
     parent = output.parent.resolve(strict=True)

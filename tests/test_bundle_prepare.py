@@ -72,6 +72,7 @@ class BundlePreparationTests(unittest.TestCase):
                 json.dumps(
                     dict(
                         input_id=P.O.M.INPUT_ID,
+                        pack_only=True,
                         bundle=dict(name=destination[0], member=destination[1], externals=[], comparison="diagnostic"),
                         sources=[dict(path=original.name, member=original.name, sha256=P.O.B.sha(original))],
                         objects=[
@@ -88,9 +89,13 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertTrue(result["success"])
             self.assertEqual(json.loads((pack / "types.json").read_text())[index["type_id"]], P.O.json_layout(layout))
             binding = dict(destination=destination, record_source=destination, generated="sdk_material", pointer_namespace=[destination[:2]])
-            compiled = G.Graph(root, {}).bundle_bindings([dict(binding, record=P.O.B.sha(profile))], *destination[:2])
+            graph = G.Graph(root, {})
+            compiled = graph.bundle_bindings([dict(binding, record=P.O.B.sha(profile))], *destination[:2])
             self.assertEqual(compiled["unresolved"], [])
             self.assertEqual(compiled["bindings"], [dict(binding, supplier=P.O.B.sha(profile))])
+            job = graph.jobs["recipe/jobs/owner-material.json"]
+            self.assertEqual(job["outputs"], {})
+            self.assertNotIn("catalog_bundle", job["artifacts"])
             binding["supplier"] = "material"
             policy = root / "policy.json"
             request.update(

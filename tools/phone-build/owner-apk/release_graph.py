@@ -467,7 +467,7 @@ class Graph:
             artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
-        if producer == "object_produce":
+        if producer == "object_produce" and not profile.get("pack_only"):
             target = "payload/" + ("windows-shaders.bundle" if "original_bundle" in profile else profile["bundle"]["name"])
             outputs[target] = target
             artifacts["catalog_bundle"] = target

@@ -21,6 +21,7 @@ and can join this report after matching those digests to the candidate APK.
 The object producer publishes its indexed final type table for bundle
 preparation. Preparation tracks SDK-generated materials, authored fieldless
 components and their current MonoScripts with an explicit pointer namespace.
+The release graph uses this object job only as a record supplier.
 The emitter checks managed schema and current registry bytes, including for a
 generated MonoScript with no consumer in the selected closure.
 

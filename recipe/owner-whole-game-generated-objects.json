@@ -1,4 +1,5 @@
 {
+  "pack_only": true,
   "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
   "sdk": {
     "path": "Contents/Resources/unity editor resources",
