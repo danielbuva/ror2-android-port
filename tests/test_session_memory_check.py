@@ -73,7 +73,7 @@ class SessionMemoryCheckTests(unittest.TestCase):
     def test_native_loss_returns_through_menu_and_keeps_actual_cleanup_contract(self):
         from test_session_cleanup_check import abandoned_report, completed_report, live_report, ordinary_start_report, session_one_defeat_report
 
-        for fault in (None, "profile", "cleanup", "session", "stalled-menu"):
+        for fault in (None, "profile", "cleanup", "session", "stalled-menu", "unfocused-menu"):
             with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
                 root = Path(temporary)
                 out = root / "evidence"
@@ -84,12 +84,18 @@ class SessionMemoryCheckTests(unittest.TestCase):
                 device.read_receipt.return_value = {"persistentDataPath": "/fixture/Android/data/dev.ror2lab.arm64/files"}
                 device.evidence_directory.return_value = out
                 device.launch.return_value = {"pid": "314"}
+                window_samples = 0
 
                 def shell(*args, **kwargs):
+                    nonlocal window_samples
                     if args == ("wm", "size"):
                         return "Physical size: 1280x800"
                     if args == ("dumpsys", "window", "displays"):
-                        return "mDisplayRotation=ROTATION_0"
+                        window_samples += kwargs.get("timeout") == 5
+                        focus = (
+                            "Window{1 dev.ror2lab.arm64/com.unity3d.player.UnityPlayerActivity}" if window_samples > 1 and fault != "unfocused-menu" else "null"
+                        )
+                        return f"  Display: mDisplayId=0\n  mCurrentFocus={focus}\nmDisplayRotation=ROTATION_0"
                     return ""
 
                 device.sh.side_effect = shell
@@ -148,9 +154,21 @@ class SessionMemoryCheckTests(unittest.TestCase):
                 result = json.loads((out / "result.json").read_text())
                 self.assertEqual(result["success"], fault is None)
                 # One Return to menu tap despite two identical defeat reports; never Restart.
-                self.assertEqual(device.sh.call_args_list.count(mock.call("input", "tap", "610", "420")), 0 if fault == "stalled-menu" else 1)
+                self.assertEqual(
+                    device.sh.call_args_list.count(mock.call("input", "tap", "610", "420")), 0 if fault in {"stalled-menu", "unfocused-menu"} else 1
+                )
                 self.assertNotIn(mock.call("input", "tap", "207", "420"), device.sh.call_args_list)
+                start_tap = mock.call("input", "-d", "0", "tap", "100", "200")
+                samples = device.sh.call_args_list
+                starts = [index for index, call in enumerate(samples) if call == start_tap]
+                if fault in {None, "unfocused-menu"}:
+                    if fault is None:
+                        self.assertEqual(samples[starts[1] - 2 : starts[1]], [mock.call("dumpsys", "window", "displays", timeout=5)] * 2)
+                    else:
+                        self.assertEqual(result["stop"], "offline-menu-focus-not-restored")
+                    self.assertEqual(result["cooldowns"][0]["display_zero_focus"], fault is None)
                 if fault is None:
+                    self.assertEqual(len(starts), 3)
                     self.assertEqual([row["ending"] for row in result["session_outcomes"]], ["abandon", "loss", "abandon"])
                     self.assertTrue(all(row["host_ready_to_end_request_seconds"] > 0 for row in result["session_outcomes"]))
                     self.assertEqual([row["world_seconds"] for row in result["session_outcomes"]], [10.0, 10.0, 10.0])
@@ -163,7 +181,7 @@ class SessionMemoryCheckTests(unittest.TestCase):
                 else:
                     cooldown.assert_called_once()  # Session 1 passed; the second ending failed before another cooldown.
                     self.assertEqual(result["sessions_observed"], 1)
-                    self.assertEqual(device.sh.call_args_list.count(mock.call("input", "tap", "100", "200")), 2)
+                    self.assertEqual(len(starts), 1 if fault == "unfocused-menu" else 2)
                     if fault == "stalled-menu":
                         self.assertEqual(result["stop"], "offline-menu-start-not-acknowledged")
                         self.assertEqual(result["first_failure"], "session 2 stayed at the menu after Start")

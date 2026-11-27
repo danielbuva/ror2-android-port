@@ -19,6 +19,7 @@ from device import PACKAGE
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from nova_bridge import current_errors
 import session_cleanup_check as cleanup
+from touch_gesture import owned_display_zero_focus
 from session_cleanup_check import (
     ABANDON_STARTUP_TIMEOUT_SECONDS,
     DEFAULT_SURVIVOR,
@@ -401,10 +402,19 @@ def check_session_memory(
                     if session > 1 and _between_sessions:
                         pause_started = time.monotonic()
                         cooled = _between_sessions()
+                        # Display wake can precede Unity regaining input focus.
+                        focus_deadline = time.monotonic() + 10
+                        while not owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=5), PACKAGE):
+                            if time.monotonic() >= focus_deadline:
+                                fail("offline-menu-focus-not-restored", "session %d menu did not regain display-zero focus" % session)
+                                break
+                            time.sleep(0.25)
                         seconds = time.monotonic() - pause_started
-                        cooldowns.append(dict(before_session=session, seconds=seconds, observation=cooled))
+                        cooldowns.append(dict(before_session=session, seconds=seconds, observation=cooled, display_zero_focus=first_failure is None))
                         write(out / "cooldowns.json", cooldowns)
                         deadline += seconds
+                        if first_failure is not None:
+                            break
                         if not cleanup._same_process(device, pid):
                             fail("process-exited-during-cooldown")
                             break
@@ -412,7 +422,7 @@ def check_session_memory(
                     if coords is None:
                         fail("offline-menu-start-control-unavailable", "session %d" % session)
                         break
-                    device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                    device.sh("input", "-d", "0", "tap", str(coords[0]), str(coords[1]))
                     menu_start_requested_at = time.monotonic()
                     menu_started.add(session)
                     live_at = startup_at = None
