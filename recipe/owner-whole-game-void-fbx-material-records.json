@@ -1,0 +1,147 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-scrapvoid_assets_all_05024c18468b9433ce2c20bf81ed73b8.bundle",
+      "sha256": "7e84ebf9c814833a947f80e9659c3679a406f59ff92989755cb99ef5a016c25c",
+      "members": [
+        {
+          "name": "CAB-f5c11d021e68a507b09639e28f0119ed",
+          "objects": [
+            {
+              "path_id": -7114709857595704461,
+              "class_id": 21,
+              "sha256": "9ff5e2e597d18546f2b073fb22f8a329d26fb18ff373823347e9438dcd2a9579",
+              "outputs": [
+                {
+                  "bundle": "void-fbx-material-frontier",
+                  "member": "CAB-c4ae487ea16f4de7b49bd0322e14808e",
+                  "path_id": -7114709857595704461,
+                  "bytes": 2380,
+                  "sha256": "9ff5e2e597d18546f2b073fb22f8a329d26fb18ff373823347e9438dcd2a9579",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -2121454189209128125,
+              "class_id": 21,
+              "sha256": "15d6e60bbc2397941548296aac01f663823aedc29ee9e2ac9155de79ae1061cb",
+              "outputs": [
+                {
+                  "bundle": "void-fbx-material-frontier",
+                  "member": "CAB-c4ae487ea16f4de7b49bd0322e14808e",
+                  "path_id": -2121454189209128125,
+                  "bytes": 2400,
+                  "sha256": "15d6e60bbc2397941548296aac01f663823aedc29ee9e2ac9155de79ae1061cb",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": 4782225911564331808,
+              "class_id": 21,
+              "sha256": "ec5e7c04bb6bd45ba904bed36c7f136db6e8dd7e723d99795b674490caa8fcef",
+              "outputs": [
+                {
+                  "bundle": "void-fbx-material-frontier",
+                  "member": "CAB-c4ae487ea16f4de7b49bd0322e14808e",
+                  "path_id": 4782225911564331808,
+                  "bytes": 2396,
+                  "sha256": "ec5e7c04bb6bd45ba904bed36c7f136db6e8dd7e723d99795b674490caa8fcef",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidstage_assets_all_e2cacf541af02bcdb5d5849af7612319.bundle",
+      "sha256": "22b179b1ab64664c81d09c25bec25efa4210578c117452326961cbda6ab83947",
+      "members": [
+        {
+          "name": "CAB-47d337ee3f3c1d9054e0516f2c4caa2f",
+          "objects": [
+            {
+              "path_id": -8323693492219947262,
+              "class_id": 21,
+              "sha256": "5bb8f325f0486cc87ff5c0a8c04a8ec7e6c9cac6a41b111692371d57ac7b999b",
+              "outputs": [
+                {
+                  "bundle": "void-fbx-material-frontier",
+                  "member": "CAB-c4ae487ea16f4de7b49bd0322e14808e",
+                  "path_id": -8323693492219947262,
+                  "bytes": 1356,
+                  "sha256": "5bb8f325f0486cc87ff5c0a8c04a8ec7e6c9cac6a41b111692371d57ac7b999b",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -6585282180004893000,
+              "class_id": 21,
+              "sha256": "792f05cdff607a4ec9f42d6a1d35a7656843f86f9d46ff498276b42ba4512218",
+              "outputs": [
+                {
+                  "bundle": "void-fbx-material-frontier",
+                  "member": "CAB-c4ae487ea16f4de7b49bd0322e14808e",
+                  "path_id": -6585282180004893000,
+                  "bytes": 1616,
+                  "sha256": "792f05cdff607a4ec9f42d6a1d35a7656843f86f9d46ff498276b42ba4512218",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -2781368281714402830,
+              "class_id": 21,
+              "sha256": "81c0ee79727a870f56187f6c1666bf4673b1a675ec02bd197256cf624ed7ac80",
+              "outputs": [
+                {
+                  "bundle": "void-fbx-material-frontier",
+                  "member": "CAB-c4ae487ea16f4de7b49bd0322e14808e",
+                  "path_id": -2781368281714402830,
+                  "bytes": 1040,
+                  "sha256": "81c0ee79727a870f56187f6c1666bf4673b1a675ec02bd197256cf624ed7ac80",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": 2345301275827974733,
+              "class_id": 21,
+              "sha256": "cd9515a63775d628e50ee17a65170cb7135aff8665b8c91aff3a922b2a99857b",
+              "outputs": [
+                {
+                  "bundle": "void-fbx-material-frontier",
+                  "member": "CAB-c4ae487ea16f4de7b49bd0322e14808e",
+                  "path_id": 2345301275827974733,
+                  "bytes": 2396,
+                  "sha256": "cd9515a63775d628e50ee17a65170cb7135aff8665b8c91aff3a922b2a99857b",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": 8096733741966880494,
+              "class_id": 21,
+              "sha256": "316fa7102f96b72e6daf4a74d16455c317d843b0d23e4ba6e0665d90233d3992",
+              "outputs": [
+                {
+                  "bundle": "void-fbx-material-frontier",
+                  "member": "CAB-c4ae487ea16f4de7b49bd0322e14808e",
+                  "path_id": 8096733741966880494,
+                  "bytes": 1480,
+                  "sha256": "316fa7102f96b72e6daf4a74d16455c317d843b0d23e4ba6e0665d90233d3992",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
