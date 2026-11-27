@@ -467,11 +467,21 @@ class SafetyTests(unittest.TestCase):
 
     def test_thor_top_only_is_verified_and_first_mode_survives_nested_device_context(self):
         state = self.thor_display_shell(True)
-        self.assertTrue(self.d.display(True))
-        second = object.__new__(device.Device)
-        second.__dict__.update(self.d.__dict__)
-        self.assertTrue(second.display(True))
-        self.assertEqual(device.Device.sleep_awakened(), [])
+        elapsed = 0.0
+
+        def advance(seconds):
+            nonlocal elapsed
+            elapsed += seconds
+
+        # Keep the real one-second stable-readback check but advance virtual
+        # time instead of sleeping for the two already-mocked wakeups.
+        clock = types.SimpleNamespace(monotonic=lambda: elapsed, sleep=advance)
+        with patch.object(device, "time", clock):
+            self.assertTrue(self.d.display(True))
+            second = object.__new__(device.Device)
+            second.__dict__.update(self.d.__dict__)
+            self.assertTrue(second.display(True))
+            self.assertEqual(device.Device.sleep_awakened(), [])
         self.assertEqual(state["mode"], "0")
         self.assertFalse(state["awake"])
         self.assertEqual(device.Device._awake_devices, {})

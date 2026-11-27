@@ -5,15 +5,22 @@ import copy
 import errno
 import json
 from pathlib import Path
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from tests.owner_journey_fixture import owner_journey, F, J, U
-from tests.owner_journey_android import install
+from tests.owner_journey_android import InstallerFixture
 from tests.test_phone_updates import FakeGitHub, encoded
 
 
 class OwnerJourneyTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        cls.installer = InstallerFixture(Path(directory.name))
+
     def test_import_build_install_and_update(self):
         with owner_journey() as journey:
             self.assertEqual(journey.run("install-prepare")["state"], "INPUTS_REQUIRED")
@@ -41,7 +48,7 @@ class OwnerJourneyTests(unittest.TestCase):
                 self.assertEqual(stages, list(F.STAGES))
                 self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
                 previous = installed
-                installed = install(journey, previous)
+                installed = self.installer.install(journey, previous)
                 self.assertTrue(installed["installed_readback_verified"])
                 self.assertEqual(installed["release"]["version_code"], version)
                 self.assertEqual(installed["profile_retention_verified"], previous is not None)
@@ -103,7 +110,7 @@ class OwnerJourneyTests(unittest.TestCase):
                 # persisted state. This is not an OS kill or power-loss simulation.
                 self.assertEqual(journey.run("release-build")["state"], "READY")
                 self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
-                receipt = install(journey)
+                receipt = self.installer.install(journey)
                 identity = {key: receipt[key] for key in ("sha256", "input_sha256", "payload_sha256", "signer_sha256", "source_sha256", "toolchain_sha256")}
                 if baseline is None:
                     baseline = identity
@@ -125,7 +132,7 @@ class OwnerJourneyTests(unittest.TestCase):
             original.parent.mkdir(parents=True)
             original.write_bytes(b"authored")
             self.assertEqual(journey.run("release-build")["state"], "READY")
-            first = install(journey)
+            first = self.installer.install(journey)
             first_bytes = Path(first["apk"]).read_bytes()
             if distinct:
                 journey.publish(3, "different authored payload")
@@ -134,7 +141,7 @@ class OwnerJourneyTests(unittest.TestCase):
                 journey.candidate["release"].update(version="synthetic-2", version_code=3)
             self.assertEqual(journey.run("release-check", first)["state"], "UPDATE_AVAILABLE")
             self.assertEqual(journey.run("release-build", first)["state"], "READY")
-            current = install(journey, first)
+            current = self.installer.install(journey, first)
             if distinct:
                 self.assertNotEqual(Path(current["apk"]).read_bytes(), first_bytes)
                 self.assertNotEqual(current["payload_sha256"], first["payload_sha256"])
@@ -172,7 +179,7 @@ class OwnerJourneyTests(unittest.TestCase):
             self.assertEqual(state["state"], "READY")
             self.assertTrue(state["rollback"])
             self.assertEqual(json.loads((journey.inputs / "installed-release.json").read_text()), current)
-            rolled = install(journey, current)
+            rolled = self.installer.install(journey, current)
             self.assertGreater(rolled["version_code"], current["version_code"])
             self.assertEqual(rolled["release"], first["release"])
             self.assertEqual(rolled["payload_sha256"], first["payload_sha256"])
@@ -240,7 +247,7 @@ class OwnerJourneyTests(unittest.TestCase):
                     states = [event["state"] for event in journey.events]
                     self.assertLess(states.index("DOWNLOADING"), states.index("VERIFYING"))
                     self.assertLess(states.index("VERIFYING"), states.index("BUILDING"))
-                    installed = install(journey, installed)
+                    installed = self.installer.install(journey, installed)
                 self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
                 self.assertFalse(list((journey.inputs / "work/releases/downloads").glob(".download-*")))
                 self.assertEqual(original.read_bytes(), b"authored")
@@ -253,21 +260,21 @@ class OwnerJourneyTests(unittest.TestCase):
                 original.parent.mkdir(parents=True)
                 original.write_bytes(b"authored")
                 self.assertEqual(journey.run("release-build")["state"], "READY")
-                first = install(journey)
+                first = self.installer.install(journey)
                 prior_receipt = (journey.inputs / "installed-release.json").read_bytes()
                 journey.candidate["release"] = copy.deepcopy(journey.release)
                 journey.candidate["release"].update(version="synthetic-2", version_code=3)
                 journey.run("release-check", first)
                 self.assertEqual(journey.run("release-build", first)["state"], "READY")
                 refused_code = json.loads((journey.inputs / "owner-apk-ready.json").read_text())["version_code"]
-                unchanged = install(journey, first, outcome=outcome)
+                unchanged = self.installer.install(journey, first, outcome=outcome)
                 self.assertEqual(unchanged, first)
                 self.assertEqual(json.loads((journey.inputs / "installed-release.json").read_text()), json.loads(prior_receipt))
                 self.assertFalse((journey.inputs / "pending-install.json").exists())
                 self.assertEqual(journey.run("release-build", first)["state"], "READY")
                 retry = json.loads((journey.inputs / "owner-apk-ready.json").read_text())
                 self.assertGreater(retry["version_code"], refused_code)
-                installed = install(journey, first)
+                installed = self.installer.install(journey, first)
                 self.assertTrue(installed["installed_readback_verified"])
                 self.assertEqual(installed["release"]["version_code"], 3)
                 self.assertEqual(installed["signer_sha256"], first["signer_sha256"])
@@ -302,7 +309,7 @@ class OwnerJourneyTests(unittest.TestCase):
             self.assertFalse((journey.inputs / "owner-apk-ready.json").exists())
             self.assertFalse((journey.inputs / "installed-release.json").exists())
             self.assertEqual(journey.run("release-build")["state"], "READY")
-            installed = install(journey)
+            installed = self.installer.install(journey)
             self.assertTrue(installed["installed_readback_verified"])
             self.assertEqual(original.read_bytes(), b"authored")
             self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
