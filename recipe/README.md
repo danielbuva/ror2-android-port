@@ -7611,7 +7611,7 @@ middleware, original files and outputs stay local.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-code-job-inputs.json` | `6a9db9c77118f96c2d064c4696a95160092e47303dca2e8d4217aef4ac389714` |
+| `owner-code-job-inputs.json` | `07c1476269c8c25aa07a56f234a9cd8628a0374c0c801180d048012dd1ee5f59` |
 | `owner-burst-job-inputs.json` | `3a4d0dbbdfbc8dcd7d170322c58e95333cc941e9d8155a92db980bfec9adcac8` |
 
 Audit 2026-11-26. `owner-v30-bundle-shader-leaves.json` uses original game

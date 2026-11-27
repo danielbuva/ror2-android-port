@@ -158,13 +158,17 @@ public final class ToolHostActivity extends Activity {
         refreshStatus();
     }
     private JSONObject toolPlan() throws Exception {
+        JSONObject plan = currentInstallPlan();
+        return plan != null && plan.has("acquired_inputs") ? plan : null;
+    }
+    private JSONObject currentInstallPlan() throws Exception {
         File plan = new File(getFilesDir(), "owner-input/install-inputs.json");
         long modified = plan.lastModified();
         if (modified != planModified) {
-            inputPlan = modified == 0 ? null : readJson(plan);
+            inputPlan = modified == 0 ? null : readInstallInputs(plan);
             planModified = modified;
         }
-        return inputPlan != null && inputPlan.has("acquired_inputs") ? inputPlan : null;
+        return inputPlan;
     }
     private void control(String action) {
         try { if (OwnerBuildService.hasLiveControls()) OwnerBuildService.control(this, action); }
@@ -214,14 +218,27 @@ public final class ToolHostActivity extends Activity {
         // The OS owns the grant. Returning from Settings never starts conversion.
         return false;
     }
+    private static final int MAX_PRIVATE_JSON_BYTES = 4 * 1024 * 1024;
+    // Keep the install plan limit in sync with owner-apk/install_inputs.py.
+    private static final int MAX_INSTALL_INPUTS_BYTES = 8 * 1024 * 1024;
+
+    static JSONObject readInstallInputs(File file) throws Exception {
+        return readJson(file, MAX_INSTALL_INPUTS_BYTES);
+    }
     static JSONObject readJson(File file) throws Exception {
-        if (file.length() > 4 * 1024 * 1024) throw new IOException("Private status is too large");
-        try (InputStream input = new FileInputStream(file)) { return readJson(input); }
+        return readJson(file, MAX_PRIVATE_JSON_BYTES);
+    }
+    private static JSONObject readJson(File file, int maxBytes) throws Exception {
+        if (file.length() > maxBytes) throw new IOException("Private metadata is too large");
+        try (InputStream input = new FileInputStream(file)) { return readJson(input, maxBytes); }
     }
     static JSONObject readJson(InputStream input) throws Exception {
+        return readJson(input, MAX_PRIVATE_JSON_BYTES);
+    }
+    private static JSONObject readJson(InputStream input, int maxBytes) throws Exception {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream(); byte[] buffer = new byte[8192]; int count;
         while ((count = input.read(buffer)) != -1) {
-            if (bytes.size() + count > 4 * 1024 * 1024) throw new IOException("Private metadata is too large");
+            if (bytes.size() + count > maxBytes) throw new IOException("Private metadata is too large");
             bytes.write(buffer, 0, count);
         }
         return new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
@@ -481,10 +498,7 @@ public final class ToolHostActivity extends Activity {
         JSONObject pipeline = state.optJSONObject("pipeline");
         File durable = new File(getFilesDir(), "owner-input/install-checkpoint.json");
         if (durable.isFile()) pipeline = readJson(durable);
-        if (pipeline == null) {
-            File plan = new File(getFilesDir(), "owner-input/install-inputs.json");
-            if (plan.isFile()) pipeline = readJson(plan);
-        }
+        if (pipeline == null) pipeline = currentInstallPlan();
         if (pipeline != null) {
             detail.append("\n\nReconstruction stages");
             if (pipeline.has("repair_notice")) detail.append("\n").append(pipeline.optString("repair_notice"));

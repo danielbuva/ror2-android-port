@@ -69,7 +69,7 @@ final class OwnerInputSource implements OwnerInputImport.Source {
     public InputStream open(String path) throws Exception { return access.open(app, documents.get(path)); }
     static void acquire(Context app, OwnerInputImport.Observer observer, Access access) throws Exception {
         File root = new File(app.getFilesDir().getCanonicalFile(), "owner-input");
-        JSONObject plan = ToolHostActivity.readJson(new File(root, "install-inputs.json"));
+        JSONObject plan = ToolHostActivity.readInstallInputs(new File(root, "install-inputs.json"));
         JSONObject pins = plan.getJSONObject("acquired_inputs");
         List<OwnerInputImport.Required> rows = new ArrayList<>();
         for (Iterator<String> paths = pins.keys(); paths.hasNext();) {
@@ -102,7 +102,7 @@ final class OwnerInputSource implements OwnerInputImport.Source {
             .put("inventory_sha256", plan.getString("acquired_inputs_sha256")).put("message", "Required tools verified in private storage."));
     }
     static void run(Context app, OwnerInputImport.Observer observer, Access access) throws Exception {
-        JSONObject plan = ToolHostActivity.readJson(new File(app.getFilesDir(), "owner-input/install-inputs.json"));
+        JSONObject plan = ToolHostActivity.readInstallInputs(new File(app.getFilesDir(), "owner-input/install-inputs.json"));
         if (plan.getInt("schema") != 1 || !"import".equals(plan.getString("import_root"))) throw new IOException("Check a signed install release first");
         List<OwnerInputImport.Version> versions = new ArrayList<>();
         for (String field : new String[]{"supported_versions", "recognized_versions"}) {
