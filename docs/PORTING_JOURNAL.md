@@ -5116,3 +5116,16 @@ in `intersection-vulkan-draw-device-01/terminal.done.json`.
 Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
 The runner removed the fixture, slept the OLED and released the lease.
 Linked native Materials and depth-fade rendering remain open.
+
+## J1566 — Verify signed native BC3 texture production on Android
+
+2026-11-27. The signed ARM64 texture job processed three original BC3
+Texture2Ds, covering colour, UI alpha and packed A/G normals across their
+original 7, 7 and 6 mip levels. Objects, resources, types and index matched
+all four host size and SHA-256 pins. Production took 18.93 s at 55.1 MiB peak
+child RSS and 3.30 MiB net stage use. CPU/GPU peaked at 64.9 °C at admission,
+with 0 s above 80 °C and a 32 °C admission battery.
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+Evidence `work/coordination/p1-textures/phone-bc3-1127/device-retry/terminal.done.json` (`92e461ea`).
+The runner removed the toolhost and released the lease. Whole-cohort phone
+production, canonical integration and in-game visuals remain open.
