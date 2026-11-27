@@ -219,6 +219,7 @@ public sealed partial class SirenEncounterSession : IDisposable
         public bool bodyDestroyRequestCompleted;
         public bool masterDestroyRequestCompleted;
         public bool nativeDeathObserved, naturallyRetired;
+        public string nativeDeathRejection;
         public GameObject deathBody;
         public NetworkIdentity deathBodyIdentity;
         public HealthComponent deathHealth;
@@ -476,8 +477,7 @@ public sealed partial class SirenEncounterSession : IDisposable
 
     void OnNativeActorDeath(DamageReport damage)
     {
-        if (disposed || cleanupStarted || !NetworkServer.active || damage == null ||
-            !damage.victimMaster || !damage.victimBody || !damage.victim || damage.victim.alive)
+        if (disposed || cleanupStarted || !NetworkServer.active || damage == null || !damage.victimMaster)
             return;
         foreach (var entry in ownedBossMasters)
             CaptureNativeActorDeath(entry, damage, OriginalBossBodyName);
@@ -489,11 +489,22 @@ public sealed partial class SirenEncounterSession : IDisposable
     {
         var member = entry.master;
         if (!member || entry.masterDestroyRequestCompleted || entry.naturallyRetired ||
-            !ReferenceEquals(damage.victimMaster, member) || member.netId != entry.networkId ||
-            !ReferenceEquals(NetworkServer.FindLocalObject(entry.networkId), member.gameObject) ||
-            member.teamIndex != TeamIndex.Monster || member.playerCharacterMasterController ||
-            !HasNativeActorBodyPrefab(member, expectedBodyName) || !member.IsDeadAndOutOfLivesServer())
+            !ReferenceEquals(damage.victimMaster, member))
             return;
+        entry.nativeDeathRejection = "victim-health";
+        if (!damage.victimBody || !damage.victim || damage.victim.alive)
+            return;
+        entry.nativeDeathRejection = "master-map";
+        if (member.netId != entry.networkId || !ReferenceEquals(NetworkServer.FindLocalObject(entry.networkId), member.gameObject))
+            return;
+        entry.nativeDeathRejection = "master-body-contract";
+        if (member.teamIndex != TeamIndex.Monster || member.playerCharacterMasterController ||
+            !HasNativeActorBodyPrefab(member, expectedBodyName))
+            return;
+        entry.nativeDeathRejection = "terminal-life";
+        if (!member.IsDeadAndOutOfLivesServer())
+            return;
+        entry.nativeDeathRejection = "minion-owner";
         if (entry.ownerNetworkId != NetworkInstanceId.Invalid &&
             (!member.minionOwnership || member.minionOwnership.NetworkownerMasterId != entry.ownerNetworkId))
             return;
@@ -502,10 +513,16 @@ public sealed partial class SirenEncounterSession : IDisposable
             return;
         var body = damage.victimBody.gameObject;
         var bodyIdentity = body.GetComponent<NetworkIdentity>();
-        if (body.scene != scene || damage.victimBody.master != member ||
+        entry.nativeDeathRejection = "body-scene";
+        if (body.scene != scene)
+            return;
+        entry.nativeDeathRejection = "body-contract";
+        if (damage.victimBody.master != member ||
             damage.victimBody.bodyIndex != BodyCatalog.FindBodyIndex(expectedBodyName) ||
-            !ReferenceEquals(body.GetComponent<HealthComponent>(), damage.victim) || !bodyIdentity ||
-            bodyIdentity.netId.Value == 0 || !bodyIdentity.isServer ||
+            !ReferenceEquals(body.GetComponent<HealthComponent>(), damage.victim))
+            return;
+        entry.nativeDeathRejection = "body-map";
+        if (!bodyIdentity || bodyIdentity.netId.Value == 0 || !bodyIdentity.isServer ||
             !ReferenceEquals(NetworkServer.FindLocalObject(bodyIdentity.netId), body))
             return;
         entry.deathBody = body;
@@ -513,11 +530,16 @@ public sealed partial class SirenEncounterSession : IDisposable
         entry.deathHealth = damage.victim;
         entry.deathBodyId = bodyIdentity.netId;
         entry.nativeDeathObserved = true;
+        entry.nativeDeathRejection = null;
     }
 
     void ValidateNaturallyDestroyedMaster(OwnedMaster entry)
     {
-        if (!entry.nativeDeathObserved || ReferenceEquals(entry.master, null) || entry.master ||
+        if (!entry.nativeDeathObserved)
+            throw new InvalidOperationException("Missing Siren master " + entry.networkId.Value + " (owner " +
+                entry.ownerNetworkId.Value + ") has no native terminal-death witness: " +
+                (entry.nativeDeathRejection ?? "no matching callback"));
+        if (ReferenceEquals(entry.master, null) || entry.master ||
             entry.networkId.Value == 0 || !ReferenceEquals(NetworkServer.FindLocalObject(entry.networkId), null) ||
             ReferenceEquals(entry.deathBody, null) || ReferenceEquals(entry.deathBodyIdentity, null) ||
             ReferenceEquals(entry.deathHealth, null) || entry.deathBodyId.Value == 0)
