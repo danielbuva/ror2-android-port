@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1553 — Run a pinned texture stage with a disposable Android toolhost
+
+2026-11-27. The shared converter-stage runner installed the pinned toolhost
+on Nova B, staged the original inputs for eight BC1 Cubemaps and ran the
+Android ETC producer. All four pack artifacts matched host byte counts and
+SHA-256 hashes. Resource SHA-256 `b7976d2933c0cdcec70e9d74bd4323d1e07d70695b8b5143fab3d822f831f2be`.
+The producer took 935.7 s, peaked at 437.9 MiB RSS and used 132.6 MiB
+of net stage storage. Peak CPU/GPU was 57.7 °C with 0 s above 80 °C.
+Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a859516807c00a4`.
+The runner verified package removal and OLED sleep and released the lease.
+Evidence `work/coordination/p1-textures/phone-bc1-cubemap-1127/terminal.done.json`.
+Signed Crunch/BC7 conversion and in-game Cubemap checks remain open.
+
 ## J1552 — Recover REX Mortar aim and projectile materials
 
 2026-11-27. The original body visual owner prepares REX's configured
