@@ -2131,7 +2131,9 @@ pairs. Source identity and body/type witnesses are derived from those pins.
 For a retained supplier with already-relocated PPtrs, a binding's explicit
 `pointer_namespace` lists `[bundle, member]` pairs, starting with the local
 member and then each external slot. Ordinary suppliers resolve through their
-original member tables. Preparation preserves supplier record identities through
+original member tables. A checked local producer patch can choose an emitted
+alias when that alias is bound to the same original endpoint. Preparation
+preserves supplier record identities through
 retained lineage while relocating only qualified PPtr fields. It refuses missing
 bodies, conflicting source destinations, stale type tables and mismatching or
 unused overrides. Preparation is host qualification support; signed dispatch and
