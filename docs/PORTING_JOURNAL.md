@@ -4890,3 +4890,14 @@ APK SHA-256 `5af412ac93b310c221879305194cb68d3f81868252c048a573ef2c99db2d236e`
 `work/coordination/alpha-saf-stability-20261127/nova-b-sustained-placement/`.
 The native enemy cap, scratch, display and lease teardown passed. Both FPS
 means missed 60 FPS. Ordinary play, matched visuals and budgets remain open.
+
+## J1547 — Stage pinned converter inputs in owned Android scratch
+
+2026-11-27. The shared runner streamed a pinned descriptor's inputs to its
+attempt directory on Secondary Nova. All four BC1 artifact sizes and SHA-256
+digests matched the host receipt. The stage took 2.47 s and peaked at 36.2 MiB
+RSS. The CPU/GPU peak was 54.1 °C at admission, with 0 s above 80 °C.
+The runner collected JSON and digests, retired scratch and slept the display.
+Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a859516807c00a4`.
+Evidence: `work/coordination/p1-phonepipe/2026-11-27/bc1-staged/terminal.done.json`.
+Unity typed load and gameplay remain open.
