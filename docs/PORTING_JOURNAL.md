@@ -17,6 +17,19 @@ APK SHA-256 `34f8908c75e493d6b683af45ae18d55bd3b990033243c298376ff99b622e2003`
 in `whole-game-scopes-device-01/terminal.done.json`.
 Peak SoC was 48.9 °C with 0 s above 80 °C. Fixture removal, OLED sleep and
 lease release passed. Camera integration and whole-game coverage remain open.
+## J1548 — Recover Acrid Leap acid ghost materials
+
+2026-11-27. The original body visual owner prepares the native Leap
+projectile's detached acid ghost. One assisted Utility tap on Titanic
+Plains recorded one authority and one server activation and six owned
+acid hits on a Beetle. Active Gas and Spittle both used recovered
+Cloud Remap variant 36 at queue 3000. The paired capture shows green
+acid with clear particle edges. Matched PC parity remains open.
+APK SHA-256 `d18afa358fc31dee6f7d3de2dd7ce6cad73e6d5469133886416cfea31adc3da3` (source `49046273`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/acrid-leap-acid-main-nova/`
+contains the native log, comparison and terminal receipt. SoC peaked at
+78.1 °C and battery at 28 °C. Adopted placement, scratch cleanup, OLED
+sleep and lease release passed.
 ## J1547 — Recover REX Disperse charge materials
 
 2026-11-27. The original body visual owner prepares the native Disperse
