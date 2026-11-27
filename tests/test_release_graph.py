@@ -156,6 +156,29 @@ class ReleaseGraphTests(unittest.TestCase):
                 {"entries": {"payload/fixture": {"job": producer}}}, required_inputs="recipe/input.json", workspace_bytes=0, bindings={"pc": "."}
             )
 
+    def test_owner_code_uses_admitted_sdk_and_provider_roots(self):
+        graph = G.Graph(ROOT, {})
+        graph.conversion = graph.code_conversion("recipe/owner-code-job-inputs.json")
+        native = graph.native_code("recipe/owner-native-job-inputs.json", graph.conversion)
+        code_job = graph.jobs[graph.conversion]
+        native_job = graph.jobs[native]
+        bindings = {"sdk_install": "acquired/sdk", "code_providers": "acquired/providers"}
+        with tempfile.TemporaryDirectory() as directory:
+            dispatcher = object.__new__(J.Dispatcher)
+            dispatcher.inputs = Path(directory).resolve()
+            dispatcher.repo = dispatcher.runtime = dispatcher.installed_runtime = dispatcher.native = dispatcher.inputs
+            dispatcher.config = {"bindings": bindings}
+            output = dispatcher.inputs / "work/jobs/attempt"
+            for root in bindings.values():
+                (dispatcher.inputs / root).mkdir(parents=True)
+            sdk = str(dispatcher.inputs / bindings["sdk_install"])
+            self.assertEqual(dispatcher.expand(code_job["request"]["sdk_install"], code_job, output, None), sdk)
+            self.assertEqual(dispatcher.expand(native_job["request"]["sdk_install"], native_job, output, None), sdk)
+            self.assertEqual(dispatcher.expand(graph.sdk_contents(), code_job, output, None), sdk + "/Unity.app/Contents")
+            for path in code_job["request"]["source_inputs"].values():
+                expanded = Path(dispatcher.expand(path, code_job, output, None))
+                self.assertTrue(expanded.is_relative_to(dispatcher.inputs / bindings["code_providers"]))
+
     def test_staged_phone_entry_points_run_without_a_checkout(self):
         with tempfile.TemporaryDirectory() as temporary:
             app = Path(temporary).resolve()
