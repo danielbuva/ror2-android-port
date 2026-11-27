@@ -225,6 +225,31 @@ class StagedUpdate(FolderImport):
         )
         return {path.removeprefix(runtime + "/"): digest for path, digest in hashes.items()}
 
+    def nightly_play(self, phone, device, receipt, stage):
+        from whole_game_scoreboard import installed_census
+
+        tour_failed = False
+        try:
+            with stage("baseline-play"):
+                self.play(phone, device, "baseline")
+        except Exception:
+            tour_failed = True
+            raise
+        finally:
+            if not phone.thermal.cancelled.is_set():
+                try:
+                    with stage("whole-game-scoreboard"):
+                        self.require(phone.thermal.device.display(False), "nightly-census-display-sleep")
+                        tour = self.installer.DIAGNOSTICS.directory / "baseline-play/terminal.done.json"
+                        installed_census(phone, self.installer, receipt, device, tour)
+                except Exception as error:
+                    if not tour_failed:
+                        raise
+                    self.installer.DIAGNOSTICS.write("census-error.json", self.installer.encoded({"error": str(error)}))
+                finally:
+                    if tour_failed:
+                        self.installer.set_phase("baseline-play")
+
     def run(self, phone, passed):
         installer = self.installer
         metrics = phone.flow_metrics = installer.FlowMetrics(phone)
@@ -267,11 +292,12 @@ class StagedUpdate(FolderImport):
             with stage("baseline-reconstruct-and-install"):
                 first, device = self.install(phone, "baseline")
                 passed("staged-baseline-install")
+            if self.nightly:
+                self.nightly_play(phone, device, first, stage)
+                passed("nightly-baseline-tour")
+                return
             with stage("baseline-play"):
                 self.play(phone, device, "baseline")
-                if self.nightly:
-                    passed("nightly-baseline-tour")
-                    return
                 before = self.native_hashes(device)
                 passed("staged-baseline-native-save")
             update = self.pair["update"]["publisher_version_code"]

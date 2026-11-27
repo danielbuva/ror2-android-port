@@ -224,8 +224,8 @@ class RefusedLeaseTest(unittest.TestCase):
             request_path = repo / "request.json"
             config = repo / "work/config/lab-runner.json"
             config.parent.mkdir(parents=True)
-            config.write_text(json.dumps({"devices": {"thor": "fixture"}}))
-            for operation, steps in (("staged-update", 3), ("nightly", 2)):
+            config.write_text(json.dumps({"devices": {"thor": "fixture-thor", "nova-b": "fixture-nova"}}))
+            for operation, device, budget in (("staged-update", "thor", 3 * 14400 + 1800), ("nightly", "nova-b", 2 * 14400 + 3000)):
                 with self.subTest(operation=operation):
                     request_path.write_text(
                         json.dumps(
@@ -233,7 +233,7 @@ class RefusedLeaseTest(unittest.TestCase):
                                 repo=str(repo),
                                 checkout=str(repo),
                                 workstream="fixture-worker",
-                                device="thor",
+                                device=device,
                                 done_file=str(repo / f"work/{operation}.json"),
                                 operation=operation,
                             )
@@ -246,7 +246,7 @@ class RefusedLeaseTest(unittest.TestCase):
                         self.assertEqual(lab_runner.local_packaging(request_path), 0)
                     command = execute.call_args.args[0]
                     self.assertEqual(command["args"][-4:], [f"--{operation}-request", str(request_path), "--timeout", "14400"])
-                    self.assertEqual(command["timeout_seconds"], steps * 14400 + 1800)
+                    self.assertEqual(command["timeout_seconds"], budget)
 
     def test_explicit_toolhost_plan_is_validated_and_cached_by_input_pin(self):
         with tempfile.TemporaryDirectory() as directory:

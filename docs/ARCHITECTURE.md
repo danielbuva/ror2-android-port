@@ -1922,6 +1922,11 @@ installed manifest diff before allowing reconstruction. The build receipt
 records APK entry reuse and producer cache hits separately. The device tour
 creates native save data, verifies its hashes while the game is stopped before
 and after PackageInstaller replacement, and checks it loads in the updated game.
+The nightly uses the same owner with one signed release and a verified game
+folder already on the phone. Its End Run tour and the JSON-only APK census
+finish under the installer lease. `scripts/lab/whole_game_scoreboard.py` runs
+the existing census producer inside the installer toolhost and joins the
+retained reports before the installer tears down its scratch.
 The [local packaging request](LAB_RUNNER.md#current-local-packaging-request)
 uses the shared lab runner for a granted device and records the installed version
 and hashes before the fixture is removed. The toolhost request pins the cached

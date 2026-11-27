@@ -417,6 +417,8 @@ def local_packaging(path, *, dry_run=False, detach=False):
             raise CommandError("installer-test signing backup requires a full cached source commit")
         if not re.fullmatch(r"[a-z0-9-]+", workstream) or device not in runner.devices or (build_toolhost and device != "thor"):
             raise CommandError("invalid local packaging workstream or configured device")
+        if operation == "nightly" and device != "nova-b":
+            raise CommandError("the signed nightly gameplay tour uses the secondary Nova")
         common_dir = subprocess.check_output(["git", "-C", checkout, "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()
         if Path(common_dir).resolve() != (repo / ".git").resolve():
             raise CommandError("packaging checkout must belong to the canonical repository")
@@ -426,7 +428,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
         elif operation in ("staged-update", "nightly"):
             # The signed native producer alone took 9,158 seconds in J1512.
             command["args"].extend([f"--{operation}-request", str(Path(path).resolve()), "--timeout", str(STAGED_UPDATE_STEP_TIMEOUT)])
-            command["timeout_seconds"] = (2 if operation == "nightly" else 3) * STAGED_UPDATE_STEP_TIMEOUT + 1800
+            command["timeout_seconds"] = 2 * STAGED_UPDATE_STEP_TIMEOUT + 3000 if operation == "nightly" else 3 * STAGED_UPDATE_STEP_TIMEOUT + 1800
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
             if operation == "packaging" and "toolhost_source_commit" in request:

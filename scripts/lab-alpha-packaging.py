@@ -291,6 +291,7 @@ def main(argv=None):
     acquisition = None
     completed = set()
     failed = False
+    first_failure = None
     phase = "setup"
 
     def passed(case):
@@ -331,9 +332,9 @@ def main(argv=None):
                 return 0
             phone = Phone(serial, args.timeout)
             phase = "staged-update"
-            # Reserve separate windows for import and both builds, with time
-            # left for play checks and cleanup before the outer runner exits.
-            with phone.observe_thermal(duration=(2 if nightly else 3) * args.timeout + 1200, require_continuous_trace=True):
+            # Leave time after import and build for the tour, census and cleanup.
+            duration = 2 * args.timeout + 2400 if nightly else 3 * args.timeout + 1200
+            with phone.observe_thermal(duration=duration, require_continuous_trace=True):
                 try:
                     acquisition.run(phone, passed)
                 finally:
@@ -394,11 +395,15 @@ def main(argv=None):
         if phase in ("saf-acquisition", "staged-update"):
             phase = INSTALLER.CURRENT_PHASE
         print("FAIL alpha-packaging phase=" + phase + " reason=" + str(error), flush=True)
+        first_failure = {"phase": phase, "reason": str(error)}
         failed = True
-    except Exception:
+    except Exception as error:
+        if phase in ("saf-acquisition", "staged-update"):
+            phase = INSTALLER.CURRENT_PHASE
         if INSTALLER.DIAGNOSTICS is not None:
             INSTALLER.DIAGNOSTICS.write("alpha-packaging-error.log", traceback.format_exc().encode())
         print("FAIL alpha-packaging phase=" + phase + " reason=unexpected-local-error-see-private-evidence", flush=True)
+        first_failure = {"phase": phase, "reason": str(error) or type(error).__name__}
         failed = True
     finally:
         if phone is not None:
@@ -408,6 +413,7 @@ def main(argv=None):
                     acquisition.cleanup(phone)
                 except Exception:
                     print("FAIL cleanup reason=owned-download-cleanup-not-verified", flush=True)
+                    first_failure = first_failure or {"phase": "cleanup", "reason": "owned-download-cleanup-not-verified"}
                     failed = True
             try:
                 result = phone.cleanup()
@@ -417,7 +423,13 @@ def main(argv=None):
                     print("SKIP cleanup packages=not-checked reason=no-owned-package-mutation", flush=True)
             except Exception:
                 print("FAIL cleanup reason=owned-package-cleanup-not-verified", flush=True)
+                first_failure = first_failure or {"phase": "cleanup", "reason": "owned-package-cleanup-not-verified"}
                 failed = True
+        if nightly and not args.dry_run and INSTALLER.DIAGNOSTICS is not None:
+            INSTALLER.DIAGNOSTICS.write(
+                "nightly-summary.json",
+                INSTALLER.encoded({"success": not failed, "completed": sorted(completed), "first_failure": first_failure}),
+            )
         INSTALLER.DIAGNOSTICS = None
     if not failed and not (args.acquisition_request or staged_request):
         print("SCOPE synthetic-only; SAF/provider UI, legitimate cohorts, power-loss and game-profile acceptance NOT RUN", flush=True)
