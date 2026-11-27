@@ -1144,6 +1144,7 @@ class DeviceSessionTests(unittest.TestCase):
         workload_error=False,
         terminal_error=False,
         thermal_error=False,
+        thermal_finish_error=None,
         payload=False,
         exception_rows="",
         signature_failure=False,
@@ -1250,7 +1251,8 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.side_effect = shell
         thermal = mock.Mock(error="safety stop" if thermal_error else None, peak_cpu_gpu_celsius=81, time_above_80_seconds=3, admission_battery={})
         thermal.thread = thermal.stopper = None
-        thermal.finish.side_effect = RuntimeError("safety stop") if thermal_error else lambda: events.append("thermal-finish")
+        finish_error = thermal.error or thermal_finish_error
+        thermal.finish.side_effect = RuntimeError(finish_error) if finish_error else lambda: events.append("thermal-finish")
         thermal.start.side_effect = lambda: events.append("thermal-start")
 
         if start_from_menu:
@@ -1407,6 +1409,14 @@ class DeviceSessionTests(unittest.TestCase):
         result = self.run_case(thermal_error=True)
         self.assertFalse(result["success"])
         self.assertTrue(result["lease_released"])
+
+    def test_thermal_stop_pid_ambiguity_releases_after_verified_idle(self):
+        result = self.run_case(workload_error=True, thermal_finish_error="Ambiguous game PID; refuse thermal stop")
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertIn("Ambiguous game PID", result["thermal_finish_error"])
+        self.assertEqual(result["cleanup_errors"], [])
 
     def test_failed_terminal_still_sleeps_and_publishes_but_retains_lease(self):
         result = self.run_case(terminal_error=True)
