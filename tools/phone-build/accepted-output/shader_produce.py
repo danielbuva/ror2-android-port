@@ -624,10 +624,13 @@ def retained_keywords(pre, gpu, material_keywords=None):
 
 
 def shader_records(passes, keyword_names):
+    return merge_variant_records(variant_records(variants, keyword_names) for variants in passes)
+
+
+def merge_variant_records(groups):
     """Merge fresh per-pass groups, preserving their local/native record order."""
     records, packed = [], []
-    for variants in passes:
-        raw, tables, programs, parameters = variant_records(variants, keyword_names)
+    for raw, tables, programs, parameters in groups:
         indices = []
         for index in range(struct.unpack_from("<I", raw)[0]):
             offset, size, _ = struct.unpack_from("<3I", raw, 4 + index * 12)
