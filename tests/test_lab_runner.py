@@ -169,13 +169,26 @@ class RefusedLeaseTest(unittest.TestCase):
             config.write_text(json.dumps({"devices": {"nova-b": "fixture"}}))
             request = repo / "request.json"
             done = repo / "work/terminal.json"
-            request.write_text(json.dumps(dict(repo=str(repo), checkout=str(repo), workstream="fixture-worker", device="nova-b", done_file=str(done))))
+            source_commit = "a" * 40
+            request.write_text(
+                json.dumps(
+                    dict(
+                        repo=str(repo),
+                        checkout=str(repo),
+                        workstream="fixture-worker",
+                        device="nova-b",
+                        done_file=str(done),
+                        toolhost_source_commit=source_commit,
+                    )
+                )
+            )
             with (
                 mock.patch.object(lab_runner.subprocess, "check_output", return_value=str(repo / ".git")),
                 mock.patch.object(lab_runner.Runner, "execute", side_effect=lab_runner.CommandError("fixture failure")) as execute,
             ):
                 self.assertEqual(lab_runner.local_packaging(request), 1)
             self.assertEqual(execute.call_args.kwargs, dict(local_checkout=repo, workstream="fixture-worker"))
+            self.assertEqual(execute.call_args.args[0]["args"][-2:], ["--toolhost-source-commit", source_commit])
             self.assertEqual(json.loads(done.read_bytes())["error"], "fixture failure")
 
     def test_explicit_toolhost_plan_is_validated_and_cached_by_input_pin(self):

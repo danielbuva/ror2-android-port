@@ -105,6 +105,50 @@ class AlphaPackagingTests(unittest.TestCase):
             phone.thermal = None
             self.assertEqual(phone.execute("example", label="cleanup-command"), "available")
 
+    def test_display_is_acquired_before_launch_and_restored_after_failure(self):
+        phone = A.Phone("synthetic-test-device", 20)
+        calls = []
+        device = Mock(display_awakened=False)
+
+        def set_display(awake):
+            calls.append(awake)
+            device.display_awakened = awake
+            return True
+
+        class Thermal:
+            def __init__(self, selected, *args):
+                self.device = selected
+                self.admission_battery = self.peak_cpu_gpu_celsius = self.time_above_80_seconds = self.error = None
+
+            def cool(self):
+                pass
+
+            def start(self):
+                pass
+
+            def finish(self):
+                calls.append("finish")
+
+        def launch(**kwargs):
+            calls.append("launch")
+            self.assertTrue(device.display_awakened)
+
+        device.display.side_effect = set_display
+        with (
+            patch("sys.path", [str(ROOT / "scripts/lab"), *A.sys.path]),
+            patch("alpha_stability_batch._GameThermalOwner", Thermal),
+            patch("device.Device", return_value=device),
+            patch.object(A.INSTALLER, "DIAGNOSTICS", Mock(directory=ROOT)),
+            patch.object(A.INSTALLER.Phone, "start", side_effect=launch),
+            self.assertRaisesRegex(A.INSTALLER.Failure, "fixture failure"),
+            phone.observe_thermal(),
+        ):
+            phone.start()
+            phone.start(repeat_notification_denial=True)
+            raise A.INSTALLER.Failure("fixture failure")
+
+        self.assertEqual(calls, [True, "launch", "launch", False, "finish"])
+
     def test_installed_identity_and_complete_binding(self):
         receipt, ledger = bound()
         A.verify_issue(receipt, ledger, 1)
@@ -196,14 +240,15 @@ class AlphaPackagingTests(unittest.TestCase):
         self.assertIn("FAIL install-prompt-mode-conflict", output.getvalue())
 
     def test_prompt_mode_delegates_and_accepts_only_explicit_prompt_cases(self):
-        def accept(phone, config, temporary, passed, *, qualify_install_prompts):
+        def accept(phone, config, temporary, passed, *, qualify_install_prompts, record_metrics):
             self.assertTrue(qualify_install_prompts)
+            self.assertTrue(record_metrics)
             for case in A.INSTALLER.PROMPT_CASES:
                 passed(case)
 
         with (
             patch.dict("os.environ", {"LAB_DEVICE_SERIAL": "synthetic-test-device"}),
-            patch.object(A.INSTALLER, "PrivateDiagnostics"),
+            patch.object(A.INSTALLER, "PrivateDiagnostics") as diagnostics,
             patch.object(A.INSTALLER, "read_context", return_value={}),
             patch.object(A, "Phone") as phone,
             patch.object(A, "compile_import_harness", return_value=b"synthetic-dex"),
@@ -213,11 +258,13 @@ class AlphaPackagingTests(unittest.TestCase):
             patch("sys.stdout", new_callable=io.StringIO) as output,
         ):
             phone.return_value.cleanup.return_value = "verified-absent"
+            phone.return_value.flow_metrics.report.return_value = {"stages": []}
             self.assertEqual(A.main(["--qualify-install-prompts"]), 0)
         phone.assert_called_once_with("synthetic-test-device", 1200, allow_test_installs=False)
         for case in A.INSTALLER.PROMPT_CASES:
             self.assertIn("PASS " + case, output.getvalue())
         phone.return_value.cleanup.assert_called_once_with()
+        diagnostics.return_value.write.assert_called_once_with("phone-flow-metrics.json", b'{"stages":[]}\n')
 
     def test_cold_restart_checks_ledger_and_installed_hash(self):
         first = bound()

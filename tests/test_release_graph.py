@@ -105,6 +105,8 @@ class ReleaseGraphTests(unittest.TestCase):
             graph = G.Graph(ROOT, {})
             paths = graph.current_code_sources(signed_audio=True)
             self.assertFalse({"AGENTS.md", "PORTING_STATE.md"} & set(paths))
+            self.assertIn("recipe/native-view-camera-transform.json", paths)
+            self.assertIn("tools/unity/runtime/input/AndroidNativeSourceViewOnlyRigMarker.cs", paths)
             graph.jobs["recipe/jobs/test-code.json"] = {"script": "tools/phone-build/owner-code/produce.py", "needs": []}
             graph.job_profiles["recipe/jobs/test-code.json"] = {}
             graph.public_files["recipe/jobs/test-code.json"] = paths

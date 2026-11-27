@@ -964,6 +964,7 @@ class Graph:
     def current_code_sources(self, *, signed_audio=False):
         runtime = "recipe/runtime-sources.json"
         audio_manifest = "recipe/original-audio-owner-sources.json"
+        camera_recipe = "recipe/native-view-camera-transform.json"
         audio = self.repo / "tools/unity/support/audio"
         return [
             "environment/toolchain.json",
@@ -975,6 +976,8 @@ class Graph:
             "recipe/importer-identities.json",
             audio_manifest,
             "recipe/owner-audio-prefab.json",
+            camera_recipe,
+            json.loads((self.repo / camera_recipe).read_text())["source_paths"]["marker"],
             "recipe/wwise-android-abi.json",
             "recipe/wwise-init-android.json" if signed_audio else "tools/phone-build/legacy/transform_init.py.txt",
             "android/Assets/LabDiagnostics.cs",

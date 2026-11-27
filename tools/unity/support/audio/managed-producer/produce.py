@@ -570,12 +570,18 @@ def main() -> None:
     audio_hashes = {}
     if args.observe_audio:
         project = ROOT / "tools/assembly-transforms/MusicOutputObserverCecilTransform.csproj"
-        post_project = project.with_name("NativeViewCameraCecilTransform.csproj")
+        camera_project = project.with_name("NativeViewCameraCecilTransform.csproj")
+        camera_recipe = ROOT / "recipe/native-view-camera-transform.json"
+        camera_pins = json.loads(camera_recipe.read_text())
+        marker_source = ROOT / camera_pins["source_paths"]["marker"]
         post_marker_source = project.with_name("CommandoPostObserverMarker.cs")
-        audio_sources = [project, project.with_suffix(".cs"), post_project, post_project.with_suffix(".cs"), post_marker_source]
+        marker_sources = [marker_source, post_marker_source]
+        audio_sources = [project, project.with_suffix(".cs"), camera_project, camera_project.with_suffix(".cs"), post_marker_source]
         source_pins = json.loads((ROOT / "recipe/assembly-transforms.json").read_text())["tool_sources"]
         for source in audio_sources:
             require(sha(source) == source_pins[source.relative_to(ROOT).as_posix()], "audio observer transform source pin changed")
+        require(sha(marker_source) == camera_pins["source_sha256"]["marker"], "view-only camera marker source pin changed")
+        audio_sources.extend((camera_recipe, marker_source))
         tool_dir = out / "compiled/music-observer-transform"
         build_transform(project, tool_dir)
         observed_game = out / "game-original-owner-music-observed.dll"
@@ -590,37 +596,46 @@ def main() -> None:
             audio_hashes["music_observed_game"] == "619af38a62b19fdfcd6ef1408548aecedbda3e0830be7982cc4f96cd6b000523",
             "music observer output differs from the qualified R3 transform",
         )
-        post_dir = out / "compiled/commando-post-transform"
-        build_transform(post_project, post_dir)
-        post_marker = post_dir / "CommandoPostObserverMarker.dll"
+        camera_dir = out / "compiled/native-view-camera-transform"
+        build_transform(camera_project, camera_dir)
+        helper = camera_dir / "NativeViewCameraMarker.Helper.dll"
+        corelib = compiler.corelib if compiler else contents / "MonoBleedingEdge/lib/mono/unityaot-linux/mscorlib.dll"
+        marker_refs = [corelib, unity_core, observed_game, managed / "netstandard.dll"]
         if compiler:
-            compiler.compile(post_marker, [post_marker_source], [compiler.corelib], ["-target:library"], env=env)
+            compiler.compile(helper, marker_sources, marker_refs, ["-target:library", "-optimize+"], env=env)
         else:
-            run(
-                [str(mono), str(csc), "-target:library", "-out:" + str(post_marker), str(post_marker_source)],
-                cwd=ROOT,
-                env=env,
-                log=out / "logs/commando-post-marker.log",
-            )
+            compile_library("native-view-camera-marker", helper, marker_sources, ["-noconfig", "-nostdlib+", "-optimize+"], marker_refs, mono, csc, out, env)
         audio_game = out / "game-original-owner-audio-observed.dll"
-        run(
-            [
-                str(dotnet),
-                str(post_dir / (post_project.stem + ".dll")),
-                "commando-post-only",
-                str(observed_game),
-                str(post_marker),
-                str(audio_game),
-                str(managed),
-            ],
-            cwd=ROOT,
-            env=tool_env,
-            log=out / "logs/commando-post-observer.log",
-        )
+        with tempfile.TemporaryDirectory(dir=out / "tmp") as directory:
+            resolver = Path(directory)
+            # Resolve the transformed game and API before looking up other original dependencies.
+            for source, name in (
+                (observed_game, "RoR2.dll"),
+                (composed_api, "AK.Wwise.Unity.API.dll"),
+                (unity_core, unity_core.name),
+                (managed / "mscorlib.dll", "mscorlib.dll"),
+            ):
+                shutil.copyfile(source, resolver / name)
+            run(
+                [
+                    str(dotnet),
+                    str(camera_dir / (camera_project.stem + ".dll")),
+                    str(observed_game),
+                    str(audio_game),
+                    str(helper),
+                    "-",
+                    str(resolver),
+                    str(managed),
+                    str(unity_core.parent),
+                ],
+                cwd=ROOT,
+                env=tool_env,
+                log=out / "logs/native-view-camera-transform.log",
+            )
         audio_hashes["audio_observed_game"] = sha(audio_game)
         require(
-            audio_hashes["audio_observed_game"] == "388a369eb53a75faaa7380427023f88d88aa573fad0a1a5d6973dd53b6dc53a1",
-            "Commando post observer output differs from the qualified R3 transform",
+            audio_hashes["audio_observed_game"] == "09a4b334cf2396b079c1d77a99e5e85fae77057415a8f231a01fea01e1e8f1ca",
+            "camera and Commando observer output differs from the qualified R3 transform",
         )
     if compiler:
         compiler.verify()
