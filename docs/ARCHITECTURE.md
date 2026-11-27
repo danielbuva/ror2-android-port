@@ -1420,6 +1420,12 @@ row; recovery checks the ordered persisted prefix before truncating uncommitted
 tails and continuing. Initial/final receipts are replaced atomically. Host
 SIGKILL recovery qualifies this contract; Android crash recovery remains open
 after J1123. SDK colour bands run sequentially.
+`texture_compare.py` provides the host comparison for this owner. It verifies
+the reference APK, payload and source selectors, compares complete texture
+chains and bodies, and writes a new private receipt. The public etcpak bridge
+supplies test encodings through the same source preprocessing path. The
+[comparison setup](../tools/phone-build/accepted-output/README.md#compare-texture-encoders-on-the-host)
+uses the lab Python environment and explicit native tool paths.
 The same owner derives full-chain RGBA through `sdk-rgba-mips` and audited
 `recipe/owner-rgba-mip-textures.json`; source top-level decode, transparency
 extension, continuous float mip filtering and per-level SDK/public encoding
