@@ -57,8 +57,8 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
 
-    def test_shader_probes_require_the_disposable_fixture_without_gameplay_inputs(self):
-        for mode in ("shader-draw", "shader-compute"):
+    def test_probes_require_the_disposable_fixture_without_gameplay_inputs(self):
+        for mode in ("shader-draw", "shader-compute", "texture-readback"):
             request = dict(self.request, mode=mode, package=runner.PHONE_CONTENT_PACKAGE)
             runner.save(self.request_file, request)
             self.assertEqual(runner.load_request(self.request_file)["mode"], mode)
@@ -97,6 +97,24 @@ class DeviceSessionTests(unittest.TestCase):
         with mock.patch.object(runner, "launch", return_value={"pid": "42"}):
             runner.run_workload(device, thermal, request, self.output, result)
         self.assertEqual(result["shader_compute"], report)
+
+    def test_texture_readback_requires_vulkan_and_preserves_the_sample_report(self):
+        device, thermal = mock.Mock(), mock.Mock()
+        thermal.cancelled.is_set.return_value = False
+        device.sh.return_value = "42"
+        request = dict(self.request, mode="texture-readback")
+        report = dict(graphics="Vulkan", passed=True, samples=[dict(mip=1, face=2)])
+        with mock.patch.object(runner, "launch", return_value={"pid": "42"}):
+            for graphics in ("Vulkan", "OpenGLES3"):
+                report["graphics"] = graphics
+                device.cmd.return_value = "Unity: PHONE_TEXTURE_READBACK " + json.dumps(report)
+                result = {}
+                if graphics == "Vulkan":
+                    runner.run_workload(device, thermal, request, self.output, result)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "inspect its Vulkan report"):
+                        runner.run_workload(device, thermal, request, self.output, result)
+                self.assertEqual(result["texture_readback"], report)
 
     def test_installed_alpha_request_has_no_local_game_apk_or_selector(self):
         request = dict(self.request, package="dev.ror2lab.alpha", mode=runner.INSTALLED_ALPHA)
