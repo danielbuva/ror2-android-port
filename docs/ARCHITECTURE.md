@@ -8664,6 +8664,15 @@ releases capture textures at teardown. The collider describes camera placement,
 and the PNGs can localize a presentation stage. Identifying a draw requires
 pixel-event evidence.
 
+The same selector accepts default-off `frameCaptureOcclusion` for the lab
+camera. After the requested stage and stopwatch arrive, the camera renders
+three windows with occlusion on, off and on from one pose and projection.
+Each window warms for 32 frames, measures 60 frames and then takes a paired
+capture. The report keeps submitted draw, SetPass and vertex totals, GPU timing
+totals and their sample counts. The camera restores the live pose, projection
+mode and culling setting after each render and on teardown. Stage exit or
+backgrounding during the comparison marks the capture incomplete.
+
 
 ## Host-only owner layout models
 
