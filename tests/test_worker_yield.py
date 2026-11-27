@@ -81,7 +81,7 @@ class WorkerYieldTests(unittest.TestCase):
         self.assertEqual(actionable, [])
         self.assertIn("| idle | parked |", text)
         self.assertIn("Quota: 1 turn(s) failed on the usage limit", text)
-        self.assertIn("Set budget-daily", text)
+        self.assertIn("No budget-daily is set", text)
 
     def test_budget_lists_workers_to_park_worst_cost_first(self):
         self.log("cheap", "20261127T100000Z", [turn(30_000_000)])
