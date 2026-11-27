@@ -3457,6 +3457,19 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+
+The same runner's `installed-alpha` mode observes an existing
+`dev.ror2lab.alpha` installation. `installed_alpha.py` pins publisher trust to
+the authorized installer APK, verifies the installer-private completion receipt
+against the selected signed release, then binds the live alpha version, APK hash
+and storage placement. The signed member's recipe closure in `public-tools.zip`
+binds the runtime attempt. After bootstrap Play and Unity activity focus on
+display 0, the runner uses PID- and attempt-bound native reports for character
+select, first-stage readiness, End Run cleanup and return to character select.
+Cleanup stops the verified game, checks the installed hash and sleeps the
+display. The tour transfers JSON evidence and leaves package installation,
+payload and saves to the installer.
+
 For `owner-unplugged`, the same runner arms a one-shot request on adopted
 app storage and verifies that the launched PID can read the admitted thermal
 sensors before prompting the owner. `LabDiagnostics` reports foreground
@@ -5151,6 +5164,13 @@ order and each `finally`) is in
 pending coroutines before stage transport clears projectiles or `NovaInputSession`
 retires the run and combat services. Geometry cleanup stops any remaining
 spawner coroutines before unloading the scene.
+
+`IntegratedStageBoundary` verifies that the active `SceneInfo` belongs to
+the destination Moon2 scene before preparing its mission. Native runs keep
+their existing loot tables. The legacy layout continues to own its test
+chests and barrels. `MoonMissionBoundary` rebinds resolved director cards
+to the owned templates from the Moon encounter or whole-catalog population
+and releases its scene-owned state at stage teardown.
 
 ## Ownership
 

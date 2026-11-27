@@ -867,12 +867,12 @@
       {
         "file": "559a814d7d0454ed4a5be9f3f6e7c7a1",
         "bytes": 169608,
-        "sha256": "68579d0762a9bcb4f47f6a5aa5d490cabbe8506ef36046d736e05e213e7fb514",
+        "sha256": "c09642763b69924147bafb2d42499d72c80a50cbfb043e0b386f1e8f3bb2b9d5",
         "name": "MovementBatchProbe",
         "recipe": {
           "path": "runtime-config.json",
           "bytes": 169579,
-          "sha256": "3be64e6fba4285947ff365f3a9dc789d53153a4e3953657dbf7c00363685ae32"
+          "sha256": "259e9998550e503d5ecd73a7998cfa509f07dc9e5098bdad8c08d05637a52b02"
         }
       },
       {
