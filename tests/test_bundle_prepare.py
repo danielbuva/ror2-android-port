@@ -893,6 +893,26 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(profile["bundle"]["asset_groups"][0]["roots"], [100, 200])
             self.assertEqual(second["catalog_bundle"]["sha256"], second["sha256"])
 
+    def test_preparation_retains_external_consumer_records_outside_catalog_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root)
+            policy["asset_groups"][0].update(roots=[300], preload_roots=[])
+            policy["retained_path_ids"] = [100]
+            (root / "policy.json").write_text(json.dumps(policy))
+            request["policy"] = pin(root / "policy.json")
+            inputs.write_text(json.dumps(request))
+
+            result = P.prepare_request(inputs, root / "prepared")
+            required = json.loads((root / "prepared/required.json").read_bytes())
+            self.assertEqual(required["path_ids"], [100, 200, 300, 400])
+            self.assertEqual(required["asset_groups"], policy["asset_groups"])
+            self.assertEqual(required["assets"], policy["assets"])
+            emitted = P.produce_request(result["request"]["path"], root / "emitted")
+            with P.O.B.Bundle(Path(emitted["bundle"])).member("CAB-content") as stream:
+                ids = {row["path_id"] for row in P.O.W.read_serialized(stream)["objects"]}
+            self.assertTrue({100, 200, 300} <= ids)
+
     def test_preparation_resolves_relocated_pointer_by_original_identity(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1169,12 +1189,13 @@ class BundlePreparationTests(unittest.TestCase):
     def test_fresh_managed_preparation_retains_script_identity_properties_and_null_source(self):
         E = P.module("bundle_endpoints")
         identity = P.O.module("_prepare_test_identity", Path(__file__).resolve().parents[1] / "scripts/lab/script_identity.py")
-        for mode in ("managed", "original-null", "missing-script"):
+        for mode in ("managed", "stale-native-hash", "original-null", "missing-script"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 inputs, request, policy, pin = self.fixture(root)
                 null = mode == "original-null"
                 missing = mode == "missing-script"
+                stale = mode == "stale-native-hash"
                 node = identity._node
                 names = ("AuthoredBehaviour", "Fixture", "Authored.dll")
                 props = bytes(range(16))
@@ -1209,7 +1230,7 @@ class BundlePreparationTests(unittest.TestCase):
                     stripped=0,
                     script_type=-1 if null else 0,
                     script_id=bytes(16) if null else identity.md4("".join(names).encode()),
-                    hash=bytes(16) if null else props,
+                    hash=bytes(16) if null else b"x" * 16 if stale else props,
                     tree=identity._tree(nodes),
                     dependencies=[],
                 )
@@ -1296,11 +1317,41 @@ class BundlePreparationTests(unittest.TestCase):
                     policy["staged_bindings"] = [dict(source=[source.name, "CAB-managed", 20], destination=["sdk", "Library/unity default resources", 70])]
                 (root / "policy.json").write_text(json.dumps(policy))
                 request["policy"] = pin(root / "policy.json")
+                key = names[2], names[1], names[0]
+                if stale:
+                    request["managed_inputs"] = {"properties_sdk": pin(sdk)}
                 inputs.write_text(json.dumps(request))
-                result = P.prepare_request(inputs, root / "prepared")
+                if stale:
+                    context = dict(
+                        identity_owner=SimpleNamespace(**{**vars(identity), "properties_hash": lambda *args: props}),
+                        current={key: dict(properties=props.hex())},
+                        normalizer=SimpleNamespace(editor_curves=lambda nodes: nodes),
+                        sdk_tree=typ["tree"],
+                        registry_scripts={key: (script, script_type)},
+                    )
+                    load_module = P.module
+                    with (
+                        patch.object(P, "module", side_effect=lambda name: E if name == "bundle_endpoints" else load_module(name)),
+                        patch.object(E, "managed_context", return_value=context),
+                        patch.object(E, "current_providers", return_value=SimpleNamespace(registry=lambda actual: self.assertEqual(tuple(actual), key))),
+                    ):
+                        result = P.prepare_request(inputs, root / "prepared")
+                        emitted = P.produce_request(result["request"]["path"], root / "emitted")
+                    with P.O.B.Bundle(Path(emitted["bundle"])).member("CAB-content") as stream:
+                        layout = P.O.W.read_serialized(stream)
+                        emitted_row = next(item for item in layout["objects"] if item["path_id"] == 100)
+                        self.assertEqual(layout["types"][emitted_row["type_id"]]["hash"], props)
+                else:
+                    result = P.prepare_request(inputs, root / "prepared")
                 prepared = json.loads(Path(result["request"]["path"]).read_bytes())
                 value = list(P.json_rows(root / "prepared/selected-records.jsonl"))[0]
-                _, retained = P.ProducerRecords().record(value)
+                row, retained = P.ProducerRecords().record(value)
+                if stale:
+                    self.assertEqual(retained, struct.pack("<iqiiqi", 0, 0, 1, 1, 70, 0))
+                    self.assertEqual(row["body_before_sha256"], P.hashlib.sha256(body).hexdigest())
+                    self.assertEqual(row["native_type_hash"], props.hex())
+                    self.assertEqual(value["native_type_hash"], props.hex())
+                    typ = dict(typ, hash=props)
                 if null or missing:
                     self.assertEqual(len(prepared["null_script_sources"]), 1)
                     declaration = prepared["null_script_sources"][0]
@@ -1320,7 +1371,6 @@ class BundlePreparationTests(unittest.TestCase):
                     self.assertEqual(P.pointers(retained, typ, {})[("m_Script",)], (1, 70))
                     original = json.loads((root / "prepared/original-script-properties.json").read_bytes())
                     self.assertEqual(original, [dict(identity=[names[2], names[1], names[0]], properties=props.hex())])
-                    key = names[2], names[1], names[0]
                     context = dict(
                         identity_owner=identity,
                         current={key: dict(unsupported=True, unchanged_provider_sha256="ab" * 32, source_trees=[typ["tree"].hex()])},

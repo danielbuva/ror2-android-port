@@ -452,7 +452,8 @@ def prepare(owner, inputs, output):
         raise ValueError("unsupported bundle preparation contract")
     policy = pins.read(request["policy"])
     required_keys = {"bundle", "member", "bindings", "asset_groups", "assets"}
-    if not required_keys <= policy.keys() or set(policy) - required_keys - {"field_routes", "staged_bindings", "canonical"}:
+    optional_keys = {"field_routes", "staged_bindings", "canonical", "retained_path_ids"}
+    if not required_keys <= policy.keys() or set(policy) - required_keys - optional_keys:
         raise ValueError("unsupported bundle preparation policy")
     member = policy["bundle"], policy["member"]
     game = pins.path(request["game_root"])
@@ -724,7 +725,8 @@ def prepare(owner, inputs, output):
             raw_records[target] = value, body, typ
             return value, body, typ
 
-        pending = []
+        # Other bundles can reference local records without a catalog entry here.
+        pending = [(*member, pid) for pid in policy_rows(pins, policy.get("retained_path_ids", []))]
         asset_groups = list(policy_rows(pins, policy["asset_groups"]))
         for group in asset_groups:
             pending.extend((*member, pid) for pid in group["roots"])
@@ -838,6 +840,7 @@ def prepare(owner, inputs, output):
         # apply different routes to the same body but keep its lineage key.
         retained = {}
         occurrences = Counter()
+        correct_managed_type = None
         for target in sorted(selected):
             if target[:2] != member:
                 continue
@@ -845,6 +848,13 @@ def prepare(owner, inputs, output):
             supplier_name = bindings[target]["supplier"]
             targets = {tuple(edge["field"]): tuple(edge["target"]) for edge in routes[target]}
             revised = owner.relocate_pointer_fields(value, body, typ, targets, externals)
+            native_hash_before = typ["hash"]
+            if typ["class_id"] == 114 and request["managed_inputs"]:
+                script_target = targets.get(("m_Script",), targets.get(("#490",)))
+                if script_target is not None:
+                    if correct_managed_type is None:
+                        correct_managed_type = E.managed_type_corrector(owner, pins, request["managed_inputs"])
+                    typ = correct_managed_type(value, typ, *read(script_target))
             record_key = tuple(value["record_source"])
             occurrence_key = supplier_name, record_key
             pack_key = supplier_name, occurrences[occurrence_key]
@@ -862,6 +872,8 @@ def prepare(owner, inputs, output):
                 body_before_sha256=value["sha256"],
                 type_id=len(pack["types"]),
             )
+            if typ["hash"] != native_hash_before:
+                row["native_type_hash"] = typ["hash"].hex()
             pack["blob"].extend(revised)
             pack["rows"].append(row)
             pack["types"].append(owner.O.json_layout(typ))
