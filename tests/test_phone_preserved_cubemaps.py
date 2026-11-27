@@ -3,6 +3,7 @@
 import io
 import struct
 import unittest
+from unittest.mock import patch
 
 from test_phone_texture_producer import T, authored_body, digest
 
@@ -53,12 +54,45 @@ class PreservedCubemapTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaisesRegex(ValueError, "metadata differs from source"):
                 T.body_output(body, fields, pixels, dict(target, **change), "cube-preserve")
 
+    def test_converted_faces_keep_the_original_stride_order_and_cube_body(self):
+        for fmt, stride, output_fmt in ((10, 24, 34), (25, 48, 47)):
+            faces = [bytes([face]) * stride for face in range(6)]
+            source = b"".join(faces)
+            body, fields = cube_body(source, fmt=fmt, stride=stride)
+            operation = f"source-bc{1 if fmt == 10 else 7}-cube-etc"
+            selected = dict(
+                width=4,
+                height=4,
+                fields=fields,
+                operation=operation,
+                pixels=dict(member=None, offset=fields["image data"][0] + 4, bytes=len(source), sha256=digest(source)),
+            )
+            encoded = [bytes([face + 8]) * stride for face in range(6)]
+            sdk, etc = {"pixels": "pixels"}, "etc"
+            with patch.object(T, "source_bc_etc", side_effect=encoded) as encode:
+                pixels = T.pixels_input(None, body, selected, etc_codec=etc, sdk=sdk)
+            self.assertEqual([row.args for row in encode.call_args_list], [(face, 4, 4, fmt, 3, False, sdk, etc) for face in faces])
+            self.assertEqual(pixels, b"".join(encoded))
+            target = dict(name="Source", alpha_optional=False, usage=0, inline=True, stream=EMPTY, mips=3, colour_space=0)
+            self.assertEqual(T.body_output(body, fields, pixels, target, operation), cube_body(pixels, fmt=output_fmt, stride=stride)[0])
+
     def test_half_float_chains_are_preserved_without_quantization(self):
         # Includes fractional and above-one half values, unlike RGBA8 storage.
         texel = struct.pack("<4e", 0.0003, 0.5, 12.75, 1)
         pixels = texel * (16 + 4 + 1) * 6
         body, fields = cube_body(pixels, fmt=17, stride=168)
         self.assertEqual(T.preserve_cube_mips(pixels, body, dict(width=4, height=4, fields=fields)), pixels)
+
+    def test_native_alpha8_and_rgb24_preserve_six_complete_face_chains(self):
+        for fmt, channels in ((1, 1), (3, 3)):
+            with self.subTest(fmt=fmt):
+                stride = channels * (16 + 4 + 1)
+                pixels = b"".join(bytes([face]) * stride for face in range(6))
+                body, fields = cube_body(pixels, fmt=fmt, stride=stride)
+                selected = dict(width=4, height=4, fields=fields)
+                self.assertEqual(T.preserve_cube_mips(pixels, body, selected), pixels)
+                with self.assertRaisesRegex(ValueError, "six complete source mip chains"):
+                    T.preserve_cube_mips(pixels[:-stride], body, selected)
 
     def test_source_chain_and_format_mismatch_are_rejected(self):
         for width, height, fmt, mips, stride, size in (

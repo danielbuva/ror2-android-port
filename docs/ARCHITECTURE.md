@@ -1412,21 +1412,25 @@ decoding, raw copying, fixed source-coordinate color extension and public
 JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
 original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
 colour space and usage. It checks source extents and preserves metadata rather
-than generating replacement mip levels. `source-bc3-etc` likewise reads each
-original mip, including the texels stored in its boundary blocks. It writes
-ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for packed A/G
-normal maps. It uses the existing pinned native decoder, ETC2 colour and
+than generating replacement mip levels. `source-bc3-etc` and `source-bc7-etc`
+read each original mip, including the texels stored in its boundary blocks.
+Both write ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for
+packed A/G normal maps. They use the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
 use the same codec pins and output checks. `texture_native_profile.py` selects
-original Alpha8, RGB24, RGBA32, ARGB32, HDR Cubemap, BC1 and BC3 records from the
-PC texture coverage ledger. The same selector and producer support standalone
-player records. They pin the original serialized file, any sibling resource
+original Alpha8, RGB24, RGBA32, ARGB32, native Cubemap, BC1, BC3 and BC7 records
+from the PC texture coverage ledger. The same selector and producer support
+standalone player records. They pin the original serialized file, any sibling resource
 stream and an embedded tree from an original bundle with the same complete
 type identity. Native copy also preserves original zero-pixel placeholders.
 It checks native schemas, platform data, references and complete mip extents,
 then writes a private profile. Source-derived BC profiles pin original bytes and
 expected output extents and leave reference output hashes empty. BC1 colour
 retains usage and encodes each original mip as ETC1 RGB after checking opacity.
+The same path processes all six original face-major mip chains for opaque BC1
+and BC7 Cubemaps, preserving per-face image size and the full stream extent.
+`source-bc3-crunch-etc` unpacks the original DXT5Crunched mip chain into BC3
+blocks and reuses the per-level Android encoder without generating new mips.
 BC1-only jobs pin the native pixel decoder and ETC encoder directly.
 The producer's setup, stream checks and output ownership apply to these packs.
 `build_texture_jpeg.py` owns
@@ -1479,8 +1483,8 @@ handling. Its `bc6-half` pipe mode decodes one unsigned BC6H mip into little-end
 RGBAHalf with opaque alpha. It crops edge blocks to the requested dimensions and
 streams four rows at a time. The default-scene owner still consumes the native
 capture while source reflection and ambient compatibility are evaluated.
-The opt-in `cube-preserve` operation retains original BC6H/RGBAHalf face/mip
-bytes, format, color space and usage with per-face CompleteImageSize. The audited
+The opt-in `cube-preserve` operation retains original Alpha8, RGB24, BC6H and
+RGBAHalf face/mip bytes, format, color space and usage with per-face CompleteImageSize. The audited
 `recipe/owner-source-baked-reflections.json` selects two original baked probes;
 no codec or SDK is consumed. Existing input/profile/body/resource hash gates,
 checkpoint ownership and teardown apply. Native BC6H support is a device gate;
@@ -1563,8 +1567,10 @@ exact-editor host controls; game-cohort and Android admission remain separate.
 `etc1-mips` extends that texture owner with full-chain filtering, logical-tail
 tiling and destination normal-metric selection. `owner-rgb-mip-textures.json`
 provides the original/destination field and import relationships. The existing
-public ETC tool also owns bounded Unity Crunch top-level decompression using
-unchanged pinned Zlib headers, built by `build_texture_etc.py`. The SDK toolchain
+public ETC tool also owns bounded Unity Crunch decompression using unchanged
+pinned Zlib headers, built by `build_texture_etc.py`. The top-level modes are
+used by the legacy mip-generation routes. The full-chain BC3 mode emits the
+original levels in order for the source-mip route. The SDK toolchain
 supplies its native pixel helper; ETC1 mip production executes no SDK encoder.
 J1110 qualifies all 1,589 records on the host; Android cohort qualification
 remains open.
@@ -5414,11 +5420,12 @@ override references with the renderer and trail sources.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs, Mercenary's owned finisher swing before GroundLight configures it, and
 Acrid's normal and combo-finisher swings. It reads configured native states
-for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, which
-instantiate their prefabs directly. Artificer's configured Nano-Bomb projectile
+for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, and
+REX's Disperse charge, which instantiate or pool their prefabs directly.
+Artificer's configured Nano-Bomb projectile
 also enters this owner so the projectile controller's detached ghost takes the
-same material recovery path. It holds the Acrid
-finisher's typed provider lease through the run. Integrated world cleanup restores
+same material recovery path. It holds native addressable provider leases through
+the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
 The detailed renderer report reads VagrantMesh's effective slot properties from
@@ -8596,6 +8603,10 @@ configured muzzle and impact effects by catalog identity. It retains camera
 projected screen bounds and material slots for up to 1.25 seconds or 120 frames.
 The report belongs to the current world and holds only observations. Projected
 bounds and effect identity identify candidates for comparison with the video.
+With detailed visual diagnostics enabled, the same owner follows the first
+native REX Disperse cast. It reads the charge state's live instance and then
+matches the release by catalog identity. Each phase records end-of-frame
+renderer slots for up to 1.25 seconds or 120 frames in the world report.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
@@ -8608,6 +8619,9 @@ The same session retains the projectile at Beetle Queen's configured FireSpit
 address. The native effect owner follows the explosion's enabled child projectile
 reference and prepares both detached ghosts before the director spawns enemies.
 Teardown restores the original material slots.
+The body visual owner also prepares Acrid's configured Leap projectile.
+The same native effect owner follows its controller's detached acid ghost
+and restores the particle material slots during world teardown.
 `IntegratedWorldSession` sends the owned Engineer shield template through the
 same presentation owner before native deployment. The center and edge renderers
 inherit the prepared materials, and world teardown restores the template slots.

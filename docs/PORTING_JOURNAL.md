@@ -6,6 +6,33 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1548 — Recover Acrid Leap acid ghost materials
+
+2026-11-27. The original body visual owner prepares the native Leap
+projectile's detached acid ghost. One assisted Utility tap on Titanic
+Plains recorded one authority and one server activation and six owned
+acid hits on a Beetle. Active Gas and Spittle both used recovered
+Cloud Remap variant 36 at queue 3000. The paired capture shows green
+acid with clear particle edges. Matched PC parity remains open.
+APK SHA-256 `d18afa358fc31dee6f7d3de2dd7ce6cad73e6d5469133886416cfea31adc3da3` (source `49046273`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/acrid-leap-acid-main-nova/`
+contains the native log, comparison and terminal receipt. SoC peaked at
+78.1 °C and battery at 28 °C. Adopted placement, scratch cleanup, OLED
+sleep and lease release passed.
+## J1547 — Recover REX Disperse charge materials
+
+2026-11-27. The original body visual owner prepares the native Disperse
+charge prefab before it is instantiated. In assisted seed-3 Titanic Plains,
+one Utility tap produced one authority and one server callback. All 11 charge
+samples showed the recovered Glow at queue 3000 and recovered distortion.
+The same-process video shows the opaque charge card clear and visible green
+and purple release particles. Release-material and PC visual parity are open.
+APK SHA-256 `0b8d9a8990ee717bcfb8e433586ffcdb1a545724ea244db39ec4cccbe301b072` (source `ed6d7805`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/rex-disperse-charge-main-nova/`
+contains the native log, paired capture assessment and terminal receipt.
+SoC peaked at 81.6 °C with 0.317 s above 80 °C and 29 °C battery.
+Adopted placement, scratch cleanup, OLED sleep and lease release passed.
+
 ## J1546 — Verify signed Histogram conversion on Android
 
 2026-11-27. The shared toolhost runner verified the signed release and original

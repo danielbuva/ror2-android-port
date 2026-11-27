@@ -86,6 +86,11 @@ namespace EntityStates.BeetleQueenMonster
 }
 namespace EntityStates.Croco
 {
+    public class BaseLeap
+    {
+        public static GameObject projectilePrefab;
+    }
+
     public class Slash
     {
         public static GameObject configuredNormal;
@@ -117,6 +122,14 @@ namespace EntityStates.Mage.Weapon
     {
         public static GameObject configuredProjectile;
         public GameObject projectilePrefab = configuredProjectile;
+    }
+}
+namespace EntityStates.Treebot.Weapon
+{
+    public class ChargeSonicBoom
+    {
+        public static EntityStateGameObject configuredEffect;
+        public EntityStateGameObject chargeEffectPrefab = configuredEffect;
     }
 }
 namespace RoR2
@@ -332,6 +345,7 @@ static class Fixture
     {
         var flame = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
         var charge = new Renderer { sharedMaterials = new[] { original } };
+        var disperseGlow = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
         var bombGhost = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
         var mercNormal = new Renderer { sharedMaterials = new[] { original } };
         var mercFinisher = new Renderer { sharedMaterials = new[] { original } };
@@ -340,6 +354,9 @@ static class Fixture
         var fallback = new Renderer { sharedMaterials = new[] { original } };
         EntityStates.Mage.Weapon.Flamethrower.configuredEffect = new GameObject { components = new[] { flame } };
         EntityStates.Mage.Weapon.ChargeNovabomb.configuredEffect = new GameObject { components = new[] { charge } };
+        EntityStates.Treebot.Weapon.ChargeSonicBoom.configuredEffect = new EntityStateGameObject {
+            directReference = new GameObject { components = new[] { disperseGlow } }
+        };
         EntityStates.Mage.Weapon.ThrowNovabomb.configuredProjectile = new GameObject { components = new[] {
             new RoR2.Projectile.ProjectileController { ghostPrefab = new GameObject { components = new[] { bombGhost } } }
         } };
@@ -351,6 +368,14 @@ static class Fixture
             directReference = new GameObject { components = new[] { fallback } }
         };
         var operation = new AsyncOperationHandle<GameObject> { Result = new GameObject { components = new[] { finisher } } };
+        var crocoGas = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
+        var crocoSpittle = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
+        var crocoAcid = new GameObject { components = new[] {
+            new RoR2.Projectile.ProjectileController {
+                ghostPrefab = new GameObject { components = new[] { crocoGas, crocoSpittle } }
+            }
+        } };
+        EntityStates.Croco.BaseLeap.projectilePrefab = crocoAcid;
         var queenGas = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
         var queenSpittle = new ParticleSystemRenderer { sharedMaterials = new[] { original } };
         var queenAcid = new GameObject { components = new[] {
@@ -380,7 +405,7 @@ static class Fixture
               "Mage Nano-Bomb ghost trail should be prepared and its original retained");
         Check(!EntityStates.Merc.GroundLight.comboSwingEffectPrefab && !EntityStates.Merc.GroundLight.comboFinisherSwingEffectPrefab,
               "Merc presentation must leave native state configuration to the game");
-        foreach (var renderer in new Renderer[] { flame, charge, bombGhost, mercNormal, mercFinisher })
+        foreach (var renderer in new Renderer[] { flame, charge, disperseGlow, bombGhost, mercNormal, mercFinisher })
         {
             var material = renderer.sharedMaterials[0];
             Check(material.shader.name == "Recovered/" + original.shader.name &&
@@ -396,13 +421,18 @@ static class Fixture
         Check(prepare.MoveNext() && finisher.sharedMaterials[0] != original &&
               queenGas.sharedMaterials[0] == original && queenSpittle.sharedMaterials[0] == original,
               "native finisher should be prepared while the Queen projectile loads");
+        Check(EntityStates.Croco.BaseLeap.projectilePrefab == crocoAcid, "Croco preparation must retain the native projectile");
+        foreach (var renderer in new[] { crocoGas, crocoSpittle })
+            Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
+                  session.worldLootSourceMaterials[renderer][0] == original,
+                  "Croco acid ghost must inherit the prepared material and retain its original slot for teardown");
         Check((string)Addressables.requestedKey == "native-queen-spit" &&
               session.ownedOriginalVisualHandles[1] == queenOperation,
               "native Queen projectile address and ownership must be preserved");
         queenOperation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 &&
               EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab == queenReference &&
-              session.worldLootSourceMaterials.Count == 9, "Queen preparation must retain native state configuration");
+              session.worldLootSourceMaterials.Count == 12, "Queen preparation must retain native state configuration");
         foreach (var renderer in new[] { queenGas, queenSpittle })
             Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
                   session.worldLootSourceMaterials[renderer][0] == original,

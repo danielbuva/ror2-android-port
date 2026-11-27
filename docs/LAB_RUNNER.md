@@ -102,6 +102,11 @@ sources and verifies every retained runtime asset and Android library.
 The build refuses changed native/runtime inputs and records the base commit
 and hash next to the new APK. The repack verifies current authored source pins
 against the tracked files it embeds and caches the APK by checkout commit.
+For a local staged-release check, pass `--release-trust <public-key-config.json>`.
+Use the retained repository and application ID with the publisher RSA public
+keys in `keys`. The repack records the trust hash and prints a separate cache
+key. Use `signed.apk` from that entry and its receipt hash as `installer_apk`
+and `installer_sha256` in the staged-update request.
 An explicitly staged Android build can also seed this rebuild. Use its
 request-keyed cache directory. For an older receipt without source and signer
 fields, replay its original packaging request against the original checkout with
@@ -134,9 +139,12 @@ ZIP. Use a disposable installer with the publisher key in its packaged trust.
 The dry-run verifies both signed source graphs and checks that both support the
 current inventory. The detached run serves the releases over local ADB reverse,
 imports the staged originals through Android's picker, and checks native save
-retention across a same-key update. Its cleanup removes only the scoped stage
-and the packages it installed. Import and each reconstruction have a four-hour
-limit to accommodate the measured signed native build.
+retention across a same-key update. Each play phase writes a
+`terminal.done.json` bound to the live APK hash and signed runtime attempt.
+The whole-game scoreboard can join those receipts to a census of the same APK.
+Cleanup removes the scoped stage and the packages the run installed. Import
+and each reconstruction have a four-hour limit to accommodate the measured
+signed native build.
 
 To build a specific managed installer stage, add a `toolhost_inputs` object.
 Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
