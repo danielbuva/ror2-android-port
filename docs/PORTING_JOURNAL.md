@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1522 — Retire the native Siren boss at End Run
+
+2026-11-27. Capture the source boss with HLAPI's invalid minion-owner ID so
+the native death event authorizes retirement of its exact server identity.
+APK SHA-256 `8d61bcc60d70820310373a83dcb12a8bb1c8745cbff452de26850da95346836a` (source `250ef2af`).
+Evidence: `work/coordination/gameplay-coverage-20261126/siren-native-retirement-fix-nova-b/`.
+Sample 168 records native defeat and reward droplet 148 at 59.96 FPS (16.68 ms).
+The same session's completed report records boss 146 naturally retired,
+both owners disposed, 12 eggs retired and 42 toggle targets restored.
+The runner stopped after cleanup at 90.4 °C SoC, with 11.13 s above 80 °C
+and a 35 °C battery. Scratch removal, OLED sleep and lease release passed.
+Ordinary player input and matched PC rendering remain open.
+
 ## J1521 — Complete the assisted converted Titanic Plains teleporter exit
 
 2026-11-27. The assisted driver chooses the charged native teleporter for exit.

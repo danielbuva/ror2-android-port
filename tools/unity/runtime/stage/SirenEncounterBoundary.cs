@@ -214,7 +214,7 @@ public sealed partial class SirenEncounterSession : IDisposable
     {
         public CharacterMaster master;
         public NetworkInstanceId networkId;
-        public NetworkInstanceId ownerNetworkId;
+        public NetworkInstanceId ownerNetworkId = NetworkInstanceId.Invalid;
         public bool bodyDestroyRequestCompleted;
         public bool masterDestroyRequestCompleted;
         public bool nativeDeathObserved, naturallyRetired;
