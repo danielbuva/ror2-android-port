@@ -355,3 +355,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1520](PORTING_JOURNAL.md#j1520--restore-the-native-gold-shores-boss-reward) | 2026-11-26 | Restore the native Gold Shores boss reward | 2026-11-27. |
 | [J1521](PORTING_JOURNAL.md#j1521--complete-the-assisted-converted-titanic-plains-teleporter-exit) | 2026-11-26 | Complete the assisted converted Titanic Plains teleporter exit | 2026-11-27. |
 | [J1522](PORTING_JOURNAL.md#j1522--retire-the-native-siren-boss-at-end-run) | 2026-11-26 | Retire the native Siren boss at End Run | 2026-11-27. |
+| [J1523](PORTING_JOURNAL.md#j1523--capture-commandos-natural-hit-flinch-and-recovery) | 2026-11-26 | Capture Commando's natural-hit flinch and recovery | 2026-11-27. |

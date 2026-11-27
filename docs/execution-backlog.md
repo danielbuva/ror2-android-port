@@ -91,8 +91,7 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
 
 ## Gameplay integration
 
-- [ ] Verify Commando real-hit flinch/recovery with assists off after a sampled
-      living-world baseline; audit other survivors for additive aim/gesture defects.
+- [ ] Audit the remaining survivors for additive aim and gesture defects.
 - [ ] Audit shipped enemy bodies and projectile/effect material slots together,
       group source shaders/keywords and adaptation outcomes, then verify fixes on-device.
 

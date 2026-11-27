@@ -550,6 +550,73 @@ class DeviceSessionTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         runner.load_request(self.request_file)
 
+    def test_video_requires_a_bounded_menu_start_observation(self):
+        with (
+            mock.patch.object(device_module, "validate_apk_identity"),
+            mock.patch("installed_attempt.attempt_from_installed", return_value="embedded"),
+        ):
+            request = dict(self.request, start_from_menu=True, capture_video=True)
+            runner.save(self.request_file, request)
+            self.assertTrue(runner.load_request(self.request_file)["capture_video"])
+            for changes in (
+                dict(start_from_menu=False),
+                dict(duration_seconds=181),
+                dict(stage_transition={"from": "blackbeach2", "to": "golemplains"}),
+            ):
+                with self.subTest(changes=changes):
+                    runner.save(self.request_file, dict(request, **changes))
+                    with self.assertRaisesRegex(ValueError, "capture_video requires"):
+                        runner.load_request(self.request_file)
+
+    def test_video_retains_its_recording_and_stops_only_its_recorder_on_abort(self):
+        for abort in (False, True):
+            with self.subTest(abort=abort):
+                target = mock.Mock(package=self.request["package"])
+                target.read_receipt.return_value = {"persistentDataPath": "/sdcard/owned"}
+                started, stopped = runner.threading.Event(), runner.threading.Event()
+
+                def shell(*args, **kwargs):
+                    if args[0] == "screenrecord":
+                        started.set()
+                        if abort and not stopped.wait(5):
+                            raise RuntimeError("recorder did not receive its stop")
+                    if args[0] == "pkill":
+                        stopped.set()
+                    return "12"
+
+                target.sh.side_effect = shell
+                result = {"device_cleanup": {}}
+                thermal = mock.Mock(error=None)
+                with (
+                    mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
+                    mock.patch.object(device_module, "retain_device_file", return_value="digest") as retain,
+                    mock.patch.object(device_module, "remove_device_file") as remove,
+                ):
+                    try:
+                        with runner.capture_launch_video(target, thermal, "12", self.output, 35, result):
+                            self.assertTrue(started.wait(5))
+                            if abort:
+                                raise RuntimeError("thermal abort")
+                    except RuntimeError as error:
+                        if not abort:
+                            raise
+                        self.assertEqual(str(error), "thermal abort")
+
+                command = next(call.args for call in target.sh.call_args_list if call.args[0] == "screenrecord")
+                remote = command[-1]
+                self.assertEqual(command[1:-1], ("--bit-rate", "5000000", "--time-limit", "35"))
+                if abort:
+                    self.assertTrue(stopped.is_set())
+                    self.assertNotIn("video", result)
+                    retain.assert_not_called()
+                    remove.assert_called_once_with(target, remote, {}, missing_ok=True)
+                else:
+                    self.assertFalse(stopped.is_set())
+                    video = result["video"]
+                    self.assertEqual((video["pid"], video["sha256"]), (12, "digest"))
+                    retain.assert_called_once_with(target, remote, self.output / video["file"], {})
+                    remove.assert_not_called()
+
     def test_attack_capture_uses_matching_native_state_and_open_display(self):
         self.output.mkdir(parents=True)
         target = mock.Mock(package="dev.ror2lab.arm64", base=["adb", "-s", "synthetic-device"])
