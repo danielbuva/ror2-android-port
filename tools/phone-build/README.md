@@ -147,6 +147,26 @@ does not establish in-game lighting, visuals or device acceptance. As in the
 pinned EditorKit typed lookup and R2API handle lifecycle prior art, a container
 load alone is insufficient evidence for a requested asset and its lifetime.
 
+To check texture producer coverage against current PC originals, pass
+`texture_catalog.py` a JSON request with `pc` (install root), `data` (relative
+player data directory), and `suppliers` (ordered `profile` and `receipt` pins
+with `path`, `bytes` and `sha256`). The first matching original bundle, member
+and object wins.
+
+```sh
+python3 -B tools/phone-build/accepted-output/texture_catalog.py request.json --output texture-graph
+python3 -I -S tools/phone-build/accepted-output/bundle_preload.py \
+  --graph texture-graph --schema texture-graph/schemas.json --output texture-fixture \
+  --bundle source-texture-catalog --member CAB-f05917d43bafd07cc371ad817060c6ad
+```
+
+Use the emitted `request.json` with `phone-content-check` above. The graph's
+`coverage.jsonl` enumerates original bundle and player identities. Its
+`done.json` counts exact and approximate matches to producer recipe hashes
+before stream relocation, plus originals without a matching supplied route.
+Typed load qualifies the emitted fixture independently of the canonical APK
+scoreboard and leaves visual and device qualification open.
+
 `phone-wrapper-oracle` is separate current **desktop verification** support.
 Its explicit request is either `{"operation":"stage"}` or
 `{"operation":"check","project":"<absolute generated project>"}`. Stage writes
