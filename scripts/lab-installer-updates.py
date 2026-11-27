@@ -21,6 +21,7 @@ from pathlib import Path
 import re
 import secrets
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -825,18 +826,24 @@ for name in sys.argv[4:]:
             public.public_source_path(name, sha(data))
             archive.writestr(name, data)
         archive.writestr("bundle-index.json", encoded(index))
+    with bundle.open("rb") as stream:
+        bundle_sha256 = hashlib.file_digest(stream, "sha256").hexdigest()
     body = {
         "version": "synthetic-N" + ("+1" if version == 2 else ""),
         "version_code": version,
         "application_id": GAME,
         "minimum_installer_version": 3,
-        "bundle_sha256": sha(bundle.read_bytes()),
+        "bundle_sha256": bundle_sha256,
         "data_schema": {"writes": 1, "reads": [1]},
         "entries": {name: public.entry_dependencies(index, name) for name in inputs},
     }
     public.validate_publication(bundle, body)
     envelope = public.sign_envelope(body, KEY_ID, private_key, public_key)
-    return {"release.json": encoded(envelope["release"]), "release.sig": encoded(envelope["signature"]), "public-tools.zip": bundle.read_bytes()}
+    return {"release.json": encoded(envelope["release"]), "release.sig": encoded(envelope["signature"]), "public-tools.zip": bundle}
+
+
+def asset_size(data):
+    return data.stat().st_size if isinstance(data, Path) else len(data)
 
 
 @contextmanager
@@ -846,11 +853,19 @@ def server():
             with self.server.lock:
                 self.server.requests.append(self.path)
                 data = self.server.paths.get(self.path)
-            self.send_response(200 if data is not None else 404)
-            self.send_header("Content-Length", str(len(data) if data is not None else 0))
-            self.end_headers()
+            if isinstance(data, Path):
+                with data.open("rb") as stream:
+                    self.send_length(200, os.fstat(stream.fileno()).st_size)
+                    shutil.copyfileobj(stream, self.wfile, length=1024 * 1024)
+                return
+            self.send_length(200 if data is not None else 404, len(data) if data is not None else 0)
             if data is not None:
                 self.wfile.write(data)
+
+        def send_length(self, status, size):
+            self.send_response(status)
+            self.send_header("Content-Length", str(size))
+            self.end_headers()
 
         def log_message(self, *args):
             pass
@@ -874,7 +889,7 @@ def publish(service, files, version):
         "draft": False,
         "prerelease": False,
         "tag_name": "owner-v" + str(version),
-        "assets": [{"name": name, "size": len(data), "browser_download_url": base + name} for name, data in files.items()],
+        "assets": [{"name": name, "size": asset_size(data), "browser_download_url": base + name} for name, data in files.items()],
     }
     with service.lock:
         service.paths = {"/" + name: data for name, data in files.items()}
@@ -1095,7 +1110,7 @@ class Phone:
     def reserve_install_outputs(self, apk, inputs, releases):
         # Cover the installed/staged installer and APKs plus retained inputs
         # and release tools, including temporary transaction copies.
-        payload = sum(len(data) for data in inputs.values()) + sum(len(data) for row in releases.values() for data in row.values())
+        payload = sum(len(data) for data in inputs.values()) + sum(asset_size(data) for row in releases.values() for data in row.values())
         self.storage_reserve = type(self).storage_reserve + 3 * (apk.stat().st_size + payload)
 
     def put(self, name, data):
