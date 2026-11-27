@@ -28,6 +28,7 @@ sys.path.insert(0, str(ROOT / "scripts/lab"))
 PROFILE = ROOT / "recipe/owner-native-arm64.json"
 PROFILE_SHA = "868a0665d3550b53eebf0d57c8a50997f09a4a797e86a45ebd21f13004e6136d"
 RESERVE = 2 * 1024**3
+HOST_CCACHE = Path("/opt/homebrew/bin/ccache")
 
 
 def input_state(work):
@@ -41,6 +42,42 @@ def input_state(work):
 def sha(path):
     with Path(path).open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def compile_cache(sdk_state, tool_state, compiler, android_tools, output, protected, environment):
+    if android_tools:
+        directory = os.environ.get("ROR2LAB_NATIVE_CACHE_DIR")
+        executable = Path(android_tools["resource_dir"]).parents[1] / "native-links/ccache"
+        if not directory or not executable.is_file():
+            return None
+        if executable.resolve() != Path(compiler).with_name("libccache.so"):
+            raise ValueError("ccache must resolve to the toolhost's installed native provider")
+        directory, maximum = Path(directory), "3GiB"
+        compiler_hash = tool_state[compiler]
+    else:
+        if not HOST_CCACHE.is_file() or compiler not in sdk_state:
+            return None
+        executable = HOST_CCACHE
+        directory, maximum = Path.home() / "Library/Caches/dev.ror2lab.il2cpp-ccache", "10GiB"
+        compiler_hash = sdk_state[compiler]
+    directory = directory.resolve()
+    if any(directory.is_relative_to(path) or path.is_relative_to(directory) for path in protected):
+        raise ValueError("native compiler cache overlaps protected inputs or outputs")
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    provider_hash = sha(executable)
+    identity = hashlib.sha256(json.dumps([sdk_state, tool_state, provider_hash], sort_keys=True).encode()).hexdigest()
+    base_environment = environment if environment is not None else {"PATH": "/usr/bin:/bin", "LC_ALL": "C", "TMPDIR": str(output / "tmp")}
+    cache_environment = {key: value for key, value in base_environment.items() if not key.startswith("CCACHE_")}
+    cache_environment.update(
+        CCACHE_DIR=str(directory),
+        CCACHE_MAXSIZE=maximum,
+        CCACHE_TEMPDIR=str(output / "tmp"),
+        CCACHE_CONFIGPATH=os.devnull,
+        CCACHE_COMPILERCHECK="string:" + compiler_hash,
+        CCACHE_COMPILERTYPE="clang",
+        CCACHE_STATSLOG=str(output / "logs/ccache-stats.log"),
+    )
+    return executable, provider_hash, identity, cache_environment
 
 
 def write(path, value):
@@ -566,6 +603,7 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
         "pause_clock",
         "measure_jobs",
         "compile_workers",
+        "use_ccache",
     } != required or not isinstance(request["sources_compressed"], bool):
         raise ValueError("explicit native request fields required")
     work, sdk, receipt, sources, metadata = [canonical(request[n]) for n in ("owner_work", "sdk_install", "converter_receipt", "sources", "metadata")]
@@ -590,6 +628,9 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
     linux_tools = request.get("linux_tools")
     linux_state = linux_tool_state(linux_tools) if linux_tools else None
     value = plan(profile, sdk, output, None if linux_tools else android_tools)
+    use_ccache = request.get("use_ccache", True)
+    if type(use_ccache) is not bool:
+        raise ValueError("native use_ccache selector must be boolean")
     inputs = {
         "inventory": inventory,
         "sdk": sdk_state,
@@ -646,6 +687,8 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
     if compiled:
         result.update(**{"resume" if resuming else "compiled": str(compiled)}, reused_compile_tasks=0)
 
+    cache = None
+
     def compile_job(index, job, cancelled=None):
         if cancelled is not None and cancelled.is_set():
             raise InterruptedError("native measurement cancelled")
@@ -659,7 +702,15 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
         if linux_tools:
             linux_invoke(job["argv"], output, str(index), sdk, linux_tools, **options)
         else:
-            invoke(job["argv"], output, str(index), **options)
+            command = job["argv"]
+            if cache:
+                executable, _, identity, cache_environment = cache
+                # ccache can omit path-map values from its own key. Retain the
+                # exact compile command, including paths that affect object bytes.
+                namespace = hashlib.sha256(json.dumps([identity, command]).encode()).hexdigest()
+                options["env"] = dict(cache_environment, CCACHE_NAMESPACE=namespace)
+                command = [str(executable), *command]
+            invoke(command, output, str(index), **options)
         if sha(source) != before:
             raise ValueError("native input changed during compilation")
         obj = Path(job["output"])
@@ -684,6 +735,11 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
         for target, members in value["wrappers"].items():
             Path(target).write_text(lump_source(members))
         if not plan_only:
+            if use_ccache and not linux_tools:
+                compiler = android_tools["clang"] if android_tools else profile["compiler"]
+                cache = compile_cache(sdk_state, tool_state, compiler, android_tools, output, (work, game, sdk, ROOT), environment)
+            if cache:
+                result["ccache_sha256"] = cache[1]
             result["phase"] = "compiling"
             if compile_workers == 2:
                 cancelled = Event()
@@ -747,6 +803,8 @@ def run(request, *, plan_only=False, profile=None, from_conversion=False):
             raise ValueError("Android tool inputs changed")
         if linux_tools and linux_tool_state(linux_tools) != linux_state:
             raise ValueError("Linux tool inputs changed")
+        if cache and sha(cache[0]) != cache[1]:
+            raise ValueError("ccache provider changed during native production")
         if converter_inputs(receipt, request["converter_receipt_sha256"], sources, metadata, profile, request["sources_compressed"]) != (
             providers,
             metadata_row,

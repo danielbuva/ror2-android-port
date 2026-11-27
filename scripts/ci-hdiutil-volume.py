@@ -69,16 +69,16 @@ def main() -> int:
     pending = args.image.parent / "attach.pending"
     pending.write_text("attachment-completion-unconfirmed\n")
     attach_status = run_hdiutil(attach, args.timeout_seconds)
-    if attach_status is None:
+    if attach_status is None or attach_status < 0:
         print(
             "ci-local: hdiutil attach timed out; mount state is uncertain; cleanup must reconcile image ownership",
             file=sys.stderr,
         )
         return ATTACH_STATE_UNCERTAIN
+    pending.unlink()
     if attach_status != 0:
         print(f"ci-local: hdiutil attach failed ({attach_status}); using ordinary temporary directory", file=sys.stderr)
         return CREATE_FAILED
-    pending.unlink()
     return 0
 
 
