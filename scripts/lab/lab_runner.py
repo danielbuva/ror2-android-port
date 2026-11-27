@@ -336,7 +336,7 @@ class Runner:
                         shutil.rmtree(lease, ignore_errors=True)
             if local_checkout is None:
                 self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
-            self.run([sys.executable, "scripts/prune-generated.py", "--apply"], self.repo, timeout=1800)
+            self.run([sys.executable, "scripts/prune-generated.py", "--apply", "--aggressive"], self.repo, timeout=1800)
 
 
 def toolhost_summary(out):

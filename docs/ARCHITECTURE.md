@@ -3129,6 +3129,23 @@ Planning checks eligibility once per marked run, not per descendant directory.
 Marking never deletes; normal dry-run/apply owns pruning and rechecks eligibility
 before the first deletion of each marked run. No symlinked runs are eligible.
 
+`--aggressive` applies a 48-hour minimum to stand-alone APKs and evidence
+and covers APK copies in device and lab-build output roots. It also retires
+receipted R9 Unity bundle copies and isolated Gradle caches from old unpinned
+attempts. The manifests, logs and receipts stay. Active projects, immutable
+history and `.prune-keep` trees are protected. Cache ownership and age rules
+remain as described above, with explicit keeps also honored in aggressive mode.
+Older thermal, exception, input and resource traces and heap snapshots can be
+stored losslessly as `.zst`. The pruner skips evidence with shared APFS
+allocation and publishes an archive only after checksum testing and a reduction
+in allocated bytes. Converter indexes and protocol JSONL retain their original
+paths. `scripts/lab/evidence_files.py` opens raw or compressed trace bytes for
+retained reports and heap analysis. The heap export owner materializes one
+snapshot at a time in its existing temporary directory and preserves capture
+identity. Apply is serialized and writes its ledger under `work/cleanup-analysis`.
+The ledger distinguishes logical candidate bytes from the signed change in
+volume-available bytes measured by `df`, which includes concurrent host activity.
+
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
 renumbers only branch additions and regenerates `docs/JOURNAL_INDEX.md`. Setup

@@ -15,6 +15,8 @@ from pathlib import Path
 import statistics
 import struct
 
+from evidence_files import open_evidence
+
 RAW_HEADER = struct.Struct("<8siiii")
 RAW_CAPACITY = 262144
 HITCH33_MS = struct.unpack("<f", struct.pack("<f", 33.334))[0]
@@ -611,8 +613,15 @@ def main():
             raise ValueError("Raw frame sidecar hash differs from retained session")
         raw_trace = read_raw_frames(data)
     completed = json.loads(args.completed_session.read_text()) if args.completed_session else None
-    report = analyze(session, [json.loads(line) for line in args.thermal.read_text().splitlines() if line.strip()], raw_trace, completed)
-    report["input_sha256"] = {key: hashlib.sha256(path.read_bytes()).hexdigest() for key, path in (("session", args.session), ("thermal", args.thermal))}
+    thermal_hash = hashlib.sha256()
+    thermal = []
+    with open_evidence(args.thermal) as stream:
+        for line in stream:
+            thermal_hash.update(line)
+            if line.strip():
+                thermal.append(json.loads(line))
+    report = analyze(session, thermal, raw_trace, completed)
+    report["input_sha256"] = {"session": hashlib.sha256(args.session.read_bytes()).hexdigest(), "thermal": thermal_hash.hexdigest()}
     if raw_hash:
         report["input_sha256"]["raw_frames"] = raw_hash
     if args.completed_session:

@@ -1,9 +1,15 @@
 import copy
 from datetime import datetime, timedelta, timezone
+import hashlib
+import json
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import struct
+import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import perf_report as perf
@@ -33,6 +39,21 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("zstd"), "Zstandard CLI required for retained thermal traces")
+    def test_retained_thermal_trace_hashes_original_bytes(self):
+        session, thermal = fixture()
+        trace = ("\r\n".join(json.dumps(row) for row in thermal) + "\r\n").encode()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            receipt = root / "result.json"
+            receipt.write_text(json.dumps(session))
+            original = root / "session-sustained-thermal.jsonl"
+            original.with_suffix(".jsonl.zst").write_bytes(subprocess.check_output(["zstd", "-qc"], input=trace))
+            output = root / "report.json"
+            with patch.object(sys, "argv", ["perf_report", str(receipt), str(original), "--output", str(output)]):
+                perf.main()
+            self.assertEqual(json.loads(output.read_text())["input_sha256"]["thermal"], hashlib.sha256(trace).hexdigest())
+
     def test_five_minute_bins_pair_runtime_and_temperature_by_utc(self):
         session, _ = fixture()
         origin = datetime(2026, 1, 1, tzinfo=timezone.utc)
