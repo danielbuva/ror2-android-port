@@ -306,6 +306,45 @@ class EmissionTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertTrue(result["owned_app_removed"])
 
+    def test_signed_artifact_compares_selected_output_and_removes_owned_toolhost(self):
+        self.request.pop("expected_records")
+        self.request.update(operation="signed-artifact", expected_sha256="a" * 64)
+        contract = dict(
+            bundle="bundle.zip",
+            envelope="release.json",
+            public_key="publisher.pem",
+            key_id="fixture",
+            output="artifact",
+            job="recipe/jobs/fixture.json",
+            artifact="objects",
+            bindings={"pc": "game"},
+        )
+        files = {}
+        for name, data in (
+            ("request.json", json.dumps(contract)),
+            ("input-hashes.json", "{}"),
+            ("bundle.zip", "fixture"),
+            ("release.json", "{}"),
+            ("publisher.pem", "fixture"),
+        ):
+            source = self.root / ("staged-" + name)
+            source.write_text(data)
+            files[name] = dict(source=str(source), bytes=source.stat().st_size, sha256=EMISSION.digest(source))
+        manifest = Path(self.request["manifest"]["path"])
+        manifest.write_text(json.dumps(dict(files=files)))
+        self.request["manifest"]["sha256"] = EMISSION.digest(manifest)
+        self.path.write_text(json.dumps(self.request))
+        self.collected = dict(signed_artifact=dict(success=True, job=contract["job"], artifact=contract["artifact"], sha256="a" * 64), thermal={})
+        result = self.run_request()
+        self.assertTrue(result["success"], result)
+        self.assertTrue(result["owned_app_removed"])
+        command = self.phone.transport.start_detached.call_args.args[0]
+        self.assertTrue(any(part.endswith("/owner-code/run_android.py") for part in command))
+        self.assertFalse(any(part.startswith("ROR2LAB_BUILD_HOSTFXR=") for part in command))
+
+        self.collected["signed_artifact"]["sha256"] = "b" * 64
+        self.assertFalse(self.run_request()["success"])
+
     def test_signed_code_keeps_unknown_handle_for_exact_reattachment(self):
         self.signed_request()
         self.phone.transport.wait_detached.side_effect = INSTALLER.TRANSPORT.DetachedUncertain(self.job)
@@ -445,7 +484,7 @@ class EmissionTests(unittest.TestCase):
             process = launch.return_value
             process.stdin = pipe
             process.wait.return_value = process.poll.return_value = 0
-            EMISSION.transfer(self.phone, apk, {}, "/remote", native, signed_code=True)
+            EMISSION.transfer(self.phone, apk, {}, "/remote", native, operation=EMISSION.SIGNED_CODE)
         with tarfile.open(streamed) as archive:
             self.assertEqual(archive.getmember("runtime/" + dotnet8 + "libcoreclr.so").linkname, native + "/libcoreclr.so")
             self.assertEqual(archive.getmember("runtime/" + dotnet10 + "libcoreclr.so").linkname, native + "/libcoreclr10.so")

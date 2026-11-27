@@ -1,0 +1,56 @@
+{
+  "bundles": [
+    {
+      "members": [
+        {
+          "meshes": [
+            {
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "bytes": 4512,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "ops": {},
+                  "path_id": 4141190660904612807,
+                  "sha256": "a355933f4dfb64b16facd07abb0598f4f0778cc87e6dbb26e72c291897e5943d"
+                }
+              ],
+              "path_id": 4141190660904612807,
+              "sha256": "a355933f4dfb64b16facd07abb0598f4f0778cc87e6dbb26e72c291897e5943d"
+            }
+          ],
+          "name": "CAB-c5a0aa99992bcb9b0c1c64cdb73ae21d"
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-solutionalhaunt_assets_all_eadd8444825009c5037e8f7d270ca57e.bundle",
+      "sha256": "6295e3018c6446579fc8549b2afaecf05bc300651d74365d413eee854b504443"
+    },
+    {
+      "members": [
+        {
+          "meshes": [
+            {
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "bytes": 81584,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "ops": {},
+                  "path_id": -56792529225862179,
+                  "sha256": "1e148e3ad8cb39ed0ff43291c1055f2eb8f2540411b7b7ae566b744884903a42"
+                }
+              ],
+              "path_id": -56792529225862179,
+              "sha256": "1e148e3ad8cb39ed0ff43291c1055f2eb8f2540411b7b7ae566b744884903a42"
+            }
+          ],
+          "name": "CAB-814602cd32214cdd5d489996e7556822"
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4_assets_all_e70b3dc3ef8cad59f67a90c07b4e1f35.bundle",
+      "sha256": "8244fa011c55c33172db6846df282ccd9a52a41157ef66cf1384fbcd5fa92e1e"
+    }
+  ],
+  "excluded": [],
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
+}

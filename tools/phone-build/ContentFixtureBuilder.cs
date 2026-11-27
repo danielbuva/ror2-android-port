@@ -78,6 +78,7 @@ public static partial class ContentFixtureBuilder
             case "AnimationClip": return typeof(AnimationClip);
             case "Material": return typeof(Material);
             case "Shader": return typeof(Shader);
+            case "ComputeShader": return typeof(ComputeShader);
             case "Texture2D": return typeof(Texture2D);
             case "Cubemap": return typeof(Cubemap);
             case "Sprite": return typeof(Sprite);
@@ -85,6 +86,7 @@ public static partial class ContentFixtureBuilder
             case "AvatarMask": return typeof(AvatarMask);
             case "PhysicMaterial": return typeof(PhysicMaterial);
             case "SpeedTreeWindAsset": return typeof(Terrain).Assembly.GetType("UnityEngine.SpeedTreeWindAsset", throwOnError: true);
+            case "AnimatorController": return typeof(UnityEditor.Animations.AnimatorController);
             case "AnimatorOverrideController": return typeof(AnimatorOverrideController);
             case "AssetBundleManifest": return typeof(AssetBundleManifest);
             default: throw new Exception("Unsupported native-content type: " + name);
@@ -302,7 +304,10 @@ public static partial class ContentFixtureBuilder
         PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
         PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
         var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-        new GameObject("PhoneContentFixture").AddComponent<ContentFixture>();
+        var fixture = new GameObject("PhoneContentFixture").AddComponent<ContentFixture>();
+        var computeAddress = Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_COMPUTE");
+        fixture.computeHistogram = !String.IsNullOrEmpty(computeAddress);
+        fixture.shaderAddress = computeAddress ?? Environment.GetEnvironmentVariable("ROR2_PHONE_SHADER_DRAW");
         EditorSceneManager.SaveScene(scene, "Assets/Fixture.unity");
         var report = BuildPipeline.BuildPlayer(new[] { "Assets/Fixture.unity" }, Output("phone-content-fixture.apk"), BuildTarget.Android, BuildOptions.Development);
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Fixture build failed: " + report.summary.result);

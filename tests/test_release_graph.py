@@ -27,6 +27,38 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_direct_compute_job_binds_original_record_and_installed_tools(self):
+        path = ROOT / "recipe/owner-histogram-compute-translation.json"
+        pin = G.digest(path)
+        (record,) = json.loads(path.read_bytes())["typed_records"]
+        destination = [record["output"][key] for key in ("bundle", "member", "path_id")]
+        source = [record["source"][key] for key in ("path", "member", "path_id")]
+        graph = G.Graph(ROOT, {})
+        row = dict(destination=destination, source=source, record_source=destination, record="a" * 64)
+        bindings = graph.bundle_bindings([row], *destination[:2], source_profiles=[pin])
+        self.assertEqual(bindings["unresolved"], [])
+        self.assertEqual(bindings["bindings"][0]["supplier"], pin)
+        name = "recipe/jobs/" + path.name
+        job = graph.jobs[name]
+        self.assertIn(job["script"], J.PRODUCERS)
+        self.assertEqual(job["arguments"], ["--request", "${request}"])
+        self.assertEqual(job["needs"], [])
+        self.assertEqual(set(job["artifacts"]), {"receipt", "objects", "index", "types"})
+        self.assertEqual(job["request"]["profile"]["sha256"], pin)
+
+        with tempfile.TemporaryDirectory() as directory:
+            native = Path(directory).resolve()
+            dispatch = object.__new__(J.Dispatcher)
+            dispatch.repo = dispatch.inputs = dispatch.runtime = dispatch.installed_runtime = dispatch.native = native
+            dispatch.jobs_root = native / "work/jobs"
+            dispatch.descriptors = graph.jobs
+            expected = {}
+            for tool in ("libshader-dxbc.so", "libspirv-val.so"):
+                binary = native / tool
+                binary.write_text(tool)
+                expected[f"native_sha256:{tool}"] = G.digest(binary)
+            self.assertEqual(dispatch.input_pins(name), expected)
+
     def test_bundle_shader_leaves_resolve_original_and_sdk_sources(self):
         profile = ROOT / "recipe/owner-v30-bundle-shader-leaves.json"
         pin = G.digest(profile)
@@ -811,6 +843,22 @@ class ReleaseGraphTests(unittest.TestCase):
                 texture.sdk_inputs(request_path, pin, pc)
             (native / "libtexture-pixels.so").write_text("changed installed provider")
             self.assertNotEqual(after["native_sha256:libtexture-pixels.so"], dispatch.input_pins(names["rgb-mip"])["native_sha256:libtexture-pixels.so"])
+
+    def test_signed_source_bc1_binds_native_codecs_without_sdk_extraction(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            profile = repo / "recipe/owner-authored-bc1.json"
+            profile.parent.mkdir()
+            profile.write_text(json.dumps({"bundles": [{"members": [{"textures": [{"operation": "source-bc1-etc"}]}]}]}))
+            graph = G.Graph(repo, {})
+            graph.conversion = "recipe/jobs/owner-code.json"
+            job = graph.jobs[graph.build(G.digest(profile))]
+            args = job["arguments"]
+            for flag, native in (("pixels-codec", "libtexture-pixels.so"), ("etc-codec", "libtexture-etc.so")):
+                self.assertEqual(args[args.index("--" + flag) + 1], "${native}/" + native)
+                self.assertEqual(args[args.index("--" + flag + "-sha256") + 1], "${native_sha256:" + native + "}")
+            self.assertEqual(job["needs"], [])
+            self.assertNotIn("request", job)
 
     def test_player_shader_suppliers_keep_serialized_and_nested_pack_contracts(self):
         graph = G.Graph(ROOT, {})
@@ -1800,6 +1848,11 @@ fixtures = {{'authored': {bundle!r}, 'sidecar': {sidecar!r}}}
             dispatcher.produce("payload/authored", release["entries"]["payload/authored"], destination)
             self.assertEqual(destination.read_bytes(), bundle)
             self.assertEqual(progress, [False, False])
+            consumer = dispatcher.descriptor(index["entries"]["payload/authored"]["job"])
+            (supplier,) = consumer["needs"]
+            self.assertEqual(dispatcher.artifact_sha256(supplier, "objects"), hashlib.sha256(b"authored").hexdigest())
+            with self.assertRaisesRegex(ValueError, "outside the signed entry graph"):
+                dispatcher.artifact_sha256("recipe/jobs/unreachable.json", "objects")
             manifest_target = "payload/generated-android-data"
             dispatcher.produce(manifest_target, release["entries"][manifest_target], root / "manifest")
             import UnityPy

@@ -27,7 +27,9 @@ import traceback
 from uuid import uuid4
 from xml.etree import ElementTree
 
-PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
+from phone_apk import PACKAGE as PHONE_CONTENT_PACKAGE
+
+PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted", PHONE_CONTENT_PACKAGE}
 PROCESS_TIME = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 TRANSIENTS = ("movement-batch-selection.json", "offline-settings-v1/preferences.json.pending")
 GOLEM_ATTACK = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+EntityStates\.GolemMonster\.(ClapState|FireLaser):OnEnter\(\)\s*$")
@@ -122,14 +124,25 @@ def load_request(path, serial=None):
         "sustained",
         "settings-save-failure",
         "profile-write-interrupt",
+        "profile-save-failure",
         "software-notices",
         "player-screens",
         "owner-unplugged",
+        "shader-draw",
+        "shader-compute",
     }:
         raise ValueError("Unknown device workload mode")
-    if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
+    shader_modes = {"shader-draw", "shader-compute"}
+    if value["mode"] in shader_modes or value["package"] == PHONE_CONTENT_PACKAGE:
+        if (
+            value["mode"] not in shader_modes
+            or value["package"] != PHONE_CONTENT_PACKAGE
+            or value.keys() - required - {"mode", "serial", "adopted_install", "cooldown_seconds", "capture_interval_seconds"}
+        ):
+            raise ValueError("Shader probe requires the disposable content fixture and its standalone workload")
+    elif value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
-    if value["mode"] in {"settings-save-failure", "profile-write-interrupt"} and "selection" in value:
+    if value["mode"] in {"settings-save-failure", "profile-write-interrupt", "profile-save-failure"} and "selection" in value:
         raise ValueError("Persistence workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
@@ -295,7 +308,7 @@ def checked_mapping(request):
 
 def reset_other_lab(request, lease, record, cleanup=None):
     """Converted runs also leave the separately owned lab package idle."""
-    if request["package"] == "dev.ror2lab.arm64":
+    if request["package"] != "dev.ror2lab.converted":
         return
     from alpha_stability_batch import _idle_readback
     from device import Device
@@ -1185,10 +1198,10 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
         save(output / "launch.json", launched)
         observe_unplugged(device, request, output, result, str(launched["pid"]))
         return
-    if request["mode"] == "profile-write-interrupt":
-        from settings_write_interrupt_check import check_profile_write_interrupt
+    if request["mode"] in {"profile-write-interrupt", "profile-save-failure"}:
+        from settings_write_interrupt_check import check_profile_recovery
 
-        result["profile_write_interrupt"] = check_profile_write_interrupt(
+        result[request["mode"].replace("-", "_")] = check_profile_recovery(
             device, thermal, request, output, checked_launch, partial(start_from_menu, process_checks=process_checks), result.get("device_cleanup")
         )
         return
@@ -1240,6 +1253,26 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
+    if request["mode"] in {"shader-draw", "shader-compute"}:
+        report_name = request["mode"].replace("-", "_")
+        report_marker = "PHONE_" + report_name.upper() + " "
+        deadline = time.monotonic() + request["duration_seconds"]
+        while time.monotonic() < deadline:
+            if thermal.cancelled.is_set():
+                raise RuntimeError(thermal.error)
+            if device.sh("pidof", device.package, check=False).strip() != pid:
+                raise RuntimeError("Shader fixture process exited or changed")
+            log = device.cmd("logcat", "-d", "--pid=" + pid, "Unity:I", "AndroidRuntime:E", "*:S")
+            for line in log.splitlines():
+                _, marker, payload = line.partition(report_marker)
+                if marker:
+                    report = result[report_name] = json.loads(payload)
+                    if report.get("passed") is not True or report.get("graphics") != "Vulkan":
+                        raise RuntimeError("Shader fixture failed; inspect its Vulkan report")
+                    return
+            thermal.cancelled.wait(1)
+        raise RuntimeError("Shader fixture produced no report before the deadline")
+
     if request["mode"] == INSTALLED_ALPHA:
         tour = result["tour"] = {"native_title": "unobserved", "phase": "bootstrap"}
         if launched.get("activity") != device.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity":
@@ -1248,7 +1281,9 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
         tour["bootstrap_play"] = True
         tour["phase"] = "player-activity"
         observe_alpha_player(device, thermal, pid, output, request["duration_seconds"])
-        observe_alpha_tour(device, thermal, pid, output, tour, start_attempt, request["duration_seconds"])
+        observe_alpha_tour(
+            device, thermal, pid, output, tour, start_attempt, request["duration_seconds"], retain_native_loss=request.get("retain_native_loss", False)
+        )
         return
     if request.get("start_from_menu") and "input_script" not in request:
         reference = request.get("bootstrap_play_reference")
@@ -1282,7 +1317,7 @@ def observe_alpha_player(device, thermal, pid, output, duration):
     raise RuntimeError("Unity player did not gain focus after bootstrap Play")
 
 
-def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
+def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration, *, retain_native_loss=False):
     from session_cleanup_check import _read_json, abandon_control_coordinates, matches_run, menu_start_coordinates
     from touch_gesture import owned_display_zero_focus
 
@@ -1304,16 +1339,19 @@ def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
             report_id=report_id,
             attempt=attempt,
             runtime=runtime,
-            stop_phases=("commando-defeated",),
+            stop_phases=() if retain_native_loss else ("commando-defeated",),
         )
 
-    def tap(control, coordinates, windows):
+    def require_focus(control, windows):
         if thermal.error:
             raise RuntimeError(thermal.error)
         if device.sh("pidof", device.package, check=False, timeout=5) != pid or not owned_display_zero_focus(
             windows, device.package, activity="com.unity3d.player.UnityPlayerActivity"
         ):
             raise RuntimeError("Owned Unity display or process changed before " + control)
+
+    def tap(control, coordinates, windows):
+        require_focus(control, windows)
         if coordinates is None:
             raise RuntimeError("Current native geometry unavailable for " + control)
         device.sh("input", "-d", "0", "tap", *map(str, coordinates), timeout=5)
@@ -1321,6 +1359,17 @@ def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
     menu = wait("character-select", lambda r: r.get("phase") == "offline-start-menu" and (r.get("hud") or {}).get("survivorSelectableCount", 0) > 0)
     save(output / "start-menu.json", menu)
     tour["character_select"] = True
+    if retain_native_loss:
+        settings = menu["settings"]
+        tap("Settings", (settings["buttonX"], settings["buttonY"]), device.sh("dumpsys", "window", "displays", timeout=5))
+        settings = wait("native-settings", lambda r: r.get("settings", {}).get("visible") is True)["settings"]
+        tap(
+            "Save settings",
+            (int(settings["screenWidth"] / 2 - 110), int(settings["screenHeight"] / 2 + 48)),
+            device.sh("dumpsys", "window", "displays", timeout=5),
+        )
+        menu = wait("native-settings-closed", lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("visible") is False)
+        device.sh("test", "-s", runtime + "/offline-settings-v1/preferences.json", timeout=5)
     session = menu["session"]
     tap("Start", menu_start_coordinates(menu), device.sh("dumpsys", "window", "displays", timeout=5))
     report = wait(
@@ -1332,6 +1381,24 @@ def observe_alpha_tour(device, thermal, pid, output, tour, attempt, duration):
     )
     save(output / "world-start.json", report)
     tour["first_stage"] = report["stage"]["scene"]
+    if retain_native_loss:
+        from settings_write_interrupt_check import new_native_loss
+
+        ended = wait(
+            "native-persisted-defeat",
+            lambda r: r.get("session") == session
+            and r.get("phase") == "commando-defeated"
+            and all(r.get("results", {}).get(key) is True for key in ("persisted", "serverEnding", "clientEnding", "reportReloaded")),
+        )
+        ledger = _read_json(device, runtime + "/offline-run-results-v1/profile.json")
+        new_native_loss([], ledger["runs"])
+        save(output / "persisted-defeat.json", ended)
+        require_focus("Results Continue", device.sh("dumpsys", "window", "displays", timeout=5))
+        device.sh("input", "-d", "0", "keyboard", "keyevent", "KEYCODE_ESCAPE", timeout=5)
+        returned = wait("native-defeat-return", lambda r: r.get("session") == session + 1 and r.get("phase") == "offline-start-menu")
+        save(output / "returned-menu.json", returned)
+        tour.update(phase="completed", returned=True, persisted_native_loss=True)
+        return
     for control, phase, condition in (
         (
             "button",
@@ -1529,6 +1596,7 @@ def execute(request):
     exception_log = None
     initial_exception_bytes = None
     active_hash = None
+    fixture_was_present = False
     initial_hash_pending = False
     started = time.monotonic()
     prior_selectors = command_selectors()
@@ -1556,6 +1624,9 @@ def execute(request):
             device = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
             reset_other_lab(request, lease, result.setdefault("initial_lab_reset", {}), cleanup)
             if device.exists():
+                if device.package == PHONE_CONTENT_PACKAGE:
+                    fixture_was_present = True
+                    raise RuntimeError("Content fixture already installed; refusing to modify it")
                 if not device.receipt("installed.json").exists() and "prior_receipt" in request:
                     adopt_receipt(device, request["prior_receipt"])
                 initial_hash_pending = True
@@ -1771,6 +1842,17 @@ def execute(request):
                     clean("diagnostic-scratch", retain_scratch)
                     clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {}), cleanup))
                     clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {}), cleanup))
+                if device.package == PHONE_CONTENT_PACKAGE:
+
+                    def remove_fixture():
+                        verify_owned(device, active_hash)
+                        if not device.reset()["removed"]:
+                            raise RuntimeError("Shader fixture uninstall could not be verified")
+                        device.receipt("runtime.json").unlink(missing_ok=True)
+                        return True
+
+                    if clean("fixture-uninstall", remove_fixture):
+                        active_hash = None
 
             if device:
 
@@ -1790,6 +1872,8 @@ def execute(request):
                                 result["terminal_readback"] = dict(apk_sha256=active_hash, process_absent=True)
                             else:
                                 result["terminal_readback"] = dict(ownership_verified=False)
+                        elif fixture_was_present:
+                            result["terminal_readback"] = dict(installed=independent.exists(), preexisting=True)
                         elif active_hash:
                             result["terminal_readback"] = _idle_readback(independent, active_hash)
                         elif not independent.exists():

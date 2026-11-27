@@ -34,6 +34,7 @@ PRODUCERS = {
             "object_produce",
             "record_produce",
             "shader_produce",
+            "shader_translate",
             "texture_produce",
             "player_data",
             "sdk_inputs",
@@ -58,6 +59,7 @@ WITNESS = re.compile(r"\$\{(inputs|installed_runtime|native)\}/(.+)")
 
 def validate_jobs(index, release, read_job):
     """Require every final entry and all transitive jobs in its signed closure."""
+    validated = set()
     for entry, row in index["entries"].items():
         if read_job(row["job"]).get("outputs", {}).get(entry) is None:
             raise ValueError("release entry is not produced by its declared job")
@@ -112,6 +114,8 @@ def validate_jobs(index, release, read_job):
                 visit(required, active | {name})
 
         visit(row["job"], set())
+        validated.update(seen)
+    return validated
 
 
 class Dispatcher:
@@ -125,7 +129,7 @@ class Dispatcher:
         self.progress = progress or (lambda name, reused: None)
         self.jobs_root = UPDATES.within(self.inputs, "work/releases/jobs")
         self.jobs_root.mkdir(parents=True, exist_ok=True)
-        self.validate()
+        self.validated_jobs = self.validate()
         # run_android resolves producers through runtime/repo; point it at the
         # newly verified source, not the installer APK's older bundled checkout.
         self.runtime = Path(tempfile.mkdtemp(prefix="runtime-", dir=self.jobs_root))
@@ -144,7 +148,7 @@ class Dispatcher:
         return self.descriptors[name]
 
     def validate(self):
-        validate_jobs(self.index, self.release, self.descriptor)
+        return validate_jobs(self.index, self.release, self.descriptor)
 
     def closure(self, name):
         """Union all declared consumers: a shared job cannot reuse weaker pins."""
@@ -383,3 +387,10 @@ class Dispatcher:
     def output_sha256(self, name):
         job = self.index["entries"][name]["job"]
         return self.output_hashes[job][self.descriptor(job)["outputs"][name]]
+
+    def artifact_sha256(self, job, artifact):
+        if job not in self.validated_jobs:
+            raise ValueError("producer is outside the signed entry graph")
+        path = self.descriptor(job)["artifacts"][artifact]
+        self.execute(job)
+        return self.output_hashes[job][path]

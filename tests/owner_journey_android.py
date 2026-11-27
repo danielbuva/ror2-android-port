@@ -51,9 +51,9 @@ def install(journey, previous=None, *, outcome="success"):
     stubs["org/json/JSONObject.java"] = stubs["org/json/JSONObject.java"].replace("private Map<String,Object> values", "public Map<String,Object> values")
     stubs["org/json/JSONArray.java"] = (
         stubs["org/json/JSONArray.java"]
-        .replace("private java.util.List<Integer> values", "public java.util.List<Integer> values")
-        .replace("put(int v)", "put(long v)")
-        .replace("values.add(v)", "values.add((int)v)")
+        .replace("private java.util.List<Integer> values", "public java.util.List<Object> values")
+        .replace("put(int v)", "put(Object v)")
+        .replace("return values.get(i);", "return ((Number)values.get(i)).intValue();")
     )
     activity = stubs["dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java"]
     activity = activity.replace("o.write(1);", "o.write(org.json.Export.encode(v).getBytes(java.nio.charset.StandardCharsets.UTF_8));")

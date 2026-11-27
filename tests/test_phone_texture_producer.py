@@ -8,8 +8,10 @@ import os
 from pathlib import Path
 import struct
 import subprocess
+import sys
 import tempfile
 import unittest
+from unittest.mock import call, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -131,6 +133,42 @@ class TextureProducerTests(unittest.TestCase):
     def test_normal_unpack_uses_ag_coordinates_and_integer_blue(self):
         source = bytes([19, 128, 49, 128, 31, 128, 29, 255, 0, 128, 0, 0, 6, 0, 12, 128])
         self.assertEqual(T.normal_rgb(source), bytes([128, 128, 254, 255, 128, 127, 0, 128, 127, 128, 0, 127]))
+
+    def test_source_bc3_etc_encodes_each_original_mip_and_preserves_block_padding(self):
+        red = bytes([173, 0]) + bytes(6) + struct.pack("<HHI", 0xF800, 0, 0)
+        green = bytes([211, 0]) + bytes(6) + struct.pack("<HHI", 0x07E0, 0, 0)
+        source = red * 4 + green
+        sdk, etc = {}, "authored-etc"
+        with patch.object(T, "sdk_encode_rgba", side_effect=[b"R" * 64, b"G" * 16]) as encode:
+            self.assertEqual(T.source_bc_etc(source, 7, 5, 12, 2, False, None, etc), b"R" * 64 + b"G" * 16)
+        self.assertEqual(
+            encode.call_args_list,
+            [call(bytes([255, 0, 0, 173]) * 64, 8, 8, None, etc), call(bytes([0, 255, 0, 211]) * 16, 4, 4, None, etc)],
+        )
+        with patch.object(T.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, b"N" * 8)) as encode:
+            self.assertEqual(T.source_bc_etc(green, 3, 2, 12, 1, True, None, etc), b"N" * 8)
+        self.assertEqual(encode.call_args.args[0], [etc, "4", "4", "normal"])
+        self.assertEqual(encode.call_args.kwargs["input"], T.normal_rgb(bytes([0, 255, 0, 211]) * 16))
+        with self.assertRaisesRegex(ValueError, "source BC mip chain extent"):
+            T.source_bc_etc(source[:-1], 7, 5, 12, 2, False, sdk, etc)
+
+    def test_source_bc1_etc_encodes_original_mips_and_rejects_transparent_padding(self):
+        red = struct.pack("<HHI", 0xF800, 0, 0)
+        green = struct.pack("<HHI", 0x07E0, 0, 0)
+        transparent_padding = struct.pack("<HHI", 0, 0x07E0, 3 << 30)
+        etc = "authored-etc"
+        encoded = [subprocess.CompletedProcess([], 0, b"R" * 32), subprocess.CompletedProcess([], 0, b"G" * 8)]
+        with patch.object(T.subprocess, "run", side_effect=encoded) as encode:
+            self.assertEqual(T.source_bc_etc(red * 4 + green, 7, 5, 10, 2, False, None, etc), b"R" * 32 + b"G" * 8)
+        self.assertEqual(
+            encode.call_args_list,
+            [
+                call([etc, "8", "8", "rgb"], input=bytes([255, 0, 0]) * 64, capture_output=True, timeout=120),
+                call([etc, "4", "4", "rgb"], input=bytes([0, 255, 0]) * 16, capture_output=True, timeout=120),
+            ],
+        )
+        with self.assertRaisesRegex(ValueError, "source BC1 mip has transparency"):
+            T.source_bc_etc(transparent_padding, 3, 2, 10, 1, False, None, etc)
 
     def test_public_alpha_source_provider_drift_refuses_before_output(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -308,10 +346,13 @@ class TextureProducerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             pc = root / "pc"
-            pc.mkdir()
-            source = pc / "authored.bundle"
-            serialized, offsets = serialized_textures([body], [99])
+            data = pc / "Authored_Data"
+            bundles = data / "StreamingAssets/aa/StandaloneWindows64"
+            bundles.mkdir(parents=True)
+            source = bundles / "authored.bundle"
+            serialized, offsets = serialized_textures([body, body], [99, 100])
             source.write_bytes(FIXTURE.bundle([("CAB-authored", serialized, 4), ("CAB-authored.resS", b"LEAD" + encoded, 0)], True))
+            (data / "level0").write_bytes(serialized_textures([body], [101], [89])[0])
             source_hash = T.BUNDLE.sha(source)
             selected = {
                 "path_id": 99,
@@ -327,7 +368,7 @@ class TextureProducerTests(unittest.TestCase):
             }
             profile = {
                 "input_id": T.MESH.INPUT_ID,
-                "bundles": [{"path": source.name, "sha256": source_hash, "members": [{"name": "CAB-authored", "textures": [selected]}]}],
+                "bundles": [{"path": source.relative_to(pc).as_posix(), "sha256": source_hash, "members": [{"name": "CAB-authored", "textures": [selected]}]}],
             }
             profile_path = root / "profile.json"
             profile_path.write_text(json.dumps(profile))
@@ -340,6 +381,24 @@ class TextureProducerTests(unittest.TestCase):
             self.assertEqual(index[0]["resource"]["stream"], target_stream)
             self.assertNotIn("resource", index[1])
             self.assertEqual(T.BUNDLE.sha(source), source_hash)
+            pack_receipt = root / "output/result.json"
+            request = root / "catalog-request.json"
+            supplier = {
+                key: dict(path=str(path), bytes=path.stat().st_size, sha256=T.BUNDLE.sha(path))
+                for key, path in (("profile", profile_path), ("receipt", pack_receipt))
+            }
+            request.write_text(json.dumps(dict(pc=str(pc), data=data.name, suppliers=[supplier])))
+            graph = root / "catalog"
+            fixture = subprocess.run(
+                [sys.executable, "-B", str(Path(T.__file__).with_name("texture_catalog.py")), str(request), "--output", str(graph)],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(fixture.returncode, 0, fixture.stderr)
+            scores = json.loads((graph / "done.json").read_text())["classes"]
+            self.assertEqual(scores, {"Texture2D": dict(exact=1, approximate=0, missing=1), "Cubemap": dict(exact=0, approximate=0, missing=1)})
+            coverage = [json.loads(line) for line in (graph / "coverage.jsonl").read_text().splitlines()]
+            self.assertEqual([(row["source"][2], row["status"]) for row in coverage], [(99, "exact"), (100, "missing"), (101, "missing")])
             with self.assertRaises(ValueError):
                 T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "output")
             with self.assertRaisesRegex(ValueError, "profile drift"):

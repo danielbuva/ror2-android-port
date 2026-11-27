@@ -79,15 +79,17 @@ def apk_digest(device, package_path):
     return observed[0]
 
 
-def validate_selection(package, installer_package, installer_sha256, expected_source_sha256):
+def validate_selection(package, installer_package, installer_sha256, expected_source_sha256, *, staged=False):
+    test_package = "dev.ror2lab.installertest"
+    eligible = installer_package == test_package if staged else installer_package not in {PACKAGE, test_package}
     if (
         package != PACKAGE
         or not APPLICATION_ID.fullmatch(installer_package)
-        or installer_package in {PACKAGE, "dev.ror2lab.installertest"}
+        or not eligible
         or not SHA256.fullmatch(installer_sha256)
         or not SHA256.fullmatch(expected_source_sha256)
     ):
-        raise ValueError("Explicit production installer and source release required")
+        raise ValueError("Explicit " + ("staged" if staged else "production") + " installer and source release required")
 
 
 def release_attempt(bundle, release, public):
@@ -133,9 +135,60 @@ def release_attempt(bundle, release, public):
             return attempt
 
 
-def verify_installed(device, installer_package, installer_sha256, trust, expected_source_sha256, public_tools):
+def preflight_update(installer_apk, installer_sha256, installer_version, baseline, update, *, include_install_plan=False):
+    """Qualify two local signed source graphs before selecting a phone."""
+    trust = installer_trust(installer_apk, installer_sha256)
+    owner = release_tools()
+    public = owner.public()
+
+    def read(directory, name, limit):
+        with (Path(directory) / name).open("rb") as stream:
+            return public.load_json(stream.read(limit + 1), max_bytes=limit)
+
+    versions = []
+    for directory in (baseline, update):
+        envelope = {
+            "release": read(directory, "release.json", owner.MAX_METADATA),
+            "signature": read(directory, "release.sig", 16384),
+        }
+        release = public.verify_envelope(envelope, trust["keys"])
+        owner.RELEASE.validate(release, installer_version, PACKAGE, versions[-1]["version_code"] if versions else 0)
+        versions.append(release)
+
+    sources = []
+    for directory, release in zip((baseline, update), versions):
+        bundle = Path(directory) / "public-tools.zip"
+        public.validate_publication(bundle, release)
+        source = {
+            "publisher_version_code": release["version_code"],
+            "source_sha256": owner.ALPHA.fingerprint(release),
+            "bundle_sha256": release["bundle_sha256"],
+            "attempt": release_attempt(bundle, release, public),
+        }
+        if include_install_plan:
+            with zipfile.ZipFile(bundle) as archive:
+                index = public.read_bundle_index(archive.read(public.INDEX), release)
+                plan = index["install_plan"]
+                with archive.open(plan["required_inputs"]) as catalog:
+                    contents = catalog.read(public.MAX_JSON_BYTES + 1)
+                if hashlib.sha256(contents).hexdigest() != index["files"][plan["required_inputs"]]:
+                    raise ValueError("required-input catalog differs from the signed plan")
+            inputs = load_module("installed_alpha_input_plan", ROOT / "tools/phone-build/owner-apk/install_inputs.py")
+            source["input_plan"] = inputs.input_description(plan, public.load_json(contents))
+            source["jobs"] = sorted(job for stage in plan["stages"] for job in stage["jobs"])
+        sources.append(source)
+    changes = owner.release_changes(versions[0]["entries"], versions[1]["entries"])
+    return {
+        "baseline": sources[0],
+        "update": sources[1],
+        **changes,
+        "unchanged_entries": sorted(versions[1]["entries"].keys() - set(changes["changed_entries"])),
+    }
+
+
+def verify_installed(device, installer_package, installer_sha256, trust, expected_source_sha256, public_tools, *, staged=False):
     """Read only the verified installer receipt and small PackageManager results."""
-    validate_selection(device.package, installer_package, installer_sha256, expected_source_sha256)
+    validate_selection(device.package, installer_package, installer_sha256, expected_source_sha256, staged=staged)
     installer_path = base_apk(device, installer_package)
     if apk_digest(device, installer_path) != installer_sha256:
         raise RuntimeError("Live installer differs from the authorized APK")

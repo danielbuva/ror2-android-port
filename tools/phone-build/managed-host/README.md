@@ -201,6 +201,35 @@ so the fallback preserves the source's signed `char` semantics. Retain the
 public tools' license notices with the packaged providers.
 [Source pins](../../../docs/shader-recovery.md#pinned-tools-and-local-prerequisites)
 
+The signed direct ComputeShader recipe uses a two-tool Android backend. Put
+the following four archives in `PUBLIC_SHADER_SOURCES`, using these filenames.
+`build_shader_tools.py` checks their exact SHA-256 pins before extracting them.
+
+| Filename | Source |
+| --- | --- |
+| `vkd3d-2.0.tar.xz` | [Wine vkd3d 2.0](https://dl.winehq.org/vkd3d/source/vkd3d-2.0.tar.xz) |
+| `spirv-tools.tar.gz` | [SPIRV-Tools v2026.4](https://codeload.github.com/KhronosGroup/SPIRV-Tools/tar.gz/ef96ed763b43b59b33b31b362f09a02b729fa1c9) |
+| `spirv-headers.tar.gz` | [SPIRV-Headers dependency](https://codeload.github.com/KhronosGroup/SPIRV-Headers/tar.gz/496543121ce6419f23d6fa5d7194ba66c36212d2) |
+| `vulkan-headers.tar.gz` | [Vulkan headers 1.4.350.1](https://codeload.github.com/KhronosGroup/Vulkan-Headers/tar.gz/refs/tags/vulkan-sdk-1.4.350.1) |
+
+Use GNU Bison 3.8.2, CMake 4 and Ninja on the build host.
+
+```sh
+source scripts/env.sh
+python3 tools/phone-build/managed-host/build_shader_tools.py \
+  --sources "$PUBLIC_SHADER_SOURCES" --ndk "$ANDROID_NDK_ROOT" \
+  --bison "$BISON_382" --output work/rebuild/android-shader-tools
+```
+
+Merge the two `natives` rows from `native-tools.json` into the managed-host
+backend configuration. PackageManager installs the executable files, and the
+signed job receipt records their hashes. With any distributed copies, include
+the builder's `notices`, `public-sources` and `relink` directories so recipients
+can audit and relink vkd3d. The builder's command logs and `native-tools.json`
+contain local paths and stay with the private build. The current direct recipe
+selects the original Histogram ComputeShader. Its output is a typed record
+pack for bundle assembly.
+
 The muxer keeps CoreLib in the selected framework's verified data directory via
 the public hostfxr runtime-property API. For .NET 10 it uses the public
 [CoreCLR hosting ABI](https://github.com/dotnet/runtime/blob/v10.0.0/src/coreclr/hosts/inc/coreclrhost.h)
@@ -317,8 +346,8 @@ never pauses its sensor loop or overrides its cooling decision. These controls
 stop when work hands off to Android installation and do not apply to profile
 verification or recovery. Provider cancel
 uses `CancellationSignal` and closes the active source stream. Battery admission
-retains the documented caller rule (at most 35 C and 85%, no charging at or above
-80%); the supervisor's thermal limits are unchanged. The screen displays signed
+requires a measured temperature of at most 35 C at any charge level. The
+supervisor pauses at 90 C on the hottest readable SoC zone. The screen displays signed
 stages, byte/job progress, elapsed time, first failure, live duty-runner readings
 and Android battery charge/health; unavailable or old readings are marked.
 
@@ -395,11 +424,12 @@ profile/settings across cold starts still require explicit device qualification.
 ## Explicit debug release source
 
 Only a debuggable installer accepts an explicitly provisioned private
-`owner-input/debug-release-source.json` containing `enabled: true`, `base_url`,
-`key_id` and `public_key`. The base is an explicit loopback HTTP address and port
-reached through the lab's reverse tunnel; `latest.json` and all three signed
-release assets stay within that base. The extra publisher public key cannot
-replace a production key. The UI labels the test source prominently.
+`owner-input/debug-release-source.json` containing `enabled: true` and `base_url`.
+The base is an explicit loopback HTTP address and port reached through the lab's
+reverse tunnel. `latest.json` and all three signed release assets stay within
+that base. The installer uses its provisioned publisher keys for this source.
+Synthetic tests can also supply both `key_id` and `public_key` to add a new
+publisher under an unused ID. The UI labels the test source prominently.
 
 Release builds reject this configuration, including partial configuration,
 before contacting any server. Debuggability is read from Android application

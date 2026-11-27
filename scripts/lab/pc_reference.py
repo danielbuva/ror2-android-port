@@ -3,14 +3,18 @@
 import argparse
 import fcntl
 import json
+import math
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.request
 import zipfile
+from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -28,6 +32,8 @@ CLONE_NAME = "ror2-reference"
 RECEIPT = ".ror2lab-reference.json"
 EXCLUDE = {"steam_appid.txt", "bepinex", "winhttp.dll", "doorstop_config.ini", ".doorstop_version"}
 NAME = re.compile(r"[a-z0-9][a-z0-9_-]{0,79}\Z")
+FRAME = re.compile(r"frame(?:-[0-9]{4,})?\.png\Z")
+ACTIONS = {"capture", "spawn", "state", "skill", "grapple", "ping", "fire-trail", "move"}
 
 
 def steam_build(source):
@@ -148,14 +154,27 @@ def positive_steam_account(output):
     return bool(match and int(match[1], 16))
 
 
+def memory_pressure_level():
+    return int(subprocess.check_output(["/usr/sbin/sysctl", "-n", "kern.memorystatus_vm_pressure_level"], text=True).strip())
+
+
+def check_capture_memory():
+    pressure = memory_pressure_level()
+    if pressure >= 4:
+        raise RuntimeError(f"Host memory pressure is critical (level {pressure})")
+    summary = subprocess.check_output(["/usr/bin/memory_pressure", "-Q"], text=True)
+    free = re.search(r"^System-wide memory free percentage: (\d+)%$", summary, re.M)
+    if free is None:
+        raise RuntimeError("Could not read free host memory from memory_pressure -Q")
+    if int(free[1]) < 25:
+        raise RuntimeError(f"Host memory is {free[1]}% free; captures require at least 25%")
+
+
 def check_capture_host(command):
     steam = subprocess.run(["/usr/bin/pgrep", "-if", r'(^|[/\\]|[[:space:]"])steam[.]exe([[:space:]"]|$)'], capture_output=True)
     if steam.returncode == 1:
         raise RuntimeError("NEED owner: start and sign in to Steam in the reference bottle")
     steam.check_returncode()
-    pressure = subprocess.check_output(["/usr/sbin/sysctl", "-n", "kern.memorystatus_vm_pressure_level"], text=True).strip()
-    if pressure != "1":
-        raise RuntimeError(f"Host memory pressure is {pressure}; captures require normal pressure (1)")
     processes = subprocess.check_output([*command, "tasklist.exe"], text=True, timeout=35)
     if re.search(r"^\s*Steam\.exe\s+", processes, re.I | re.M) is None:
         raise RuntimeError("NEED owner: start and sign in to Steam in the reference bottle")
@@ -169,6 +188,34 @@ def check_capture_host(command):
     )
     if account.returncode or not positive_steam_account(account.stdout):
         raise RuntimeError("NEED owner: sign in to Steam in the reference bottle")
+
+
+def run_capture(command, log, timeout):
+    check_capture_memory()
+    deadline = time.monotonic() + timeout
+    with subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, start_new_session=True) as process:
+        try:
+            while (remaining := deadline - time.monotonic()) > 0:
+                try:
+                    return process.wait(timeout=min(1, remaining))
+                except subprocess.TimeoutExpired:
+                    pressure = memory_pressure_level()
+                    if pressure >= 4:
+                        raise RuntimeError(f"Capture aborted: host memory pressure reached critical level {pressure}") from None
+            raise subprocess.TimeoutExpired(command, timeout)
+        except BaseException:
+            # Wine may give its GUI process a separate session. The unique
+            # request argument identifies this capture in either session.
+            with suppress(ProcessLookupError):
+                os.killpg(process.pid, signal.SIGKILL)
+            request = command[-1]
+            processes = subprocess.check_output(["/bin/ps", "-axww", "-o", "pid=,args="], text=True, errors="replace")
+            for row in processes.splitlines():
+                pid, arguments = row.split(maxsplit=1)
+                if "--ror2lab-reference" in arguments and request in arguments:
+                    with suppress(ProcessLookupError):
+                        os.kill(int(pid), signal.SIGKILL)
+            raise
 
 
 def load_plan(plan):
@@ -199,7 +246,53 @@ def load_plan(plan):
             raise ValueError("Scenario seed must be a decimal string in the unsigned 64-bit range")
         if not scenario.get("scene") or not scenario.get("body"):
             raise ValueError("Scenario requires an expected scene and survivor body")
+        spawned = set()
+        for step in scenario["steps"]:
+            if step.get("action") not in ACTIONS:
+                raise ValueError("Step requires a supported action")
+            if step["action"] == "grapple":
+                hold, window = step.get("holdSeconds"), step.get("recordSeconds")
+                if not all(type(value) in (int, float) and math.isfinite(value) for value in (hold, window)) or not 0 < hold < window:
+                    raise ValueError("Grapple requires a recording window longer than the positive hold")
+            if "observeProjectileHitOn" in step:
+                target, window, aim = step["observeProjectileHitOn"], step.get("recordSeconds"), step.get("aimDirection")
+                if (
+                    step["action"] != "skill"
+                    or step.get("subject", "player") != "player"
+                    or step.get("value") not in ("primary", "secondary", "utility", "special")
+                    or not isinstance(target, str)
+                    or target not in spawned
+                    or type(window) not in (int, float)
+                    or not 0 < window <= 2
+                    or not isinstance(aim, list)
+                    or len(aim) != 3
+                    or not all(type(value) in (int, float) and math.isfinite(value) for value in aim)
+                    or not any(aim)
+                ):
+                    raise ValueError("Projectile capture requires a player skill, earlier target spawn, aim direction and up to two seconds")
+            if step["action"] == "spawn" and isinstance(step.get("subject"), str):
+                spawned.add(step["subject"])
     return scenarios
+
+
+def encode_capture_video(folder, timeline, ffmpeg, clip):
+    if len(timeline) < 2 or any(not FRAME.fullmatch(frame["frame"]) for frame in timeline):
+        raise RuntimeError("Capture video requires a valid PNG timeline")
+    lines = ["ffconcat version 1.0"]
+    for frame, next_frame in zip(timeline, timeline[1:]):
+        duration = next_frame["seconds"] - frame["seconds"]
+        if not math.isfinite(duration) or duration <= 0:
+            raise RuntimeError("Capture frame timestamps must increase")
+        lines.extend((f"file {frame['frame']}", "option framerate 1000", f"duration {duration:.6f}"))
+    lines.extend((f"file {timeline[-1]['frame']}", "option framerate 1000"))
+    receipt = folder / "video.ffconcat"
+    receipt.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    subprocess.run(
+        [ffmpeg, "-nostdin", "-v", "error", "-f", "concat", "-safe", "0", "-i", receipt, "-fps_mode", "vfr", "-c:v", "libx264", "-pix_fmt", "yuv420p", clip],
+        cwd=folder,
+        timeout=60,
+        check=True,
+    )
 
 
 def capture_files(output, scenario, result):
@@ -209,10 +302,14 @@ def capture_files(output, scenario, result):
     files = ["audio-events.jsonl"]
     if result.get("audio_capture_status") == "AK_Success":
         files.append("mix.wav")
-    for step in steps:
+    for planned, step in zip(scenario["steps"], steps):
         folder = step["id"]
         files.extend((f"{folder}/frame.png", f"{folder}/state.json"))
         files.extend(f"{folder}/{frame['frame']}" for frame in step["timeline"][1:])
+        if planned.get("action") == "grapple":
+            files.extend((f"{folder}/grapple-ticks.jsonl", f"{folder}/grapple.mp4"))
+        if planned.get("observeProjectileHitOn"):
+            files.extend((f"{folder}/projectile-trace.json", f"{folder}/projectile.mp4"))
     artifacts = {}
     for name in files:
         path = (output / name).resolve()
@@ -224,9 +321,12 @@ def capture_files(output, scenario, result):
 
 def run_plan(args, clone, identity, command, plan, scenarios):
     check_capture_host(command)
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg and any(step["action"] == "grapple" or step.get("observeProjectileHitOn") for scenario in scenarios for step in scenario["steps"]):
+        raise RuntimeError("Reference video capture requires ffmpeg")
     root = Path(tempfile.mkdtemp(prefix=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-"), dir=LOCAL))
     write(root / "plan.json", plan)
-    manifest = {"status": "running", "platform": "crossover-d3d11", **identity, "scenarios": []}
+    manifest = {"schema_version": 1, "status": "running", "platform": "crossover-d3d11", **identity, "scenarios": []}
     try:
         for index, scenario in enumerate(scenarios):
             if index:
@@ -236,7 +336,7 @@ def run_plan(args, clone, identity, command, plan, scenarios):
             request = output / "request.json"
             write(request, {"settings": plan["settings"], "scenario": scenario})
             with (output / "wine.log").open("wb") as log:
-                process = subprocess.run(
+                exit_code = run_capture(
                     [
                         *command,
                         "--dll",
@@ -256,9 +356,8 @@ def run_plan(args, clone, identity, command, plan, scenarios):
                         "--ror2lab-reference",
                         windows_path(request),
                     ],
-                    stdout=log,
-                    stderr=subprocess.STDOUT,
-                    timeout=args.timeout,
+                    log,
+                    args.timeout,
                 )
             terminal = output / "result.json"
             result = read(terminal) if terminal.is_file() else {"status": "failed", "error": "Recorder never produced a result"}
@@ -266,12 +365,21 @@ def run_plan(args, clone, identity, command, plan, scenarios):
                 {
                     "id": scenario["id"],
                     "result": str(terminal.relative_to(root)) if terminal.is_file() else None,
-                    "exit_code": process.returncode,
+                    "exit_code": exit_code,
                     **result,
                 }
             )
-            if process.returncode or result["status"] != "passed":
-                raise RuntimeError(result.get("error") or f"{scenario['id']} exited with code {process.returncode}")
+            if exit_code or result["status"] != "passed":
+                raise RuntimeError(result.get("error") or f"{scenario['id']} exited with code {exit_code}")
+            for step in result["steps"]:
+                if step.get("grapple_ticks"):
+                    clip = "grapple.mp4"
+                elif step.get("projectile_trace"):
+                    clip = "projectile.mp4"
+                else:
+                    continue
+                encode_capture_video(output / step["id"], step["timeline"], ffmpeg, clip)
+                step["video"] = f"{step['id']}/{clip}"
             manifest["scenarios"][-1]["sha256"] = capture_files(output, scenario, result)
         manifest["status"] = "passed"
     except BaseException as error:

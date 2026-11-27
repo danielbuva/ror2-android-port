@@ -57,7 +57,7 @@ Observe → implement the full change → `./dev preflight` → build → instal
 
 Use `./dev` as the obvious interface; see [docs/DEVELOPING.md](docs/DEVELOPING.md) for supported commands. Use the pinned Unity MCP for editor state/actions and deterministic CLIs for filesystem, Git/GitHub, device operations and editor/server startup. Never send concurrent editor mutations to the same Unity instance. Check an outstanding build completes before loading scenes or entering Play Mode. If compilation prevents MCP connection, repair the recorded first error and restart the isolated editor; do not treat mere tool presence as a passing test.
 
-Whole-catalog builds (full, code-only and R9) refuse uncommitted or untracked changes under `tools/unity`, `tools/catalog` and `android/Assets/Editor`, and record the commit in the build receipt (`source.commit`, J738): commit before building (a WIP commit is fine), so the working project is always reproducible from Git. Python must pass CI's Ruff step: run `.local/lab-venv/bin/ruff format` and `ruff check` on the Python files you change before committing; the tracked pre-push hook (`scripts/git-hooks/pre-push`, enabled with `git config core.hooksPath scripts/git-hooks`) runs `scripts/ci-local.sh`, which repeats the GitHub host-tests check on the pushed commit in a fresh clone without `work/` or the Unity install, and refuses a push that would fail. Host tests that need the editor's Mono/Roslyn must `skipTest` when it is absent. Run preflight before expensive builds. Input drift requires inventory/diff review and explicit local acceptance; do not silently apply patches to unknown builds. Preserve failed run directories and known-good APK/hash receipts. Do not clear all caches for a small code/shader change. Inspect the current first failure before extending scope.
+Whole-catalog builds (full, code-only and R9) refuse uncommitted or untracked changes under `tools/unity`, `tools/catalog` and `android/Assets/Editor`, and record the commit in the build receipt (`source.commit`, J738): commit before building (a WIP commit is fine), so the working project is always reproducible from Git. Python must pass CI's Ruff step: run `.local/lab-venv/bin/ruff format` and `ruff check` on the Python files you change before committing. The tracked pre-push hook (`scripts/git-hooks/pre-push`, enabled with `git config core.hooksPath scripts/git-hooks`) runs Ruff, audits and affected host tests in a fresh clone of the pushed commit without `work/` or the Unity install. An uncertain test mapping runs the full suite locally. GitHub always runs the full suite. Host tests that need the editor's Mono/Roslyn must `skipTest` when it is absent. Run preflight before expensive builds. Input drift requires inventory/diff review and explicit local acceptance; do not silently apply patches to unknown builds. Preserve failed run directories and known-good APK/hash receipts. Do not clear all caches for a small code/shader change. Inspect the current first failure before extending scope.
 
 Keep offline single-player first unless evidence requires otherwise. Retain local networking/authority semantics; online services are a separate gate. Prefer clean temporary adapters with explicit unavailable capabilities over giant gameplay rewrites. Preserve type/serialization identity when experimenting with precompiled assemblies. IL2CPP still AOT-compiles those assemblies.
 
@@ -69,11 +69,12 @@ Commit small logical changes after checking staged files for proprietary materia
 
 Documentation serves the next implementer; keep it short and current.
 
-- `docs/PORTING_JOURNAL.md`: one entry per **shipped** result (merged change, closed readiness entry,
-  device-verified behaviour), at most 15 lines: what changed, evidence path, APK/output hash, what remains.
-  Run `python3 scripts/journal-index.py` after editing. Exploratory, negative or in-progress results go to
-  a dated note under ignored `work/coordination/`, or three lines folded into the next feature PR; never a
-  docs-only PR. J1–J1177 are frozen in `docs/history/journal-J1-J1177/`.
+- Add one `docs/PORTING_JOURNAL.md` entry for each shipped device-verified behaviour or closed
+  readiness or alpha gate. Include the change, evidence path, APK/output hash where applicable and
+  remaining work in at most 15 lines. Run `python3 scripts/journal-index.py` after editing.
+  Record routine host-only fixes in their PR. Keep exploratory, negative or in-progress results in
+  a dated note under ignored `work/coordination/` or in three lines in the next feature PR.
+  J1–J1177 are frozen in `docs/history/journal-J1-J1177/`.
 - `PORTING_STATE.md`: a one-page snapshot, **replaced** (never appended) at most once a day. Keep "latest
   device-verified APK", "installed now" and "runtime source since that APK" as separate facts.
 - `docs/execution-backlog.md`: open work only. `docs/milestones.md`: gate status. `docs/risk-register.md`:

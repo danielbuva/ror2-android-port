@@ -1,0 +1,252 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach_assets_all_8be51f888d4a9b679b288243f863a9a0.bundle",
+      "sha256": "78eeccaa037ae101f7e9f41d99508fe009d4374716d6660b7f17e2d9395d98fb",
+      "members": [
+        {
+          "name": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a",
+          "textures": [
+            {
+              "path_id": 2319351975949389940,
+              "offset": 7767664,
+              "bytes": 292,
+              "sha256": "102f0baea223c464a55b9ec22332b818d6099ed93d3e75d7547b16d8c4ce13a2",
+              "fields": {
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ],
+                "m_MipCount": [
+                  52,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_ColorSpace": [
+                  100,
+                  4
+                ],
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a.resS",
+                "offset": 27739696,
+                "bytes": 131232,
+                "sha256": "d4c93fcd993687307335cf07b963293f2ed536ae556a3bb60a2a4fdc324cb3b0"
+              },
+              "operation": "cube-preserve",
+              "width": 128,
+              "height": 128,
+              "outputs": [
+                {
+                  "bundle": "blackbeach-source-lab",
+                  "member": "BuildPlayer-blackbeach",
+                  "path_id": 18932,
+                  "name": "ReflectionProbe-0",
+                  "alpha_optional": true,
+                  "usage": 0,
+                  "mips": 8,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 0,
+                    "size": 131232,
+                    "path": "archive:/BuildPlayer-blackbeach/BuildPlayer-blackbeach.resS"
+                  },
+                  "pixel_bytes": 131232,
+                  "pixel_sha256": "d4c93fcd993687307335cf07b963293f2ed536ae556a3bb60a2a4fdc324cb3b0",
+                  "bytes": 264,
+                  "sha256": "b4fae1289bea6a60708567172e76818a7c5425aa0c46b7b82947c34e02e269f9"
+                }
+              ]
+            },
+            {
+              "path_id": -4680449046929750540,
+              "offset": 2442504,
+              "bytes": 292,
+              "sha256": "47893dff2ae9d3b164b137c27a3d9e6b2f33e772a9f8a010993112a9f84be544",
+              "fields": {
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ],
+                "m_MipCount": [
+                  52,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_ColorSpace": [
+                  100,
+                  4
+                ],
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a.resS",
+                "offset": 11802432,
+                "bytes": 524448,
+                "sha256": "a4c76773a7d1ba11a4cbc8f63bfffefbe13581265b29f55053d380de757640c7"
+              },
+              "operation": "cube-preserve",
+              "width": 256,
+              "height": 256,
+              "outputs": [
+                {
+                  "bundle": "blackbeach-source-lab",
+                  "member": "BuildPlayer-blackbeach",
+                  "path_id": 18933,
+                  "name": "ReflectionProbe-1",
+                  "alpha_optional": true,
+                  "usage": 0,
+                  "mips": 9,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 131232,
+                    "size": 524448,
+                    "path": "archive:/BuildPlayer-blackbeach/BuildPlayer-blackbeach.resS"
+                  },
+                  "pixel_bytes": 524448,
+                  "pixel_sha256": "a4c76773a7d1ba11a4cbc8f63bfffefbe13581265b29f55053d380de757640c7",
+                  "bytes": 264,
+                  "sha256": "086cbfa07ace3975a3aa7d3d10b289b75919d2a224ddd33f86c2cb7e7e80c401"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-golemplains_assets_all_7085efcd436035de400d60c81e73c06f.bundle",
+      "sha256": "7e9e5ef7783e232b8f5593c84b71777add5f42cda134805f3b867878be41e1e8",
+      "members": [
+        {
+          "name": "CAB-2286350d325de341ae869c105f41da28",
+          "textures": [
+            {
+              "path_id": 6547798053902131159,
+              "offset": 4798120,
+              "bytes": 292,
+              "sha256": "f14c08935f33dcfa47a34738925290a73e17184c62d5f007fb7b519253e1648c",
+              "fields": {
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ],
+                "m_MipCount": [
+                  52,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_ColorSpace": [
+                  100,
+                  4
+                ],
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-2286350d325de341ae869c105f41da28.resS",
+                "offset": 7390208,
+                "bytes": 2097312,
+                "sha256": "e13df90d0ab6e76e1ccefeb35839ab537e1d9be9a021dad825f37c1b0c58c52c"
+              },
+              "operation": "cube-preserve",
+              "width": 512,
+              "height": 512,
+              "outputs": [
+                {
+                  "bundle": "golemplains-source-lab",
+                  "member": "BuildPlayer-golemplains",
+                  "path_id": 10560,
+                  "name": "ReflectionProbe-3",
+                  "alpha_optional": true,
+                  "usage": 0,
+                  "mips": 10,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 0,
+                    "size": 2097312,
+                    "path": "archive:/BuildPlayer-golemplains/BuildPlayer-golemplains.resS"
+                  },
+                  "pixel_bytes": 2097312,
+                  "pixel_sha256": "e13df90d0ab6e76e1ccefeb35839ab537e1d9be9a021dad825f37c1b0c58c52c",
+                  "bytes": 268,
+                  "sha256": "a717b8e83b75d123e5119035553c61ac9849a699232bf1bbfea9e900b914b088"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

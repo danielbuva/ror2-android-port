@@ -308,6 +308,14 @@ def changed_entries(release, cache, input_sha256):
     return changed
 
 
+def release_changes(previous_entries, release_entries):
+    """Compare signed output dependencies independently of the local build cache."""
+    return {
+        "changed_entries": sorted(name for name, hashes in release_entries.items() if previous_entries.get(name) != hashes),
+        "removed_entries": sorted(set(previous_entries) - set(release_entries)),
+    }
+
+
 def installed_changes(release, request, inputs):
     path = Path(inputs) / "installed-release.json"
     installed = public().load_json(path.read_bytes()) if path.exists() else {}
@@ -320,10 +328,8 @@ def installed_changes(release, request, inputs):
     ):
         previous = {}
         known = False
-    entries = previous.get("entries", {})
     return {
-        "changed_entries": sorted(name for name, hashes in release["entries"].items() if entries.get(name) != hashes),
-        "removed_entries": sorted(set(entries) - set(release["entries"])),
+        **release_changes(previous.get("entries", {}), release["entries"]),
         "installed_manifest_known": known,
     }
 
@@ -708,15 +714,15 @@ def _run(request_file, runtime, native, *, transport=None, debuggable=False):
 
         dispatcher = flow.perform("staging", stage) if flow is not None else stage()
         emit("BUILDING", "Rebuilding changed files from verified owner inputs.", release=release, rebuild_entries=changed, **differences)
+        jobs_reused = {}
         if flow is not None:
             job_stages = pipeline.validate_plan(index["install_plan"], index, dispatcher.descriptor)
-            completed = set()
 
             def produced(name, reused):
                 if reused is not None:
-                    completed.add(name)
+                    jobs_reused[name] = reused
                 current = flow.state["current_stage"]
-                flow.progress(sum(job_stages[job] == current for job in completed))
+                flow.progress(sum(job_stages[job] == current for job in jobs_reused))
 
             dispatcher.progress = produced
             for row in index["install_plan"]["stages"]:
@@ -751,6 +757,12 @@ def _run(request_file, runtime, native, *, transport=None, debuggable=False):
             retention_policy=retention_policy,
         )
         ready["envelope"] = candidate["envelope"]
+        if flow is not None:
+            ready["incremental"] = {
+                "rebuilt": result["rebuilt"],
+                "reused": result["reused"],
+                "producer_jobs": {name: "reused" if reused else "executed" for name, reused in jobs_reused.items()},
+            }
         if input_identity(inputs, config) != identity:
             raise ValueError("owner inputs changed during signing")
         if toolchain_identity(runtime, native) != binding["toolchain_sha256"]:
@@ -759,7 +771,13 @@ def _run(request_file, runtime, native, *, transport=None, debuggable=False):
         prune_releases(inputs)
         if flow is not None:
             flow.await_install()
-        emit("READY", "Owner-built update is ready for Android installation consent.", release=release, rebuilt=result["rebuilt"], reused=result["reused"])
+        emit(
+            "READY",
+            "Owner-built update is ready for Android installation consent.",
+            release=release,
+            rebuilt=result["rebuilt"],
+            reused=result["reused"],
+        )
     except Exception as error:
         if flow is not None and flow.state["status"] != "failed":
             flow.fail(error)
