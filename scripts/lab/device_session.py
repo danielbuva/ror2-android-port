@@ -1512,8 +1512,11 @@ def execute(request):
                     try:
                         thermal.finish()
                     except RuntimeError:
-                        if not thermal.error or any(thread and thread.is_alive() for thread in (thermal.thread, thermal.stopper)):
+                        if any(thread and thread.is_alive() for thread in (thermal.thread, thermal.stopper)):
                             raise
+                        # The following owned stop and independent idle readback
+                        # still have to succeed before this lease can be released.
+                        result["thermal_finish_error"] = traceback.format_exc()
                         result["success"] = False
 
                 clean("thermal", finish_thermal)
