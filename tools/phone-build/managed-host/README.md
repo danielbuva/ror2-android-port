@@ -395,11 +395,12 @@ profile/settings across cold starts still require explicit device qualification.
 ## Explicit debug release source
 
 Only a debuggable installer accepts an explicitly provisioned private
-`owner-input/debug-release-source.json` containing `enabled: true`, `base_url`,
-`key_id` and `public_key`. The base is an explicit loopback HTTP address and port
-reached through the lab's reverse tunnel; `latest.json` and all three signed
-release assets stay within that base. The extra publisher public key cannot
-replace a production key. The UI labels the test source prominently.
+`owner-input/debug-release-source.json` containing `enabled: true` and `base_url`.
+The base is an explicit loopback HTTP address and port reached through the lab's
+reverse tunnel. `latest.json` and all three signed release assets stay within
+that base. The installer uses its provisioned publisher keys for this source.
+Synthetic tests can also supply both `key_id` and `public_key` to add a new
+publisher under an unused ID. The UI labels the test source prominently.
 
 Release builds reject this configuration, including partial configuration,
 before contacting any server. Debuggability is read from Android application

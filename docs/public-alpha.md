@@ -312,7 +312,7 @@ thermal sampling policy; proposed performance budgets do not change those limits
 - [x] Recover an injected ENOSPC during the live native profile save.
       The app retained both profile generations and settings after persisting
       the loss report. Two cold Starts reconciled one loss, then zero.
-      [Device evidence](PORTING_JOURNAL.md#j1539--recover-a-native-profile-save-after-injected-enospc).
+      [Device evidence](PORTING_JOURNAL.md#j1542--recover-a-native-profile-save-after-injected-enospc).
 - [ ] Complete physical storage failure and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)

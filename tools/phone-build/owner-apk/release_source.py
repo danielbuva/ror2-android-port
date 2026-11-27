@@ -1,7 +1,8 @@
 """Explicit debug-only loopback release source; production trust is never replaced.
 
 The Android worker supplies debuggability from ApplicationInfo, not private JSON.
-The host lab writes only a public key and source URL to debug-release-source.json.
+The host lab writes a source URL and, for synthetic releases, an additional
+public key to debug-release-source.json.
 """
 
 import re
@@ -64,7 +65,7 @@ class DebugReleaseTransport:
 
 
 def configure(trust, override, *, debuggable, validate_public_key):
-    """Return copied trust and transport, or unchanged production configuration.
+    """Return the trust and transport for the explicitly selected source.
 
     Presence is not opt-in: enabled must be the boolean true. A release build
     rejects even malformed/stale override configuration before trusting it.
@@ -73,9 +74,12 @@ def configure(trust, override, *, debuggable, validate_public_key):
         return trust, None
     if debuggable is not True:
         raise ValueError("test release source and publisher key are forbidden in release builds")
-    if not isinstance(override, dict) or set(override) != {"enabled", "base_url", "key_id", "public_key"} or override["enabled"] is not True:
-        raise ValueError("debug release override requires explicit enabled=true, base_url, key_id and public_key")
+    source_fields = {"enabled", "base_url"}
+    if not isinstance(override, dict) or set(override) not in (source_fields, source_fields | {"key_id", "public_key"}) or override["enabled"] is not True:
+        raise ValueError("debug release override requires explicit enabled=true and base_url; key_id and public_key must be supplied together")
     transport = DebugReleaseTransport(override["base_url"])
+    if "key_id" not in override:
+        return trust, transport
     key_id = override["key_id"]
     if not isinstance(key_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", key_id) or key_id in trust["keys"]:
         raise ValueError("test publisher requires a new key ID; production keys cannot be replaced")

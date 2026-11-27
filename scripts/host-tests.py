@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Time the entire unittest host suite, serially or in an isolated process pool.
+"""Time the unittest host suite, serially or in an isolated process pool.
 
-Discovery is exactly ``unittest discover -s tests``: no path/change filters.
+Discovery is exactly ``unittest discover -s tests``. The pre-push caller may
+provide a module list to filter execution after discovery.
 Workers inherit that discovery using POSIX fork (Linux CI and macOS ci-local),
 so import-time skips, custom load_tests suites and their IDs are not recreated.
 Each discovery module stays intact, including its class/module fixtures. The
@@ -292,6 +293,7 @@ def main(argv=None):
     parser.add_argument("--timeout", type=float, default=900, help="per-module deadline in seconds, including fixtures")
     parser.add_argument("--report", type=Path, help="write full machine-readable results (local diagnostics; review before publishing)")
     parser.add_argument("--compare", type=Path, help="fail unless discovered IDs and all unittest outcomes equal this prior report")
+    parser.add_argument("--modules-from", type=Path, help="pre-push only: execute the listed discovery modules")
     parser.add_argument("--slowest", type=int, default=15, help="number of slowest tests and modules to print")
     args = parser.parse_args(argv)
     if args.workers < 1 or not math.isfinite(args.timeout) or args.timeout <= 0 or args.slowest < 0:
@@ -299,6 +301,7 @@ def main(argv=None):
     if "fork" not in multiprocessing.get_all_start_methods():
         parser.error("host tests require the Linux/macOS fork start method")
     baseline = json.loads(args.compare.read_text()) if args.compare else None
+    selected = set(args.modules_from.read_text().splitlines()) if args.modules_from else set()
     report_path = args.report.resolve() if args.report else None
     os.chdir(args.root.resolve())
     sys.path.insert(0, str(Path.cwd()))
@@ -311,9 +314,17 @@ def main(argv=None):
         os.environ.update(TMPDIR=temporary, TEMP=temporary, TMP=temporary)
         tempfile.tempdir = temporary
         discovery_started = time.perf_counter()
-        suite = unittest.TestLoader().discover("tests")
-        discovered = [test.id() for test in leaves(suite)]
+        loader = unittest.TestLoader()
+        suite = loader.discover("tests")
         modules = [(index, module_name(part, index), part) for index, part in enumerate(suite)]
+        if selected:
+            known = {name for _, name, _ in modules}
+            if loader.errors or not selected <= known or any(name.startswith("unittest.") for name in known):
+                print("ci-local: full host suite (discovery could not confirm the selection)")
+            else:
+                print(f"ci-local: running {len(selected)} of {len(modules)} discovered host-test modules")
+                modules = [row for row in modules if row[1] in selected]
+        discovered = [test.id() for _, _, part in modules for test in leaves(part)]
         discovery_seconds = time.perf_counter() - discovery_started
         results, errors = run_pool(modules, args.workers, args.timeout, scratch)
     report = {

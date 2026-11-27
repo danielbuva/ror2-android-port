@@ -1,8 +1,6 @@
 #!/bin/sh
-# Refuse a push that would fail GitHub's host-tests check: scripts/ci-local.sh runs its steps
-# (Ruff on changed files, audits, host tests) on the committed content being pushed, in a fresh
-# checkout with the Unity install hidden and case-sensitive temp files. Only source objects
-# and keyed dependencies are reused; all checks run again for every pushed commit.
+# Check the committed content being pushed in a fresh checkout. Run Ruff and the
+# audits plus affected host tests (or the full suite when the impact is unclear).
 # Installed with: git config core.hooksPath scripts/git-hooks. Bypass only with the operator's say-so.
 root=$(git rev-parse --show-toplevel) || exit 1
 zero=0000000000000000000000000000000000000000
@@ -14,7 +12,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   else
     base=$remote_sha
   fi
-  "$root/scripts/ci-local.sh" "$local_sha" "$base" || status=1
+  "$root/scripts/ci-local.sh" "$local_sha" "$base" --pre-push || status=1
 done
-[ $status = 0 ] || echo "pre-push: refusing the push; GitHub's host-tests check would fail (see above)." >&2
+[ $status = 0 ] || echo "pre-push: refusing the push; a local CI check failed (see above)." >&2
 exit $status
