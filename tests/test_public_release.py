@@ -405,6 +405,19 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
         self.assertIn("recipe/inputs.json", result["index"]["files"])
         with zipfile.ZipFile(Path(self.temporary.name) / "public.zip") as archive:
             self.assertEqual(PUBLIC.load_json(archive.read("recipe/inputs.json")), manifest)
+
+        tools = {"acquired/sdk/example.jar": {"bytes": 2, "sha256": "b" * 64}}
+        tools_path = "recipe/acquired-tools.json"
+        (self.root / tools_path).write_text(json.dumps(tools))
+        self.commit()
+        self.plan["install_plan"]["acquired_inputs"] = tools_path
+        self.plan["install_plan"]["configuration"]["bindings"]["sdk"] = "acquired/sdk"
+        with_tools = self.build("with-tools.zip")
+        self.assertEqual(with_tools["entries"], result["entries"])
+        with zipfile.ZipFile(Path(self.temporary.name) / "with-tools.zip") as archive:
+            self.assertEqual(PUBLIC.load_json(archive.read(tools_path)), tools)
+            self.assertEqual(set(archive.namelist()), {*result["index"]["files"], tools_path, PUBLIC.INDEX})
+
         self.plan["install_plan"]["configuration"]["bindings"]["originals"] = "../../escape"
         with self.assertRaises(ValueError):
             self.build("bad.zip")
