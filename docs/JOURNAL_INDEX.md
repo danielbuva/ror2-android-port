@@ -379,5 +379,5 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1547](PORTING_JOURNAL.md#j1547--recover-rex-disperse-charge-materials) | 2026-11-27 | Recover REX Disperse charge materials | 2026-11-27. |
 | [J1548](PORTING_JOURNAL.md#j1548--recover-acrid-leap-acid-ghost-materials) | 2026-11-27 | Recover Acrid Leap acid ghost materials | 2026-11-27. |
 | [J1550](PORTING_JOURNAL.md#j1550--reuse-unchanged-producer-outputs-on-android-updates) | 2026-11-27 | Reuse unchanged producer outputs on Android updates | 2026-11-27. |
-| [J1553](PORTING_JOURNAL.md#j1553--run-a-pinned-texture-stage-with-a-disposable-android-toolhost) | 2026-11-27 | Run a pinned texture stage with a disposable Android toolhost | 2026-11-27. |
 | [J1552](PORTING_JOURNAL.md#j1552--recover-rex-mortar-aim-and-projectile-materials) | 2026-11-27 | Recover REX Mortar aim and projectile materials | 2026-11-27. |
+| [J1553](PORTING_JOURNAL.md#j1553--run-a-pinned-texture-stage-with-a-disposable-android-toolhost) | 2026-11-27 | Run a pinned texture stage with a disposable Android toolhost | 2026-11-27. |

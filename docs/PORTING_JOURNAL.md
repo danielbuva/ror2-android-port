@@ -18,6 +18,7 @@ Toolhost APK SHA-256 `0476b72a8500345aaa13cd71a806e3f8c4b4baf949a9ab3e7a85951680
 The runner verified package removal and OLED sleep and released the lease.
 Evidence `work/coordination/p1-textures/phone-bc1-cubemap-1127/terminal.done.json`.
 Signed Crunch/BC7 conversion and in-game Cubemap checks remain open.
+
 ## J1552 — Recover REX Mortar aim and projectile materials
 
 2026-11-27. The original body visual owner prepares REX's configured
