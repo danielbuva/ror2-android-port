@@ -14,6 +14,10 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   else
     base=$remote_sha
   fi
+  python3 "$root/scripts/lab/source_pins.py" check --commit "$local_sha" --base "$base" --refresh-for-push "$local_ref" || {
+    status=1
+    continue
+  }
   "$root/scripts/ci-local.sh" "$local_sha" "$base" --pre-push || status=1
 done
 [ $status = 0 ] || echo "pre-push: refusing the push; a local CI check failed (see above)." >&2
