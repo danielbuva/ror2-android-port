@@ -2139,9 +2139,15 @@ def qualify_closed_local(native, member, records, closure, consumer, read, schem
             raise ValueError(f"Closed local record signed script differs: {pid}")
 
     _, layout, objects = native.members[consumer_member]
-    script_id = C.S.md4("".join(consumer["identity"]).encode())
-    matches = [pid for pid, row in objects.items() if layout["types"][row["type_id"]].get("script_id") == script_id]
-    (pid,) = matches
+    if set(consumer) == {"member", "identity"}:
+        script_id = C.S.md4("".join(consumer["identity"]).encode())
+        (pid,) = (pid for pid, row in objects.items() if layout["types"][row["type_id"]].get("script_id") == script_id)
+    elif set(consumer) == {"member", "path_id", "class_id"}:
+        pid = consumer["path_id"]
+        if pid not in objects or layout["types"][objects[pid]["type_id"]]["class_id"] != consumer["class_id"]:
+            raise ValueError("Closed local record native consumer differs")
+    else:
+        raise ValueError("Closed local records require a typed consumer")
     _, typ, body = native.record(consumer_member, (0, pid))
     fields = pointers(body, typ, schemas)
     roots = []

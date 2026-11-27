@@ -354,6 +354,10 @@ PPtrs to be supplied at their existing external identity. The repacker checks
 the exact native Mesh type and consumer member and can supply these endpoints
 without adding catalog roots. It reads back the unchanged container in that
 case. Temporary repack files are removed when the operation ends.
+For a verified closed record set, the same repacker can check a streamed
+scene's native consumer by member, PathID and class. Its typed PPtr must
+identify the added record in the donor member. The donor retains that record
+without a catalog address, as required by scene occlusion data.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
