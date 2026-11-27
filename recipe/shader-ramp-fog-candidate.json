@@ -58,7 +58,7 @@
     },
     "shader_deferred_sha256": "dc1b81f1e012de8dd9da7cedddc2d62b7ac76cb564ac00cf262e55815b3b11c4",
     "shader_metadata_sha256": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318",
-    "shader_segments_sha256": "914dbee65a172770325df03b269999bc6100469b91eb7e731f0957ad35383be7",
+    "shader_segments_sha256": "fa11fe49ac585c4976584e467a44e336dad98169d1d5f370d30a0355619832bc",
     "shader_source_sha256": "3c768c15f29f312347f2e99b0e3ddf8612207db8023f220dcb52c5d51218212a"
   }
 }

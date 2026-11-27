@@ -55,6 +55,30 @@ class CompilerHosting(unittest.TestCase):
 
 
 class TranslatedShaderPack(unittest.TestCase):
+    def test_vertex_preserves_native_structure_array_and_member_offsets(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+            from shader_segments import parameter_layout
+
+        record = N.reflection(
+            [
+                "cb: Draw 272 1",
+                "const: Tint 256 0 0 1 4 0",
+                "const: Transforms 0 0 2 128 0 2",
+                "const: Transforms.Forward 0 0 1 4 4 0",
+                "const: Transforms.Inverse 64 0 1 4 4 0",
+            ]
+        )
+        source = N.native_parameters(record, {"constants": [], "buffers": [], "bindings": [], "textures": []})
+        native = parameter_layout(source, structured=True)["buffers"][1]
+        rows, descriptors = translator.stage_parameters({"buffers": [dict(native, slot=4)], "textures": []}, vertex=True)
+        self.assertEqual(descriptors, ["cbv", "4", "1", "6"])
+        expected = dict(record["buffers"][0], name="vs_Draw")
+        self.assertEqual(N.reflection(rows)["buffers"], [expected])
+        invalid = source.replace(N.words(0, 2, 128, 2), N.words(32, 2, 128, 2))
+        with self.assertRaisesRegex(RuntimeError, "exceeds native buffer"):
+            parameter_layout(invalid, structured=True)
+
     def test_fragment_uses_independent_sampler_registers_and_native_variant_shape(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
             import shader_translate as translator

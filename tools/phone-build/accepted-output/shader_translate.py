@@ -52,16 +52,22 @@ def stage_parameters(layout, vertex):
     """Route source-layout resources to the linked pass's descriptor sets."""
     stage_flag = 0x04000000 if vertex else 0x08000000
     rows, descriptors = [], []
+
+    def constant_row(name, variable):
+        return (
+            f"const: {name} {variable['offset']} {variable['type']} {int(variable['matrix'])} {variable['rows']} {variable['columns']} {variable['array_size']}"
+        )
+
     for buffer in layout["buffers"]:
         slot = buffer["slot"] + (2 if vertex else 0)
         name = ("vs_" if vertex else "fs_") + buffer["name"]
         variables = buffer["variables"]
         rows.append(f"cb: {name} {buffer['size']} {len(variables)}")
-        for variable in variables:
-            rows.append(
-                f"const: {variable['name']} {variable['offset']} {variable['type']} {int(variable['matrix'])} "
-                f"{variable['rows']} {variable['columns']} {variable['array_size']}"
-            )
+        rows.extend(constant_row(variable["name"], variable) for variable in variables)
+        for structure in buffer.get("structures", []):
+            name_prefix = structure["name"]
+            rows.append(f"const: {name_prefix} {structure['offset']} 0 2 {structure['stride']} 0 {structure['array_size']}")
+            rows.extend(constant_row(f"{name_prefix}.{variable['name']}", variable) for variable in structure["variables"])
         rows.append(f"cbbind: {name} {stage_flag | 0x10000 | slot}")
         descriptors.extend(("cbv", str(buffer["slot"]), "1", str(slot)))
     textures = layout["textures"]
@@ -113,7 +119,7 @@ def translate_tree(original, directory, tools):
         for entry in entries:
             index = entry["m_BlobIndex"]
             record, program = records[index], dxbc[index]
-            layout = selected_layout(original, raw, record)
+            layout = selected_layout(original, raw, record, structured=True)
             rows, descriptors = stage_parameters(layout, vertex)
             if vertex:
                 rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))

@@ -8297,11 +8297,17 @@ object stream in `result.json` for the named bundle preparation supplier.
 The exact Android player typed-loaded the staged Animate Alpha leaf and
 matched the two ramp endpoint pixels from the SDK control. The fixture
 owns the temporary draw resources and the shared runner owns package removal
-and display sleep. The ComputeShader path preserves the source kernel and
+and display sleep. The graphics path maps independent and shared sampler
+registers for 2D and cube images. It preserves per-variant structured
+constant arrays, member offsets and strides through the same native parameter
+writer. Unity typed-loaded the additional texture and instancing variants.
+Their device draw and whole-game coverage remain open.
+The ComputeShader path preserves the source kernel and
 workgroup tables, remaps storage, constants and sampler-free 2D image bindings,
 and writes bare Vulkan SPIR-V into the native kernel. The original histogram
-clear and gather modules pass Vulkan 1.0 validation. ComputeShader player
-dispatch and whole-game coverage remain open.
+clear and gather modules pass Vulkan 1.0 validation. The Android Vulkan
+fixture clears all 256 bins and gathers all 256 solid-red pixels into the
+highest bin using those original kernels. Other compute shapes remain open.
 
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
