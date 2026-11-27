@@ -6196,6 +6196,21 @@ All four persisted records are raw-exact (1,184 bytes); one belongs to the saved
 unresolved census, reducing 104 to 103. Other overlapping outputs are not counted
 as new closures. Complete bundle, phone production and runtime gates stay open.
 
+### Whole-game Void FBX Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-void-fbx-material-records.json` | `cb0b8bd2590ed68be96aa76375584b69a283bb38bc381f3f3f318d3d5bea2790` |
+
+Audit date 2026-11-27. Eight original Void Stage and Scrap Void Materials
+are selected from the legitimate Steam input. `record_produce.py` exports
+their complete native records for checked pointer relocation at bundle
+assembly. The profile publishes only input paths, identities, sizes and
+hashes. Protected bodies, dependency binaries and local paths stay local.
+Pinned AssetRipper `AssetCollection.TryGetAsset` informed the external
+member lookup. Unity 2021.3.45f2 loaded and unloaded all eight Materials
+in the isolated fixture and verified eight Shader and 33 texture bindings.
+
 ### Whole-game Standard fallback keyword registration (J1306)
 
 | Recipe | SHA-256 |
