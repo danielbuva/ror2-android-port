@@ -1070,6 +1070,13 @@ every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
 game builds; two mesh cases are excluded from that immutable cohort profile.
+`recipe/owner-whole-game-mesh-frontier.json` supplies two original inline
+Meshes that the canonical graph's Fungal and Solus Wing component references
+need. The profile preserves the original bodies, including the collision data.
+The existing preload preparer binds each supplier record through its original
+member and path ID. The exact-editor fixture loads both as Meshes at scoped
+test addresses. Their original FBX preload groups and signed release integration
+remain open.
 The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
 excluded MercSwordSwipe record through the same setup/teardown. The optional
 `unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared

@@ -986,6 +986,30 @@ class BundlePreparationTests(unittest.TestCase):
                 with self.assertRaises((ValueError, EOFError)):
                     P.prepare_request(inputs, root / "prepared")
 
+    def test_failed_preparation_reports_all_reachable_source_pointer_gaps(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root)
+            policy["bindings"] = [row for row in policy["bindings"] if row["destination"][2] != 400]
+            source = next(row for row in policy["bindings"] if row["destination"][2] == 200)
+            policy["bindings"].append(dict(source, destination=["content", "CAB-content", 999]))
+            policy_path = root / "policy.json"
+            policy_path.write_text(json.dumps(policy))
+            request["policy"] = pin(policy_path)
+            inputs.write_text(json.dumps(request))
+            output = root / "prepared"
+
+            with self.assertRaisesRegex(ValueError, "2 unresolved original PPtrs"):
+                P.prepare_request(inputs, output)
+
+            gaps = {tuple(row["field"]): row for row in json.loads((output / "unresolved-source-endpoints.json").read_bytes())}
+            self.assertEqual(gaps[("duplicate",)]["pointer"], [0, 40])
+            self.assertEqual(gaps[("duplicate",)]["target_member"], "CAB-a")
+            self.assertEqual(gaps[("duplicate",)]["candidates"], [])
+            self.assertEqual(gaps[("next",)]["candidates"], [["content", "CAB-content", 200], ["content", "CAB-content", 999]])
+            self.assertEqual(gaps[("next",)]["target_member"], "CAB-b")
+            self.assertFalse((output / "inputs.json").exists())
+
     def test_extend_prepared_selection_with_measured_external_routes(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

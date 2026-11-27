@@ -541,6 +541,7 @@ def prepare(owner, inputs, output):
             raise ValueError("duplicate exceptional field route")
         overrides[key] = row
     used, selected, types, routes, raw_records = set(), {}, {}, {}, {}
+    unresolved = []
     output.mkdir(parents=True, exist_ok=False)
 
     def write(name, value, lines=False):
@@ -646,7 +647,11 @@ def prepare(owner, inputs, output):
                     if unbound is not None and identical_inline_mesh(owner, unbound, original(bound_source), parsed):
                         return checked_destination
             if len(candidates) != 1:
-                raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer, owner_field)))
+                destination, field = owner_field
+                unresolved.append(
+                    dict(source=source, pointer=pointer, owner=destination, field=field, target_member=target_member, candidates=sorted(candidates))
+                )
+                return None
             return next(iter(candidates))
 
         def read(target):
@@ -786,12 +791,21 @@ def prepare(owner, inputs, output):
                             _, _, metadata = original(source)
                             original_pointer = tuple(reference["from"]) if relocated else pointer
                             endpoint = source_target(source, metadata, original_pointer, key, producer_target)
+                            if endpoint is None:
+                                continue
                 else:
                     endpoint = staged.target(target[1], pointer)
                 read(endpoint)
                 edges.append(dict(field=list(field), pointer=list(pointer), target=list(endpoint)))
                 pending.append(endpoint)
             routes[target] = edges
+        if unresolved:
+            report = write("unresolved-source-endpoints.json", unresolved)
+            first = unresolved[0]
+            raise ValueError(
+                f"source endpoint absent or ambiguous: {(first['source'], first['pointer'], (first['owner'], first['field']))}. "
+                f"{len(unresolved)} unresolved original PPtrs in {report['path']}"
+            )
         if used != overrides.keys():
             raise ValueError("unused exceptional field route")
         # The emitted endpoint index contains only the reachable SDK witnesses.
