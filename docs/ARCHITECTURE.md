@@ -8466,6 +8466,13 @@ provider plan stages the executables. The shared
 runner verified the signed Histogram producer on Android. Its output hash
 matched the object dispatched in the Vulkan fixture.
 
+The signed `owner-graphics-shader-translation-v1` profile routes the original
+Outline record to its canonical bundle identity. It binds SMOL-V encoding,
+SPIRV-Cross and glslang alongside DXBC translation and SPIR-V validation.
+The managed-host builder builds five Android executables and retains their
+public source and notices. The producer checks their hashes before and after
+translation and includes them in the typed pack receipt.
+
 Release-graph discovery also accepts typed packs from `shader_prefab.py`.
 Preparation uses each recipe's pinned original Shader identity and reads the
 produced Android body through the pack receipt and type table. Shader fallback

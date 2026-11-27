@@ -17,6 +17,11 @@ import object_produce as objects
 import shader_produce as shader
 
 COMPUTE_PROFILE = "owner-compute-shader-translation-v1"
+GRAPHICS_PROFILE = "owner-graphics-shader-translation-v1"
+SIGNED_PROFILES = {
+    COMPUTE_PROFILE: (72, {"dxbc", "spirv_val"}),
+    GRAPHICS_PROFILE: (48, {"dxbc", "spirv_val", "smolv", "spirv_cross", "glslang"}),
+}
 
 
 def vertex_channels(dxbc):
@@ -269,6 +274,7 @@ def produce(request):
         raise ValueError("translation output must be disjoint from original inputs")
     profile = request.get("profile")
     input_id = None
+    class_id = None
     tool_pins = {}
     tools = request["tools"]
     if profile is None:
@@ -280,10 +286,12 @@ def produce(request):
         records = selection["typed_records"]
         if not records:
             raise ValueError("translated Shader profile is empty")
-        if selection.get("schema") == COMPUTE_PROFILE:
+        schema = selection.get("schema")
+        if schema in SIGNED_PROFILES:
+            class_id, required_tools = SIGNED_PROFILES[schema]
             input_id = selection["input_id"]
-            if input_id != objects.M.INPUT_ID or set(tools) != {"dxbc", "spirv_val"}:
-                raise ValueError("compute translation requires the accepted input and two installed tools")
+            if input_id != objects.M.INPUT_ID or set(tools) != required_tools:
+                raise ValueError(f"{schema} requires the accepted input and pinned tools: {sorted(required_tools)}")
             tool_pins = tools
             for pin in tool_pins.values():
                 shader.checked(Path(pin["path"]), pin)
@@ -294,8 +302,8 @@ def produce(request):
     rows, types, type_ids = [], [], {}
     with (output / "objects.bin").open("xb") as stream:
         for target, typ, original in source_records(root, records):
-            if input_id is not None and typ["class_id"] != 72:
-                raise ValueError("compute translation profile requires a ComputeShader record")
+            if class_id is not None and typ["class_id"] != class_id:
+                raise ValueError(f"{schema} requires Unity class {class_id}")
             stage_dir = directory / str(len(rows))
             stage_dir.mkdir()
             node = objects.W.shader_node(typ["tree"])

@@ -234,6 +234,18 @@ The builder applies `vkd3d-structured-srv.patch` to the pinned vkd3d source
 and includes it in `public-sources`. Apply the same patch at the archive root
 before rebuilding the vkd3d libraries for relinking.
 
+For the signed graphics profile, pass `--graphics` and add these archives to
+the same source directory. Stage all five `natives` rows from the receipt.
+The builder keeps the additional upstream notices and the glslang Android CLI
+patch with the public source archives. The patch enables the tool and keeps
+diagnostic paths compatible with the pinned Unity NDK.
+
+| Filename | Source |
+| --- | --- |
+| `smol-v.tar.gz` | [SMOL-V source revision](https://codeload.github.com/aras-p/smol-v/tar.gz/55000efe742f56d8b51223b9ea7775a8f0501881) |
+| `spirv-cross.tar.gz` | [SPIRV-Cross Vulkan SDK 1.4.363.0](https://codeload.github.com/KhronosGroup/SPIRV-Cross/tar.gz/refs/tags/vulkan-sdk-1.4.363.0) |
+| `glslang.tar.gz` | [glslang 16.6.0](https://codeload.github.com/KhronosGroup/glslang/tar.gz/refs/tags/16.6.0) |
+
 The muxer keeps CoreLib in the selected framework's verified data directory via
 the public hostfxr runtime-property API. For .NET 10 it uses the public
 [CoreCLR hosting ABI](https://github.com/dotnet/runtime/blob/v10.0.0/src/coreclr/hosts/inc/coreclrhost.h)

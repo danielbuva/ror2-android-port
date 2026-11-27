@@ -2739,6 +2739,18 @@ routing. Programs, translated bodies and device evidence stay local.
 | `owner-histogram-compute-translation.json` | `237d60bfb5624afc874cf152a6ea785f9b9afea6077b185023cf19526d404d50` |
 | `owner-camera-compute-translation.json` | `b089d2fc030cef076d780d1c0e293c69eeed5c4573462011be9406ce39f75716` |
 
+`owner-outline-graphics-translation.json` selects the original Outline shader
+for the canonical bundle. The profile SHA-256 is
+`7f8f26c6396caffa96751e12dae1d5bd25d69c59fe8bc94248c2fcdfe12037d0`.
+The graphics backend adds pinned SMOL-V, Khronos SPIRV-Cross and Khronos
+glslang to the DXBC translator and SPIR-V validator. The tracked glslang patch
+enables its standalone CLI with diagnostic paths compatible with the pinned
+Unity NDK. The recipe contains only
+source selectors, hashes and output routing. The builder retains the public
+source packages, patch and notices. Game programs, translated bodies and
+device records stay local. Provenance, privacy, licensing and
+sensitive-content audit completed 2026-11-27.
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP
