@@ -551,7 +551,7 @@ class ReleaseGraphTests(unittest.TestCase):
             # Pin the index wire format, including the manifest's stable artifact
             # reference and the bundle and record pack descriptors.
             self.assertEqual(
-                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "3cefee8605995bb3791c20861244c2f9984095ab12828ca92916c56b73cfc208"
+                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "da9e23524aa98d8a08765c773243a65857bc7bf742147b3e0879d4d975618091"
             )
 
     def test_scene_record_suppliers_close_published_consumers(self):
@@ -612,6 +612,7 @@ class ReleaseGraphTests(unittest.TestCase):
             producer = Path(job["script"]).stem
             if producer == "object_produce" and "objects" in job["artifacts"]:
                 self.assertEqual(job["artifacts"]["layout"], "layout.json")
+                self.assertEqual(job["artifacts"]["types"], "types.json")
                 seen.add(producer)
             if producer in {
                 "record_produce",
