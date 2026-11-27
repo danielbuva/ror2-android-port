@@ -27,7 +27,9 @@ import traceback
 from uuid import uuid4
 from xml.etree import ElementTree
 
-PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
+from phone_apk import PACKAGE as PHONE_CONTENT_PACKAGE
+
+PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted", PHONE_CONTENT_PACKAGE}
 PROCESS_TIME = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 TRANSIENTS = ("movement-batch-selection.json", "offline-settings-v1/preferences.json.pending")
 GOLEM_ATTACK = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+EntityStates\.GolemMonster\.(ClapState|FireLaser):OnEnter\(\)\s*$")
@@ -125,9 +127,19 @@ def load_request(path, serial=None):
         "software-notices",
         "player-screens",
         "owner-unplugged",
+        "shader-draw",
+        "shader-compute",
     }:
         raise ValueError("Unknown device workload mode")
-    if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
+    shader_modes = {"shader-draw", "shader-compute"}
+    if value["mode"] in shader_modes or value["package"] == PHONE_CONTENT_PACKAGE:
+        if (
+            value["mode"] not in shader_modes
+            or value["package"] != PHONE_CONTENT_PACKAGE
+            or value.keys() - required - {"mode", "serial", "adopted_install", "cooldown_seconds", "capture_interval_seconds"}
+        ):
+            raise ValueError("Shader probe requires the disposable content fixture and its standalone workload")
+    elif value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
     if value["mode"] in {"settings-save-failure", "profile-write-interrupt"} and "selection" in value:
         raise ValueError("Persistence workload owns its attempt-bound selector")
@@ -295,7 +307,7 @@ def checked_mapping(request):
 
 def reset_other_lab(request, lease, record, cleanup=None):
     """Converted runs also leave the separately owned lab package idle."""
-    if request["package"] == "dev.ror2lab.arm64":
+    if request["package"] != "dev.ror2lab.converted":
         return
     from alpha_stability_batch import _idle_readback
     from device import Device
@@ -1240,6 +1252,26 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
+    if request["mode"] in {"shader-draw", "shader-compute"}:
+        report_name = request["mode"].replace("-", "_")
+        report_marker = "PHONE_" + report_name.upper() + " "
+        deadline = time.monotonic() + request["duration_seconds"]
+        while time.monotonic() < deadline:
+            if thermal.cancelled.is_set():
+                raise RuntimeError(thermal.error)
+            if device.sh("pidof", device.package, check=False).strip() != pid:
+                raise RuntimeError("Shader fixture process exited or changed")
+            log = device.cmd("logcat", "-d", "--pid=" + pid, "Unity:I", "AndroidRuntime:E", "*:S")
+            for line in log.splitlines():
+                _, marker, payload = line.partition(report_marker)
+                if marker:
+                    report = result[report_name] = json.loads(payload)
+                    if report.get("passed") is not True or report.get("graphics") != "Vulkan":
+                        raise RuntimeError("Shader fixture failed; inspect its Vulkan report")
+                    return
+            thermal.cancelled.wait(1)
+        raise RuntimeError("Shader fixture produced no report before the deadline")
+
     if request["mode"] == INSTALLED_ALPHA:
         tour = result["tour"] = {"native_title": "unobserved", "phase": "bootstrap"}
         if launched.get("activity") != device.package + "/dev.ror2owner.bootstrap.PayloadBootstrapActivity":
@@ -1529,6 +1561,7 @@ def execute(request):
     exception_log = None
     initial_exception_bytes = None
     active_hash = None
+    fixture_was_present = False
     initial_hash_pending = False
     started = time.monotonic()
     prior_selectors = command_selectors()
@@ -1556,6 +1589,9 @@ def execute(request):
             device = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
             reset_other_lab(request, lease, result.setdefault("initial_lab_reset", {}), cleanup)
             if device.exists():
+                if device.package == PHONE_CONTENT_PACKAGE:
+                    fixture_was_present = True
+                    raise RuntimeError("Content fixture already installed; refusing to modify it")
                 if not device.receipt("installed.json").exists() and "prior_receipt" in request:
                     adopt_receipt(device, request["prior_receipt"])
                 initial_hash_pending = True
@@ -1771,6 +1807,17 @@ def execute(request):
                     clean("diagnostic-scratch", retain_scratch)
                     clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {}), cleanup))
                     clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {}), cleanup))
+                if device.package == PHONE_CONTENT_PACKAGE:
+
+                    def remove_fixture():
+                        verify_owned(device, active_hash)
+                        if not device.reset()["removed"]:
+                            raise RuntimeError("Shader fixture uninstall could not be verified")
+                        device.receipt("runtime.json").unlink(missing_ok=True)
+                        return True
+
+                    if clean("fixture-uninstall", remove_fixture):
+                        active_hash = None
 
             if device:
 
@@ -1790,6 +1837,8 @@ def execute(request):
                                 result["terminal_readback"] = dict(apk_sha256=active_hash, process_absent=True)
                             else:
                                 result["terminal_readback"] = dict(ownership_verified=False)
+                        elif fixture_was_present:
+                            result["terminal_readback"] = dict(installed=independent.exists(), preexisting=True)
                         elif active_hash:
                             result["terminal_readback"] = _idle_readback(independent, active_hash)
                         elif not independent.exists():

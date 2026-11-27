@@ -16,6 +16,7 @@ from device_context import (
     storage_policy,
     validate_receipt_directory,
 )
+from phone_apk import PACKAGE as PHONE_CONTENT_PACKAGE
 
 PACKAGE = "dev.ror2lab.arm64"
 ADB = "/opt/homebrew/bin/adb"
@@ -84,7 +85,7 @@ def validate_apk_identity(apk, expected_package=PACKAGE):
 class Device:
     _awake_devices = {}
     package = PACKAGE
-    supported_packages = {PACKAGE, "dev.ror2lab.converted"}
+    supported_packages = {PACKAGE, "dev.ror2lab.converted", PHONE_CONTENT_PACKAGE}
 
     def __init__(self, selector=None, work_root=None, *, package=PACKAGE):
         if package not in self.supported_packages:
