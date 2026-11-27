@@ -469,8 +469,7 @@ class Graph:
         if producer == "object_produce":
             target = "payload/" + ("windows-shaders.bundle" if "original_bundle" in profile else profile["bundle"]["name"])
             outputs[target] = target
-            if "original_bundle" not in profile:
-                artifacts["catalog_bundle"] = target
+            artifacts["catalog_bundle"] = target
         if producer == "player_data" or (producer == "shader_produce" and "typed_records" not in profile):
             artifacts = {"receipt": "result.json"}
             targets = [row["file"] for row in profile["shaders"]] if producer == "shader_produce" else list(profile["outputs"])
@@ -806,21 +805,12 @@ class Graph:
         needs = []
         for job in sorted(set(selected_jobs)):
             descriptor = self.jobs[job]
-            for target, path in sorted(descriptor["outputs"].items()):
-                if not target.startswith("payload/"):
-                    continue
-                artifact = "manifest_bundle_" + str(len(bundles))
-                descriptor["artifacts"][artifact] = path
-                bundles.append(
-                    {
-                        "name": target.removeprefix("payload/"),
-                        "path": "${job:" + job + ":" + artifact + "}",
-                        "sha256": "${sha256:" + job + ":" + artifact + "}",
-                        "bytes": "${bytes:" + job + ":" + artifact + "}",
-                    }
-                )
-                if job not in needs:
-                    needs.append(job)
+            bundle = descriptor["artifacts"].get("catalog_bundle")
+            if bundle is None:
+                continue
+            target = next(target for target, path in descriptor["outputs"].items() if path == bundle)
+            bundles.append(dict(name=target.removeprefix("payload/"), **self.artifact_pin(job, "catalog_bundle")))
+            needs.append(job)
         if not bundles:
             raise ValueError("bundle manifest requires selected complete bundle profiles")
         name = "recipe/jobs/owner-bundle-manifest.json"
