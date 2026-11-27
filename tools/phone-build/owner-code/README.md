@@ -238,6 +238,11 @@ maps from the actual original catalog/IL and freshly decompiles the selected 14
 support sources; then compiles/post-processes all 145 gameplay sources. The three
 runtime request/stage/project admissions remain intact. No fake project is used.
 
+The raw managed producer applies the existing view-only camera transform to
+the music-observed game assembly. The converted `RoR2.dll` contains the camera
+marker and both camera guards alongside the Commando post observer. The camera
+rig remains under the existing opt-in diagnostic owner.
+
 For current-source diagnostic builds, set
 `passive_pcm_capture_after_authority_skill_requested` to `true` to capture
 MainOutput after the first authority skill. Omit the field or set it to `false`
