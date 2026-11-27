@@ -3153,6 +3153,8 @@ paths. `scripts/lab/evidence_files.py` opens raw or compressed trace bytes for
 retained reports and heap analysis. The heap export owner materializes one
 snapshot at a time in its existing temporary directory and preserves capture
 identity. Apply is serialized and writes its ledger under `work/cleanup-analysis`.
+The shared device runner calls the pruner from its own checkout and passes the
+canonical work directory explicitly.
 The ledger distinguishes logical candidate bytes from the signed change in
 volume-available bytes measured by `df`, which includes concurrent host activity.
 
