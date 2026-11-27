@@ -2370,6 +2370,11 @@ The request may pin dependency bundles in load order. The fixture opens them
 before loading root assets and unloads the full set in reverse order. An
 explicit Material expectation checks the loaded shader name and each saved
 non-null texture property and object name against the receipt.
+For the Animate Alpha Vulkan diagnostic, set `ROR2_PHONE_SHADER_DRAW=1` on
+`phone-content-build` with a native-content request for its standalone Shader
+address. The builder embeds the checked bundle in the disposable fixture APK.
+`ContentFixture.cs` draws two ramp inputs offscreen and reports the center
+pixels, graphics backend and result through `PHONE_SHADER_DRAW`.
 For a streamed scene, the same request pins the bundle and dependencies and
 specifies the exact path in `scene`.
 `ContentFixtureSceneCheck.cs` enters Play Mode in the isolated project, loads

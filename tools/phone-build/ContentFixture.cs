@@ -5,9 +5,21 @@ using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.Networking;
 
-// Isolated authored probe. No game, catalog or existing runtime owner is read.
+// Isolated authored probe for explicit native content inputs.
 public sealed class ContentFixture : MonoBehaviour
 {
+    public string shaderAddress;
+
+    [Serializable] sealed class ShaderDrawReport
+    {
+        public string graphics;
+        public string shader;
+        public Color32 low;
+        public Color32 high;
+        public bool passed;
+        public string failure;
+    }
+
     [Serializable] public sealed class Report
     {
         public string unity;
@@ -58,6 +70,11 @@ public sealed class ContentFixture : MonoBehaviour
 
     IEnumerator Start()
     {
+        if (!String.IsNullOrEmpty(shaderAddress))
+        {
+            yield return CheckShaderDraw();
+            yield break;
+        }
         using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
         using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
         using (var files = activity.Call<AndroidJavaObject>("getFilesDir"))
@@ -112,5 +129,88 @@ public sealed class ContentFixture : MonoBehaviour
         report.bundleSha256 = digest;
         File.WriteAllText(Path.Combine(Application.persistentDataPath, "phone-content-report.json"), JsonUtility.ToJson(report, true));
         Debug.Log("PHONE_CONTENT_FIXTURE " + JsonUtility.ToJson(report));
+    }
+
+    IEnumerator CheckShaderDraw()
+    {
+        var report = new ShaderDrawReport { graphics = SystemInfo.graphicsDeviceType.ToString() };
+        using (var request = UnityWebRequestAssetBundle.GetAssetBundle(Application.streamingAssetsPath + "/phone-shader.bundle"))
+        {
+            yield return request.SendWebRequest();
+            yield return new WaitForEndOfFrame();
+            AssetBundle bundle = null;
+            try
+            {
+                if (request.result != UnityWebRequest.Result.Success) throw new Exception(request.error);
+                bundle = DownloadHandlerAssetBundle.GetContent(request);
+                var shader = bundle.LoadAsset<Shader>(shaderAddress);
+                if (shader == null || !shader.isSupported) throw new Exception("Shader is unavailable or unsupported");
+                report.shader = shader.name;
+                DrawAnimateAlpha(shader, report);
+            }
+            catch (Exception error) { report.failure = error.Message; }
+            finally { if (bundle != null) bundle.Unload(true); }
+        }
+        Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(report));
+    }
+
+    static void DrawAnimateAlpha(Shader shader, ShaderDrawReport report)
+    {
+        var material = new Material(shader);
+        var ramp = new Texture2D(2, 1, TextureFormat.RGBA32, false, true) {
+            filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp
+        };
+        var pixels = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var target = RenderTexture.GetTemporary(16, 16, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        var previous = RenderTexture.active;
+        GL.PushMatrix();
+        try
+        {
+            ramp.SetPixels(new[] { Color.red, Color.green });
+            ramp.Apply();
+            material.SetColor("_Color", Color.white);
+            material.SetFloat("_AlphaBoost", 1);
+            material.SetFloat("_TrueAlpha", 1);
+            material.SetFloat("_PatternPixelSize", 1);
+            material.SetFloat("_PatternStrength", 0);
+            material.SetFloat("_ExternalAlpha", 0);
+            material.SetFloat("_LightenFactor", 1);
+            material.SetVector("_TextureSampleAdd", Vector4.zero);
+            material.SetTexture("_OverlayTex", Texture2D.whiteTexture);
+            material.SetTexture("_RemapRamp", ramp);
+
+            RenderTexture.active = target;
+            GL.LoadOrtho();
+            report.low = DrawRampSample(material, pixels, Texture2D.blackTexture);
+            report.high = DrawRampSample(material, pixels, Texture2D.whiteTexture);
+            report.passed = report.graphics == "Vulkan" &&
+                report.low.r >= 250 && report.low.g <= 5 && report.low.b <= 5 &&
+                report.high.r <= 5 && report.high.g >= 250 && report.high.b <= 5;
+        }
+        finally
+        {
+            GL.PopMatrix();
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(target);
+            Destroy(material);
+            Destroy(ramp);
+            Destroy(pixels);
+        }
+    }
+
+    static Color32 DrawRampSample(Material material, Texture2D pixels, Texture texture)
+    {
+        GL.Clear(true, true, Color.blue);
+        material.SetTexture("_MainTex", texture);
+        if (!material.SetPass(0)) throw new Exception("Shader pass 0 could not bind");
+        GL.Begin(GL.QUADS);
+        GL.Color(Color.white);
+        GL.TexCoord2(0, 0); GL.Vertex3(0, 0, 0.5f);
+        GL.TexCoord2(0, 1); GL.Vertex3(0, 1, 0.5f);
+        GL.TexCoord2(1, 1); GL.Vertex3(1, 1, 0.5f);
+        GL.TexCoord2(1, 0); GL.Vertex3(1, 0, 0.5f);
+        GL.End();
+        pixels.ReadPixels(new Rect(8, 8, 1, 1), 0, 0, false);
+        return pixels.GetPixel(0, 0);
     }
 }

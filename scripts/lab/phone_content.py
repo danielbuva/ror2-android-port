@@ -61,7 +61,7 @@ def stage(destination, *, ambient=False):
         (folder / name).write_bytes(source.read_bytes())
     (destination / "Packages").mkdir()
     (destination / "Packages/manifest.json").write_text(
-        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.terrain":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0"}}\n'
+        '{"dependencies":{"com.unity.modules.androidjni":"1.0.0","com.unity.modules.assetbundle":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.terrain":"1.0.0","com.unity.modules.unitywebrequest":"1.0.0","com.unity.modules.unitywebrequestassetbundle":"1.0.0"}}\n'
     )
     (destination / "ProjectSettings").mkdir()
     (destination / "ProjectSettings/ProjectVersion.txt").write_text(
@@ -333,6 +333,9 @@ def run_editor(project, *, build=False, ambient=False):
     env = unity_editor_env()
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
     scene_check = False
+    shader_bundle = None
+    if env.get("ROR2_PHONE_SHADER_DRAW") and (not build or not env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK")):
+        raise RuntimeError("Shader draw requires a fixture build and a native-content request")
     if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
         if ambient:
             raise RuntimeError("Native-content typed loads require the content fixture")
@@ -341,6 +344,12 @@ def run_editor(project, *, build=False, ambient=False):
         request_path.write_text(json.dumps(request, indent=2) + "\n")
         env["ROR2_PHONE_NATIVE_CONTENT_CHECK"] = str(request_path)
         scene_check = "scene" in request
+        if env.get("ROR2_PHONE_SHADER_DRAW"):
+            assets = request.get("assets", [])
+            if len(assets) != 1 or assets[0]["type"] != "Shader" or assets[0].get("subasset") or request.get("dependencies"):
+                raise RuntimeError("Shader draw requires exactly one Shader address in a standalone bundle")
+            env["ROR2_PHONE_SHADER_DRAW"] = assets[0]["name"]
+            shader_bundle = project / "Assets/StreamingAssets/phone-shader.bundle"
         if scene_check:
             if build:
                 raise RuntimeError("Native scene check requires Play Mode without a player build")
@@ -366,7 +375,16 @@ def run_editor(project, *, build=False, ambient=False):
         str(log),
     ]
     with host_build_lock(lock, operation="Alpha phone content fixture " + operation, timeout=1):
-        result = subprocess.run(args, env=env, capture_output=True, timeout=600)
+        if shader_bundle is not None:
+            if shader_bundle.exists() or shader_bundle.is_symlink():
+                raise RuntimeError("Generated fixture already has a staged shader bundle")
+            subprocess.run(["/bin/cp", "-c", request["path"], shader_bundle], check=True)
+        try:
+            result = subprocess.run(args, env=env, capture_output=True, timeout=600)
+        finally:
+            if shader_bundle is not None:
+                shader_bundle.unlink()
+                shader_bundle.with_suffix(".bundle.meta").unlink(missing_ok=True)
     (attempt / "launch.txt").write_bytes(result.stdout + result.stderr)
     oracle = None
     oracle_error = None
