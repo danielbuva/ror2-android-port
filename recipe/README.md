@@ -7284,8 +7284,11 @@ accepted Vulkan wrappers in a host comparison.
 Manual provenance, licensing, privacy and sensitive-content review covered
 source and destination selectors, hashes, SDK and tool pins, and the authored
 compile request. Original shader bytes, recovered code, compiler output and
-test captures stay local. The recipe SHA-256 is
-`33acddd1c461921fc51aa63542cc54b98b5d10d37ede90ed1d80fe5803173de9`.
+test captures stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-ui-animate-alpha.json` | `33acddd1c461921fc51aa63542cc54b98b5d10d37ede90ed1d80fe5803173de9` |
 
 ## Current-script bundle comparison (2026-11-04)
 
