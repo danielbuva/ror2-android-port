@@ -655,7 +655,7 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
     if source["input_id"] != input_id or source["source_catalog_sha256"] != policy["source_catalog_sha256"]:
         raise ValueError("catalog projection source identity differs")
 
-    paths = {path.casefold(): path for build in builds for path in build["assetNames"]}
+    paths = {path.casefold() for build in builds for path in build["assetNames"]}
     excluded = set(policy["exclusions"])
     remaps = policy["remaps"]
     known = {row["id"] for row in source["locations"]}
@@ -702,10 +702,10 @@ def project_source_catalog(source, policy, builds, *, input_id, attempt):
             keys.append(dict(row, locations=selected))
     mesh_subobjects = []
     for row in policy["mesh_subobjects"]:
-        path = row["path"].casefold()
-        if path not in paths:
+        path = row["path"]
+        if path.casefold() not in paths:
             raise ValueError("catalog projection mesh alias has no produced owner: " + row["key"])
-        mapped[path] = paths[path]
+        mapped[path] = path
         mesh_subobjects.append(dict(source=path, key=row["key"], type=row["type"]))
     closure = dict(
         input_id=input_id,

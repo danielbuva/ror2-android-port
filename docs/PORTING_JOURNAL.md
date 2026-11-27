@@ -6,6 +6,17 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1524 — Restore converted Goolake's native Mesh references
+
+2026-11-27. Pack five source Mesh records into Goolake's dependency donor and
+bind the pack to the consuming scene in the signed release graph.
+APK SHA-256 `c9ba5d61f96daee12aca90a59624aee7966fab827091398287b5d72222e52fc6` (runtime `0ffee31b`, producer `05031afa`).
+Evidence under `work/coordination/p1-scenes-w/goolake-v41-catalog-spelling/v41-native-goolake-transition/`.
+The assisted native Plains exit activated Goolake with 2,048 renderers and
+320 mesh colliders. The strict geometry gate reported zero missing Mesh
+references. SoC peaked at 89.6 °C with 7.50 s above 80 °C and a 35 °C start
+battery. Adopted placement, scratch removal and OLED sleep passed.
+Native destination population, sustained play and Razorwire pickup remain open.
 ## J1523 — Capture Commando's natural-hit flinch and recovery
 
 2026-11-27. Shared device sessions can retain a bounded gameplay MP4 after

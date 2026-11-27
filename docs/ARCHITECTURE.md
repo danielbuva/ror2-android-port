@@ -237,6 +237,12 @@ and native-manifest dependencies. The graph assigns stable artifact names to
 object bundles and built-in player resources when it compiles their producers.
 Follower bundles and catalog production bind the same staged files. The catalog
 also consumes each emitted profile, independently of canonical body-identity proof.
+An optional `mesh_append` in a preload release binds source Mesh pack jobs and
+the scene bundle jobs that reference those Meshes. The existing local asset
+repacker checks those references and full native types after emission or
+canonical repack. Only the final bundle is published as payload and consumed
+by the catalog and native manifest. The catalog projection keeps original or
+authored relocation path spelling while matching Unity's case-folded inventory.
 For SDK resource endpoints, preparation can generate full witnesses from pinned
 original type layouts and the produced resource bodies. The endpoint checker
 verifies native type metadata, body extents and recursively resolved pointers

@@ -7440,3 +7440,14 @@ Audit 2026-11-26. The assisted Gold shrine route refreshes the reviewed
 `IntegratedWorldBoundary.cs` pin in `original-audio-owner-sources.json` and its
 build-hook consumers. The authored change expires a terrain recovery timer
 when the objective changes. The refresh contains only authored source hashes.
+
+Audit 2026-11-27. `owner-goolake-scene-mesh-endpoints.json` selects five
+existing `owner-meshes.json` transforms for MeshFilter and MeshCollider
+references in Goolake. The provenance, privacy, licensing and sensitive-content
+review covered original bundle and member selectors, object IDs, transform
+settings and hashes. The producer reads owned inputs locally. Mesh bodies and
+device evidence stay under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-goolake-scene-mesh-endpoints.json` | `b9013e5afd13edd54d0c8298f597e147efae0457549d08ec109c19b7e3409060` |

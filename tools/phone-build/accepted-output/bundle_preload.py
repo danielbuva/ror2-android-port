@@ -2998,7 +2998,7 @@ def produce_release_request(inputs, output):
     inputs, output = Path(inputs).resolve(strict=True), Path(output).resolve()
     before = O.B.sha(inputs)
     wrapper = json.loads(inputs.read_bytes())
-    if set(wrapper) != {"schema", "profiles", "request"} or wrapper["schema"] != "owner-bundle-preload-release-v1":
+    if set(wrapper) - {"mesh_append"} != {"schema", "profiles", "request"} or wrapper["schema"] != "owner-bundle-preload-release-v1":
         raise ValueError("unsupported bundle release contract")
     request = dict(wrapper["request"])
     policy = request["policy"]
@@ -3010,6 +3010,33 @@ def produce_release_request(inputs, output):
     request_path.write_text(json.dumps(request, sort_keys=True) + "\n")
     preparation = prepare_request(request_path, output / "prepared")
     result = produce_request(preparation["request"]["path"], output)
+    if "mesh_append" in wrapper:
+        append = wrapper["mesh_append"]
+        if set(append) != {"packs", "mesh_consumers"} or not all(append.values()):
+            raise ValueError("bundle Mesh append requires source packs and consuming scenes")
+        append_request = output / "mesh-append-inputs.json"
+        append_request.write_text(
+            json.dumps(
+                dict(
+                    schema="owner-bundle-local-assets-v1",
+                    source=result["catalog_bundle"],
+                    codec=request["codec"],
+                    name=policy["bundle"],
+                    member=policy["member"],
+                    groups=[],
+                    **append,
+                ),
+                sort_keys=True,
+            )
+            + "\n"
+        )
+        final = expose_local_assets_request(append_request, output / "mesh-complete")
+        result.update(
+            bundle=final["bundle"],
+            sha256=final["sha256"],
+            catalog_bundle=dict(path=final["bundle"], bytes=final["bytes"], sha256=final["sha256"]),
+            mesh_append=final,
+        )
     if O.B.sha(inputs) != before:
         raise ValueError("bundle release request changed during production")
     result["preparation"] = preparation
