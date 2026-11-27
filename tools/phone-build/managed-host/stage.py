@@ -24,6 +24,7 @@ JAVA_SOURCES = (
     "OwnerBuildService.java",
     "OwnerInputImport.java",
     "OwnerInputSource.java",
+    "OwnerToolDownload.java",
     "OwnerGraphicsPicker.java",
     "../owner-apk/graphics/GraphicsDriverPackage.java",
     "../owner-apk/graphics/GraphicsDriverPolicy.java",

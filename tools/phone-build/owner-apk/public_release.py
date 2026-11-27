@@ -164,6 +164,7 @@ PUBLISHING_SOURCE_FILES = {
             "OwnerBuildService.java",
             "OwnerInputImport.java",
             "OwnerInputSource.java",
+            "OwnerToolDownload.java",
             "NativePythonHost.c",
             "NativeDotnetMuxer.c",
             "NativeJavaHost.c",

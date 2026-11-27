@@ -1999,6 +1999,12 @@ copies; `install_inputs.py` binds the signed input/stage plan to admitted local
 paths and writes the private original-file inventory and configuration used by
 the native-code owner. Startup metadata uses the admitted content hashes by
 default, so copying identical inputs again preserves its identity.
+`managed-host/OwnerInputSource.java` acquires the plan's pinned tools through
+the foreground service. It reads owner files through SAF and uses
+`OwnerToolDownload.java` for approved upstream HTTPS paths. `OwnerInputImport.java`
+keeps resumable partials outside the producer tree, verifies complete files and
+publishes them atomically under the private `acquired/` path. Build admission
+rehashes that tree against the signed plan before running a producer.
 `install_inputs.py` also generates the source-output assembly receipt.
 `install_flow.py` owns durable stage
 checkpoints and failure/retry state, including stage-admission write failures
