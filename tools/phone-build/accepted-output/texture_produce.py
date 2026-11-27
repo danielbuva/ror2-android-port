@@ -2,6 +2,7 @@
 
 import argparse
 from array import array
+from contextlib import contextmanager
 import hashlib
 import importlib.util
 import json
@@ -14,6 +15,7 @@ import struct
 import subprocess
 import sys
 import time
+from types import SimpleNamespace
 
 
 def module(name):
@@ -27,6 +29,68 @@ BUNDLE = module("unity_bundle")
 MESH = module("mesh_produce")
 O = module("object_produce")
 SOURCE_BC_ETC_FORMATS = {"source-bc1-etc": 10, "source-bc3-etc": 12}
+
+
+@contextmanager
+def texture_source(pc, path, resources=None, *, discover=False):
+    if resources is None:
+        yield BUNDLE.Bundle(path)
+        return
+
+    def sibling(name):
+        if name != Path(name).name or not name.endswith(".resS"):
+            raise ValueError("invalid standalone texture resource name")
+        return MESH.safe_input(pc, (path.parent / name).relative_to(pc).as_posix())
+
+    def check_resource(name, digest):
+        if BUNDLE.sha(sibling(name)) != digest:
+            raise ValueError("standalone texture resource drift")
+
+    for name, digest in resources.items():
+        check_resource(name, digest)
+
+    with path.open("rb") as serial:
+        serial.size = path.stat().st_size
+
+        def member(name):
+            if name == path.name:
+                return serial
+            resource = sibling(name)
+            if name not in resources:
+                if not discover:
+                    raise ValueError("standalone texture resource is unpinned")
+                resources[name] = BUNDLE.sha(resource)
+            return resource.open("rb")
+
+        yield SimpleNamespace(member=member)
+    for name, digest in resources.items():
+        check_resource(name, digest)
+
+
+def type_identity(typ):
+    return tuple(typ.get(field) for field in ("class_id", "stripped", "script_type", "hash", "script_id"))
+
+
+def texture_witnesses(pc, witnesses):
+    types = {}
+    for witness in witnesses:
+        relative, member, identity = witness["source"]
+        path = MESH.safe_input(pc, relative)
+        if BUNDLE.sha(path) != witness["sha256"]:
+            raise ValueError("standalone texture schema witness drift")
+        typ = O.source_record_type(path, member, identity, witness["class_id"])
+        tree = typ["tree"]
+        if types.setdefault(type_identity(typ), tree) != tree:
+            raise ValueError("conflicting standalone texture schema witnesses")
+    return types
+
+
+def witnessed_texture_type(typ, witnesses):
+    if "tree" not in typ:
+        tree = witnesses.get(type_identity(typ))
+        if tree is not None:
+            return dict(typ, tree=tree, dependencies=[])
+    return typ
 
 
 def dxt1_rgb(data, width, height, force_four_colours=False):
@@ -497,9 +561,9 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
             raise ValueError("texture pixels escape original body")
         pixels = body[start : start + location["bytes"]]
     else:
-        stream = bundle.member(location["member"])
-        stream.seek(location["offset"])
-        pixels = BUNDLE.exact(stream, location["bytes"])
+        with bundle.member(location["member"]) as stream:
+            stream.seek(location["offset"])
+            pixels = BUNDLE.exact(stream, location["bytes"])
     if len(pixels) != location["bytes"] or hashlib.sha256(pixels).hexdigest() != location["sha256"]:
         raise ValueError("original texture pixels drift")
     operation = selected["operation"]
@@ -701,22 +765,29 @@ def produce(
     sdk_toolchain_sha256=None,
     resume=False,
     comparison="exact",
+    *,
+    pixels_codec=None,
+    pixels_codec_sha256=None,
 ):
     if comparison not in ("exact", "diagnostic"):
         raise ValueError("unknown output comparison policy")
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
     profile = json.loads(profile_path.read_text())
-    if set(profile) != {"input_id", "bundles"} or profile["input_id"] != MESH.INPUT_ID:
+    if not {"input_id", "bundles"} <= profile.keys() <= {"input_id", "bundles", "schema_witnesses"} or profile["input_id"] != MESH.INPUT_ID:
         raise ValueError("unknown texture input")
     pc = pc.resolve(strict=True)
-    needs_sdk = any(
-        texture["operation"] in {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *SOURCE_BC_ETC_FORMATS}
-        for bundle in profile["bundles"]
-        for member in bundle["members"]
-        for texture in member["textures"]
-    )
+    witnesses = texture_witnesses(pc, profile.get("schema_witnesses", []))
+    operations = {texture["operation"] for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]}
+    needs_sdk = bool(operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", "source-bc3-etc"})
     sdk = sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) if needs_sdk or sdk_toolchain is not None or sdk_toolchain_sha256 is not None else None
+    if ("source-bc1-etc" in operations and sdk is None) or pixels_codec is not None or pixels_codec_sha256 is not None:
+        if pixels_codec is None or pixels_codec_sha256 is None:
+            raise ValueError("pinned native texture pixel decoder required")
+        pixels_codec = pixels_codec.resolve(strict=True)
+        if pixels_codec.is_relative_to(pc) or BUNDLE.sha(pixels_codec) != pixels_codec_sha256:
+            raise ValueError("native texture pixel decoder drift or overlap with original input")
+    codec_tools = sdk if pixels_codec is None else {**(sdk or {}), "pixels": str(pixels_codec)}
     needs_jpeg = any(
         texture["operation"] in {"rgb-jpeg", "dxt1-rgb-jpeg"} or (texture["operation"] in {"etc1", "etc1-mips"} and texture["jpeg"])
         for bundle in profile["bundles"]
@@ -729,12 +800,8 @@ def produce(
         jpeg_codec = jpeg_codec.resolve(strict=True)
         if jpeg_codec.is_relative_to(pc) or BUNDLE.sha(jpeg_codec) != jpeg_codec_sha256:
             raise ValueError("public JPEG codec drift or overlap with original input")
-    needs_etc = any(
-        texture["operation"]
-        in {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *SOURCE_BC_ETC_FORMATS}
-        for bundle in profile["bundles"]
-        for member in bundle["members"]
-        for texture in member["textures"]
+    needs_etc = bool(
+        operations & {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips", *SOURCE_BC_ETC_FORMATS}
     )
     if needs_etc or etc_codec is not None or etc_codec_sha256 is not None:
         if etc_codec is None or etc_codec_sha256 is None:
@@ -772,6 +839,8 @@ def produce(
         receipt["etc_codec_sha256"] = etc_codec_sha256
     if sdk is not None:
         receipt["sdk_toolchain_sha256"] = sdk_toolchain_sha256
+    if pixels_codec is not None:
+        receipt["pixels_codec_sha256"] = pixels_codec_sha256
     types, completed_types = [], []
     if resume:
         counts, types, completed_types = texture_resume(output, profile, receipt)
@@ -795,64 +864,68 @@ def produce(
                 before = path.stat()
                 if BUNDLE.sha(path) != selected_bundle["sha256"]:
                     raise ValueError("original texture bundle drift")
-                bundle = BUNDLE.Bundle(path)
-                for selected_member in selected_bundle["members"]:
-                    member = bundle.member(selected_member["name"])
-                    metadata = O.W.read_serialized(member)
-                    source_objects = metadata["objects"]
-                    by_id = {row["path_id"]: row for row in source_objects}
-                    by_extent = {(metadata["data_offset"] + row["offset"], row["bytes"]): row for row in source_objects}
-                    for selected in selected_member["textures"]:
-                        extent = (selected["offset"], selected["bytes"])
-                        obj = by_id[selected["path_id"]] if "path_id" in selected else by_extent[extent]
-                        typ = metadata["types"][obj["type_id"]]
-                        if typ["class_id"] not in (28, 89) or (metadata["data_offset"] + obj["offset"], obj["bytes"]) != extent:
-                            raise ValueError("original texture metadata drift")
-                        type_count = len(types)
-                        type_id = O.record_type(typ, types, type_ids)
-                        if len(types) != type_count:
-                            # The descriptor must survive before any row can commit its ID.
-                            texture_receipt(output, types, "types.json")
-                        completed = min(max(committed - visited, 0), len(selected["outputs"]))
-                        if any(value != type_id for value in completed_types[visited : visited + completed]):
-                            raise ValueError("texture checkpoint source type drift")
-                        visited += len(selected["outputs"])
-                        if completed == len(selected["outputs"]):
-                            continue
-                        member.seek(selected["offset"])
-                        body = BUNDLE.exact(member, selected["bytes"])
-                        if hashlib.sha256(body).hexdigest() != selected["sha256"]:
-                            raise ValueError("original texture body drift")
-                        pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
-                        pixel_sha = hashlib.sha256(pixels).hexdigest()
-                        for target in selected["outputs"][completed:]:
-                            if target["pixel_sha256"] is None and len(pixels) != target["pixel_bytes"]:
-                                raise ValueError("source-derived texture pixel extent differs")
-                            if comparison == "exact" and (pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]):
-                                raise ValueError("produced texture pixels differ from accepted hash")
-                            result = body_output(body, selected["fields"], pixels, target, selected["operation"])
-                            digest = hashlib.sha256(result).hexdigest()
-                            if target["sha256"] is None and len(result) != target["bytes"]:
-                                raise ValueError("source-derived texture body extent differs")
-                            if comparison == "exact" and (len(result) != target["bytes"] or digest != target["sha256"]):
-                                raise ValueError("produced texture body differs from accepted hash")
-                            actual = dict(target, bytes=len(result), sha256=digest, pixel_bytes=len(pixels), pixel_sha256=pixel_sha)
-                            row = texture_row(actual, objects.tell(), resources.tell())
-                            row["type_id"] = type_id
-                            if comparison == "diagnostic":
-                                row["historical_raw_exact"] = all(actual[key] == target[key] for key in ("bytes", "sha256", "pixel_bytes", "pixel_sha256"))
-                            objects.write(result)
-                            if not target["inline"] and pixels:
-                                resources.write(pixels)
-                                receipt["resource_bytes"] += len(pixels)
-                            for stream in (objects, resources):
-                                stream.flush()
-                                os.fsync(stream.fileno())
-                            index.write(json.dumps(row, sort_keys=True) + "\n")
-                            index.flush()
-                            os.fsync(index.fileno())
-                            receipt["objects"] += 1
-                            receipt["object_bytes"] += len(result)
+                with texture_source(pc, path, selected_bundle.get("resources")) as bundle:
+                    for selected_member in selected_bundle["members"]:
+                        member = bundle.member(selected_member["name"])
+                        metadata = O.W.read_serialized(member)
+                        source_objects = metadata["objects"]
+                        by_id = {row["path_id"]: row for row in source_objects}
+                        by_extent = {(metadata["data_offset"] + row["offset"], row["bytes"]): row for row in source_objects}
+                        for selected in selected_member["textures"]:
+                            extent = (selected["offset"], selected["bytes"])
+                            obj = by_id[selected["path_id"]] if "path_id" in selected else by_extent[extent]
+                            typ = metadata["types"][obj["type_id"]]
+                            if "resources" in selected_bundle:
+                                typ = witnessed_texture_type(typ, witnesses)
+                                if "tree" not in typ:
+                                    raise ValueError("standalone texture needs a matching original schema")
+                            if typ["class_id"] not in (28, 89) or (metadata["data_offset"] + obj["offset"], obj["bytes"]) != extent:
+                                raise ValueError("original texture metadata drift")
+                            type_count = len(types)
+                            type_id = O.record_type(typ, types, type_ids)
+                            if len(types) != type_count:
+                                # The descriptor must survive before any row can commit its ID.
+                                texture_receipt(output, types, "types.json")
+                            completed = min(max(committed - visited, 0), len(selected["outputs"]))
+                            if any(value != type_id for value in completed_types[visited : visited + completed]):
+                                raise ValueError("texture checkpoint source type drift")
+                            visited += len(selected["outputs"])
+                            if completed == len(selected["outputs"]):
+                                continue
+                            member.seek(selected["offset"])
+                            body = BUNDLE.exact(member, selected["bytes"])
+                            if hashlib.sha256(body).hexdigest() != selected["sha256"]:
+                                raise ValueError("original texture body drift")
+                            pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, codec_tools)
+                            pixel_sha = hashlib.sha256(pixels).hexdigest()
+                            for target in selected["outputs"][completed:]:
+                                if target["pixel_sha256"] is None and len(pixels) != target["pixel_bytes"]:
+                                    raise ValueError("source-derived texture pixel extent differs")
+                                if comparison == "exact" and (pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]):
+                                    raise ValueError("produced texture pixels differ from accepted hash")
+                                result = body_output(body, selected["fields"], pixels, target, selected["operation"])
+                                digest = hashlib.sha256(result).hexdigest()
+                                if target["sha256"] is None and len(result) != target["bytes"]:
+                                    raise ValueError("source-derived texture body extent differs")
+                                if comparison == "exact" and (len(result) != target["bytes"] or digest != target["sha256"]):
+                                    raise ValueError("produced texture body differs from accepted hash")
+                                actual = dict(target, bytes=len(result), sha256=digest, pixel_bytes=len(pixels), pixel_sha256=pixel_sha)
+                                row = texture_row(actual, objects.tell(), resources.tell())
+                                row["type_id"] = type_id
+                                if comparison == "diagnostic":
+                                    row["historical_raw_exact"] = all(actual[key] == target[key] for key in ("bytes", "sha256", "pixel_bytes", "pixel_sha256"))
+                                objects.write(result)
+                                if not target["inline"] and pixels:
+                                    resources.write(pixels)
+                                    receipt["resource_bytes"] += len(pixels)
+                                for stream in (objects, resources):
+                                    stream.flush()
+                                    os.fsync(stream.fileno())
+                                index.write(json.dumps(row, sort_keys=True) + "\n")
+                                index.flush()
+                                os.fsync(index.fileno())
+                                receipt["objects"] += 1
+                                receipt["object_bytes"] += len(result)
                 after = path.stat()
                 if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns) or BUNDLE.sha(path) != selected_bundle["sha256"]:
                     raise ValueError("original texture input changed during production")
@@ -868,6 +941,8 @@ def produce(
             raise ValueError("public JPEG codec changed during production")
         if etc_codec is not None and BUNDLE.sha(etc_codec) != etc_codec_sha256:
             raise ValueError("public ETC codec changed during production")
+        if pixels_codec is not None and BUNDLE.sha(pixels_codec) != pixels_codec_sha256:
+            raise ValueError("native texture pixel decoder changed during production")
         if sdk is not None and sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) != sdk:
             raise ValueError("SDK texture toolchain changed during production")
         receipt["outputs"] = {
@@ -898,6 +973,8 @@ def main():
     parser.add_argument("--etc-codec-sha256")
     parser.add_argument("--sdk-toolchain", type=Path)
     parser.add_argument("--sdk-toolchain-sha256")
+    parser.add_argument("--pixels-codec", type=Path)
+    parser.add_argument("--pixels-codec-sha256")
     parser.add_argument("--comparison", choices=("exact", "diagnostic"), default="exact")
     args = parser.parse_args()
     produce(
@@ -913,6 +990,8 @@ def main():
         args.sdk_toolchain_sha256,
         resume=args.resume,
         comparison=args.comparison,
+        pixels_codec=args.pixels_codec,
+        pixels_codec_sha256=args.pixels_codec_sha256,
     )
 
 

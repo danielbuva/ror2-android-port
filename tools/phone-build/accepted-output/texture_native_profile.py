@@ -12,7 +12,7 @@ import bundle_preload as preload
 import texture_produce as texture
 
 
-NATIVE_2D_PIXEL_BYTES = {1: 1, 3: 3, 4: 4}
+NATIVE_2D_PIXEL_BYTES = {1: 1, 3: 3, 4: 4, 5: 4}
 
 
 def texture_record(bundle, body, typ, position, identity, relative, member, trees, source_operation):
@@ -36,10 +36,12 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     elif fmt not in ((17, 24) if cube else NATIVE_2D_PIXEL_BYTES):
         return None
     width, height, mips = map(integer, ("m_Width", "m_Height", "m_MipCount"))
-    if min(width, height) < 1 or not 1 <= mips <= max(width, height).bit_length():
+    image_count = integer("m_ImageCount")
+    empty = not cube and source_operation is None and (width, height, mips) == (0, 0, 1) and (fmt, image_count) in ((1, 1), (4, 0))
+    if not empty and (min(width, height) < 1 or not 1 <= mips <= max(width, height).bit_length()):
         return None
     faces = 6 if cube else 1
-    if integer("m_ImageCount") != faces or integer("m_TextureDimension") != 2 or field("m_PlatformBlob") != bytes(4):
+    if (not empty and image_count != faces) or integer("m_TextureDimension") != 2 or field("m_PlatformBlob") != bytes(4):
         return None
     if any(pid for _, pid in preload.pointers(body, typ, trees).values()):
         return None
@@ -52,7 +54,9 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     if (size and (image_size or not path)) or (not size and (offset or path)):
         return None
     stride = integer("m_CompleteImageSize")
-    if source_operation:
+    if empty:
+        expected = 0
+    elif source_operation:
         try:
             texture.source_bc_extents(stride, width, height, fmt, mips)
         except ValueError:
@@ -69,9 +73,9 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
 
     resource = path.rsplit("/", 1)[-1] if size else None
     if resource:
-        stream = bundle.member(resource)
-        stream.seek(offset)
-        pixels = texture.BUNDLE.exact(stream, size)
+        with bundle.member(resource) as stream:
+            stream.seek(offset)
+            pixels = texture.BUNDLE.exact(stream, size)
     else:
         inline = field(image_key)
         pixels = inline[4 : 4 + image_size]
@@ -128,38 +132,50 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     )
 
 
-def discover(pc, coverage, source_operation=None):
+def discover(pc, coverage, source_operation=None, schema_witnesses=()):
     candidates = defaultdict(lambda: defaultdict(set))
     for row in preload.json_rows(coverage):
         relative, member, identity = row["source"]
-        if row["status"] == "missing" and relative.endswith(".bundle"):
+        if row["status"] == "missing" and (relative.endswith(".bundle") or schema_witnesses):
             candidates[relative][member].add(identity)
+    witnesses = texture.texture_witnesses(pc, schema_witnesses)
     bundles = []
     trees = {}
     for relative, members in sorted(candidates.items()):
         path = texture.MESH.safe_input(pc, relative)
-        bundle = texture.BUNDLE.Bundle(path)
+        resources = None if relative.endswith(".bundle") else {}
         selections = []
-        for member, identities in sorted(members.items()):
-            stream = bundle.member(member)
-            metadata = texture.O.W.read_serialized(stream)
-            selected = []
-            for obj in metadata["objects"]:
-                identity = obj["path_id"]
-                typ = metadata["types"][obj["type_id"]]
-                if identity not in identities or typ["class_id"] not in (28, 89) or "tree" not in typ:
-                    continue
-                position = metadata["data_offset"] + obj["offset"]
-                stream.seek(position)
-                body = texture.BUNDLE.exact(stream, obj["bytes"])
-                record = texture_record(bundle, body, typ, position, identity, relative, member, trees, source_operation)
-                if record is not None:
-                    selected.append(record)
-            if selected:
-                selections.append(dict(name=member, textures=selected))
+        with texture.texture_source(pc, path, resources, discover=True) as bundle:
+            for member, identities in sorted(members.items()):
+                stream = bundle.member(member)
+                metadata = texture.O.W.read_serialized(stream)
+                selected = []
+                for obj in metadata["objects"]:
+                    identity = obj["path_id"]
+                    typ = metadata["types"][obj["type_id"]]
+                    if identity not in identities or typ["class_id"] not in (28, 89):
+                        continue
+                    if resources is not None:
+                        typ = texture.witnessed_texture_type(typ, witnesses)
+                    if "tree" not in typ:
+                        continue
+                    position = metadata["data_offset"] + obj["offset"]
+                    stream.seek(position)
+                    body = texture.BUNDLE.exact(stream, obj["bytes"])
+                    record = texture_record(bundle, body, typ, position, identity, relative, member, trees, source_operation)
+                    if record is not None:
+                        selected.append(record)
+                if selected:
+                    selections.append(dict(name=member, textures=selected))
         if selections:
-            bundles.append(dict(path=relative, sha256=texture.BUNDLE.sha(path), members=selections))
-    return dict(input_id=texture.MESH.INPUT_ID, bundles=bundles)
+            source = dict(path=relative, sha256=texture.BUNDLE.sha(path), members=selections)
+            if resources is not None:
+                source["resources"] = resources
+            bundles.append(source)
+    profile = dict(input_id=texture.MESH.INPUT_ID, bundles=bundles)
+    if any("resources" in source for source in bundles):
+        profile["schema_witnesses"] = schema_witnesses
+    return profile
 
 
 if __name__ == "__main__":
@@ -167,6 +183,7 @@ if __name__ == "__main__":
     parser.add_argument("pc", type=Path)
     parser.add_argument("coverage", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--schema-witnesses", type=Path, help="pinned original bundle selectors for standalone texture class schemas")
     compression = parser.add_mutually_exclusive_group()
     compression.add_argument("--source-bc1", action="store_const", dest="source_operation", const="source-bc1-etc", help="select BC1 colour originals for ETC1")
     compression.add_argument("--source-bc3", action="store_const", dest="source_operation", const="source-bc3-etc", help="select BC3 originals for Android ETC")
@@ -174,7 +191,8 @@ if __name__ == "__main__":
     pc = args.pc.resolve(strict=True)
     if args.output.resolve().is_relative_to(pc):
         raise ValueError("Texture profile output overlaps original input")
-    profile = discover(pc, args.coverage, args.source_operation)
+    witnesses = json.loads(args.schema_witnesses.read_bytes()) if args.schema_witnesses else ()
+    profile = discover(pc, args.coverage, args.source_operation, witnesses)
     with args.output.open("x") as output:
         json.dump(profile, output)
         output.write("\n")
