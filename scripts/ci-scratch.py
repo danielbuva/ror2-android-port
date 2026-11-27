@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Own ci-local scratch and recover only recorded, inactive, abandoned runs.
 
-No broad temporary-directory cleanup. An uncertain image mapping is a refusal.
-The supervisor cleans ordinarily completed shells. Abnormal or uncertain runs
-remain preserved for owner reconciliation; SIGKILL recovery is not claimed.
+The supervisor cleans after its shell exits. The sweep also recovers recorded
+dead-owner runs whose scratch and mounted volume have no open files.
 """
 
 from __future__ import annotations
@@ -42,14 +41,18 @@ def regular(path):
     return stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid()
 
 
-def devices(image):
+def image_inventory():
     result = subprocess.run(["hdiutil", "info", "-plist"], capture_output=True, timeout=30, check=True)
     data = plistlib.loads(result.stdout)
     if not isinstance(data, dict) or not isinstance(data.get("images"), list):
         raise ValueError("invalid image inventory")
+    return data["images"]
+
+
+def devices(image):
     found = set()
     other = set()
-    for item in data["images"]:
+    for item in image_inventory():
         if not isinstance(item, dict) or not isinstance(item.get("image-path"), str):
             raise ValueError("invalid image inventory")
         matches = os.path.realpath(item["image-path"]) == str(image)
@@ -66,7 +69,7 @@ def devices(image):
     return found
 
 
-def detach(image):
+def detach(image, *, force=True):
     # Never use cached device numbers: macOS can reuse them after an unmount.
     attached = devices(image)
     # Prefer the whole backing disk when present; otherwise use listed entities.
@@ -83,20 +86,19 @@ def detach(image):
         if failed:
             if device not in devices(image):
                 continue
+            if not force:
+                raise ValueError(f"regular detach failed for {device}")
             subprocess.run(["hdiutil", "detach", "-force", device], capture_output=True, timeout=30, check=True)
     if devices(image):
         raise ValueError("image still attached")
 
 
-def require_unmounted(scratch):
-    result = subprocess.run(["hdiutil", "info", "-plist"], capture_output=True, timeout=30, check=True)
-    data = plistlib.loads(result.stdout)
-    if not isinstance(data, dict) or not isinstance(data.get("images"), list):
-        raise ValueError("invalid mount inventory")
-    for image in data["images"]:
+def owned_mounts(scratch, expected_image=None):
+    for image in image_inventory():
         entries = image.get("system-entities") if isinstance(image, dict) else None
-        if not isinstance(entries, list):
+        if not isinstance(entries, list) or not isinstance(image.get("image-path"), str):
             raise ValueError("invalid mount inventory")
+        ours = expected_image is not None and os.path.realpath(image["image-path"]) == str(expected_image)
         for entry in entries:
             if not isinstance(entry, dict):
                 raise ValueError("invalid mount inventory")
@@ -107,8 +109,44 @@ def require_unmounted(scratch):
                 raise ValueError("invalid mount location")
             # Check both spelling and resolution: a renamed or foreign image may
             # still be mounted inside our scratch, regardless of image identity.
-            if Path(os.path.abspath(mount)).is_relative_to(scratch) or Path(os.path.realpath(mount)).is_relative_to(scratch):
+            resolved = Path(mount).resolve()
+            inside = Path(os.path.abspath(mount)).is_relative_to(scratch) or resolved.is_relative_to(scratch)
+            if ours:
+                if resolved != scratch / "case-sensitive":
+                    raise ValueError("owned image mounted outside its expected location")
+                yield resolved
+            elif inside:
                 raise ValueError("scratch contains mounted image")
+
+
+def require_unmounted(scratch):
+    list(owned_mounts(scratch))
+
+
+def lsof_output(*args):
+    result = subprocess.run(["lsof", "-nP", *args], capture_output=True, timeout=15)
+    if result.stderr or result.returncode not in (0, 1) or (result.returncode == 1 and result.stdout):
+        raise ValueError("lsof could not confirm open files")
+    return result.stdout
+
+
+def scratch_open(scratch):
+    prefixes = [os.fsencode(scratch) + b"/"]
+    if sys.platform == "darwin" and prefixes[0].startswith(b"/private/"):
+        prefixes.append(prefixes[0][len(b"/private") :])
+    for field in lsof_output("-F0n").split(b"\0"):
+        field = field.lstrip(b"\n")
+        if not field.startswith(b"n/"):
+            continue
+        name = field[1:]
+        for prefix in prefixes:
+            if name == prefix[:-1]:
+                return True
+            # flock covers owner.lock. DiskImages holds the backing image open
+            # until detach, so query the mounted filesystem independently.
+            if name.startswith(prefix) and name[len(prefix) :] not in (b"owner.lock", b"volume.sparseimage"):
+                return True
+    return False
 
 
 def linux_mounts():
@@ -178,8 +216,6 @@ def reclaim(path, *, own=False, now=None):
             record = json.loads(read_record(record_path))
             if not isinstance(record, dict):
                 return "unowned"
-            if record.get("completed") is not True:
-                return "uncertain-descendants"
             pgid = record.get("pgid")
             if not 1 < pid <= 2147483647 or record.get("pid") != pid or type(pgid) is not int or not 1 < pgid <= 2147483647:
                 return "unowned"
@@ -190,19 +226,27 @@ def reclaim(path, *, own=False, now=None):
             current = path.lstat()
             if (info.st_dev, info.st_ino) != (current.st_dev, current.st_ino):
                 return "changed"
-            # A service may finish an attach after its CLI has died. Only the
-            # setup owner removes this marker after confirmed CLI completion.
-            if os.path.lexists(path / "attach.pending"):
-                return "uncertain-attach"
             image = path / "volume.sparseimage"
-            if image.is_symlink():
+            if os.path.lexists(image) and not regular(image):
                 return "unowned"
             if sys.platform == "darwin":
-                detach(image)
+                mounts = list(owned_mounts(path, image))
+                if any(lsof_output("-t", "+f", "--", str(mount)) for mount in mounts) or scratch_open(path):
+                    return "open-files"
+                # A timed-out service request can still attach after its CLI
+                # exits. An observed exact mount can be detached and verified.
+                if os.path.lexists(path / "attach.pending") and not mounts:
+                    return "uncertain-attach"
+                detach(image, force=own)
                 require_unmounted(path)
             elif image.exists():
                 # Never delete an image on a platform unable to reconcile mounts.
                 return "unsupported-image"
+            elif shutil.which("lsof"):
+                if scratch_open(path):
+                    return "open-files"
+            elif not own and record.get("completed") is not True:
+                return "uncertain-descendants"
             require_no_mounts(path)
             current = path.lstat()
             if (info.st_dev, info.st_ino) != (current.st_dev, current.st_ino) or not stat.S_ISDIR(current.st_mode):
@@ -211,14 +255,21 @@ def reclaim(path, *, own=False, now=None):
                 return "live"
             shutil.rmtree(path)
             return "removed"
-    except (OSError, ValueError, TypeError, subprocess.SubprocessError, plistlib.InvalidFileException):
+    except FileNotFoundError:
+        return "unowned" if not path.exists() else "preserved"
+    except (OSError, ValueError, TypeError, subprocess.SubprocessError, plistlib.InvalidFileException) as error:
+        print(f"ci-local cleanup: {path.name}: {error}", file=sys.stderr)
         return "preserved"
 
 
 def sweep(root):
     for path in root.iterdir():
         if NAME.fullmatch(path.name):
-            reclaim(path)
+            outcome = reclaim(path)
+            if outcome == "removed":
+                print(f"ci-local cleanup: reaped {path.name}", file=sys.stderr)
+            elif outcome in ("preserved", "uncertain-attach"):
+                print(f"ci-local cleanup: WARNING kept {path.name} ({outcome})", file=sys.stderr)
 
 
 def kill_and_reap(process):
@@ -233,8 +284,6 @@ def supervise(command, root):
     root = root.resolve(strict=True)
     sweep(root)
     scratch = Path(tempfile.mkdtemp(prefix="ci-local.", dir=root))
-    (scratch / "owner.pid").write_text(str(os.getpid()) + "\n")
-    (scratch / "owner.lock").touch(mode=0o600)
     process = None
     received = []
     previous = {}
@@ -251,6 +300,8 @@ def supervise(command, root):
         previous[sig] = signal.signal(sig, interrupted)
     status = 1
     try:
+        (scratch / "owner.pid").write_text(str(os.getpid()) + "\n")
+        (scratch / "owner.lock").touch(mode=0o600)
         env = os.environ | {"CI_LOCAL_OWNED_SCRATCH": str(scratch)}
         process = subprocess.Popen(command, env=env, start_new_session=True)
         (scratch / "owner.json").write_text(json.dumps({"pid": os.getpid(), "pgid": process.pid, "completed": False}))
@@ -264,20 +315,30 @@ def supervise(command, root):
                 time.sleep(0.05)
         status = process.returncode
         if 0 <= status < 128 and not received:
-            # Only an ordinary completed CI shell supplies this recovery claim.
-            # A killed supervisor/shell cannot certify escaped descendants.
+            # On Linux without lsof only ordinary dead-owner runs are swept.
             record = scratch / "owner.complete"
             record.write_text(json.dumps({"pid": os.getpid(), "pgid": process.pid, "completed": True}))
             os.replace(record, scratch / "owner.json")
     finally:
         # Descendants may outlive the shell. Do not remove files under live work;
         # the next startup can reclaim after the whole recorded group has gone.
-        outcome = reclaim(scratch, own=True) if process is not None else "preserved"
-        print("ci-local cleanup: " + outcome, file=sys.stderr)
+        if process is None:
+            shutil.rmtree(scratch)
+            outcome = "removed"
+        else:
+            outcome = reclaim(scratch, own=True)
+        if outcome == "removed":
+            print("ci-local cleanup: removed", file=sys.stderr)
+        else:
+            print(f"ci-local cleanup: WARNING kept {scratch.name} ({outcome})", file=sys.stderr)
         for sig, handler in previous.items():
             signal.signal(sig, handler)
     return 128 + received[0] if received else (128 - status if status < 0 else status)
 
 
 if __name__ == "__main__":
-    raise SystemExit(supervise(["bash", *sys.argv[1:]], Path(os.environ.get("TMPDIR", "/tmp"))))
+    root = Path(os.environ.get("TMPDIR", "/tmp")).resolve(strict=True)
+    if sys.argv[1:] == ["--sweep"]:
+        sweep(root)
+    else:
+        raise SystemExit(supervise(["bash", *sys.argv[1:]], root))

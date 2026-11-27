@@ -222,7 +222,16 @@ be reviewed. `source_inputs` has exactly these canonical absolute paths:
 | `wwise_android_source` | Owner's authorized Android PINVOKE declarations. |
 | `wwise_os_string_source` | Matching authorized Android handwritten declarations. |
 | `wwise_abi_native` | Matching generic Release ARM64 SDK library for static ABI inspection. |
-| `wwise_native` | The explicitly supplied hash-bound instrumented SDK product required by existing audio contracts; independent production remains open. |
+| `wwise_native` | The explicitly supplied hash-bound instrumented SDK product required by the current managed producer. |
+
+The standalone `wwise_native.py` takes the licensed `--stock` root (containing
+`integration/Wwise/AkSoundEngine` and `sdk`), the NDK r25c `--sysroot` with its
+sibling runtime archives, explicit `--clang`, `--linker` and
+`--resource-dir` paths, and a new private `--output` directory. It emits
+`libAkSoundEngine.so` and `result.json` after validating the ARM64 export roster,
+SONAME, dependencies and 16 KiB load alignment. Retain the receipt and logs
+when removing the generated library, objects and composed source. The signed
+managed path still consumes its historical pin until the new receipt is wired in.
 
 ```sh
 python tools/phone-build/owner-code/produce.py /absolute/owner/source-request.json

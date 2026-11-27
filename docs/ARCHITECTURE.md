@@ -2140,6 +2140,16 @@ Clang driver, and invokes it without a global Linux execution handler. Original
 SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
 fallback; whole-player Linux app hosting and runtime parity are separate gates.
 
+`tools/phone-build/owner-code/wwise_native.py` builds the Android Wwise player
+library from the owner's licensed stock integration, SDK archives, and NDK
+r25c target files. The authored diagnostic code and
+`recipe/owner-wwise-native.json` reconstruct the two modified source files in
+the private output after checking their stock hashes. Clang and LLD link the
+result directly. The resulting receipt records the ELF hash, exact export
+roster digest, dependencies and load alignment. This standalone producer has
+passed host cross-compilation. Signed release dispatch and Android execution
+are separate gates.
+
 `owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
 invocation over freshly produced managed assemblies. The existing public Burst
 policy selects roots, SDK compilation API defines, options and tool hashes.
@@ -3400,21 +3410,19 @@ create/attach CLI, killing and reaping only its own timed-out caller. Ordinary
 setup failure uses the existing temporary-directory fallback.
 `scripts/ci-scratch.py` supervises each CI shell in a separate process group,
 records its owner PID and child group, and performs synchronous cleanup after
-ordinary completion (exit 0–127). This relies on CI's synchronous child contract:
-check/cache helpers and test fixtures must join their work before returning.
-PID/group checks are additional removal vetoes, not proof that arbitrary detached
-descendants are gone. INT/TERM/HUP terminate the owned group but preserve uncertain
-descendant state. Startup recovery considers only same-user, recorded, ordinarily
-completed dead-owner `ci-local.*` directories older than 30 minutes. Live groups,
-missing ownership records, aliases and concurrent cleanup locks refuse removal.
-SIGKILL and other abnormal exits leave durable uncertainty: age alone never
-clears it. These runs require owner reconciliation; automatic SIGKILL recovery
-is not claimed.
+success, failure or a catchable signal. INT, TERM and HUP stop the owned
+group. The host runner reaps its separate test worker sessions on TERM.
+CI startup and `prune-generated.py --apply --aggressive` use the same sweep
+for same-user, recorded dead-owner `ci-local.*` directories under `TMPDIR`
+older than 30 minutes. The sweep skips active owners or groups, open files,
+missing records, aliases and concurrent cleanup locks. Linux without
+`lsof` limits the sweep to ordinarily completed runs.
 On macOS, current `hdiutil info -plist` must identify the exact owned image before
-device-based detach (with a forced fallback). An interrupted attachment retains
-an explicit pending marker: empty inventory does not prove the service cannot
-attach later. Pending attachments, uncertain mappings, remaining mounts or failed
-detach preserve scratch. Linux checks mountinfo, including same-device bind mounts,
+device-based detach. `lsof` checks the scratch paths and each owned mount.
+The immediate owner can use a forced-detach fallback for its own idle volume.
+An interrupted attach with no observed mount retains its pending marker for
+reconciliation. An uncertain mapping, remaining mount or failed detach reports
+the preserved scratch directory. Linux checks mountinfo, including same-device bind mounts,
 and removes only scratch without an image. Original verification exit status is
 retained. Cleanup never opens an editor or uses a lab device.
 
@@ -8716,10 +8724,12 @@ Device aim, firing and hit-reaction presentation remain separate checks.
 `./dev editor --target lab --action enemy-material-audit` inventory. It reads
 native-provider body/projectile candidates and the prepared session's registered
 effect prefabs, including inactive renderer slots, Billboard materials, particle
-meshes and trails. It also resolves the Titan pre-fist projectile's addressed
-ghost and the Vagrant default skin's addressed body material, and inspects the
-direct Mercenary Expose and Acrid disease impact effects. The audit selects
-recovered resources from saved source keywords, as the runtime owner does.
+meshes and trails. It resolves the Titan pre-fist and Fire Bolt projectile ghost
+addresses and the Vagrant default skin's addressed body material. Fire Bolt's
+native configuration supplies the projectile through an inert state. The audit
+also inspects the direct Mercenary Expose and Acrid disease impact effects. It
+records exposed blend operands and selects recovered resources from saved source
+keywords, as the runtime owner does.
 Setup requires the prepared lab project and generated catalog. The private
 editor receipt records typed bindings and resource coverage. Android rendering
 and pixel attribution require matched captures.
