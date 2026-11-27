@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1528 — Restore Artificer charge and flame materials
+
+2026-11-27. The body visual owner submits the native Nano-Bomb charge and
+Flamethrower prefabs to the existing material owner before instantiation.
+Paired assisted Roost video shows the opaque charge quad clear and gray flame
+particles render orange. Live flame particles and trails use queue 3000.
+Authority and server recorded four Fire Bolts, one Nano-Bomb and one
+Flamethrower. All skill machines returned to Idle.
+APK SHA-256 `7c0604803b4b5354afc9a4c4cd09bb0796f4bd330975320cd857c61039334ba9` (source `de15ec0b`).
+Evidence `work/coordination/gameplay-fidelity-coverage-20261117/artificer-cast-effects-main-nova/`.
+Launch peaked at 91.9 °C, with 11.102 s above 80 °C and battery at 32 °C.
+Adopted placement, scratch removal and OLED sleep passed. Host pruning was
+completed separately. The upward flame and bomb release flash remain open.
+
 ## J1527 — Restore transparency to the native Engineer shield
 
 2026-11-27. The native shield template enters the existing effect material
