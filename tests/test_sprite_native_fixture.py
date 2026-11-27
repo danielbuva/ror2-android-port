@@ -67,6 +67,30 @@ class SpriteNativeFixtureTests(unittest.TestCase):
                 F.stage(root, request, root / "work/refused")
             self.assertFalse((root / "work/refused").exists())
 
+    def test_portable_staging_preserves_request_bytes_and_references_images(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            request, image = self.prepare(root)
+            images = root / "images"
+            images.mkdir()
+            image = image.rename(images / "0.png")
+            value = json.loads(request.read_bytes())
+            value["items"][0]["png"] = "images/0.png"
+            request_bytes = json.dumps(value, indent=4).encode() + b"\n"
+            request.write_bytes(request_bytes)
+
+            result = F.stage(root, request, root / "work/portable")
+            project = Path(result["project"])
+            self.assertEqual((project / "sprite-source-request.json").read_bytes(), request_bytes)
+            self.assertEqual(result["request_sha256"], hashlib.sha256(request_bytes).hexdigest())
+            self.assertTrue((project / "images").is_symlink())
+            self.assertTrue((project / "images/0.png").samefile(image))
+
+            value["items"][0]["png"] = "images/../images/0.png"
+            request.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "request index"):
+                F.stage(root, request, root / "work/refused")
+
     def test_android_fixture_has_a_separate_package_and_no_embedded_images(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

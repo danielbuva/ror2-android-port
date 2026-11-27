@@ -1306,7 +1306,10 @@ constant or controller body is stored in the recipe.
 Setup, pack state and teardown remain with the same generic record owner.
 `scripts/lab/sprite_native_fixture.py` stages the current SDK-only Sprite runtime
 diagnostic with `SpriteNativeFixture.cs`. It references source PNGs by path/hash
-in a fresh ignored project. Under the editor mutex, the pinned Unity MCP invokes
+in a fresh ignored project. A portable request references `images/<index>.png`
+relative to its own directory. Staging preserves request bytes and links the
+image directory. The constructor verifies each PNG hash and includes the exact
+request SHA-256 in its result. Under the editor mutex, the pinned Unity MCP invokes
 `Tools/P1/Run Sprite Native Fixture`; created textures and sprites are destroyed
 after each item. Float-bit geometry and the terminal result stay private. The
 fixture also emits UVs, bounds and native rect/pivot/border properties for source
@@ -1330,11 +1333,13 @@ the fixture does not install itself or touch the lab player's package.
 `sprite_produce.py` owns current original-input native Sprite record batches.
 Its `prepare` action checks original Sprite/Texture2D schemas, hashes and local
 texture relationships, then uses `texture_produce.source_rgba` and the pinned
-public pixel decoder to generate lossless PNGs and constructor requests. No
-exported image supplies production pixels. Crop-derived pivot and original
-constructor settings retain the qualified native API contract. Its `produce`
-action rereads original records, admits explicit hash-pinned exact-SDK native
-output, and applies importer identities and qualified pointer relationships.
+public pixel decoder to generate lossless PNGs under `images/` and a portable
+constructor request. Crop-derived pivot and original constructor settings retain
+the qualified native API contract. Its `produce` action rereads original records,
+admits explicit hash-pinned exact-SDK native output, and applies importer
+identities and qualified pointer relationships. A paired request path and SHA-256
+bind the prepared cohort to the request hash recorded by the constructor. Older
+native witnesses remain usable without request binding.
 The named `texture_importer` modes re-derive parameters during record assembly.
 After the pinned exporter's crop/pivot/border normalization, `single` checks
 matching original names and uses the decoded image extent; `multiple` uses the
