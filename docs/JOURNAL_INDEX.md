@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1570](PORTING_JOURNAL.md#j1570--translate-and-draw-original-multipass-terrain-shaders-on-vulkan) | 2026-11-27 | Translate and draw original multipass terrain shaders on Vulkan | 2026-11-27. |
 | [J1567](PORTING_JOURNAL.md#j1567--run-signed-cloud-intersection-remap-translation-on-android) | 2026-11-27 | Run signed Cloud Intersection Remap translation on Android | 2026-11-27. |
 | [J1565](PORTING_JOURNAL.md#j1565--draw-original-cloud-intersection-remap-on-android-vulkan) | 2026-11-27 | Draw original Cloud Intersection Remap on Android Vulkan | 2026-11-27. |
 | [J1564](PORTING_JOURNAL.md#j1564--run-signed-outline-shader-translation-on-android) | 2026-11-27 | Run signed Outline shader translation on Android | 2026-11-27. |
