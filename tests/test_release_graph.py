@@ -1367,12 +1367,14 @@ if 'resource_dir' in tools:
             self.assertEqual(build()["rebuilt"], ["payload/fixture"])
             write(package_archive, "compiler input v2")
             self.assertEqual(build()["rebuilt"], ["apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"])
+            # Slow producers may emit elapsed-time callbacks before completion.
+            completions = [(job, cached) for job, cached in progress if cached is not None]
             self.assertEqual(
-                [cached for job, cached in progress if job == package_job],
+                [cached for job, cached in completions if job == package_job],
                 [False, True, True, True, True, True, False],
             )
             self.assertEqual(
-                [event for event in progress if event[0] != package_job][:-5],
+                [event for event in completions if event[0] != package_job][:-5],
                 [
                     (code, False),
                     (player, False),
@@ -1406,7 +1408,7 @@ if 'resource_dir' in tools:
                     (native_job, True),
                 ],
             )
-            self.assertEqual(progress[-5:], [(code, False), (player, False), (witness, False), (bundle, False), (native_job, False)])
+            self.assertEqual(completions[-5:], [(code, False), (player, False), (witness, False), (bundle, False), (native_job, False)])
 
             for path in G.Graph(ROOT, {}).current_code_sources(signed_audio=True):
                 write(repo / path, (ROOT / path).read_text())
