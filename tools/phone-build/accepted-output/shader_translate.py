@@ -64,15 +64,25 @@ def stage_parameters(layout, vertex):
             )
         rows.append(f"cbbind: {name} {stage_flag | 0x10000 | slot}")
         descriptors.extend(("cbv", str(buffer["slot"]), "1", str(slot)))
-    for texture in layout["textures"]:
-        # The measured UI pass uses three separate 2D images and samplers.
+    textures = layout["textures"]
+    image_base = max(3, 1 + max((texture["sampler"] for texture in textures), default=-1))
+    bound_samplers = set()
+    for texture in textures:
         source_slot = texture["slot"]
         sampler = texture["sampler"]
-        if vertex or texture["dimension"] != 2 or texture["multisampled"] or source_slot not in range(3) or sampler < 0:
-            raise ValueError("unqualified Vulkan UI texture binding")
-        image_slot = source_slot + 3
-        descriptors.extend(("texture", str(source_slot), "0", str(image_slot), "sampler", str(sampler), "0", str(source_slot)))
-        rows.append(f"texbind: {texture['name']} {stage_flag | image_slot} {stage_flag | source_slot} 0 2")
+        dimension = texture["dimension"]
+        multisampled = texture.get("multisampled", False)
+        if dimension is None:
+            # The native variant texture binding packs the dimension above its MSAA bit.
+            dimension, multisampled = divmod(texture["native_texture_descriptor"], 2)
+        if vertex or dimension not in (2, 4) or multisampled or source_slot < 0 or sampler < 0:
+            raise ValueError("unqualified Vulkan texture binding")
+        image_slot = image_base + source_slot
+        descriptors.extend(("texture", str(source_slot), "0", str(image_slot)))
+        if sampler not in bound_samplers:
+            descriptors.extend(("sampler", str(sampler), "0", str(sampler)))
+            bound_samplers.add(sampler)
+        rows.append(f"texbind: {texture['name']} {stage_flag | image_slot} {stage_flag | sampler} 0 {dimension}")
     return rows, descriptors
 
 

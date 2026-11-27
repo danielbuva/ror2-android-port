@@ -55,6 +55,27 @@ class CompilerHosting(unittest.TestCase):
 
 
 class TranslatedShaderPack(unittest.TestCase):
+    def test_fragment_uses_independent_sampler_registers_and_native_variant_shape(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+
+        textures = [
+            dict(name="left", slot=0, sampler=3, dimension=2, multisampled=False),
+            dict(name="right", slot=3, sampler=0, dimension=4, multisampled=False),
+            dict(name="variant", slot=1, sampler=3, dimension=None, native_texture_descriptor=4),
+        ]
+        rows, descriptors = translator.stage_parameters({"buffers": [], "textures": textures}, vertex=False)
+        self.assertEqual(
+            [descriptors[index : index + 4] for index in range(0, len(descriptors), 4)],
+            [["texture", "0", "0", "4"], ["sampler", "3", "0", "3"], ["texture", "3", "0", "7"], ["sampler", "0", "0", "0"], ["texture", "1", "0", "5"]],
+        )
+        reflected = N.reflection(rows)["textures"]
+        fragment = 0x08000000
+        self.assertEqual(
+            [(row["texture"], row["sampler"], row["dimension"]) for row in reflected],
+            [(fragment | 4, fragment | 3, 2), (fragment | 7, fragment, 4), (fragment | 5, fragment | 3, 2)],
+        )
+
     def test_profile_receipt_admits_two_original_records(self):
         import hashlib
         import json
