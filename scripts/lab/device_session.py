@@ -124,6 +124,7 @@ def load_request(path, serial=None):
         "sustained",
         "settings-save-failure",
         "profile-write-interrupt",
+        "profile-save-failure",
         "software-notices",
         "player-screens",
         "owner-unplugged",
@@ -141,7 +142,7 @@ def load_request(path, serial=None):
             raise ValueError("Shader probe requires the disposable content fixture and its standalone workload")
     elif value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
-    if value["mode"] in {"settings-save-failure", "profile-write-interrupt"} and "selection" in value:
+    if value["mode"] in {"settings-save-failure", "profile-write-interrupt", "profile-save-failure"} and "selection" in value:
         raise ValueError("Persistence workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
@@ -1197,10 +1198,10 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
         save(output / "launch.json", launched)
         observe_unplugged(device, request, output, result, str(launched["pid"]))
         return
-    if request["mode"] == "profile-write-interrupt":
-        from settings_write_interrupt_check import check_profile_write_interrupt
+    if request["mode"] in {"profile-write-interrupt", "profile-save-failure"}:
+        from settings_write_interrupt_check import check_profile_recovery
 
-        result["profile_write_interrupt"] = check_profile_write_interrupt(
+        result[request["mode"].replace("-", "_")] = check_profile_recovery(
             device, thermal, request, output, checked_launch, partial(start_from_menu, process_checks=process_checks), result.get("device_cleanup")
         )
         return
