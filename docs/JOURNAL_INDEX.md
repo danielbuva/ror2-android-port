@@ -377,5 +377,5 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1544](PORTING_JOURNAL.md#j1544--recover-beetle-queen-acid-ghost-materials) | 2026-11-27 | Recover Beetle Queen acid ghost materials | 2026-11-27. |
 | [J1546](PORTING_JOURNAL.md#j1546--verify-signed-histogram-conversion-on-android) | 2026-11-27 | Verify signed Histogram conversion on Android | 2026-11-27. |
 | [J1547](PORTING_JOURNAL.md#j1547--recover-rex-disperse-charge-materials) | 2026-11-27 | Recover REX Disperse charge materials | 2026-11-27. |
-| [J1549](PORTING_JOURNAL.md#j1549--dispatch-original-camera-scopes-on-android-vulkan) | 2026-11-27 | Dispatch original camera scopes on Android Vulkan | 2026-11-27. |
 | [J1548](PORTING_JOURNAL.md#j1548--recover-acrid-leap-acid-ghost-materials) | 2026-11-27 | Recover Acrid Leap acid ghost materials | 2026-11-27. |
+| [J1549](PORTING_JOURNAL.md#j1549--dispatch-original-camera-scopes-on-android-vulkan) | 2026-11-27 | Dispatch original camera scopes on Android Vulkan | 2026-11-27. |
