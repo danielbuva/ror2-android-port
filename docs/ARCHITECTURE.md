@@ -6508,6 +6508,9 @@ existing owner-input tree. The host stages the current committed producer
 closure and a small descriptor. The phone checks the input pins, hashes the
 declared artifacts, and returns the stage and thermal receipts with an optional
 scoreboard. The runner removes attempt scratch and preserves the input tree.
+The lab-only `whole-game-scoreboard` stage reads APKs and payload receipts
+accessible to the retained toolhost. The same scoreboard owner runs on the
+host and phone with the same request pins and JSON schema.
 
 For `signed-code` requests the same runner stages the installed toolhost's .NET
 frameworks and Clang resources, then calls `owner-code/run_android.py` with the

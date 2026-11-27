@@ -186,7 +186,7 @@ def prepare_stage(path, checkout, name, *, dry_run):
     stage = owner.load_stage(files["stage.json"]["source"])
     if Path(stage["producer"]).stem.replace("_", "-") != name:
         raise ValueError("converter-stage-name-mismatch")
-    for producer in (*STAGE_SUPPORT, stage["producer"]):
+    for producer in (*STAGE_SUPPORT, stage["producer"], *owner.PRODUCER_SUPPORT.get(stage["producer"], ())):
         files["repo/" + producer] = {}
     checkout, commit, _ = repin_producers(files, checkout)
     done = Path(request["done_file"])
@@ -661,7 +661,9 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
             )
         else:
             job = installer.TRANSPORT.DetachedJob(**handle)
-        observed = phone.transport.wait_detached(job, destination / "logs", timeout=request["timeout_seconds"] + 60, poll_interval=2, capture_logs=False)
+        observed = phone.transport.wait_detached(
+            job, destination / "logs", timeout=request["timeout_seconds"] + 60, poll_interval=2, capture_logs=False, transfer_logs=not stage
+        )
         code_output = None
         if signed_code:
             code_request = json.loads(Path(files[request["request"]]["source"]).read_bytes())

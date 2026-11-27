@@ -154,8 +154,8 @@ class AdbTransport:
         # The exclusive directory/status protocol, not host exit, decides.
         return job
 
-    def wait_detached(self, job, logs, *, label="adb-job", timeout=60, poll_interval=0.25, capture_logs=True):
-        """Tolerate failed observations until deadline; pull logs before reporting.
+    def wait_detached(self, job, logs, *, label="adb-job", timeout=60, poll_interval=0.25, capture_logs=True, transfer_logs=True):
+        """Tolerate failed observations until deadline and optionally pull logs.
 
         Timeout does not kill the remote job or remove its directory: neither
         absence nor completion is established. Caller retains the private handle
@@ -164,7 +164,6 @@ class AdbTransport:
         if timeout <= 0 or poll_interval <= 0:
             raise ValueError("adb-detached-wait-budget")
         logs = Path(logs)
-        logs.mkdir(parents=True, exist_ok=True)
         directory = shlex.quote(job.directory)
         probe = f"if [ -f {directory}/status ]; then cat {directory}/status; else printf pending; fi"
         deadline, status, invalid = time.monotonic() + timeout, None, False
@@ -186,8 +185,11 @@ class AdbTransport:
             time.sleep(min(poll_interval, max(0, deadline - time.monotonic())))
         # Log transfer has its own bounded recovery budget, including after a
         # timeout. Never substitute partial/missing logs for a terminal status.
+        log_names = ("stdout.log", "stderr.log") if transfer_logs else ()
+        if log_names:
+            logs.mkdir(parents=True, exist_ok=True)
         transferred = True
-        for name in ("stdout.log", "stderr.log"):
+        for name in log_names:
             try:
                 if job.shell_prefix:
                     # App-private evidence needs run-as. Stream rather than
@@ -213,10 +215,8 @@ class AdbTransport:
             raise DetachedUncertain(job)
         if not transferred:
             raise AdbError("adb-detached-log-pull-failed")
-        result = subprocess.CompletedProcess(
-            [], status, (logs / "stdout.log").read_bytes() if capture_logs else b"", (logs / "stderr.log").read_bytes() if capture_logs else b""
-        )
-        return result
+        stdout, stderr = ((logs / name).read_bytes() for name in log_names) if capture_logs and log_names else (b"", b"")
+        return subprocess.CompletedProcess([], status, stdout, stderr)
 
     def cleanup_detached(self, job, *, timeout=15):
         # Guard against deleting a still-running job, even if a caller gets its
