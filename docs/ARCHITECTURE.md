@@ -8690,6 +8690,12 @@ The exact-editor fixture loads each advertised GameObject and Mesh and
 unloads the bundle. The source preload sequence remains a release graph
 admission requirement for this cohort.
 
+The PlasmaCoreGhost record profile feeds its original Light, prefab
+hierarchy, particle systems, Material and managed components to
+`record_produce.py`. Bundle preparation resolves their PPtrs against the
+existing suppliers. The scoped editor fixture loads the prefab and unloads
+the bundle. Release admission requires the original 30-slot preload order.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
