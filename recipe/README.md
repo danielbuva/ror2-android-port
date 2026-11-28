@@ -8011,3 +8011,17 @@ and writes the record pack under ignored `work/`.
 | --- | --- |
 | `owner-whole-game-fungal-triplanar-material-records.json` | `7ae3dd60664d93a5165c0dc7bcd65fd10a124c649a08494872317e78c3ec7890` |
 | `owner-whole-game-wavy-cloth-material-records.json` | `f15515bd5860846b37827eba56050debaee8fc42e942280966c5e94a61a2e995` |
+
+## HGStandard graphics translation (2026-11-28)
+
+The profile selects the original Deferred Standard Shader for the signed
+graphics translation producer and keeps its Commando destination. The
+provenance, privacy, licensing and sensitive-content audit covered the
+native record selector, destination, public compiler bindings and hashes.
+The producer reads the accepted PC installation and emits its Vulkan record
+under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-hgstandard-graphics-translation.json` | `9bf7d2ed28c3cdaefcc8698378fba849f0ca86773e69e0310bff8e993596ef78` |
+| `jobs/owner-hgstandard-graphics-translation.json` | `d46182ff7205d14a1727cb54b95debc7f783db1509609cadd4a210571855d221` |
