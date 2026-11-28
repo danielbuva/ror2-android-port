@@ -1085,6 +1085,12 @@ original inline Meshes from the ConstructionArm FBX and prefab preload tables
 through the same producer. The exact-editor fixture loads those eleven and the
 two previously supplied Meshes at scoped addresses. Complete original preload
 groups and their signed catalog routes still depend on non-Mesh records.
+`recipe/owner-whole-game-evis-projectile-meshes.json` supplies two original
+EvisProjectileGhost Meshes at their source PathIDs. Both keep their packed
+vertex data and complete native types. The other three original MeshFilter
+references can use the byte- and type-matched endpoints in the existing
+Commando bundle. The checked whole-game graph owns those field routes and
+prefab admission.
 The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
 excluded MercSwordSwipe record through the same setup/teardown. The optional
 `unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
@@ -8271,10 +8277,11 @@ the Texture2D and CustomRenderTexture targets from V48. The isolated editor
 fixture verifies the saved bindings and unloads the bundles.
 
 `recipe/owner-whole-game-soul1-damage-zone-material-record.json` selects the
-original Soul1 DamageZone Material. Bundle preparation joins its signed
-Triplanar Terrain Blend Emissive Shader and resolves eight saved Texture2D
-links using V48 and the existing RGB and RGBA mip suppliers. The isolated
-Unity fixture checks the links and unloads the bundles.
+original Soul1 DamageZone Material. The scoped bundle preparation joins the
+retained J1579 Triplanar Terrain Blend Emissive Shader and resolves eight
+saved Texture2D links using V48 and existing RGB and RGBA mip suppliers.
+The isolated Unity fixture checks the links and unloads the bundles.
+Canonical admission awaits the refreshed signed Shader.
 
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
@@ -8336,6 +8343,13 @@ Shader to the signed Terrain Blend and restores the saved texture links
 using pinned Android suppliers. The exact-editor fixture checks those links
 and unloads its bundles. Release composition preserves both Material slots
 in the original animated pillar preload groups.
+
+The Ancient Loft animated pillar FBX profiles use `record_produce.py` for
+the original hierarchy, Animator, SkinnedMeshRenderer and AnimationClip
+records, and `avatar_produce.py` for the two original Avatars. Setup verifies
+the PC bundle and body pins. The producers write private object packs and
+close their inputs on exit. Bundle preparation joins the packs to the Mesh
+and Material suppliers at the original 22 preload positions per FBX.
 
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
@@ -8775,6 +8789,12 @@ The exact-editor fixture loads each advertised GameObject and Mesh and
 unloads the bundle. The source preload sequence remains a release graph
 admission requirement for this cohort.
 
+The MolotovClusterGhost profile feeds the original Light, owning prefab
+hierarchy, particle system and managed components to `record_produce.py`.
+Bundle preparation uses the existing MonoScript registry supplier and keeps
+the 37 source preload slots in order before three additional endpoints.
+The scoped editor fixture loads the prefab and unloads the bundle.
+
 The PlasmaCoreGhost record profile feeds its original Light, prefab
 hierarchy, particle systems, Material and managed components to
 `record_produce.py`. Bundle preparation resolves their PPtrs against the
@@ -8794,6 +8814,18 @@ resolves their PPtrs and reuses the existing Mesh and built-in Shader.
 The scoped exact-editor fixture loads the GameObject and unloads the bundle.
 Release admission keeps the original 33 preload slots in order and appends
 any additional destinations required by the release graph.
+
+The CrocoLeapAcidGhost profile feeds the original Light, prefab hierarchy,
+particle systems, Material and managed components to `record_produce.py`.
+Bundle preparation keeps the 39 source preload slots in order and resolves
+four additional Shader and texture providers from the existing graph. The
+scoped editor fixture loads the GameObject and unloads the bundle.
+
+The PickupAfterburner profile feeds the original Light and its owning
+prefab hierarchy to `record_produce.py`. Bundle preparation preserves the
+37 original preload slots before ten additional endpoints. The shared
+Material uses the existing graph route after verifying its source Shader
+identity. The scoped editor fixture loads the prefab and unloads the bundle.
 
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It

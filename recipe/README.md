@@ -7919,6 +7919,25 @@ and hashes, following the pinned AssetRipper member and saved-property
 lookup. Serialized bodies, generated packs and local paths stay under
 ignored `work/`.
 
+## MolotovClusterGhost native records (2026-11-28)
+
+`owner-molotov-cluster-ghost-native-records.json` selects 35 original
+records through `record_produce.py`, including the Light and its reciprocal
+GameObject owner. The scoped bundle preserves 37 ordered source preload
+slots before three additional destinations. Persisted readback reverses
+all 81 relocated PPtrs to recover the original record hashes. Preparation
+uses the existing source MonoScript registry supplier for the two managed
+components.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-molotov-cluster-ghost-native-records.json` | `130fe57ad33b5a793a7e41d8e43fdfe5d3769c8b88919a03df2a91f79d0f2e85` |
+
 ## PlasmaCoreGhost native records (2026-11-27)
 
 `owner-plasmacore-ghost-native-records.json` selects 23 original records
@@ -7974,6 +7993,42 @@ ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-scav-sack-ghost-native-records.json` | `e1768fe06a17b4c42368ce57de3fb6531031de3e829d3dca81a438a0c33d65d6` |
+
+## CrocoLeapAcidGhost native records (2026-11-28)
+
+`owner-croco-leap-acid-ghost-native-records.json` selects 28 original
+records through `record_produce.py`, including the Light, its owning
+GameObject, particle systems and the Material. Bundle preparation preserves
+the 39 source preload slots and appends four additional Shader and texture
+destinations from the existing graph.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-croco-leap-acid-ghost-native-records.json` | `b6c1473d08a66c1e0a4085e6f7811527c55597dd9703a449f8637d8003e20978` |
+
+## PickupAfterburner native records (2026-11-28)
+
+`owner-pickup-afterburner-native-records.json` selects 38 original
+records through `record_produce.py`, including the Light and its
+reciprocal GameObject owner. The scoped bundle preserves 37 ordered
+source preload slots before ten additional destinations. Persisted
+readback reverses all 92 relocated PPtrs to recover the original
+record hashes. The shared Material route uses the original Shader
+identity after resolving the two source file-ID tables.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-pickup-afterburner-native-records.json` | `c28e92ec6a4af223e68b553f4c9ec04277e02515f8d95417103e97915e6344ca` |
 
 ## Solus Heart wireframe Shader profile (2026-11-27)
 
@@ -8071,6 +8126,25 @@ and writes its record pack under ignored `work/`.
 | --- | --- |
 | `owner-whole-game-ancientloft-pillar-material-records.json` | `c080e3c85b1f4be088744dd007dc5e7df2c6581db07b6f2a6087f583fe1b5d1f` |
 
+## Ancient Loft animated pillar FBX records (2026-11-28)
+
+The two profiles select 38 native records and two Avatars for the original
+Floating Pillar Stone and Half-Intact Pillar groups. Both keep their original
+PathIDs in the whole-game content member. The native record and Avatar
+producers preserve the source bodies. Scoped bundle readback checked each
+group's 22 original preload positions and Unity 2021.3.45f2 loaded and unloaded
+the linked assets. Canonical release admission and Android play remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object identities, classes, offsets, sizes
+and hashes. Both producers read the user's PC installation and write their
+packs under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-ancientloft-pillar-fbx-records.json` | `8970996543bd6f8d823e7b1ca86df3ac850fbbb043bf258632f4f219e4ab92ff` |
+| `owner-whole-game-ancientloft-pillar-avatars.json` | `7a688f829b7157b98dc1efb343a219102002040f716e9ff895135c4041e99f4d` |
+
 ## Snow Topped graphics translation (2026-11-28)
 
 The profile selects the original Snow Topped Shader and supplies the existing
@@ -8085,15 +8159,33 @@ and writes regenerated Shader data under ignored `work/`.
 | `owner-snow-topped-graphics-translation.json` | `4ccb0361513a69c752ef710328d01cf721321354ea876669c5563d4a3feb0c85` |
 | `jobs/owner-snow-topped-graphics-translation.json` | `938398c73789394deec7e2636cde730b9aca028b80e471e6bc54987b9d36c392` |
 
+## EvisProjectileGhost Mesh records (2026-11-28)
+
+Run `mesh_produce.py` with this profile to supply two original Mercenary
+projectile Meshes at their original PathIDs. The scoped bundle preserved
+both packed Mesh bodies and complete types. Unity 2021.3.45f2 loaded and
+unloaded both as Meshes. Three other MeshFilter references have matching
+bodies and complete types in the signed V48 Commando bundle. Canonical
+prefab admission and Android rendering are pending.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object identities, body lengths and
+verification hashes. Mesh data and editor evidence stay under ignored
+`work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-evis-projectile-meshes.json` | `20bac1950a28a834b0f704761b8d6caae9cb98fe3b2a74a1316d3c171c8de0d0` |
+
 ## Soul1 DamageZone Material record (2026-11-28)
 
 The profile selects the original Material used by 24 Soul1 scene fields.
 Scoped bundle readback reverses all nine relocated pointers and recovers the
-source body. The exact-editor fixture checks the signed J1579 Triplanar
-Terrain Blend Emissive Shader and eight saved Texture2D links. Two RGB mip origins
-are new to the successor policy. The third streamed texture reuses the
-existing Fungal binding. Canonical admission and linked Android rendering
-remain open.
+source body. Unity 2021.3.45f2 verifies the retained J1579 Triplanar
+Terrain Blend Emissive Shader and eight saved Texture2D links, then unloads
+the bundles. Two RGB mip origins are new to the successor policy. The third
+streamed texture reuses the existing Fungal binding. Canonical admission
+awaits the refreshed signed Shader. Linked Android rendering remains open.
 
 The provenance, privacy, licensing and sensitive-content review covered
 the relative source bundle path, member and object identities, class,
