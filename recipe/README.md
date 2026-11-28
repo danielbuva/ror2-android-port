@@ -8104,6 +8104,23 @@ and writes the record pack under ignored `work/`.
 | `owner-whole-game-fungal-triplanar-material-records.json` | `7ae3dd60664d93a5165c0dc7bcd65fd10a124c649a08494872317e78c3ec7890` |
 | `owner-whole-game-wavy-cloth-material-records.json` | `f15515bd5860846b37827eba56050debaee8fc42e942280966c5e94a61a2e995` |
 
+## Fungal HGStandard Material records (2026-11-28)
+
+The profile selects six original Fungal Material bodies through
+`record_produce.py`. Scoped bundle readback verified 44 Shader and texture
+pointer relocations and recovered every source body. Unity 2021.3.45f2
+loaded all six Materials, checked their 38 saved texture links, and unloaded
+the bundles. Both signed Shader fallback records retain their source order.
+
+Manual provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, serialized member and object identities, classes,
+sizes, and hashes. The producer requires legitimate PC input. It writes the
+original record bytes and receipts under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-fungal-hgstandard-material-records.json` | `89114dfc7a459c6164a2c1e1fc5561b034b53b971187a3547af1af52410ae7da` |
+
 ## Soul1 Cloud Remap Material records (2026-11-28)
 
 The profiles select 26 original Material records through `record_produce.py`.
