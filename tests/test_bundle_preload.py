@@ -2212,6 +2212,25 @@ P.emit_closed_native(root/'graph', [root/'types.json'], root/'killed', 'authored
                 selected["asset_groups"][0]["preload_roots"] = [list(target)]
                 changed = emit(1, 1)
                 self.assertEqual(set(next(entry[2] for entry in changed if entry[1] == (0, 10))), {(0, 10), (0, 20), (1, target[2])})
+
+                group = selected["asset_groups"][0]
+                order = [(0, 20), (1, target[2]), (0, 10)]
+                slots = [["authored", "CAB-authored", 20], list(target), ["authored", "CAB-authored", 10]]
+                group.update(preload_roots=slots)
+                ranked = emit(0, 2)
+                group["preserve_preload_order"] = True
+                ordered = emit(1, 1)
+                self.assertNotEqual(ranked, ordered)
+                self.assertEqual([entry[2] for entry in ordered if entry[0] == "assets/subassets.asset"], [order, order])
+                self.assertEqual(emit(0, 2), ordered)
+                slots.reverse()
+                reordered = emit(1, 1)
+                self.assertEqual([entry[2] for entry in reordered if entry[0] == "assets/subassets.asset"], [order[::-1], order[::-1]])
+                self.assertEqual(reordered, C.containers(P.produce_graph(selected, graph, {}, endpoint_record=read))[0])
+                graph[20].add((0, 70))
+                with self.assertRaisesRegex(ValueError, "Ordered preload roots differ.*70"):
+                    emit(0, 0)
+                graph[20].remove((0, 70))
                 # Cache reuse still reads the actual seed extent and full type.
                 endpoints[target][1].write_bytes(b"changed")
                 with self.assertRaisesRegex(ValueError, "body or full type"):
@@ -2261,19 +2280,27 @@ P.emit_closed_native(root/'graph', [root/'types.json'], root/'killed', 'authored
             inputs, _ = self.canonical_fixture(root)
             group = inputs["required"]["asset_groups"][0]
             target = ("canonical", "CAB-canonical", 101)
-            group["preload_roots"] = [["authored", "CAB-authored", 40], list(target)]
+            group["preserve_preload_order"] = True
+            order = [(0, 50), (1, 101), (0, 30), (1, 100), (0, 40)]
+            group["preload_roots"] = [
+                ["authored", "CAB-authored", 50],
+                list(target),
+                ["authored", "CAB-authored", 30],
+                ["canonical", "CAB-canonical", 100],
+                ["authored", "CAB-authored", 40],
+            ]
             W, C = P.module("unity_write"), P.module("catalog_complete")
 
             def endpoint(actual):
-                self.assertEqual(actual, target)
+                self.assertEqual(actual[:2], target[:2])
                 with W.B.Bundle(inputs["canonical_bundle"]).member(target[1]) as stream:
                     layout = W.read_serialized(stream)
-                    obj = next(row for row in layout["objects"] if row["path_id"] == target[2])
+                    obj = next(row for row in layout["objects"] if row["path_id"] == actual[2])
                     typ = layout["types"][obj["type_id"]]
                     stream.seek(layout["data_offset"] + obj["offset"])
                     body = W.B.exact(stream, obj["bytes"])
                 value = dict(
-                    destination=list(target),
+                    destination=list(actual),
                     bytes=len(body),
                     sha256=hashlib.sha256(body).hexdigest(),
                     class_id=typ["class_id"],
@@ -2292,7 +2319,7 @@ P.emit_closed_native(root/'graph', [root/'types.json'], root/'killed', 'authored
                 stream.seek(layout["data_offset"] + obj["offset"])
                 entries = C.containers(W.B.exact(stream, obj["bytes"]))[0]
             self.assertEqual([entry[1] for entry in entries], [(0, 30)])
-            self.assertEqual(set(entries[0][2]), {(0, 30), (0, 40), (0, 50), (1, 100), (1, 101)})
+            self.assertEqual(entries[0][2], order)
             warm = P.repack_canonical_aliases(output=root / "warm", **inputs)
             self.assertTrue(warm["cache_reused"])
             self.assertEqual(warm["sha256"], first["sha256"])

@@ -40,18 +40,25 @@ def stage(root, request_path, output, *, android=False):
     output.relative_to(root / "work")
     if output.exists():
         raise ValueError("Use a new fixture output directory")
-    request = json.loads(request_path.read_text())
+    request_bytes = request_path.read_bytes()
+    request = json.loads(request_bytes)
     if set(request) != {"items"} or not isinstance(request["items"], list) or not 1 <= len(request["items"]) <= 256:
         raise ValueError("Invalid source Sprite fixture request")
     identities = set()
-    for item in request["items"]:
+    portable = False
+    for index, item in enumerate(request["items"]):
         if set(item) != {"id", "png", "sha256", "rect", "pivot", "border", "pixels_per_unit", "extrude", "mesh_type"}:
             raise ValueError("Unknown source Sprite fixture fields")
         if not isinstance(item["id"], str) or not item["id"] or item["id"] in identities:
             raise ValueError("Sprite fixture source identities must be unique")
         identities.add(item["id"])
         path = Path(item["png"])
-        if not path.is_absolute() or path.suffix.lower() != ".png" or sha(path) != item["sha256"]:
+        if not path.is_absolute():
+            if item["png"] != f"images/{index}.png":
+                raise ValueError("Source image path does not match its request index")
+            portable = True
+            path = request_path.parent / path
+        if path.suffix.lower() != ".png" or not path.is_file() or sha(path) != item["sha256"]:
             raise ValueError("Source PNG path/hash changed")
         for name, count in (("rect", 4), ("pivot", 2), ("border", 4)):
             if len(item[name]) != count or any(type(v) not in (int, float) or not math.isfinite(v) for v in item[name]):
@@ -79,11 +86,13 @@ def stage(root, request_path, output, *, android=False):
         manifest["dependencies"]["com.unity.modules." + name] = "1.0.0"
     (project / "Packages/manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (project / "ProjectSettings/ProjectVersion.txt").write_text("m_EditorVersion: 2021.3.45f2\nm_EditorVersionWithRevision: 2021.3.45f2 (88f88f591b2e)\n")
-    (project / "sprite-source-request.json").write_text(json.dumps(request, indent=2) + "\n")
+    if portable:
+        (project / "images").symlink_to(request_path.parent / "images", target_is_directory=True)
+    (project / "sprite-source-request.json").write_bytes(request_bytes)
     receipt = {
         "success": True,
         "project": str(project),
-        "request_sha256": sha(request_path),
+        "request_sha256": hashlib.sha256(request_bytes).hexdigest(),
         "source_sha256": sha(root / SOURCE),
         "bootstrap_sha256": sha(root / BOOTSTRAP),
         "items": len(request["items"]),

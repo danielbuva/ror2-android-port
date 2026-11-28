@@ -341,7 +341,11 @@ def sdk_inputs(path, pin, pc):
     if path is None or pin is None or BUNDLE.sha(path) != pin:
         raise ValueError("pinned SDK texture toolchain required or drifted")
     value = json.loads(path.read_text())
-    if set(value) != {"command", "environment", "pixels", "inputs"} or not value["inputs"]:
+    if (
+        set(value) - {"batch_bands"} != {"command", "environment", "pixels", "inputs"}
+        or not value["inputs"]
+        or ("batch_bands" in value and value["batch_bands"] is not True)
+    ):
         raise ValueError("unknown SDK texture toolchain")
     command = value["command"]
     if not isinstance(command, list) or len(command) < 2 or any(not isinstance(s, str) or not s or "\0" in s for s in command):
@@ -366,25 +370,31 @@ def sdk_encode_rgba(rgba, width, height, sdk, etc_codec):
         raise ValueError("public ETC codec failed or returned a different pixel extent")
     band_height = min(max(4, ((height + 15) // 16) * 4), max(4, (262144 // width) // 4 * 4))
 
-    def encode(row):
-        rows = min(band_height, height - row)
+    def encode(pixels, rows, band=None):
+        arguments = [*sdk["command"], str(width), str(rows), "1", "0"]
+        if band is not None:
+            arguments.append(str(band))
         encoded = subprocess.run(
-            [*sdk["command"], str(width), str(rows), "1", "0"],
+            arguments,
             env={**os.environ, **sdk["environment"]},
-            input=memoryview(rgba)[row * width * 4 : (row + rows) * width * 4],
+            input=pixels,
             capture_output=True,
-            timeout=120,
+            timeout=120 * ((rows + band - 1) // band if band is not None else 1),
         )
         if encoded.returncode or len(encoded.stdout) != width * rows // 2:
             raise ValueError("SDK texture codec failed or returned a different extent")
         return encoded.stdout
 
     if height <= band_height:
-        colours = encode(0)
+        colours = encode(rgba, height)
+    elif sdk.get("batch_bands"):
+        colours = encode(rgba, height, band_height)
     else:
         colours = bytearray()
         for row in range(0, height, band_height):
-            colours.extend(encode(row))
+            rows = min(band_height, height - row)
+            band = memoryview(rgba)[row * width * 4 : (row + rows) * width * 4]
+            colours.extend(encode(band, rows))
     output = bytearray(width * height)
     for offset in range(0, len(output), 16):
         output[offset : offset + 8] = alpha.stdout[offset : offset + 8]

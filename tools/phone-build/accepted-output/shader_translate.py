@@ -134,17 +134,25 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
         for entry in entries:
             index = entry["m_BlobIndex"]
             record, program = records[index], dxbc[index]
+            keywords = tuple(record["keywords"])
+            if keywords in stages[stage]:
+                raise ValueError(f"duplicate {stage} source keyword variant: {keywords}")
             layout = selected_layout(original, raw, record, structured=True)
-            stages[stage][tuple(record["keywords"])] = (index, program, layout, entry["m_ShaderRequirements"])
+            stages[stage][keywords] = (index, program, layout, entry["m_ShaderRequirements"])
 
     vertices, fragments = stages["progVertex"], stages["progFragment"]
-    if not vertices or vertices.keys() != fragments.keys():
+    fragment_keys = {keywords: keywords for keywords in vertices}
+    # Terrain forward passes keep VERTEXLIGHT_ON in the vertex table only.
+    # Use the matching original fragment while retaining the full vertex key.
+    if vertices.keys() != fragments.keys() and all("VERTEXLIGHT_ON" not in keywords for keywords in fragments):
+        fragment_keys = {keywords: tuple(key for key in keywords if key != "VERTEXLIGHT_ON") for keywords in vertices}
+    if not vertices or set(fragment_keys.values()) != fragments.keys():
         raise ValueError("Vulkan translation requires paired source keyword variants")
     fragment_slots = (buffer["slot"] for _, _, layout, _ in fragments.values() for buffer in layout["buffers"])
     vertex_binding_base = max(2, max(fragment_slots, default=-1) + 1)
     variants = []
     for keywords, vertex_stage in vertices.items():
-        fragment_stage = fragments[keywords]
+        fragment_stage = fragments[fragment_keys[keywords]]
         vertex_draw_call = next((buffer for buffer in vertex_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
         fragment_draw_call = next((buffer for buffer in fragment_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
         shared_draw_call = fragment_draw_call["slot"] if vertex_draw_call and fragment_draw_call else None
@@ -169,8 +177,8 @@ def translate_tree(original, directory, tools):
 
     form = original["m_ParsedForm"]
     passes = [shader_pass for subshader in form["m_SubShaders"] for shader_pass in subshader["m_Passes"]]
-    if original["m_Dependencies"] or not passes or any(p["m_Type"] != 0 or p["m_ProgramMask"] != 6 for p in passes):
-        raise ValueError("translation requires ordinary vertex/fragment passes and no external Shader dependencies")
+    if not passes or any(p["m_Type"] != 0 or p["m_ProgramMask"] != 6 for p in passes):
+        raise ValueError("translation requires ordinary vertex/fragment passes")
     source, records, dxbc = read_segments(original, bytes(original["compressedBlob"]))
     groups = []
     for ordinal, shader_pass in enumerate(passes):
@@ -181,6 +189,8 @@ def translate_tree(original, directory, tools):
         variants = translate_pass(original, shader_pass, source, records, dxbc, pass_directory, tools)
         groups.append(shader.variant_records(variants, form["m_KeywordNames"]))
     raw, packed = shader.merge_variant_records(groups)
+    # Bundle preparation resolves these source dependency pointers against the
+    # typed supplier bindings when it relocates the Shader.
     tree = shader.deepcopy(original)
     targets = (shader_pass for subshader in tree["m_ParsedForm"]["m_SubShaders"] for shader_pass in subshader["m_Passes"])
     for target, (pass_raw, _, _, _), (table, programs, parameters) in zip(targets, groups, packed):

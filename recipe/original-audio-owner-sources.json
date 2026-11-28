@@ -15,7 +15,7 @@
     "../../runtime/world/IntegratedWorldBoundary.cs": "52c6dfb73273c281e4532735cf66e4fde7c100d01142dd10262ba62030adc426",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "d1d197dc12526614f37b9c3c3699be3bf16a96315abd3ac698c15b4270bfe8b6",
     "../../runtime/world/SurvivorSkillObserver.cs": "00f496749c33bdb1c2fcc7ec8fa87c3abb8abb7e0048b7e1404aa9505d061e6b",
-    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "31cceff4ae1ea0df0b94fc6a63fc07c1e687f38bde9e12fd9c1330118997aa7d",
+    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "de6534904c994e43301d070a34997cf9dc716f9caec054453c1df3567a461f5a",
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "fdce9ba21e249c7c9a8d2eed788c7561907a5327f9e9b8dc28ce23334e71ee70",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "b70f8914fbc05eb6a88729b25c63ed10aee20256604cc259b3d8a5134705a7cf",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
