@@ -87,8 +87,11 @@ Documentation serves the next implementer; keep it short and current.
 
 - The phone converter minimizes installation time, memory, heat and storage use.
 - The game maximizes sustained FPS, frame pacing, battery efficiency and visual fidelity.
-- Neither sacrifices correctness for benchmark numbers: reconstructed bytes, original behaviour
-  and visual output stay exact. Closing reconstruction gaps remains the priority; full-pipeline
+- The bar is that converted content works: it loads, behaves like the original and looks right in
+  game. Byte-exact reconstruction is not required (byte equality is a diagnostic); do not spend
+  effort turning working "approximate" output into "exact". Structural correctness (references,
+  type trees, script bindings, gameplay data) still matters because broken structure stops the game
+  working. Closing gaps that stop content loading or playing remains the priority; full-pipeline
   profiling and optimization is a release gate in [docs/public-alpha.md](docs/public-alpha.md#performance-release-gate).
   Record per-stage time/memory/heat/storage when you already run the converter or the game.
 
