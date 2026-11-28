@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1580 — Verify v4 incremental lab APK installation
+
+2026-11-28 UTC. The pinned Unity editor emitted an APK with a verified v4
+sidecar. The shared runner installed the v4-signed J1500 APK on the Thor
+with `adb install --incremental --wait` and verified internal placement.
+ADB took 31.047 s incremental and 31.475 s streaming for the same 1.1 GiB
+APK. Both tests began at 31 °C and ended with package removal, OLED sleep
+and lease release. Adopted installs keep the streaming path.
+APK SHA-256 `56840f9b2c1a4921ae6ee7ac8b594604b587b477435da28fcc7b5cad6d46ac57`.
+Evidence `work/coordination/p1-phonepipe/2026-11-27/incremental-thor/`.
+Install-to-launch timing remains open behind the J1071 lower-panel gate.
+
 ## J1559 — Play converted Distant Roost with source occlusion data
 
 2026-11-27. The staged converter retains the original native occlusion data,
@@ -5267,3 +5279,17 @@ whole-game scoring remain open.
   in `fungal-triplanar-draw-device-03/terminal.done.json` and
   `signed-fungal-triplanar-device-01/terminal.done.json`. Linked scene
   Material draws and the active emissive variation remain open.
+
+## J1581 — Draw the Solus Heart wireframe on Android Vulkan
+
+2026-11-28. Linked 12 original vertex, fragment and geometry variants.
+Exact Unity typed-loaded the Shader and its original VertexLit fallback.
+APK `a66a304915ec42706ed04839ba60989caf624a51944fe4fb01c8bc378fcfc646`
+read a magenta edge, blue interior and green mirrored background.
+Signed bundle `bc63c317ddc1fa4d2ac9c58291c804c17f61a8a12658eabb3b7f224e704d8073`
+matched all host outputs in 25.83 s at 89.93 MiB peak child RSS,
+7.91 MiB stage storage and 70 °C peak CPU/GPU. Both packages were removed.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`solus-heart-geometry-draw-device-02/terminal.done.json` and
+`signed-solus-heart-device-01/signed_artifact.json`. Linked
+gameplay draws and whole-game scoring remain open.

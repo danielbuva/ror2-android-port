@@ -1023,6 +1023,11 @@ def build(
         else:
             with timing.phase("apk_clone"):
                 copy_build_artifact(r["apk"], apk, verify=False)
+            if sidecar := r.pop("apkV4Sidecar", None):
+                from iteration_apk import retain_v4_sidecar
+
+                with timing.phase("apk_v4_signature"):
+                    r.update(retain_v4_sidecar(apk, sidecar))
         with timing.phase("apk_hash"):
             apk_hash = sha(apk)
         r.update(

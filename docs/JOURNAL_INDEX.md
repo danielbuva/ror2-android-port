@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1581](PORTING_JOURNAL.md#j1581--draw-the-solus-heart-wireframe-on-android-vulkan) | 2026-11-27 | Draw the Solus Heart wireframe on Android Vulkan | 2026-11-28. |
 | [J1579](PORTING_JOURNAL.md#j1579--draw-original-fungal-triplanar-shaders-on-android-vulkan) | 2026-11-27 | Draw original Fungal Triplanar shaders on Android Vulkan | - Linked 732 original Vulkan variant pairs for Terrain Blend, Terrain Blend Emissive and Standard Triplanar Splat. |
 | [J1578](PORTING_JOURNAL.md#j1578--draw-wavy-cloth-cutout-and-shadows-on-android-vulkan) | 2026-11-27 | Draw Wavy Cloth cutout and shadows on Android Vulkan | 2026-11-28. |
 | [J1575](PORTING_JOURNAL.md#j1575--draw-terrain-detail-vertex-lighting-on-android-vulkan) | 2026-11-27 | Draw Terrain Detail vertex lighting on Android Vulkan | 2026-11-27. |
@@ -404,3 +405,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1553](PORTING_JOURNAL.md#j1553--run-a-pinned-texture-stage-with-a-disposable-android-toolhost) | 2026-11-27 | Run a pinned texture stage with a disposable Android toolhost | 2026-11-27. |
 | [J1560](PORTING_JOURNAL.md#j1560--capture-paired-occlusion-windows-from-a-fixed-gameplay-camera) | 2026-11-27 | Capture paired occlusion windows from a fixed gameplay camera | 2026-11-27. |
 | [J1559](PORTING_JOURNAL.md#j1559--play-converted-distant-roost-with-source-occlusion-data) | 2026-11-27 | Play converted Distant Roost with source occlusion data | 2026-11-27. |
+| [J1580](PORTING_JOURNAL.md#j1580--verify-v4-incremental-lab-apk-installation) | 2026-11-27 | Verify v4 incremental lab APK installation | 2026-11-28 UTC. |

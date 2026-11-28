@@ -3271,7 +3271,11 @@ the Loader test input and records the stock hook and motor at fixed ticks.
 damage for projectile comparison steps. `FrameBurst.cs` captures rendered frames
 around the cast for timestamped video.
 `tools/pc-reference/compare.py` pairs a hashed PC frame with a selected
-Android capture. See the [PC reference recorder](../tools/pc-reference/README.md).
+Android capture. `./dev pc-reference compare batch` is the current offline
+comparison path: `tools/pc-reference/compare_batch.py` owns frame alignment,
+advisory image metrics, step-aligned audio event comparison, and private
+JSON/Markdown reports. It reads existing captures without launching either
+platform. See the [PC reference recorder](../tools/pc-reference/README.md).
 The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
@@ -3316,6 +3320,12 @@ registry labels and the editor/perf/lane selectors without starting an editor or
 querying a device. Labels live with existing CLI owners; dispatch is unchanged.
 
 ## Build pipeline
+
+`LabBuild.cs` enables APK Signature Scheme v4 on the generated Unity launcher
+Gradle project for packaged lab builds. `scripts/lab/build.py` and
+`scripts/lab/unity_rebuild.py` use the verifier in `scripts/lab/iteration_apk.py`
+to check the generated signature against the promoted APK and retain the
+sibling `.apk.idsig` with its hash in the build receipt.
 
 `scripts/lab/source_pins.py` owns `./dev pins check` and `./dev pins refresh`.
 It resolves public recipe and profile hashes from tracked files, following
@@ -3671,7 +3681,16 @@ Its request selects the canonical checkout, private output,
 workstream, disposable package, APK path/hash, duration and optional targeted-touch
 JSON. The same workload uses the selected device's configured storage profile:
 adopted storage on the main Nova and internal storage on the second Nova.
-`Device` owns installation, and the shared runner checks APK, private data and
+`Device` owns installation. The shared runner uses automatic transport for
+initial install and signer recovery. Internal installs with an `.idsig` and
+advertised incremental delivery use incremental install with `--wait`.
+The install owner retries definite rejections with streaming after verifying
+the prior ownership state. Adopted installs stream to the freshly resolved UUID.
+The `install-launch` workload measures ADB time and dispatch-to-PID time on a
+fresh standalone lab install. `install-only` measures ADB time with the OLEDs
+asleep when a launch cannot meet the display policy. The shared runner verifies
+ownership before removing the package and verifies OLED sleep during teardown.
+The shared runner checks APK, private data and
 shared payload backing. The internal install estimate must leave at least 15 GiB
 free. Both profiles reserve APK and payload inputs plus 20 GiB before install,
 and verify the 20 GiB reserve after payload sync. Converted-package receipts
@@ -8219,6 +8238,12 @@ record producer keeps the native bodies for checked pointer relocation by
 including the SDK built-in texture, and unloads them after typed validation.
 Scene intake owns the prefab's 108-slot preload order.
 
+`recipe/owner-voidstage-crystal-material-records.json` supplies the original
+Crystal Material body through `record_produce.py`, preserving the canonical
+scene's destination ID. `bundle_preload.py` resolves its Shader and five
+Texture2D pointers from the original member identities. The isolated fixture
+checks those typed links and unloads the bundle and dependencies.
+
 `recipe/owner-whole-game-mire-native-material-records.json` uses the same
 producer and preparation owners for nine Mire and Access Codes Node
 Materials. It supplies two of the Material destinations referenced by
@@ -8277,6 +8302,13 @@ the Fungal native Material profile, select 52 original class-21 bodies through
 `record_produce.py`. Bundle preparation resolves the saved Shader and Texture2D
 pointers against the signed Shader and existing texture suppliers. The exact
 editor fixture checks the bindings and unloads its bundles after each cohort.
+
+The Fungal triplanar and Wavy Cloth Material profiles use `record_produce.py`
+to select 27 more original class-21 bodies. `bundle_preload.py` resolves the
+saved Shader and texture pointers using the linked supplier graph. Scoped
+readback verified all 124 relocations. The Unity 2021.3.45f2 content fixture
+loaded the Materials, checked their saved bindings and unloaded the bundles.
+Canonical admission and linked Android draw checks remain open.
 
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one

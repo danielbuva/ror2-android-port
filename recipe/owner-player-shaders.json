@@ -66,8 +66,8 @@
       "sha256": "fa7130f8e63927b87c4ba36f474e11e547c91b8f893abbb80fc6c4ac0fb2e7cc"
     },
     "android/Assets/Editor/LabBuild.cs": {
-      "bytes": 50114,
-      "sha256": "9cfd0aec4dd17c33c291bf8ee218b197e626a27d1182c385e337bfe09ea6b700"
+      "bytes": 51400,
+      "sha256": "15e344c014a4cb00b850026855c3eb7339a874b5bebe1d54afe9368d2486de82"
     },
     "tools/unity/runtime/shaders/AndroidColorGrade.shader": {
       "bytes": 414,

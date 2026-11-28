@@ -6341,6 +6341,22 @@ and other bytes. Unity 2021.3.45f2 loaded the three Materials, resolved
 three Shader and fourteen texture bindings, and unloaded the fixture.
 Ordered release admission and Android rendering remain open.
 
+### Voidstage Crystal Material record
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-voidstage-crystal-material-records.json` | `7c820974ff40cad488b8efee1b882196ace25619b7c7a0518de44b7babfaf73d` |
+
+Audit date 2026-11-28. The recipe selects one original Material from the
+legitimate Steam input and retains the destination ID used by the Voidstage
+scene. It lists relative source paths, identities, sizes and hashes. Pinned
+AssetRipper's `AssetCollection.TryGetAsset` and `MaterialExtensions` informed
+member and saved texture lookup. The scoped fixture verified six relocated
+pointers and preserved all other bytes, including the original keywords.
+Unity 2021.3.45f2 loaded the Material with Solid Parallax and five saved
+Texture2D links, then unloaded it. Bodies, dependencies and raw evidence stay
+local. Canonical scene admission and Android rendering remain open.
+
 ### Whole-game Mire Material records
 
 | Recipe | SHA-256 |
@@ -7968,3 +7984,23 @@ D3D11 programs from the legitimate installation, translates the measured
 Vulkan geometry variants locally and retains original property and dependency
 metadata. The signed job witnesses the rebuilt pack. No compiled shader data,
 private paths or device details enter the recipe.
+
+## Fungal triplanar and Wavy Cloth Material records (2026-11-27)
+
+The two profiles select 16 Fungal triplanar and 11 Wavy Cloth Material
+records through `record_produce.py`. Scoped bundle readback reversed all
+124 checked PPtr relocations to recover the original record bytes. Unity
+2021.3.45f2 loaded and unloaded the Materials and verified their 27 Shader
+and 97 saved texture references. Canonical admission uses the existing
+signed Shader and texture suppliers, including the established Wavy Cloth
+Shader alias. Linked Android draw checks remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative source bundle paths, serialized member and object identities,
+classes, sizes and hashes. The producer reads the user's installed PC data
+and writes the record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-fungal-triplanar-material-records.json` | `7ae3dd60664d93a5165c0dc7bcd65fd10a124c649a08494872317e78c3ec7890` |
+| `owner-whole-game-wavy-cloth-material-records.json` | `f15515bd5860846b37827eba56050debaee8fc42e942280966c5e94a61a2e995` |

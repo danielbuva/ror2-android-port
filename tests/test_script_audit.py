@@ -97,8 +97,9 @@ class ScriptAuditTests(unittest.TestCase):
         # also finalizes its optional capture witness from that returned report;
         # The fast-iteration change adds timed BuildReport steps and explicit export/
         # scripts-only options; the default remains a Development player build.
+        # Incremental lab signing requires and records the generated v4 sidecar.
         # Keep destination audits from silently changing this reviewed path.
-        self.assertEqual(hashlib.sha256(body).hexdigest(), "b2517fb3849b70268eec2057bd73ec8424bbd0c7b5b25033d85e5a12958321a2")
+        self.assertEqual(hashlib.sha256(body).hexdigest(), "1810f9916a81086c39ceec5b340a8166856a89f18a757b0e81b9e225d60a6d62")
 
     def test_destination_gates_before_calling_unchanged_build_and_never_filters_messages(self):
         source = SOURCE.read_text()
