@@ -8047,3 +8047,23 @@ and writes its record pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-soul1-fungal-material-records.json` | `093ac4aa8d802f42955c58044261d0fbd848eb64f3abd3a1d763c2de37b4c6b1` |
+
+## Ancient Loft animated pillar Material records (2026-11-28)
+
+The profile selects the two original Material records used by the Floating
+Pillar Stone and Half-Intact Pillar groups. The source Material positions are
+806 and 700 in the original preload array. Scoped bundle readback reversed all
+14 pointer relocations and recovered both original bodies. Two field-specific
+texture aliases reuse historical Android textures whose original compressed
+pixels and serialized settings match. The exact-editor fixture checks the
+Terrain Blend Shader and 12 saved texture links. Canonical admission and
+linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative source bundle paths, serialized member and object identities,
+classes, sizes and hashes. The producer reads the user's installed PC data
+and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-ancientloft-pillar-material-records.json` | `c080e3c85b1f4be088744dd007dc5e7df2c6581db07b6f2a6087f583fe1b5d1f` |
