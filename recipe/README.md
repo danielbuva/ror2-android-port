@@ -2797,6 +2797,18 @@ local. Provenance, privacy, licensing and sensitive-content review completed
 | --- | --- |
 | `owner-cloud-remap-graphics-translation.json` | `59fe8c20139b0b1763f13e4eb84f4cd3c45b2e67f8d93c5a8839410878c045c1` |
 
+The Fungal Triplanar profile selects the original Terrain Blend, Terrain
+Blend Emissive and Standard Triplanar Splat Shader records for the signed
+graphics translator. The Wavy Cloth profile supplies their original
+Diffuse and VertexLit fallbacks during bundle preparation. The recipe
+contains source pins and destination object identifiers. Original programs,
+translated bodies and raw receipts stay local. Provenance, privacy, licensing
+and sensitive-content review completed 2026-11-28.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-fungal-triplanar-graphics-translation.json` | `3ca308144a0b0c2bf28cc29f92743c56ec4888677cee25b919bf97f497e47022` |
+
 The Terrain detail graphics profile selects two original WavingDoublePass
 Shader records for the signed graphics translator. It reuses the Terrain detail
 source pins and destinations. It contains only provenance and routing metadata.
