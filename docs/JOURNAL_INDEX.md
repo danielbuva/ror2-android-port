@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1578](PORTING_JOURNAL.md#j1578--draw-wavy-cloth-cutout-and-shadows-on-android-vulkan) | 2026-11-27 | Draw Wavy Cloth cutout and shadows on Android Vulkan | 2026-11-28. |
 | [J1575](PORTING_JOURNAL.md#j1575--draw-terrain-detail-vertex-lighting-on-android-vulkan) | 2026-11-27 | Draw Terrain Detail vertex lighting on Android Vulkan | 2026-11-27. |
 | [J1576](PORTING_JOURNAL.md#j1576--batch-sdk-etc2-colour-encoding-per-mip-on-android) | 2026-11-27 | Batch SDK ETC2 colour encoding per mip on Android | 2026-11-27. |
 | [J1577](PORTING_JOURNAL.md#j1577--verify-all-signed-crunch-and-bc7-producer-artifacts-on-android) | 2026-11-27 | Verify all signed Crunch and BC7 producer artifacts on Android | 2026-11-27. |
