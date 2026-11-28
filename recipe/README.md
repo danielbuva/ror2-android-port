@@ -7938,3 +7938,23 @@ ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-chef-display-frost-native-records.json` | `33d4819cfaf738b928df483235fd24844338df4a65ccc18b61e2b492ffdfb308` |
+
+## ScavSackGhost native records (2026-11-27)
+
+`owner-scav-sack-ghost-native-records.json` selects 29 original records
+through `record_produce.py`, including the Light, its owning GameObject
+and the hierarchy needed to resolve its references. The Material uses a
+separate destination ID to avoid a collision with another source Material.
+Scoped readback checked 65 PPtrs and all 33 original preload slots in order
+before five additional destinations. Unity 2021.3.45f2 loaded the GameObject
+and unloaded the bundle. Release admission resolves the dependency closure
+against the release graph while retaining the original preload prefix.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-scav-sack-ghost-native-records.json` | `e1768fe06a17b4c42368ce57de3fb6531031de3e829d3dca81a438a0c33d65d6` |
