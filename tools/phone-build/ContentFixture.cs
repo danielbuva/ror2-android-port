@@ -52,6 +52,20 @@ public sealed class ContentFixture : MonoBehaviour
         public bool passed;
     }
 
+    [Serializable] sealed class TriplanarDrawReport
+    {
+        public string shader;
+        public Color32[] triplanarSamples;
+        public bool passed;
+    }
+
+    [Serializable] sealed class TriplanarDrawBatchReport
+    {
+        public string graphics;
+        public TriplanarDrawReport[] draws;
+        public bool passed;
+    }
+
     [Serializable] sealed class AutoExposureReport
     {
         public string graphics;
@@ -309,8 +323,23 @@ public sealed class ContentFixture : MonoBehaviour
         draws[0] = firstDraw;
         for (int i = 1; i < draws.Length; ++i)
             draws[i] = CheckShaderDraw(bundle, loadError, graphics, shaderAddresses[i]);
+        bool passed = Array.TrueForAll(draws, draw => draw.passed);
+        if (draws.Length == 3 && Array.TrueForAll(shaderAddresses, address => address.Contains("/triplanar-")))
+        {
+            // Keep the three triplanar samples in one Android log entry.
+            foreach (var draw in draws)
+                if (!string.IsNullOrEmpty(draw.failure)) Debug.LogWarning(draw.failure);
+            var compact = new TriplanarDrawBatchReport {
+                graphics = graphics, passed = passed,
+                draws = Array.ConvertAll(draws, draw => new TriplanarDrawReport {
+                    shader = draw.shader, triplanarSamples = draw.triplanarSamples, passed = draw.passed
+                })
+            };
+            Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(compact));
+            return;
+        }
         var batch = new ShaderDrawBatchReport {
-            graphics = graphics, draws = draws, passed = Array.TrueForAll(draws, draw => draw.passed)
+            graphics = graphics, draws = draws, passed = passed
         };
         Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(batch));
     }
