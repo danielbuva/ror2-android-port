@@ -8012,14 +8012,16 @@ and writes the record pack under ignored `work/`.
 | `owner-whole-game-fungal-triplanar-material-records.json` | `7ae3dd60664d93a5165c0dc7bcd65fd10a124c649a08494872317e78c3ec7890` |
 | `owner-whole-game-wavy-cloth-material-records.json` | `f15515bd5860846b37827eba56050debaee8fc42e942280966c5e94a61a2e995` |
 
-## Soul1 Cloud Intersection Remap Material records (2026-11-27)
+## Soul1 Cloud Remap Material records (2026-11-28)
 
-The profile selects 23 original Material records through `record_produce.py`.
-Nine more Soul1 Materials are supplied by the existing Sad1 profiles. The
-isolated V48-linked bundle restored all 32 original bodies by reversing 135
-checked pointer relocations. Unity 2021.3.45f2 verified 32 Shader and 103
-saved texture links and unloaded the bundles. Canonical composition and
-linked Android rendering remain open.
+The profiles select 26 original Material records through `record_produce.py`.
+Ten more Soul1 Materials reuse the existing Sad1 profiles. The isolated
+bundle binds the original Cloud Remap identity to the signed J1574 Shader
+and its VertexLit fallback. Reversing 155 persisted pointer relocations
+recovered all 36 original Material bodies. Four existing Texture2D packs
+supplied 1,141,656 streamed bytes checked after emission. Unity 2021.3.45f2
+verified 36 Shader and 119 saved texture links and unloaded the bundles.
+Canonical composition and linked Android rendering remain open.
 
 The provenance, privacy, licensing and sensitive-content review covered
 relative source bundle paths, serialized member and object identities,
@@ -8029,3 +8031,4 @@ and writes the record pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-soul1-signed-cloud-material-records.json` | `7a6f2ef8671a4c8095ffdb7d39c0a2eac20ee8c1066c1414a4ce0cef2f4caeab` |
+| `owner-whole-game-soul1-cloud-remap-textured-material-records.json` | `b5495041181ef634fc26b71209fff677d135f7cdd284f91d52b7f2bd0f3407b6` |
