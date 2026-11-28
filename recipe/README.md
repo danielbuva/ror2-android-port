@@ -8067,3 +8067,17 @@ and writes its record pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-ancientloft-pillar-material-records.json` | `c080e3c85b1f4be088744dd007dc5e7df2c6581db07b6f2a6087f583fe1b5d1f` |
+
+## Snow Topped graphics translation (2026-11-28)
+
+The profile selects the original Snow Topped Shader and supplies the existing
+Commando fallback alias through the signed graphics translation producer.
+The provenance, privacy, licensing and sensitive-content review covered
+native record selectors, destination identity, public tool bindings and
+verification hashes. The producer reads the user's accepted PC installation
+and writes regenerated Shader data under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-snow-topped-graphics-translation.json` | `4ccb0361513a69c752ef710328d01cf721321354ea876669c5563d4a3feb0c85` |
+| `jobs/owner-snow-topped-graphics-translation.json` | `938398c73789394deec7e2636cde730b9aca028b80e471e6bc54987b9d36c392` |

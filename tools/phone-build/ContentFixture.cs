@@ -364,6 +364,7 @@ public sealed class ContentFixture : MonoBehaviour
             else if (shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend" ||
                 shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend Emissive")
                 DrawTriplanar(shader, report, new[] { "_RedChannelSideTex", "_RedChannelTopTex", "_GreenChannelTex", "_BlueChannelTex" });
+            else if (shader.name == "Hopoo Games/Deferred/Snow Topped") DrawSnowTopped(shader, report);
             else if (shader.name == "Hopoo Games/Deferred/Standard Triplanar Splat")
                 DrawTriplanar(shader, report, new[] { "_MainTex", "_RedSplatTex" });
             else if (shader.name == "Hopoo Games/Transparent/Texture Scrolling Wireframe") DrawWireframe(shader, report);
@@ -1060,6 +1061,117 @@ public sealed class ContentFixture : MonoBehaviour
             Destroy(mesh);
             Destroy(material);
             Destroy(transparent);
+            Destroy(normal);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawSnowTopped(Shader shader, ShaderDrawReport report)
+    {
+        var previous = RenderTexture.active;
+        var material = new Material(shader);
+        var mesh = new Mesh();
+        var baseTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var snow = new Texture2D(2, 1, TextureFormat.RGBA32, false, true);
+        var normal = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var pixels = new Texture2D(32, 1, TextureFormat.RGBA32, false, true);
+        var color = new RenderTexture[4];
+        try
+        {
+            int deferred = material.FindPass("DEFERRED");
+            if (deferred < 0) throw new Exception("Snow Topped Deferred pass is missing");
+            var targets = new RenderTargetIdentifier[color.Length];
+            for (int i = 0; i < color.Length; ++i)
+            {
+                color[i] = RenderTexture.GetTemporary(32, 32, i == 0 ? 24 : 0,
+                    RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+                targets[i] = color[i];
+            }
+
+            mesh.vertices = new[] {
+                new Vector3(-0.16f, -0.2f, 0), new Vector3(-0.16f, 0.2f, 0),
+                new Vector3(0.16f, 0.2f, 0), new Vector3(0.16f, -0.2f, 0)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            mesh.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
+            var tangent = new Vector4(1, 0, 0, 1);
+            mesh.tangents = new[] { tangent, tangent, tangent, tangent };
+            mesh.colors = new[] { Color.white, Color.white, Color.white, Color.white };
+            mesh.uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+
+            baseTexture.SetPixel(0, 0, Color.red);
+            baseTexture.Apply();
+            snow.filterMode = FilterMode.Point;
+            snow.wrapMode = TextureWrapMode.Repeat;
+            snow.SetPixels(new[] { Color.blue, Color.green });
+            snow.Apply();
+            normal.SetPixel(0, 0, new Color(0.5f, 0.5f, 1, 1));
+            normal.Apply();
+
+            material.EnableKeyword("BINARYBLEND");
+            material.EnableKeyword("TRIPLANAR");
+            material.SetTexture("_MainTex", baseTexture);
+            material.SetTexture("_NormalTex", normal);
+            material.SetTexture("_SnowTex", snow);
+            material.SetTexture("_SnowNormalTex", normal);
+            // The mesh-UV variant would sample green snow at both positions.
+            material.SetTextureScale("_SnowTex", Vector2.zero);
+            material.SetTextureOffset("_SnowTex", new Vector2(0.75f, 0.5f));
+            material.SetFloat("_Cull", (float)CullMode.Off);
+            material.SetColor("_Color", Color.white);
+            material.SetFloat("_NormalStrength", 0);
+            material.SetFloat("_Depth", 0.5f);
+            material.SetFloat("_SnowBias", 0.625f);
+            material.SetFloat("_TriplanarTextureFactor", 1);
+
+            var transforms = new[] {
+                Matrix4x4.Translate(new Vector3(-0.6f, 0, -1)),
+                Matrix4x4.Translate(new Vector3(0.6f, 0, -1))
+            };
+            var projection = Matrix4x4.Ortho(-1, 1, -1, 1, 0.1f, 10);
+            var expected = new Color32[] { new Color32(128, 0, 128, 255),
+                Color.blue, new Color32(128, 128, 0, 255) };
+            using var commands = new CommandBuffer();
+            foreach (bool instanced in new[] { false, true })
+            {
+                material.enableInstancing = instanced;
+                commands.SetRenderTarget(targets, targets[0]);
+                commands.ClearRenderTarget(true, true, Color.blue);
+                commands.SetViewProjectionMatrices(Matrix4x4.identity, projection);
+                if (instanced)
+                    commands.DrawMeshInstanced(mesh, 0, material, deferred, transforms, transforms.Length);
+                else
+                    foreach (var transform in transforms)
+                        commands.DrawMesh(mesh, transform, material, 0, deferred);
+                Graphics.ExecuteCommandBuffer(commands);
+                commands.Clear();
+
+                RenderTexture.active = color[0];
+                pixels.ReadPixels(new Rect(0, 16, 32, 1), 0, 0, false);
+                report.triplanarSamples = new Color32[] {
+                    pixels.GetPixel(6, 0), pixels.GetPixel(16, 0), pixels.GetPixel(25, 0)
+                };
+                for (int i = 0; i < expected.Length; ++i)
+                {
+                    var sample = report.triplanarSamples[i];
+                    var match = expected[i];
+                    if (Mathf.Abs(sample.r - match.r) > 1 || Mathf.Abs(sample.g - match.g) > 1 ||
+                        Mathf.Abs(sample.b - match.b) > 1)
+                        throw new Exception("Snow Topped Deferred sample " + i + " differs, instanced=" + instanced);
+                }
+            }
+
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            foreach (var target in color)
+                if (target != null) RenderTexture.ReleaseTemporary(target);
+            Destroy(mesh);
+            Destroy(material);
+            Destroy(baseTexture);
+            Destroy(snow);
             Destroy(normal);
             Destroy(pixels);
         }
