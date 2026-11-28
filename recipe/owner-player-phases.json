@@ -58,7 +58,7 @@
   "scene": {
     "profile": "recipe/owner-default-scene.json",
     "environment": "original",
-    "sha256": "7d87265081ba77ee17d468ec378c5efa43594506160bac3cee62162f23cc31bf",
+    "sha256": "82cfebc051e68b884e4f9b0533663f4a1ff1016bb6467e46dd473af1431104d4",
     "outputs": [
       "level0"
     ]
