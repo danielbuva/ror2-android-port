@@ -199,6 +199,22 @@ def signer_digest(apk):
     return digests[0]
 
 
+def retain_v4_sidecar(apk, source):
+    """Keep the generated signature beside the exact bytes it verifies."""
+    from common import copy_file_clone
+
+    apk, source = Path(apk), Path(source)
+    sidecar = apk.with_suffix(".apk.idsig")
+    if source.is_symlink() or not source.is_file():
+        raise RuntimeError("APK v4 signature must be a regular file")
+    verified = run([android_tools() / "apksigner", "verify", "--verbose", "--v4-signature-file", source, apk], timeout=180).stdout.decode()
+    if "Verified using v4 scheme (APK Signature Scheme v4): true" not in verified.splitlines():
+        raise RuntimeError("APK v4 signature did not verify")
+    if source != sidecar:
+        copy_file_clone(source, sidecar)
+    return {"apk_v4_idsig": str(sidecar), "apk_v4_idsig_sha256": sha(sidecar)}
+
+
 def assemble_export(work, export, output, anchor):
     from unity_rebuild import debug_signing_key
 

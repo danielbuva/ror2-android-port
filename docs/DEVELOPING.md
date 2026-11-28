@@ -17,8 +17,16 @@ evidence rules. For disposable APKs, supply `canonical_root`, `output` (under
 its `work/`), `workstream`, `package`, `apk`, `apk_sha256` and `duration_seconds`.
 Select the device serial with `--device` or the request's `serial` field.
 Set `adopted_install: true` for adopted-only placement. Omit it when using the
-second Nova's internal storage profile. Other optional fields include
-`cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
+second Nova's internal storage profile. Shared installs default to `auto`.
+This selects incremental delivery when internal storage, a v4 `.idsig` sidecar
+and device support are available. Set `install_transport` to `streaming` or
+`incremental` for a strict transport comparison. Use `mode: "install-launch"`
+with a standalone lab APK and an absent lab package to measure ADB install
+time and time from install dispatch to a verified launcher PID. The runner
+removes the installation after the measurement. `mode: "install-only"` uses the
+same disposable package and measures ADB install time with the OLEDs asleep.
+Use it on Thor while the physical top-only launch gate is unavailable. Other
+optional fields include `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
 `settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`,
 or fixture modes `shader-draw`, `shader-compute` and `texture-readback`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by

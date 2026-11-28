@@ -36,6 +36,22 @@ class IterationApkTests(unittest.TestCase):
             archive.writestr("META-INF/CERT.SF", b"obsolete signature")
             archive.writestr("META-INF/MANIFEST.MF", b"obsolete manifest")
 
+    def test_v4_signature_promotion_requires_explicit_verification(self):
+        self.base_apk()
+        source = self.root / "launcher-debug.apk.idsig"
+        source.write_bytes(b"authored sidecar")
+        destination = self.base.with_suffix(".apk.idsig")
+        line = "Verified using v4 scheme (APK Signature Scheme v4): "
+        with patch.object(apk, "android_tools", return_value=self.root), patch.object(apk, "run") as run:
+            run.return_value.stdout = (line + "false\n").encode()
+            with self.assertRaisesRegex(RuntimeError, "did not verify"):
+                apk.retain_v4_sidecar(self.base, source)
+            run.return_value.stdout = (line + "true\n").encode()
+            receipt = apk.retain_v4_sidecar(self.base, source)
+            self.assertEqual(run.call_args.args[0][-3:], ["--v4-signature-file", source, self.base])
+        self.assertEqual(receipt["apk_v4_idsig_sha256"], hashlib.sha256(source.read_bytes()).hexdigest())
+        self.assertEqual(destination.read_bytes(), source.read_bytes())
+
     def test_splice_preserves_members_compression_and_replaces_complete_data(self):
         self.base_apk()
         native = self.root / "fresh.so"

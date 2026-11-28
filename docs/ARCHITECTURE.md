@@ -3321,6 +3321,12 @@ querying a device. Labels live with existing CLI owners; dispatch is unchanged.
 
 ## Build pipeline
 
+`LabBuild.cs` enables APK Signature Scheme v4 on the generated Unity launcher
+Gradle project for packaged lab builds. `scripts/lab/build.py` and
+`scripts/lab/unity_rebuild.py` use the verifier in `scripts/lab/iteration_apk.py`
+to check the generated signature against the promoted APK and retain the
+sibling `.apk.idsig` with its hash in the build receipt.
+
 `scripts/lab/source_pins.py` owns `./dev pins check` and `./dev pins refresh`.
 It resolves public recipe and profile hashes from tracked files, following
 dependencies through producer sources, embedded build-hook bindings and other
@@ -3675,7 +3681,16 @@ Its request selects the canonical checkout, private output,
 workstream, disposable package, APK path/hash, duration and optional targeted-touch
 JSON. The same workload uses the selected device's configured storage profile:
 adopted storage on the main Nova and internal storage on the second Nova.
-`Device` owns installation, and the shared runner checks APK, private data and
+`Device` owns installation. The shared runner uses automatic transport for
+initial install and signer recovery. Internal installs with an `.idsig` and
+advertised incremental delivery use incremental install with `--wait`.
+The install owner retries definite rejections with streaming after verifying
+the prior ownership state. Adopted installs stream to the freshly resolved UUID.
+The `install-launch` workload measures ADB time and dispatch-to-PID time on a
+fresh standalone lab install. `install-only` measures ADB time with the OLEDs
+asleep when a launch cannot meet the display policy. The shared runner verifies
+ownership before removing the package and verifies OLED sleep during teardown.
+The shared runner checks APK, private data and
 shared payload backing. The internal install estimate must leave at least 15 GiB
 free. Both profiles reserve APK and payload inputs plus 20 GiB before install,
 and verify the 20 GiB reserve after payload sync. Converted-package receipts
