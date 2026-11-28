@@ -8827,6 +8827,12 @@ prefab hierarchy to `record_produce.py`. Bundle preparation preserves the
 Material uses the existing graph route after verifying its source Shader
 identity. The scoped editor fixture loads the prefab and unloads the bundle.
 
+The EvisProjectileGhost profile supplies the original Light and its owning
+prefab hierarchy through `record_produce.py`. Bundle preparation preserves
+the 40 source preload slots before 31 additional endpoints. Five MeshFilter
+references resolve through the two source Meshes and three retained Commando
+records. The scoped editor fixture loads the prefab and unloads the bundle.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,

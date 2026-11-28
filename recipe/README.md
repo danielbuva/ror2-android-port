@@ -8030,6 +8030,25 @@ ignored `work/`.
 | --- | --- |
 | `owner-pickup-afterburner-native-records.json` | `c28e92ec6a4af223e68b553f4c9ec04277e02515f8d95417103e97915e6344ca` |
 
+## EvisProjectileGhost native records (2026-11-28)
+
+`owner-evis-projectile-ghost-native-records.json` selects 55 original
+records through `record_produce.py`, including the Light and its reciprocal
+GameObject owner. The scoped bundle preserves 40 ordered source preload
+slots before 31 additional endpoints. Persisted readback reverses all 133
+relocated PPtrs to recover the original record hashes. Five MeshFilter
+references use the two original Meshes and three matching Commando records.
+Unity 2021.3.45f2 loaded and unloaded the scoped GameObject.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-evis-projectile-ghost-native-records.json` | `3142468797cf82a2a16a2673f2c8b65ea4f094cbafe0ea8450caaf1f7b2ba50d` |
+
 ## Solus Heart wireframe Shader profile (2026-11-27)
 
 The signed qualification selects the original Texture Scrolling Wireframe
