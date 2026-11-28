@@ -8344,6 +8344,13 @@ the PC bundle and body pins. The producers write private object packs and
 close their inputs on exit. Bundle preparation joins the packs to the Mesh
 and Material suppliers at the original 22 preload positions per FBX.
 
+The Abandoned Aqueduct Orbiting Goo Material profile uses
+`record_produce.py` to select the original class-21 body. Bundle preparation
+joins its five saved pointers to the signed Standard Shader and the existing
+Android texture suppliers. The scoped exact-editor fixture checks the Shader
+and four texture links, then unloads its bundles. The FBX composition keeps
+the Material at its original preload position.
+
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
 texture declarations (`any`). Setup takes explicit original/SDK/template/codec
