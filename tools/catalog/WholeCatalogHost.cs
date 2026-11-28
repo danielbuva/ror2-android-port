@@ -292,6 +292,19 @@ public static class WholeCatalogHost
         var standard = Resources.Load<TextAsset>("AndroidNativeStandardVariants");
         if (standard)
             families["Hopoo Games/Deferred/Standard"] = JObject.Parse(standard.text);
+        var materialMappings = new Dictionary<Material, JObject>();
+        JObject Mapping(Material material)
+        {
+            if (!material)
+                return CombatMaterialMapping(material, families);
+            if (!materialMappings.TryGetValue(material, out var mapping))
+            {
+                mapping = CombatMaterialMapping(material, families);
+                materialMappings.Add(material, mapping);
+            }
+            return mapping;
+        }
+
         var candidates = new JArray();
         foreach (var category in new[] { "CharacterBody", "Projectile" })
         {
@@ -314,31 +327,141 @@ public static class WholeCatalogHost
             candidates.Add(new JObject { ["id"] = -1, ["path"] = path, ["category"] = "RegisteredEffect", ["provider"] = -1 });
 
         JToken Location(string file) => locations.Values.Single(row => ((string)row["path"]).EndsWith("/" + file, StringComparison.Ordinal));
-        void Include(JToken location, string category)
+        var candidatePaths = new HashSet<string>(candidates.Select(row => (string)row["path"]), StringComparer.Ordinal);
+        var locationByPath = locations.Values.ToLookup(row => (string)row["path"], StringComparer.Ordinal);
+        void Include(string path, string category)
         {
-            var path = (string)location["path"];
-            if (!candidates.Any(row => (string)row["path"] == path))
-                candidates.Add(new JObject { ["id"] = (int)location["id"], ["path"] = path, ["category"] = category, ["provider"] = -1 });
+            if (candidatePaths.Add(path))
+            {
+                var location = locationByPath[path].FirstOrDefault();
+                candidates.Add(new JObject { ["id"] = (int?)location?["id"] ?? -1, ["path"] = path, ["category"] = category,
+                                             ["provider"] = -1 });
+            }
         }
 
         // These source effects are acquired outside the registered effect list.
-        Include(Location("MercExposeEffect.prefab"), "DirectEffect");
-        Include(Location("CrocoDiseaseImpactEffect.prefab"), "DirectEffect");
-        JObject IncludeProjectileGhost(GameObject prefab, string expectedGhost)
+        Include((string)Location("MercExposeEffect.prefab")["path"], "DirectEffect");
+        Include((string)Location("CrocoDiseaseImpactEffect.prefab")["path"], "DirectEffect");
+        var ghostBindings = new Dictionary<string, JObject>(StringComparer.Ordinal);
+        var impactBindings = new JArray();
+        void InspectProjectileGhost(GameObject prefab, string path)
         {
             var projectile = prefab ? prefab.GetComponent<RoR2.Projectile.ProjectileController>() : null;
             if (!projectile)
-                throw new Exception("Projectile controller missing for " + expectedGhost);
+            {
+                ghostBindings[path] = new JObject { ["projectile"] = path, ["status"] = "missing-controller" };
+                errors.Add(path + ": missing typed ProjectileController");
+                return;
+            }
             var ghost = addresses.Inspect(new SerializedObject(projectile), "ghostPrefabAddress", null, projectile.ghostPrefab,
                                           out var binding);
-            if (!ghost || ghost.name != expectedGhost || !ghost.GetComponent<RoR2.Projectile.ProjectileGhostController>())
-                throw new Exception("Projectile ghost binding missing for " + expectedGhost);
-            Include(locations.Values.Single(row => (string)row["path"] == AssetPath(ghost)), "ProjectileGhost");
-            return binding;
+            binding["projectile"] = path;
+            ghostBindings[path] = binding;
+            string ghostPath = (string)binding["effective"];
+            // The native controller creates the visual even when it has no follower component.
+            binding["ghostControllerPresent"] = ghost && ghost.GetComponent<RoR2.Projectile.ProjectileGhostController>();
+            if (!string.IsNullOrEmpty(ghostPath))
+            {
+                binding["status"] = "resolved";
+                Include(ghostPath, "ProjectileGhost");
+            }
+            else if (!ghost && (string)binding["addressStatus"] == "empty" && !projectile.ghostPrefab)
+                binding["status"] = "unassigned";
+            else
+            {
+                binding["status"] = "invalid";
+                errors.Add(path + ": invalid typed projectile ghost binding");
+            }
         }
 
-        var titan = AssetDatabase.LoadAssetAtPath<GameObject>((string)Location("TitanPreFistProjectile.prefab")["path"]);
-        var titanGhost = IncludeProjectileGhost(titan, "TitanPreFistGhost");
+        string IncludeImpactEffect(GameObject effect, string projectilePath)
+        {
+            if (!effect)
+                return null;
+            string path = AssetPath(effect);
+            if (string.IsNullOrEmpty(path))
+                errors.Add(projectilePath + ": projectile impact effect asset path missing for " + effect.name);
+            else
+                Include(path, "ProjectileImpactEffect");
+            return path;
+        }
+
+        void InspectProjectileImpacts(GameObject prefab, string path)
+        {
+            foreach (var impact in prefab.GetComponentsInChildren<RoR2.Projectile.ProjectileImpactExplosion>(true))
+            {
+                string impactEffect = IncludeImpactEffect(impact.impactEffect, path);
+                string explosionEffect = IncludeImpactEffect(impact.explosionEffect, path);
+                impactBindings.Add(new JObject {
+                    ["projectile"] = path,
+                    ["component"] = HierarchyPath(impact.transform),
+                    ["impactEffect"] = impactEffect,
+                    ["explosionEffect"] = explosionEffect,
+                    ["detonationEffect"] = impactEffect ?? explosionEffect,
+                    ["expiredEffect"] = IncludeImpactEffect(impact.expiredEffect, path),
+                    ["blastImpactEffect"] = IncludeImpactEffect(impact.blastImpactEffect, path)
+                });
+            }
+        }
+
+        // Projectile edges append unique visual roots for the same slot census.
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var location = candidates[i];
+            string category = (string)location["category"];
+            int provider = (int)location["provider"], id = (int)location["id"];
+            string path = (string)location["path"];
+            var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            roots.Add(new JObject { ["category"] = category, ["provider"] = provider, ["location"] = id, ["path"] = path,
+                                    ["loaded"] = (bool)root });
+            if (category == "Projectile")
+                InspectProjectileGhost(root, path);
+            if (!root)
+            {
+                errors.Add("Typed prefab missing: " + category + "/" + path);
+                continue;
+            }
+            if (category == "Projectile")
+                InspectProjectileImpacts(root, path);
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var hierarchy = HierarchyPath(renderer.transform);
+                var particle = renderer as ParticleSystemRenderer;
+                var streams = new List<ParticleSystemVertexStream>();
+                if (particle)
+                    particle.GetActiveVertexStreams(streams);
+                var materials = renderer.sharedMaterials;
+                for (int slot = 0; slot < materials.Length; slot++)
+                    AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", slot,
+                                      materials[slot]);
+                foreach (var model in root.GetComponentsInChildren<RoR2.CharacterModel>(true))
+                    foreach (var info in model.baseRendererInfos.Where(info => info.renderer == renderer))
+                    {
+                        var row = AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams,
+                                                    "CharacterModel.defaultMaterial", 0, info.defaultMaterial);
+                        row["materialAddress"] =
+                            info.defaultMaterialAddress == null ? null : Convert.ToString(info.defaultMaterialAddress.RuntimeKey);
+                    }
+                var billboard = renderer as BillboardRenderer;
+                if (billboard && billboard.billboard)
+                    AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "billboard.material", 0,
+                                      billboard.billboard.material);
+                if (particle && particle.trailMaterial)
+                    AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "trailMaterial", 0,
+                                      particle.trailMaterial);
+                if (materials.Length == 0 && !(billboard && billboard.billboard))
+                    AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", -1, null);
+            }
+        }
+        JObject RequireProjectileGhost(string projectilePath, string expectedGhost)
+        {
+            if (!ghostBindings.TryGetValue(projectilePath, out var binding) || (bool?)binding["ghostControllerPresent"] != true ||
+                Path.GetFileNameWithoutExtension((string)binding["effective"]) != expectedGhost)
+                throw new Exception("Projectile ghost binding missing for " + expectedGhost);
+            return (JObject)binding.DeepClone();
+        }
+
+        var titanGhost = RequireProjectileGhost((string)Location("TitanPreFistProjectile.prefab")["path"], "TitanPreFistGhost");
         var fireBoltConfig = AssetDatabase.LoadAssetAtPath<RoR2.EntityStateConfiguration>(
             (string)Location("EntityStates.Mage.Weapon.FireFireBolt.asset")["path"]);
         if (!fireBoltConfig)
@@ -350,53 +473,28 @@ public static class WholeCatalogHost
         if (!fireBolt.projectilePrefab || fireBolt.projectilePrefab.name != "MageFireboltBasic" ||
             JsonUtility.ToJson(fireBoltConfig) != before)
             throw new Exception("Fire Bolt state projectile configuration differs");
-        var fireBoltGhost = IncludeProjectileGhost(fireBolt.projectilePrefab, "MageFireboltGhost");
+        var fireBoltGhost = RequireProjectileGhost(AssetPath(fireBolt.projectilePrefab), "MageFireboltGhost");
         fireBoltGhost["configuration"] = AssetPath(fireBoltConfig);
-        fireBoltGhost["projectile"] = AssetPath(fireBolt.projectilePrefab);
 
-        foreach (JObject location in candidates)
+        JObject RequireProjectileDetonation(string projectilePath, string effectFile, bool useExplosionFallback = false)
         {
-            string category = (string)location["category"];
-            int provider = (int)location["provider"], id = (int)location["id"];
-            string path = (string)location["path"];
-            var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            roots.Add(new JObject { ["category"] = category, ["provider"] = provider, ["location"] = id, ["path"] = path,
-                                    ["loaded"] = (bool)root });
-            if (!root)
-            {
-                errors.Add("Typed prefab missing: " + category + "/" + path);
-                continue;
-            }
-            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
-            {
-                var hierarchy = HierarchyPath(renderer.transform);
-                var particle = renderer as ParticleSystemRenderer;
-                var streams = new List<ParticleSystemVertexStream>();
-                if (particle)
-                    particle.GetActiveVertexStreams(streams);
-                var materials = renderer.sharedMaterials;
-                for (int slot = 0; slot < materials.Length; slot++)
-                    AddCombatMaterial(rows, families, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", slot,
-                                      materials[slot]);
-                foreach (var model in root.GetComponentsInChildren<RoR2.CharacterModel>(true))
-                    foreach (var info in model.baseRendererInfos.Where(info => info.renderer == renderer))
-                    {
-                        var row = AddCombatMaterial(rows, families, id, category, path, renderer, hierarchy, particle, streams,
-                                                    "CharacterModel.defaultMaterial", 0, info.defaultMaterial);
-                        row["materialAddress"] =
-                            info.defaultMaterialAddress == null ? null : Convert.ToString(info.defaultMaterialAddress.RuntimeKey);
-                    }
-                var billboard = renderer as BillboardRenderer;
-                if (billboard && billboard.billboard)
-                    AddCombatMaterial(rows, families, id, category, path, renderer, hierarchy, particle, streams, "billboard.material", 0,
-                                      billboard.billboard.material);
-                if (particle && particle.trailMaterial)
-                    AddCombatMaterial(rows, families, id, category, path, renderer, hierarchy, particle, streams, "trailMaterial", 0,
-                                      particle.trailMaterial);
-                if (materials.Length == 0 && !(billboard && billboard.billboard))
-                    AddCombatMaterial(rows, families, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", -1, null);
-            }
+            string effectPath = (string)Location(effectFile)["path"];
+            var binding = impactBindings.OfType<JObject>().SingleOrDefault(row => (string)row["projectile"] == projectilePath);
+            string configuredField = useExplosionFallback ? "explosionEffect" : "impactEffect";
+            if (binding == null || (string)binding[configuredField] != effectPath ||
+                (string)binding["detonationEffect"] != effectPath ||
+                (useExplosionFallback && (string)binding["impactEffect"] != null) ||
+                !rows.Any(row => (string)row["root"] == effectPath))
+                throw new Exception("Projectile detonation material binding missing for " + effectFile);
+            return (JObject)binding.DeepClone();
         }
+
+        var mortarImpact = RequireProjectileDetonation((string)Location("TreebotMortar2.prefab")["path"],
+                                                       "OmniExplosionVFXTreebotMortar.prefab");
+        var fireBoltImpact = RequireProjectileDetonation(AssetPath(fireBolt.projectilePrefab), "OmniExplosionVFXQuick.prefab");
+        var drifterImpact = RequireProjectileDetonation((string)Location("DrifterJunkCubeProjectile.prefab")["path"],
+                                                        "DrifterBluntForceSlamGroundImpVFX.prefab", useExplosionFallback: true);
+
         var vagrantSkin = AssetDatabase.LoadAssetAtPath<RoR2.SkinDef>((string)Location("skinVagrantBodyDefault.asset")["path"]);
         if (!vagrantSkin)
             throw new Exception("Vagrant default skin missing");
@@ -412,16 +510,19 @@ public static class WholeCatalogHost
         var vagrant = Location("VagrantBody.prefab");
         if (!material || AssetPath(skinInfo.renderer) != (string)vagrant["path"])
             throw new Exception("Vagrant default skin body material binding missing");
-        var skinMaterial = AddCombatMaterial(rows, families, (int)vagrant["id"], "CharacterBody", (string)vagrant["path"], skinInfo.renderer,
+        var skinMaterial = AddCombatMaterial(rows, Mapping, (int)vagrant["id"], "CharacterBody", (string)vagrant["path"], skinInfo.renderer,
                                              HierarchyPath(skinInfo.renderer.transform), null, new List<ParticleSystemVertexStream>(),
                                              "SkinDefParams.defaultMaterial", 0, material);
         skinMaterial["materialAddress"] = reference == null ? null : Convert.ToString(reference.RuntimeKey);
 
         var result = new JObject {
             ["scope"] =
-                "Native-provider bodies and projectiles, registered effects and targeted source bindings; Android rendering and reference comparison remain open",
+                "Native-provider bodies and projectiles, configured ghosts and ProjectileImpactExplosion effects, registered effects and targeted source bindings; Android rendering and reference comparison remain open",
             ["roots"] = roots, ["slots"] = rows, ["errors"] = errors,
+            ["projectileGhostBindings"] = new JArray(ghostBindings.Values),
+            ["projectileImpactBindings"] = impactBindings,
             ["titanGhostBinding"] = titanGhost, ["fireBoltGhostBinding"] = fireBoltGhost, ["vagrantSkinBinding"] = skinBinding,
+            ["mortarImpactBinding"] = mortarImpact, ["fireBoltImpactBinding"] = fireBoltImpact, ["drifterImpactBinding"] = drifterImpact,
             ["surfaceObservationContract"] = VerifySurfaceMaterialObservation()
         };
         File.WriteAllText(outputPath, result.ToString());
@@ -433,7 +534,13 @@ public static class WholeCatalogHost
         // No session, catalog, scene or presentation adapter is initialized.
         var type = typeof(PortSession).GetNestedType("TeleporterWorldSession", System.Reflection.BindingFlags.NonPublic);
         var observer = Activator.CreateInstance(type, new object[] { null });
-        var method = type.GetMethod("ObserveSurfaceMaterial");
+        PortSession.SurfaceMaterialObservation Observe(Material source)
+        {
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
+                                                         System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.OptionalParamBinding;
+            return (PortSession.SurfaceMaterialObservation)type.InvokeMember("ObserveSurfaceMaterial", flags, null, observer,
+                                                                            new object[] { source });
+        }
         var material = new Material(Shader.Find("Standard"));
         var texture = new Texture2D(2, 2) { name = "Authored census fixture texture" };
         try
@@ -443,13 +550,13 @@ public static class WholeCatalogHost
             material.SetTexture("_MainTex", texture);
             material.SetTextureScale("_MainTex", new Vector2(2, 3));
             material.EnableKeyword("_EMISSION");
-            var row = (PortSession.SurfaceMaterialObservation)method.Invoke(observer, new object[] { material, true });
+            var row = Observe(material);
             var main = row.properties.Single(property => property.name == "_MainTex");
             if (row.material != material.name || row.shader != material.shader.name || row.queue != 3123 ||
                 row.supported != material.shader.isSupported || !row.keywords.Contains("_EMISSION") ||
                 main.textureId != texture.GetInstanceID() || main.width != 2 || main.height != 2 ||
                 main.scale != new Vector2(2, 3) || material.GetTexture("_MainTex") != texture || material.renderQueue != 3123 ||
-                method.Invoke(observer, new object[] { null, true }) != null)
+                Observe(null) != null)
                 throw new Exception("Live surface material observation contract failed");
             VerifyEffectiveSurfaceProperties(type, material);
             return new JObject { ["liveMaterialState"] = true, ["nullSlot"] = true, ["sourceUnchanged"] = true,
@@ -512,7 +619,7 @@ public static class WholeCatalogHost
             UnityEngine.Object.DestroyImmediate(root);
         }
     }
-    static JObject AddCombatMaterial(JArray rows, Dictionary<string, JObject> families, int id, string category, string root,
+    static JObject AddCombatMaterial(JArray rows, Func<Material, JObject> mapping, int id, string category, string root,
                                      Renderer renderer, string hierarchy, ParticleSystemRenderer particle,
                                      List<ParticleSystemVertexStream> streams, string binding, int slot, Material material)
     {
@@ -550,7 +657,7 @@ public static class WholeCatalogHost
                           ["particleMesh"] = particle && particle.mesh ? AssetDatabase.GetAssetPath(particle.mesh) : null,
                           ["particleMeshes"] = new JArray(meshes.Select(mesh => mesh ? AssetDatabase.GetAssetPath(mesh) : null)),
                           ["vertexStreams"] = new JArray(streams.Select(stream => stream.ToString())),
-                          ["mapping"] = CombatMaterialMapping(material, families) };
+                          ["mapping"] = mapping(material) };
         rows.Add(row);
         return row;
     }

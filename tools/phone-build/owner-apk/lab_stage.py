@@ -15,7 +15,13 @@ JOBS = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(JOBS)
 ACCEPTED_OUTPUT = "tools/phone-build/accepted-output/"
 SCOREBOARD = ACCEPTED_OUTPUT + "whole_game_scoreboard.py"
-PRODUCER_SUPPORT = {SCOREBOARD: tuple(ACCEPTED_OUTPUT + name for name in ("unity_bundle.py", "unity_write.py"))}
+PRODUCER_SUPPORT = {
+    SCOREBOARD: tuple(ACCEPTED_OUTPUT + name for name in ("unity_bundle.py", "unity_write.py")),
+    ACCEPTED_OUTPUT + "texture_native_profile.py": tuple(
+        ACCEPTED_OUTPUT + name + ".py"
+        for name in ("bundle_preload", "mesh_produce", "object_produce", "record_produce", "texture_produce", "unity_bundle", "unity_mesh", "unity_write")
+    ),
+}
 PRODUCERS = {name for name in JOBS.PRODUCERS if name.startswith(ACCEPTED_OUTPUT)} | PRODUCER_SUPPORT.keys()
 UPDATES = JOBS.UPDATES
 

@@ -170,7 +170,13 @@ For the scheduled phone conversion, use `operation: nightly` and
 fields. Set `phone_source` to a two-or-more-component folder path relative to
 the phone's Downloads directory, for example `LabInput/Originals`. The runner
 verifies that existing folder against `current_inventory` and imports it
-through the system picker. Use a fresh `done_file` under
+through the system picker. For releases with a signed acquired-tool inventory,
+set `acquire_on_phone: true`. Stage just the folder-sourced tools in a sibling
+`Tools` folder under the first component of `phone_source`, for example
+`LabInput/Tools`. Use the signed paths without their `acquired/` prefix.
+The installer imports that folder through the picker and downloads tools with
+signed HTTPS URLs. A release with only HTTPS tools needs no `Tools` folder.
+Use a fresh `done_file` under
 `work/coordination/p1-nightly/<UTC date>/`. Dry-run before joining the device
 queue, then detach on the grant.
 
