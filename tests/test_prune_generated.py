@@ -36,6 +36,7 @@ class PruneGeneratedTests(unittest.TestCase):
         self.root = Path(self.temporary.name).resolve()
         self.work = self.root / "work"
         self.addCleanup(self.temporary.cleanup)
+        self.sweep_ci_scratch = self.enterContext(patch.object(prune, "sweep_ci_scratch"))
         prune.ROOT = self.root
         (self.root / "PORTING_STATE.md").write_text("Latest APK `" + PROTECTED + "`\n")
 
@@ -131,6 +132,22 @@ class PruneGeneratedTests(unittest.TestCase):
         planner.aggressive_files()
         return planner
 
+    def test_aggressive_cli_requires_explicit_dedupe_flag(self):
+        self.work.mkdir()
+        for flags in ([], ["--apply"], ["--dedupe"], ["--dedupe", "--apply"]):
+            with (
+                self.subTest(flags=flags),
+                patch.object(sys, "argv", [str(SCRIPT), "--aggressive", "--json", *flags]),
+                patch.object(prune.subprocess, "check_output", return_value=str(self.root / ".git")),
+                patch.object(prune, "volume_available", return_value=1024),
+                patch.object(prune, "duplicate_plan", return_value=[]) as duplicates,
+                redirect_stdout(io.StringIO()) as output,
+            ):
+                prune.main()
+                enabled = "--dedupe" in flags
+                self.assertEqual(json.loads(output.getvalue())["dedupe"], enabled)
+                self.assertEqual(duplicates.call_count, int(enabled))
+
     def test_aggressive_apks_require_48_hours_and_respect_protection(self):
         from hashlib import sha256
 
@@ -164,6 +181,7 @@ class PruneGeneratedTests(unittest.TestCase):
         with patch.object(prune, "volume_available", side_effect=[1000, 2024]):
             report = prune.apply(planner.items, self.work, self.work / "cleanup-analysis/ledger.json", aggressive=True)
         self.assertEqual(report["volume_available_delta_bytes"], 1024)
+        self.sweep_ci_scratch.assert_called_once_with()
         self.assertTrue((installed / "old.apk").is_file())
         self.assertEqual(planner.items[0]["skipped"], "APK became pinned after planning")
 

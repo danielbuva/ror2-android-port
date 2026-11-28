@@ -62,9 +62,9 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "0127b5448164d88976a484153c9b047a815acb1d0b304c4378ce4bb5a026f79e"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "4152fab7d75fa258f18273aa59490c62a40a46f40388f84086736e6253b04ef7"
 STAGE_PIN_TOOL_SHA256 = "e58420236cadec75e47b959e2ed0dd36dace0d55638b462f552422af9d236b28"
-REQUEST_PIN_TOOL_SHA256 = "b4c8abdc7e98be1db34c1b20f35abcc154487caa36aaafafd5b48fc70fb47a5e"
+REQUEST_PIN_TOOL_SHA256 = "e0595fa10e969ffbf8aadf85d7d0fcfa3a9f7b122775cfabfffab90b0131549a"
 MANAGED_PRODUCER_SHA256 = "1d71425de0cc4f4dc2cf7b7e96c3554253514ec05b1ef2e2a655866aca548892"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
@@ -82,10 +82,10 @@ OWNER_SOURCE_HASHES = {
     "../../runtime/session/PortSession.cs": "fd120d35f52b93c285fd356b5455d7c925c8907164260e6945ee8d1c82a418b4",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "0c08a4e06977e68ec5bc1acc20014f6cdabb7d3f71dd2874caaa6455f3f9b059",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
-    "../../runtime/world/IntegratedWorldBoundary.cs": "52c6dfb73273c281e4532735cf66e4fde7c100d01142dd10262ba62030adc426",
+    "../../runtime/world/IntegratedWorldBoundary.cs": "c5d6f4f2a814d28c64f6742a2b222cb10d61a74021bdb451f35cddd06f96d6ce",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "d1d197dc12526614f37b9c3c3699be3bf16a96315abd3ac698c15b4270bfe8b6",
     "../../runtime/world/SurvivorSkillObserver.cs": "00f496749c33bdb1c2fcc7ec8fa87c3abb8abb7e0048b7e1404aa9505d061e6b",
-    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "31cceff4ae1ea0df0b94fc6a63fc07c1e687f38bde9e12fd9c1330118997aa7d",
+    "bootstrap/GameAudioOriginalAcceptedRequestProvider.cs": "de6534904c994e43301d070a34997cf9dc716f9caec054453c1df3567a461f5a",
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "fdce9ba21e249c7c9a8d2eed788c7561907a5327f9e9b8dc28ce23334e71ee70",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "b70f8914fbc05eb6a88729b25c63ed10aee20256604cc259b3d8a5134705a7cf",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
@@ -946,6 +946,7 @@ def generate_request_contract(
     passive_pcm_capture_after_authority_skill_requested: bool = False,
     *,
     owner_work: Path | None = None,
+    built_native_sha256: str | None = None,
 ) -> tuple[Path, Path]:
     """Create the pre-derivative input contract and same-build request.
 
@@ -1016,7 +1017,7 @@ def generate_request_contract(
         "adapted_init_sha256": adapted_init,
     }
     request_generator = load_module(TOOLS / "generate_accepted_request_pin.py", "audio_request_pin_contract")
-    expected = request_generator.expected_sources(owner_work)
+    expected = request_generator.expected_sources(owner_work, built_native_sha256=built_native_sha256)
     rows = []
     for role, path in members.items():
         resolved = path.resolve(strict=True)

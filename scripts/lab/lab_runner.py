@@ -130,6 +130,7 @@ class Runner:
         self.leases = self.repo / ".local/orchestrator/leases"
         self.resume_state = None
         self.reattached = False
+        self.queue_receipt = {}
 
     def secrets(self):
         return [*self.devices.values(), str(self.repo), str(Path.home())]
@@ -178,11 +179,13 @@ class Runner:
             raise CommandError("device battery observation incomplete")
         return int(values["level"]), int(current), int(values["temperature"])
 
-    def take_lease(self, alias, serial, *, workstream="lab-runner"):
+    def take_lease(self, alias, serial, *, workstream="lab-runner", queued=False):
         lease = self.leases / serial
         try:
             lease.mkdir(parents=True)
         except FileExistsError:
+            if queued:
+                raise
             if self.resume_state is None:
                 raise CommandError(f"device {alias} is leased; retry after its owner releases it") from None
             owner = json.loads((lease / "lab-runner.json").read_bytes())
@@ -273,7 +276,7 @@ class Runner:
                 rows.append(f"{alias}: unreachable ({type(error).__name__})")
         return "\n".join(rows)
 
-    def execute(self, request, *, local_checkout=None, workstream=None, local_ref=False):
+    def execute(self, request, *, local_checkout=None, workstream=None, local_ref=False, queued=False):
         if request["job"] == "status":
             return 0, self.status()
         serial = None
@@ -286,7 +289,19 @@ class Runner:
         lease = None
         try:
             if serial:
-                if workstream:
+                if queued:
+                    from device_queue import DeviceQueue
+
+                    started = time.monotonic()
+
+                    def acquire():
+                        # Remember the lease even if the following cursor write fails.
+                        nonlocal lease
+                        lease = self.take_lease(request["device"], serial, workstream=workstream, queued=True)
+
+                    DeviceQueue(self.leases.parent, serial).wait(acquire)
+                    self.queue_receipt["queue_wait_seconds"] = time.monotonic() - started
+                elif workstream:
                     self.require_grant(serial, workstream)
                     lease = self.take_lease(request["device"], serial, workstream=workstream)
                 else:
@@ -338,6 +353,8 @@ class Runner:
                 finally:
                     if not (lease / "retain.json").exists():
                         shutil.rmtree(lease, ignore_errors=True)
+                    if queued:
+                        self.queue_receipt["lease_released"] = not lease.exists()
             if local_checkout is None:
                 self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
             self.run([sys.executable, "scripts/prune-generated.py", "--apply", "--aggressive"], local_checkout or self.repo, timeout=1800)
@@ -429,7 +446,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
             # The signed native producer alone took 9,158 seconds in J1512.
             command["args"].extend([f"--{operation}-request", str(Path(path).resolve()), "--timeout", str(STAGED_UPDATE_STEP_TIMEOUT)])
             command["timeout_seconds"] = 2 * STAGED_UPDATE_STEP_TIMEOUT + 3000 if operation == "nightly" else 3 * STAGED_UPDATE_STEP_TIMEOUT + 1800
-            if operation == "staged-update" and request.get("acquire_on_phone") is True:
+            if request.get("acquire_on_phone") is True:
                 command["timeout_seconds"] += STAGED_UPDATE_STEP_TIMEOUT
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])
@@ -548,7 +565,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
     return int(not result["success"])
 
 
-def local_emission(path, *, dry_run=False, resume=False, restage=False, workstream=None, strict_battery=False):
+def local_emission(path, *, dry_run=False, resume=False, restage=False, workstream=None, strict_battery=False, queued=False, detach=False):
     """Private request entry point; same script/worktree/lease owner as /lab."""
     request = json.loads(Path(path).read_bytes())
     configuration = request["runner"]
@@ -556,12 +573,32 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
     done = Path(request["done_file"])
     if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(repo / "work") or done.exists():
         raise ValueError("emission-new-absolute-work-done-file-required")
+    if queued and (not workstream or not re.fullmatch(r"[a-z0-9-]+", workstream) or resume or restage):
+        raise ValueError("New queued emission jobs require a workstream and fresh staging")
+    if detach and not queued:
+        raise ValueError("Detached emission requires --queue")
     if dry_run:
         spec = importlib.util.spec_from_file_location("lab_toolhost_emission", Path(__file__).with_name("toolhost_emission.py"))
         operation = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(operation)
         _, files = operation.load_request(path)
         print(json.dumps(dict(success=True, dry_run=True, files=len(files))))
+        return 0
+    if detach:
+        done.parent.mkdir(parents=True, exist_ok=True)
+        with done.with_suffix(".job.json").open("x") as reservation:
+            json.dump(dict(done_file=str(done)), reservation)
+        command = [sys.executable, str(Path(__file__).resolve()), "--emission-request", str(Path(path).resolve()), "--workstream", workstream, "--queue"]
+        if strict_battery:
+            command.append("--strict-battery")
+        try:
+            with done.with_suffix(".runner.log").open("w") as log:
+                subprocess.Popen(command, cwd=repo, start_new_session=True, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
+        except OSError as error:
+            done.write_text(json.dumps(dict(success=False, error=str(error))) + "\n")
+            print("WAITING done-file " + str(done), flush=True)
+            return 1
+        print("WAITING done-file " + str(done), flush=True)
         return 0
     result = dict(success=False)
     runner = Runner(repo, {}, strict_battery=strict_battery)
@@ -573,6 +610,10 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
 
     previous = {number: signal.signal(number, interrupt) for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)}
     try:
+        if queued:
+            from device_session import source_environment
+
+            source_environment(repo)
         local_ref = configuration.get("local_ref", False)
         if local_ref and (local_ref is not True or not workstream):
             raise CommandError("local emission commit requires a dispatcher workstream")
@@ -590,7 +631,7 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
             command += " --resume-emission"
         if restage:
             command += " --resume-emission --restage-emission" if not resume else " --restage-emission"
-        code, _ = runner.execute(parse_command(command), workstream=workstream, local_ref=local_ref)
+        code, _ = runner.execute(parse_command(command), workstream=workstream, local_ref=local_ref, queued=queued)
         operation = done.with_suffix(".operation.json")
         if operation.exists():
             result.update(json.loads(operation.read_bytes()))
@@ -598,6 +639,7 @@ def local_emission(path, *, dry_run=False, resume=False, restage=False, workstre
     except BaseException as error:
         result.update(success=False, error=str(error) or type(error).__name__)
     finally:
+        result.update(runner.queue_receipt)
         done.parent.mkdir(parents=True, exist_ok=True)
         temporary = done.with_suffix(done.suffix + ".tmp")
         temporary.write_text(json.dumps(result, indent=2) + "\n")
@@ -693,10 +735,12 @@ if __name__ == "__main__":
 
         parser = argparse.ArgumentParser(description="Current shared device runner: pinned bundle emission or signed-code conversion")
         parser.add_argument("--emission-request", required=True)
-        parser.add_argument("--workstream", help="Require this dispatcher grant before taking the device lease")
+        parser.add_argument("--workstream", help="Owner of the dispatcher grant or queued job")
+        parser.add_argument("--queue", action="store_true", help="Wait for the device at the head of the shared FIFO")
         parser.add_argument("--strict-battery", action="store_true", help="Apply standard charge limits even when a local override is configured")
         mode = parser.add_mutually_exclusive_group()
         mode.add_argument("--dry-run", action="store_true")
+        mode.add_argument("--detach", action="store_true", help="Start a queued job in a new session and publish its terminal done-file")
         mode.add_argument("--resume-emission", action="store_true")
         mode.add_argument("--restage-emission", action="store_true", help="Replace confirmed-terminal owned staging with newly pinned producers/inputs")
         mode.add_argument("--refresh-emission-manifest", metavar="CHECKOUT", help="Host-only: repin repo producers from a clean committed checkout")
@@ -714,6 +758,8 @@ if __name__ == "__main__":
                 restage=arguments.restage_emission,
                 workstream=arguments.workstream,
                 strict_battery=arguments.strict_battery,
+                queued=arguments.queue,
+                detach=arguments.detach,
             )
         )
     sys.exit(main())

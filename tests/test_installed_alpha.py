@@ -6,7 +6,7 @@ import shlex
 import sys
 import tempfile
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
@@ -307,23 +307,64 @@ class InstalledAlphaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
             select([pin, pin], self.root, inputs)
 
-    def test_staged_on_phone_acquisition_checks_receipt_and_visible_result(self):
-        staged = staged_alpha_update.StagedUpdate.__new__(staged_alpha_update.StagedUpdate)
-        staged.installer = Mock(PACKAGE="dev.ror2lab.installertest")
-        staged.require = Mock()
-        staged.acquired = {"acquired/android-sdk/compiler.txt": None}
+    def test_nightly_acquires_signed_tools_from_phone_folder_and_https(self):
+        apk, digest, version, baseline, _ = self.stage_update_pair()
+        installer = Mock(PACKAGE="dev.ror2lab.installertest")
+        original = {"path": "original", "bytes": 3, "sha256": "a" * 64}
+        inventory = self.root / "game.json"
+        inventory.write_text(json.dumps({"steam": {"buildid": 1}, "files": [dict(path="original", size=3, sha256=original["sha256"])]}))
+        manifest = {"schema": 1, "game_version": "Steam 1", "files": [original]}
+        folder_pin = {"bytes": 4, "sha256": "b" * 64}
+        download_pin = {"bytes": 5, "sha256": "c" * 64, "url": "https://test.invalid/zipflinger.jar"}
+        plan = {
+            "supported_versions": [{"manifest": manifest, "manifest_sha256": "d" * 64}],
+            "workspace_bytes": 100,
+            "acquired_inputs_sha256": "e" * 64,
+        }
+        release = {"input_plan": plan, "acquired_inputs": {"acquired/compiler": folder_pin, "acquired/zipflinger.jar": download_pin}}
+        request = {
+            "installer_apk": apk,
+            "installer_sha256": digest,
+            "installer_version": version,
+            "baseline_release": baseline,
+            "game_label": "Fixture",
+            "current_inventory": inventory,
+            "phone_source": "LabInput/Originals",
+            "acquire_on_phone": True,
+        }
+
+        def require(condition, reason):
+            if not condition:
+                raise ValueError(reason)
+
+        installer.run.return_value = b"fixture installer"
+        installer.HostTools.return_value.build = self.root
+        with patch.object(staged_alpha_update, "preflight_releases", return_value={"baseline": release}):
+            staged = staged_alpha_update.StagedUpdate(installer, require, request, nightly=True)
         staged.choose = Mock()
+        staged.verify_tree = Mock()
         staged.verify_acquired = Mock()
         staged.require_visible_status = Mock()
         phone = Mock(timeout=1)
-        pin = "a" * 64
-        phone.read.return_value = {"state": "TOOLS_READY", "inventory_sha256": pin}
+        phone.read.return_value = {"state": "TOOLS_READY", "inventory_sha256": plan["acquired_inputs_sha256"]}
 
-        staged.acquire_tools(phone, {"acquired_inputs_sha256": pin})
+        staged.stage(phone)
+        staged.acquire_tools(phone, plan)
+        staged.cleanup(phone)
 
+        self.assertEqual(
+            staged.verify_tree.call_args_list,
+            [
+                call(phone, "/sdcard/Download/LabInput/Originals", {"original": original["sha256"]}),
+                call(phone, "/sdcard/Download/LabInput/Tools", {"compiler": folder_pin["sha256"]}),
+            ],
+        )
+        self.assertFalse(staged.acquired)
+        self.assertEqual(staged.tool_stage_bytes, 0)
+        self.assertEqual(staged.acquired_bytes, 9)
+        phone.shell.assert_called_once_with("run-as", installer.PACKAGE, "test", "!", "-e", "files/owner-input/acquired", label="staged-acquired-must-be-fresh")
         staged.choose.assert_called_once_with(phone, "tree", "Tools", tools=True)
         phone.tap.assert_called_once_with("Acquire / resume required tools")
-        staged.require.assert_called_once_with(True, "staged-acquired-receipt-mismatch")
         staged.verify_acquired.assert_called_once_with(phone)
         staged.require_visible_status.assert_called_once_with(phone, "Required tools: Required tools verified in private storage.")
         staged.installer.DIAGNOSTICS.write.assert_called_once()

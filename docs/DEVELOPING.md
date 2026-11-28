@@ -9,14 +9,24 @@ Current independent prepared builds use [build lanes](build-lanes.md):
 `./dev lane --action create --name NAME`, then `LAB_LANE=NAME ./dev …`.
 
 Shared device runs use the current `./dev device-session --request <JSON>`
-entry point. Validate with `--dry-run`, then use `--detach` after the dispatcher
-grants the device. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
+entry point. Validate with `--device SERIAL --queue --dry-run`, then submit
+with `--device SERIAL --queue --detach`. The detached job takes its turn in
+the device FIFO and prints the absolute terminal receipt path. Existing grants
+continue to work with `--device SERIAL --detach`. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
 evidence rules. For disposable APKs, supply `canonical_root`, `output` (under
 its `work/`), `workstream`, `package`, `apk`, `apk_sha256` and `duration_seconds`.
-Select the granted serial with `--device` or the request's `serial` field.
+Select the device serial with `--device` or the request's `serial` field.
 Set `adopted_install: true` for adopted-only placement. Omit it when using the
-second Nova's internal storage profile. Other optional fields include
-`cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
+second Nova's internal storage profile. Shared installs default to `auto`.
+This selects incremental delivery when internal storage, a v4 `.idsig` sidecar
+and device support are available. Set `install_transport` to `streaming` or
+`incremental` for a strict transport comparison. Use `mode: "install-launch"`
+with a standalone lab APK and an absent lab package to measure ADB install
+time and time from install dispatch to a verified launcher PID. The runner
+removes the installation after the measurement. `mode: "install-only"` uses the
+same disposable package and measures ADB install time with the OLEDs asleep.
+Use it on Thor while the physical top-only launch gate is unavailable. Other
+optional fields include `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
 `settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`,
 or fixture modes `shader-draw`, `shader-compute` and `texture-readback`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
@@ -375,7 +385,13 @@ fixtures run in one serial group, not concurrently against their shared outputs.
 Reports contain local diagnostics: review them before sharing. Neither runner
 mode replaces toolchain or device acceptance.
 
-With `git config core.hooksPath scripts/git-hooks` installed, the pre-push
+Use `./dev publish` from a clean topic branch to fetch and merge `origin/main`,
+commit journal and tracked-source pin repairs when needed, and push the prepared
+branch ref through the lab pre-push hook. Use `./dev publish --pr` to open or
+find its PR to `main` and print `AUTOMERGE <n>` for the merge bot. Rerunning the
+command after a PR creation error reuses the existing branch and open PR.
+
+For direct pushes with `git config core.hooksPath scripts/git-hooks` installed, the pre-push
 hook also reconciles a clean checked-out topic's journal against its merged
 `origin/main`. It keeps main's entries intact and, when needed, creates a new
 local commit containing only the renumbered journal and regenerated index. Git
@@ -399,8 +415,9 @@ platform identity key the dependency environment; warm reuse validates installed
 package metadata. No test result, working tree, `work/`, generated lab output or
 game material is cached. Cache setup locks are released before tests so independent
 pushes do not share a running workspace. Darwin keeps the Unity-read sandbox and
-case-sensitive temporary-volume setup/cleanup. Linux removes scratch before exit;
-macOS retains asynchronous volume cleanup. `HOST_TEST_WORKERS` controls local
+case-sensitive temporary-volume setup. Local CI cleans scratch synchronously
+on exit. CI startup and aggressive pruning sweep recorded inactive scratch
+older than 30 minutes. `HOST_TEST_WORKERS` controls local
 concurrency (default 2); GitHub uses 4. Set 1 to diagnose serial behavior, not to
 skip a check.
 

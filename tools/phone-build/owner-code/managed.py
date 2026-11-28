@@ -210,7 +210,21 @@ def stage_source_audio(work, game, output, *, decoder=None):
 
 
 def audio_assemblies(
-    out, sdk, inputs, ordinary, staged, prefab, bank, init, managed_paths, manifest, *, owner_work=None, sdk_compiler=None, pcm_after_skill=False
+    out,
+    sdk,
+    inputs,
+    ordinary,
+    staged,
+    prefab,
+    bank,
+    init,
+    managed_paths,
+    manifest,
+    *,
+    owner_work=None,
+    sdk_compiler=None,
+    pcm_after_skill=False,
+    built_native_sha256=None,
 ):
     destination = out / "audio"
     destination.mkdir()
@@ -234,6 +248,7 @@ def audio_assemblies(
         passive_pcm_capture_music_output_requested=not pcm_after_skill,
         passive_pcm_capture_after_authority_skill_requested=pcm_after_skill,
         owner_work=owner_work,
+        built_native_sha256=built_native_sha256,
     )
     stage_pin = audio.load_module(audio.TOOLS / "generate_runtime_stage_pin.py", "source_owner_stage_pin")
     request_pin = audio.load_module(audio.TOOLS / "generate_accepted_request_pin.py", "source_owner_request_pin")
@@ -244,7 +259,7 @@ def audio_assemblies(
         raise ValueError("existing runtime request/stage generator drift")
     stage_source, request_source = generated / "GameAudioOriginalGeneratedStagePin.cs", generated / "GameAudioOriginalGeneratedRequestPin.cs"
     stage_pin.generate(staged / "stage-receipt.json", staged, stage_source, prefab, bank, init / "Init.bnk", init / "receipt.json", owner_work=owner_work)
-    request_pin.emit(request, contract, staged / "stage-receipt.json", request_source, owner_work=owner_work)
+    request_pin.emit(request, contract, staged / "stage-receipt.json", request_source, owner_work=owner_work, built_native_sha256=built_native_sha256)
     contents = sdk / "Unity.app/Contents"
     mono, csc = contents / "MonoBleedingEdge/bin/mono", contents / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
     named = {Path(k).name: p for k, p in managed_paths.items()}
@@ -286,12 +301,22 @@ def audio_assemblies(
         for p in sorted((audio.SOURCE / "bootstrap").glob("*.cs"))
         if p.name not in {"GameAudioOriginalGeneratedRequestPin.cs", "GameAudioOriginalGeneratedStagePin.cs"}
     ] + [request_source, stage_source]
+    native_options = []
+    if built_native_sha256 is not None:
+        built_pin = generated / "GameAudioOriginalNativeBuildPin.cs"
+        built_pin.write_text(
+            "// The signed release used a verified Wwise native producer.\n"
+            "internal static class GameAudioOriginalNativeBuildPin { "
+            f'internal const string LibrarySha256 = "{built_native_sha256}"; }}\n'
+        )
+        bootstrap_sources.append(built_pin)
+        native_options = ["-define:ROR2LAB_BUILT_WWISE"]
     if sdk_compiler:
         options = ["-target:library", "-langversion:9", "-define:UNITY_ANDROID"]
         env = dict(os.environ, TMPDIR=str(out / "tmp"))
         sdk_compiler.compile(observer, [audio.SOURCE / "core/OriginalOwnerProbeObserver.cs"], [sdk_compiler.corelib], options, env=env)
         sdk_compiler.compile(core, core_sources, [*core_refs, observer], options, env=env)
-        sdk_compiler.compile(bootstrap, bootstrap_sources, [*refs, core, observer], options, env=env)
+        sdk_compiler.compile(bootstrap, bootstrap_sources, [*refs, core, observer], [*options, *native_options], env=env)
         sdk_compiler.verify()
     else:
         audio.compile_observer(mono, csc, observer, destination / "observer.log")
@@ -302,7 +327,7 @@ def audio_assemblies(
             csc,
             bootstrap,
             bootstrap_sources,
-            bootstrap_options,
+            [*bootstrap_options, *native_options],
             [core, bootstrap_refs["AK.Wwise.Unity.API.dll"], observer],
             destination,
         )
@@ -520,7 +545,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
         native.write(output / "result.json", result)
 
 
-def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pcm_after_skill=False):
+def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pcm_after_skill=False, wwise_build=None):
     work, sdk = native.canonical(work), native.canonical(sdk)
     output = Path(output)
     if not signed_audio and work != (ROOT / "work").resolve():
@@ -532,10 +557,17 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pc
     if state[0] != profile["input_id"]:
         raise ValueError("unsupported legitimate source input")
     inputs = bind_paths(values, signed_audio=signed_audio)
+    built_native_sha256 = None
+    if wwise_build is not None:
+        if not signed_audio:
+            raise ValueError("Wwise build receipts are only admitted for signed audio")
+        producer = load(HERE / "wwise_native.py", "managed_wwise_native")
+        built_native_sha256 = producer.verify_build(inputs["wwise_native"], wwise_build)
+    expected_native_sha256 = built_native_sha256 or audio.LINEAGE["native_library_sha256"]
     if (
         native.sha(inputs["newtonsoft"]) != profile["newtonsoft_sha256"]
         or (not signed_audio and native.sha(inputs["decoder"]) != profile["decoder_sha256"])
-        or native.sha(inputs["wwise_native"]) != audio.LINEAGE["native_library_sha256"]
+        or native.sha(inputs["wwise_native"]) != expected_native_sha256
     ):
         raise ValueError("qualified generic package/decoder/licensed native input differs")
     native.disjoint(output, [sdk, state[1], work / "config", work / "inventory", *inputs.values()])
@@ -629,8 +661,11 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pc
         supplied.mkdir()
         native_copy = supplied / "libAkSoundEngine.so"
         shutil.copyfile(inputs["wwise_native"], native_copy)
-        if native.sha(native_copy) != audio.LINEAGE["native_library_sha256"]:
+        if native.sha(native_copy) != expected_native_sha256:
             raise ValueError("supplied licensed native copy differs")
+        if wwise_build is not None:
+            result["wwise_build_receipt_sha256"] = wwise_build["sha256"]
+            result["wwise_native_sha256"] = expected_native_sha256
         audio_outputs = audio_assemblies(
             output,
             sdk,
@@ -645,6 +680,7 @@ def run(work, sdk, values, output, *, signed_audio=False, android_tools=None, pc
             owner_work=owner_work,
             sdk_compiler=compiler,
             pcm_after_skill=pcm_after_skill,
+            built_native_sha256=built_native_sha256,
         )
         observed_game = raw / "game-original-owner-audio-observed.dll"
         if observed_game not in managed_paths.values():

@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1580 — Verify v4 incremental lab APK installation
+
+2026-11-28 UTC. The pinned Unity editor emitted an APK with a verified v4
+sidecar. The shared runner installed the v4-signed J1500 APK on the Thor
+with `adb install --incremental --wait` and verified internal placement.
+ADB took 31.047 s incremental and 31.475 s streaming for the same 1.1 GiB
+APK. Both tests began at 31 °C and ended with package removal, OLED sleep
+and lease release. Adopted installs keep the streaming path.
+APK SHA-256 `56840f9b2c1a4921ae6ee7ac8b594604b587b477435da28fcc7b5cad6d46ac57`.
+Evidence `work/coordination/p1-phonepipe/2026-11-27/incremental-thor/`.
+Install-to-launch timing remains open behind the J1071 lower-panel gate.
+
 ## J1559 — Play converted Distant Roost with source occlusion data
 
 2026-11-27. The staged converter retains the original native occlusion data,
@@ -5129,3 +5141,170 @@ in `intersection-vulkan-draw-device-01/terminal.done.json`.
 Peak SoC was 60.1 °C with 0 s above 80 °C and a 28 °C admission battery.
 The runner removed the fixture, slept the OLED and released the lease.
 Linked native Materials and depth-fade rendering remain open.
+
+## J1569 — Run signed Cloud Intersection Remap translation on Android
+
+2026-11-27. The signed Android graphics producer emitted the original-derived
+Cloud Intersection Remap pack used in the J1565 Vulkan draw. Object SHA-256
+`25a6fd529a61b5ea840ee30e104d70f6069ce82a4c6e3ba472b35a0c2e931869`.
+Toolhost APK SHA-256 `334c8bcdd1de1c1c24a57165747e3a9885c350c868c982c0a719dbbeb2d6a662`.
+The producer took 29.1 s with 88 MiB peak child RSS and 9.7 MiB net stage
+storage. Peak CPU/GPU was 63.7 °C with 0 s above 80 °C.
+The runner removed the disposable toolhost and released the lease.
+Evidence `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/signed-cloud-device-02/terminal.done.json`.
+Linked gameplay and depth-fade rendering remain open.
+
+## J1570 — Translate and draw original multipass terrain shaders on Vulkan
+
+2026-11-27. The signed DXBC translator retained 12 passes across PaintHeight,
+Cutout/VertexLit and TerrainLayerUtils. Unity 2021.3.45f2 typed-loaded all three.
+APK `14020d89a4d262550e531219116eefe6135ff0a71ef0df15d8e389ea06ba2d13`
+confirmed Vulkan TerrainLayerUtils pass 0 Max blend over blue
+`(109,109,255,255)` and pass 2 layer copy `(17,109,223,255)`.
+Signed Android emission matched host object pack
+`5f9ac89f10ea8c33703e2fbee817a1233fb486419c0316cf2327a2a4277d65e5`
+in 28.2 s, with 88 MiB peak child RSS and 9.0 MiB net stage storage.
+Evidence: `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+`multipass-terrain-draw-device-02/terminal.done.json` and
+`signed-multipass-device-01/terminal.done.operation.json`. Linked Terrain draws
+and whole-game scoring remain open.
+## J1568 — Verify signed native BC3 texture production on Android
+
+2026-11-27. Three original BC3 Texture2Ds (20 mips) covered colour, UI alpha
+and packed A/G normals. All four pack sizes and SHA-256s matched. The signed
+ARM64 producer took 18.93 s at 55.1 MiB peak child RSS and 3.30 MiB net stage
+use, with 32 °C battery at admission and 64.9 °C peak CPU/GPU (0 s above 80 °C).
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+Evidence `work/coordination/p1-textures/phone-bc3-1127/device-retry/terminal.done.json` (`92e461ea`).
+The 12-record, 72-mip cohort also matched all four pins in 275.37 s at
+36.99 MiB peak child RSS and 6.72 MiB net stage use, with a 33 °C admission
+battery and 68.0 °C peak CPU/GPU (0 s above 80 °C). Cohort evidence
+`work/coordination/p1-textures/phone-bc3-cohort-1127/device/terminal.done.json` (`032003df`).
+The runner removed both toolhost installs and released the leases.
+Whole-game production, canonical integration and in-game visuals remain open.
+
+## J1567 — Run detached device jobs through the shared FIFO
+
+2026-11-27. Detached sessions waited for the shared lease and completed
+without a worker taking a manual grant. The main Nova queued for 1082.18 s
+before it took the lease and passed the same Vulkan draw as Secondary Nova.
+Both used fixture APK SHA-256
+`0d5854c11e55776236430b5f76520c20693ca821ef0e9072328d72267f154b5d`.
+Admission battery was 35 °C and 29 °C, with SoC peaks of 72.9 °C and 56.1 °C.
+Thor completed headless signed-artifact emission in 12.40 s at 87.68 MiB peak
+child RSS. Its CPU/GPU peaked at 64.1 °C, and both panels stayed asleep.
+All three jobs removed their fixtures, verified OLED sleep and released their leases.
+Evidence is under `work/coordination/gameplay-coverage-20261126/` in
+`queue-nova/`, `queue-nova-b/` and `queue-thor/` terminal receipts.
+Interactive Thor qualification is still blocked on Screen-2 control.
+
+## J1574 — Draw Cloud Remap and reproduce its signed Vulkan pack
+
+2026-11-27. The phone producer retained 992 Cloud Remap and 16 fallback
+VertexLit program pairs. Exact Unity loaded both Shader records. Bundle preparation
+kept the original fallback path ID and relocated its file ID from 1 to 0.
+APK `00cfd49d24966c8947b400d1549c0566776d48579a50da7ed36444e5dc5208d8`
+(source `cf3fb91f`) matched opaque red and green draws and the blue gap on Vulkan.
+The signed Android bundle `bd674ecb57f00d2912ce363288969fa02f885d37dd5b0734bc0c00b8c55983bd`
+matched the three host artifacts in 570.2 s with 132.8 MiB peak child RSS,
+66.7 MiB stage storage and 69.2 °C peak CPU/GPU temperature.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`cloud-remap-draw-device-01/terminal.done.json` and
+`signed-cloud-remap-device-04/signed_artifact.json`. Whole-game scoring and
+linked Material rendering remain open.
+
+## J1577 — Verify all signed Crunch and BC7 producer artifacts on Android
+
+2026-11-27. The Android toolhost matched the expected byte counts and SHA-256
+hashes for the index, types, objects and resources of the signed four-record
+Crunch and BC7 fixture. Producer time was 684.75 s with 47.7 MiB peak child RSS
+and 17.28 MiB net stage use. Peak CPU/GPU was 60.5 °C at admission, with
+0 s above 80 °C. The runner removed the toolhost and verified OLED sleep.
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+Evidence `work/coordination/p1-phonepipe/2026-11-27/signed-texture-pins/terminal.done.json`.
+Unity typed load and gameplay for this fixture remain open.
+## J1576 — Batch SDK ETC2 colour encoding per mip on Android
+
+2026-11-27. The pinned SDK adapter reuses one process per ETC2 colour mip.
+On Nova B, 12 original BC3 textures with 72 mips produced all four matching
+pack sizes and SHA-256 hashes. SDK launches fell from 108 to 38. Producer time
+fell from 275.372 to 233.598 s, peak child RSS from 36.99 to 36.47 MiB and
+net stage storage from 6.72 to 2.78 MiB. Battery was 31 °C at admission.
+CPU/GPU peaked at 64.1 °C with zero pauses or time above 80 °C.
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+Evidence `work/coordination/p1-textures/phone-bc3-sdk-bands-1127/device/terminal.done.operation.json`.
+The signed production SDK descriptor and play verification remain open.
+## J1575 — Draw Terrain Detail vertex lighting on Android Vulkan
+
+2026-11-27. The signed Shader producer preserved 324 source program keys
+across 12 Terrain Detail passes. Exact Unity loaded both Shader records.
+Vulkan APK `337b8be742353900b973e396ce6a12cbc9aab230c46e7c22417b38ed0ac8f930`
+(source `f4e58286`) drew both through the Forward camera. Adding a red point
+light changed `(64,64,64,255)` to `(134,64,64,255)` while the outside was blue.
+The signed bundle `c19f87930e4bd28b67375cb02bdcb61340e2cf88ab3b52c61b2450118ba4b87a`
+matched the host in 198.60 s with 92.9 MiB peak child RSS, 31.4 MiB stage
+storage and 64.1 °C peak CPU/GPU temperature.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`terrain-detail-forward-device-01/terminal.done.json` and
+`signed-terrain-detail-device-01/signed_artifact.json`. Linked scene draws and
+whole-game scoring remain open.
+
+## J1578 — Draw Wavy Cloth cutout and shadows on Android Vulkan
+
+2026-11-28. The producer linked 170 variants across Wavy Cloth and its
+Diffuse and VertexLit fallbacks. Exact Unity loaded all three Shader records.
+APK `c664ae6b99021ef2d6335496bb1d7d9b47245c98e87388a3bcbf7a73e0b67312`
+read green and blue for opaque and cutout Deferred samples. ShadowCaster
+occluded the sentinel behind opaque cloth and left it visible behind cutout.
+Signed Android bundle `40e41bb5c9c943448da6f91167ad2a98361f543e4d77c4b11a81a175444d6aa2`
+matched the host in 109.30 s at 90.6 MiB peak child RSS, with
+15.9 MiB stage storage and 69.2 °C peak CPU/GPU.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`wavy-cloth-draw-device-01/terminal.done.json` and
+`signed-wavy-cloth-device-02/signed_artifact.json`. Linked gameplay and
+whole-game scoring remain open.
+
+## J1579 — Draw original Fungal Triplanar shaders on Android Vulkan
+
+- Linked 732 original Vulkan variant pairs for Terrain Blend, Terrain Blend
+  Emissive and Standard Triplanar Splat. Exact Unity typed-loaded all three
+  roots and their original Diffuse and VertexLit fallbacks.
+- Plain Deferred readback returned opaque red, clear blue and opaque green
+  on all three roots. APK SHA-256 `716fb6dd24a6ce4d59cbd84853b9a45069c8fc4e524b7304f7a49d8004a36627`.
+- Signed conversion reproduced the host index, object stream and types.
+  Bundle SHA-256 `a0377710be572cf28021eb7a45a20f844776149177ef7048ec231ee1523a8526`.
+  Producer ran for 453.62 s at 122.28 MiB peak child RSS, 64.53 MiB stage
+  and 71.2 °C peak CPU/GPU. Both disposable packages were removed.
+- Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+  in `fungal-triplanar-draw-device-03/terminal.done.json` and
+  `signed-fungal-triplanar-device-01/terminal.done.json`. Linked scene
+  Material draws and the active emissive variation remain open.
+
+## J1581 — Draw the Solus Heart wireframe on Android Vulkan
+
+2026-11-28. Linked 12 original vertex, fragment and geometry variants.
+Exact Unity typed-loaded the Shader and its original VertexLit fallback.
+APK `a66a304915ec42706ed04839ba60989caf624a51944fe4fb01c8bc378fcfc646`
+read a magenta edge, blue interior and green mirrored background.
+Signed bundle `bc63c317ddc1fa4d2ac9c58291c804c17f61a8a12658eabb3b7f224e704d8073`
+matched all host outputs in 25.83 s at 89.93 MiB peak child RSS,
+7.91 MiB stage storage and 70 °C peak CPU/GPU. Both packages were removed.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`solus-heart-geometry-draw-device-02/terminal.done.json` and
+`signed-solus-heart-device-01/signed_artifact.json`. Linked
+gameplay draws and whole-game scoring remain open.
+
+## J1582 — Draw original Snow Topped variants on Android Vulkan
+
+2026-11-28 UTC. Translated 296 Deferred and 148 ShadowCaster variant pairs.
+Exact Unity typed-loaded Snow Topped and its original Diffuse and VertexLit
+fallbacks. Ordinary and instanced Vulkan Deferred draws both read half
+magenta, clear blue and half yellow using the Void Island SE keyword pair.
+APK `e5428b06e96052a02b42d35d46473be7f46e7268df5c4c4b5fe9edfc9209d1c4`.
+Signed bundle `29ad48261ef21bf4e2f14fe1dc02da52e9e37861002373eec5716065e0c6e9c7`
+matched all host artifacts in 286.48 s at 112.22 MiB peak child RSS and
+66.5 °C peak CPU/GPU. Package removal and lease release passed for both runs.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`snow-topped-draw-device-01/terminal.done.json` and
+`signed-snow-topped-device-01/terminal.done.json`. Linked scene draws,
+ShadowCaster readback and whole-game scoring remain open.

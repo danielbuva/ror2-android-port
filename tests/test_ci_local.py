@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+import plistlib
 import shutil
 import subprocess
 import tempfile
@@ -54,8 +55,11 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
             git("update-ref", "refs/remotes/origin/main", head)
             fakebin = root / "bin"
             fakebin.mkdir()
+            inventory = root / "empty-inventory.plist"
+            inventory.write_bytes(plistlib.dumps({"images": []}))
             for name, content in {
-                "hdiutil": "#!/bin/sh\nexit 1\n",
+                "hdiutil": '#!/bin/sh\n[ "$1" = info ] || exit 1\ncat "$FAKE_INVENTORY"\n',
+                "lsof": "#!/bin/sh\nexit 1\n",
                 "sandbox-exec": '#!/bin/sh\nshift 2\nexec "$@"\n',
             }.items():
                 target = fakebin / name
@@ -67,6 +71,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 "GIT_INDEX_FILE": str(repo / ".git/index"),
                 "PATH": str(fakebin) + os.pathsep + env["PATH"],
                 "TMPDIR": str(root),
+                "FAKE_INVENTORY": str(inventory),
             }
             # The checks must come from the commit, not another agent's current edits.
             (scripts / "audit-public.py").write_text("raise SystemExit('uncommitted checker')\n")
@@ -80,6 +85,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("all CI steps pass", result.stdout)
+            self.assertIn("ci-local cleanup: removed", result.stderr)
             self.assertEqual(result.stdout.count("fixture check passed"), 4)
             self.assertIn("dependency environment created", result.stderr)
             second = subprocess.run(
@@ -115,3 +121,5 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
             self.assertIn("runner failure sentinel", failure.stdout)
             self.assertNotIn("all CI steps pass", failure.stdout)
             self.assertNotIn("Ran 1 test", failure.stderr)
+            self.assertIn("ci-local cleanup: removed", failure.stderr)
+            self.assertEqual(list(root.glob("ci-local.*")), [])

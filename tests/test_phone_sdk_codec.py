@@ -13,11 +13,11 @@ FIXTURE = """
 #include <string.h>
 struct Image {void *pixels; int type,width,height,stride;};
 static int initialized;
-void libetc_init(void) {initialized=1;}
+void libetc_init(void) {++initialized;}
 int libetc_compress(struct Image image,int backend,int format,int quality,int space,void *out,size_t *size) {
-    if (!initialized || image.type || image.width!=4 || image.height!=4 || image.stride!=16 ||
-        backend!=1 || (format!=1 && format!=2) || quality!=1 || space || *size!=(format==2?16:8)) return 0;
-    memcpy(out,image.pixels,format==2?16:8);
+    if (initialized!=1 || image.type || image.width!=4 || (image.height!=4 && image.height!=8) || image.stride!=16 ||
+        backend!=1 || (format!=1 && format!=2) || quality!=1 || space || *size!=(format==2?16:8)*image.height/4) return 0;
+    memcpy(out,image.pixels,*size);
     if (((unsigned char*)image.pixels)[0]==42) --*size;
     return 1;
 }
@@ -42,8 +42,8 @@ class SdkCodecTests(unittest.TestCase):
         )
         subprocess.run([compiler, "-std=c11", "-Wall", "-Wextra", "-Werror", str(SOURCE), "-ldl", "-o", str(cls.binary)], check=True, capture_output=True)
 
-    def invoke(self, data, dimensions=("4", "4")):
-        return subprocess.run([str(self.binary), str(self.library), *dimensions, "2", "0"], input=data, capture_output=True, timeout=10)
+    def invoke(self, data, dimensions=("4", "4"), options=()):
+        return subprocess.run([str(self.binary), str(self.library), *dimensions, "2", "0", *options], input=data, capture_output=True, timeout=10)
 
     def test_by_value_descriptor_and_exact_pipe(self):
         pixels = bytes(range(64))
@@ -60,6 +60,12 @@ class SdkCodecTests(unittest.TestCase):
         result = self.invoke(b"", ("8193", "4"))
         self.assertEqual(result.returncode, 65)
         self.assertEqual(result.stdout, b"")
+
+    def test_batched_bands_keep_order_and_use_one_initialization(self):
+        pixels = b"\x11" * 128 + b"\x22" * 64
+        result = self.invoke(pixels, ("4", "12"), ("8",))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, b"\x11" * 32 + b"\x22" * 16)
 
 
 if __name__ == "__main__":

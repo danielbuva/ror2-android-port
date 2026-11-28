@@ -1,3 +1,6 @@
+import hashlib
+import importlib.util
+import json
 import os
 import runpy
 import struct
@@ -42,6 +45,29 @@ def elf_fixture():
     return bytes(header) + sections + symbols + strings
 
 
+def linked_fixture(dependencies, alignment):
+    data = bytearray(elf_fixture())
+    program_header = struct.pack("<IIQQQQQQ", 1, 5, 0, 0, 0, 0, 0, alignment)
+    struct.pack_into("<Q", data, 32, len(data))
+    struct.pack_into("<HH", data, 54, len(program_header), 1)
+    data.extend(program_header)
+    strings = b"\0"
+    records = []
+    for tag, name in [(14, "libAkSoundEngine.so"), *((1, name) for name in dependencies)]:
+        records.append(struct.pack("<qQ", tag, len(strings)))
+        strings += name.encode("ascii") + b"\0"
+    records.append(bytes(16))
+    dynamic = b"".join(records)
+    section = struct.Struct("<IIQQQQIIQQ")
+    sections = data[64 : 64 + 4 * section.size]
+    sections += section.pack(0, 3, 0, 0, len(data), len(strings), 0, 0, 1, 0)
+    sections += section.pack(0, 6, 0, 0, len(data) + len(strings), len(dynamic), 4, 0, 8, 16)
+    data.extend(strings + dynamic)
+    struct.pack_into("<Q", data, 40, len(data))
+    struct.pack_into("<H", data, 60, 6)
+    return bytes(data) + sections
+
+
 class WwiseAndroidAbiTests(unittest.TestCase):
     def test_reads_defined_dynamic_functions_and_data(self):
         self.assertEqual(native_exports(elf_fixture()), {"public_fn", "weak_fn", "public_data"})
@@ -49,6 +75,35 @@ class WwiseAndroidAbiTests(unittest.TestCase):
     def test_rejects_truncated_linked_string_table(self):
         with self.assertRaisesRegex(ValueError, "dynamic string table extent"):
             native_exports(elf_fixture()[:-1])
+
+    def test_native_build_audit_requires_dependencies_and_page_alignment(self):
+        owner_code = ROOT / "tools/phone-build/owner-code"
+        spec = importlib.util.spec_from_file_location("test_wwise_native", owner_code / "wwise_native.py")
+        producer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(producer)
+        exports = hashlib.sha256(b"public_data\npublic_fn\nweak_fn").hexdigest()
+        needed = sorted(producer.DEPENDENCIES)
+        with tempfile.TemporaryDirectory() as directory, patch.object(producer, "EXPORTS_SHA256", exports):
+            library = Path(directory) / "libAkSoundEngine.so"
+            library.write_bytes(linked_fixture(needed, 16384))
+            audit = producer.audit_library(library)
+            self.assertEqual(audit["exports"], 3)
+            receipt = Path(directory) / "result.json"
+            receipt.write_text(json.dumps({"schema": 1, "success": True, "library": audit, "overlay_sha256": producer.native.sha(producer.POLICY)}))
+            pin = {"path": str(receipt.resolve()), "sha256": producer.native.sha(receipt), "bytes": receipt.stat().st_size}
+            self.assertEqual(producer.verify_build(library, pin), audit["sha256"])
+            library.write_bytes(library.read_bytes() + b"changed bytes")
+            with self.assertRaisesRegex(ValueError, "successful producer receipt"):
+                producer.verify_build(library, pin)
+            receipt.write_text("{}")
+            with self.assertRaisesRegex(ValueError, "dependency pin"):
+                producer.verify_build(library, pin)
+            library.write_bytes(linked_fixture(needed[:-1], 16384))
+            with self.assertRaisesRegex(ValueError, "dependencies or SONAME"):
+                producer.audit_library(library)
+            library.write_bytes(linked_fixture(needed, 4096))
+            with self.assertRaisesRegex(ValueError, "16 KiB"):
+                producer.audit_library(library)
 
     def test_plan_output_without_android_hard_links(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(os, "link", None):

@@ -448,6 +448,16 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
         self.assertTrue((self.output / "terminal.done.json").is_file())
 
+    def test_queued_device_option_does_not_require_a_legacy_grant(self):
+        with mock.patch.object(runner.subprocess, "Popen", return_value=mock.Mock(pid=12)) as process:
+            args = ["--request", str(self.request_file), "--device", "second-fixture", "--queue", "--detach"]
+            self.assertEqual(runner.main(args), 0)
+            with self.assertRaises(FileExistsError):
+                runner.main(args)
+        process.assert_called_once()
+        self.assertEqual(process.call_args.args[0][-3:], ["--device", "second-fixture", "--queue"])
+        self.assertTrue(process.call_args.kwargs["start_new_session"])
+
     def test_discovery_failure_releases_lease_before_writing_failed_terminal(self):
         lease = runner.Lease(self.request)
 
@@ -470,6 +480,34 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertIn("Selected device is not attached and authorized", result["error"])
         self.assertTrue(result["lease_released"])
         self.assertFalse(lease.path.exists())
+        self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
+
+    def test_queued_discovery_failure_releases_lease_before_writing_terminal(self):
+        from device_queue import DeviceQueue, ENABLED
+
+        lease = runner.Lease(self.request)
+        queue = DeviceQueue(lease.path.parent.parent, self.request["serial"])
+        queue.directory.mkdir(parents=True)
+        (queue.directory / ENABLED).touch()
+
+        def discover(**_kwargs):
+            self.assertTrue(lease.path.is_dir())
+            self.assertFalse((self.output / "terminal.done.json").exists())
+            raise DeviceContextError("fixture discovery failure")
+
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
+            mock.patch.object(device_module, "Device", side_effect=discover),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(self.request, queued=True)
+
+        self.assertFalse(result["success"])
+        self.assertIn("fixture discovery failure", result["error"])
+        self.assertTrue(result["lease_released"])
+        self.assertFalse(lease.path.exists())
+        self.assertGreaterEqual(result["queue_wait_seconds"], 0)
         self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
 
     def test_interrupted_preinstall_hash_can_finish_verified_cleanup(self):
@@ -1507,7 +1545,7 @@ class DeviceSessionTests(unittest.TestCase):
             target.base = ["fake-adb", "-s", target.serial]
             target.storage.return_value = {"mode": "adopted", "uuid": "fixture-adopted"}
             target.install_counter.return_value = self.root / "install-count.json"
-            target.install.side_effect = lambda apk: device_class.install(target, apk)
+            target.install.side_effect = lambda apk, mode: device_class.install(target, apk, mode)
             target.reset.side_effect = lambda: device_class.reset(target)
             target.cmd.side_effect = lambda *args, **kwargs: device_class.cmd(target, *args, **kwargs)
 
@@ -1690,7 +1728,7 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual((result["apk"], result["apk_sha256"]), (self.request["apk"], self.digest))
         self.assertEqual(result["device_cleanup"]["bytes_removed"], 17 * 2 * len(runner.TRANSIENTS))
         if not signature_failure:
-            target.install.assert_called_once_with(Path(self.request["apk"]))
+            target.install.assert_called_once_with(Path(self.request["apk"]), mode="auto")
         removed = [event for event in events if event.startswith("remove:")]
         self.assertTrue(removed)
         self.assertEqual(events.count("stop"), 3)
@@ -1878,6 +1916,77 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual([checkpoint["phase"] for checkpoint in checks], ["before-launch", "launch"])
         self.assertEqual(checks[-1]["processes"][0]["pid"], "73")
         thermal.launch.assert_not_called()
+
+    def test_install_launch_records_dispatch_to_verified_pid(self):
+        target = mock.Mock(package=self.request["package"])
+        thermal = mock.Mock(error=None)
+        result = {"install": {"dispatch_monotonic": 10}}
+        self.output.mkdir(parents=True)
+        with mock.patch.object(runner, "launch", return_value={"pid": "73"}) as launcher, mock.patch.object(runner.time, "monotonic", return_value=35):
+            runner.run_workload(target, thermal, dict(self.request, mode=runner.INSTALL_LAUNCH), self.output, result)
+        launcher.assert_called_once_with(target, thermal, process_checks=[], resolve_activity=True)
+        self.assertEqual(result["install_to_pid_seconds"], 25)
+        self.assertEqual(json.loads((self.output / "launch.json").read_text())["pid"], "73")
+
+    def test_fresh_install_launch_releases_lease_without_game_runtime_directory(self):
+        self.check_fresh_install_probe(runner.INSTALL_LAUNCH)
+
+    def test_install_only_keeps_displays_asleep_and_removes_package(self):
+        self.check_fresh_install_probe(runner.INSTALL_ONLY)
+
+    def check_fresh_install_probe(self, mode):
+        request = dict(self.request, mode=mode, install_transport="streaming")
+        target = mock.Mock(package=request["package"])
+        target.exists.return_value = False
+        target.receipt.side_effect = lambda name: self.root / name
+        target.install.return_value = {"dispatch_monotonic": 0}
+        target.owned.return_value = {"package_path": "package:/fixture/base.apk", "apk_sha256": self.digest}
+        target.sh.side_effect = lambda command, *args, **kwargs: {
+            "sh": process_snapshot(),
+            "sha256sum": self.digest + "  /fixture/base.apk",
+            "am": "",
+        }[command]
+        target.reset.return_value = {"removed": True}
+        independent = mock.Mock()
+        independent.exists.return_value = False
+        independent.storage.return_value = {"mode": "internal"}
+        independent.display.return_value = True
+        stale_runtime = target.receipt("runtime.json")
+        stale_runtime.touch()
+        thermal = mock.Mock(error=None, admission_battery={}, peak_cpu_gpu_celsius=30, time_above_80_seconds=0)
+
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=32 * 1024**3)),
+            mock.patch.object(device_module, "Device", side_effect=[target, independent]),
+            mock.patch.object(runner, "placement", return_value={}),
+            mock.patch.object(runner, "prepare_launch") as prepare,
+            mock.patch.object(runner, "ensure_runtime", side_effect=FileNotFoundError("runtime files")) as runtime,
+            mock.patch.object(runner, "reset_idle") as reset,
+            mock.patch.object(runner, "launch", return_value={"pid": "73"}) as launch,
+            mock.patch.object(batch, "_GameThermalOwner", return_value=thermal),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(request)
+
+        self.assertTrue(result["success"], result.get("error") or result.get("cleanup_errors"))
+        self.assertEqual(result["terminal_readback"], {"installed": False, "oled_asleep": True})
+        self.assertTrue(result["lease_released"])
+        if mode == runner.INSTALL_LAUNCH:
+            self.assertIn("install_to_pid_seconds", result)
+            prepare.assert_called_once_with(target, result["prelaunch"], verify_display=True)
+        else:
+            self.assertNotIn("install_to_pid_seconds", result)
+            prepare.assert_not_called()
+            launch.assert_not_called()
+            thermal.cool.assert_called_once_with()
+        target.display.assert_not_called()
+        target.install.assert_called_once_with(self.apk, mode="streaming")
+        target.reset.assert_called_once_with()
+        independent.display.assert_called_once_with(False)
+        runtime.assert_not_called()
+        reset.assert_not_called()
+        self.assertFalse(stale_runtime.exists())
 
     def test_only_resumed_peer_is_reset_before_converted_launch(self):
         peer = "dev.ror2lab.arm64"

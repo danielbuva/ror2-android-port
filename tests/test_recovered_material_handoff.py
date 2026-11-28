@@ -52,6 +52,9 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
         source += "\n" + source_method(visuals, "IEnumerator PrepareDirectNativeEffects(")
         source += "\n" + source_method(visuals, "IEnumerator PrepareReferencedNativeEffect(")
         source += "\n" + source_method(visuals, "void PresentConfiguredNativeEffect(")
+        world = (ROOT / "tools/unity/runtime/world/IntegratedWorldBoundary.cs").read_text()
+        source += "\n}\nstatic partial class Fixture {\n"
+        source += source_method(world, "static string MortarImpactIdentity(")
         source += "\n}\n"
         with tempfile.TemporaryDirectory() as temporary:
             scratch = Path(temporary)

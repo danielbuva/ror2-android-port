@@ -10,6 +10,18 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1582](PORTING_JOURNAL.md#j1582--draw-original-snow-topped-variants-on-android-vulkan) | 2026-11-27 | Draw original Snow Topped variants on Android Vulkan | 2026-11-28 UTC. |
+| [J1581](PORTING_JOURNAL.md#j1581--draw-the-solus-heart-wireframe-on-android-vulkan) | 2026-11-27 | Draw the Solus Heart wireframe on Android Vulkan | 2026-11-28. |
+| [J1579](PORTING_JOURNAL.md#j1579--draw-original-fungal-triplanar-shaders-on-android-vulkan) | 2026-11-27 | Draw original Fungal Triplanar shaders on Android Vulkan | - Linked 732 original Vulkan variant pairs for Terrain Blend, Terrain Blend Emissive and Standard Triplanar Splat. |
+| [J1578](PORTING_JOURNAL.md#j1578--draw-wavy-cloth-cutout-and-shadows-on-android-vulkan) | 2026-11-27 | Draw Wavy Cloth cutout and shadows on Android Vulkan | 2026-11-28. |
+| [J1575](PORTING_JOURNAL.md#j1575--draw-terrain-detail-vertex-lighting-on-android-vulkan) | 2026-11-27 | Draw Terrain Detail vertex lighting on Android Vulkan | 2026-11-27. |
+| [J1576](PORTING_JOURNAL.md#j1576--batch-sdk-etc2-colour-encoding-per-mip-on-android) | 2026-11-27 | Batch SDK ETC2 colour encoding per mip on Android | 2026-11-27. |
+| [J1577](PORTING_JOURNAL.md#j1577--verify-all-signed-crunch-and-bc7-producer-artifacts-on-android) | 2026-11-27 | Verify all signed Crunch and BC7 producer artifacts on Android | 2026-11-27. |
+| [J1574](PORTING_JOURNAL.md#j1574--draw-cloud-remap-and-reproduce-its-signed-vulkan-pack) | 2026-11-27 | Draw Cloud Remap and reproduce its signed Vulkan pack | 2026-11-27. |
+| [J1567](PORTING_JOURNAL.md#j1567--run-detached-device-jobs-through-the-shared-fifo) | 2026-11-27 | Run detached device jobs through the shared FIFO | 2026-11-27. |
+| [J1568](PORTING_JOURNAL.md#j1568--verify-signed-native-bc3-texture-production-on-android) | 2026-11-27 | Verify signed native BC3 texture production on Android | 2026-11-27. |
+| [J1570](PORTING_JOURNAL.md#j1570--translate-and-draw-original-multipass-terrain-shaders-on-vulkan) | 2026-11-27 | Translate and draw original multipass terrain shaders on Vulkan | 2026-11-27. |
+| [J1569](PORTING_JOURNAL.md#j1569--run-signed-cloud-intersection-remap-translation-on-android) | 2026-11-27 | Run signed Cloud Intersection Remap translation on Android | 2026-11-27. |
 | [J1565](PORTING_JOURNAL.md#j1565--draw-original-cloud-intersection-remap-on-android-vulkan) | 2026-11-27 | Draw original Cloud Intersection Remap on Android Vulkan | 2026-11-27. |
 | [J1566](PORTING_JOURNAL.md#j1566--match-texture-mip-readback-on-android-vulkan-and-editor-metal) | 2026-11-27 | Match texture mip readback on Android Vulkan and editor Metal | 2026-11-27. |
 | [J1564](PORTING_JOURNAL.md#j1564--run-signed-outline-shader-translation-on-android) | 2026-11-27 | Run signed Outline shader translation on Android | 2026-11-27. |
@@ -394,3 +406,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1553](PORTING_JOURNAL.md#j1553--run-a-pinned-texture-stage-with-a-disposable-android-toolhost) | 2026-11-27 | Run a pinned texture stage with a disposable Android toolhost | 2026-11-27. |
 | [J1560](PORTING_JOURNAL.md#j1560--capture-paired-occlusion-windows-from-a-fixed-gameplay-camera) | 2026-11-27 | Capture paired occlusion windows from a fixed gameplay camera | 2026-11-27. |
 | [J1559](PORTING_JOURNAL.md#j1559--play-converted-distant-roost-with-source-occlusion-data) | 2026-11-27 | Play converted Distant Roost with source occlusion data | 2026-11-27. |
+| [J1580](PORTING_JOURNAL.md#j1580--verify-v4-incremental-lab-apk-installation) | 2026-11-27 | Verify v4 incremental lab APK installation | 2026-11-28 UTC. |

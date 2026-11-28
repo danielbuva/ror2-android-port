@@ -196,9 +196,9 @@ class ExactSdkUnityCompilerTests(unittest.TestCase):
                 self.assertEqual(child.returncode, 0, child.stderr)
                 result = json.loads(child.stdout)
                 self.assertTrue(result["success"], (result, (stage / "output/compiler.log").read_text() if (stage / "output/compiler.log").exists() else ""))
-                self.assertEqual(result["reference_count"], 157)
+                self.assertEqual(result["reference_count"], 158)
                 report = json.loads((stage / "output/references.json").read_text())
-                self.assertEqual(len(report["excluded"]), 29)
+                self.assertEqual(len(report["excluded"]), 28)
                 results.append((result["outputs"], result["reference_report_sha256"]))
             self.assertEqual(results[0], results[1])
 

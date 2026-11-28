@@ -146,6 +146,7 @@ def build(compiler, linker, library, output, qemu_root=None, sysroot=None, andro
             "environment": environment,
             "pixels": str(decoder),
             "inputs": {str(p): sha(p) for p in sorted(set([codec, decoder, library, *runtime]))},
+            "batch_bands": True,
         }
         (output / "sdk-tools.json").write_text(json.dumps(toolchain, indent=2) + "\n")
         (output / "NOTICE.txt").write_text(

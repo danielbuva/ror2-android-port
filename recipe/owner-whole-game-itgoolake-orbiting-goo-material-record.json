@@ -1,0 +1,30 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-itgoolake_assets_all_417a96734899a8d6ed3b2b0cd5ba92ac.bundle",
+      "sha256": "8441a0f134db18522d00d6f4c9a4c6dc323a6038a4a2c882dcc2f87191bfc7fb",
+      "members": [
+        {
+          "name": "CAB-3f443c90800348ad053647758822c66d",
+          "objects": [
+            {
+              "path_id": -3828622688228647022,
+              "class_id": 21,
+              "sha256": "96ffaf4b1f5d6b96cbba52e90182c06c8778e0af66dd9cda2806aa28b02ee4fd",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7482861070928799938,
+                  "bytes": 2396,
+                  "sha256": "96ffaf4b1f5d6b96cbba52e90182c06c8778e0af66dd9cda2806aa28b02ee4fd"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

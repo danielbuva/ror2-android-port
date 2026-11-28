@@ -27,7 +27,7 @@ scratch="$CI_LOCAL_OWNED_SCRATCH"
 unset CI_LOCAL_OWNED_SCRATCH
 volume="$scratch/case-sensitive"
 # EXIT returns to the supervisor, which synchronously detaches by verified device
-# and removes only our scratch. Abnormal/SIGKILL runs retain durable uncertainty.
+# and removes only our scratch. Later sweeps can recover abandoned scratch.
 trap 'status=$?; trap - EXIT; exit "$status"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM

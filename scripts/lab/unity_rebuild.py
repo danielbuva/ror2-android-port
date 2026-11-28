@@ -241,6 +241,10 @@ def execute_build(destination, work, api):
         apk = Path(result["apk"])
         if not apk.resolve().is_relative_to(scratch) or not apk.is_file():
             raise RuntimeError("Unity APK outside destination run or missing")
+        if sidecar := result.pop("apkV4Sidecar", None):
+            from iteration_apk import retain_v4_sidecar
+
+            result.update(retain_v4_sidecar(apk, sidecar))
         payload = scratch / "generated-android-data"
         if not (payload / "whole-catalog.json").is_file():
             raise RuntimeError("Full destination content build did not produce whole-catalog.json")
