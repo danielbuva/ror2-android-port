@@ -8344,6 +8344,13 @@ using pinned Android suppliers. The exact-editor fixture checks those links
 and unloads its bundles. Release composition preserves both Material slots
 in the original animated pillar preload groups.
 
+The Soul1 Crystal Material profile selects two original class-21 bodies
+through `record_produce.py`. Scoped bundle preparation joins the signed
+Crystal Shader and its ordered fallbacks to the retained texture suppliers.
+The exact-editor fixture checks both Materials and their saved texture links
+and unloads the bundles. Canonical composition preserves 87 original scene
+fields. Crystal_opt uses its own Shader route and remains pending.
+
 The Ancient Loft animated pillar FBX profiles use `record_produce.py` for
 the original hierarchy, Animator, SkinnedMeshRenderer and AnimationClip
 records, and `avatar_produce.py` for the two original Avatars. Setup verifies

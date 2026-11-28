@@ -8258,3 +8258,21 @@ installation and emits the Vulkan record under ignored `work/`.
 | --- | --- |
 | `owner-crystalshader-graphics-translation.json` | `f6ffd4f5bc42384dad4395b6b89903361f65d89e52e1e145aaaad4c93186f578` |
 | `jobs/owner-crystalshader-graphics-translation.json` | `62bedee5d7a2201398bc0677df39e6ad8db00d28dca5d8b2a1afc80ec0489fa8` |
+
+## Soul1 Crystal Material records (2026-11-28)
+
+The profile selects two original Materials used by 87 Soul1 scene fields.
+Scoped bundle readback reverses 16 Material pointers and verifies the two
+ordered fallback links in the signed Crystal Shader. Unity 2021.3.45f2 loads
+the two Materials and three Shaders, checks all 14 saved texture links,
+including the CustomRenderTexture, and unloads the bundles. Canonical
+admission and linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+the relative source bundle path, member and object identities, class,
+length and hashes. The public producer reads the user's accepted PC
+installation and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-soul1-crystal-material-records.json` | `d5068d735ec5237b34b05a4bbb399efc3df31a11cf599cc48fbf436085177476` |
