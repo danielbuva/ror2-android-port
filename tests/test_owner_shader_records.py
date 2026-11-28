@@ -55,6 +55,25 @@ class CompilerHosting(unittest.TestCase):
 
 
 class TranslatedShaderPack(unittest.TestCase):
+    def test_fragment_attachment_mask_uses_source_target_indices(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+
+        def signature(*outputs):
+            names = bytearray()
+            rows = []
+            for semantic, index, register in outputs:
+                offset = 8 + 24 * len(outputs) + len(names)
+                names.extend(semantic + b"\0")
+                rows.append(struct.pack("<6I", offset, index, 0, 3, register, 15))
+            payload = struct.pack("<2I", len(outputs), 8) + b"".join(rows) + names
+            chunk = struct.pack("<4sI", b"OSGN", len(payload)) + payload
+            return b"DXBC" + bytes(20) + struct.pack("<3I", 36 + len(chunk), 1, 36) + chunk
+
+        self.assertEqual(translator.fragment_color_mask(signature((b"SV_Depth", 0, 0xFFFFFFFF))), 1)
+        self.assertEqual(translator.fragment_color_mask(signature((b"SV_Target", 0, 0))), 1)
+        self.assertEqual(translator.fragment_color_mask(signature(*[(b"SV_Target", i, i) for i in range(4)])), 15)
+
     def test_vertex_light_variants_share_the_original_fragment(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
             import shader_segments
@@ -72,9 +91,10 @@ class TranslatedShaderPack(unittest.TestCase):
         with (
             patch.object(shader_segments, "selected_layout", return_value=layout),
             patch.object(translator, "vertex_channels", return_value=[]),
+            patch.object(translator, "fragment_color_mask", return_value=15),
             patch.object(translator, "compile_spirv", side_effect=lambda _tools, _directory, _index, program, *_args, **_kwargs: program) as compile_spirv,
             patch.object(translator.subprocess, "run", side_effect=lambda _args, *, input, **_kwargs: SimpleNamespace(stdout=input)),
-            patch.object(translator.shader, "linked_vulkan_program", side_effect=lambda vertex, fragment, **_kwargs: vertex + fragment),
+            patch.object(translator.shader, "linked_vulkan_program", side_effect=lambda vertex, fragment, **_kwargs: vertex + fragment) as link,
         ):
             variants = translator.translate_pass({}, shader_pass, b"", records, programs, Path("fixture"), tools)
             for indices, error in [((3,), "requires paired"), ((2, 3), "requires paired"), ((2, 2), "duplicate progFragment")]:
@@ -84,6 +104,7 @@ class TranslatedShaderPack(unittest.TestCase):
         self.assertEqual([variant["keywords"] for variant in variants], [("FOG_LINEAR",), ("FOG_LINEAR", "VERTEXLIGHT_ON")])
         self.assertEqual([variant["requirements"] for variant in variants], [5, 6])
         self.assertEqual([variant["compilation"]["data"] for variant in variants], [b"vertexfragment", b"vertex_litfragment"])
+        self.assertEqual([call.kwargs["color_mask"] for call in link.call_args_list], [15, 15])
 
     def test_multipass_translation_preserves_pass_state_and_relocates_both_indices(self):
         from copy import deepcopy
@@ -197,27 +218,35 @@ class TranslatedShaderPack(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "exceeds native buffer"):
             parameter_layout(invalid, structured=True)
 
-    def test_instancing_preserves_native_names_and_links_draw_call_binding(self):
+    def test_instancing_preserves_native_names_and_shares_two_stage_bindings(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
             import shader_translate as translator
 
         buffers = [
             dict(name="UnityDrawCallInfo", slot=1, size=16, variables=[]),
             dict(name="UnityInstancing_PerDraw0", slot=2, size=256, variables=[]),
+            dict(name="UnityInstancing_PerDraw2", slot=3, size=128, variables=[]),
         ]
-        layout = {"buffers": buffers, "textures": []}
-        vertex, vertex_descriptors = translator.stage_parameters(layout, True, vertex_binding_base=3, shared_draw_call=1)
-        fragment, fragment_descriptors = translator.stage_parameters({**layout, "buffers": buffers[:1]}, False, shared_draw_call=1)
-        self.assertEqual(vertex_descriptors, ["cbv", "1", "1", "1", "cbv", "2", "1", "5"])
-        self.assertEqual(fragment_descriptors, ["cbv", "1", "1", "1"])
+        vertex_layout = {"buffers": buffers, "textures": []}
+        fragment_layout = {"buffers": [dict(buffers[0], slot=0), dict(buffers[1], slot=4)], "textures": []}
+        shared = translator.shared_constant_bindings(vertex_layout, fragment_layout)
+        self.assertEqual(shared, {"UnityDrawCallInfo": 0, "UnityInstancing_PerDraw0": 4})
+        vertex, vertex_descriptors = translator.stage_parameters(vertex_layout, True, vertex_binding_base=5, shared_bindings=shared)
+        fragment, fragment_descriptors = translator.stage_parameters(fragment_layout, False, shared_bindings=shared)
+        self.assertEqual(vertex_descriptors, ["cbv", "1", "1", "0", "cbv", "2", "1", "4", "cbv", "3", "1", "8"])
+        self.assertEqual(fragment_descriptors, ["cbv", "0", "1", "0", "cbv", "4", "1", "4"])
+        native = N.reflection(vertex + fragment)
         self.assertEqual(
-            vertex + fragment,
+            native["bindings"],
             [
-                "cb: UnityInstancing_PerDraw0 256 0",
-                "cbbind: UnityInstancing_PerDraw0 67174405",
-                "cb: UnityDrawCallInfo 8 0",
-                "cbbind: UnityDrawCallInfo 201392129",
+                {"name": "UnityInstancing_PerDraw2", "index": 0x04010008},
+                {"name": "UnityDrawCallInfo", "index": 0x0C010000},
+                {"name": "UnityInstancing_PerDraw0", "index": 0x0C010004},
             ],
+        )
+        self.assertEqual(
+            [(row["name"], row["size"]) for row in native["buffers"]],
+            [("UnityInstancing_PerDraw2", 128), ("UnityDrawCallInfo", 8), ("UnityInstancing_PerDraw0", 256)],
         )
 
     def test_fragment_uses_independent_sampler_registers_and_native_variant_shape(self):
@@ -532,19 +561,19 @@ class NativeRecords(unittest.TestCase):
     def test_linked_vulkan_envelope_preserves_stage_extents(self):
         vertex = b"LOMS" + b"v" * 23
         fragment = b"LOMS" + b"f" * 25
-        result = N.linked_vulkan_program(vertex, fragment, alpha_clip=True)
+        result = N.linked_vulkan_program(vertex, fragment, alpha_clip=True, color_mask=15)
         marker, vertex_offset, vertex_size, fragment_offset, fragment_size = struct.unpack_from("<5I", result)
         self.assertEqual((marker, fragment_offset), (0x02000021, 176))
         self.assertEqual(vertex_offset, fragment_offset + fragment_size)
         self.assertEqual(result[fragment_offset:vertex_offset], fragment)
         self.assertEqual(result[vertex_offset : vertex_offset + vertex_size], vertex)
-        self.assertEqual(struct.unpack_from("<I", result, 76), (1,))
+        self.assertEqual(struct.unpack_from("<I", result, 76), (15,))
 
     def test_geometry_envelope_uses_the_exact_sdk_extent(self):
         vertex = b"LOMS" + b"v" * 23
         fragment = b"LOMS" + b"f" * 25
         geometry = b"LOMS" + b"g" * 31
-        result = N.linked_vulkan_program(vertex, fragment, geometry=geometry, alpha_clip=False)
+        result = N.linked_vulkan_program(vertex, fragment, geometry=geometry, alpha_clip=False, color_mask=1)
         header = struct.unpack_from("<44I", result)
         self.assertEqual(header[0], 0x02000020)
         self.assertEqual(header[9:11], (176 + len(fragment) + len(vertex), len(geometry)))

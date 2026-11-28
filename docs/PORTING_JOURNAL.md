@@ -5308,3 +5308,21 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `snow-topped-draw-device-01/terminal.done.json` and
 `signed-snow-topped-device-01/terminal.done.json`. Linked scene draws,
 ShadowCaster readback and whole-game scoring remain open.
+
+## J1583 — Preserve Deferred Vulkan attachments and shared instance buffers
+
+2026-11-28 UTC. The source linker uses DXBC fragment output masks for
+Vulkan color attachments and declares shared instance buffers once.
+HGStandard APK `43a9cfd58a0f8f3ee795f5e82201a8396446e5ee15e7a828d20e2f7caf037bef`
+matched six albedo samples, specular values 51 and 204, and distinct
+red and green per-instance light probes with a blue background.
+Crystal APK `41826200086f23414ba0f5bb3db75f1a91bb68862e99b5cc63f23c966a31c323`
+matched ordinary Deferred and both per-instance fade swaps. Both packages
+were removed. Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `hgstandard-draw-device-03/terminal.done.json` and
+`crystalshader-draw-device-02/terminal.done.json`.
+Signed Crystal and HGStandard replays matched all host outputs in
+`signed-crystalshader-device-02/` and `signed-hgstandard-device-05/`. HGStandard
+bundle `17f40a04990689fc0a08d29a60b5c3e707d46db26973d276b72a56215a7eb02a`
+took 1056.21 s at 221.83 MiB peak RSS and 64.5 °C peak CPU/GPU. Both signed
+apps were removed. Linked scene draws and whole-game scoring remain open.

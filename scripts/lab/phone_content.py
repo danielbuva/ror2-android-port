@@ -141,6 +141,8 @@ def native_content_request(path):
             raise RuntimeError("Native scene requires an exact scene path")
         if request.get("loadMode", "Additive") not in ("Additive", "Single"):
             raise RuntimeError("Native scene loadMode must be Additive or Single")
+        if type(request.get("expectedOcclusionDataResolved", True)) is not bool:
+            raise RuntimeError("Native scene expectedOcclusionDataResolved must be a Boolean")
         if "expectedBakedReflectionCubemaps" in request and baked_reflection_cubemaps(request["expectedBakedReflectionCubemaps"]) is None:
             raise RuntimeError("Native scene expectedBakedReflectionCubemaps requires Cubemap widths, mip counts and formats")
         return request
@@ -170,7 +172,7 @@ def validate_native_scene(report, request, commit):
         or report.get("bundleSha256") != request["sha256"]
         or report.get("scenePath") != request["scene"]
         or report.get("loadMode", "Additive") != request.get("loadMode", "Additive")
-        or not report.get("occlusionDataResolved")
+        or report.get("occlusionDataResolved") is not request.get("expectedOcclusionDataResolved", True)
         or not report.get("unloaded")
         or report.get("failure")
         or report.get("roots", 0) <= 0
