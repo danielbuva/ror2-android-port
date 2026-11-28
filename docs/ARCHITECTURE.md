@@ -6719,10 +6719,11 @@ enforce it, because other clang-format versions format C# differently.
 isolation, per-test/module timing and explicit serial/parallel outcome comparison.
 It runs every discovered test, groups the known shared-project compiler fixtures,
 reaps worker families on failure/timeout and retains native skip/failure semantics.
-GitHub and the local hook use this owner without result caching or changed-test
-selection. `scripts/audit-public.py` streams every index blob by its staged object
-ID and validates every compressed recipe row; necessary-byte regex prefilters
-retain the existing detection rules. GitHub caches only pinned pip downloads.
+GitHub runs the full suite and the local hook can select affected modules.
+Neither caches test results. `scripts/audit-public.py` streams every index blob
+by its staged object ID and validates every compressed recipe row. Its UUID
+scan starts at the first hyphen and tests both original word boundaries.
+GitHub caches only pinned pip downloads.
 [Timing and cache operation](DEVELOPING.md#full-host-checks-and-timing) describe
 setup, reuse and isolation.
 

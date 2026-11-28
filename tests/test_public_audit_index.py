@@ -174,7 +174,8 @@ class PublicAuditPrefilterTests(unittest.TestCase):
         # every original regex, with no use of the new necessary-byte filters.
         if path.startswith("recipe/"):
             data = AUDIT.WWISE_ASSET_NAME.sub(b"Wwise/ScriptableObjects/WWISE-ASSET.asset", data)
-        return [label for label, pattern in AUDIT.PATTERNS.items() if re.search(pattern, data)]
+        patterns = {**AUDIT.PATTERNS, "UUID": rb"(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"}
+        return [label for label, pattern in patterns.items() if re.search(pattern, data)]
 
     def test_prefilters_preserve_all_patterns_at_every_position(self):
         uuid = b"-".join((b"12345678", b"1234", b"abcd", b"ABCD", b"123456789abc"))
@@ -210,6 +211,14 @@ class PublicAuditPrefilterTests(unittest.TestCase):
                 for path in ("recipe/authored.json", "docs/authored.txt"):
                     with self.subTest(prefix=variant, extra_uuid=bool(tail), path=path):
                         self.assertEqual(AUDIT.violations(path, data), self.original_patterns(path, data))
+
+    def test_uuid_scan_preserves_both_word_boundaries(self):
+        uuid = b"-".join((b"aBCd1234", b"abcd", b"ABCD", b"1234", b"123456abcdef"))
+        for before in (b"", b"F", b"g", b"_", b"-", b"\n", b"\xff", b"a" * 1000 + b"-"):
+            for after in (b"", b"f", b"g", b"_", b"-", b"\n", b"\xff"):
+                with self.subTest(before=before[-1:], after=after):
+                    data = before + uuid + after
+                    self.assertEqual(AUDIT.violations("docs/authored.txt", data), self.original_patterns("docs/authored.txt", data))
 
     def test_compressed_recipe_checks_every_row_with_unchanged_findings(self):
         rows = [json.dumps({"input_id": "synthetic"}).encode() + b"\n"]

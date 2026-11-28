@@ -15,7 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PATTERNS = {
     "personal home path": rb"/(?:Users|home)/[A-Za-z0-9_.-]+/",
     "concrete storage UUID": rb"(?i)/mnt/expand/[0-9a-f]{8}-[0-9a-f-]{27,}",
-    "UUID": rb"(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b",
+    # Search for the first hyphen and check the opening group and word boundary
+    # behind it. The literal prefix lets the regex skip long encoded runs.
+    "UUID": rb"(?i)-(?<=\b[0-9a-f]{8}-)[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b",
     "private key": rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
     # Start at the full local token so encoded runs are scanned only once.
     "email": rb"(?<![\w.+-])[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
