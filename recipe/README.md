@@ -8064,3 +8064,22 @@ and writes regenerated Shader data under ignored `work/`.
 | --- | --- |
 | `owner-snow-topped-graphics-translation.json` | `4ccb0361513a69c752ef710328d01cf721321354ea876669c5563d4a3feb0c85` |
 | `jobs/owner-snow-topped-graphics-translation.json` | `938398c73789394deec7e2636cde730b9aca028b80e471e6bc54987b9d36c392` |
+
+## Soul1 DamageZone Material record (2026-11-28)
+
+The profile selects the original Material used by 24 Soul1 scene fields.
+Scoped bundle readback reverses all nine relocated pointers and recovers the
+source body. The exact-editor fixture checks the signed J1579 Triplanar
+Terrain Blend Emissive Shader and eight saved Texture2D links. Two RGB mip origins
+are new to the successor policy. The third streamed texture reuses the
+existing Fungal binding. Canonical admission and linked Android rendering
+remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+the relative source bundle path, member and object identities, class,
+size and hashes. The public producer reads the user's installed PC data
+and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-soul1-damage-zone-material-record.json` | `c16848f5a932787995cbf5ffdb2d854f8419800764d29f6fef9b0f20edef00e0` |
