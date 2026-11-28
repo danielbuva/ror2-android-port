@@ -8769,6 +8769,12 @@ The exact-editor fixture loads each advertised GameObject and Mesh and
 unloads the bundle. The source preload sequence remains a release graph
 admission requirement for this cohort.
 
+The MolotovClusterGhost profile feeds the original Light, owning prefab
+hierarchy, particle system and managed components to `record_produce.py`.
+Bundle preparation uses the existing MonoScript registry supplier and keeps
+the 37 source preload slots in order before three additional endpoints.
+The scoped editor fixture loads the prefab and unloads the bundle.
+
 The PlasmaCoreGhost record profile feeds its original Light, prefab
 hierarchy, particle systems, Material and managed components to
 `record_produce.py`. Bundle preparation resolves their PPtrs against the
