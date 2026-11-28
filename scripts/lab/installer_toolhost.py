@@ -108,14 +108,14 @@ def verify_runtime_inputs(checkout, base_commit, version, staging, texture_sdk_c
     # Each pinned repo asset is replaced during assembly; the Android runtime is retained.
     base.pop("public_profile_source_hashes")
     pins = current.pop("public_profile_source_hashes")
-    retained_codec = expected = None
+    retained_codec = expected_codec = None
     if texture_sdk_codec is not None:
         old = base.get("texture_sdk_guest", {})
-        expected = current.get("texture_sdk_guest", {}).get(TEXTURE_CODEC)
+        expected_codec = current.get("texture_sdk_guest", {}).get(TEXTURE_CODEC)
         retained_codec = old.get(TEXTURE_CODEC)
-        if retained_codec is None or expected is None or retained_codec == expected or digest(texture_sdk_codec) != expected:
+        if retained_codec is None or expected_codec is None or retained_codec == expected_codec or digest(texture_sdk_codec) != expected_codec:
             raise ValueError("Texture SDK codec replacement must match the changed profile pin")
-        old[TEXTURE_CODEC] = expected
+        old[TEXTURE_CODEC] = expected_codec
     if base != current:
         raise ValueError("retained Android tool profile differs")
     tracked = set(git(checkout, "ls-tree", "-rz", "--name-only", version, "--", *REPO_ASSETS).split("\0"))
@@ -123,7 +123,7 @@ def verify_runtime_inputs(checkout, base_commit, version, staging, texture_sdk_c
         path = checkout / name
         if name not in tracked or path != path.resolve() or digest(path) != expected:
             raise ValueError("public fixture source differs: " + name)
-    return retained_codec, expected
+    return retained_codec, expected_codec
 
 
 def base_receipt(base):
