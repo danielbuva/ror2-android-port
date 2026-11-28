@@ -37,6 +37,13 @@ namespace UnityEngine
     public class ParticleSystemRenderer : Renderer { public Material trailMaterial; }
     public class GameObject : Object
     {
+        public struct Scene
+        {
+            public bool valid;
+            public bool IsValid() => valid;
+        }
+        public Scene scene;
+        public bool activeInHierarchy;
         public Object[] components = new Object[0];
         public T[] GetComponentsInChildren<T>(bool includeInactive) where T : Object
             => Array.ConvertAll(Array.FindAll(components, value => value is T), value => (T)value);
@@ -179,7 +186,15 @@ namespace RoR2
         public struct TeamMaterialPair { public int teamIndex; public Material sharedMaterial; }
         public TeamMaterialPair[] teamMaterialPairs;
     }
-    public class EffectComponent : UnityEngine.Object { }
+    public class EffectComponent : UnityEngine.Object
+    {
+        public int effectIndex = -1;
+        public GameObject gameObject;
+        public EffectManagerHelper helper;
+        public T GetComponent<T>() where T : UnityEngine.Object => helper as T;
+    }
+    public class EffectManagerHelper : UnityEngine.Object { public EffectPool OwningPool; }
+    public class EffectPool { public GameObject PrefabObject; }
     public class EffectDef
     {
         readonly AssetOrDirectReference<GameObject> _prefabAssetOrDirectReference;
@@ -290,7 +305,7 @@ public static partial class AndroidMaterialPresentation
         return true;
     }
 }
-static class Fixture
+static partial class Fixture
 {
     static void Check(bool value, string message) { if (!value) throw new Exception(message); }
     static void CheckLateEquipmentLock(Material source)
@@ -536,8 +551,30 @@ static class Fixture
         foreach (var copy in session.worldMaterials) UnityEngine.Object.Destroy(copy);
         Check(indicator.teamMaterialPairs == pairs && enemy && unrelated && unrenderable, "team material source ownership did not unwind");
     }
+    static void CheckMortarImpactIdentity()
+    {
+        var prefab = new GameObject();
+        var instance = new GameObject { scene = new GameObject.Scene { valid = true }, activeInHierarchy = true };
+        var pool = new EffectPool { PrefabObject = prefab };
+        var helper = new EffectManagerHelper { OwningPool = pool };
+        var effect = new EffectComponent { gameObject = instance, helper = helper };
+        Check(MortarImpactIdentity(effect, prefab, 275) == "pool prefab", "unindexed pooled impact was missed");
+        pool.PrefabObject = new GameObject();
+        effect.effectIndex = 275;
+        Check(MortarImpactIdentity(effect, prefab, 275) == null, "foreign pool matched the impact");
+        helper.OwningPool = null;
+        Check(MortarImpactIdentity(effect, prefab, 275) == "instance index", "direct impact was missed");
+        Check(MortarImpactIdentity(effect, prefab, 276) == null, "unrelated direct instance matched the impact");
+        instance.activeInHierarchy = false;
+        Check(MortarImpactIdentity(effect, prefab, 275) == null, "inactive impact was observed");
+        instance.activeInHierarchy = true;
+        instance.scene.valid = false;
+        Check(MortarImpactIdentity(effect, prefab, 275) == null, "asset was observed as a live impact");
+    }
+
     static void Main()
     {
+        CheckMortarImpactIdentity();
         var body = new Material("Hopoo Games/Deferred/Standard", "source tint/textures/queue/keywords");
         var trail = new Material("Hopoo Games/FX/Cloud Remap", "source trail properties");
         var unknown = new Material("Unknown shader", "untouched");

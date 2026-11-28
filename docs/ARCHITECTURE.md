@@ -1085,6 +1085,12 @@ original inline Meshes from the ConstructionArm FBX and prefab preload tables
 through the same producer. The exact-editor fixture loads those eleven and the
 two previously supplied Meshes at scoped addresses. Complete original preload
 groups and their signed catalog routes still depend on non-Mesh records.
+`recipe/owner-whole-game-evis-projectile-meshes.json` supplies two original
+EvisProjectileGhost Meshes at their source PathIDs. Both keep their packed
+vertex data and complete native types. The other three original MeshFilter
+references can use the byte- and type-matched endpoints in the existing
+Commando bundle. The checked whole-game graph owns those field routes and
+prefab admission.
 The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
 excluded MercSwordSwipe record through the same setup/teardown. The optional
 `unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
@@ -8270,6 +8276,13 @@ preparation bind the signed Fungal Terrain Blend Emissive Shader and retain
 the Texture2D and CustomRenderTexture targets from V48. The isolated editor
 fixture verifies the saved bindings and unloads the bundles.
 
+`recipe/owner-whole-game-soul1-damage-zone-material-record.json` selects the
+original Soul1 DamageZone Material. The scoped bundle preparation joins the
+retained J1579 Triplanar Terrain Blend Emissive Shader and resolves eight
+saved Texture2D links using V48 and existing RGB and RGBA mip suppliers.
+The isolated Unity fixture checks the links and unloads the bundles.
+Canonical admission awaits the refreshed signed Shader.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
@@ -8813,6 +8826,18 @@ Bundle preparation keeps the 39 source preload slots in order and resolves
 four additional Shader and texture providers from the existing graph. The
 scoped editor fixture loads the GameObject and unloads the bundle.
 
+The PickupAfterburner profile feeds the original Light and its owning
+prefab hierarchy to `record_produce.py`. Bundle preparation preserves the
+37 original preload slots before ten additional endpoints. The shared
+Material uses the existing graph route after verifying its source Shader
+identity. The scoped editor fixture loads the prefab and unloads the bundle.
+
+The EvisProjectileGhost profile supplies the original Light and its owning
+prefab hierarchy through `record_produce.py`. Bundle preparation preserves
+the 40 source preload slots before 31 additional endpoints. Five MeshFilter
+references resolve through the two source Meshes and three retained Commando
+records. The scoped editor fixture loads the prefab and unloads the bundle.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
@@ -8966,7 +8991,9 @@ renderer slots for up to 1.25 seconds or 120 frames in the world report.
 The same diagnostics sample the first REX Mortar aim endpoint and read the
 configured projectile and impact indices before the native state fires on exit.
 For up to two seconds after release, the trace records the owned projectile,
-its ghost and matching pooled impact roots for comparison with the video.
+its ghost and live impact roots for comparison with the video. It matches an
+active scene instance by its pool's exact configured impact prefab or, for
+direct instances, by its effect index. The root records which identity matched.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to

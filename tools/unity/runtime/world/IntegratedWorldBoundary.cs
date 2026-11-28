@@ -145,6 +145,8 @@ public sealed partial class PortSession
     {
         public int instanceId;
         public string role, name;
+        public int effectIndex = -1;
+        public string effectIdentity;
         public Vector3 position;
         public ObjectiveRendererObservation[] renderers;
     }
@@ -544,6 +546,7 @@ public sealed partial class PortSession
         FieldInfo treebotChargeEffectField;
         EffectIndex treebotReleaseEffect;
         FieldInfo treebotMortarEndpointField;
+        GameObject treebotMortarImpactPrefab;
         SirenEggDiagnosticInput sirenEggDiagnosticInput;
         EngineerNativeOutputObserver engiNativeOutputs;
         SurvivorSkillInputCoverage skillInputCoverage;
@@ -2430,7 +2433,8 @@ public sealed partial class PortSession
                     var explosion = projectile ? projectile.GetComponent<ProjectileImpactExplosion>() : null;
                     report.projectile = projectile ? projectile.name : null;
                     report.projectileIndex = projectile ? ProjectileCatalog.GetProjectileIndex(projectile) : -1;
-                    report.impactIndex = (int)RecordNativeEffect(explosion ? explosion.impactEffect : null, out report.impact);
+                    treebotMortarImpactPrefab = explosion ? explosion.impactEffect : null;
+                    report.impactIndex = (int)RecordNativeEffect(treebotMortarImpactPrefab, out report.impact);
                     treebotMortarEndpointField = typeof(AimMortar2).GetField("endpointVisualizerTransform",
                                                                             BindingFlags.Instance | BindingFlags.NonPublic);
                     if (treebotMortarEndpointField == null)
@@ -2459,6 +2463,7 @@ public sealed partial class PortSession
                     if (realSeconds - report.releaseRealSeconds >= 2f || frame - report.releaseFrame >= 240)
                     {
                         report.completed = true;
+                        treebotMortarImpactPrefab = null;
                         coordinator.Save();
                         return;
                     }
@@ -2471,11 +2476,18 @@ public sealed partial class PortSession
                         if (projectile.ghost)
                             sample.roots.Add(ObserveNativeEffectRoot(projectile.ghost.gameObject, "ghost"));
                     }
-                    if (report.impactIndex >= 0)
+                    if (treebotMortarImpactPrefab)
                     {
-                        foreach (var effect in UnityEngine.Object.FindObjectsOfType<EffectComponent>())
-                            if ((int)effect.effectIndex == report.impactIndex)
-                                sample.roots.Add(ObserveNativeEffectRoot(effect.gameObject, "impact"));
+                        foreach (var effect in Resources.FindObjectsOfTypeAll<EffectComponent>())
+                        {
+                            var identity = MortarImpactIdentity(effect, treebotMortarImpactPrefab, report.impactIndex);
+                            if (identity == null)
+                                continue;
+                            var root = ObserveNativeEffectRoot(effect.gameObject, "impact");
+                            root.effectIndex = (int)effect.effectIndex;
+                            root.effectIdentity = identity;
+                            sample.roots.Add(root);
+                        }
                     }
                 }
                 if (sample.roots.Count != 0)
@@ -2485,8 +2497,21 @@ public sealed partial class PortSession
             {
                 report.error = error.GetBaseException().Message;
                 report.completed = true;
+                treebotMortarImpactPrefab = null;
                 coordinator.Save();
             }
+        }
+
+        static string MortarImpactIdentity(EffectComponent effect, GameObject prefab, int index)
+        {
+            if (!effect || !effect.gameObject.scene.IsValid() || !effect.gameObject.activeInHierarchy)
+                return null;
+            // A pooled instance can lack the baked definition's catalog index.
+            var helper = effect.GetComponent<EffectManagerHelper>();
+            var pool = helper ? helper.OwningPool : null;
+            if (pool != null)
+                return pool.PrefabObject == prefab ? "pool prefab" : null;
+            return index >= 0 && (int)effect.effectIndex == index ? "instance index" : null;
         }
 
         static EffectIndex RecordNativeEffect(GameObject prefab, out string name)

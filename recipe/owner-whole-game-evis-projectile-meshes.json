@@ -1,0 +1,45 @@
+{
+  "bundles": [
+    {
+      "members": [
+        {
+          "meshes": [
+            {
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "bytes": 137116,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "ops": {},
+                  "path_id": -8633345161757189271,
+                  "sha256": "1e35440524cbfc377e723dfa6b9598ebe2cb495cd6cb40dc56ef96704a70f85e"
+                }
+              ],
+              "path_id": -8633345161757189271,
+              "sha256": "1e35440524cbfc377e723dfa6b9598ebe2cb495cd6cb40dc56ef96704a70f85e"
+            },
+            {
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "bytes": 119352,
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "ops": {},
+                  "path_id": 7123939154941713257,
+                  "sha256": "c8218de4fa793bb8591396b7714335e26bf09bd6cb195abad7c7e7f258bec5d4"
+                }
+              ],
+              "path_id": 7123939154941713257,
+              "sha256": "c8218de4fa793bb8591396b7714335e26bf09bd6cb195abad7c7e7f258bec5d4"
+            }
+          ],
+          "name": "CAB-9eb9ee5c7c7aeb088ce50567818f6e24"
+        }
+      ],
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-merc_assets_all_a0ed07dff73d15de2ae313c0812f5387.bundle",
+      "sha256": "dc80f84b617b475ce76e7fe811f95ae29e80606ab6bb4707321afa9c6d6c5af6"
+    }
+  ],
+  "excluded": [],
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
+}
