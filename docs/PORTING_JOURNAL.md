@@ -5313,11 +5313,12 @@ ShadowCaster readback and whole-game scoring remain open.
 
 2026-11-28 UTC. The source linker uses DXBC fragment output masks for
 Vulkan color attachments and declares shared instance buffers once.
-HGStandard APK `48caad02229e19a910d5420c9856b3101d9a0659e9e5e0dd196011ecb100e3b3`
-matched six albedo samples and specular values 51 and 204.
+HGStandard APK `43a9cfd58a0f8f3ee795f5e82201a8396446e5ee15e7a828d20e2f7caf037bef`
+matched six albedo samples, specular values 51 and 204, and distinct
+red and green per-instance light probes with a blue background.
 Crystal APK `41826200086f23414ba0f5bb3db75f1a91bb68862e99b5cc63f23c966a31c323`
 matched ordinary Deferred and both per-instance fade swaps. Both packages
 were removed. Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
-in `hgstandard-draw-device-02/terminal.done.json` and
+in `hgstandard-draw-device-03/terminal.done.json` and
 `crystalshader-draw-device-02/terminal.done.json`.
 Corrected signed replays, linked scene draws and whole-game scoring remain open.
