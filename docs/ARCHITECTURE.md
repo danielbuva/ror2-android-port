@@ -8622,8 +8622,11 @@ Terrain Detail leaves through a Forward camera and reads the effect of a
 point light on each. The Wavy Cloth fixture samples the Deferred G-buffer and
 compares camera output with its ShadowCaster enabled and disabled. The same
 fixture samples plain Deferred G-buffer albedo for Terrain Blend, Terrain
-Blend Emissive and Standard Triplanar Splat. Linked Material draws, active
-emissive variants and whole-game coverage remain open.
+Blend Emissive and Standard Triplanar Splat. The Snow Topped profile retains
+the original Diffuse and VertexLit fallback pointers through the Wavy Cloth
+supplier. Its fixture samples ordinary and instanced Deferred draws for the
+Void Island SE snow keyword pair. Linked Material draws, active emissive
+variants and whole-game coverage remain open.
 The ComputeShader path preserves the source kernel and workgroup tables and
 writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
 then read-only textures and structured buffers, then writable buffers and 2D,
