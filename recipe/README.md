@@ -8158,3 +8158,21 @@ and writes regenerated Shader data under ignored `work/`.
 | --- | --- |
 | `owner-snow-topped-graphics-translation.json` | `4ccb0361513a69c752ef710328d01cf721321354ea876669c5563d4a3feb0c85` |
 | `jobs/owner-snow-topped-graphics-translation.json` | `938398c73789394deec7e2636cde730b9aca028b80e471e6bc54987b9d36c392` |
+
+## EvisProjectileGhost Mesh records (2026-11-28)
+
+Run `mesh_produce.py` with this profile to supply two original Mercenary
+projectile Meshes at their original PathIDs. The scoped bundle preserved
+both packed Mesh bodies and complete types. Unity 2021.3.45f2 loaded and
+unloaded both as Meshes. Three other MeshFilter references have matching
+bodies and complete types in the signed V48 Commando bundle. Canonical
+prefab admission and Android rendering are pending.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object identities, body lengths and
+verification hashes. Mesh data and editor evidence stay under ignored
+`work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-evis-projectile-meshes.json` | `20bac1950a28a834b0f704761b8d6caae9cb98fe3b2a74a1316d3c171c8de0d0` |
