@@ -8598,8 +8598,9 @@ Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
 instances. It also draws Cloud Intersection Remap with the directional plain
 and instanced variants and depth fade disabled. The same fixture draws both
 Terrain Detail leaves through a Forward camera and reads the effect of a
-point light on each. Cloud native Material draws and whole-game coverage
-remain open.
+point light on each. The Wavy Cloth fixture samples the Deferred G-buffer and
+compares camera output with its ShadowCaster enabled and disabled. Cloud native
+Material draws and whole-game coverage remain open.
 The ComputeShader path preserves the source kernel and workgroup tables and
 writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
 then read-only textures and structured buffers, then writable buffers and 2D,
@@ -8734,6 +8735,13 @@ suppliers, including two RGB mip textures. The scoped exact-editor fixture
 loads the GameObject and unloads the bundle. Canonical intake preserves the
 source preload order and verifies the full dependency closure.
 
+The ScavSackGhost profile feeds its original Light, prefab hierarchy,
+Material and managed components to `record_produce.py`. Bundle preparation
+resolves their PPtrs and reuses the existing Mesh and built-in Shader.
+The scoped exact-editor fixture loads the GameObject and unloads the bundle.
+Release admission keeps the original 33 preload slots in order and appends
+any additional destinations required by the release graph.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
@@ -8837,6 +8845,12 @@ inherited explosion, lifetime expiry and blast-hit prefab fields. It reports
 the native detonation choice and reuses the same renderer census for each
 unique target. Mortar and Fire Bolt exercise direct bindings, and Drifter's
 junk projectile exercises the inherited explosion fallback.
+The audit also records assigned `OmniEffect` radius overrides and
+`TeamAreaIndicator` team materials in a separate receipt table. Each row
+retains its native table position, configured renderer targets and imported
+material and shader identity. The editor reads the prefab fields without
+starting the components. `TeleporterWorldBoundary` owns runtime preparation
+and restores the source tables during teardown.
 The audit resolves the Vagrant default skin's addressed body material and
 also inspects the direct Mercenary Expose and Acrid disease impact effects. It
 records exposed blend operands and selects recovered resources from saved source

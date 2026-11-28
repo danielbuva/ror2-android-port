@@ -5236,3 +5236,18 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `terrain-detail-forward-device-01/terminal.done.json` and
 `signed-terrain-detail-device-01/signed_artifact.json`. Linked scene draws and
 whole-game scoring remain open.
+
+## J1578 — Draw Wavy Cloth cutout and shadows on Android Vulkan
+
+2026-11-28. The producer linked 170 variants across Wavy Cloth and its
+Diffuse and VertexLit fallbacks. Exact Unity loaded all three Shader records.
+APK `c664ae6b99021ef2d6335496bb1d7d9b47245c98e87388a3bcbf7a73e0b67312`
+read green and blue for opaque and cutout Deferred samples. ShadowCaster
+occluded the sentinel behind opaque cloth and left it visible behind cutout.
+Signed Android bundle `40e41bb5c9c943448da6f91167ad2a98361f543e4d77c4b11a81a175444d6aa2`
+matched the host in 109.30 s at 90.6 MiB peak child RSS, with
+15.9 MiB stage storage and 69.2 °C peak CPU/GPU.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`wavy-cloth-draw-device-01/terminal.done.json` and
+`signed-wavy-cloth-device-02/signed_artifact.json`. Linked gameplay and
+whole-game scoring remain open.
