@@ -344,7 +344,6 @@ class InstalledAlphaTests(unittest.TestCase):
         staged.choose = Mock()
         staged.verify_tree = Mock()
         staged.verify_acquired = Mock()
-        staged.require_visible_status = Mock()
         phone = Mock(timeout=1)
         phone.read.return_value = {"state": "TOOLS_READY", "inventory_sha256": plan["acquired_inputs_sha256"]}
 
@@ -366,7 +365,7 @@ class InstalledAlphaTests(unittest.TestCase):
         staged.choose.assert_called_once_with(phone, "tree", "Tools", tools=True)
         phone.tap.assert_called_once_with("Acquire / resume required tools")
         staged.verify_acquired.assert_called_once_with(phone)
-        staged.require_visible_status.assert_called_once_with(phone, "Required tools: Required tools verified in private storage.")
+        phone.require_visible_status.assert_called_once_with("Required tools: Required tools verified in private storage.")
         staged.installer.DIAGNOSTICS.write.assert_called_once()
 
     def test_nightly_census_joins_play_failure_without_pulling_the_apk(self):

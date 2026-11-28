@@ -220,22 +220,6 @@ class FolderImport:
             time.sleep(0.5)
         raise self.installer.Failure("acquisition-import-timeout")
 
-    def require_visible_status(self, phone, *parts):
-        # The status TextView is first in the installer's ScrollView.
-        for _ in range(6):
-            tree = phone.ui_windows((self.installer.PACKAGE,), recovery=False)
-            if any(all(part in node.get("text", "") for part in parts) for node in tree.iter("node")):
-                return
-            scroll = next((node for node in tree.iter("node") if node.get("scrollable") == "true"), None)
-            if scroll is None:
-                break
-            bounds = list(map(int, re.findall(r"\d+", scroll.get("bounds", ""))))
-            self.require(len(bounds) == 4, "installer-status-scroll-bounds")
-            x1, y1, x2, y2 = bounds
-            x = str((x1 + x2) // 2)
-            phone.shell("input", "swipe", x, str(y1 + (y2 - y1) // 5), x, str(y2 - (y2 - y1) // 5), "250", label="installer-scroll-to-status")
-        raise self.installer.Failure("installer-status-not-visible")
-
 
 class Acquisition(FolderImport):
     def __init__(self, installer, require, request, config, temporary):
@@ -330,7 +314,7 @@ class Acquisition(FolderImport):
         )
 
     def visible_status(self, phone, state, detail):
-        self.require_visible_status(phone, "Game import: " + state, *detail)
+        phone.require_visible_status("Game import: " + state, *detail)
 
     def no_admitted_output(self, phone, *, no_import=False):
         self.require(phone.read("owner-apk-ready.json") is None and not phone.occupied(self.installer.GAME), "acquisition-unverified-apk-admitted")

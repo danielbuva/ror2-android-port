@@ -1917,6 +1917,8 @@ On adopted devices, the synthetic package-only acceptance uses the shell-only
 It provisions fixture files and reads bounded receipts under the installer UID.
 The runner verifies code and private data paths against the live adopted volume.
 The synthetic game's retention Activity emits a nonce-bound file check result.
+The shared installer runner reads status from the focused window and scrolls to
+the visible status text for acquisition and both Check for updates outcomes.
 `reconcile` recovers persisted session state after recreation; installed identity
 and required profile readback gate success and advancement of the installed
 manifest. Session/receiver diagnostics observe these transitions without changing

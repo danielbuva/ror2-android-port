@@ -22,6 +22,16 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def test_visible_status_scrolls_back_from_the_check_button(self):
+        phone = LAB.Phone("fixture", 1)
+        controls = ET.fromstring('<hierarchy><node scrollable="true" bounds="[0,0][600,1000]"><node text="Check for updates"/></node></hierarchy>')
+        status = ET.fromstring('<hierarchy><node text="The installed game is up to date. TEST RELEASE SOURCE"/></hierarchy>')
+        with patch.object(phone, "ui_windows", side_effect=[controls, status]) as windows, patch.object(phone, "shell") as shell:
+            phone.require_visible_status("The installed game is up to date.", "TEST RELEASE SOURCE")
+        self.assertEqual(windows.call_count, 2)
+        windows.assert_called_with((LAB.PACKAGE,), recovery=False)
+        shell.assert_called_once_with("input", "swipe", "300", "200", "300", "800", "250", label="installer-scroll-to-status")
+
     def test_adopted_packaging_reads_code_and_private_data_on_the_selected_volume(self):
         phone = LAB.Phone("fixture", 1)
         phone.adopted_packaging_fixture = True
@@ -2016,7 +2026,6 @@ class LabInstallerUpdatesTests(unittest.TestCase):
     def test_acceptance_checks_witness_before_marking_update_and_rollback_pass(self):
         phone = Mock()
         phone.occupied.return_value = False
-        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/><node text="The installed game is up to date."/></hierarchy>')
         phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}, {"sha256": "rolled"}]
         phone.read.side_effect = lambda name: (
             {"rebuilt": [LAB.UPDATE_ENTRY], "reused": []}
@@ -2051,11 +2060,14 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             ],
         )
         self.assertEqual([call.args for call in phone.check.call_args_list], [(1,), (2,), (2, "UP_TO_DATE")])
+        self.assertEqual(
+            [call.args for call in phone.require_visible_status.call_args_list],
+            [("TEST RELEASE SOURCE",), ("Signed update available", "Changed outputs: 1; removed: 0"), ("The installed game is up to date.",)],
+        )
 
     def test_prompt_acceptance_requires_settings_and_pending_evidence_before_update_cases(self):
         phone = Mock()
         phone.occupied.return_value = False
-        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/><node text="The installed game is up to date."/></hierarchy>')
         phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}, {"sha256": "rolled"}]
         phone.read.side_effect = lambda name: (
             {"rebuilt": [LAB.UPDATE_ENTRY], "reused": []}

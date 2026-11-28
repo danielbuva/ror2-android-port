@@ -111,7 +111,7 @@ class StagedTools(FolderImport):
             if state == "TOOLS_READY":
                 self.require(row.get("inventory_sha256") == plan["acquired_inputs_sha256"], "staged-acquired-receipt-mismatch")
                 self.verify_acquired(phone)
-                self.require_visible_status(phone, "Required tools: Required tools verified in private storage.")
+                phone.require_visible_status("Required tools: Required tools verified in private storage.")
                 self.installer.DIAGNOSTICS.write("staged-acquired-tools.json", self.installer.encoded(row))
                 return
             if state in {"TOOLS_UNAVAILABLE", "CANCELLED", "ERROR"}:
@@ -433,9 +433,9 @@ class StagedUpdate(StagedTools):
             phone.put("debug-release-source.json", installer.encoded({"enabled": True, "base_url": base}))
             with stage("signed-source-import"):
                 phone.start()
+                phone.require_visible_status("TEST RELEASE SOURCE")
                 phone.select_game_placement()
                 phone.check(baseline)
-                self.require(any("TEST RELEASE SOURCE" in node.get("text", "") for node in phone.ui().iter("node")), "debug-source-warning-not-visible")
                 self.import_originals(phone)
                 passed("signed-source-import")
             if self.acquire_on_phone:
@@ -468,8 +468,7 @@ class StagedUpdate(StagedTools):
             with stage("check-for-updates"):
                 installer.publish(service, self.releases["update"], update)
                 changes = phone.check(update)
-                self.require_visible_status(
-                    phone,
+                phone.require_visible_status(
                     "Signed update available",
                     f"Changed outputs: {len(self.pair['changed_entries'])}; removed: {len(self.pair['removed_entries'])}",
                 )
@@ -495,7 +494,7 @@ class StagedUpdate(StagedTools):
             with stage("check-up-to-date"):
                 installer.publish(service, self.releases["update"], update)
                 phone.check(update, "UP_TO_DATE")
-                self.require_visible_status(phone, "The installed game is up to date.")
+                phone.require_visible_status("The installed game is up to date.")
                 self.require(
                     "/public-tools.zip" not in service.requests and phone.read("installed-release.json") == second, "staged-current-check-started-work"
                 )

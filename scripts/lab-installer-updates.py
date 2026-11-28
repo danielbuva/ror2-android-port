@@ -1255,6 +1255,23 @@ class Phone:
     def ui(self):
         return self.ui_for((PACKAGE,))
 
+    def require_visible_status(self, *parts):
+        # The status TextView is first in the installer's ScrollView.
+        for _ in range(6):
+            tree = self.ui_windows((PACKAGE,), recovery=False)
+            if any(all(part in node.get("text", "") for part in parts) for node in tree.iter("node")):
+                return
+            scroll = next((node for node in tree.iter("node") if node.get("scrollable") == "true"), None)
+            if scroll is None:
+                break
+            bounds = list(map(int, re.findall(r"\d+", scroll.get("bounds", ""))))
+            if len(bounds) != 4:
+                raise Failure("installer-status-scroll-bounds")
+            x1, y1, x2, y2 = bounds
+            x = str((x1 + x2) // 2)
+            self.shell("input", "swipe", x, str(y1 + (y2 - y1) // 5), x, str(y2 - (y2 - y1) // 5), "250", label="installer-scroll-to-status")
+        raise Failure("installer-status-not-visible")
+
     def ui_for(self, allowed_packages):
         # A newly launched Activity can report a null accessibility root while
         # uiautomator still exits 0 and creates no file. Retry only that observed
@@ -2010,10 +2027,9 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
             phone.put("import-state.json", encoded({"state": "IMPORTED", "message": "Synthetic test inputs only"}))
             set_phase("baseline-N-check")
             phone.start()
+            phone.require_visible_status("TEST RELEASE SOURCE")
             phone.select_game_placement()
             phone.check(1)
-            if not any("TEST RELEASE SOURCE" in node.get("text", "") for node in phone.ui().iter("node")):
-                raise Failure("debug-source-warning-not-visible")
         set_phase("baseline-N-install")
         phone.storage()
         if qualify_install_prompts:
@@ -2048,6 +2064,7 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
             changes = phone.check(2)
             if (changes.get("installed_manifest_known"), changes.get("changed_entries"), changes.get("removed_entries")) != (True, [UPDATE_ENTRY], []):
                 raise Failure("update-manifest-diff-mismatch")
+            phone.require_visible_status("Signed update available", "Changed outputs: 1; removed: 0")
             if "/public-tools.zip" in service.requests:
                 raise Failure("check-downloaded-bundle-before-consent")
             passed("check-for-updates")
@@ -2071,8 +2088,7 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
             phone.check(2, "UP_TO_DATE")
             if "/public-tools.zip" in service.requests or phone.read("installed-release.json") != second:
                 raise Failure("up-to-date-check-mutated-installation")
-            if not any("The installed game is up to date." in node.get("text", "") for node in phone.ui().iter("node")):
-                raise Failure("up-to-date-result-not-visible")
+            phone.require_visible_status("The installed game is up to date.")
         passed("check-up-to-date")
         if phone_flow:
             passed("synthetic-phone-flow")
