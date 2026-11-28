@@ -7946,3 +7946,23 @@ ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-scav-sack-ghost-native-records.json` | `e1768fe06a17b4c42368ce57de3fb6531031de3e829d3dca81a438a0c33d65d6` |
+
+## Fungal triplanar and Wavy Cloth Material records (2026-11-27)
+
+The two profiles select 16 Fungal triplanar and 11 Wavy Cloth Material
+records through `record_produce.py`. Scoped bundle readback reversed all
+124 checked PPtr relocations to recover the original record bytes. Unity
+2021.3.45f2 loaded and unloaded the Materials and verified their 27 Shader
+and 97 saved texture references. Canonical admission uses the existing
+signed Shader and texture suppliers, including the established Wavy Cloth
+Shader alias. Linked Android draw checks remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative source bundle paths, serialized member and object identities,
+classes, sizes and hashes. The producer reads the user's installed PC data
+and writes the record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-fungal-triplanar-material-records.json` | `7ae3dd60664d93a5165c0dc7bcd65fd10a124c649a08494872317e78c3ec7890` |
+| `owner-whole-game-wavy-cloth-material-records.json` | `f15515bd5860846b37827eba56050debaee8fc42e942280966c5e94a61a2e995` |
