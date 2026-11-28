@@ -8332,3 +8332,17 @@ installation and writes its record pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-soul1-crystal-material-records.json` | `d5068d735ec5237b34b05a4bbb399efc3df31a11cf599cc48fbf436085177476` |
+
+## Dread Fog B graphics translation (2026-11-28)
+
+The signed graphics job produces Dread Fog B from the accepted PC build at
+its whole-game destination. It retains the original Transparent/VertexLit
+fallback. Provenance, privacy, licensing and sensitive-content review covered
+the source and destination selectors, public compiler pins and verification
+hashes. Reconstructed Shader records and device evidence stay under ignored
+`work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-dread-fog-b-graphics-translation.json` | `2ba91c6a8c90e077d2b6263e6c73942ef1f9e6ee1992e55638092631591f8dff` |
+| `jobs/owner-dread-fog-b-graphics-translation.json` | `75a8e7f23fb2d6371269a19127d5740431d301a660ff1fcf7adf2169c8b36231` |

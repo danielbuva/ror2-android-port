@@ -46,6 +46,7 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32[] standardAlbedoSamples;
         public int[] standardSpecularSamples;
         public Color32[] standardProbeSamples;
+        public Vector2Int[] dreadFogBounds;
         public bool passed;
         public string failure;
     }
@@ -362,6 +363,7 @@ public sealed class ContentFixture : MonoBehaviour
             else if (shader.name == "Hopoo Games/FX/Cloud Intersection Remap") DrawIntersection(shader, report);
             else if (shader.name == "Hidden/TerrainEngine/TerrainLayerUtils") DrawTerrainLayers(shader, report);
             else if (shader.name == "Hopoo Games/FX/Cloud Remap") DrawCloudRemap(shader, report);
+            else if (shader.name == "Hopoo Games/FX/Dread Fog B") DrawDreadFog(shader, report);
             else if (shader.name == "Hidden/TerrainEngine/Details/WavingDoublePass") DrawTerrainDetail(shader, report, false);
             else if (shader.name == "Hidden/TerrainEngine/Details/BillboardWavingDoublePass") DrawTerrainDetail(shader, report, true);
             else if (shader.name == "Hopoo Games/Deferred/Wavy Cloth") DrawWavyCloth(shader, report);
@@ -936,6 +938,82 @@ public sealed class ContentFixture : MonoBehaviour
             Destroy(transparent);
             Destroy(ramp);
             Destroy(mesh);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawDreadFog(Shader shader, ShaderDrawReport report)
+    {
+        const string directional = "DIRECTIONAL";
+        const int width = 64;
+        bool previousDirectional = Shader.IsKeywordEnabled(directional);
+        var material = new Material(shader);
+        var mesh = new Mesh();
+        var red = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var pixels = new Texture2D(width, 1, TextureFormat.RGBA32, false, true);
+        var target = RenderTexture.GetTemporary(width, width, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        var previous = RenderTexture.active;
+        try
+        {
+            foreach (string keyword in new[] { "FADECLOSE", "USE_CONTRAST", "USE_EMISSIVE", "USE_VERTEX" })
+                material.EnableKeyword(keyword);
+            material.SetInt("_SrcBlendFloat", (int)BlendMode.One);
+            material.SetInt("_DstBlendFloat", (int)BlendMode.Zero);
+            material.SetInt("_Cull", (int)CullMode.Off);
+            material.SetInt("_ZTest", (int)CompareFunction.Always);
+            material.SetFloat("_VertexOffsetAmount", 0);
+            material.SetFloat("_VertexOffsetPower", 0.5f);
+            red.SetPixel(0, 0, Color.red);
+            red.Apply();
+
+            mesh.vertices = new[] {
+                new Vector3(0.15f, -0.25f, 0.5f), new Vector3(0.15f, 0.25f, 0.5f),
+                new Vector3(0.45f, 0.25f, 0.5f), new Vector3(0.45f, -0.25f, 0.5f)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            mesh.normals = new[] { Vector3.back, Vector3.back, Vector3.back, Vector3.back };
+            mesh.uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+            mesh.colors = new[] { Color.black, Color.black, Color.black, Color.black };
+
+            report.dreadFogBounds = new Vector2Int[4];
+            using var commands = new CommandBuffer();
+            for (int sample = 0; sample < report.dreadFogBounds.Length; ++sample)
+            {
+                material.SetTexture("_MainTex", (sample & 1) != 0 ? red : Texture2D.blackTexture);
+                material.SetTexture("_SecTex", (sample & 2) != 0 ? red : Texture2D.blackTexture);
+                commands.Clear();
+                commands.SetRenderTarget(target);
+                commands.ClearRenderTarget(true, true, Color.magenta);
+                commands.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+                commands.EnableShaderKeyword(directional);
+                commands.DrawMesh(mesh, Matrix4x4.identity, material, 0, 0);
+                Graphics.ExecuteCommandBuffer(commands);
+
+                RenderTexture.active = target;
+                pixels.ReadPixels(new Rect(0, width / 2, width, 1), 0, 0, false);
+                int first = width, last = -1;
+                for (int x = 0; x < width; ++x)
+                {
+                    if (((Color32)pixels.GetPixel(x, 0)).Equals((Color32)Color.magenta)) continue;
+                    first = Math.Min(first, x);
+                    last = x;
+                }
+                report.dreadFogBounds[sample] = new Vector2Int(first, last);
+            }
+            var bounds = report.dreadFogBounds;
+            report.passed = report.graphics == "Vulkan" &&
+                bounds[0].x < bounds[0].y && bounds[0].x >= width / 2 &&
+                bounds[0].y + 4 <= bounds[1].y && bounds[1].Equals(bounds[2]) &&
+                bounds[1].y + 4 <= bounds[3].y && bounds[3].y < width - 1;
+        }
+        finally
+        {
+            if (!previousDirectional) Shader.DisableKeyword(directional);
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(target);
+            Destroy(material);
+            Destroy(mesh);
+            Destroy(red);
             Destroy(pixels);
         }
     }

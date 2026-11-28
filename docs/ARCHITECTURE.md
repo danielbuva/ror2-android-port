@@ -8669,6 +8669,10 @@ into the Shader's compressed blob.
 Terrain detail forward passes pair each full vertex keyword set with its
 original fragment after dropping the vertex-only `VERTEXLIGHT_ON` from the
 lookup. The linked program keeps the full vertex key and both requirements.
+When a vertex and fragment variant sample the same named texture, the
+translator checks the source texture shape and sampler register. Both stages
+use the fragment's Vulkan image and sampler slots. One parameter row exposes
+the binding to both stages, as in the exact editor's Vulkan output.
 Geometry passes require matching original vertex, fragment and geometry
 keyword sets and a resource-free geometry stage. The translator applies the
 Vulkan Y transform at each geometry emission and emits the three stages in

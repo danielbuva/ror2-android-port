@@ -60,6 +60,34 @@ def vertex_channels(dxbc):
     return sorted(channels)
 
 
+def texture_shape(texture):
+    dimension = texture["dimension"]
+    if dimension is None:
+        # The native variant texture binding packs the dimension above its MSAA bit.
+        return divmod(texture["native_texture_descriptor"], 2)
+    return dimension, texture.get("multisampled", False)
+
+
+def image_binding_base(textures):
+    return max(3, 1 + max((texture["sampler"] for texture in textures), default=-1))
+
+
+def shared_texture_slots(vertex_textures, fragment_textures):
+    """Map shared names to the fragment's Vulkan image slots."""
+    if not vertex_textures:
+        return {}
+    fragment_by_name = {texture["name"]: texture for texture in fragment_textures}
+    image_base = image_binding_base(fragment_textures)
+    slots = {}
+    for texture in vertex_textures:
+        name = texture["name"]
+        fragment = fragment_by_name.get(name)
+        if fragment is None or texture_shape(texture) != texture_shape(fragment) or texture["sampler"] != fragment["sampler"]:
+            raise ValueError(f"unqualified shared Vulkan texture binding: {name}")
+        slots[name] = image_base + fragment["slot"]
+    return slots
+
+
 def fragment_color_mask(dxbc):
     mask = 0
     for name, semantic_index, _, _ in signature_rows(dxbc, b"OSGN"):
@@ -84,7 +112,7 @@ def shared_constant_bindings(vertex_layout, fragment_layout):
     return bindings
 
 
-def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_bindings=None):
+def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_bindings=None, shared_textures=None):
     """Route source-layout resources to the linked pass's descriptor sets."""
     stage_flag = 0x04000000 if vertex else 0x08000000
     shared_bindings = shared_bindings or {}
@@ -120,24 +148,26 @@ def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_bindings=N
         visibility = 0x0C000000 if shared else stage_flag
         rows.append(f"cbbind: {name} {visibility | 0x10000 | slot}")
     textures = layout["textures"]
-    image_base = max(3, 1 + max((texture["sampler"] for texture in textures), default=-1))
+    image_base = image_binding_base(textures)
+    shared_textures = shared_textures or {}
     bound_samplers = set()
     for texture in textures:
         source_slot = texture["slot"]
         sampler = texture["sampler"]
-        dimension = texture["dimension"]
-        multisampled = texture.get("multisampled", False)
-        if dimension is None:
-            # The native variant texture binding packs the dimension above its MSAA bit.
-            dimension, multisampled = divmod(texture["native_texture_descriptor"], 2)
-        if vertex or dimension not in (2, 4) or multisampled or source_slot < 0 or sampler < 0:
+        name = texture["name"]
+        shared = name in shared_textures
+        dimension, multisampled = texture_shape(texture)
+        if (vertex and not shared) or dimension not in (2, 4) or multisampled or source_slot < 0 or sampler < 0:
             raise ValueError("unqualified Vulkan texture binding")
-        image_slot = image_base + source_slot
+        image_slot = shared_textures[name] if shared else image_base + source_slot
         descriptors.extend(("texture", str(source_slot), "0", str(image_slot)))
         if sampler not in bound_samplers:
             descriptors.extend(("sampler", str(sampler), "0", str(sampler)))
             bound_samplers.add(sampler)
-        rows.append(f"texbind: {texture['name']} {stage_flag | image_slot} {stage_flag | sampler} 0 {dimension}")
+        if shared and vertex:
+            continue  # The fragment metadata declares the binding for both stages.
+        visibility = 0x0C000000 if shared else stage_flag
+        rows.append(f"texbind: {name} {visibility | image_slot} {visibility | sampler} 0 {dimension}")
     return rows, descriptors
 
 
@@ -204,6 +234,7 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
     for keywords, vertex_stage in vertices.items():
         fragment_stage = fragments[fragment_keys[keywords]]
         shared_bindings = shared_constant_bindings(vertex_stage[2], fragment_stage[2])
+        shared_textures = shared_texture_slots(vertex_stage[2]["textures"], fragment_stage[2]["textures"])
         reflection, codes, requirements = [], {}, 0
         sources = [("vert", vertex_stage), ("frag", fragment_stage)]
         if has_geometry:
@@ -215,7 +246,9 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
                 rows, descriptors = [], []
             else:
                 vertex = stage == "vert"
-                rows, descriptors = stage_parameters(layout, vertex, vertex_binding_base=vertex_binding_base, shared_bindings=shared_bindings)
+                rows, descriptors = stage_parameters(
+                    layout, vertex, vertex_binding_base=vertex_binding_base, shared_bindings=shared_bindings, shared_textures=shared_textures
+                )
                 if vertex:
                     rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))
             glsl_stage = stage if stage in ("vert", "geom") else None

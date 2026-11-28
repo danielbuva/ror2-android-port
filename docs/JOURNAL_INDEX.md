@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1584](PORTING_JOURNAL.md#j1584--draw-dread-fog-b-vertex-displacement-on-android-vulkan) | 2026-11-27 | Draw Dread Fog B vertex displacement on Android Vulkan | 2026-11-28 UTC. |
 | [J1583](PORTING_JOURNAL.md#j1583--preserve-deferred-vulkan-attachments-and-shared-instance-buffers) | 2026-11-27 | Preserve Deferred Vulkan attachments and shared instance buffers | 2026-11-28 UTC. |
 | [J1582](PORTING_JOURNAL.md#j1582--draw-original-snow-topped-variants-on-android-vulkan) | 2026-11-27 | Draw original Snow Topped variants on Android Vulkan | 2026-11-28 UTC. |
 | [J1581](PORTING_JOURNAL.md#j1581--draw-the-solus-heart-wireframe-on-android-vulkan) | 2026-11-27 | Draw the Solus Heart wireframe on Android Vulkan | 2026-11-28. |
