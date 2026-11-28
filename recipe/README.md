@@ -8012,14 +8012,16 @@ and writes the record pack under ignored `work/`.
 | `owner-whole-game-fungal-triplanar-material-records.json` | `7ae3dd60664d93a5165c0dc7bcd65fd10a124c649a08494872317e78c3ec7890` |
 | `owner-whole-game-wavy-cloth-material-records.json` | `f15515bd5860846b37827eba56050debaee8fc42e942280966c5e94a61a2e995` |
 
-## Soul1 Cloud Intersection Remap Material records (2026-11-27)
+## Soul1 Cloud Remap Material records (2026-11-28)
 
-The profile selects 23 original Material records through `record_produce.py`.
-Nine more Soul1 Materials are supplied by the existing Sad1 profiles. The
-isolated V48-linked bundle restored all 32 original bodies by reversing 135
-checked pointer relocations. Unity 2021.3.45f2 verified 32 Shader and 103
-saved texture links and unloaded the bundles. Canonical composition and
-linked Android rendering remain open.
+The profiles select 26 original Material records through `record_produce.py`.
+Ten more Soul1 Materials reuse the existing Sad1 profiles. The isolated
+bundle binds the original Cloud Remap identity to the signed J1574 Shader
+and its VertexLit fallback. Reversing 155 persisted pointer relocations
+recovered all 36 original Material bodies. Four existing Texture2D packs
+supplied 1,141,656 streamed bytes checked after emission. Unity 2021.3.45f2
+verified 36 Shader and 119 saved texture links and unloaded the bundles.
+Canonical composition and linked Android rendering remain open.
 
 The provenance, privacy, licensing and sensitive-content review covered
 relative source bundle paths, serialized member and object identities,
@@ -8029,6 +8031,59 @@ and writes the record pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-soul1-signed-cloud-material-records.json` | `7a6f2ef8671a4c8095ffdb7d39c0a2eac20ee8c1066c1414a4ce0cef2f4caeab` |
+| `owner-whole-game-soul1-cloud-remap-textured-material-records.json` | `b5495041181ef634fc26b71209fff677d135f7cdd284f91d52b7f2bd0f3407b6` |
+
+## Soul1 Fungal Terrain Blend Emissive Material records (2026-11-28)
+
+The profile selects three original Material records through `record_produce.py`.
+These records cover 443 Soul1 scene references. Reversing all 22 persisted
+pointer relocations recovered the original bodies. Unity 2021.3.45f2
+verified the signed Shader and 19 saved texture links, including four
+CustomRenderTexture links, before unloading. Canonical composition and
+linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative source bundle paths, serialized member and object identities,
+classes, sizes and hashes. The producer reads the user's installed PC data
+and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-soul1-fungal-material-records.json` | `093ac4aa8d802f42955c58044261d0fbd848eb64f3abd3a1d763c2de37b4c6b1` |
+
+## Ancient Loft animated pillar Material records (2026-11-28)
+
+The profile selects the two original Material records used by the Floating
+Pillar Stone and Half-Intact Pillar groups. The source Material positions are
+806 and 700 in the original preload array. Scoped bundle readback reversed all
+14 pointer relocations and recovered both original bodies. Two field-specific
+texture aliases reuse historical Android textures whose original compressed
+pixels and serialized settings match. The exact-editor fixture checks the
+Terrain Blend Shader and 12 saved texture links. Canonical admission and
+linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative source bundle paths, serialized member and object identities,
+classes, sizes and hashes. The producer reads the user's installed PC data
+and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-ancientloft-pillar-material-records.json` | `c080e3c85b1f4be088744dd007dc5e7df2c6581db07b6f2a6087f583fe1b5d1f` |
+
+## Snow Topped graphics translation (2026-11-28)
+
+The profile selects the original Snow Topped Shader and supplies the existing
+Commando fallback alias through the signed graphics translation producer.
+The provenance, privacy, licensing and sensitive-content review covered
+native record selectors, destination identity, public tool bindings and
+verification hashes. The producer reads the user's accepted PC installation
+and writes regenerated Shader data under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-snow-topped-graphics-translation.json` | `4ccb0361513a69c752ef710328d01cf721321354ea876669c5563d4a3feb0c85` |
+| `jobs/owner-snow-topped-graphics-translation.json` | `938398c73789394deec7e2636cde730b9aca028b80e471e6bc54987b9d36c392` |
 
 ## HGStandard graphics translation (2026-11-28)
 

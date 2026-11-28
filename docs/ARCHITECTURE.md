@@ -8256,12 +8256,19 @@ preparation resolves their Shader and texture PPtrs, including eleven
 textures from existing suppliers. The isolated Unity fixture checks the
 resolved bindings before unloading.
 
-`recipe/owner-whole-game-soul1-signed-cloud-material-records.json` supplies
-23 original Cloud Intersection Remap Materials used by Soul1. The shared
-record producer reads the pinned PC bundles, and bundle preparation binds
-the Materials to the signed Shader and typed texture destinations from V48.
-Nine additional Soul1 Materials reuse the Sad1 suppliers. The isolated
-Unity fixture checks the bindings and unloads the bundles after validation.
+`recipe/owner-whole-game-soul1-signed-cloud-material-records.json` and
+`recipe/owner-whole-game-soul1-cloud-remap-textured-material-records.json`
+supply 26 original Cloud Remap Materials used by Soul1. Ten more reuse the
+Sad1 suppliers. Bundle preparation binds the original Shader identity to
+the signed J1574 Cloud Remap with its VertexLit fallback and resolves
+Texture2D references through V48 and the existing streamed suppliers.
+The isolated Unity fixture checks the bindings and unloads the bundles.
+
+`recipe/owner-whole-game-soul1-fungal-material-records.json` supplies three
+original Materials referenced by Soul1. The same record producer and bundle
+preparation bind the signed Fungal Terrain Blend Emissive Shader and retain
+the Texture2D and CustomRenderTexture targets from V48. The isolated editor
+fixture verifies the saved bindings and unloads the bundles.
 
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
@@ -8316,6 +8323,13 @@ saved Shader and texture pointers using the linked supplier graph. Scoped
 readback verified all 124 relocations. The Unity 2021.3.45f2 content fixture
 loaded the Materials, checked their saved bindings and unloaded the bundles.
 Canonical admission and linked Android draw checks remain open.
+
+The Ancient Loft pillar Material profile selects two original class-21
+bodies through `record_produce.py`. Bundle preparation binds the saved
+Shader to the signed Terrain Blend and restores the saved texture links
+using pinned Android suppliers. The exact-editor fixture checks those links
+and unloads its bundles. Release composition preserves both Material slots
+in the original animated pillar preload groups.
 
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
@@ -8632,8 +8646,11 @@ Terrain Detail leaves through a Forward camera and reads the effect of a
 point light on each. The Wavy Cloth fixture samples the Deferred G-buffer and
 compares camera output with its ShadowCaster enabled and disabled. The same
 fixture samples plain Deferred G-buffer albedo for Terrain Blend, Terrain
-Blend Emissive and Standard Triplanar Splat. Linked Material draws, active
-emissive variants and whole-game coverage remain open.
+Blend Emissive and Standard Triplanar Splat. The Snow Topped profile retains
+the original Diffuse and VertexLit fallback pointers through the Wavy Cloth
+supplier. Its fixture samples ordinary and instanced Deferred draws for the
+Void Island SE snow keyword pair. Linked Material draws, active emissive
+variants and whole-game coverage remain open.
 The ComputeShader path preserves the source kernel and workgroup tables and
 writes bare Vulkan SPIR-V into the native kernel. Set 0 starts with samplers,
 then read-only textures and structured buffers, then writable buffers and 2D,
