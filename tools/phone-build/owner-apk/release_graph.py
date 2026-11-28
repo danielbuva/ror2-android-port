@@ -88,6 +88,7 @@ def texture_sdk_request(library, guest_files):
             library["path"],
         ],
         "environment": {},
+        "batch_bands": True,
         "pixels": "${native}/" + pixels,
         "inputs": {
             **{"${native}/" + name: "${native_sha256:" + name + "}" for name in (qemu, pixels, "libc++_shared.so")},

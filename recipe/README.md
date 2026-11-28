@@ -2517,6 +2517,12 @@ relative paths and checksums. The private fixture stages the pinned files with
 the provider licensing requirements in the managed app-host setup. The Unity
 codec comes from the owner-acquired SDK archive at conversion time.
 
+2026-11-27: the `texture-sdk-codec` pin selects the authored batch-band
+guest qualified in [J1576](../docs/PORTING_JOURNAL.md#j1576--batch-sdk-etc2-colour-encoding-per-mip-on-android).
+The signed release graph pairs this hash with `batch_bands`. The installer
+stages the guest under the existing GNU runtime and SDK licensing boundaries.
+The change tracks one hash for the public tool source's compiled output.
+
 
 The app-host profile source pins were refreshed on 2026-10-24 for the integrated
 public profile: `assembly_transforms.py` and `common.py` changed while the
