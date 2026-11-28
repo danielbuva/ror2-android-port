@@ -8256,12 +8256,13 @@ preparation resolves their Shader and texture PPtrs, including eleven
 textures from existing suppliers. The isolated Unity fixture checks the
 resolved bindings before unloading.
 
-`recipe/owner-whole-game-soul1-signed-cloud-material-records.json` supplies
-23 original Cloud Intersection Remap Materials used by Soul1. The shared
-record producer reads the pinned PC bundles, and bundle preparation binds
-the Materials to the signed Shader and typed texture destinations from V48.
-Nine additional Soul1 Materials reuse the Sad1 suppliers. The isolated
-Unity fixture checks the bindings and unloads the bundles after validation.
+`recipe/owner-whole-game-soul1-signed-cloud-material-records.json` and
+`recipe/owner-whole-game-soul1-cloud-remap-textured-material-records.json`
+supply 26 original Cloud Remap Materials used by Soul1. Ten more reuse the
+Sad1 suppliers. Bundle preparation binds the original Shader identity to
+the signed J1574 Cloud Remap with its VertexLit fallback and resolves
+Texture2D references through V48 and the existing streamed suppliers.
+The isolated Unity fixture checks the bindings and unloads the bundles.
 
 `recipe/owner-whole-game-soul1-fungal-material-records.json` supplies three
 original Materials referenced by Soul1. The same record producer and bundle
