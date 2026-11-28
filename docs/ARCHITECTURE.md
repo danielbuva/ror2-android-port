@@ -3699,6 +3699,8 @@ The `install-launch` workload measures ADB time and dispatch-to-PID time on a
 fresh standalone lab install. `install-only` measures ADB time with the OLEDs
 asleep when a launch cannot meet the display policy. The shared runner verifies
 ownership before removing the package and verifies OLED sleep during teardown.
+The `install-idle` workload retains the owned lab APK and optional synced
+payload, checks idle state and releases the lease without launching the player.
 The shared runner checks APK, private data and
 shared payload backing. The internal install estimate must leave at least 15 GiB
 free. Both profiles reserve APK and payload inputs plus 20 GiB before install,

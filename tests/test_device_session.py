@@ -1934,6 +1934,51 @@ class DeviceSessionTests(unittest.TestCase):
     def test_install_only_keeps_displays_asleep_and_removes_package(self):
         self.check_fresh_install_probe(runner.INSTALL_ONLY)
 
+    def test_install_idle_retains_fresh_package_and_syncs_without_launch(self):
+        payload = self.root / "payload"
+        payload.mkdir()
+        (payload / "content").touch()
+        request = dict(self.request, mode=runner.INSTALL_IDLE, payload_directory=str(payload))
+        target = mock.Mock(package=request["package"])
+        target.exists.return_value = False
+        target.receipt.side_effect = lambda name: self.root / name
+        target.sh.side_effect = lambda command, *args, **kwargs: {
+            "sh": process_snapshot(),
+            "am": "",
+            "pm": "package:" + target.package,
+            "sha256sum": self.digest + "  /fixture/base.apk",
+        }[command]
+        target.owned.return_value = target.install.return_value = {"apk_sha256": self.digest, "package_path": "package:/fixture/base.apk"}
+        target.sync.return_value = {"files": ["content"]}
+        target.storage.return_value = {"mode": "internal"}
+        thermal = mock.Mock(error=None, admission_battery={}, peak_cpu_gpu_celsius=30, time_above_80_seconds=0)
+        readback = {"apk_sha256": self.digest, "process_absent": True}
+
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=32 * 1024**3)),
+            mock.patch.object(device_module, "Device", return_value=target),
+            mock.patch.object(runner, "placement", return_value={}),
+            mock.patch.object(runner, "prepare_launch") as prepare,
+            mock.patch.object(runner, "ensure_runtime", return_value="/owned"),
+            mock.patch.object(runner, "reset_idle"),
+            mock.patch.object(batch, "_GameThermalOwner", return_value=thermal),
+            mock.patch.object(batch, "_idle_readback", side_effect=lambda *_: readback.copy()),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(request)
+
+        self.assertTrue(result["success"], result.get("error") or result.get("cleanup_errors"))
+        self.assertTrue(result["lease_released"])
+        self.assertEqual(result["terminal_readback"], dict(readback, oled_asleep=True))
+        self.assertEqual(result["lab_packages"], ["package:" + target.package])
+        target.install.assert_called_once_with(self.apk, mode="auto")
+        target.sync.assert_called_once_with(payload, replace_previous=True, cleanup=result["device_cleanup"])
+        thermal.cool.assert_called_once_with()
+        target.display.assert_called_once_with(False)
+        prepare.assert_not_called()
+        target.reset.assert_not_called()
+
     def check_fresh_install_probe(self, mode):
         request = dict(self.request, mode=mode, install_transport="streaming")
         target = mock.Mock(package=request["package"])

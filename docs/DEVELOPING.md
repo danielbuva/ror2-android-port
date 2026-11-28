@@ -25,7 +25,8 @@ with a standalone lab APK and an absent lab package to measure ADB install
 time and time from install dispatch to a verified launcher PID. The runner
 removes the installation after the measurement. `mode: "install-only"` uses the
 same disposable package and measures ADB install time with the OLEDs asleep.
-Use it on Thor while the physical top-only launch gate is unavailable. Other
+Use `mode: "install-idle"` to retain the installed APK and optionally sync its
+payload while keeping the OLEDs asleep. Other
 optional fields include `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
 `settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`,
 or fixture modes `shader-draw`, `shader-compute` and `texture-readback`),

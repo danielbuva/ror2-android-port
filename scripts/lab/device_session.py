@@ -39,6 +39,7 @@ INTERNAL_INSTALL_FLOOR_BYTES = 15 * 1024**3
 UNPLUGGED_SECONDS = 30 * 60
 UNPLUGGED_REQUEST = "owner-unplugged-request.json"
 INSTALLED_ALPHA = "installed-alpha"
+INSTALL_IDLE = "install-idle"
 INSTALL_LAUNCH = "install-launch"
 INSTALL_ONLY = "install-only"
 INSTALL_PROBE_MODES = {INSTALL_LAUNCH, INSTALL_ONLY}
@@ -128,6 +129,7 @@ def load_request(path, serial=None, *, queued=False):
         raise ValueError("Unknown install transport")
     if value["mode"] not in {
         "launch",
+        INSTALL_IDLE,
         *INSTALL_PROBE_MODES,
         "sustained",
         "settings-save-failure",
@@ -1619,6 +1621,7 @@ def execute(request, *, queued=False):
     (output / ".prune-keep").touch()
     installed_alpha = request["mode"] == INSTALLED_ALPHA
     install_launch = request["mode"] == INSTALL_LAUNCH
+    install_idle = request["mode"] == INSTALL_IDLE
     install_probe = request["mode"] in INSTALL_PROBE_MODES
     install_only = request["mode"] == INSTALL_ONLY
     apk = None if installed_alpha else Path(request["apk"])
@@ -1694,7 +1697,7 @@ def execute(request, *, queued=False):
                 save(output / "initial-reset.json", result["initial_reset"])
                 result["initial_idle"] = _idle_readback(device, active_hash)
             check_lab_processes(device, result["process_checkpoints"], "before-install")
-            if install_probe:
+            if install_probe or install_idle:
                 thermal = _GameThermalOwner(
                     device,
                     request["apk_sha256"],
@@ -1743,6 +1746,9 @@ def execute(request, *, queued=False):
                         result["install_recovery"]["payload_resynced"] = True
                     result["storage_after_sync"] = placement(device, DEVICE_RESERVE_BYTES)
                 result["installed_idle"] = _idle_readback(device, active_hash)
+                if install_idle:
+                    result["success"] = True
+                    return result
                 exception_log = runtime + "/exceptions.jsonl"
                 initial_exception_bytes = exception_log_size(device, exception_log)
                 initial_scratch = diagnostic_scratch(device, runtime)
@@ -1952,6 +1958,8 @@ def execute(request, *, queued=False):
                         else:
                             raise RuntimeError("Package present without verified ownership at terminal readback")
                         result["storage_final"] = independent.storage()
+                        if install_idle:
+                            result["lab_packages"] = sorted(independent.sh("pm", "list", "packages", "dev.ror2lab.").splitlines())
                     finally:
                         if not independent.display(False):
                             raise RuntimeError("Independent OLED sleep verification failed")
