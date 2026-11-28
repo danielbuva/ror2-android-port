@@ -41,6 +41,7 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32[] clothDeferredSamples;
         public Color32[] clothShadowSamples;
         public Color32[] triplanarSamples;
+        public Color32[] crystalDeferredSamples;
         public Color32[] wireframeSamples;
         public Color32[] standardAlbedoSamples;
         public int[] standardSpecularSamples;
@@ -364,6 +365,7 @@ public sealed class ContentFixture : MonoBehaviour
             else if (shader.name == "Hidden/TerrainEngine/Details/BillboardWavingDoublePass") DrawTerrainDetail(shader, report, true);
             else if (shader.name == "Hopoo Games/Deferred/Wavy Cloth") DrawWavyCloth(shader, report);
             else if (shader.name == "Hopoo Games/Deferred/Standard") DrawStandard(shader, report);
+            else if (shader.name == "Hopoo Games/Deferred/Crystal") DrawCrystal(shader, report);
             else if (shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend" ||
                 shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend Emissive")
                 DrawTriplanar(shader, report, new[] { "_RedChannelSideTex", "_RedChannelTopTex", "_GreenChannelTex", "_BlueChannelTex" });
@@ -1197,6 +1199,93 @@ public sealed class ContentFixture : MonoBehaviour
             Destroy(material);
             Destroy(transparent);
             Destroy(normal);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawCrystal(Shader shader, ShaderDrawReport report)
+    {
+        var previous = RenderTexture.active;
+        var material = new Material(shader);
+        var mesh = new Mesh();
+        var pixels = new Texture2D(32, 1, TextureFormat.RGBA32, false, true);
+        var color = new RenderTexture[4];
+        try
+        {
+            int deferred = material.FindPass("DEFERRED");
+            if (deferred < 0) throw new Exception("Crystal Deferred pass is missing");
+            var targets = new RenderTargetIdentifier[color.Length];
+            for (int i = 0; i < color.Length; ++i)
+            {
+                color[i] = RenderTexture.GetTemporary(32, 32, i == 0 ? 24 : 0,
+                    RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+                targets[i] = color[i];
+            }
+
+            mesh.vertices = new[] {
+                new Vector3(-0.16f, -0.2f, 0), new Vector3(-0.16f, 0.2f, 0),
+                new Vector3(0.16f, 0.2f, 0), new Vector3(0.16f, -0.2f, 0)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3, 2, 1, 0, 3, 2, 0 };
+            mesh.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
+            mesh.uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+
+            material.SetColor("_MainColor", Color.red);
+            material.SetColor("_FresnelColor", Color.black);
+            material.SetFloat("_FresnelPower", 1);
+            material.SetFloat("_Fade", 1);
+            var transforms = new[] {
+                Matrix4x4.Translate(new Vector3(-0.6f, 0, -1)),
+                Matrix4x4.Translate(new Vector3(0.6f, 0, -1))
+            };
+            var projection = Matrix4x4.Ortho(-1, 1, -1, 1, 0.1f, 10);
+            var expected = new Color32[] {
+                Color.red, Color.blue, Color.red,
+                Color.red, Color.blue, Color.blue,
+                Color.blue, Color.blue, Color.red
+            };
+            report.crystalDeferredSamples = new Color32[expected.Length];
+            var properties = new MaterialPropertyBlock();
+            using var commands = new CommandBuffer();
+            for (int draw = 0; draw < 3; ++draw)
+            {
+                bool instanced = draw != 0;
+                material.enableInstancing = instanced;
+                commands.SetRenderTarget(targets, targets[0]);
+                commands.ClearRenderTarget(true, true, Color.blue);
+                commands.SetViewProjectionMatrices(Matrix4x4.identity, projection);
+                if (instanced)
+                {
+                    float leftFade = draw == 1 ? 1 : -1;
+                    properties.SetFloatArray("_Fade", new[] { leftFade, -leftFade });
+                    commands.DrawMeshInstanced(mesh, 0, material, deferred, transforms, transforms.Length, properties);
+                }
+                else
+                    foreach (var transform in transforms)
+                        commands.DrawMesh(mesh, transform, material, 0, deferred);
+                Graphics.ExecuteCommandBuffer(commands);
+                commands.Clear();
+
+                RenderTexture.active = color[0];
+                pixels.ReadPixels(new Rect(0, 16, 32, 1), 0, 0, false);
+                int sample = 3 * draw;
+                report.crystalDeferredSamples[sample] = pixels.GetPixel(6, 0);
+                report.crystalDeferredSamples[sample + 1] = pixels.GetPixel(16, 0);
+                report.crystalDeferredSamples[sample + 2] = pixels.GetPixel(25, 0);
+            }
+            for (int i = 0; i < expected.Length; ++i)
+                if (!report.crystalDeferredSamples[i].Equals(expected[i]))
+                    throw new Exception("Crystal Deferred sample " + i + " differs");
+
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            foreach (var target in color)
+                if (target != null) RenderTexture.ReleaseTemporary(target);
+            Destroy(mesh);
+            Destroy(material);
             Destroy(pixels);
         }
     }
