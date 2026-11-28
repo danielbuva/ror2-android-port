@@ -8049,6 +8049,24 @@ ignored `work/`.
 | --- | --- |
 | `owner-evis-projectile-ghost-native-records.json` | `3142468797cf82a2a16a2673f2c8b65ea4f094cbafe0ea8450caaf1f7b2ba50d` |
 
+## PeaceFlowerOld native records (2026-11-28)
+
+`owner-peace-flower-old-native-records.json` selects 64 original records
+through `record_produce.py`, including both Lights and their owning
+GameObjects. Persisted readback verifies the two original Light bodies and
+reciprocal GameObject references. The scoped bundle preserves all 78 original
+preload slots before 14 additional endpoints. Unity 2021.3.45f2 loaded the
+scoped prefab as a GameObject and unloaded the bundle.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-peace-flower-old-native-records.json` | `86461d186d5368bb537c2732f0ab8624289aaffc95ddecfadda7d8bbdb4994d3` |
+
 ## Solus Heart wireframe Shader profile (2026-11-27)
 
 The signed qualification selects the original Texture Scrolling Wireframe
@@ -8178,6 +8196,23 @@ and writes regenerated Shader data under ignored `work/`.
 | `owner-snow-topped-graphics-translation.json` | `4ccb0361513a69c752ef710328d01cf721321354ea876669c5563d4a3feb0c85` |
 | `jobs/owner-snow-topped-graphics-translation.json` | `938398c73789394deec7e2636cde730b9aca028b80e471e6bc54987b9d36c392` |
 
+## Abandoned Aqueduct Orbiting Goo Material record (2026-11-28)
+
+The profile selects the original Material used by the Orbiting Goo FBX.
+Scoped bundle readback reverses five relocated pointers and recovers the
+source body. Unity 2021.3.45f2 verifies the signed Standard Shader and four
+saved Texture2D links, then unloads the bundles. The FBX's canonical
+composition and linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered the
+relative source bundle path, member and object identities, class, length and
+hashes. The public producer reads the user's accepted PC installation and
+writes the record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-itgoolake-orbiting-goo-material-record.json` | `6c283424d3de95c5a042f4f4f5603099b231ee48c7c913ff8a8e56d4f9f81111` |
+
 ## EvisProjectileGhost Mesh records (2026-11-28)
 
 Run `mesh_produce.py` with this profile to supply two original Mercenary
@@ -8195,6 +8230,70 @@ verification hashes. Mesh data and editor evidence stay under ignored
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-evis-projectile-meshes.json` | `20bac1950a28a834b0f704761b8d6caae9cb98fe3b2a74a1316d3c171c8de0d0` |
+
+## Soul1 DamageZone Material record (2026-11-28)
+
+The profile selects the original Material used by 24 Soul1 scene fields.
+Scoped bundle readback reverses all nine relocated pointers and recovers the
+source body. Unity 2021.3.45f2 verifies the retained J1579 Triplanar
+Terrain Blend Emissive Shader and eight saved Texture2D links, then unloads
+the bundles. Two RGB mip origins are new to the successor policy. The third
+streamed texture reuses the existing Fungal binding. Canonical admission
+awaits the refreshed signed Shader. Linked Android rendering remains open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+the relative source bundle path, member and object identities, class,
+size and hashes. The public producer reads the user's installed PC data
+and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-soul1-damage-zone-material-record.json` | `c16848f5a932787995cbf5ffdb2d854f8419800764d29f6fef9b0f20edef00e0` |
+
+## HGStandard graphics translation (2026-11-28)
+
+The profile selects the original Deferred Standard Shader for the signed
+graphics translation producer and keeps its Commando destination. The
+provenance, privacy, licensing and sensitive-content audit covered the
+native record selector, destination, public compiler bindings and hashes.
+The producer reads the accepted PC installation and emits its Vulkan record
+under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-hgstandard-graphics-translation.json` | `9bf7d2ed28c3cdaefcc8698378fba849f0ca86773e69e0310bff8e993596ef78` |
+| `jobs/owner-hgstandard-graphics-translation.json` | `d46182ff7205d14a1727cb54b95debc7f783db1509609cadd4a210571855d221` |
+
+## CrystalShader graphics translation (2026-11-28)
+
+The signed graphics job selects the original DLC4 Deferred Crystal Shader at
+its whole-game destination. The review covered source and destination
+selectors, public tool bindings and verification hashes for provenance,
+privacy, licensing and sensitive content. The job reads the accepted PC
+installation and emits the Vulkan record under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-crystalshader-graphics-translation.json` | `f6ffd4f5bc42384dad4395b6b89903361f65d89e52e1e145aaaad4c93186f578` |
+| `jobs/owner-crystalshader-graphics-translation.json` | `62bedee5d7a2201398bc0677df39e6ad8db00d28dca5d8b2a1afc80ec0489fa8` |
+
+## Soul1 Crystal Material records (2026-11-28)
+
+The profile selects two original Materials used by 87 Soul1 scene fields.
+Scoped bundle readback reverses 16 Material pointers and verifies the two
+ordered fallback links in the signed Crystal Shader. Unity 2021.3.45f2 loads
+the two Materials and three Shaders, checks all 14 saved texture links,
+including the CustomRenderTexture, and unloads the bundles. Canonical
+admission and linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+the relative source bundle path, member and object identities, class,
+length and hashes. The public producer reads the user's accepted PC
+installation and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-soul1-crystal-material-records.json` | `d5068d735ec5237b34b05a4bbb399efc3df31a11cf599cc48fbf436085177476` |
 
 ## Dread Fog B graphics translation (2026-11-28)
 

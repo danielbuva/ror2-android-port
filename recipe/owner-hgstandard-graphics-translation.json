@@ -1,0 +1,21 @@
+{
+  "schema": "owner-graphics-shader-translation-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "typed_records": [
+    {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -197252232775272061,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "4e0aa8271cb0d2fb8ef242b7bbaee70743a64c0d0343620d26d9a9f37d65db0c"
+      },
+      "output": {
+        "bundle": "commando-prefab-lab",
+        "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+        "path_id": 5161927701771667371
+      }
+    }
+  ]
+}

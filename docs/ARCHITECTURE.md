@@ -8276,6 +8276,13 @@ preparation bind the signed Fungal Terrain Blend Emissive Shader and retain
 the Texture2D and CustomRenderTexture targets from V48. The isolated editor
 fixture verifies the saved bindings and unloads the bundles.
 
+`recipe/owner-whole-game-soul1-damage-zone-material-record.json` selects the
+original Soul1 DamageZone Material. The scoped bundle preparation joins the
+retained J1579 Triplanar Terrain Blend Emissive Shader and resolves eight
+saved Texture2D links using V48 and existing RGB and RGBA mip suppliers.
+The isolated Unity fixture checks the links and unloads the bundles.
+Canonical admission awaits the refreshed signed Shader.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
@@ -8337,12 +8344,26 @@ using pinned Android suppliers. The exact-editor fixture checks those links
 and unloads its bundles. Release composition preserves both Material slots
 in the original animated pillar preload groups.
 
+The Soul1 Crystal Material profile selects two original class-21 bodies
+through `record_produce.py`. Scoped bundle preparation joins the signed
+Crystal Shader and its ordered fallbacks to the retained texture suppliers.
+The exact-editor fixture checks both Materials and their saved texture links
+and unloads the bundles. Canonical composition preserves 87 original scene
+fields. Crystal_opt uses its own Shader route and remains pending.
+
 The Ancient Loft animated pillar FBX profiles use `record_produce.py` for
 the original hierarchy, Animator, SkinnedMeshRenderer and AnimationClip
 records, and `avatar_produce.py` for the two original Avatars. Setup verifies
 the PC bundle and body pins. The producers write private object packs and
 close their inputs on exit. Bundle preparation joins the packs to the Mesh
 and Material suppliers at the original 22 preload positions per FBX.
+
+The Abandoned Aqueduct Orbiting Goo Material profile uses
+`record_produce.py` to select the original class-21 body. Bundle preparation
+joins its five saved pointers to the signed Standard Shader and the existing
+Android texture suppliers. The scoped exact-editor fixture checks the Shader
+and four texture links, then unloads its bundles. The FBX composition keeps
+the Material at its original preload position.
 
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
@@ -8626,6 +8647,9 @@ both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform wi
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
 linked envelope. It feeds source layouts through the existing
 `shader_produce.py` parameter writer and emits a typed replacement pack.
+The linker derives the Vulkan color attachment mask from each original
+fragment output signature. Deferred G-buffer variants enable every declared
+target. Depth-only variants keep bit zero, as in the exact editor's envelope.
 For shaders with ordinary vertex and fragment passes, the translator retains
 subshader and pass order and render state. The shared record writer merges
 the per-pass Vulkan tables and relocates their program and parameter indices
@@ -8652,7 +8676,9 @@ constant arrays, member offsets and strides through the same native parameter
 writer. Unity typed-loaded the additional texture and instancing variants.
 The graphics linker assigns distinct vertex and fragment uniform bindings and
 preserves the native Unity instancing buffer names. When both stages consume
-`UnityDrawCallInfo`, they share its binding with both stage flags. The Android
+`UnityDrawCallInfo` or the same `UnityInstancing_` buffer, the linker serializes
+one declaration with both stage flags and routes both programs to its binding.
+Unity assigns Vulkan constant buffer bindings by name. The Android
 Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
 instances. It also draws Cloud Intersection Remap with the directional plain
 and instanced variants and depth fade disabled. The same fixture draws both
@@ -8830,6 +8856,12 @@ the 40 source preload slots before 31 additional endpoints. Five MeshFilter
 references resolve through the two source Meshes and three retained Commando
 records. The scoped editor fixture loads the prefab and unloads the bundle.
 
+The PeaceFlowerOld profile supplies both original Lights and their prefab
+hierarchy through `record_produce.py`. The scoped bundle keeps 78 original
+preload slots in order before 14 additional endpoints. Persisted readback
+verifies each Light and its reciprocal GameObject component reference. The
+scoped exact-editor fixture loads the prefab and unloads the bundle.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
@@ -8983,7 +9015,9 @@ renderer slots for up to 1.25 seconds or 120 frames in the world report.
 The same diagnostics sample the first REX Mortar aim endpoint and read the
 configured projectile and impact indices before the native state fires on exit.
 For up to two seconds after release, the trace records the owned projectile,
-its ghost and matching pooled impact roots for comparison with the video.
+its ghost and live impact roots for comparison with the video. It matches an
+active scene instance by its pool's exact configured impact prefab or, for
+direct instances, by its effect index. The root records which identity matched.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
