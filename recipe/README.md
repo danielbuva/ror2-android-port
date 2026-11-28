@@ -8071,6 +8071,25 @@ and writes its record pack under ignored `work/`.
 | --- | --- |
 | `owner-whole-game-ancientloft-pillar-material-records.json` | `c080e3c85b1f4be088744dd007dc5e7df2c6581db07b6f2a6087f583fe1b5d1f` |
 
+## Ancient Loft animated pillar FBX records (2026-11-28)
+
+The two profiles select 38 native records and two Avatars for the original
+Floating Pillar Stone and Half-Intact Pillar groups. Both keep their original
+PathIDs in the whole-game content member. The native record and Avatar
+producers preserve the source bodies. Scoped bundle readback checked each
+group's 22 original preload positions and Unity 2021.3.45f2 loaded and unloaded
+the linked assets. Canonical release admission and Android play remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object identities, classes, offsets, sizes
+and hashes. Both producers read the user's PC installation and write their
+packs under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-ancientloft-pillar-fbx-records.json` | `8970996543bd6f8d823e7b1ca86df3ac850fbbb043bf258632f4f219e4ab92ff` |
+| `owner-whole-game-ancientloft-pillar-avatars.json` | `7a688f829b7157b98dc1efb343a219102002040f716e9ff895135c4041e99f4d` |
+
 ## Snow Topped graphics translation (2026-11-28)
 
 The profile selects the original Snow Topped Shader and supplies the existing
