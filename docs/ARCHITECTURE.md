@@ -8830,6 +8830,12 @@ inherited explosion, lifetime expiry and blast-hit prefab fields. It reports
 the native detonation choice and reuses the same renderer census for each
 unique target. Mortar and Fire Bolt exercise direct bindings, and Drifter's
 junk projectile exercises the inherited explosion fallback.
+The audit also records assigned `OmniEffect` radius overrides and
+`TeamAreaIndicator` team materials in a separate receipt table. Each row
+retains its native table position, configured renderer targets and imported
+material and shader identity. The editor reads the prefab fields without
+starting the components. `TeleporterWorldBoundary` owns runtime preparation
+and restores the source tables during teardown.
 The audit resolves the Vagrant default skin's addressed body material and
 also inspects the direct Mercenary Expose and Acrid disease impact effects. It
 records exposed blend operands and selects recovered resources from saved source
