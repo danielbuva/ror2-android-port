@@ -8647,6 +8647,9 @@ both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform wi
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
 linked envelope. It feeds source layouts through the existing
 `shader_produce.py` parameter writer and emits a typed replacement pack.
+The linker derives the Vulkan color attachment mask from each original
+fragment output signature. Deferred G-buffer variants enable every declared
+target. Depth-only variants keep bit zero, as in the exact editor's envelope.
 For shaders with ordinary vertex and fragment passes, the translator retains
 subshader and pass order and render state. The shared record writer merges
 the per-pass Vulkan tables and relocates their program and parameter indices
@@ -8669,7 +8672,9 @@ constant arrays, member offsets and strides through the same native parameter
 writer. Unity typed-loaded the additional texture and instancing variants.
 The graphics linker assigns distinct vertex and fragment uniform bindings and
 preserves the native Unity instancing buffer names. When both stages consume
-`UnityDrawCallInfo`, they share its binding with both stage flags. The Android
+`UnityDrawCallInfo` or the same `UnityInstancing_` buffer, the linker serializes
+one declaration with both stage flags and routes both programs to its binding.
+Unity assigns Vulkan constant buffer bindings by name. The Android
 Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
 instances. It also draws Cloud Intersection Remap with the directional plain
 and instanced variants and depth fade disabled. The same fixture draws both
