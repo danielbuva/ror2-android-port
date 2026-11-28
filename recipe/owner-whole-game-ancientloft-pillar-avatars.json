@@ -1,0 +1,46 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-ancientloft_assets_all_95e3b0ed593aab5def2b88fccf93ed25.bundle",
+      "sha256": "985fe6a827537efd8b307ab18490db1155c9e965f3a0a570fa9c797059ecd59a",
+      "members": [
+        {
+          "name": "CAB-fa1dffeaadff5d1dbc121099bcf95bc9",
+          "avatars": [
+            {
+              "path_id": -4707277825749415276,
+              "offset": 4229416,
+              "bytes": 1720,
+              "sha256": "5e2dc210a2f26d68399c44076546a03608dc2e222e2aeb27eb90265a3205e77c",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4707277825749415276,
+                  "bytes": 1720,
+                  "sha256": "5e2dc210a2f26d68399c44076546a03608dc2e222e2aeb27eb90265a3205e77c"
+                }
+              ]
+            },
+            {
+              "path_id": -969025459016865701,
+              "offset": 5843896,
+              "bytes": 1736,
+              "sha256": "50af9e27a0a4fbb4bc9b6d8302938140136e8596a1df2d7e4d8d5222f5768695",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -969025459016865701,
+                  "bytes": 1736,
+                  "sha256": "50af9e27a0a4fbb4bc9b6d8302938140136e8596a1df2d7e4d8d5222f5768695"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

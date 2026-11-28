@@ -1,0 +1,586 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-ancientloft_assets_all_95e3b0ed593aab5def2b88fccf93ed25.bundle",
+      "sha256": "985fe6a827537efd8b307ab18490db1155c9e965f3a0a570fa9c797059ecd59a",
+      "members": [
+        {
+          "name": "CAB-fa1dffeaadff5d1dbc121099bcf95bc9",
+          "objects": [
+            {
+              "path_id": -9091403128855524716,
+              "class_id": 4,
+              "sha256": "97f8e52698649f68ef824921ce2c877a6dfde66baad2243a30395f00397cb5b1",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -9091403128855524716,
+                  "bytes": 68,
+                  "sha256": "97f8e52698649f68ef824921ce2c877a6dfde66baad2243a30395f00397cb5b1",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": -8934593581941757861,
+              "class_id": 95,
+              "sha256": "f0fb9718ed8d69c66cbab8e096e21570bba02ac8e4928d22690b78b986bd9ecb",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8934593581941757861,
+                  "bytes": 56,
+                  "sha256": "f0fb9718ed8d69c66cbab8e096e21570bba02ac8e4928d22690b78b986bd9ecb",
+                  "native_type_hash": "157ac76304440e8dd2945b36b049d91c"
+                }
+              ]
+            },
+            {
+              "path_id": -6578202307153926053,
+              "class_id": 4,
+              "sha256": "a668500e864e80906293aad44a8008f895ecaec8f4b20109ddd639964e1e95bf",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6578202307153926053,
+                  "bytes": 80,
+                  "sha256": "a668500e864e80906293aad44a8008f895ecaec8f4b20109ddd639964e1e95bf",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": -6563342351302194540,
+              "class_id": 4,
+              "sha256": "4407a9dddf2e427776b6eb6b37729846956f010378abd8ef2eed9f660c84904e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6563342351302194540,
+                  "bytes": 92,
+                  "sha256": "4407a9dddf2e427776b6eb6b37729846956f010378abd8ef2eed9f660c84904e",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": -5599952615337072549,
+              "class_id": 1,
+              "sha256": "533acd20e9bb1b16f840e6cacc8da23c47f9bb5150bf4c6e9401fe6621736636",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5599952615337072549,
+                  "bytes": 59,
+                  "sha256": "533acd20e9bb1b16f840e6cacc8da23c47f9bb5150bf4c6e9401fe6621736636",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -5387392213097772396,
+              "class_id": 1,
+              "sha256": "620a83cf9f2ff4433f473ef827751f90efc9c22bd548c81291142069d787d6b9",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5387392213097772396,
+                  "bytes": 35,
+                  "sha256": "620a83cf9f2ff4433f473ef827751f90efc9c22bd548c81291142069d787d6b9",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -5295258379102033829,
+              "class_id": 4,
+              "sha256": "a1881de3a4ef665b94b205f6070d9ac7195908f58ce62ad8a53adf5c2f352923",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5295258379102033829,
+                  "bytes": 68,
+                  "sha256": "a1881de3a4ef665b94b205f6070d9ac7195908f58ce62ad8a53adf5c2f352923",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": -5031978517229770661,
+              "class_id": 1,
+              "sha256": "6d29c5ac2b7489c72c4cc40f23ad3a36c6eb71702304494ccb1c4693998dc392",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5031978517229770661,
+                  "bytes": 35,
+                  "sha256": "6d29c5ac2b7489c72c4cc40f23ad3a36c6eb71702304494ccb1c4693998dc392",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -4969788789731489132,
+              "class_id": 1,
+              "sha256": "e657f22a92a3bf5fe418b5d5b776376d4c94e2e0ff6422ff3e7dd3b2936f572e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4969788789731489132,
+                  "bytes": 63,
+                  "sha256": "e657f22a92a3bf5fe418b5d5b776376d4c94e2e0ff6422ff3e7dd3b2936f572e",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -4958470444119881068,
+              "class_id": 4,
+              "sha256": "4f0e23adce61dadcab5bf0e74b5e014c14ae3e2e088052f64e5fa54e2837f4c7",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4958470444119881068,
+                  "bytes": 80,
+                  "sha256": "4f0e23adce61dadcab5bf0e74b5e014c14ae3e2e088052f64e5fa54e2837f4c7",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": -4938055832476751781,
+              "class_id": 137,
+              "sha256": "38b2cf49e75d00309ed8a5b5482d06febb179ed1754dbae6baebc570f61c7916",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4938055832476751781,
+                  "bytes": 260,
+                  "sha256": "38b2cf49e75d00309ed8a5b5482d06febb179ed1754dbae6baebc570f61c7916",
+                  "native_type_hash": "3b77c18ac0a8bce8b69803db72f96b7f"
+                }
+              ]
+            },
+            {
+              "path_id": -4913863872806557605,
+              "class_id": 4,
+              "sha256": "cb4e19ab39bae2dab9b0c1d6f0b948f385767df60c21a17435998eeec58d1b3b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4913863872806557605,
+                  "bytes": 92,
+                  "sha256": "cb4e19ab39bae2dab9b0c1d6f0b948f385767df60c21a17435998eeec58d1b3b",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": -4797177347020420460,
+              "class_id": 95,
+              "sha256": "7a4afbbe7dff24df9f4c6492dc4bfc4fda08de1327f59196797395c831302681",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4797177347020420460,
+                  "bytes": 56,
+                  "sha256": "7a4afbbe7dff24df9f4c6492dc4bfc4fda08de1327f59196797395c831302681",
+                  "native_type_hash": "157ac76304440e8dd2945b36b049d91c"
+                }
+              ]
+            },
+            {
+              "path_id": -4540181738154423660,
+              "class_id": 4,
+              "sha256": "ef4de8138fd92635edbcbbd14d5d17a0005ee8cea259fd0722106f8eaf2ac711",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4540181738154423660,
+                  "bytes": 68,
+                  "sha256": "ef4de8138fd92635edbcbbd14d5d17a0005ee8cea259fd0722106f8eaf2ac711",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": -3503251175961523564,
+              "class_id": 1,
+              "sha256": "ff4870e7f1db56d1aab8f2a1178a0d8c4fc07606fec10f51423f95efd1efab76",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3503251175961523564,
+                  "bytes": 63,
+                  "sha256": "ff4870e7f1db56d1aab8f2a1178a0d8c4fc07606fec10f51423f95efd1efab76",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -2687816932753012076,
+              "class_id": 137,
+              "sha256": "2328b4f69f1b569c1d15f9cd0101b130786e7939a0ff85a2b56ea05a238ee06e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2687816932753012076,
+                  "bytes": 260,
+                  "sha256": "2328b4f69f1b569c1d15f9cd0101b130786e7939a0ff85a2b56ea05a238ee06e",
+                  "native_type_hash": "3b77c18ac0a8bce8b69803db72f96b7f"
+                }
+              ]
+            },
+            {
+              "path_id": -2367980313623197036,
+              "class_id": 1,
+              "sha256": "de560bd24c46f653a5477ca39b805f100195bca34e17f7ed0332c6f5e910a38e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2367980313623197036,
+                  "bytes": 35,
+                  "sha256": "de560bd24c46f653a5477ca39b805f100195bca34e17f7ed0332c6f5e910a38e",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -2169640465419769765,
+              "class_id": 1,
+              "sha256": "b03291ed94f4ea2c63b69f803c8bac78b7b1ccc39c2a3b110dc0c2bc85644b7d",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2169640465419769765,
+                  "bytes": 35,
+                  "sha256": "b03291ed94f4ea2c63b69f803c8bac78b7b1ccc39c2a3b110dc0c2bc85644b7d",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -932388341929669996,
+              "class_id": 4,
+              "sha256": "fce4c9a5ff1062ca82b411816487db084ea05f7910695e90f0227e4210ab6122",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -932388341929669996,
+                  "bytes": 80,
+                  "sha256": "fce4c9a5ff1062ca82b411816487db084ea05f7910695e90f0227e4210ab6122",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": -901750858861049196,
+              "class_id": 74,
+              "sha256": "b8508e0a97011251507db89926f36fd42f08b38fb525e1364b7aee936d02610d",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -901750858861049196,
+                  "bytes": 4736,
+                  "sha256": "b8508e0a97011251507db89926f36fd42f08b38fb525e1364b7aee936d02610d",
+                  "native_type_hash": "1ece1117b1e6a8b84516b3eb77051cc3"
+                }
+              ]
+            },
+            {
+              "path_id": 176044838179989595,
+              "class_id": 4,
+              "sha256": "b3a98834568aaa5a9e01964668725229d307687fe255e1ce9ed221853bd5eedb",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 176044838179989595,
+                  "bytes": 68,
+                  "sha256": "b3a98834568aaa5a9e01964668725229d307687fe255e1ce9ed221853bd5eedb",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": 436282633814501467,
+              "class_id": 4,
+              "sha256": "678994f4e345a1e33e90a691bf984fa89b8a45d9f26d46402b787f995a79288a",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 436282633814501467,
+                  "bytes": 80,
+                  "sha256": "678994f4e345a1e33e90a691bf984fa89b8a45d9f26d46402b787f995a79288a",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": 904420062980040795,
+              "class_id": 4,
+              "sha256": "d81d10422f81087ec0ce3eb03e0a669728245e3d6710b2215fd5df7dde654da2",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 904420062980040795,
+                  "bytes": 80,
+                  "sha256": "d81d10422f81087ec0ce3eb03e0a669728245e3d6710b2215fd5df7dde654da2",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": 1827062346823133275,
+              "class_id": 1,
+              "sha256": "2c16855cc4f04cd20b222cf3b1ccef9e7fa30d849e62005363b01c9583bd6173",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1827062346823133275,
+                  "bytes": 55,
+                  "sha256": "2c16855cc4f04cd20b222cf3b1ccef9e7fa30d849e62005363b01c9583bd6173",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 2323590754687281243,
+              "class_id": 74,
+              "sha256": "626d001ebf59597c139dc9e5d77f699a796c6fc4069d772b8edb36bf1a47e64e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2323590754687281243,
+                  "bytes": 4880,
+                  "sha256": "626d001ebf59597c139dc9e5d77f699a796c6fc4069d772b8edb36bf1a47e64e",
+                  "native_type_hash": "1ece1117b1e6a8b84516b3eb77051cc3"
+                }
+              ]
+            },
+            {
+              "path_id": 2593580449126419092,
+              "class_id": 4,
+              "sha256": "dce54150a11c19b7dfbc24b447dfdbb6781ca19c59fd6e05415248e928f9ef46",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2593580449126419092,
+                  "bytes": 80,
+                  "sha256": "dce54150a11c19b7dfbc24b447dfdbb6781ca19c59fd6e05415248e928f9ef46",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": 3100173729580386964,
+              "class_id": 1,
+              "sha256": "fb386029efa53daa4e96aa0d3e76ce42bb1dbf90f053ce6e552ad4e4a6fe37d3",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3100173729580386964,
+                  "bytes": 35,
+                  "sha256": "fb386029efa53daa4e96aa0d3e76ce42bb1dbf90f053ce6e552ad4e4a6fe37d3",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 3730370187740342363,
+              "class_id": 4,
+              "sha256": "d688ebc765e75a1d6f6285e97ca945746eff98645630227e9a53705d7e681070",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3730370187740342363,
+                  "bytes": 80,
+                  "sha256": "d688ebc765e75a1d6f6285e97ca945746eff98645630227e9a53705d7e681070",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": 4404759135104034907,
+              "class_id": 1,
+              "sha256": "b44fa35a0d9b3acf82d5d23e4509b7f22228b10c557451abb33e31648e3c6141",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4404759135104034907,
+                  "bytes": 35,
+                  "sha256": "b44fa35a0d9b3acf82d5d23e4509b7f22228b10c557451abb33e31648e3c6141",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 4448160787472017499,
+              "class_id": 1,
+              "sha256": "83ae35b3aa13ef18598478bf3d0dfb869c9a5dd8e9c545c25ea6cdb561e33555",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4448160787472017499,
+                  "bytes": 31,
+                  "sha256": "83ae35b3aa13ef18598478bf3d0dfb869c9a5dd8e9c545c25ea6cdb561e33555",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 4874024152928881300,
+              "class_id": 1,
+              "sha256": "cd58704fb65f6b726288adb6d9050e851d64f3d4aeb277e841df726867c87b7b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4874024152928881300,
+                  "bytes": 31,
+                  "sha256": "cd58704fb65f6b726288adb6d9050e851d64f3d4aeb277e841df726867c87b7b",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 5330368771286370964,
+              "class_id": 4,
+              "sha256": "bb11afdfdcf2788f91e17a66cf6b8e23f43c7731939bf0970fa3389d25bfd1a2",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5330368771286370964,
+                  "bytes": 68,
+                  "sha256": "bb11afdfdcf2788f91e17a66cf6b8e23f43c7731939bf0970fa3389d25bfd1a2",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": 5611778256205187732,
+              "class_id": 1,
+              "sha256": "b0c3ba43035cb55b22d14a93c1eb54d594a4f776a1570fa3bb62ebe416542083",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5611778256205187732,
+                  "bytes": 35,
+                  "sha256": "b0c3ba43035cb55b22d14a93c1eb54d594a4f776a1570fa3bb62ebe416542083",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 5866091958420858971,
+              "class_id": 4,
+              "sha256": "22329b1e18aa27eb4c8d5cc96d051dd959c204b58ad1ae33e059b356517e25e2",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5866091958420858971,
+                  "bytes": 80,
+                  "sha256": "22329b1e18aa27eb4c8d5cc96d051dd959c204b58ad1ae33e059b356517e25e2",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": 5957924996555761755,
+              "class_id": 1,
+              "sha256": "a304ddf399211489a280358267d9db75e55db59a81a51c800e712b32b7807fe8",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5957924996555761755,
+                  "bytes": 59,
+                  "sha256": "a304ddf399211489a280358267d9db75e55db59a81a51c800e712b32b7807fe8",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 6060205643648469652,
+              "class_id": 4,
+              "sha256": "3f6a5af58effe37bb7e222ba6fb7aeac6840ebb554c2788290bbea8109157611",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6060205643648469652,
+                  "bytes": 92,
+                  "sha256": "3f6a5af58effe37bb7e222ba6fb7aeac6840ebb554c2788290bbea8109157611",
+                  "native_type_hash": "54a1e3fa2ed21bd55841935600d82554"
+                }
+              ]
+            },
+            {
+              "path_id": 6634388924898371675,
+              "class_id": 1,
+              "sha256": "154e86496186de3e4659043dff5aa3e2fa976e9efb0d908290a05fad86e39188",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6634388924898371675,
+                  "bytes": 35,
+                  "sha256": "154e86496186de3e4659043dff5aa3e2fa976e9efb0d908290a05fad86e39188",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 6729336362115861140,
+              "class_id": 1,
+              "sha256": "555ad44590f324f45558210644a2ed56499148ba5d57cb4b96cea462ac15922f",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6729336362115861140,
+                  "bytes": 55,
+                  "sha256": "555ad44590f324f45558210644a2ed56499148ba5d57cb4b96cea462ac15922f",
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

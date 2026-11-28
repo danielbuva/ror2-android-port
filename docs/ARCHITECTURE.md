@@ -8331,6 +8331,13 @@ using pinned Android suppliers. The exact-editor fixture checks those links
 and unloads its bundles. Release composition preserves both Material slots
 in the original animated pillar preload groups.
 
+The Ancient Loft animated pillar FBX profiles use `record_produce.py` for
+the original hierarchy, Animator, SkinnedMeshRenderer and AnimationClip
+records, and `avatar_produce.py` for the two original Avatars. Setup verifies
+the PC bundle and body pins. The producers write private object packs and
+close their inputs on exit. Bundle preparation joins the packs to the Mesh
+and Material suppliers at the original 22 preload positions per FBX.
+
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
 texture declarations (`any`). Setup takes explicit original/SDK/template/codec
