@@ -8256,6 +8256,13 @@ preparation resolves their Shader and texture PPtrs, including eleven
 textures from existing suppliers. The isolated Unity fixture checks the
 resolved bindings before unloading.
 
+`recipe/owner-whole-game-soul1-signed-cloud-material-records.json` supplies
+23 original Cloud Intersection Remap Materials used by Soul1. The shared
+record producer reads the pinned PC bundles, and bundle preparation binds
+the Materials to the signed Shader and typed texture destinations from V48.
+Nine additional Soul1 Materials reuse the Sad1 suppliers. The isolated
+Unity fixture checks the bindings and unloads the bundles after validation.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
