@@ -8195,3 +8195,22 @@ verification hashes. Mesh data and editor evidence stay under ignored
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-evis-projectile-meshes.json` | `20bac1950a28a834b0f704761b8d6caae9cb98fe3b2a74a1316d3c171c8de0d0` |
+
+## Soul1 DamageZone Material record (2026-11-28)
+
+The profile selects the original Material used by 24 Soul1 scene fields.
+Scoped bundle readback reverses all nine relocated pointers and recovers the
+source body. Unity 2021.3.45f2 verifies the retained J1579 Triplanar
+Terrain Blend Emissive Shader and eight saved Texture2D links, then unloads
+the bundles. Two RGB mip origins are new to the successor policy. The third
+streamed texture reuses the existing Fungal binding. Canonical admission
+awaits the refreshed signed Shader. Linked Android rendering remains open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+the relative source bundle path, member and object identities, class,
+size and hashes. The public producer reads the user's installed PC data
+and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-soul1-damage-zone-material-record.json` | `c16848f5a932787995cbf5ffdb2d854f8419800764d29f6fef9b0f20edef00e0` |
