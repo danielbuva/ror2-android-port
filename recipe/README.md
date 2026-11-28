@@ -2807,6 +2807,16 @@ privacy, licensing and sensitive-content review completed 2026-11-27.
 | --- | --- |
 | `owner-terrain-detail-graphics-translation.json` | `188503c1e3ea62346ad84f614174720990d62785a26297da1ee92f424df0ace6` |
 
+The Wavy Cloth profile selects the original Shader and its Diffuse and VertexLit
+fallbacks for the signed graphics translator. It records only source pins and
+destination object identifiers. DXBC, translated programs and raw receipts stay
+local. Provenance, privacy, licensing and sensitive-content review completed
+2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-wavy-cloth-graphics-translation.json` | `00f47587b31204049683836cd98257d35bbdaf31fb95c10c9b42538ed4711821` |
+
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
 compilation API's hash inputs, separate from player compilation flags. The MCP
