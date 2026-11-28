@@ -8030,6 +8030,24 @@ and writes the record pack under ignored `work/`.
 | --- | --- |
 | `owner-whole-game-soul1-signed-cloud-material-records.json` | `7a6f2ef8671a4c8095ffdb7d39c0a2eac20ee8c1066c1414a4ce0cef2f4caeab` |
 
+## Soul1 Fungal Terrain Blend Emissive Material records (2026-11-28)
+
+The profile selects three original Material records through `record_produce.py`.
+These records cover 443 Soul1 scene references. Reversing all 22 persisted
+pointer relocations recovered the original bodies. Unity 2021.3.45f2
+verified the signed Shader and 19 saved texture links, including four
+CustomRenderTexture links, before unloading. Canonical composition and
+linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative source bundle paths, serialized member and object identities,
+classes, sizes and hashes. The producer reads the user's installed PC data
+and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-soul1-fungal-material-records.json` | `093ac4aa8d802f42955c58044261d0fbd848eb64f3abd3a1d763c2de37b4c6b1` |
+
 ## Snow Topped graphics translation (2026-11-28)
 
 The profile selects the original Snow Topped Shader and supplies the existing

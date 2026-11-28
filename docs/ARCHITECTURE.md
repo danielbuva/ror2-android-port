@@ -8263,6 +8263,12 @@ the Materials to the signed Shader and typed texture destinations from V48.
 Nine additional Soul1 Materials reuse the Sad1 suppliers. The isolated
 Unity fixture checks the bindings and unloads the bundles after validation.
 
+`recipe/owner-whole-game-soul1-fungal-material-records.json` supplies three
+original Materials referenced by Soul1. The same record producer and bundle
+preparation bind the signed Fungal Terrain Blend Emissive Shader and retain
+the Texture2D and CustomRenderTexture targets from V48. The isolated editor
+fixture verifies the saved bindings and unloads the bundles.
+
 The existing `shader_prefab.py` owner registers inherited fallback keywords in
 snippet/stage order, merging global/local declarations and builtin names within
 each stage while retaining existing flags. The whole-game Standard fallback
