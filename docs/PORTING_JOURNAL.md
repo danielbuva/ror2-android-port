@@ -5321,4 +5321,6 @@ matched ordinary Deferred and both per-instance fade swaps. Both packages
 were removed. Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
 in `hgstandard-draw-device-03/terminal.done.json` and
 `crystalshader-draw-device-02/terminal.done.json`.
-Corrected signed replays, linked scene draws and whole-game scoring remain open.
+Crystal's signed replay reproduced body `6c43e4157cba17eed77e83479377964d08ae01dc15abdeb7d867ae9aa9d962fa`
+in `signed-crystalshader-device-02/terminal.done.json`.
+HGStandard's corrected signed replay, linked scene draws and whole-game scoring remain open.
