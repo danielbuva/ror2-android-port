@@ -4956,6 +4956,21 @@ Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
 The runner removed its attempt scratch, preserved staged inputs, slept the
 display and released the lease. Typed load and gameplay remain open.
 
+## J1584 — Restore Artificer's native Fire Bolt ghost materials
+
+2026-11-28. The body visual owner prepares the configured Fire Bolt projectile
+and detached ghost before the native state fires. Assisted Distant Roost recorded
+one paired Primary activation, zero on other slots, and all slots back at Idle.
+Four active ghost slots used Android variants 0/36 and two inactive enabled
+slots used variant 105. All six used queue 3000. The trace matched the native
+Quick impact pool and recorded its point light.
+Frozen 266-member payload, APK SHA-256 `9ec4c90f3e6f3e50197141ef717aa5adf9bb101fa99b1071e4556177ace4da40` (source `741d7673`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/artificer-fire-bolt-full-binding-main-nova/`
+includes the terminal receipt, launch video, snapshot and terminal Unity log.
+Final snapshot was 95.23 FPS / 10.50 ms. CPU/GPU peaked at 96.7 °C without a
+three-second threshold crossing. Battery held 31 °C. Adopted placement, scratch
+cleanup, OLED sleep and lease release passed. Matched PC rendering remains open.
+
 ## J1545 — Return to the menu after End Run in converted Distant Roost
 
 2026-11-27. V46 ordinary Start gave Commando native authority in Distant Roost.

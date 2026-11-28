@@ -5582,9 +5582,9 @@ for Acrid's normal swing, Artificer's Flamethrower and Nano-Bomb charge, and
 REX's Disperse charge and Mortar's aim endpoint and projectile. Mortar's
 endpoint rim and expanding projectile sphere retain their distinct source
 blend modes.
-Artificer's configured Nano-Bomb projectile
-also enters this owner so the projectile controller's detached ghost takes the
-same material recovery path. It holds native addressable provider leases through
+Artificer's configured Nano-Bomb and Fire Bolt projectiles also enter this
+owner so their detached ghosts take the same material recovery path. The
+session holds native addressable provider leases through
 the run. Integrated world cleanup restores
 source slots and particle trails before the visual owner releases its leases and
 the session destroys its material copies. Source blend values remain intact.
@@ -9038,6 +9038,11 @@ For up to two seconds after release, the trace records the owned projectile,
 its ghost and live impact roots for comparison with the video. It matches an
 active scene instance by its pool's exact configured impact prefab or, for
 direct instances, by its effect index. The root records which identity matched.
+The opt-in `diagnosticMageFireBoltRelease` uses the same impact identity check
+after the first native Fire Bolt release and samples live impact lights. Its
+ghost readback includes inactive children so their material bindings can be
+checked alongside the active flight renderers. The world report retains up
+to 1.25 seconds or 120 frames for comparison with the launch video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to

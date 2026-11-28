@@ -132,9 +132,11 @@ public sealed partial class PortSession
             var mortar = new EntityStates.Treebot.Weapon.AimMortar2();
             PresentConfiguredNativeEffect(mortar.endpointVisualizerPrefab, "Treebot Mortar endpoint", unavailable);
             PresentConfiguredNativeEffect(mortar.projectilePrefab, "Treebot Mortar projectile", unavailable);
-            // The projectile controller creates the detached ghost outside EffectCatalog.
+            // Projectile controllers create detached ghosts outside EffectCatalog.
             PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.ThrowNovabomb().projectilePrefab,
                                           "Mage Nano-Bomb projectile", unavailable);
+            PresentConfiguredNativeEffect(new EntityStates.Mage.Weapon.FireFireBolt().projectilePrefab,
+                                          "Mage Fire Bolt projectile", unavailable);
 
             // The native GroundLight static configuration is populated after this setup.
             var mercNormal = WholeCatalogComposed.LoadOwnedContent<GameObject>(MercNormalSwingVisualPath);
