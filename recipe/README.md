@@ -8195,3 +8195,17 @@ verification hashes. Mesh data and editor evidence stay under ignored
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-evis-projectile-meshes.json` | `20bac1950a28a834b0f704761b8d6caae9cb98fe3b2a74a1316d3c171c8de0d0` |
+
+## Dread Fog B graphics translation (2026-11-28)
+
+The signed graphics job produces Dread Fog B from the accepted PC build at
+its whole-game destination. It retains the original Transparent/VertexLit
+fallback. Provenance, privacy, licensing and sensitive-content review covered
+the source and destination selectors, public compiler pins and verification
+hashes. Reconstructed Shader records and device evidence stay under ignored
+`work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-dread-fog-b-graphics-translation.json` | `2ba91c6a8c90e077d2b6263e6c73942ef1f9e6ee1992e55638092631591f8dff` |
+| `jobs/owner-dread-fog-b-graphics-translation.json` | `75a8e7f23fb2d6371269a19127d5740431d301a660ff1fcf7adf2169c8b36231` |
