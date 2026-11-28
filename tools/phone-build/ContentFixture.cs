@@ -372,6 +372,8 @@ public sealed class ContentFixture : MonoBehaviour
             else if (shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend" ||
                 shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend Emissive")
                 DrawTriplanar(shader, report, new[] { "_RedChannelSideTex", "_RedChannelTopTex", "_GreenChannelTex", "_BlueChannelTex" });
+            else if (shader.name == "Hopoo Games/Optimized/Switch/Environment/Triplanar Emissive Optimized")
+                DrawTriplanar(shader, report, new[] { "_RedChannelTopTex", "_GreenChannelTex", "_BlueChannelTex" }, optimized: true);
             else if (shader.name == "Hopoo Games/Deferred/Snow Topped") DrawSnowTopped(shader, report);
             else if (shader.name == "Hopoo Games/Deferred/Standard Triplanar Splat")
                 DrawTriplanar(shader, report, new[] { "_MainTex", "_RedSplatTex" });
@@ -1520,7 +1522,7 @@ public sealed class ContentFixture : MonoBehaviour
         }
     }
 
-    static void DrawTriplanar(Shader shader, ShaderDrawReport report, string[] albedoProperties)
+    static void DrawTriplanar(Shader shader, ShaderDrawReport report, string[] albedoProperties, bool optimized = false)
     {
         var previous = RenderTexture.active;
         var material = new Material(shader);
@@ -1569,6 +1571,14 @@ public sealed class ContentFixture : MonoBehaviour
             material.SetTexture("_NormalTex", normal);
             foreach (var property in new[] { "_overallColor", "_RedTint", "_RColor", "_GColor", "_BColor" })
                 if (material.HasProperty(property)) material.SetColor(property, Color.white);
+            if (optimized)
+            {
+                material.EnableKeyword("USE_ALPHA");
+                material.EnableKeyword("USE_NORMAL");
+                material.SetColor("_TintRed", Color.white);
+                material.SetColor("_TintGreen", Color.white);
+                material.SetColor("_TintBlue", Color.white);
+            }
             var redAlbedo = new MaterialPropertyBlock();
             var greenAlbedo = new MaterialPropertyBlock();
             foreach (var property in albedoProperties)

@@ -2809,6 +2809,16 @@ and sensitive-content review completed 2026-11-28.
 | --- | --- |
 | `owner-fungal-triplanar-graphics-translation.json` | `3ca308144a0b0c2bf28cc29f92743c56ec4888677cee25b919bf97f497e47022` |
 
+The Soul1 TerrainA optimized profile selects the original Triplanar Emissive
+Optimized Shader and its canonical destination. Bundle preparation uses the
+same ordered Diffuse and VertexLit fallbacks as Fungal Triplanar. Programs,
+translated bodies and raw receipts stay local. Provenance, privacy, licensing
+and sensitive-content review completed 2026-11-28.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-soul1-terrain-a-opt-graphics-translation.json` | `dce52a3d864612e223bf841ad88b68b902a20277f9e3219ef95a7b61e513b8b5` |
+
 The Terrain detail graphics profile selects two original WavingDoublePass
 Shader records for the signed graphics translator. It reuses the Terrain detail
 source pins and destinations. It contains only provenance and routing metadata.
