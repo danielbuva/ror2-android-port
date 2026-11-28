@@ -74,6 +74,17 @@ class PhoneContentTests(unittest.TestCase):
                 unloaded=True,
             )
             validate_native_scene(report, request, "c" * 40)
+            without_occlusion = request | {"expectedOcclusionDataResolved": False}
+            request_path.write_text(json.dumps(without_occlusion))
+            self.assertEqual(native_content_request(request_path), without_occlusion)
+            validate_native_scene(report | {"occlusionDataResolved": False}, without_occlusion, "c" * 40)
+            with self.assertRaisesRegex(RuntimeError, "native scene contract"):
+                validate_native_scene(report, without_occlusion, "c" * 40)
+            with self.assertRaisesRegex(RuntimeError, "native scene contract"):
+                validate_native_scene({key: value for key, value in report.items() if key != "occlusionDataResolved"}, without_occlusion, "c" * 40)
+            request_path.write_text(json.dumps(request | {"expectedOcclusionDataResolved": 0}))
+            with self.assertRaisesRegex(RuntimeError, "expectedOcclusionDataResolved"):
+                native_content_request(request_path)
             single = request | {"loadMode": "Single"}
             request_path.write_text(json.dumps(single))
             self.assertEqual(native_content_request(request_path), single)

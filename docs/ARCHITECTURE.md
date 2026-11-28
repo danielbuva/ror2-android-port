@@ -2549,6 +2549,9 @@ specifies the exact path in `scene`.
 the bundle additively, selects the scene and reads native occlusion settings.
 It records loaded roots, MeshRenderer counts, the resolved data reference
 and Umbra sizes around activation, then unloads the scene and its bundles.
+The fixture requires a resolved occlusion data reference by default. Set
+`expectedOcclusionDataResolved: false` when the pinned source scene proves
+that the reference is absent, as in Bazaar.
 The optional `loadMode: "Single"` control loads the same inputs alone and
 creates a blank scene for teardown. The receipt records which mode ran.
 The editor exposes the data reference. Serialized scene checks cover the
