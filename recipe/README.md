@@ -7919,6 +7919,25 @@ and hashes, following the pinned AssetRipper member and saved-property
 lookup. Serialized bodies, generated packs and local paths stay under
 ignored `work/`.
 
+## MolotovClusterGhost native records (2026-11-28)
+
+`owner-molotov-cluster-ghost-native-records.json` selects 35 original
+records through `record_produce.py`, including the Light and its reciprocal
+GameObject owner. The scoped bundle preserves 37 ordered source preload
+slots before three additional destinations. Persisted readback reverses
+all 81 relocated PPtrs to recover the original record hashes. Preparation
+uses the existing source MonoScript registry supplier for the two managed
+components.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-molotov-cluster-ghost-native-records.json` | `130fe57ad33b5a793a7e41d8e43fdfe5d3769c8b88919a03df2a91f79d0f2e85` |
+
 ## PlasmaCoreGhost native records (2026-11-27)
 
 `owner-plasmacore-ghost-native-records.json` selects 23 original records
@@ -7974,6 +7993,23 @@ ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-scav-sack-ghost-native-records.json` | `e1768fe06a17b4c42368ce57de3fb6531031de3e829d3dca81a438a0c33d65d6` |
+
+## CrocoLeapAcidGhost native records (2026-11-28)
+
+`owner-croco-leap-acid-ghost-native-records.json` selects 28 original
+records through `record_produce.py`, including the Light, its owning
+GameObject, particle systems and the Material. Bundle preparation preserves
+the 39 source preload slots and appends four additional Shader and texture
+destinations from the existing graph.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-croco-leap-acid-ghost-native-records.json` | `b6c1473d08a66c1e0a4085e6f7811527c55597dd9703a449f8637d8003e20978` |
 
 ## Solus Heart wireframe Shader profile (2026-11-27)
 
@@ -8070,6 +8106,25 @@ and writes its record pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-ancientloft-pillar-material-records.json` | `c080e3c85b1f4be088744dd007dc5e7df2c6581db07b6f2a6087f583fe1b5d1f` |
+
+## Ancient Loft animated pillar FBX records (2026-11-28)
+
+The two profiles select 38 native records and two Avatars for the original
+Floating Pillar Stone and Half-Intact Pillar groups. Both keep their original
+PathIDs in the whole-game content member. The native record and Avatar
+producers preserve the source bodies. Scoped bundle readback checked each
+group's 22 original preload positions and Unity 2021.3.45f2 loaded and unloaded
+the linked assets. Canonical release admission and Android play remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object identities, classes, offsets, sizes
+and hashes. Both producers read the user's PC installation and write their
+packs under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-ancientloft-pillar-fbx-records.json` | `8970996543bd6f8d823e7b1ca86df3ac850fbbb043bf258632f4f219e4ab92ff` |
+| `owner-whole-game-ancientloft-pillar-avatars.json` | `7a688f829b7157b98dc1efb343a219102002040f716e9ff895135c4041e99f4d` |
 
 ## Snow Topped graphics translation (2026-11-28)
 
