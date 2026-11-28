@@ -8996,6 +8996,11 @@ For up to two seconds after release, the trace records the owned projectile,
 its ghost and live impact roots for comparison with the video. It matches an
 active scene instance by its pool's exact configured impact prefab or, for
 direct instances, by its effect index. The root records which identity matched.
+The opt-in `diagnosticMageFireBoltRelease` uses the same impact identity check
+after the first native Fire Bolt release and samples live impact lights. Its
+ghost readback includes inactive children so their material bindings can be
+checked alongside the active flight renderers. The world report retains up
+to 1.25 seconds or 120 frames for comparison with the launch video.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to

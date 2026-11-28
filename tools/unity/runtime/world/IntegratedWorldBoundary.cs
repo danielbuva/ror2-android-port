@@ -2573,7 +2573,7 @@ public sealed partial class PortSession
                     if (!projectile || projectile.owner != player.gameObject || report.projectileIndex < 0 ||
                         projectile.catalogIndex != report.projectileIndex || !projectile.ghost)
                         continue;
-                    sample.roots.Add(ObserveNativeEffectRoot(projectile.ghost.gameObject, "ghost"));
+                    sample.roots.Add(ObserveNativeEffectRoot(projectile.ghost.gameObject, "ghost", includeInactiveRenderers: true));
                 }
                 if (report.impactPrefab)
                 {
@@ -2622,12 +2622,12 @@ public sealed partial class PortSession
             return prefab ? EffectCatalog.FindEffectIndexFromPrefab(prefab) : EffectIndex.Invalid;
         }
 
-        NativeEffectTraceRoot ObserveNativeEffectRoot(GameObject root, string role)
+        NativeEffectTraceRoot ObserveNativeEffectRoot(GameObject root, string role, bool includeInactiveRenderers = false)
         {
             var surfaceObserver = coordinator.GetTeleporterWorldSession();
             return new NativeEffectTraceRoot { instanceId = root.GetInstanceID(), role = role, name = root.name,
                                              position = root.transform.position,
-                                             renderers = root.GetComponentsInChildren<Renderer>()
+                                             renderers = root.GetComponentsInChildren<Renderer>(includeInactiveRenderers)
                                                              .Where(renderer => renderer.enabled)
                                                              .Select(renderer => surfaceObserver.ObserveOwnedSurface(renderer, false))
                                                              .ToArray() };
