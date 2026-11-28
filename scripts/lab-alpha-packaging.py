@@ -401,6 +401,7 @@ def main(argv=None):
                     INSTALLER.set_phase(phase)
                     with phone.observe_thermal():
                         phase = "installer-acceptance"
+                        phone.adopted_packaging_fixture = args.package_only and phone.require_adopted
                         try:
                             INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts, record_metrics=True)
                         finally:

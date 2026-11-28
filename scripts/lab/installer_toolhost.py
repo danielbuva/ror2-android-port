@@ -262,7 +262,7 @@ def build(checkout, base, zipalign, check=False, *, release_trust=None, texture_
             android,
             "-d",
             classes,
-            *(checkout / MANAGED / name for name in staging.JAVA_SOURCES),
+            *(checkout / MANAGED / name for name in (*staging.JAVA_SOURCES, "PackagingFixture.java")),
         )
         jar = output / "classes.jar"
         with zipfile.ZipFile(jar, "x") as archive:
@@ -273,7 +273,20 @@ def build(checkout, base, zipalign, check=False, *, release_trust=None, texture_
         game_package = retained_trust["application_id"]
         staging.tool_manifest(checkout / MANAGED / manifest.name, manifest, PACKAGE, game_package=game_package)
         wire = "{http://schemas.android.com/apk/res/android}"
-        fields = ET.parse(manifest).getroot().attrib
+        tree = ET.parse(manifest)
+        fields = tree.getroot().attrib
+        if trust_data is None:
+            ET.SubElement(
+                tree.getroot().find("application"),
+                "provider",
+                {
+                    wire + "name": "dev.ror2lab.phonebuildhostfixture.PackagingFixture",
+                    wire + "authorities": PACKAGE + ".packaging",
+                    wire + "exported": "true",
+                    wire + "permission": "android.permission.DUMP",
+                },
+            )
+            tree.write(manifest, encoding="utf-8", xml_declaration=True)
         compiled = output / "compiled.apk"
         run(tools / "aapt", "package", "-f", "-M", manifest, "-I", android, "-F", compiled)
         names = git(checkout, "ls-tree", "-rz", "--name-only", version, "--", *REPO_ASSETS).split("\0")

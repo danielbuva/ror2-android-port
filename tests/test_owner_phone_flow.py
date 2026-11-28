@@ -226,7 +226,7 @@ public class CheckDiagnosticHarness {
                     str(android),
                     "-d",
                     temporary,
-                    *(str(SOURCE / name) for name in staging.JAVA_SOURCES),
+                    *(str(SOURCE / name) for name in (*staging.JAVA_SOURCES, "PackagingFixture.java")),
                 ],
                 capture_output=True,
                 text=True,

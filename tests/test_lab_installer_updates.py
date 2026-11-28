@@ -22,6 +22,37 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def test_adopted_packaging_reads_code_and_private_data_on_the_selected_volume(self):
+        phone = LAB.Phone("fixture", 1)
+        phone.adopted_packaging_fixture = True
+        phone.install_volume = "fixture-adopted"
+        root = "/mnt/expand/fixture-adopted"
+        apk = "package:" + root + "/app/game/base.apk"
+        df = b"Filesystem 1K-blocks Used Available Use% Mounted on\nvolume 100 25 75 25% /storage\n"
+        for data_root in (root, "/data", "/mnt/expand/other"):
+            with (
+                self.subTest(data_root=data_root),
+                patch.object(phone, "shell", side_effect=[f"  dataDir={data_root}/user/0/{LAB.GAME}\n".encode(), df]) as shell,
+            ):
+                if data_root == root:
+                    self.assertEqual(phone.data_free(LAB.GAME, apk, label="fixture"), 75 * 1024)
+                    self.assertEqual(shell.call_args.args, ("df", "-k", root))
+                else:
+                    with self.assertRaisesRegex(LAB.Failure, "adopted-package-backing-unverified"):
+                        phone.data_free(LAB.GAME, apk, label="fixture")
+                    self.assertEqual(shell.call_count, 1)
+
+    def test_adopted_packaging_put_checks_the_published_bytes(self):
+        phone = LAB.Phone("fixture", 1)
+        phone.adopted_packaging_fixture = phone.owned_installer = True
+        body = b"synthetic \x00 bytes"
+        with patch.object(phone, "packaging_fixture", side_effect=[b"", LAB.sha(body).encode(), b"", b"wrong"]) as fixture:
+            phone.put("import/files/apk/example", body)
+            self.assertEqual(fixture.call_args_list[0].args, ("write", "write/import/files/apk/example"))
+            self.assertEqual(fixture.call_args_list[0].kwargs["data"], body)
+            with self.assertRaisesRegex(LAB.Failure, "device-input-write-receipt"):
+                phone.put("update-state.json", body)
+
     def test_retain_declared_phone_artifact_streams_exact_bytes_before_cleanup(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         phone.owned_installer = True
@@ -2075,6 +2106,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             self.skipTest("JDK compiler module unavailable")
         files = {"dev/ror2lab/synthetic/RetentionWitness.java": LAB.witness_source()}
         files["android/os/Bundle.java"] = r"""package android.os; public class Bundle {}"""
+        files["android/util/Log.java"] = r"""package android.util; public class Log { public static int i(String tag, String message) { return 0; } }"""
         files["android/content/Intent.java"] = (
             r"""package android.content; public class Intent { public String mode,nonce; public String getStringExtra(String key) { return key.equals("mode")?mode:nonce; } }"""
         )

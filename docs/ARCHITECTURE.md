@@ -1912,6 +1912,11 @@ volume in the pending transaction. Completion verifies the installed APK and
 private data backing against that volume. A misplaced fresh installation can
 be removed through Android consent after exact receipt and APK verification.
 An occupied package retains its profile and is never removed by this path.
+On adopted devices, the synthetic package-only acceptance uses the shell-only
+`PackagingFixture` provider registered when repacking the disposable installer.
+It provisions fixture files and reads bounded receipts under the installer UID.
+The runner verifies code and private data paths against the live adopted volume.
+The synthetic game's retention Activity emits a nonce-bound file check result.
 `reconcile` recovers persisted session state after recreation; installed identity
 and required profile readback gate success and advancement of the installed
 manifest. Session/receiver diagnostics observe these transitions without changing

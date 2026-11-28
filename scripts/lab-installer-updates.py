@@ -29,6 +29,7 @@ import sys
 import tempfile
 import threading
 import time
+from urllib.parse import quote
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -720,6 +721,7 @@ public final class RetentionWitness extends Activity {
       File target = new File(getFilesDir(), "synthetic-retention-witness.json"), temp = new File(getFilesDir(), "synthetic-retention-witness.tmp");
       try (FileOutputStream out = new FileOutputStream(temp)) { out.write(row.toString().getBytes(StandardCharsets.UTF_8)); out.getFD().sync(); }
       if (!temp.renameTo(target)) throw new IOException();
+      android.util.Log.i("Ror2RetentionWitness", row.toString());
     } catch (Exception failure) { /* Missing receipt fails the host check. */ }
     finish();
   }
@@ -939,6 +941,7 @@ class Phone:
         self.reverse_port = None
         self.install_volume = None
         self.require_adopted = False
+        self.adopted_packaging_fixture = False
         self.settings_focus_key = None
         self.install_focus_key = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
@@ -966,7 +969,7 @@ class Phone:
                 if len(paths) != 1 or not paths[0].startswith("package:"):
                     continue
                 row["code_free_bytes"] = self.available(self.shell("df", "-k", paths[0][8:], label="phone-flow-code-free", timeout=10))
-                row["data_free_bytes"] = self.available(self.shell("run-as", package, "df", "-k", ".", label="phone-flow-data-free", timeout=10))
+                row["data_free_bytes"] = self.data_free(package, paths[0], label="phone-flow-data-free", timeout=10)
                 if name == "installer":
                     battery = self.shell("dumpsys", "battery", label="phone-flow-temperature", timeout=10)
                     values = re.findall(rb"^\s*temperature:\s*(\d+)\s*$", battery, re.M)
@@ -1116,22 +1119,43 @@ class Phone:
             if available < self.storage_reserve:
                 raise Failure("device-storage-reserve")
             return
+        if self.adopted_packaging_fixture and self.install_volume not in {volume for _, volume in observed if volume != "internal"}:
+            raise Failure("device-adopted-storage-unavailable")
         # Verify both installed code placement and actual app-private backing,
         # not /sdcard aliases. All outputs stay inside this lab process.
         for package in (PACKAGE, GAME) if self.alpha_hash else (PACKAGE,):
             paths = self.package_paths(package)
             if len(paths) != 1 or not paths[0].startswith("package:"):
                 raise Failure("device-package-placement-unavailable")
-            if package == GAME and self.require_adopted:
+            if package == GAME and self.require_adopted and not self.adopted_packaging_fixture:
                 private = self.shell("run-as", package, "pwd", label="device-game-private-backing").decode().strip()
                 if not any(
                     paths[0].startswith("package:" + root + "/app/") and private.startswith(root + "/") for volume, root in choices if volume != "internal"
                 ):
                     raise Failure("device-game-not-on-adopted-storage")
             code = self.available(self.shell("df", "-k", paths[0][8:], label="device-storage-code-free"))
-            data = self.available(self.shell("run-as", package, "df", "-k", ".", label="device-storage-data-free"))
+            data = self.data_free(package, paths[0], label="device-storage-data-free")
             if min(code, data) < self.storage_reserve:
                 raise Failure("device-storage-reserve")
+
+    def data_free(self, package, package_path, *, label, timeout=60):
+        if not self.adopted_packaging_fixture:
+            return self.available(self.shell("run-as", package, "df", "-k", ".", label=label, timeout=timeout))
+        code = re.fullmatch(r"package:(/mnt/expand/[A-Za-z0-9-]+)/app/.+", package_path)
+        if not code or code[1] != "/mnt/expand/" + self.install_volume:
+            raise Failure("device-adopted-package-backing-unverified")
+        details = self.shell("dumpsys", "package", package, label="device-package-data-backing", timeout=timeout).decode()
+        if "dataDir=" + code[1] + "/user/0/" + package not in {line.strip() for line in details.splitlines()}:
+            raise Failure("device-adopted-package-backing-unverified")
+        return self.available(self.shell("df", "-k", code[1], label=label, timeout=timeout))
+
+    def packaging_fixture(self, action, path, *, label, timeout=60, data=None):
+        self.require_owned_installer()
+        uri = "content://" + PACKAGE + ".packaging/" + quote(path)
+        result = self.execute("shell", "content", action, "--uri", uri, label=label, timeout=timeout, stdin=data, idempotent=action == "read")
+        if result.returncode or result.stderr:
+            raise Failure(label)
+        return result.stdout
 
     def select_game_placement(self):
         if self.require_adopted:
@@ -1151,10 +1175,19 @@ class Phone:
         path = "files/owner-input/" + name
         if not re.fullmatch(r"[A-Za-z0-9_./+ -]+", path) or ".." in path.split("/"):
             raise Failure("test-input-path")
+        if self.adopted_packaging_fixture:
+            self.packaging_fixture("write", "write/" + name, label="device-input-write", data=data)
+            receipt = self.packaging_fixture("read", "write-result", label="device-input-write-receipt")
+            if receipt != hashlib.sha256(data).hexdigest().encode():
+                raise Failure("device-input-write-receipt")
+            return
         self.shell("run-as", PACKAGE, "mkdir", "-p", shlex.quote(str(Path(path).parent)), label="device-input-directory")
         self.command("shell", shlex.join(["run-as", PACKAGE, "sh", "-c", "cat > " + shlex.quote(path)]), stdin=data, label="device-input-write")
 
     def read(self, name, *, timeout=60):
+        if self.adopted_packaging_fixture:
+            data = self.packaging_fixture("read", "read/" + name, label="device-state-read", timeout=timeout)
+            return json.loads(data) if data else None
         path = "files/owner-input/" + name
         result = self.command(
             "shell",
@@ -1484,6 +1517,8 @@ class Phone:
         return row
 
     def producer_attempt_count(self):
+        if self.adopted_packaging_fixture:
+            return int(self.packaging_fixture("read", "producer-attempts", label="device-producer-attempt-count"))
         output = self.shell(
             "run-as",
             PACKAGE,
@@ -1603,15 +1638,20 @@ class Phone:
             self.shell("am", "start", "-W", "-n", GAME + "/" + WITNESS_CLASS, "--es", "mode", mode, "--es", "nonce", nonce, label="retention-witness-launch")
             deadline = time.monotonic() + 15
             while time.monotonic() < deadline:
-                raw = self.shell(
-                    "run-as",
-                    GAME,
-                    "sh",
-                    "-c",
-                    "'if [ -f files/synthetic-retention-witness.json ]; then cat files/synthetic-retention-witness.json; else printf null; fi'",
-                    label="retention-witness-result",
-                )
-                row = json.loads(raw)
+                if self.adopted_packaging_fixture:
+                    raw = self.shell("logcat", "-d", "-v", "raw", "-s", "Ror2RetentionWitness:I", label="retention-witness-result")
+                    matching = [line for line in raw.splitlines() if nonce.encode() in line]
+                    row = json.loads(matching[0]) if len(matching) == 1 else None
+                else:
+                    raw = self.shell(
+                        "run-as",
+                        GAME,
+                        "sh",
+                        "-c",
+                        "'if [ -f files/synthetic-retention-witness.json ]; then cat files/synthetic-retention-witness.json; else printf null; fi'",
+                        label="retention-witness-result",
+                    )
+                    row = json.loads(raw)
                 if row and row.get("nonce") == nonce:
                     if row.get("mode") != mode or row.get("verified") is not True or row.get("files") != 2:
                         raise Failure("retention-witness-mismatch")
@@ -1808,6 +1848,8 @@ class Phone:
         # this independent Android preference before uninstall, not arbitrary
         # app files, raw logs or the release request (which contains metadata).
         self.require_owned_installer()
+        if self.adopted_packaging_fixture:
+            return check_diagnostic_summary(self.packaging_fixture("read", "check-diagnostic", label="device-check-diagnostic-read", timeout=15))
         command = (
             'for p in shared_prefs shared_prefs/owner-check-diagnostic.xml; do [ ! -L "$p" ] || exit 1; done; '
             "if [ -f shared_prefs/owner-check-diagnostic.xml ]; then head -c 4097 shared_prefs/owner-check-diagnostic.xml; fi"
@@ -1820,6 +1862,9 @@ class Phone:
         # No alpha/game namespace, broad traversal, or mutation is involved.
         if not self.owned_installer or not self.installer_hash or self.package_hash(PACKAGE) != self.installer_hash:
             return {"status": "unavailable", "reason": "ownership-unverified"}
+        if self.adopted_packaging_fixture:
+            data = self.packaging_fixture("read", "read/install-diagnostic.json", label="device-install-diagnostic-read", timeout=15)
+            return install_diagnostic_summary(data or b"null")
         command = (
             'for p in files files/owner-input files/owner-input/install-diagnostic.json; do [ ! -L "$p" ] || exit 1; done; '
             "if [ -f files/owner-input/install-diagnostic.json ]; then head -c 4097 files/owner-input/install-diagnostic.json; else printf null; fi"
@@ -1832,6 +1877,8 @@ class Phone:
         # logs. Never traverse producer artifacts, keys, or other app namespaces.
         if not self.owned_installer or self.package_hash(PACKAGE) != self.installer_hash:
             raise Failure("apk-log-installer-not-owned")
+        if self.adopted_packaging_fixture:
+            return
         for tool in ("javac", "dex"):
             script = (
                 'for p in files files/owner-input files/owner-input/work files/owner-input/work/releases; do [ ! -L "$p" ] || exit 1; done; '
