@@ -283,6 +283,7 @@ public static class WholeCatalogHost
         var addresses = new CatalogAddresses(manifest, locations.ToDictionary(row => row.Key, row => (string)row.Value["path"]));
         var roots = new JArray();
         var rows = new JArray();
+        var runtimeOverrides = new JArray();
         var errors = new JArray();
         var families = new Dictionary<string, JObject>(StringComparer.Ordinal);
         var otherFamilies = Resources.Load<TextAsset>("AndroidNativeMaterialFamilies");
@@ -423,6 +424,7 @@ public static class WholeCatalogHost
             }
             if (category == "Projectile")
                 InspectProjectileImpacts(root, path);
+            InspectCombatMaterialOverrides(root, path, category, id, Mapping, runtimeOverrides);
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 var hierarchy = HierarchyPath(renderer.transform);
@@ -517,8 +519,9 @@ public static class WholeCatalogHost
 
         var result = new JObject {
             ["scope"] =
-                "Native-provider bodies and projectiles, configured ghosts and ProjectileImpactExplosion effects, registered effects and targeted source bindings; Android rendering and reference comparison remain open",
-            ["roots"] = roots, ["slots"] = rows, ["errors"] = errors,
+                "Native-provider bodies and projectiles, configured ghosts and ProjectileImpactExplosion effects, registered effects, " +
+                "runtime material overrides and targeted source bindings; Android rendering and reference comparison remain open",
+            ["roots"] = roots, ["slots"] = rows, ["errors"] = errors, ["runtimeMaterialOverrides"] = runtimeOverrides,
             ["projectileGhostBindings"] = new JArray(ghostBindings.Values),
             ["projectileImpactBindings"] = impactBindings,
             ["titanGhostBinding"] = titanGhost, ["fireBoltGhostBinding"] = fireBoltGhost, ["vagrantSkinBinding"] = skinBinding,
@@ -526,7 +529,65 @@ public static class WholeCatalogHost
             ["surfaceObservationContract"] = VerifySurfaceMaterialObservation()
         };
         File.WriteAllText(outputPath, result.ToString());
-        return new { roots = roots.Count, slots = rows.Count, errors = errors.Count, output = outputPath };
+        return new { roots = roots.Count, slots = rows.Count, runtimeOverrides = runtimeOverrides.Count, errors = errors.Count, output = outputPath };
+    }
+
+    static void InspectCombatMaterialOverrides(GameObject prefab, string path, string category, int id,
+                                               Func<Material, JObject> mapping, JArray rows)
+    {
+        JObject Binding(Component owner, string field, Material material) =>
+            new JObject { ["root"] = path, ["category"] = category, ["location"] = id,
+                          ["owner"] = HierarchyPath(owner.transform), ["kind"] = owner.GetType().Name,
+                          ["component"] = Array.IndexOf(owner.GetComponents(owner.GetType()), owner),
+                          ["binding"] = field, ["material"] = AssetPath(material), ["materialName"] = material.name,
+                          ["shader"] = material.shader ? material.shader.name : null,
+                          ["keywords"] = new JArray(material.shaderKeywords.OrderBy(key => key, StringComparer.Ordinal)),
+                          ["queue"] = material.renderQueue, ["mapping"] = mapping(material) };
+        JToken RendererLink(Renderer renderer)
+        {
+            if (!renderer)
+                return JValue.CreateNull();
+            return new JObject { ["renderer"] = HierarchyPath(renderer.transform),
+                                 ["component"] = Array.IndexOf(renderer.GetComponents<Renderer>(), renderer) };
+        }
+
+        foreach (var effect in prefab.GetComponentsInChildren<RoR2.OmniEffect>(true))
+        {
+            var groups = effect.omniEffectGroups ?? Array.Empty<RoR2.OmniEffect.OmniEffectGroup>();
+            for (int group = 0; group < groups.Length; group++)
+            {
+                var elements = groups[group].omniEffectElements;
+                for (int index = 0; index < elements.Length; index++)
+                {
+                    var element = elements[index];
+                    if (!element.particleSystemOverrideMaterial)
+                        continue;
+                    var row = Binding(effect, "particleSystemOverrideMaterial", element.particleSystemOverrideMaterial);
+                    row["group"] = group;
+                    row["element"] = index;
+                    row["maximumValidRadius"] = element.maximumValidRadius;
+                    var particle = element.particleSystem;
+                    row["particleSystem"] = particle ? HierarchyPath(particle.transform) : null;
+                    row["renderer"] = RendererLink(particle ? particle.GetComponent<ParticleSystemRenderer>() : null);
+                    rows.Add(row);
+                }
+            }
+        }
+        foreach (var indicator in prefab.GetComponentsInChildren<RoR2.TeamAreaIndicator>(true))
+        {
+            var pairs = indicator.teamMaterialPairs ?? Array.Empty<RoR2.TeamAreaIndicator.TeamMaterialPair>();
+            for (int index = 0; index < pairs.Length; index++)
+            {
+                var pair = pairs[index];
+                if (!pair.sharedMaterial)
+                    continue;
+                var row = Binding(indicator, "teamMaterialPairs.sharedMaterial", pair.sharedMaterial);
+                row["pair"] = index;
+                row["teamIndex"] = (int)pair.teamIndex;
+                row["renderers"] = new JArray((indicator.areaIndicatorRenderers ?? Array.Empty<Renderer>()).Select(RendererLink));
+                rows.Add(row);
+            }
+        }
     }
     static JObject VerifySurfaceMaterialObservation()
     {
