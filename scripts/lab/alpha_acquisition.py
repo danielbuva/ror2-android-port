@@ -83,10 +83,11 @@ def picker_node(tree, *labels, ids=(), clickable=False):
     return matches[0] if matches else None
 
 
-def selected_document(preferences, kind, relative_path):
+def selected_document(preferences, kind, relative_path, *, tools=False):
     values = {entry.get("name"): entry.text for entry in ET.fromstring(preferences).findall("string")}
-    uri = urlsplit(values.get("source_uri") or "")
-    if values.get("source_kind") != kind or uri.scheme != "content" or uri.netloc != EXTERNAL_PROVIDER:
+    uri = urlsplit(values.get("tool_source_uri" if tools else "source_uri") or "")
+    actual_kind = "tree" if tools else values.get("source_kind")
+    if actual_kind != kind or uri.scheme != "content" or uri.netloc != EXTERNAL_PROVIDER:
         return False
     segment = "tree" if kind == "tree" else "document"
     prefix, _, document = uri.path.rpartition("/")
@@ -160,14 +161,17 @@ class FolderImport:
                 tree = self.picker_tree(phone)
         raise self.installer.Failure("acquisition-document-not-visible")
 
-    def require_selection(self, phone, kind, name):
+    def require_selection(self, phone, kind, name, *, tools=False):
         preferences = phone.command(
             "shell", "run-as", self.installer.PACKAGE, "cat", "shared_prefs/owner-phone-flow.xml", label="acquisition-selected-document", idempotent=True
         )
-        self.require(selected_document(preferences, kind, f"Download/{self.stage_name}/{name}"), "acquisition-selected-document-mismatch")
+        self.require(selected_document(preferences, kind, f"Download/{self.stage_name}/{name}", tools=tools), "acquisition-selected-document-mismatch")
 
-    def choose(self, phone, kind, name=None, *, via_control=False):
-        if via_control:
+    def choose(self, phone, kind, name=None, *, via_control=False, tools=False):
+        if tools:
+            self.require(kind == "tree" and not via_control, "acquisition-tools-require-real-folder-picker")
+            phone.tap("Choose SDK / tool folder")
+        elif via_control:
             dispatch_control(phone, self.installer, "choose-folder" if kind == "tree" else "choose-zip")
         else:
             phone.tap("Choose game folder" if kind == "tree" else "Choose game ZIP")
@@ -188,12 +192,13 @@ class FolderImport:
             for text in ("Use this folder", "Allow"):
                 self.click_picker(phone, self.picker_tree(phone), (text,), "acquisition-confirm-folder-grant", clickable=True)
         phone.ui_windows((self.installer.PACKAGE,), recovery=False)
-        observed = phone.read("update-state.json")
-        self.require(
-            observed and observed.get("state") == "INPUT_REQUIRED" and "Source selected." in observed.get("message", ""),
-            "acquisition-source-selection-unverified",
-        )
-        self.require_selection(phone, kind, name)
+        if not tools:
+            observed = phone.read("update-state.json")
+            self.require(
+                observed and observed.get("state") == "INPUT_REQUIRED" and "Source selected." in observed.get("message", ""),
+                "acquisition-source-selection-unverified",
+            )
+        self.require_selection(phone, kind, name, tools=tools)
 
     def restart_installer(self, phone, kind, name):
         phone.require_owned_installer()

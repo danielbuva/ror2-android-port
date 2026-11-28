@@ -60,6 +60,92 @@ class InstallInputTests(unittest.TestCase):
         self.assertEqual(json.loads((self.inputs / "input-hashes.json").read_text()), {"import/files/Data/example.txt": self.manifest["files"][0]["sha256"]})
         self.assertFalse((self.inputs / "signing").exists())
 
+    def test_signed_acquired_tools_bind_and_hash_separately_from_originals(self):
+        original = self.import_fixture()
+        tool = self.inputs / "acquired/sdk/tool.txt"
+        tool.parent.mkdir(parents=True)
+        data = b"synthetic tool"
+        name = "acquired/sdk/tool.txt"
+        pin = {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        manifest = self.repo / "recipe/acquired.json"
+        manifest.write_text(json.dumps({name: pin}))
+        self.plan["acquired_inputs"] = "recipe/acquired.json"
+        self.plan["configuration"]["bindings"]["tool_root"] = "acquired/sdk"
+        self.index["files"]["recipe/acquired.json"] = INPUTS.UPDATES.RELEASE.digest(manifest)
+
+        description = INPUTS.describe(self.index, self.repo, self.inputs)
+        self.assertEqual(description["manifest"], self.manifest)
+        self.assertEqual(description["acquired_inputs"], {name: pin})
+        self.assertEqual(description["acquired_inputs_sha256"], hashlib.sha256(INPUTS.UPDATES.RELEASE.signed_bytes({name: pin})).hexdigest())
+        with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
+            INPUTS.prepare(self.index, self.repo, self.inputs)
+        tool.write_bytes(data)
+        config = INPUTS.prepare(self.index, self.repo, self.inputs)
+        self.assertEqual(config["bindings"]["tool_root"], "acquired/sdk")
+        self.assertEqual(config["bindings"]["game"], "import/files")
+        self.assertEqual(json.loads((self.inputs / "input-hashes.json").read_text())[name], pin["sha256"])
+        identity = INPUTS.UPDATES.input_identity(self.inputs, config)
+        self.assertEqual(INPUTS.UPDATES.input_identity(self.inputs, INPUTS.prepare(self.index, self.repo, self.inputs)), identity)
+        extra = tool.with_name("stale.txt")
+        extra.write_text("extra")
+        with self.assertRaisesRegex(ValueError, "tool tree differs"):
+            INPUTS.prepare(self.index, self.repo, self.inputs)
+        extra.unlink()
+        tool.write_bytes(b"changed tool!!")
+        with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
+            INPUTS.prepare(self.index, self.repo, self.inputs)
+        self.assertEqual(original.read_bytes(), b"example")
+
+    def test_signed_acquired_inventory_cannot_select_originals_keys_or_overlapping_paths(self):
+        pin = {"bytes": 1, "sha256": "b" * 64}
+        for value in ({"import/files/a": pin}, {"signing/owner/a": pin}, {"acquired/sdk": pin, "acquired/sdk/tool.txt": pin}):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "invalid acquired-tool inventory entry"):
+                INPUTS.acquired_inventory(value)
+
+    def test_whole_game_tool_inventory_fits_bounded_install_description(self):
+        self.plan["acquired_inputs"] = "recipe/acquired.json"
+        self.plan["configuration"]["bindings"]["tool_root"] = "acquired/sdk"
+        pin = {"bytes": 1, "sha256": "b" * 64}
+        shelf = "acquired/sdk/PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-arm64/sysroot/usr/include/"
+        tools = {f"{shelf}group{row:05d}/detail/implementation/header.h": pin for row in range(23_000)}
+        description = INPUTS.input_description(self.plan, self.manifest, tools)
+        INPUTS.write_description(self.inputs, description)
+        path = self.inputs / "install-inputs.json"
+        self.assertGreater(path.stat().st_size, 4 * 1024**2)
+        self.assertEqual(path.read_bytes(), INPUTS.UPDATES.RELEASE.signed_bytes(description))
+        with self.assertRaisesRegex(ValueError, "exceeds bounded UI metadata limit"):
+            INPUTS.input_description(self.plan, self.manifest, tools | {name + ".other": pin for name in tools})
+
+    def test_signed_tool_urls_are_limited_to_reviewed_provider_paths(self):
+        revision = "a" * 40
+        source = f"acquired/asset-ripper/{revision}/LICENSE.md"
+        raw = f"https://raw.githubusercontent.com/AssetRipper/AssetRipper/{revision}/LICENSE.md"
+        jar = "acquired/android-sdk/jars/asm-9.2.jar"
+        maven = "https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.2/asm-9.2.jar"
+        zipflinger = "acquired/android-sdk/jars/zipflinger-7.4.2.jar"
+        google_maven = "https://dl.google.com/dl/android/maven2/com/android/zipflinger/7.4.2/zipflinger-7.4.2.jar"
+        pin = {"bytes": 1, "sha256": "b" * 64}
+        accepted = {
+            source: dict(pin, url=raw),
+            jar: dict(pin, url=maven),
+            zipflinger: dict(pin, url=google_maven),
+            "acquired/unity-android-support.pkg": pin,
+        }
+        self.assertEqual(INPUTS.acquired_inventory(accepted), accepted)
+        for name, url in (
+            (source, raw.replace(revision, "main")),
+            (source, raw.replace("AssetRipper/AssetRipper", "other/AssetRipper")),
+            (source, raw + "?download=true"),
+            (jar, maven.replace("https:", "http:")),
+            (jar, maven.replace("asm/9.2", "asm/../9.2")),
+            (jar, raw),
+            (zipflinger, google_maven.replace("/zipflinger/", "/zipflinger-other/")),
+            (zipflinger, google_maven.replace("zipflinger-7.4.2.jar", "zipflinger-7.4.3.jar")),
+            ("acquired/unity-android-support.pkg", "https://download.unity3d.com/component.pkg"),
+        ):
+            with self.subTest(name=name, url=url), self.assertRaises(ValueError):
+                INPUTS.acquired_inventory({name: dict(pin, url=url)})
+
     def test_signed_versions_feed_the_native_original_inventory(self):
         imported = self.import_fixture()
         game = self.inputs / "import/files"

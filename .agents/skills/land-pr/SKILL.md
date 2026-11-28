@@ -5,8 +5,8 @@ description: Use when updating, verifying and merging a branch or draft PR of th
 
 # Land a branch
 
-1. `git fetch origin && git merge origin/main` in the branch's own worktree (a not-yet-pushed branch may
-   rebase instead; never rebase or force-push a pushed branch). For journal conflicts, preserve main's
+1. `git fetch origin && git merge origin/main` in the branch's own worktree. Never rebase or force-push
+   a pushed branch. For journal conflicts, preserve main's
    entries unchanged and keep each branch addition as a separate `## J<n>` heading (temporary duplicate
    numbers are fine); remove conflict markers, never discard another branch's entry. Then run `python3
    scripts/journal-renumber.py --dry-run` and `python3 scripts/journal-renumber.py`. This host-only tool
@@ -19,8 +19,18 @@ description: Use when updating, verifying and merging a branch or draft PR of th
    Never renumber someone else's entry.
 2. `.local/lab-venv/bin/ruff format` + `ruff check` on changed Python; `python3 -m unittest discover -s tests` for affected tests.
 3. `python3 scripts/audit-public.py` on staged content; manually confirm no game-derived bytes, device serials, private paths or credentials.
-4. Push. The pre-push hook runs `scripts/ci-local.sh` with affected test selection in a fresh clone. GitHub runs the full suite.
+4. Run `./dev publish --pr` in the foreground. It fetches and merges `origin/main`, commits any
+   journal and tracked-source pin repairs, then pushes the branch ref through the normal pre-push
+   hook. The hook runs `scripts/ci-local.sh` with affected test selection in a fresh clone. GitHub
+   runs the full suite. If the merge conflicts, resolve it as in step 1 before rerunning the command.
 5. Journal shipped device-verified behaviour and closed readiness or alpha gates. Cite the device run for device claims. Record routine host-only fixes in their PR.
-6. Merge with `gh pr merge <n> --squash --delete-branch --author-email "$(git config user.email)"` (the repo's configured GitHub noreply address) once CI is green (without `--author-email` GitHub uses the account's private address). Never force-push or rewrite `main`, including to fix commit metadata; report such issues instead. then remove the local worktree (`git worktree remove`) and prune its `work/` outputs.
+6. Append the `AUTOMERGE <n>` line printed by `./dev publish --pr` to the workstream status file. The orchestrator's
+   merge bot waits for the required `host-tests` check and squash-merges with the GitHub noreply
+   author address. GitHub deletes the remote head branch. Start the next item from `origin/main`
+   while CI runs. Use `WAITING ci-pr <n>` only when the next step requires the merge.
+7. After the merge, fetch updates and switch off the topic branch before deleting it locally with
+   `git branch -D <branch>` (squash merges create a new commit). Keep the assigned worktree and its
+   symlinks. Remove any extra worktree you created and run `python3 scripts/prune-generated.py --apply --aggressive`
+   from an up-to-date main checkout. Never force-push or rewrite `main`, including to fix commit metadata.
 
 Prefer landing finished draft PRs over starting parallel re-implementations; stale PRs that no longer apply are closed with a one-line reason.

@@ -31,7 +31,11 @@ MAX_JSON_BYTES = 8 * 1024 * 1024
 MAX_BUNDLE_INDEX_BYTES = 4 * 1024 * 1024
 COMPACT_INDEX_INSTALLER_VERSION = 4
 AUTHORED_UNITY_INSTALLER_VERSION = 5
+WWISE_NATIVE_INSTALLER_VERSION = 6
+WWISE_NATIVE_JOB = "recipe/jobs/owner-wwise-native.json"
 MAX_PUBLIC_FILE_BYTES = 64 * 1024 * 1024
+# Reviewed source selectors for the whole-game Transform cohort (recipe/README.md).
+MAX_TRANSFORM_RECIPE_BYTES = 80 * 1024 * 1024
 MAX_BUNDLE_BYTES = 512 * 1024 * 1024
 INDEX = "bundle-index.json"
 SOURCE_SUFFIXES = {
@@ -392,6 +396,8 @@ def validate_bundle_index(index, release):
             raise ValueError("overlapping public bundle paths")
     if AUTHORED_UNITY_SOURCE_SHA256.keys() & index["files"].keys() and release["minimum_installer_version"] < AUTHORED_UNITY_INSTALLER_VERSION:
         raise ValueError("authored Unity sources require installer version 5 or later")
+    if WWISE_NATIVE_JOB in index["files"] and release["minimum_installer_version"] < WWISE_NATIVE_INSTALLER_VERSION:
+        raise ValueError("Wwise native production requires installer version 6 or later")
     if not isinstance(index["entries"], dict) or set(index["entries"]) != set(release["entries"]):
         raise ValueError("bundle outputs differ from signed release")
     for name, row in index["entries"].items():
@@ -460,8 +466,9 @@ def _blob(root, tracked, name):
     if name not in tracked or tracked[name][0] not in {"100644", "100755"} or tracked[name][1] != "blob":
         raise ValueError("committed regular public file required: " + name)
     size = int(subprocess.check_output(["git", "cat-file", "-s", tracked[name][2]], cwd=root))
-    if size > MAX_PUBLIC_FILE_BYTES:
-        raise ValueError("public source file size limit exceeded")
+    limit = MAX_TRANSFORM_RECIPE_BYTES if name == "recipe/owner-transforms.json" else MAX_PUBLIC_FILE_BYTES
+    if size > limit:
+        raise ValueError("public source file size limit exceeded: " + name)
     return subprocess.check_output(["git", "cat-file", "blob", tracked[name][2]], cwd=root)
 
 
@@ -495,8 +502,11 @@ def build_bundle(repository, plan, output):
                 raise ValueError("dependency file list required")
             selected.update(row[field])
     if "install_plan" in plan:
-        selected.add(public_path(plan["install_plan"]["required_inputs"]))
-        for stage in plan["install_plan"]["stages"]:
+        install_plan = plan["install_plan"]
+        selected.add(public_path(install_plan["required_inputs"]))
+        if "acquired_inputs" in install_plan:
+            selected.add(public_path(install_plan["acquired_inputs"]))
+        for stage in install_plan["stages"]:
             selected.update(stage["jobs"])
     if INDEX in selected:
         raise ValueError("bundle index is generated, not supplied")
@@ -521,11 +531,11 @@ def build_bundle(repository, plan, output):
         "version": "validation",
         "version_code": 1,
         "application_id": "dev.ror2lab.alpha",
-        "minimum_installer_version": AUTHORED_UNITY_INSTALLER_VERSION,
+        "minimum_installer_version": WWISE_NATIVE_INSTALLER_VERSION,
         "bundle_sha256": "0" * 64,
         "entries": dependencies,
     }
-    RELEASE.validate(body, AUTHORED_UNITY_INSTALLER_VERSION, body["application_id"], 0)
+    RELEASE.validate(body, WWISE_NATIVE_INSTALLER_VERSION, body["application_id"], 0)
     validate_bundle_index(index, body)
     contents[INDEX] = encode_bundle_index(index)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -564,7 +574,9 @@ def validate_publication(bundle_path, body):
             flow = _module("publication_install_flow", here / "install_flow.py")
             flow.validate_plan(index["install_plan"], index, lambda name: load_json(archive.read(public_path(name))))
             inputs = _module("publication_install_inputs", here / "install_inputs.py")
-            inputs.input_description(index["install_plan"], load_json(archive.read(index["install_plan"]["required_inputs"])))
+            plan = index["install_plan"]
+            acquired = load_json(archive.read(plan["acquired_inputs"])) if "acquired_inputs" in plan else None
+            inputs.input_description(plan, load_json(archive.read(plan["required_inputs"])), acquired)
         owner = _module("publisher_apk_owner", here / "build_owner_apk.py")
         if "install_plan" in index:
             owner.validate_source_payload(body["entries"])

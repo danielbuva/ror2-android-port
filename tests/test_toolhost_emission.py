@@ -6,6 +6,8 @@ import json
 import os
 from pathlib import Path
 import shlex
+import shutil
+import struct
 import subprocess
 import sys
 import tarfile
@@ -13,6 +15,9 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 import zipfile
+
+from test_phone_mesh_producer import bundle, serialized, vector
+from test_phone_texture_native_profile import texture_schema
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/lab"))
@@ -157,7 +162,48 @@ class EmissionTests(unittest.TestCase):
         self.assertIn("staged input hash differs", json.loads(receipt.read_bytes())["first_failure"])
         self.assertEqual(source.read_text(), "authored")
 
-    def test_converter_stage_streams_exactly_pinned_inputs_to_owned_scratch(self):
+    def test_texture_discovery_stage_runs_from_its_staged_sources(self):
+        producer = STAGE.ACCEPTED_OUTPUT + "texture_native_profile.py"
+        self.assertIn(producer, STAGE.JOBS.PRODUCERS)
+        repo = self.root / "repo"
+        for name in (producer, *STAGE.PRODUCER_SUPPORT[producer]):
+            path = repo / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / name, path)
+
+        owner_input = self.root / "owner-input"
+        inputs = owner_input / "staged"
+        pc = inputs / "pc"
+        pc.mkdir(parents=True)
+        source = pc / "authored.bundle"
+        body = vector(b"Fixture", 7) + struct.pack("<8i", 1, 2, 2, 1, 1, 2, 4, 0) + bytes(12)
+        body += vector(b"\x01\x02\x03\x04", 4) + bytes(16)
+        source.write_bytes(bundle([("CAB-test", serialized(body, texture_schema(), path_id=6, class_id=28), 4)]))
+        ledger = inputs / "coverage.jsonl"
+        ledger.write_text(json.dumps(dict(source=[source.name, "CAB-test", 6], status="exact")) + "\n")
+        output = self.output / "stage"
+        output.mkdir()
+        descriptor = self.root / "stage.json"
+        EMISSION.write(
+            descriptor,
+            dict(
+                producer=producer,
+                input_root="staged",
+                input_pins={path.relative_to(inputs).as_posix(): EMISSION.digest(path) for path in (source, ledger)},
+                arguments=[dict(inputs="pc"), dict(inputs=ledger.name), "--all-originals", "--output", dict(output="profile.json")],
+                artifacts=dict(profile="profile.json"),
+            ),
+        )
+        receipt = self.output / "receipt.json"
+        result = STAGE.run(STAGE.load_stage(descriptor), repo, owner_input, output, self.root, self.root, [sys.executable, "-I", "-S", "-B"], receipt)
+        measured = json.loads(receipt.read_bytes())
+        self.assertEqual(result, 0, measured)
+        profile = output / "profile.json"
+        records = json.loads(profile.read_bytes())["bundles"]
+        self.assertEqual([row["path"] for row in records], [source.name])
+        self.assertEqual(measured["artifacts"], {"profile": dict(sha256=EMISSION.digest(profile), bytes=profile.stat().st_size)})
+
+    def test_converter_stage_streams_exactly_pinned_inputs_to_fresh_toolhost(self):
         def pin(source):
             return dict(source=str(source), bytes=source.stat().st_size, sha256=EMISSION.digest(source))
 
@@ -177,7 +223,7 @@ class EmissionTests(unittest.TestCase):
         )
         manifest = Path(self.request["manifest"]["path"])
         self.request.pop("expected_records")
-        self.request.update(operation=EMISSION.CONVERTER_STAGE, request="stage.json", retained_tool_sha256=self.request["tool_apk"]["sha256"])
+        self.request.update(operation=EMISSION.CONVERTER_STAGE, request="stage.json")
 
         def configure(staged):
             EMISSION.write(manifest, {"files": {"stage.json": pin(descriptor), **staged}})
@@ -186,7 +232,7 @@ class EmissionTests(unittest.TestCase):
 
         profile_key, bundle_key = "inputs/fixture/profile.json", "inputs/fixture/game data/source.bundle"
         staged = {profile_key: pin(profile), bundle_key: pin(bundle)}
-        for invalid in ({profile_key: pin(profile)}, {**staged, "inputs/other.bundle": pin(bundle)}, {**staged, bundle_key: pin(profile)}):
+        for invalid in ({}, {profile_key: pin(profile)}, {**staged, "inputs/other.bundle": pin(bundle)}, {**staged, bundle_key: pin(profile)}):
             with self.subTest(invalid=invalid):
                 configure(invalid)
                 with self.assertRaisesRegex(ValueError, "converter-stage-staged-inputs-must-match-descriptor-pins"):
@@ -194,14 +240,20 @@ class EmissionTests(unittest.TestCase):
 
         configure(staged)
         self.phone.occupied.return_value = True
+        self.assertEqual(self.run_request()["error"], "emission-preexisting-package")
+        self.phone.install.assert_not_called()
+        self.phone.remove_owned_installer.assert_not_called()
+        self.phone.occupied.return_value = False
         self.collected = dict(stage=dict(success=True), thermal={})
         result = self.run_request()
         self.assertTrue(result["success"], result)
+        self.assertTrue(result["owned_app_removed"])
         state = json.loads((self.output / "device-state.json").read_bytes())
         (producer,) = self.phone.transport.start_detached.call_args.args
         self.assertIn(state["remote"] + "/inputs", producer)
         self.assertEqual(result["transfer_bytes"], sum(row["bytes"] for row in [pin(descriptor), *staged.values()]))
-        self.phone.shell.assert_any_call("run-as", INSTALLER.PACKAGE, "rm", "-rf", state["remote"], label="emission-retained-scratch-cleanup")
+        self.phone.install.assert_called_once_with(Path(self.request["tool_apk"]["path"]))
+        self.phone.remove_owned_installer.assert_called_once_with()
 
     def test_explicit_restage_replaces_only_confirmed_terminal_owned_inputs(self):
         self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
@@ -352,9 +404,9 @@ class EmissionTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertTrue(result["owned_app_removed"])
 
-    def test_signed_artifact_compares_selected_output_and_removes_owned_toolhost(self):
+    def signed_artifact_request(self, expected, selection):
         self.request.pop("expected_records")
-        self.request.update(operation="signed-artifact", expected_sha256="a" * 64)
+        self.request.update(operation="signed-artifact", **expected)
         contract = dict(
             bundle="bundle.zip",
             envelope="release.json",
@@ -362,8 +414,8 @@ class EmissionTests(unittest.TestCase):
             key_id="fixture",
             output="artifact",
             job="recipe/jobs/fixture.json",
-            artifact="objects",
             bindings={"pc": "game"},
+            **selection,
         )
         files = {}
         for name, data in (
@@ -380,6 +432,10 @@ class EmissionTests(unittest.TestCase):
         manifest.write_text(json.dumps(dict(files=files)))
         self.request["manifest"]["sha256"] = EMISSION.digest(manifest)
         self.path.write_text(json.dumps(self.request))
+        return contract
+
+    def test_signed_artifact_compares_selected_output_and_removes_owned_toolhost(self):
+        contract = self.signed_artifact_request({"expected_sha256": "a" * 64}, {"artifact": "objects"})
         self.collected = dict(signed_artifact=dict(success=True, job=contract["job"], artifact=contract["artifact"], sha256="a" * 64), thermal={})
         result = self.run_request()
         self.assertTrue(result["success"], result)
@@ -390,6 +446,29 @@ class EmissionTests(unittest.TestCase):
 
         self.collected["signed_artifact"]["sha256"] = "b" * 64
         self.assertFalse(self.run_request()["success"])
+
+    def test_signed_artifact_set_requires_every_requested_hash_and_size(self):
+        pins = {
+            label: {"sha256": value * 64, "bytes": size} for size, (label, value) in enumerate(zip(("index", "objects", "resources", "types"), "abcd"), start=1)
+        }
+        contract = self.signed_artifact_request({"expected_artifacts": pins}, {"artifacts": list(pins)})
+        report = dict(success=True, job=contract["job"], artifacts={label: pin.copy() for label, pin in pins.items()})
+        self.collected = dict(signed_artifact=report, thermal={})
+        result = self.run_request()
+        self.assertTrue(result["success"], result)
+        self.assertTrue(result["owned_app_removed"])
+        self.assertEqual(result["signed_artifact"]["artifacts"], pins)
+
+        for bad_pin in (dict(pins["objects"], bytes=0), dict(pins["objects"], sha256="f" * 64)):
+            report["artifacts"]["objects"] = bad_pin
+            self.assertFalse(self.run_request()["success"])
+        report["artifacts"].pop("objects")
+        self.assertFalse(self.run_request()["success"])
+
+        pins.pop("objects")
+        self.path.write_text(json.dumps(self.request))
+        with self.assertRaisesRegex(ValueError, "signed-artifact-selection-differs-from-expected-pins"):
+            EMISSION.load_request(self.path)
 
     def test_signed_code_keeps_unknown_handle_for_exact_reattachment(self):
         self.signed_request()

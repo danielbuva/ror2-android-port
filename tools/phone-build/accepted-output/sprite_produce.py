@@ -179,10 +179,12 @@ def prepare(profile_path, profile_pin, pc, decoder, decoder_pin, output):
     new_output(output, pc)
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_pin, "decoder_sha256": decoder_pin}
     try:
+        (output / "images").mkdir()
         items, pixels = [], []
         for selected, body, root, texture, texture_root, bundle, _ in original_records(value, pc):
             rgba, width, height = source_pixels(texture, texture_root, bundle, decoder)
-            path = output / (str(len(items)) + ".png")
+            image = f"images/{len(items)}.png"
+            path = output / image
             path.write_bytes(png_rgba(rgba, width, height))
             parameters = constructor_parameters(selected, body, root, texture, texture_root, width, height)
             _, spans = A.fields(body, root)
@@ -193,7 +195,7 @@ def prepare(profile_path, profile_pin, pc, decoder, decoder_pin, output):
                 parameters["border"] = struct.unpack_from("<4f", body, start)
             extrude = struct.unpack_from("<I", body, spans[("m_Extrude",)][0])[0]
             settings = struct.unpack_from("<I", body, spans[("m_RD", "settingsRaw")][0])[0]
-            items.append(dict(id=selected["id"], png=str(path.resolve()), sha256=B.sha(path), **parameters, extrude=extrude, mesh_type=(settings >> 6) & 1))
+            items.append(dict(id=selected["id"], png=image, sha256=B.sha(path), **parameters, extrude=extrude, mesh_type=(settings >> 6) & 1))
             pixels.append(dict(id=selected["id"], width=width, height=height, rgba_sha256=hashlib.sha256(rgba).hexdigest()))
         request = output / "sprite-source-request.json"
         request.write_text(json.dumps({"items": items}, indent=2) + "\n")
@@ -208,7 +210,9 @@ def prepare(profile_path, profile_pin, pc, decoder, decoder_pin, output):
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
 
-def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, functional=False):
+def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, functional=False, request_path=None, request_pin=None):
+    if (request_path is None) != (request_pin is None):
+        raise ValueError("Sprite constructor request path and hash must be paired")
     value = profile(profile_path, profile_pin)
     if B.sha(native_path) != native_pin:
         raise ValueError("Native Sprite constructor output drift")
@@ -219,6 +223,15 @@ def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, f
     required = {row["id"] for bundle in value["bundles"] for member in bundle["members"] for row in member["objects"]}
     if len(results) != len(native["items"]) or set(results) != required:
         raise ValueError("Native Sprite output does not cover the selected source cohort")
+    if request_path is not None:
+        request_bytes = request_path.read_bytes()
+        if hashlib.sha256(request_bytes).hexdigest() != request_pin:
+            raise ValueError("Sprite constructor request drift")
+        if native.get("request_sha256") != request_pin:
+            raise ValueError("Native Sprite output does not bind the prepared request")
+        identities = [row["id"] for row in json.loads(request_bytes)["items"]]
+        if len(identities) != len(required) or set(identities) != required:
+            raise ValueError("Sprite constructor request does not cover the selected source cohort")
     new_output(output, pc)
     started = time.monotonic()
     receipt = {
@@ -231,6 +244,8 @@ def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, f
         "functional": functional,
         "byte_differences": 0,
     }
+    if request_path is not None:
+        receipt["request_sha256"] = request_pin
     types, type_ids = [], {}
     try:
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
@@ -277,6 +292,8 @@ def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, f
                     raise ValueError("Persisted Sprite record extent drift")
         if B.sha(profile_path) != profile_pin or B.sha(native_path) != native_pin:
             raise ValueError("Sprite production provider changed")
+        if request_path is not None and B.sha(request_path) != request_pin:
+            raise ValueError("Sprite constructor request changed during production")
         (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         receipt.update(
             success=True,
@@ -302,6 +319,8 @@ def main():
     parser.add_argument("--pixels-sha256")
     parser.add_argument("--native-output", type=Path)
     parser.add_argument("--native-sha256")
+    parser.add_argument("--request", type=Path, help="Bind production to the prepared Sprite constructor request")
+    parser.add_argument("--request-sha256")
     parser.add_argument("--functional", action="store_true", help="Record byte differences diagnostically; retain schema and reference checks")
     args = parser.parse_args()
     if args.action == "prepare":
@@ -311,7 +330,17 @@ def main():
     else:
         if args.native_output is None or args.native_sha256 is None:
             parser.error("produce requires explicit exact-SDK constructor output and hash")
-        result = produce(args.profile, args.profile_sha256, args.pc_root, args.native_output, args.native_sha256, args.output, functional=args.functional)
+        result = produce(
+            args.profile,
+            args.profile_sha256,
+            args.pc_root,
+            args.native_output,
+            args.native_sha256,
+            args.output,
+            functional=args.functional,
+            request_path=args.request,
+            request_pin=args.request_sha256,
+        )
     print(json.dumps(result))
 
 

@@ -227,7 +227,7 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
                 needs=[code_job],
                 arguments=["${output}", "${job:" + code_job + ":burst}"],
                 outputs={library: "native.so", metadata: "metadata.dat"},
-                artifacts=dict(receipt="result.json"),
+                artifacts=dict(library="native.so", metadata="metadata.dat", receipt="result.json"),
             ),
         )
         self.commit()
@@ -254,10 +254,18 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
         inventory.write_text(json.dumps(dict(files=[dict(path="fixture", sha256=sha, size=original.stat().st_size, mtime_ns=0)])))
         (stage / "input-hashes.json").write_text(json.dumps({"game/fixture": sha}))
         request = stage / "request.json"
-        request.write_text(json.dumps(dict(bundle=archive.name, envelope="release.json", public_key=pub.name, key_id="test", output="rehearsal")))
+        release_request = dict(bundle=archive.name, envelope="release.json", public_key=pub.name, key_id="test", output="rehearsal")
+        request.write_text(json.dumps(release_request))
         android = PUBLIC._module("native_phone_fixture", ROOT / "tools/phone-build/owner-code/run_android.py")
         with patch.dict("os.environ"), patch("builtins.print"):
             android.run(request, runtime, host)
+            job_cache = stage / "work/releases/jobs"
+            native_jobs = set(job_cache.glob("*.json"))
+            self.assertEqual(len(native_jobs), 2)
+            artifact_request = dict(release_request, output="artifacts", job=native_job, artifacts=["library", "metadata"], bindings={})
+            request.write_text(json.dumps(artifact_request))
+            android.run(request, runtime, host)
+            self.assertEqual(len(set(job_cache.glob("*.json")) - native_jobs), 2)
             envelope["signature"]["value"] = "AAAA"
             (stage / "release.json").write_text(json.dumps(envelope))
             with self.assertRaisesRegex(ValueError, "release signature invalid"):
@@ -274,7 +282,16 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
                 for name, value in ((library, b"synthetic native"), (metadata, b"synthetic metadata"), (burst, b"synthetic burst"))
             },
         )
-        self.assertEqual(len(list((stage / "work/releases/jobs").glob("*.json"))), 2)
+        readback = json.loads((stage / "work/artifacts/result.json").read_text())
+        self.assertTrue(readback["success"])
+        self.assertEqual(readback["bundle_sha256"], built["bundle_sha256"])
+        self.assertEqual(
+            readback["artifacts"],
+            {
+                label: {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
+                for label, data in (("library", b"synthetic native"), ("metadata", b"synthetic metadata"))
+            },
+        )
 
     def test_reviewed_unity_source_is_published_and_verified(self):
         def recipe(name):
@@ -311,6 +328,14 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
             with self.subTest(name=name):
                 self.assertEqual(index["files"][name], digest)
                 self.assertEqual(PUBLIC.RELEASE.digest(verified / name), digest)
+
+    def test_wwise_build_requires_the_installer_with_the_new_producer(self):
+        job = PUBLIC.WWISE_NATIVE_JOB
+        index = {"schema": 1, "files": {job: "a" * 64}, "entries": {}}
+        release = dict(release_body(), entries={}, minimum_installer_version=5)
+        with self.assertRaisesRegex(ValueError, "requires installer version 6"):
+            PUBLIC.validate_bundle_index(index, release)
+        PUBLIC.validate_bundle_index(index, dict(release, minimum_installer_version=6))
 
     def test_same_installer_verifies_a_later_reviewed_unity_revision(self):
         name = "smoke/Assets/Bootstrap.unity"
@@ -388,6 +413,19 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
         self.assertIn("recipe/inputs.json", result["index"]["files"])
         with zipfile.ZipFile(Path(self.temporary.name) / "public.zip") as archive:
             self.assertEqual(PUBLIC.load_json(archive.read("recipe/inputs.json")), manifest)
+
+        tools = {"acquired/sdk/example.jar": {"bytes": 2, "sha256": "b" * 64}}
+        tools_path = "recipe/acquired-tools.json"
+        (self.root / tools_path).write_text(json.dumps(tools))
+        self.commit()
+        self.plan["install_plan"]["acquired_inputs"] = tools_path
+        self.plan["install_plan"]["configuration"]["bindings"]["sdk"] = "acquired/sdk"
+        with_tools = self.build("with-tools.zip")
+        self.assertEqual(with_tools["entries"], result["entries"])
+        with zipfile.ZipFile(Path(self.temporary.name) / "with-tools.zip") as archive:
+            self.assertEqual(PUBLIC.load_json(archive.read(tools_path)), tools)
+            self.assertEqual(set(archive.namelist()), {*result["index"]["files"], tools_path, PUBLIC.INDEX})
+
         self.plan["install_plan"]["configuration"]["bindings"]["originals"] = "../../escape"
         with self.assertRaises(ValueError):
             self.build("bad.zip")
@@ -411,6 +449,28 @@ lib, metadata = b"synthetic native", b"synthetic metadata"
         self.plan["files"].append("recipe/untracked.json")
         with self.assertRaisesRegex(ValueError, "committed regular"):
             self.build("untracked.zip")
+
+    def test_large_reviewed_transform_recipe_is_verified_on_extraction(self):
+        updates = PUBLIC._module("test_transform_recipe_updates", ROOT / "tools/phone-build/owner-apk/updates.py")
+        recipe = "recipe/owner-transforms.json"
+        unrelated = "recipe/other.json"
+        data = json.dumps({"synthetic": "x" * 128}).encode()
+        for name in (recipe, unrelated):
+            (self.root / name).write_bytes(data)
+        self.commit()
+        self.plan["entries"]["apk/a.txt"]["recipe_files"].append(recipe)
+        with patch.object(PUBLIC, "MAX_PUBLIC_FILE_BYTES", 64), patch.object(PUBLIC, "MAX_TRANSFORM_RECIPE_BYTES", len(data)):
+            result = self.build()
+            self.plan["files"].append(unrelated)
+            with self.assertRaisesRegex(ValueError, "size limit exceeded: recipe/other.json"):
+                self.build("other.zip")
+
+        archive = Path(self.temporary.name) / "public.zip"
+        verified = Path(self.temporary.name) / "verified"
+        body = dict(release_body(), bundle_sha256=result["bundle_sha256"], entries=result["entries"])
+        index = updates.extract_bundle(archive, verified, body)
+        self.assertEqual(index["files"][recipe], hashlib.sha256(data).hexdigest())
+        self.assertEqual((verified / recipe).read_bytes(), data)
 
     def test_transitive_shared_producer_and_one_recipe_changes(self):
         first = self.build("first.zip")

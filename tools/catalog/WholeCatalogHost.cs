@@ -171,6 +171,11 @@ public static class WholeCatalogHost
                 .Where(asset => asset).Distinct().Take(2).ToArray();
             return matches.Length == 1 ? matches[0] : null;
         }
+
+        public T Resolve<T>(AssetReferenceT<T> reference) where T : UnityEngine.Object
+        {
+            return reference != null && reference.RuntimeKeyIsValid() ? Resolve<T>(reference.AssetGUID, reference.SubObjectName) : null;
+        }
     }
 
     static void InspectAnimationSkin(RoR2.SkinDef skin, CatalogAddresses addresses, HashSet<RoR2.SkinDef> visited, JArray rows,
@@ -283,7 +288,30 @@ public static class WholeCatalogHost
         var addresses = new CatalogAddresses(manifest, locations.ToDictionary(row => row.Key, row => (string)row.Value["path"]));
         var roots = new JArray();
         var rows = new JArray();
+        var runtimeOverrides = new JArray();
+        var addressedSkinMaterials = new JArray();
         var errors = new JArray();
+        var families = new Dictionary<string, JObject>(StringComparer.Ordinal);
+        var otherFamilies = Resources.Load<TextAsset>("AndroidNativeMaterialFamilies");
+        if (otherFamilies)
+            foreach (var family in JObject.Parse(otherFamilies.text)["families"].OfType<JObject>())
+                families.Add((string)family["shader"], family);
+        var standard = Resources.Load<TextAsset>("AndroidNativeStandardVariants");
+        if (standard)
+            families["Hopoo Games/Deferred/Standard"] = JObject.Parse(standard.text);
+        var materialMappings = new Dictionary<Material, JObject>();
+        JObject Mapping(Material material)
+        {
+            if (!material)
+                return CombatMaterialMapping(material, families);
+            if (!materialMappings.TryGetValue(material, out var mapping))
+            {
+                mapping = CombatMaterialMapping(material, families);
+                materialMappings.Add(material, mapping);
+            }
+            return mapping;
+        }
+
         var candidates = new JArray();
         foreach (var category in new[] { "CharacterBody", "Projectile" })
         {
@@ -306,38 +334,104 @@ public static class WholeCatalogHost
             candidates.Add(new JObject { ["id"] = -1, ["path"] = path, ["category"] = "RegisteredEffect", ["provider"] = -1 });
 
         JToken Location(string file) => locations.Values.Single(row => ((string)row["path"]).EndsWith("/" + file, StringComparison.Ordinal));
-        void Include(JToken location, string category)
+        var candidatePaths = new HashSet<string>(candidates.Select(row => (string)row["path"]), StringComparer.Ordinal);
+        var locationByPath = locations.Values.ToLookup(row => (string)row["path"], StringComparer.Ordinal);
+        void Include(string path, string category)
         {
-            var path = (string)location["path"];
-            if (!candidates.Any(row => (string)row["path"] == path))
-                candidates.Add(new JObject { ["id"] = (int)location["id"], ["path"] = path, ["category"] = category, ["provider"] = -1 });
+            if (candidatePaths.Add(path))
+            {
+                var location = locationByPath[path].FirstOrDefault();
+                candidates.Add(new JObject { ["id"] = (int?)location?["id"] ?? -1, ["path"] = path, ["category"] = category,
+                                             ["provider"] = -1 });
+            }
         }
 
         // These source effects are acquired outside the registered effect list.
-        Include(Location("MercExposeEffect.prefab"), "DirectEffect");
-        Include(Location("CrocoDiseaseImpactEffect.prefab"), "DirectEffect");
-        var titan = AssetDatabase.LoadAssetAtPath<GameObject>((string)Location("TitanPreFistProjectile.prefab")["path"]);
-        var projectile = titan ? titan.GetComponent<RoR2.Projectile.ProjectileController>() : null;
-        if (!projectile)
-            throw new Exception("Titan pre-fist projectile controller missing");
-        var ghost = addresses.Inspect(new SerializedObject(projectile), "ghostPrefabAddress", null, projectile.ghostPrefab, out var ghostBinding);
-        if (!ghost || ghost.name != "TitanPreFistGhost" || !ghost.GetComponent<RoR2.Projectile.ProjectileGhostController>())
-            throw new Exception("Titan pre-fist projectile ghost binding missing");
-        Include(locations.Values.Single(row => (string)row["path"] == AssetPath(ghost)), "ProjectileGhost");
-
-        foreach (JObject location in candidates)
+        Include((string)Location("MercExposeEffect.prefab")["path"], "DirectEffect");
+        Include((string)Location("CrocoDiseaseImpactEffect.prefab")["path"], "DirectEffect");
+        var ghostBindings = new Dictionary<string, JObject>(StringComparer.Ordinal);
+        var impactBindings = new JArray();
+        void InspectProjectileGhost(GameObject prefab, string path)
         {
+            var projectile = prefab ? prefab.GetComponent<RoR2.Projectile.ProjectileController>() : null;
+            if (!projectile)
+            {
+                ghostBindings[path] = new JObject { ["projectile"] = path, ["status"] = "missing-controller" };
+                errors.Add(path + ": missing typed ProjectileController");
+                return;
+            }
+            var ghost = addresses.Inspect(new SerializedObject(projectile), "ghostPrefabAddress", null, projectile.ghostPrefab,
+                                          out var binding);
+            binding["projectile"] = path;
+            ghostBindings[path] = binding;
+            string ghostPath = (string)binding["effective"];
+            // The native controller creates the visual even when it has no follower component.
+            binding["ghostControllerPresent"] = ghost && ghost.GetComponent<RoR2.Projectile.ProjectileGhostController>();
+            if (!string.IsNullOrEmpty(ghostPath))
+            {
+                binding["status"] = "resolved";
+                Include(ghostPath, "ProjectileGhost");
+            }
+            else if (!ghost && (string)binding["addressStatus"] == "empty" && !projectile.ghostPrefab)
+                binding["status"] = "unassigned";
+            else
+            {
+                binding["status"] = "invalid";
+                errors.Add(path + ": invalid typed projectile ghost binding");
+            }
+        }
+
+        string IncludeImpactEffect(GameObject effect, string projectilePath)
+        {
+            if (!effect)
+                return null;
+            string path = AssetPath(effect);
+            if (string.IsNullOrEmpty(path))
+                errors.Add(projectilePath + ": projectile impact effect asset path missing for " + effect.name);
+            else
+                Include(path, "ProjectileImpactEffect");
+            return path;
+        }
+
+        void InspectProjectileImpacts(GameObject prefab, string path)
+        {
+            foreach (var impact in prefab.GetComponentsInChildren<RoR2.Projectile.ProjectileImpactExplosion>(true))
+            {
+                string impactEffect = IncludeImpactEffect(impact.impactEffect, path);
+                string explosionEffect = IncludeImpactEffect(impact.explosionEffect, path);
+                impactBindings.Add(new JObject {
+                    ["projectile"] = path,
+                    ["component"] = HierarchyPath(impact.transform),
+                    ["impactEffect"] = impactEffect,
+                    ["explosionEffect"] = explosionEffect,
+                    ["detonationEffect"] = impactEffect ?? explosionEffect,
+                    ["expiredEffect"] = IncludeImpactEffect(impact.expiredEffect, path),
+                    ["blastImpactEffect"] = IncludeImpactEffect(impact.blastImpactEffect, path)
+                });
+            }
+        }
+
+        // Projectile edges append unique visual roots for the same slot census.
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var location = candidates[i];
             string category = (string)location["category"];
             int provider = (int)location["provider"], id = (int)location["id"];
             string path = (string)location["path"];
             var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             roots.Add(new JObject { ["category"] = category, ["provider"] = provider, ["location"] = id, ["path"] = path,
                                     ["loaded"] = (bool)root });
+            if (category == "Projectile")
+                InspectProjectileGhost(root, path);
             if (!root)
             {
                 errors.Add("Typed prefab missing: " + category + "/" + path);
                 continue;
             }
+            if (category == "Projectile")
+                InspectProjectileImpacts(root, path);
+            InspectCombatMaterialOverrides(root, path, category, id, Mapping, runtimeOverrides);
+            var models = root.GetComponentsInChildren<RoR2.CharacterModel>(true);
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 var hierarchy = HierarchyPath(renderer.transform);
@@ -347,27 +441,71 @@ public static class WholeCatalogHost
                     particle.GetActiveVertexStreams(streams);
                 var materials = renderer.sharedMaterials;
                 for (int slot = 0; slot < materials.Length; slot++)
-                    AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", slot,
+                    AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", slot,
                                       materials[slot]);
-                foreach (var model in root.GetComponentsInChildren<RoR2.CharacterModel>(true))
+                foreach (var model in models)
                     foreach (var info in model.baseRendererInfos.Where(info => info.renderer == renderer))
                     {
-                        var row = AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams,
+                        var row = AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams,
                                                     "CharacterModel.defaultMaterial", 0, info.defaultMaterial);
                         row["materialAddress"] =
                             info.defaultMaterialAddress == null ? null : Convert.ToString(info.defaultMaterialAddress.RuntimeKey);
+                        if (!info.defaultMaterial && info.defaultMaterialAddress != null && info.defaultMaterialAddress.RuntimeKeyIsValid())
+                            InspectAddressedSkinMaterial(addressedSkinMaterials, addresses, Mapping, id, category, path, model, info);
                     }
                 var billboard = renderer as BillboardRenderer;
                 if (billboard && billboard.billboard)
-                    AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "billboard.material", 0,
+                    AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "billboard.material", 0,
                                       billboard.billboard.material);
                 if (particle && particle.trailMaterial)
-                    AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "trailMaterial", 0,
+                    AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "trailMaterial", 0,
                                       particle.trailMaterial);
                 if (materials.Length == 0 && !(billboard && billboard.billboard))
-                    AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", -1, null);
+                    AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", -1, null);
             }
         }
+        JObject RequireProjectileGhost(string projectilePath, string expectedGhost)
+        {
+            if (!ghostBindings.TryGetValue(projectilePath, out var binding) || (bool?)binding["ghostControllerPresent"] != true ||
+                Path.GetFileNameWithoutExtension((string)binding["effective"]) != expectedGhost)
+                throw new Exception("Projectile ghost binding missing for " + expectedGhost);
+            return (JObject)binding.DeepClone();
+        }
+
+        var titanGhost = RequireProjectileGhost((string)Location("TitanPreFistProjectile.prefab")["path"], "TitanPreFistGhost");
+        var fireBoltConfig = AssetDatabase.LoadAssetAtPath<RoR2.EntityStateConfiguration>(
+            (string)Location("EntityStates.Mage.Weapon.FireFireBolt.asset")["path"]);
+        if (!fireBoltConfig)
+            throw new Exception("Fire Bolt state configuration missing");
+        // Initialize only an inert state. The owned configuration supplies the projectile PPtr.
+        string before = JsonUtility.ToJson(fireBoltConfig);
+        var fireBolt = new EntityStates.Mage.Weapon.FireFireBolt();
+        fireBoltConfig.BuildInstanceInitializer()(fireBolt);
+        if (!fireBolt.projectilePrefab || fireBolt.projectilePrefab.name != "MageFireboltBasic" ||
+            JsonUtility.ToJson(fireBoltConfig) != before)
+            throw new Exception("Fire Bolt state projectile configuration differs");
+        var fireBoltGhost = RequireProjectileGhost(AssetPath(fireBolt.projectilePrefab), "MageFireboltGhost");
+        fireBoltGhost["configuration"] = AssetPath(fireBoltConfig);
+
+        JObject RequireProjectileDetonation(string projectilePath, string effectFile, bool useExplosionFallback = false)
+        {
+            string effectPath = (string)Location(effectFile)["path"];
+            var binding = impactBindings.OfType<JObject>().SingleOrDefault(row => (string)row["projectile"] == projectilePath);
+            string configuredField = useExplosionFallback ? "explosionEffect" : "impactEffect";
+            if (binding == null || (string)binding[configuredField] != effectPath ||
+                (string)binding["detonationEffect"] != effectPath ||
+                (useExplosionFallback && (string)binding["impactEffect"] != null) ||
+                !rows.Any(row => (string)row["root"] == effectPath))
+                throw new Exception("Projectile detonation material binding missing for " + effectFile);
+            return (JObject)binding.DeepClone();
+        }
+
+        var mortarImpact = RequireProjectileDetonation((string)Location("TreebotMortar2.prefab")["path"],
+                                                       "OmniExplosionVFXTreebotMortar.prefab");
+        var fireBoltImpact = RequireProjectileDetonation(AssetPath(fireBolt.projectilePrefab), "OmniExplosionVFXQuick.prefab");
+        var drifterImpact = RequireProjectileDetonation((string)Location("DrifterJunkCubeProjectile.prefab")["path"],
+                                                        "DrifterBluntForceSlamGroundImpVFX.prefab", useExplosionFallback: true);
+
         var vagrantSkin = AssetDatabase.LoadAssetAtPath<RoR2.SkinDef>((string)Location("skinVagrantBodyDefault.asset")["path"]);
         if (!vagrantSkin)
             throw new Exception("Vagrant default skin missing");
@@ -378,25 +516,118 @@ public static class WholeCatalogHost
         var skinInfo = parameters.rendererInfos.Single(row => row.renderer && row.renderer.name == "VagrantMesh");
         var reference = skinInfo.defaultMaterialAddress;
         var material = reference != null && reference.RuntimeKeyIsValid()
-                           ? addresses.Resolve<Material>(Convert.ToString(reference.RuntimeKey))
+                           ? addresses.Resolve(reference)
                            : skinInfo.defaultMaterial;
         var vagrant = Location("VagrantBody.prefab");
         if (!material || AssetPath(skinInfo.renderer) != (string)vagrant["path"])
             throw new Exception("Vagrant default skin body material binding missing");
-        var skinMaterial = AddCombatMaterial(rows, (int)vagrant["id"], "CharacterBody", (string)vagrant["path"], skinInfo.renderer,
+        var skinMaterial = AddCombatMaterial(rows, Mapping, (int)vagrant["id"], "CharacterBody", (string)vagrant["path"], skinInfo.renderer,
                                              HierarchyPath(skinInfo.renderer.transform), null, new List<ParticleSystemVertexStream>(),
                                              "SkinDefParams.defaultMaterial", 0, material);
         skinMaterial["materialAddress"] = reference == null ? null : Convert.ToString(reference.RuntimeKey);
 
+        string enforcer = (string)Location("Enforcer2Body.prefab")["path"];
+        var enforcerBindings = addressedSkinMaterials.Where(row => (string)row["root"] == enforcer).ToArray();
+        if (enforcerBindings.Length != 5 || enforcerBindings.Any(row => (string)row["shader"] == null ||
+                                                                       (bool?)row["matchesBodyAddress"] != true))
+            errors.Add(enforcer + ": default skin does not supply the five addressed body materials");
+
         var result = new JObject {
             ["scope"] =
-                "Native-provider bodies and projectiles, registered effects and targeted source bindings; Android rendering and reference comparison remain open",
-            ["roots"] = roots, ["slots"] = rows, ["errors"] = errors,
-            ["titanGhostBinding"] = ghostBinding, ["vagrantSkinBinding"] = skinBinding,
+                "Native-provider bodies and projectiles, configured ghosts and ProjectileImpactExplosion effects, registered effects, " +
+                "runtime material overrides and targeted source bindings; Android rendering and reference comparison remain open",
+            ["roots"] = roots, ["slots"] = rows, ["errors"] = errors, ["runtimeMaterialOverrides"] = runtimeOverrides,
+            ["addressedSkinMaterials"] = addressedSkinMaterials,
+            ["projectileGhostBindings"] = new JArray(ghostBindings.Values),
+            ["projectileImpactBindings"] = impactBindings,
+            ["titanGhostBinding"] = titanGhost, ["fireBoltGhostBinding"] = fireBoltGhost, ["vagrantSkinBinding"] = skinBinding,
+            ["mortarImpactBinding"] = mortarImpact, ["fireBoltImpactBinding"] = fireBoltImpact, ["drifterImpactBinding"] = drifterImpact,
             ["surfaceObservationContract"] = VerifySurfaceMaterialObservation()
         };
         File.WriteAllText(outputPath, result.ToString());
-        return new { roots = roots.Count, slots = rows.Count, errors = errors.Count, output = outputPath };
+        return new { roots = roots.Count, slots = rows.Count, runtimeOverrides = runtimeOverrides.Count, errors = errors.Count, output = outputPath };
+    }
+
+    static void InspectAddressedSkinMaterial(JArray rows, CatalogAddresses addresses, Func<Material, JObject> mapping, int id,
+                                             string category, string path, RoR2.CharacterModel model,
+                                             RoR2.CharacterModel.RendererInfo bodyInfo)
+    {
+        var controller = model.GetComponent<RoR2.ModelSkinController>();
+        var skin = controller ? controller.skins?.FirstOrDefault() : null;
+        var parameters = skin ? addresses.Inspect(new SerializedObject(skin), "skinDefParamsAddress", null, skin.skinDefParams, out _) : null;
+        // Record the selected skin's own parameter row, rather than inferring an applied skin from a catalog hit.
+        var skinInfo = parameters ? parameters.rendererInfos.LastOrDefault(info => info.renderer == bodyInfo.renderer) : default;
+        var reference = skinInfo.defaultMaterialAddress;
+        var material = reference != null && reference.RuntimeKeyIsValid() ? addresses.Resolve(reference) : skinInfo.defaultMaterial;
+        var bodyMaterial = addresses.Resolve(bodyInfo.defaultMaterialAddress);
+        var renderer = bodyInfo.renderer;
+        var row = AddCombatMaterial(rows, mapping, id, category, path, renderer, HierarchyPath(renderer.transform), null,
+                                    new List<ParticleSystemVertexStream>(), "SkinDefParams.defaultMaterial", 0, material);
+        row["skin"] = AssetPath(skin);
+        row["parameters"] = AssetPath(parameters);
+        row["directMaterial"] = AssetPath(skinInfo.defaultMaterial);
+        row["materialAddress"] = reference == null ? null : Convert.ToString(reference.RuntimeKey);
+        row["bodyMaterialAddress"] = Convert.ToString(bodyInfo.defaultMaterialAddress.RuntimeKey);
+        row["bodyAddressMaterial"] = AssetPath(bodyMaterial);
+        row["matchesBodyAddress"] = bodyMaterial && bodyMaterial == material;
+    }
+
+    static void InspectCombatMaterialOverrides(GameObject prefab, string path, string category, int id,
+                                               Func<Material, JObject> mapping, JArray rows)
+    {
+        JObject Binding(Component owner, string field, Material material) =>
+            new JObject { ["root"] = path, ["category"] = category, ["location"] = id,
+                          ["owner"] = HierarchyPath(owner.transform), ["kind"] = owner.GetType().Name,
+                          ["component"] = Array.IndexOf(owner.GetComponents(owner.GetType()), owner),
+                          ["binding"] = field, ["material"] = AssetPath(material), ["materialName"] = material.name,
+                          ["shader"] = material.shader ? material.shader.name : null,
+                          ["keywords"] = new JArray(material.shaderKeywords.OrderBy(key => key, StringComparer.Ordinal)),
+                          ["queue"] = material.renderQueue, ["mapping"] = mapping(material) };
+        JToken RendererLink(Renderer renderer)
+        {
+            if (!renderer)
+                return JValue.CreateNull();
+            return new JObject { ["renderer"] = HierarchyPath(renderer.transform),
+                                 ["component"] = Array.IndexOf(renderer.GetComponents<Renderer>(), renderer) };
+        }
+
+        foreach (var effect in prefab.GetComponentsInChildren<RoR2.OmniEffect>(true))
+        {
+            var groups = effect.omniEffectGroups ?? Array.Empty<RoR2.OmniEffect.OmniEffectGroup>();
+            for (int group = 0; group < groups.Length; group++)
+            {
+                var elements = groups[group].omniEffectElements;
+                for (int index = 0; index < elements.Length; index++)
+                {
+                    var element = elements[index];
+                    if (!element.particleSystemOverrideMaterial)
+                        continue;
+                    var row = Binding(effect, "particleSystemOverrideMaterial", element.particleSystemOverrideMaterial);
+                    row["group"] = group;
+                    row["element"] = index;
+                    row["maximumValidRadius"] = element.maximumValidRadius;
+                    var particle = element.particleSystem;
+                    row["particleSystem"] = particle ? HierarchyPath(particle.transform) : null;
+                    row["renderer"] = RendererLink(particle ? particle.GetComponent<ParticleSystemRenderer>() : null);
+                    rows.Add(row);
+                }
+            }
+        }
+        foreach (var indicator in prefab.GetComponentsInChildren<RoR2.TeamAreaIndicator>(true))
+        {
+            var pairs = indicator.teamMaterialPairs ?? Array.Empty<RoR2.TeamAreaIndicator.TeamMaterialPair>();
+            for (int index = 0; index < pairs.Length; index++)
+            {
+                var pair = pairs[index];
+                if (!pair.sharedMaterial)
+                    continue;
+                var row = Binding(indicator, "teamMaterialPairs.sharedMaterial", pair.sharedMaterial);
+                row["pair"] = index;
+                row["teamIndex"] = (int)pair.teamIndex;
+                row["renderers"] = new JArray((indicator.areaIndicatorRenderers ?? Array.Empty<Renderer>()).Select(RendererLink));
+                rows.Add(row);
+            }
+        }
     }
     static JObject VerifySurfaceMaterialObservation()
     {
@@ -404,7 +635,13 @@ public static class WholeCatalogHost
         // No session, catalog, scene or presentation adapter is initialized.
         var type = typeof(PortSession).GetNestedType("TeleporterWorldSession", System.Reflection.BindingFlags.NonPublic);
         var observer = Activator.CreateInstance(type, new object[] { null });
-        var method = type.GetMethod("ObserveSurfaceMaterial");
+        PortSession.SurfaceMaterialObservation Observe(Material source)
+        {
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
+                                                         System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.OptionalParamBinding;
+            return (PortSession.SurfaceMaterialObservation)type.InvokeMember("ObserveSurfaceMaterial", flags, null, observer,
+                                                                            new object[] { source });
+        }
         var material = new Material(Shader.Find("Standard"));
         var texture = new Texture2D(2, 2) { name = "Authored census fixture texture" };
         try
@@ -414,13 +651,13 @@ public static class WholeCatalogHost
             material.SetTexture("_MainTex", texture);
             material.SetTextureScale("_MainTex", new Vector2(2, 3));
             material.EnableKeyword("_EMISSION");
-            var row = (PortSession.SurfaceMaterialObservation)method.Invoke(observer, new object[] { material });
+            var row = Observe(material);
             var main = row.properties.Single(property => property.name == "_MainTex");
             if (row.material != material.name || row.shader != material.shader.name || row.queue != 3123 ||
                 row.supported != material.shader.isSupported || !row.keywords.Contains("_EMISSION") ||
                 main.textureId != texture.GetInstanceID() || main.width != 2 || main.height != 2 ||
                 main.scale != new Vector2(2, 3) || material.GetTexture("_MainTex") != texture || material.renderQueue != 3123 ||
-                method.Invoke(observer, new object[] { null }) != null)
+                Observe(null) != null)
                 throw new Exception("Live surface material observation contract failed");
             VerifyEffectiveSurfaceProperties(type, material);
             return new JObject { ["liveMaterialState"] = true, ["nullSlot"] = true, ["sourceUnchanged"] = true,
@@ -483,9 +720,9 @@ public static class WholeCatalogHost
             UnityEngine.Object.DestroyImmediate(root);
         }
     }
-    static JObject AddCombatMaterial(JArray rows, int id, string category, string root, Renderer renderer, string hierarchy,
-                                     ParticleSystemRenderer particle, List<ParticleSystemVertexStream> streams, string binding, int slot,
-                                     Material material)
+    static JObject AddCombatMaterial(JArray rows, Func<Material, JObject> mapping, int id, string category, string root,
+                                     Renderer renderer, string hierarchy, ParticleSystemRenderer particle,
+                                     List<ParticleSystemVertexStream> streams, string binding, int slot, Material material)
     {
         var textures = new JArray();
         var meshes = particle ? new Mesh[particle.meshCount] : new Mesh[0];
@@ -514,28 +751,23 @@ public static class WholeCatalogHost
                           ["keywords"] = new JArray(material ? material.shaderKeywords.OrderBy(key => key, StringComparer.Ordinal).ToArray()
                                                              : new string[0]),
                           ["queue"] = material ? material.renderQueue : -1,
+                          ["srcBlend"] = material && material.HasProperty("_SrcBlend") ? (float?)material.GetFloat("_SrcBlend") : null,
+                          ["dstBlend"] = material && material.HasProperty("_DstBlend") ? (float?)material.GetFloat("_DstBlend") : null,
                           ["textures"] = textures,
                           ["particleMode"] = particle ? particle.renderMode.ToString() : null,
                           ["particleMesh"] = particle && particle.mesh ? AssetDatabase.GetAssetPath(particle.mesh) : null,
                           ["particleMeshes"] = new JArray(meshes.Select(mesh => mesh ? AssetDatabase.GetAssetPath(mesh) : null)),
                           ["vertexStreams"] = new JArray(streams.Select(stream => stream.ToString())),
-                          ["mapping"] = CombatMaterialMapping(material) };
+                          ["mapping"] = mapping(material) };
         rows.Add(row);
         return row;
     }
-    static JObject CombatMaterialMapping(Material material)
+    static JObject CombatMaterialMapping(Material material, Dictionary<string, JObject> families)
     {
         if (!material || !material.shader)
             return new JObject { ["outcome"] = "missing-material-or-shader" };
         string shader = material.shader.name;
-        var standard = Resources.Load<TextAsset>("AndroidNativeStandardVariants");
-        var families = Resources.Load<TextAsset>("AndroidNativeMaterialFamilies");
-        JObject family = null;
-        if (shader == "Hopoo Games/Deferred/Standard" && standard)
-            family = JObject.Parse(standard.text);
-        else if (families)
-            family = JObject.Parse(families.text)["families"].OfType<JObject>().SingleOrDefault(row => (string)row["shader"] == shader);
-        if (family != null)
+        if (families.TryGetValue(shader, out var family))
         {
             // The imported stub may omit declarations for saved source keywords.
             var savedKeywords = material.shaderKeywords;

@@ -23,6 +23,8 @@ from phone_content import (
     validate_oracle,
 )
 
+from phone_texture_readback import readback_request, validate_texture_mip
+
 
 class PhoneContentTests(unittest.TestCase):
     def test_content_builder_compiles_against_exact_editor_api(self):
@@ -37,7 +39,17 @@ class PhoneContentTests(unittest.TestCase):
             args += ["/r:" + str(path) for path in sorted((sdk / "Managed/UnityEngine").glob("UnityEngine*.dll"))]
             args += ["/r:" + str(sdk / "Managed/UnityEditor.dll")]
             args += [
-                str(source / name) for name in ("ContentFixtureBuilder.cs", "ContentFixtureSceneCheck.cs", "ContentFixture.cs", "NativeScriptSchemaFixture.cs")
+                str(source / name)
+                for name in (
+                    "ContentFixtureBuilder.cs",
+                    "ContentFixtureSceneCheck.cs",
+                    "ContentFixtureTextureMip.cs",
+                    "ContentFixtureTexturePlayer.cs",
+                    "TextureMipPlayer.cs",
+                    "TextureMipSampling.cs",
+                    "ContentFixture.cs",
+                    "NativeScriptSchemaFixture.cs",
+                )
             ]
             result = subprocess.run(args, capture_output=True, text=True, timeout=45)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -89,6 +101,36 @@ class PhoneContentTests(unittest.TestCase):
             request_path.write_text(json.dumps(request | {"assets": []}))
             with self.assertRaisesRegex(RuntimeError, "Native scene"):
                 native_content_request(request_path)
+
+    def test_texture_mip_requires_valid_face_and_matching_readback(self):
+        with tempfile.TemporaryDirectory() as root:
+            attempt = Path(root).resolve()
+            bundle = attempt / "authored.bundle"
+            bundle.write_bytes(b"authored texture request control")
+            selection = {"mip": 1, "face": 2}
+            asset = {"name": "cube", "type": "Cubemap", "texture_mip": selection}
+            request = {"path": str(bundle), "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(), "assets": [asset]}
+            request_path = attempt / "request.json"
+            request_path.write_text(json.dumps(request))
+            self.assertEqual(readback_request(request_path), request)
+            for invalid in (asset | {"type": "Texture2D"}, asset | {"texture_mip": {"mip": -1, "face": 2}}):
+                request_path.write_text(json.dumps(request | {"assets": [invalid]}))
+                with self.assertRaisesRegex(RuntimeError, "valid face"):
+                    readback_request(request_path)
+            pixels = attempt / "texture-0.rgba"
+            pixels.write_bytes(b"\x10\x20\x30\xff" * 4)
+            report = selection | {
+                "width": 2,
+                "height": 2,
+                "graphics": "Metal",
+                "color_space": "Gamma",
+                "format": "ETC_RGB4",
+                "sha256": hashlib.sha256(pixels.read_bytes()).hexdigest(),
+            }
+            validate_texture_mip(pixels, selection, report)
+            for change in ({"face": 1}, {"width": 1}, {"graphics": "Null"}, {"sha256": "0" * 64}):
+                with self.assertRaisesRegex(RuntimeError, "texture mip readback"):
+                    validate_texture_mip(pixels, selection, report | change)
 
     def test_native_content_requires_each_typed_load_and_bound_bundle_destruction(self):
         with tempfile.TemporaryDirectory() as root:
@@ -181,7 +223,10 @@ class PhoneContentTests(unittest.TestCase):
                 pins.append({"path": str(bundle), "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest()})
             material = {
                 "shader": "Authored/Control",
-                "textures": [{"property": "_Base", "texture": "base"}, {"property": "_Normal", "texture": "normal"}],
+                "textures": [
+                    {"property": "_Base", "texture": "base", "type": "CustomRenderTexture"},
+                    {"property": "_Normal", "texture": "normal"},
+                ],
             }
             asset = {"name": "assets/fixture/control.mat", "type": "Material", "material": material}
             request = pins[0] | {"dependencies": [pins[1]], "assets": [asset]}
@@ -196,6 +241,8 @@ class PhoneContentTests(unittest.TestCase):
                 "unloaded": True,
                 "assets": [asset | {"loaded_name": "control", "loaded_type": "UnityEngine.Material"}],
             }
+            report = copy.deepcopy(report)
+            report["assets"][0]["material"]["textures"][1]["type"] = "Texture2D"
             output = attempt / "native-content-check.json"
             output.write_text(json.dumps(report))
             self.assertEqual(validate_native_content(attempt, "c" * 40)["count"], 1)
@@ -203,6 +250,7 @@ class PhoneContentTests(unittest.TestCase):
                 lambda r: r["dependencies"].clear(),
                 lambda r: r["assets"][0]["material"].update(shader="Hidden/InternalErrorShader"),
                 lambda r: r["assets"][0]["material"]["textures"].pop(),
+                lambda r: r["assets"][0]["material"]["textures"][0].update(type="Texture2D"),
             ):
                 changed = copy.deepcopy(report)
                 mutate(changed)

@@ -3,7 +3,8 @@ package dev.ror2lab.phonebuildhostfixture;
 /** Android-free presentation policy; persisted worker/install facts are authoritative. */
 public final class OwnerUpdateState {
     public enum Phase { IDLE, CHECKING, UP_TO_DATE, UPDATE_AVAILABLE, DOWNLOADING, VERIFYING,
-        BUILDING, SIGNING, READY, INSTALLING, AWAITING_CONFIRMATION, INSTALLED, INPUT_REQUIRED, VALIDATING, IMPORTING, IMPORTED, PAUSED, CANCELLED, INTERRUPTED, VERIFYING_PROFILE, RECOVERING_PROFILE, RECOVERY_REQUIRED, ERROR }
+        BUILDING, SIGNING, READY, INSTALLING, AWAITING_CONFIRMATION, INSTALLED, INPUT_REQUIRED, VALIDATING, IMPORTING, IMPORTED,
+        ACQUIRING_TOOLS, TOOLS_READY, TOOLS_UNAVAILABLE, PAUSED, CANCELLED, INTERRUPTED, VERIFYING_PROFILE, RECOVERING_PROFILE, RECOVERY_REQUIRED, ERROR }
     private Phase phase = Phase.IDLE;
     private String message = "Check for a signed public release.";
     /** Presentation only: preserve accessibility quiet time between live-detail updates. */
@@ -60,7 +61,7 @@ public final class OwnerUpdateState {
             cancel = pause;
             resume = !installing && !pendingRecovery && (running ? liveControls : (resumable &&
                 (model.phase == Phase.PAUSED || model.phase == Phase.INTERRUPTED || model.phase == Phase.CANCELLED)));
-            retry = idle && model.phase == Phase.ERROR && resumable;
+            retry = idle && (model.phase == Phase.ERROR || model.phase == Phase.TOOLS_UNAVAILABLE) && resumable;
             recover = !running && !installing && pendingRecovery;
             rollback = idle && rollbackAvailable;
             String next = recover ? "Recover and verify retained profile/settings before another operation."
@@ -81,7 +82,7 @@ public final class OwnerUpdateState {
     }
 
     public static boolean resumableAction(String action) {
-        return "import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)
+        return "import".equals(action) || "tool-acquire".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)
             || "install-prepare".equals(action) || "release-check".equals(action);
     }
     /** Shared Activity/notification explanation, never a thermal control policy. */
@@ -102,7 +103,7 @@ public final class OwnerUpdateState {
     public String message() { return message; }
     public boolean busy() {
         switch (phase) {
-            case CHECKING: case VALIDATING: case DOWNLOADING: case VERIFYING: case BUILDING: case SIGNING:
+            case CHECKING: case VALIDATING: case ACQUIRING_TOOLS: case DOWNLOADING: case VERIFYING: case BUILDING: case SIGNING:
             case INSTALLING: case AWAITING_CONFIRMATION: case VERIFYING_PROFILE: case RECOVERING_PROFILE: return true;
             default: return false;
         }

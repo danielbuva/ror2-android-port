@@ -33,7 +33,10 @@ public final class ToolHostActivity extends Activity {
     private Button permissionButton, confirmationButton;
     private static ToolHostActivity resumedActivity;
     private Button checkButton, rollbackButton, recoveryButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
-    private static final int PICK_TREE = 120, PICK_ZIP = 121;
+    private Button toolFolderButton, acquireToolsButton;
+    private static final int PICK_TREE = 120, PICK_ZIP = 121, PICK_TOOLS = 123;
+    private long planModified = -1;
+    private JSONObject inputPlan;
     private String flowDetail = "";
     private final Runnable refresh = new Runnable() { public void run() {
         refreshStatus();
@@ -62,9 +65,11 @@ public final class ToolHostActivity extends Activity {
         rollbackButton = button(layout, "Rebuild and install previous release (same key)", new Runnable() { public void run() { startUpdate("release-rollback"); } });
         recoveryButton = button(layout, "Recover and verify retained profile/settings", new Runnable() { public void run() { OwnerBuildService.launch(ToolHostActivity.this, "profile-recover"); } });
         prepareButton = button(layout, "Prepare signed installation plan", new Runnable() { public void run() { startUpdate("install-prepare"); } });
-        treeButton = button(layout, "Choose game folder", new Runnable() { public void run() { pickSource(true); } });
-        zipButton = button(layout, "Choose game ZIP", new Runnable() { public void run() { pickSource(false); } });
+        treeButton = button(layout, "Choose game folder", new Runnable() { public void run() { pickSource(PICK_TREE); } });
+        zipButton = button(layout, "Choose game ZIP", new Runnable() { public void run() { pickSource(PICK_ZIP); } });
         importButton = button(layout, "Import / resume game files", new Runnable() { public void run() { startImport(); } });
+        toolFolderButton = button(layout, "Choose SDK / tool folder", new Runnable() { public void run() { pickSource(PICK_TOOLS); } });
+        acquireToolsButton = button(layout, "Acquire / resume required tools", new Runnable() { public void run() { startToolAcquisition(); } });
         buildButton = button(layout, "Reconstruct and install verified game", new Runnable() { public void run() { startUpdate("release-build"); } });
         pauseButton = button(layout, "Pause", new Runnable() { public void run() { control("pause"); } });
         resumeButton = button(layout, "Resume", new Runnable() { public void run() { resume(false); } });
@@ -97,33 +102,38 @@ public final class ToolHostActivity extends Activity {
         if (graphicsPicker != null) graphicsPicker.close();
         super.onDestroy();
     }
-    private void pickSource(boolean tree) {
+    private void pickSource(int request) {
         if (OwnerBuildService.isRunning() || OwnerInstaller.busy(this)) return;
+        boolean tree = request != PICK_ZIP;
         Intent pick = new Intent(tree ? Intent.ACTION_OPEN_DOCUMENT_TREE : Intent.ACTION_OPEN_DOCUMENT);
         pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         if (!tree) { pick.setType("application/zip"); pick.addCategory(Intent.CATEGORY_OPENABLE); pick.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip", "application/x-zip-compressed", "application/octet-stream"}); }
         try {
-            Intent fixture = AcquisitionFixture.selection(this);
-            startActivityForResult(fixture == null ? pick : fixture, tree ? PICK_TREE : PICK_ZIP);
+            Intent fixture = request == PICK_TOOLS ? null : AcquisitionFixture.selection(this);
+            startActivityForResult(fixture == null ? pick : fixture, request);
         }
         catch (Exception error) { updateStatus(this, "ERROR", "File picker unavailable: " + error.getMessage()); }
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
-        if ((request != PICK_TREE && request != PICK_ZIP) || result != RESULT_OK || data == null || data.getData() == null) return;
+        if ((request != PICK_TREE && request != PICK_ZIP && request != PICK_TOOLS) || result != RESULT_OK || data == null || data.getData() == null) return;
         if (OwnerBuildService.isRunning() || OwnerInstaller.busy(this)) return;
         try {
             Uri uri = data.getData();
             if (!"content".equals(uri.getScheme())) throw new IOException("Storage Access Framework content required");
             getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             android.content.SharedPreferences preferences = getSharedPreferences(OwnerBuildService.PREFERENCES, 0);
-            String previous = preferences.getString("source_uri", "");
-            if (!preferences.edit().putString("source_uri", uri.toString()).putString("source_kind", request == PICK_TREE ? "tree" : "zip").commit())
-                throw new IOException("Could not retain selected source");
-            if (!previous.isEmpty() && !previous.equals(uri.toString())) {
+            boolean tools = request == PICK_TOOLS;
+            String key = tools ? "tool_source_uri" : "source_uri";
+            String previous = preferences.getString(key, "");
+            android.content.SharedPreferences.Editor edit = preferences.edit().putString(key, uri.toString());
+            if (!tools) edit.putString("source_kind", request == PICK_TREE ? "tree" : "zip");
+            if (!edit.commit()) throw new IOException("Could not retain selected source");
+            String other = preferences.getString(tools ? "source_uri" : "tool_source_uri", "");
+            if (!previous.isEmpty() && !previous.equals(uri.toString()) && !previous.equals(other)) {
                 try { getContentResolver().releasePersistableUriPermission(Uri.parse(previous), Intent.FLAG_GRANT_READ_URI_PERMISSION); } catch (SecurityException ignored) { }
             }
-            updateStatus(this, "INPUT_REQUIRED", "Source selected. Import verifies paths, sizes and hashes; originals stay untouched.");
+            if (!tools) updateStatus(this, "INPUT_REQUIRED", "Source selected. Import verifies paths, sizes and hashes; originals stay untouched.");
         } catch (Exception error) { updateStatus(this, "ERROR", "Could not retain source access: " + error.getMessage()); }
         refreshStatus();
     }
@@ -135,6 +145,30 @@ public final class ToolHostActivity extends Activity {
             OwnerBuildService.launch(this, "import");
         } catch (Exception error) { updateStatus(this, "ERROR", error.getMessage()); }
         refreshStatus();
+    }
+    private void startToolAcquisition() {
+        if (OwnerBuildService.isRunning() || OwnerInstaller.busy(this)) return;
+        try {
+            JSONObject plan = toolPlan();
+            if (plan == null) throw new IOException("Prepare the signed plan for this release first");
+            writeJson(this, new File(getFilesDir(), "owner-input/tools-state.json"),
+                new JSONObject().put("state", "ACQUIRING_TOOLS").put("message", "Checking signed tool pins and private free space…"));
+            OwnerBuildService.launch(this, "tool-acquire");
+        } catch (Exception error) { updateStatus(this, "ERROR", error.getMessage()); }
+        refreshStatus();
+    }
+    private JSONObject toolPlan() throws Exception {
+        JSONObject plan = currentInstallPlan();
+        return plan != null && plan.has("acquired_inputs") ? plan : null;
+    }
+    private JSONObject currentInstallPlan() throws Exception {
+        File plan = new File(getFilesDir(), "owner-input/install-inputs.json");
+        long modified = plan.lastModified();
+        if (modified != planModified) {
+            inputPlan = modified == 0 ? null : readInstallInputs(plan);
+            planModified = modified;
+        }
+        return inputPlan;
     }
     private void control(String action) {
         try { if (OwnerBuildService.hasLiveControls()) OwnerBuildService.control(this, action); }
@@ -149,6 +183,7 @@ public final class ToolHostActivity extends Activity {
         }
         String previous = OwnerBuildService.action(this);
         if ("import".equals(previous)) startImport();
+        else if ("tool-acquire".equals(previous)) startToolAcquisition();
         else if ("release-build".equals(previous) || "release-rollback".equals(previous)) startUpdate(previous);
         else if ("install-prepare".equals(previous) || "release-check".equals(previous)) startUpdate(previous);
         // This does not restart an install-only action; resumed builds retain the service's normal Android installation handoff.
@@ -183,14 +218,27 @@ public final class ToolHostActivity extends Activity {
         // The OS owns the grant. Returning from Settings never starts conversion.
         return false;
     }
+    private static final int MAX_PRIVATE_JSON_BYTES = 4 * 1024 * 1024;
+    // Keep the install plan limit in sync with owner-apk/install_inputs.py.
+    private static final int MAX_INSTALL_INPUTS_BYTES = 8 * 1024 * 1024;
+
+    static JSONObject readInstallInputs(File file) throws Exception {
+        return readJson(file, MAX_INSTALL_INPUTS_BYTES);
+    }
     static JSONObject readJson(File file) throws Exception {
-        if (file.length() > 4 * 1024 * 1024) throw new IOException("Private status is too large");
-        try (InputStream input = new FileInputStream(file)) { return readJson(input); }
+        return readJson(file, MAX_PRIVATE_JSON_BYTES);
+    }
+    private static JSONObject readJson(File file, int maxBytes) throws Exception {
+        if (file.length() > maxBytes) throw new IOException("Private metadata is too large");
+        try (InputStream input = new FileInputStream(file)) { return readJson(input, maxBytes); }
     }
     static JSONObject readJson(InputStream input) throws Exception {
+        return readJson(input, MAX_PRIVATE_JSON_BYTES);
+    }
+    private static JSONObject readJson(InputStream input, int maxBytes) throws Exception {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream(); byte[] buffer = new byte[8192]; int count;
         while ((count = input.read(buffer)) != -1) {
-            if (bytes.size() + count > 4 * 1024 * 1024) throw new IOException("Private metadata is too large");
+            if (bytes.size() + count > maxBytes) throw new IOException("Private metadata is too large");
             bytes.write(buffer, 0, count);
         }
         return new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
@@ -378,8 +426,9 @@ public final class ToolHostActivity extends Activity {
                     removed == null ? -1 : removed.length());
                 if (value.has("rebuilt")) detail += "\nRebuilt: " + value.getJSONArray("rebuilt").length() + "; reused: " + value.getJSONArray("reused").length();
                 model.observe(value.getString("state"), detail);
-                if ("import".equals(OwnerBuildService.action(this))) {
-                    File imported = new File(getFilesDir(), "owner-input/import-state.json");
+                String transfer = OwnerBuildService.transferState(OwnerBuildService.action(this));
+                if (transfer != null) {
+                    File imported = new File(getFilesDir(), "owner-input/" + transfer);
                     if (imported.isFile()) { JSONObject inputState = readJson(imported); model.observe(inputState.optString("state", "INPUT_REQUIRED"), inputState.optString("message")); }
                 }
             }
@@ -433,15 +482,23 @@ public final class ToolHostActivity extends Activity {
             if (state.optLong("total", 0) > 0) detail.append("\n").append(state.optLong("completed")).append(" / ").append(state.optLong("total")).append(" bytes");
             if (state.has("elapsed_seconds")) detail.append(" · ").append(state.optLong("elapsed_seconds")).append(" s");
         }
+        JSONObject tools = toolPlan();
+        if (tools != null) {
+            File receipt = new File(getFilesDir(), "owner-input/tools-state.json");
+            JSONObject progress = receipt.isFile() ? readJson(receipt) : new JSONObject();
+            String phase = progress.optString("state");
+            if ("TOOLS_READY".equals(phase) && !tools.getString("acquired_inputs_sha256").equals(progress.optString("inventory_sha256"))) progress = new JSONObject();
+            detail.append("\n\nRequired tools: ").append(progress.optString("message",
+                "Acquire the pinned tools for this release. For owner-supplied files, choose the folder whose contents match the paths shown after acquired/."));
+            if (progress.optLong("total", 0) > 0)
+                detail.append("\n").append(progress.optLong("completed")).append(" / ").append(progress.optLong("total")).append(" bytes");
+        }
         File update = new File(getFilesDir(), "owner-input/update-state.json");
         JSONObject state = update.isFile() ? readJson(update) : new JSONObject();
         JSONObject pipeline = state.optJSONObject("pipeline");
         File durable = new File(getFilesDir(), "owner-input/install-checkpoint.json");
         if (durable.isFile()) pipeline = readJson(durable);
-        if (pipeline == null) {
-            File plan = new File(getFilesDir(), "owner-input/install-inputs.json");
-            if (plan.isFile()) pipeline = readJson(plan);
-        }
+        if (pipeline == null) pipeline = currentInstallPlan();
         if (pipeline != null) {
             detail.append("\n\nReconstruction stages");
             if (pipeline.has("repair_notice")) detail.append("\n").append(pipeline.optString("repair_notice"));
@@ -503,6 +560,11 @@ public final class ToolHostActivity extends Activity {
         if (statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())) statusView.setText(statusText);
         rollbackButton.setEnabled(screen.rollback); recoveryButton.setEnabled(screen.recover);
         prepareButton.setEnabled(screen.prepare); treeButton.setEnabled(screen.selectInputs); zipButton.setEnabled(screen.selectInputs);
+        boolean showTools = false;
+        try { showTools = toolPlan() != null; } catch (Exception ignored) { /* Invalid plan cannot supply pins. */ }
+        toolFolderButton.setVisibility(showTools ? android.view.View.VISIBLE : android.view.View.GONE);
+        acquireToolsButton.setVisibility(showTools ? android.view.View.VISIBLE : android.view.View.GONE);
+        toolFolderButton.setEnabled(screen.selectInputs); acquireToolsButton.setEnabled(screen.selectInputs);
         importButton.setEnabled(screen.importInputs); pauseButton.setEnabled(screen.pause); cancelButton.setEnabled(screen.cancel);
         resumeButton.setEnabled(screen.resume); retryButton.setEnabled(screen.retry);
         checkButton.setEnabled(screen.check); buildButton.setEnabled(screen.build); installButton.setEnabled(screen.install);
@@ -637,6 +699,7 @@ public final class ToolHostActivity extends Activity {
         }
         for(String key:new ArrayList<>(env.keySet())) if(key.startsWith("DOTNET_") || key.startsWith("MONO_") || key.startsWith("CORECLR_") || key.startsWith("COMPlus_")) env.remove(key);
         env.put("LD_LIBRARY_PATH",nativeDir.getCanonicalPath()+":"+links.getCanonicalPath());
+        env.put("ROR2LAB_NATIVE_CACHE_DIR", new File(getFilesDir(), "native-ccache").getCanonicalPath());
         env.put("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT","1"); env.put("DOTNET_MULTILEVEL_LOOKUP","0");
         env.put("DOTNET_CLI_TELEMETRY_OPTOUT","1"); env.put("DOTNET_CLI_HOME",new File(directory,"home").getPath());
         env.put("TMPDIR",getCacheDir().getPath());

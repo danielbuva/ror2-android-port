@@ -7,7 +7,7 @@ from itertools import combinations
 from pathlib import Path
 import sys
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 SPEC = importlib.util.spec_from_file_location("shader_produce", Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output/shader_produce.py")
 N = importlib.util.module_from_spec(SPEC)
@@ -55,6 +55,121 @@ class CompilerHosting(unittest.TestCase):
 
 
 class TranslatedShaderPack(unittest.TestCase):
+    def test_vertex_light_variants_share_the_original_fragment(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_segments
+            import shader_translate as translator
+
+        def stage(*indices):
+            entries = [{"m_BlobIndex": index, "m_ShaderRequirements": 1 << index} for index in indices]
+            return {"m_PlayerSubPrograms": [[], [], [], entries]}
+
+        shader_pass = {"m_ProgramMask": 6, "progVertex": stage(0, 1), "progFragment": stage(2)}
+        records = [{"keywords": keys} for keys in [("FOG_LINEAR",), ("FOG_LINEAR", "VERTEXLIGHT_ON"), ("FOG_LINEAR",), ("UNKNOWN",)]]
+        programs = [b"vertex", b"vertex_lit", b"fragment", b"unknown"]
+        layout = {"buffers": [], "textures": []}
+        tools = {"smolv": "fixture-encoder"}
+        with (
+            patch.object(shader_segments, "selected_layout", return_value=layout),
+            patch.object(translator, "vertex_channels", return_value=[]),
+            patch.object(translator, "compile_spirv", side_effect=lambda _tools, _directory, _index, program, *_args, **_kwargs: program) as compile_spirv,
+            patch.object(translator.subprocess, "run", side_effect=lambda _args, *, input, **_kwargs: SimpleNamespace(stdout=input)),
+            patch.object(translator.shader, "linked_vulkan_program", side_effect=lambda vertex, fragment, **_kwargs: vertex + fragment),
+        ):
+            variants = translator.translate_pass({}, shader_pass, b"", records, programs, Path("fixture"), tools)
+            for indices, error in [((3,), "requires paired"), ((2, 3), "requires paired"), ((2, 2), "duplicate progFragment")]:
+                with self.subTest(indices=indices), self.assertRaisesRegex(ValueError, error):
+                    translator.translate_pass({}, dict(shader_pass, progFragment=stage(*indices)), b"", records, programs, Path("fixture"), tools)
+        self.assertEqual([call.args[2] for call in compile_spirv.call_args_list], [0, 2, 1, 2])
+        self.assertEqual([variant["keywords"] for variant in variants], [("FOG_LINEAR",), ("FOG_LINEAR", "VERTEXLIGHT_ON")])
+        self.assertEqual([variant["requirements"] for variant in variants], [5, 6])
+        self.assertEqual([variant["compilation"]["data"] for variant in variants], [b"vertexfragment", b"vertex_litfragment"])
+
+    def test_multipass_translation_preserves_pass_state_and_relocates_both_indices(self):
+        from copy import deepcopy
+        import tempfile
+
+        import lz4.block
+
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_segments
+            import shader_translate as translator
+
+        def source_pass(name):
+            return {
+                "m_Type": 0,
+                "m_ProgramMask": 6,
+                "m_State": {"m_Name": name, "zWrite": name == "first"},
+                "m_SerializedKeywordStateMask": [0],
+                "progVertex": {},
+                "progFragment": {"m_CommonParameters": {"m_TextureParams": [1]}},
+            }
+
+        def variant(value, keyword):
+            return {
+                "keywords": keyword,
+                "requirements": 33,
+                "compilation": {
+                    "data": value.encode(),
+                    "gpu_program_type": 25,
+                    "reflection": ["cb: Draw 16 1", f"const: {value} 0 0 0 1 4 0", "cbbind: Draw 5"],
+                },
+            }
+
+        source_passes = [
+            source_pass("first"),
+            dict(source_pass("second"), m_ProgramMask=14, progGeometry={"m_CommonParameters": {"m_TextureParams": []}, "m_PlayerSubPrograms": [[1]]}),
+        ]
+        keywords = ["ALT"]
+        source = {
+            "m_ParsedForm": {
+                "m_SubShaders": [{"m_Passes": source_passes}],
+                "m_KeywordNames": keywords,
+                "m_FallbackName": "Witness/Fallback",
+            },
+            "m_Dependencies": [{"m_FileID": 1, "m_PathID": -42}],
+            "compressedBlob": [],
+        }
+        original = deepcopy(source)
+        variants_by_pass = [[variant("red", []), variant("green", keywords)], [variant("red", []), variant("blue", keywords)]]
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(shader_segments, "read_segments", return_value=(b"", [], {})) as read,
+            patch.object(translator, "translate_pass", side_effect=variants_by_pass) as translate,
+        ):
+            result = translator.translate_tree(source, Path(directory), {})
+        read.assert_called_once_with(source, b"")
+        self.assertEqual([call.args[1] for call in translate.call_args_list], source_passes)
+        self.assertEqual(source, original)
+
+        def record(raw, index):
+            start, size, _ = struct.unpack_from("<3I", raw, 4 + index * 12)
+            return raw[start : start + size]
+
+        raw = lz4.block.decompress(bytes(result["compressedBlob"]), uncompressed_size=result["decompressedLengths"][0][0])
+        result_passes = result["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]
+        self.assertEqual(result["platforms"], [18])
+        self.assertEqual(result["m_Dependencies"], original["m_Dependencies"])
+        self.assertEqual(result["m_ParsedForm"]["m_FallbackName"], original["m_ParsedForm"]["m_FallbackName"])
+        self.assertEqual(struct.unpack_from("<I", raw)[0], 6)
+        for target, original_pass, variants in zip(result_passes, source_passes, variants_by_pass):
+            local, _, programs, parameters = N.variant_records(variants, keywords)
+            self.assertEqual(target["m_State"], original_pass["m_State"])
+            self.assertEqual(target["m_ProgramMask"], original_pass["m_ProgramMask"])
+            self.assertEqual(target["m_SerializedKeywordStateMask"], [0])
+            self.assertEqual(target["m_Platforms"], [18])
+            self.assertEqual(target["m_EditorDataHash"], [{f"bytes[{index}]": byte for index, byte in enumerate(N.spooky(local))}])
+            self.assertEqual(target["progFragment"]["m_PlayerSubPrograms"], [])
+            vertex = target["progVertex"]
+            for tier in range(3):
+                self.assertEqual(
+                    [record(raw, p["m_BlobIndex"]) for p in vertex["m_PlayerSubPrograms"][tier]], [record(local, p["m_BlobIndex"]) for p in programs]
+                )
+                self.assertEqual([record(raw, i) for i in vertex["m_ParameterBlobIndices"][tier]], [record(local, i) for i in parameters])
+        self.assertEqual(
+            result_passes[1]["progGeometry"], {"m_CommonParameters": {"m_TextureParams": []}, "m_PlayerSubPrograms": [], "m_ParameterBlobIndices": []}
+        )
+
     def test_vertex_preserves_native_structure_array_and_member_offsets(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
             import shader_translate as translator
@@ -73,11 +188,37 @@ class TranslatedShaderPack(unittest.TestCase):
         native = parameter_layout(source, structured=True)["buffers"][1]
         rows, descriptors = translator.stage_parameters({"buffers": [dict(native, slot=4)], "textures": []}, vertex=True)
         self.assertEqual(descriptors, ["cbv", "4", "1", "6"])
+        rows, descriptors = translator.stage_parameters({"buffers": [dict(native, slot=0)], "textures": []}, vertex=True, vertex_binding_base=3)
+        self.assertEqual(descriptors, ["cbv", "0", "1", "3"])
+        self.assertEqual(N.reflection(rows)["bindings"], [{"name": "vs_Draw", "index": 0x04010003}])
         expected = dict(record["buffers"][0], name="vs_Draw")
         self.assertEqual(N.reflection(rows)["buffers"], [expected])
         invalid = source.replace(N.words(0, 2, 128, 2), N.words(32, 2, 128, 2))
         with self.assertRaisesRegex(RuntimeError, "exceeds native buffer"):
             parameter_layout(invalid, structured=True)
+
+    def test_instancing_preserves_native_names_and_links_draw_call_binding(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+
+        buffers = [
+            dict(name="UnityDrawCallInfo", slot=1, size=16, variables=[]),
+            dict(name="UnityInstancing_PerDraw0", slot=2, size=256, variables=[]),
+        ]
+        layout = {"buffers": buffers, "textures": []}
+        vertex, vertex_descriptors = translator.stage_parameters(layout, True, vertex_binding_base=3, shared_draw_call=1)
+        fragment, fragment_descriptors = translator.stage_parameters({**layout, "buffers": buffers[:1]}, False, shared_draw_call=1)
+        self.assertEqual(vertex_descriptors, ["cbv", "1", "1", "1", "cbv", "2", "1", "5"])
+        self.assertEqual(fragment_descriptors, ["cbv", "1", "1", "1"])
+        self.assertEqual(
+            vertex + fragment,
+            [
+                "cb: UnityInstancing_PerDraw0 256 0",
+                "cbbind: UnityInstancing_PerDraw0 67174405",
+                "cb: UnityDrawCallInfo 8 0",
+                "cbbind: UnityDrawCallInfo 201392129",
+            ],
+        )
 
     def test_fragment_uses_independent_sampler_registers_and_native_variant_shape(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
@@ -190,12 +331,12 @@ class NativeUI(unittest.TestCase):
 
 
 class ComputeRecords(unittest.TestCase):
-    def test_dxbc_compute_metadata_matches_storage_descriptor_bindings(self):
+    def test_dxbc_compute_metadata_matches_descriptor_bindings(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
             import shader_translate as translator
 
-        def resource(name, dimension):
-            return dict(name=name, generatedName="", bindPoint=0, samplerBindPoint=-1, texDimension=dimension)
+        def resource(name, dimension, register=0):
+            return dict(name=name, generatedName="", bindPoint=register, samplerBindPoint=-1, texDimension=dimension)
 
         original = {
             "m_Name": "Fixture",
@@ -228,15 +369,88 @@ class ComputeRecords(unittest.TestCase):
                 )
             ],
         }
+        declarations = original["variants"][0]["kernels"]
+        buffers = declarations[0]["variantMap"][0][1]
+        images = dict(
+            buffers,
+            cbs=[resource("Params", -1)],
+            textures=[resource("From", 3), resource("To", 3, 1)],
+            outBuffers=[resource("Array", 5, 1), resource("Volume", 3)],
+            threadGroupSize=[4, 4, 4],
+        )
+        declarations.append(dict(declarations[0], name="WriteImages", variantMap=[("", images)]))
+        sampled = dict(
+            buffers,
+            cbs=[resource("Params", -1)],
+            textures=[
+                dict(resource("Array", 5, 2), samplerBindPoint=7),
+                dict(resource("Image", 2, 0), samplerBindPoint=7),
+                resource("LoadOnly", 2, 4),
+            ],
+            builtinSamplers=[dict(sampler=85, bindPoint=3)],
+            outBuffers=[resource("Destination", 2, 4)],
+        )
+        declarations.append(dict(declarations[0], name="SampleAndWrite", variantMap=[("", sampled)]))
+        mixed_inputs = dict(
+            buffers,
+            cbs=[resource("Params", -1)],
+            inBuffers=[resource("Histogram", -1)],
+            textures=[resource("Previous", 2, 1)],
+            outBuffers=[resource("Exposure", 2)],
+        )
+        declarations.append(dict(declarations[0], name="ReadAndWrite", variantMap=[("", mixed_inputs)]))
         with patch.object(translator, "compile_spirv", return_value=b"SPIR-V") as compile_spirv:
             tree = translator.translate_compute(original, Path("fixture"), {})
-        compile_spirv.assert_called_once_with({}, Path("fixture"), 0, b"DXBC", ["texture", "0", "0", "0", "storage", "0", "0", "1", "cbv", "0", "1", "0"])
+        self.assertEqual(
+            compile_spirv.call_args_list,
+            [
+                call({}, Path("fixture"), 0, b"DXBC", ["texture", "0", "0", "0", "storage", "0", "0", "1", "cbv", "0", "1", "0"]),
+                call(
+                    {},
+                    Path("fixture"),
+                    1,
+                    b"DXBC",
+                    ["texture", "0", "0", "0", "texture", "1", "0", "1", "storage-image", "0", "0", "2", "storage-image", "1", "0", "3", "cbv", "0", "1", "0"],
+                ),
+                call(
+                    {},
+                    Path("fixture"),
+                    2,
+                    b"DXBC",
+                    [
+                        *("sampler", "3", "0", "0"),
+                        *("sampler", "7", "0", "1"),
+                        *("texture", "0", "0", "2"),
+                        *("texture", "2", "0", "3"),
+                        *("texture", "4", "0", "4"),
+                        *("storage-image", "4", "0", "5"),
+                        *("cbv", "0", "1", "0"),
+                    ],
+                ),
+                call(
+                    {},
+                    Path("fixture"),
+                    3,
+                    b"DXBC",
+                    ["structured", "0", "0", "0", "texture", "1", "0", "1", "storage-image", "0", "0", "2", "cbv", "0", "1", "0"],
+                ),
+            ],
+        )
         variant = tree["variants"][0]
         kernel = variant["kernels"][0]["variantMap"][0][1]
         self.assertEqual(variant["targetRenderer"], 21)
         self.assertEqual([kernel[key][0]["bindPoint"] for key in ("cbs", "textures", "outBuffers")], [0x10000, 0, 0x2000001])
         self.assertEqual(kernel["code"], b"SPIR-V")
         self.assertEqual(kernel["threadGroupSize"], [4, 4, 1])
+        image_kernel = variant["kernels"][1]["variantMap"][0][1]
+        self.assertEqual([(row["bindPoint"], row["texDimension"]) for row in image_kernel["outBuffers"]], [(0x02000003, 5), (0x02000002, 3)])
+        self.assertEqual(image_kernel["threadGroupSize"], [4, 4, 4])
+        sampled_kernel = variant["kernels"][2]["variantMap"][0][1]
+        self.assertEqual(sampled_kernel["builtinSamplers"], [dict(sampler=85, bindPoint=0)])
+        self.assertEqual([(row["bindPoint"], row["samplerBindPoint"]) for row in sampled_kernel["textures"]], [(3, 1), (2, 1), (4, -1)])
+        self.assertEqual(sampled_kernel["outBuffers"][0]["bindPoint"], 0x02000005)
+        mixed_kernel = variant["kernels"][3]["variantMap"][0][1]
+        self.assertEqual([mixed_kernel[key][0]["bindPoint"] for key in ("cbs", "inBuffers", "textures", "outBuffers")], [0x10000, 0, 1, 0x02000002])
         self.assertEqual(original["variants"][0]["targetRenderer"], 2)
 
     def test_same_buffer_name_can_have_distinct_kernel_layouts(self):
@@ -325,6 +539,17 @@ class NativeRecords(unittest.TestCase):
         self.assertEqual(result[fragment_offset:vertex_offset], fragment)
         self.assertEqual(result[vertex_offset : vertex_offset + vertex_size], vertex)
         self.assertEqual(struct.unpack_from("<I", result, 76), (1,))
+
+    def test_geometry_envelope_uses_the_exact_sdk_extent(self):
+        vertex = b"LOMS" + b"v" * 23
+        fragment = b"LOMS" + b"f" * 25
+        geometry = b"LOMS" + b"g" * 31
+        result = N.linked_vulkan_program(vertex, fragment, geometry=geometry, alpha_clip=False)
+        header = struct.unpack_from("<44I", result)
+        self.assertEqual(header[0], 0x02000020)
+        self.assertEqual(header[9:11], (176 + len(fragment) + len(vertex), len(geometry)))
+        self.assertEqual(header[19], 1)
+        self.assertEqual(result[176:], fragment + vertex + geometry)
 
     def test_inline_sampler_is_written_to_serialized_common_parameters(self):
         compilation = {"reflection": ["sampler: 85 42"], "data": b"gpu", "gpu_program_type": 25}

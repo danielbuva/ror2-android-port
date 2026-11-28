@@ -116,7 +116,7 @@ class NativePinProviderCompileTests(unittest.TestCase):
         if not cls.mono.is_file() or not cls.csc.is_file():
             raise unittest.SkipTest("pinned Unity Mono/Roslyn host compiler is unavailable")
 
-    def compile_and_run(self, temp: Path, native_override: str | None, expected_refusal: str) -> None:
+    def compile_and_run(self, temp: Path, native_override: str | None, expected_refusal: str, *, built_native_sha256: str | None = None) -> None:
         generator = load_module(GENERATOR, "native_pin_generator_compile")
         dynamic_request_pin = temp / "GameAudioOriginalGeneratedRequestPin.cs"
         dynamic_stage_pin = temp / "GameAudioOriginalGeneratedStagePin.cs"
@@ -136,6 +136,13 @@ class NativePinProviderCompileTests(unittest.TestCase):
             str(dynamic_request_pin),
             str(HARNESS),
         ]
+        if built_native_sha256 is not None:
+            built_pin = temp / "GameAudioOriginalNativeBuildPin.cs"
+            built_pin.write_text(
+                f'internal static class GameAudioOriginalNativeBuildPin {{ internal const string LibrarySha256 = "{built_native_sha256}"; }}\n',
+                encoding="utf-8",
+            )
+            command.extend(["-define:UNITY_ANDROID", "-define:ROR2LAB_BUILT_WWISE", str(built_pin)])
         compiled = subprocess.run(command, cwd=temp, capture_output=True, text=True, check=False)
         self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
         ran = subprocess.run([str(self.mono), str(executable), expected_refusal], cwd=temp, capture_output=True, text=True, check=False)
@@ -151,6 +158,15 @@ class NativePinProviderCompileTests(unittest.TestCase):
             self.compile_and_run(Path(name), None, "<null>")
         with tempfile.TemporaryDirectory(prefix="native-pin-provider-stale-") as name:
             self.compile_and_run(Path(name), STALE_NATIVE_SHA256, "audio_native_library_pin_mismatch")
+
+    def test_signed_runtime_accepts_the_produced_pin_and_refuses_the_frozen_hash(self) -> None:
+        generator = load_module(GENERATOR, "native_pin_generator_signed")
+        produced = "d" * 64
+        expected = generator.expected_sources(Path("unused"), built_native_sha256=produced)
+        self.assertEqual(expected["native_library_sha256"], produced)
+        with tempfile.TemporaryDirectory(prefix="native-pin-signed-") as name:
+            self.compile_and_run(Path(name), produced, "<null>", built_native_sha256=produced)
+            self.compile_and_run(Path(name), provider_native_pin(), "audio_native_library_pin_mismatch", built_native_sha256=produced)
 
 
 if __name__ == "__main__":

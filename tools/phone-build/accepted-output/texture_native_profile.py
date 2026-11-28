@@ -3,14 +3,22 @@
 import argparse
 from collections import defaultdict
 from hashlib import sha256
+import importlib.util
 import io
 import json
 from pathlib import Path
 import struct
 
-import bundle_preload as preload
-import texture_produce as texture
 
+def module(name):
+    spec = importlib.util.spec_from_file_location("_texture_profile_" + name, Path(__file__).with_name(name + ".py"))
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+preload = module("bundle_preload")
+texture = module("texture_produce")
 
 NATIVE_2D_PIXEL_BYTES = {1: 1, 3: 3, 4: 4, 5: 4}
 
@@ -144,11 +152,11 @@ def texture_record(bundle, body, typ, position, identity, relative, member, tree
     )
 
 
-def discover(pc, coverage, source_operation=None, schema_witnesses=()):
+def discover(pc, coverage, source_operation=None, schema_witnesses=(), *, all_originals=False):
     candidates = defaultdict(lambda: defaultdict(set))
     for row in preload.json_rows(coverage):
         relative, member, identity = row["source"]
-        if row["status"] == "missing" and (relative.endswith(".bundle") or schema_witnesses):
+        if (all_originals or row["status"] == "missing") and (relative.endswith(".bundle") or schema_witnesses):
             candidates[relative][member].add(identity)
     witnesses = texture.texture_witnesses(pc, schema_witnesses)
     bundles = []
@@ -195,6 +203,7 @@ if __name__ == "__main__":
     parser.add_argument("pc", type=Path)
     parser.add_argument("coverage", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--all-originals", action="store_true", help="select original identities regardless of coverage status")
     parser.add_argument("--schema-witnesses", type=Path, help="pinned original bundle selectors for standalone texture class schemas")
     compression = parser.add_mutually_exclusive_group()
     compression.add_argument("--source-bc1", action="store_const", dest="source_operation", const="source-bc1-etc", help="select BC1 colour originals for ETC1")
@@ -218,7 +227,7 @@ if __name__ == "__main__":
     if args.output.resolve().is_relative_to(pc):
         raise ValueError("Texture profile output overlaps original input")
     witnesses = json.loads(args.schema_witnesses.read_bytes()) if args.schema_witnesses else ()
-    profile = discover(pc, args.coverage, args.source_operation, witnesses)
+    profile = discover(pc, args.coverage, args.source_operation, witnesses, all_originals=args.all_originals)
     with args.output.open("x") as output:
         json.dump(profile, output)
         output.write("\n")

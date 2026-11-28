@@ -893,6 +893,26 @@ class BundlePreparationTests(unittest.TestCase):
             self.assertEqual(profile["bundle"]["asset_groups"][0]["roots"], [100, 200])
             self.assertEqual(second["catalog_bundle"]["sha256"], second["sha256"])
 
+    def test_preparation_retains_external_consumer_records_outside_catalog_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request, policy, pin = self.fixture(root)
+            policy["asset_groups"][0].update(roots=[300], preload_roots=[])
+            policy["retained_path_ids"] = [100]
+            (root / "policy.json").write_text(json.dumps(policy))
+            request["policy"] = pin(root / "policy.json")
+            inputs.write_text(json.dumps(request))
+
+            result = P.prepare_request(inputs, root / "prepared")
+            required = json.loads((root / "prepared/required.json").read_bytes())
+            self.assertEqual(required["path_ids"], [100, 200, 300, 400])
+            self.assertEqual(required["asset_groups"], policy["asset_groups"])
+            self.assertEqual(required["assets"], policy["assets"])
+            emitted = P.produce_request(result["request"]["path"], root / "emitted")
+            with P.O.B.Bundle(Path(emitted["bundle"])).member("CAB-content") as stream:
+                ids = {row["path_id"] for row in P.O.W.read_serialized(stream)["objects"]}
+            self.assertTrue({100, 200, 300} <= ids)
+
     def test_preparation_resolves_relocated_pointer_by_original_identity(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1169,10 +1189,13 @@ class BundlePreparationTests(unittest.TestCase):
     def test_fresh_managed_preparation_retains_script_identity_properties_and_null_source(self):
         E = P.module("bundle_endpoints")
         identity = P.O.module("_prepare_test_identity", Path(__file__).resolve().parents[1] / "scripts/lab/script_identity.py")
-        for null in (False, True):
-            with self.subTest(null=null), tempfile.TemporaryDirectory() as tmp:
+        for mode in ("managed", "stale-native-hash", "original-null", "missing-script"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 inputs, request, policy, pin = self.fixture(root)
+                null = mode == "original-null"
+                missing = mode == "missing-script"
+                stale = mode == "stale-native-hash"
                 node = identity._node
                 names = ("AuthoredBehaviour", "Fixture", "Authored.dll")
                 props = bytes(range(16))
@@ -1207,16 +1230,28 @@ class BundlePreparationTests(unittest.TestCase):
                     stripped=0,
                     script_type=-1 if null else 0,
                     script_id=bytes(16) if null else identity.md4("".join(names).encode()),
-                    hash=bytes(16) if null else props,
+                    hash=bytes(16) if null else b"x" * 16 if stale else props,
                     tree=identity._tree(nodes),
                     dependencies=[],
                 )
-                body = struct.pack("<iqiiqi", 0, 0, 1, 0, 0 if null else 20, 0)
+                null_body = struct.pack("<iqiiqi", 0, 0, 1, 0, 0, 0)
+                body = null_body if null else struct.pack("<iqiiqi", 0, 0, 1, 0, 20, 0)
+                null_type = dict(typ, script_type=-1, script_id=bytes(16), hash=bytes(16))
                 source = root / "original/managed.bundle"
-                raw = self.serialized([dict(path_id=10, type=typ, body=body), dict(path_id=20, type=script_type, body=script)], platform=19)
+                records = [dict(path_id=10, type=typ, body=body), dict(path_id=20, type=script_type, body=script)]
+                if missing:
+                    records.append(dict(path_id=30, type=null_type, body=null_body))
+                raw = self.serialized(records, platform=19)
                 with source.open("wb") as stream:
                     P.O.W.write_bundle(stream, [("CAB-managed", 4, len(raw), lambda: io.BytesIO(raw))], lambda block, method: block, flags=0x40)
-                digest = P.hashlib.sha256(body).hexdigest()
+                output = dict(bundle="managed-pack", member="managed-member", path_id=10, bytes=len(body), sha256=P.hashlib.sha256(body).hexdigest())
+                record = dict(path_id=10, class_id=114, sha256=output["sha256"], outputs=[output])
+                if missing:
+                    witness = dict(
+                        bundle=source.name, bundle_sha256=P.O.B.sha(source), member="CAB-managed", path_id=30, sha256=P.hashlib.sha256(null_body).hexdigest()
+                    )
+                    record["missing_script_base"] = dict(bytes=len(null_body), type_source=witness)
+                    output.update(sha256=witness["sha256"], transform=dict(references=[{"offset": 16, "from": [0, 20], "to": [0, 0]}]))
                 profile = root / "managed.json"
                 profile.write_text(
                     json.dumps(
@@ -1226,19 +1261,7 @@ class BundlePreparationTests(unittest.TestCase):
                                 dict(
                                     path=source.name,
                                     sha256=P.O.B.sha(source),
-                                    members=[
-                                        dict(
-                                            name="CAB-managed",
-                                            objects=[
-                                                dict(
-                                                    path_id=10,
-                                                    class_id=114,
-                                                    sha256=digest,
-                                                    outputs=[dict(bundle="managed-pack", member="managed-member", path_id=10, bytes=len(body), sha256=digest)],
-                                                )
-                                            ],
-                                        )
-                                    ],
+                                    members=[dict(name="CAB-managed", objects=[record])],
                                 )
                             ],
                         )
@@ -1266,9 +1289,9 @@ class BundlePreparationTests(unittest.TestCase):
                 policy.pop("field_routes")
                 sdk = root / "runtime-scripts"
                 sdk.write_bytes(self.serialized([dict(path_id=70, type=script_type, body=script)]))
-                request["staged"] = [] if null else [dict(bundle="sdk", member="Library/unity default resources", file=pin(sdk))]
+                request["staged"] = [] if null or missing else [dict(bundle="sdk", member="Library/unity default resources", file=pin(sdk))]
                 # SDK serialized resources require witnesses when tree-free; this one retains its tree.
-                if not null:
+                if not (null or missing):
                     full = root / "script-full.json"
                     full.write_text(
                         json.dumps(
@@ -1294,23 +1317,60 @@ class BundlePreparationTests(unittest.TestCase):
                     policy["staged_bindings"] = [dict(source=[source.name, "CAB-managed", 20], destination=["sdk", "Library/unity default resources", 70])]
                 (root / "policy.json").write_text(json.dumps(policy))
                 request["policy"] = pin(root / "policy.json")
+                key = names[2], names[1], names[0]
+                if stale:
+                    request["managed_inputs"] = {"properties_sdk": pin(sdk)}
                 inputs.write_text(json.dumps(request))
-                result = P.prepare_request(inputs, root / "prepared")
+                if stale:
+                    context = dict(
+                        identity_owner=SimpleNamespace(**{**vars(identity), "properties_hash": lambda *args: props}),
+                        current={key: dict(properties=props.hex())},
+                        normalizer=SimpleNamespace(editor_curves=lambda nodes: nodes),
+                        sdk_tree=typ["tree"],
+                        registry_scripts={key: (script, script_type)},
+                    )
+                    load_module = P.module
+                    with (
+                        patch.object(P, "module", side_effect=lambda name: E if name == "bundle_endpoints" else load_module(name)),
+                        patch.object(E, "managed_context", return_value=context),
+                        patch.object(E, "current_providers", return_value=SimpleNamespace(registry=lambda actual: self.assertEqual(tuple(actual), key))),
+                    ):
+                        result = P.prepare_request(inputs, root / "prepared")
+                        emitted = P.produce_request(result["request"]["path"], root / "emitted")
+                    with P.O.B.Bundle(Path(emitted["bundle"])).member("CAB-content") as stream:
+                        layout = P.O.W.read_serialized(stream)
+                        emitted_row = next(item for item in layout["objects"] if item["path_id"] == 100)
+                        self.assertEqual(layout["types"][emitted_row["type_id"]]["hash"], props)
+                else:
+                    result = P.prepare_request(inputs, root / "prepared")
                 prepared = json.loads(Path(result["request"]["path"]).read_bytes())
                 value = list(P.json_rows(root / "prepared/selected-records.jsonl"))[0]
-                _, retained = P.ProducerRecords().record(value)
-                if null:
-                    proof = prepared["null_script_sources"][0]["type_source"]
-                    self.assertEqual(proof["sha256"], digest)
+                row, retained = P.ProducerRecords().record(value)
+                if stale:
+                    self.assertEqual(retained, struct.pack("<iqiiqi", 0, 0, 1, 1, 70, 0))
+                    self.assertEqual(row["body_before_sha256"], P.hashlib.sha256(body).hexdigest())
+                    self.assertEqual(row["native_type_hash"], props.hex())
+                    self.assertEqual(value["native_type_hash"], props.hex())
+                    typ = dict(typ, hash=props)
+                if null or missing:
+                    self.assertEqual(len(prepared["null_script_sources"]), 1)
+                    declaration = prepared["null_script_sources"][0]
+                    self.assertEqual(declaration["destination"], destination)
+                    proof = declaration["type_source"]
+                    self.assertEqual(proof["sha256"], P.hashlib.sha256(null_body).hexdigest())
                     qualification = E.Qualification(SimpleNamespace(**vars(P)), None, prepared, {}, {}, {})
                     qualification.game = (root / "original").resolve()
                     qualification.null_sources = {tuple(destination): proof}
-                    self.assertEqual(qualification.null_source(value), typ)
+                    if missing:
+                        self.assertEqual(proof, witness)
+                        self.assertEqual(value["source"], [source.name, "CAB-managed", 10])
+                        self.assertEqual(value["policies"], {"missing_script_base": record["missing_script_base"]})
+                    self.assertEqual(qualification.null_source(value), null_type)
+                    self.assertEqual(P.qualify_null_script_base(retained, null_type, qualification.null_source(value))[("m_Script",)], (0, 0))
                 else:
                     self.assertEqual(P.pointers(retained, typ, {})[("m_Script",)], (1, 70))
                     original = json.loads((root / "prepared/original-script-properties.json").read_bytes())
                     self.assertEqual(original, [dict(identity=[names[2], names[1], names[0]], properties=props.hex())])
-                    key = names[2], names[1], names[0]
                     context = dict(
                         identity_owner=identity,
                         current={key: dict(unsupported=True, unchanged_provider_sha256="ab" * 32, source_trees=[typ["tree"].hex()])},

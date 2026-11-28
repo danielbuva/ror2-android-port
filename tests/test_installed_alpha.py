@@ -6,7 +6,7 @@ import shlex
 import sys
 import tempfile
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
@@ -281,6 +281,93 @@ class InstalledAlphaTests(unittest.TestCase):
         receipt["incremental"]["reused"].remove("unchanged")
         with self.assertRaisesRegex(ValueError, "staged-rebuild-entry-coverage"):
             staged_alpha_update.verify_incremental(receipt, source, changed, unchanged, 1, require)
+
+    def test_staged_acquired_source_pins_one_tool_cohort_for_both_releases(self):
+        inputs = self.owner.module("test_acquired_input_selection", self.owner.HERE / "install_inputs.py")
+        name = "acquired/compiler.txt"
+        source = self.root / name
+        source.parent.mkdir()
+        data = b"fixture compiler"
+        source.write_bytes(data)
+        tool = {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        pin = {name: tool}
+        select = staged_alpha_update.acquired_sources
+        self.assertEqual(select([pin, pin], self.root, inputs), {name: (source.resolve(), tool)})
+        self.assertEqual(select([{}, {}], None, inputs), {})
+        remote = {"acquired/downloaded.txt": dict(tool, url="https://test.invalid/downloaded.txt")}
+        self.assertEqual(select([remote, remote], None, inputs, on_phone=True), {})
+        self.assertEqual(select([pin | remote, pin | remote], self.root, inputs, on_phone=True), {name: (source.resolve(), tool)})
+        with self.assertRaisesRegex(ValueError, "same signed acquired-tool inventory"):
+            select([pin | remote, pin], self.root, inputs, on_phone=True)
+        with self.assertRaisesRegex(ValueError, "same signed acquired-tool inventory"):
+            select([pin, {}], self.root, inputs)
+        with self.assertRaisesRegex(ValueError, "must supply an acquired_source"):
+            select([pin, pin], None, inputs)
+        source.write_bytes(b"changed compiler")
+        with self.assertRaisesRegex(ValueError, "acquired tool missing or changed"):
+            select([pin, pin], self.root, inputs)
+
+    def test_nightly_acquires_signed_tools_from_phone_folder_and_https(self):
+        apk, digest, version, baseline, _ = self.stage_update_pair()
+        installer = Mock(PACKAGE="dev.ror2lab.installertest")
+        original = {"path": "original", "bytes": 3, "sha256": "a" * 64}
+        inventory = self.root / "game.json"
+        inventory.write_text(json.dumps({"steam": {"buildid": 1}, "files": [dict(path="original", size=3, sha256=original["sha256"])]}))
+        manifest = {"schema": 1, "game_version": "Steam 1", "files": [original]}
+        folder_pin = {"bytes": 4, "sha256": "b" * 64}
+        download_pin = {"bytes": 5, "sha256": "c" * 64, "url": "https://test.invalid/zipflinger.jar"}
+        plan = {
+            "supported_versions": [{"manifest": manifest, "manifest_sha256": "d" * 64}],
+            "workspace_bytes": 100,
+            "acquired_inputs_sha256": "e" * 64,
+        }
+        release = {"input_plan": plan, "acquired_inputs": {"acquired/compiler": folder_pin, "acquired/zipflinger.jar": download_pin}}
+        request = {
+            "installer_apk": apk,
+            "installer_sha256": digest,
+            "installer_version": version,
+            "baseline_release": baseline,
+            "game_label": "Fixture",
+            "current_inventory": inventory,
+            "phone_source": "LabInput/Originals",
+            "acquire_on_phone": True,
+        }
+
+        def require(condition, reason):
+            if not condition:
+                raise ValueError(reason)
+
+        installer.run.return_value = b"fixture installer"
+        installer.HostTools.return_value.build = self.root
+        with patch.object(staged_alpha_update, "preflight_releases", return_value={"baseline": release}):
+            staged = staged_alpha_update.StagedUpdate(installer, require, request, nightly=True)
+        staged.choose = Mock()
+        staged.verify_tree = Mock()
+        staged.verify_acquired = Mock()
+        staged.require_visible_status = Mock()
+        phone = Mock(timeout=1)
+        phone.read.return_value = {"state": "TOOLS_READY", "inventory_sha256": plan["acquired_inputs_sha256"]}
+
+        staged.stage(phone)
+        staged.acquire_tools(phone, plan)
+        staged.cleanup(phone)
+
+        self.assertEqual(
+            staged.verify_tree.call_args_list,
+            [
+                call(phone, "/sdcard/Download/LabInput/Originals", {"original": original["sha256"]}),
+                call(phone, "/sdcard/Download/LabInput/Tools", {"compiler": folder_pin["sha256"]}),
+            ],
+        )
+        self.assertFalse(staged.acquired)
+        self.assertEqual(staged.tool_stage_bytes, 0)
+        self.assertEqual(staged.acquired_bytes, 9)
+        phone.shell.assert_called_once_with("run-as", installer.PACKAGE, "test", "!", "-e", "files/owner-input/acquired", label="staged-acquired-must-be-fresh")
+        staged.choose.assert_called_once_with(phone, "tree", "Tools", tools=True)
+        phone.tap.assert_called_once_with("Acquire / resume required tools")
+        staged.verify_acquired.assert_called_once_with(phone)
+        staged.require_visible_status.assert_called_once_with(phone, "Required tools: Required tools verified in private storage.")
+        staged.installer.DIAGNOSTICS.write.assert_called_once()
 
     def test_nightly_census_joins_play_failure_without_pulling_the_apk(self):
         module_path = Path(installed_alpha.__file__).with_name("whole_game_scoreboard.py")

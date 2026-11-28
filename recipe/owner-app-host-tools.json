@@ -304,6 +304,6 @@
     "linux/lib/x86_64-linux-gnu/libm.so.6": "5461e535328078fb72f25f7ca2bf36bc71c415bbf573ccdfa289a7b796ddfdd3",
     "linux/lib/x86_64-linux-gnu/libpthread.so.0": "9807a603f7e37097a442126303e0705a85f38ad4926db8eaf5db4befad118e11",
     "linux/lib64/ld-linux-x86-64.so.2": "1c654e88d721c9ac659b48400d20b5310ead8c6d15eeaf695d507d00d59ef490",
-    "texture-sdk-codec": "ab2e7439ff7ddf2319cdb06c8a04ad188503915a3b5831504b80e9b6a45beb6a"
+    "texture-sdk-codec": "4b93dba28bcc7efef864db47bdde934a288e48dd41af036228c37a41451679ae"
   }
 }

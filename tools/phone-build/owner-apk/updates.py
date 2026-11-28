@@ -663,7 +663,10 @@ def _run(request_file, runtime, native, *, transport=None, debuggable=False):
             provision = module("owner_install_inputs", HERE / "install_inputs.py")
             description = provision.describe(index, repo, inputs)
             if request["action"] == "install-prepare":
-                emit("INPUTS_REQUIRED", "Choose your legitimate game folder or ZIP to import privately.", import_requirements=description, release=release)
+                message = "Choose your legitimate game folder or ZIP to import privately."
+                if "acquired_inputs" in description:
+                    message += " Use Acquire / resume required tools for this release."
+                emit("INPUTS_REQUIRED", message, import_requirements=description, release=release)
                 return
             pipeline = module("owner_install_flow", HERE / "install_flow.py")
             flow = pipeline.Pipeline(inputs, release, description["manifest_sha256"], index["install_plan"], emit=progress)

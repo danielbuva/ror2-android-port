@@ -10,13 +10,25 @@ public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
  static string IterationRequest,IterationOutput;
  static bool IterationCaptured;
+ static bool PrepareV4Signing;
+ static string V4Sidecar;
  public static bool IsOwnedIterationCancellation(string[] messages,string request){
   string marker="ROR2LAB_ITERATION_EXPORT_COMPLETE "+request;
   return messages!=null&&messages.Any(message=>message.Contains(marker))&&messages.Count(message=>message=="Building Player failed")<=1&&messages.All(message=>message=="Building Player failed"||message.Contains(marker));
  }
  [Serializable] class Request {public string request_id,api,output,androidSymbols,iterationMode,bundleCompression;public bool presentationOnly,stagePresentation,reusePayload,captureIl2CppInvocation;public string[] reflectionTextureGuids;}
  [Serializable] class BuildPhase {public string name;public int depth;public double seconds;}
- [Serializable] class Result {public bool success; public string result,apk,backend,request_id,symbolPackage,build_report_guid,player_build_result;public string[] player_build_error_messages;public double seconds,bundle_seconds,player_seconds,prepare_seconds;public int errors,player_build_errors;public bool iteration_export_complete;public BuildPhase[] build_steps;}
+ [Serializable] class Result {public bool success; public string result,apk,apkV4Sidecar,backend,request_id,symbolPackage,build_report_guid,player_build_result;public string[] player_build_error_messages;public double seconds,bundle_seconds,player_seconds,prepare_seconds;public int errors,player_build_errors;public bool iteration_export_complete;public BuildPhase[] build_steps;}
+ public static void ConfigureV4Signing(string path){
+  if(!PrepareV4Signing)return;
+  string project=Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar);
+  if(Path.GetFileName(project)=="unityLibrary")project=Path.GetDirectoryName(project);
+  string launcher=Path.Combine(project,"launcher");
+  string gradle=Path.Combine(launcher,"build.gradle");
+  const string enable="android.signingConfigs.debug.enableV4Signing = true";
+  if(!File.ReadAllLines(gradle).Contains(enable))File.AppendAllText(gradle,"\n"+enable+"\n");
+  V4Sidecar=Path.Combine(launcher,"build/outputs/apk/debug/launcher-debug.apk.idsig");
+ }
  // Run last, after other Android project callbacks. An owned cancellation
  // retains the normal Bee native build/cache while bypassing only Gradle.
  public static void CaptureIterationExport(string path){
@@ -444,6 +456,7 @@ public static class LabBuild {
    result.prepare_seconds=(DateTime.UtcNow-start).TotalSeconds-result.bundle_seconds;
    var playerStart=DateTime.UtcNow;
    BuildReport report=null;
+   PrepareV4Signing=iterationMode=="";
    try{report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Lab.unity"},locationPathName=result.apk,target=BuildTarget.Android,options=options});}
    catch(Exception exception){if(!IterationCaptured||!exception.ToString().Contains("ROR2LAB_ITERATION_EXPORT_COMPLETE "+request.request_id))throw;}
    result.player_seconds=(DateTime.UtcNow-playerStart).TotalSeconds;
@@ -461,10 +474,16 @@ public static class LabBuild {
    if(currentRequest.captureIl2CppInvocation)Il2CppInvocationCapture.CompleteAfterBuild(report);
    result.build_report_guid=report.summary.guid.ToString();
    result.result=report.summary.result.ToString();result.errors=(int)report.summary.totalErrors;result.success=report.summary.result==BuildResult.Succeeded&&result.errors==0;
+   if(result.success){
+    string sidecar=result.apk+".idsig";
+    if(!File.Exists(sidecar))sidecar=V4Sidecar;
+    if(!File.Exists(sidecar))throw new InvalidOperationException("Unity Android build did not produce its v4 signature");
+    result.apkV4Sidecar=Path.GetFullPath(sidecar);
+   }
    if(result.success&&symbolsMode=="debugging"){var symbolZips=Directory.GetFiles(artifactDir,"*.zip");if(symbolZips.Length!=1)throw new InvalidOperationException("Expected exactly one Unity Android symbols ZIP");result.symbolPackage=Path.GetFullPath(symbolZips[0]);}
    }
   }catch(Exception e){result.success=false;result.result=e.ToString();Debug.LogException(e);}
-  finally{EditorUserBuildSettings.androidCreateSymbols=previousAndroidSymbols;IterationRequest=null;IterationOutput=null;IterationCaptured=false;}
+  finally{EditorUserBuildSettings.androidCreateSymbols=previousAndroidSymbols;IterationRequest=null;IterationOutput=null;IterationCaptured=false;PrepareV4Signing=false;V4Sidecar=null;}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
  [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect,stageScene,nextStageScene,playerDeathEffect,pickupDroplet,genericPickup,teleporterIndicator,objectiveTMPSettings;public string[] prefabAssets,enemyRewardAssets,objectiveSupportAssets,nextStageScenes,sourceStageScenes;}
@@ -473,6 +492,10 @@ public static class LabBuild {
   var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));
   File.WriteAllText(Path.Combine(root,"backend-evidence.json"),"{\"editor\":\""+Application.unityVersion+"\",\"selectedBackend\":\""+PlayerSettings.GetScriptingBackend(BuildTargetGroup.Android)+"\",\"architecture\":\""+PlayerSettings.Android.targetArchitectures+"\"}");
  }
+}
+public sealed class LabV4Signing : UnityEditor.Android.IPostGenerateGradleAndroidProject {
+ public int callbackOrder {get{return 0;}}
+ public void OnPostGenerateGradleAndroidProject(string path){LabBuild.ConfigureV4Signing(path);}
 }
 public sealed class LabIterationExport : UnityEditor.Android.IPostGenerateGradleAndroidProject {
  public int callbackOrder {get{return int.MaxValue;}}

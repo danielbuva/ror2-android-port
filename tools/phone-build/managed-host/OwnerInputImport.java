@@ -98,6 +98,9 @@ public final class OwnerInputImport {
         Map<String, Long> inventory() throws Exception;
         InputStream open(String path) throws Exception;
     }
+    public interface ResumableSource {
+        InputStream open(Required row, long offset) throws Exception;
+    }
     public interface Observer {
         /** May wait while paused; cancellation throws InterruptedIOException. */
         void checkpoint() throws Exception;
@@ -261,7 +264,9 @@ public final class OwnerInputImport {
         return value.toString();
     }
     private boolean reusable(Required row) throws Exception {
-        File file = target(row.path);
+        return reusable(target(row.path), row, observer);
+    }
+    private static boolean reusable(File file, Required row, Observer observer) throws Exception {
         if (!file.isFile() || file.length() != row.bytes) return false;
         MessageDigest hash = MessageDigest.getInstance("SHA-256");
         try (InputStream input = new FileInputStream(file)) {
@@ -269,6 +274,118 @@ public final class OwnerInputImport {
             while ((count = input.read(data)) != -1) { observer.checkpoint(); hash.update(data, 0, count); }
         }
         return hex(hash.digest()).equals(row.sha256);
+    }
+    /** Acquire complete, signed tools into the private tree used by build admission. */
+    public static void acquire(File root, List<Required> manifest, long workspace, Observer observer, ResumableSource source) throws Exception {
+        Map<String, Required> wanted = new TreeMap<>();
+        for (Required row : manifest) {
+            if (!row.path.startsWith("acquired/") || wanted.put(row.path, row) != null)
+                throw new IOException("Invalid acquired tool path");
+        }
+        validatePaths(wanted.keySet());
+        File tools = privateFile(root, new File(root, "acquired"));
+        File staging = privateFile(root, new File(root, "tool-staging"));
+        durableDirectory(tools);
+        durableDirectory(staging);
+        long total = 0, completed = 0;
+        Map<Required, File> pending = new LinkedHashMap<>();
+        Set<String> activePartials = new HashSet<>();
+        for (Required row : wanted.values()) {
+            observer.checkpoint();
+            total = Math.addExact(total, row.bytes);
+            File target = privateFile(root, new File(root, row.path));
+            if (reusable(target, row, observer)) {
+                completed = Math.addExact(completed, row.bytes);
+                continue;
+            }
+            String key = row.path + "\n" + row.bytes + "\n" + row.sha256;
+            String partialName = hex(MessageDigest.getInstance("SHA-256").digest(key.getBytes(StandardCharsets.UTF_8))) + ".part";
+            activePartials.add(partialName);
+            pending.put(row, privateFile(root, new File(staging, partialName)));
+        }
+        for (File file : children(staging)) {
+            if (!file.getName().matches("[0-9a-f]{64}\\.part") || !file.isFile())
+                throw new IOException("Unexpected private tool staging entry");
+            if (!activePartials.contains(file.getName()) && !file.delete())
+                throw new IOException("Could not remove a superseded tool transfer");
+        }
+        long remaining = 0;
+        for (Map.Entry<Required, File> entry : pending.entrySet()) {
+            File partial = entry.getValue();
+            long size = entry.getKey().bytes;
+            if (partial.length() > size && !partial.delete()) throw new IOException("Could not reset oversized tool transfer");
+            remaining = Math.addExact(remaining, size - partial.length());
+        }
+        // This tree contains only private copies. Clear retired files and file/directory
+        // conflicts before opening destinations in the new signed inventory.
+        Set<String> directories = new HashSet<>();
+        for (String path : wanted.keySet())
+            for (int slash = path.indexOf('/'); slash >= 0; slash = path.indexOf('/', slash + 1))
+                directories.add(path.substring(0, slash));
+        pruneTools(tools, "acquired", wanted.keySet(), directories);
+        ensureSpace(root, remaining, workspace);
+        for (Map.Entry<Required, File> entry : pending.entrySet()) {
+            Required row = entry.getKey();
+            File partial = entry.getValue();
+            long offset = partial.length();
+            ensureSpace(root, remaining, workspace);
+            File target = privateFile(root, new File(root, row.path));
+            durableDirectory(target.getParentFile());
+            transfer(row, partial, offset, completed, total, source, observer);
+            publish(partial, target);
+            completed = Math.addExact(completed, row.bytes);
+            remaining -= row.bytes - offset;
+            observer.progress(row.path, completed, total);
+        }
+    }
+    private static File[] children(File directory) throws IOException {
+        File[] files = directory.listFiles();
+        if (files == null) throw new IOException("Private tool directory unavailable");
+        for (File file : files)
+            if (!file.getCanonicalFile().equals(file.getAbsoluteFile())) throw new IOException("Private tool tree contains links");
+        return files;
+    }
+    private static void pruneTools(File directory, String relative, Set<String> files, Set<String> directories) throws Exception {
+        for (File child : children(directory)) {
+            String path = relative + "/" + child.getName();
+            if (child.isDirectory()) {
+                pruneTools(child, path, files, directories);
+                if (directories.contains(path)) continue;
+            } else if (files.contains(path)) continue;
+            if (!child.delete()) throw new IOException("Could not remove a superseded tool path: " + path);
+            syncDirectory(directory);
+        }
+    }
+    private static void transfer(Required row, File partial, long offset, long completed, long total,
+                                 ResumableSource source, Observer observer) throws Exception {
+        observer.checkpoint();
+        long copied = offset;
+        if (offset < row.bytes || !partial.isFile()) {
+            try (InputStream input = source.open(row, offset); FileOutputStream output = new FileOutputStream(partial, true)) {
+                byte[] data = new byte[65536];
+                int count;
+                try {
+                    while ((count = input.read(data)) != -1) {
+                        observer.checkpoint();
+                        if (count > row.bytes - copied) throw new ToolMismatch(row.path);
+                        output.write(data, 0, count);
+                        copied += count;
+                        observer.progress(row.path, completed + copied, total);
+                    }
+                } finally { output.getFD().sync(); }
+            } catch (ToolMismatch error) {
+                if (!partial.delete()) error.addSuppressed(new IOException("Could not reset tool transfer"));
+                throw error;
+            }
+        }
+        if (copied != row.bytes) throw new IOException("Tool transfer stopped early: " + row.path + ". Resume to continue.");
+        if (!reusable(partial, row, observer)) {
+            if (!partial.delete()) throw new IOException("Could not reset tool transfer: " + row.path);
+            throw new ToolMismatch(row.path);
+        }
+    }
+    private static final class ToolMismatch extends IOException {
+        ToolMismatch(String path) { super("Tool differs from the signed size or SHA-256: " + path); }
     }
     private void capacity() throws Exception {
         if (!root.isDirectory() && !root.mkdirs()) throw new IOException("Private import directory unavailable");
@@ -290,6 +407,9 @@ public final class OwnerInputImport {
             + " bytes. Free space using Android settings, then retry to revalidate retained inputs. Original inputs and profiles are not deleted by this refusal; existing generated-output cleanup policy is unchanged. Android installation capacity is separate.";
     }
     private void ensureSpace(long remaining) throws Exception {
+        ensureSpace(root, remaining, workspace);
+    }
+    private static void ensureSpace(File root, long remaining, long workspace) throws Exception {
         // Same estimate as game_import.py: remaining + workspace + 2 GiB + ceil(remaining * 5%).
         long margin = Math.addExact(MARGIN, remaining / 20 + (remaining % 20 == 0 ? 0 : 1));
         long needed = Math.addExact(Math.addExact(remaining, workspace), margin);

@@ -21,9 +21,10 @@ leaves an adjacent <name>.retired.json marker. Rebuild from the recorded source
 commit if an old candidate is ever needed again.
 
 Defaults to a dry-run plan; --apply deletes and writes a ledger.
---aggressive also retires stand-alone APKs in device/build output roots and
-compresses aged evidence. It uses a 48-hour minimum for stand-alone APKs and
-evidence, preserves immutable history, and measures volume free space on apply.
+--dedupe scans only for verified APFS clones of duplicate files at least 64 MiB
+and 30 minutes old. --aggressive retires stand-alone APKs and compresses
+evidence. It uses a 48-hour minimum for APKs and evidence, preserves immutable
+history, and measures volume free space on apply.
 --supersede OLD --by NEW marks a physical generated run as replaced by the
 latest direct result.json or *.done.json with success=true. After 24 hours,
 unchanged receipt-bound markers let generated outputs ignore historical manifest
@@ -37,7 +38,9 @@ guard defaults to three hours; other generated outputs retain the 24-hour guard.
 """
 
 import argparse
+from collections import defaultdict
 import ctypes
+import errno
 import fcntl
 import hashlib
 import json
@@ -70,6 +73,8 @@ IMMUTABLE_DIRS = {"immutable-history", "retired-storage"}
 EXTRA_APK_ROOTS = {"device", "lab-build"}
 TRACE_NAMES = {"admission.jsonl", "exceptions.jsonl", "input-trace.jsonl", "phase-resources.jsonl"}
 AGGRESSIVE_KINDS = {"old APK", "trace compression"}
+DEDUPE_MIN_SIZE = 64 << 20
+DEDUPE_MIN_AGE = 30 * 60
 
 
 def evidence_trace(path):
@@ -83,8 +88,8 @@ def evidence_trace(path):
     )
 
 
-def apfs_sharing(path, info):
-    """Return possible sharing, or None if the filesystem exposes no answer."""
+def apfs_allocation(path):
+    """Return (private bytes, clone references) when APFS reports both."""
     if sys.platform != "darwin":
         return None
     # getattrlist(2): ATTR_CMN_RETURNED_ATTRS and ATTR_CMNEXT_PRIVATESIZE,
@@ -99,6 +104,15 @@ def apfs_sharing(path, info):
     size, _, _, _, _, returned, private, refs = layout.unpack(result)
     if size != layout.size or returned & mask != mask:
         return None
+    return private, refs
+
+
+def apfs_sharing(path, info):
+    """Return possible sharing, or None if the filesystem exposes no answer."""
+    allocation = apfs_allocation(path)
+    if allocation is None:
+        return None
+    private, refs = allocation
     return refs > 1 or private < info.st_blocks * 512
 
 
@@ -109,8 +123,173 @@ def volume_available(work):
     return int(row.split()[3]) * 1024
 
 
+def sweep_ci_scratch():
+    subprocess.run([sys.executable, str(Path(__file__).with_name("ci-scratch.py")), "--sweep"], check=True)
+
+
 def file_identity(info):
     return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns]
+
+
+def open_inodes(*paths):
+    """Include open descriptors and mapped files, using device/inode identity."""
+    args = ["/usr/sbin/lsof", "-nP", "-F0fDi"]
+    if paths:
+        args.extend(("--", *paths))
+    result = subprocess.run(args, capture_output=True)
+    if result.stderr:
+        raise RuntimeError("lsof could not enumerate open files")
+    # A pathname query returns 1 when any requested path has no match,
+    # even if other requested paths produced records.
+    if not (paths and result.returncode == 1):
+        result.check_returncode()
+    opened = set()
+    device = None
+    for field in result.stdout.split(b"\0"):
+        field = field.lstrip(b"\n")
+        if field.startswith(b"f"):
+            device = None
+        elif field.startswith(b"D"):
+            device = int(field[1:], 16)
+        elif field.startswith(b"i") and device is not None:
+            opened.add((device, int(field[1:])))
+    return opened
+
+
+def dedupe_digest(path, info):
+    # Bind the full read to the scanned inode, including after the last byte.
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), "rb") as stream:
+        identity = file_identity(info)
+        if file_identity(os.fstat(stream.fileno())) != identity:
+            return None
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+        if file_identity(os.fstat(stream.fileno())) == identity:
+            return digest
+    return None
+
+
+def duplicate_plan(work, excluded=()):
+    if sys.platform != "darwin" or apfs_allocation(work) is None:
+        return []
+    sizes = defaultdict(list)
+    excluded = set(excluded)
+    volume = work.stat().st_dev
+    cutoff = time.time() - DEDUPE_MIN_AGE
+    blocked_flags = stat.UF_IMMUTABLE | stat.SF_IMMUTABLE | stat.UF_APPEND | stat.SF_APPEND
+    for root in (work, ROOT / ".local/build-lanes"):
+        if root.is_symlink() or root in excluded:
+            continue
+        for base, dirs, files in os.walk(root):
+            here = Path(base)
+            dirs[:] = [d for d in dirs if d not in IMMUTABLE_DIRS and here / d not in excluded]
+            for name in files:
+                path = here / name
+                if path in excluded:
+                    continue
+                try:
+                    info = path.lstat()
+                except FileNotFoundError:
+                    continue
+                if (
+                    stat.S_ISREG(info.st_mode)
+                    and info.st_dev == volume
+                    and info.st_size >= DEDUPE_MIN_SIZE
+                    and info.st_nlink == 1
+                    and not getattr(info, "st_flags", 0) & blocked_flags
+                    and info.st_mtime < cutoff
+                ):
+                    # The compression xattr describes the source's physical
+                    # stream. Mixing storage formats can invalidate the clone.
+                    sizes[(info.st_size, getattr(info, "st_flags", 0) & stat.UF_COMPRESSED)].append((path, info))
+    groups = [group for group in sizes.values() if len(group) > 1]
+    if not groups:
+        return []
+    opened = open_inodes()
+    items = []
+    for group in groups:
+        candidates = []
+        for path, info in sorted(group):
+            if (info.st_dev, info.st_ino) not in opened:
+                allocation = apfs_allocation(path)
+                if allocation is not None:
+                    candidates.append((path, info, allocation[0]))
+        # A fully shared target offers no data blocks to reclaim. Still
+        # allow it to serve as the first copy when another has private data.
+        if not any(private for _, _, private in candidates[1:]):
+            continue
+        first = {}
+        for path, info, private in candidates:
+            try:
+                digest = dedupe_digest(path, info)
+            except (FileNotFoundError, PermissionError):
+                continue
+            if digest is None:
+                continue
+            source, source_identity = first.setdefault(digest, (path, file_identity(info)))
+            if source == path or private == 0:
+                continue
+            items.append(
+                {
+                    "kind": "duplicate APFS clone",
+                    "path": path,
+                    "source": source,
+                    "bytes": info.st_size,
+                    "sha256": digest,
+                    "identity": file_identity(info),
+                    "source_identity": source_identity,
+                    "atime_ns": info.st_atime_ns,
+                }
+            )
+    return items
+
+
+def clone_duplicate(item):
+    path, source = item["path"], item["source"]
+
+    def unchanged():
+        return all(
+            candidate.resolve() == candidate and file_identity(candidate.lstat()) == identity
+            for candidate, identity in ((source, item["source_identity"]), (path, item["identity"]))
+        )
+
+    def skipped(reason):
+        item["skipped"] = reason
+
+    try:
+        if not unchanged():
+            return skipped("source or target changed after hashing")
+        original = path.lstat()
+        libc = ctypes.CDLL(None, use_errno=True)
+        with tempfile.TemporaryDirectory(prefix=".prune-clone-", dir=path.parent) as temp:
+            clone = Path(temp) / "clone"
+            # CLONE_NOFOLLOW. Unlike cp -c, clonefile never falls back to copying.
+            if libc.clonefile(os.fsencode(source), os.fsencode(clone), 1):
+                error = ctypes.get_errno()
+                if error in (errno.ENOTSUP, errno.EXDEV):
+                    return skipped("filesystem refused APFS cloning")
+                raise OSError(error, os.strerror(error))
+            # COPYFILE_METADATA | COPYFILE_NOFOLLOW copies target stat, ACL and
+            # xattrs onto the clone without touching the data fork.
+            if libc.copyfile(os.fsencode(path), os.fsencode(clone), None, 7 | (3 << 18)):
+                error = ctypes.get_errno()
+                raise OSError(error, os.strerror(error))
+            if dedupe_digest(clone, clone.lstat()) != item["sha256"]:
+                return skipped("clone failed full SHA-256 verification")
+            os.utime(clone, ns=(item["atime_ns"], original.st_mtime_ns))
+            preserved = clone.lstat()
+            metadata = ("st_mode", "st_uid", "st_gid", "st_flags", "st_mtime_ns", "st_birthtime")
+            if any(getattr(original, key) != getattr(preserved, key) for key in metadata) or preserved.st_atime_ns != item["atime_ns"]:
+                return skipped("clone could not preserve target metadata")
+            if open_inodes(source, path):
+                return skipped("source or target open by a process")
+            if not unchanged():
+                return skipped("source or target changed before publish")
+            os.replace(clone, path)
+            item["action"] = "cloned"
+    except FileNotFoundError:
+        skipped("source or target disappeared")
+    except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+        item["error"] = str(error)
 
 
 def protected_docs(authoritative):
@@ -731,7 +910,11 @@ def apply_aggressive(item, work, hashes, paths):
         item["error"] = str(error)
 
 
-def apply(plan, work, ledger_path, *, aggressive=False, extra_hashes=()):
+def ledger_item(item):
+    return {key: str(value.relative_to(ROOT)) if isinstance(value, Path) else value for key, value in item.items()}
+
+
+def apply(plan, work, ledger_path, *, aggressive=False, dedupe=False, extra_hashes=()):
     retired_receipts = work / "cleanup-analysis/pruned-build-cache"
     reason = "Rebuildable generated output discarded by scripts/prune-generated.py; rebuild from the recorded source commit"
     supersessions = {}
@@ -740,7 +923,10 @@ def apply(plan, work, ledger_path, *, aggressive=False, extra_hashes=()):
         authoritative_hashes, authoritative_paths = protected_state(work, extra_hashes, authoritative=True)
         hashes |= authoritative_hashes
         paths |= authoritative_paths
+    if aggressive or dedupe:
         before = volume_available(work)
+    if aggressive:
+        sweep_ci_scratch()
     for item in plan:
         path = item["path"]
         if not path.exists() and not path.is_symlink():
@@ -794,9 +980,14 @@ def apply(plan, work, ledger_path, *, aggressive=False, extra_hashes=()):
                     )
                     + "\n"
                 )
+    if dedupe:
+        clones = duplicate_plan(work)
+        for item in clones:
+            clone_duplicate(item)
+        plan.extend(clones)
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    items = [{**i, "path": str(i["path"].relative_to(ROOT))} for i in plan]
-    if aggressive:
+    items = [ledger_item(item) for item in plan]
+    if aggressive or dedupe:
         after = volume_available(work)
         measurements = {
             "volume_available_before_bytes": before,
@@ -806,6 +997,8 @@ def apply(plan, work, ledger_path, *, aggressive=False, extra_hashes=()):
             "compression_sharing_unknown": sum(i["kind"] == "trace compression" and i["apfs_sharing"] is None for i in items),
             "errors": sum("error" in i for i in items),
         }
+        if dedupe:
+            measurements["cloned_files"] = sum(i.get("action") == "cloned" for i in items)
         ledger_path.write_text(json.dumps({**measurements, "items": items}, indent=2) + "\n")
         return measurements
     ledger_path.write_text(json.dumps(items, indent=2) + "\n")
@@ -822,8 +1015,9 @@ def main():
     parser.add_argument("--min-age-hours", type=float, default=24.0)
     parser.add_argument("--cache-min-age-hours", type=float, default=3.0, help="Age guard for superseded build-cache entries only")
     parser.add_argument("--keep-sha256", action="append", default=[], help="Additional APK SHA-256 to protect")
-    parser.add_argument("--apply", action="store_true", help="Delete the planned items (default: print the plan only)")
-    parser.add_argument("--aggressive", action="store_true", help="Retire 48-hour-old unpinned APKs and compress old traces and snapshots")
+    parser.add_argument("--apply", action="store_true", help="Apply changes (default: print the plan only)")
+    parser.add_argument("--dedupe", action="store_true", help="Clone byte-identical large files on APFS")
+    parser.add_argument("--aggressive", action="store_true", help="Retire old unpinned APKs and compress old evidence")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--supersede", metavar="OLD", help="Mark a generated run/version as replaced; no deletion")
     parser.add_argument("--by", metavar="NEW", help="Replacement run with a passing receipt")
@@ -832,8 +1026,8 @@ def main():
     if not work.is_dir() or not work.is_relative_to(ROOT):
         sys.exit("work directory must exist inside this checkout")
     if args.supersede or args.by:
-        if not args.supersede or not args.by or args.apply or args.aggressive:
-            parser.error("--supersede OLD requires --by NEW and cannot be combined with --apply")
+        if not args.supersede or not args.by or args.apply or args.aggressive or args.dedupe:
+            parser.error("--supersede OLD requires --by NEW and cannot be combined with pruning options")
         try:
             print(json.dumps(supersede(args.supersede, args.by, work)))
         except (OSError, ValueError) as error:
@@ -860,20 +1054,31 @@ def run(args, work):
         protected_state(work, args.keep_sha256, authoritative=True),
         aggressive=args.aggressive,
     )
-    planner.build_cache()
-    planner.lab_build()
-    planner.lanes()
-    if not args.aggressive:
-        planner.snapshots()
-    for name in SCAN_ROOTS:
-        planner.scan(name)
-    if args.aggressive:
-        planner.rebuild_outputs()
-        planner.aggressive_files()
+    if not args.dedupe or args.aggressive:
+        planner.build_cache()
+        planner.lab_build()
+        planner.lanes()
+        if not args.aggressive:
+            planner.snapshots()
+        for name in SCAN_ROOTS:
+            planner.scan(name)
+        if args.aggressive:
+            planner.rebuild_outputs()
+            planner.aggressive_files()
+    if args.dedupe and not args.apply:
+        planner.items.extend(duplicate_plan(work, (item["path"] for item in planner.items)))
+    measurements = {}
+    if args.apply:
+        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        prefix = "aggressive-" if args.aggressive else "dedupe-" if args.dedupe else ""
+        ledger = work / "cleanup-analysis" / f"{prefix}prune-{stamp}-{uuid.uuid4().hex[:8]}.json"
+        measurements = apply(planner.items, work, ledger, aggressive=args.aggressive, dedupe=args.dedupe, extra_hashes=args.keep_sha256) or {}
+        measurements["ledger"] = str(ledger.relative_to(ROOT))
     total = sum(i["bytes"] for i in planner.items)
     summary = {
         "mode": "apply" if args.apply else "plan",
         "aggressive": args.aggressive,
+        "dedupe": args.dedupe,
         "protected_hashes": len(hashes),
         "cache_protected_hashes": len(planner.cache_hashes),
         "cache_protected_keys": len(planner.cache_keys),
@@ -881,16 +1086,10 @@ def run(args, work):
         "bytes": total,
         "gib": round(total / (1 << 30), 1),
         "kept": len(planner.kept),
+        **measurements,
     }
-    if args.apply:
-        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-        ledger = work / "cleanup-analysis" / f"{'aggressive-' if args.aggressive else ''}prune-{stamp}-{uuid.uuid4().hex[:8]}.json"
-        measurements = apply(planner.items, work, ledger, aggressive=args.aggressive, extra_hashes=args.keep_sha256)
-        if measurements:
-            summary.update(measurements)
-        summary["ledger"] = str(ledger.relative_to(ROOT))
     if args.json:
-        print(json.dumps({**summary, "kept_items": planner.kept, "plan": [{**i, "path": str(i["path"].relative_to(ROOT))} for i in planner.items]}, indent=2))
+        print(json.dumps({**summary, "kept_items": planner.kept, "plan": [ledger_item(item) for item in planner.items]}, indent=2))
     else:
         by_kind = {}
         for item in planner.items:

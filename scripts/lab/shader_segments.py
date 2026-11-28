@@ -5,8 +5,25 @@ from shader_metadata import STAGES, variants
 import hashlib
 import struct
 import lz4.block
-from UnityPy.export.ShaderConverter import ShaderSubProgram
 from UnityPy.streams import EndianBinaryReader
+
+
+def read_program_code(data, declaration):
+    """Read the 2021.3 native header without loading UnityPy's asset exporters."""
+    reader = EndianBinaryReader(data, endian="<")
+    version = reader.read_int()
+    gpu_type = reader.read_int()
+    mismatch = "Shader native program and serialized variant disagree"
+    if version != 202012090 or gpu_type != declaration["gpu_type"]:
+        raise RuntimeError(mismatch)
+    reader.Position += 16
+    keyword_count = reader.read_int()
+    if keyword_count != len(declaration["keywords"]):
+        raise RuntimeError(mismatch)
+    keywords = [reader.read_aligned_string() for _ in range(keyword_count)]
+    if sorted(keywords) != declaration["keywords"]:
+        raise RuntimeError(mismatch)
+    return reader.read_byte_array()
 
 
 def read_segments(tree, blob):
@@ -46,14 +63,12 @@ def read_segments(tree, blob):
             "kind": "parameters" if index in parameter_indices else "program",
         }
         if index in declarations:
-            program = ShaderSubProgram(EndianBinaryReader(data, endian="<"))
             declaration = declarations[index]
-            if program.m_Version != 202012090 or int(program.m_ProgramType) != declaration["gpu_type"] or sorted(program.m_Keywords) != declaration["keywords"]:
-                raise RuntimeError("Shader native program and serialized variant disagree")
-            at = program.m_ProgramCode.find(b"DXBC")
+            code = read_program_code(data, declaration)
+            at = code.find(b"DXBC")
             if at < 0:
                 raise RuntimeError("Declared D3D11 program has no DXBC")
-            dxbc = program.m_ProgramCode[at:]
+            dxbc = code[at:]
             size, chunks = struct.unpack_from("<II", dxbc, 24)
             if size != len(dxbc) or size < 32 + chunks * 4:
                 raise RuntimeError("Shader DXBC extent invalid")

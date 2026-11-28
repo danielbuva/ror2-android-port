@@ -67,8 +67,42 @@ final class OwnerInputSource implements OwnerInputImport.Source {
     }
     public Map<String, Long> inventory() throws Exception { if (!inventoried) { walk(DocumentsContract.getTreeDocumentId(tree), "", 0); inventoried = true; } return sizes; }
     public InputStream open(String path) throws Exception { return access.open(app, documents.get(path)); }
+    static void acquire(Context app, OwnerInputImport.Observer observer, Access access) throws Exception {
+        File root = new File(app.getFilesDir().getCanonicalFile(), "owner-input");
+        JSONObject plan = ToolHostActivity.readInstallInputs(new File(root, "install-inputs.json"));
+        JSONObject pins = plan.getJSONObject("acquired_inputs");
+        List<OwnerInputImport.Required> rows = new ArrayList<>();
+        for (Iterator<String> paths = pins.keys(); paths.hasNext();) {
+            String path = paths.next();
+            JSONObject pin = pins.getJSONObject(path);
+            rows.add(new OwnerInputImport.Required(path, pin.getLong("bytes"), pin.getString("sha256")));
+        }
+        String selected = app.getSharedPreferences(OwnerBuildService.PREFERENCES, 0).getString("tool_source_uri", "");
+        Uri tree = selected.isEmpty() ? null : Uri.parse(selected);
+        OwnerInputImport.acquire(root, rows, plan.getLong("workspace_bytes"), observer, new OwnerInputImport.ResumableSource() {
+            private OwnerInputSource local;
+            public InputStream open(OwnerInputImport.Required row, long offset) throws Exception {
+                String url = pins.getJSONObject(row.path).optString("url");
+                if (!url.isEmpty()) return OwnerToolDownload.open(url, row.path, row.bytes, offset, observer);
+                if (local == null) {
+                    boolean retained = false;
+                    for (android.content.UriPermission permission : app.getContentResolver().getPersistedUriPermissions())
+                        if (permission.isReadPermission() && permission.getUri().equals(tree)) retained = true;
+                    if (!retained) throw new IOException("Choose a folder containing your SDK/tool files to provide " + row.path);
+                    local = new OwnerInputSource(app, tree, observer, access);
+                }
+                String relative = row.path.substring("acquired/".length());
+                Long size = local.inventory().get(relative);
+                if (size == null) throw new IOException("Selected SDK/tool folder is missing " + relative);
+                if (size >= 0 && size != row.bytes) throw new IOException("Selected SDK/tool file has the wrong size: " + relative);
+                return OwnerToolDownload.skip(local.open(relative), offset, observer);
+            }
+        });
+        ToolHostActivity.writeJson(app, new File(root, "tools-state.json"), new JSONObject().put("state", "TOOLS_READY")
+            .put("inventory_sha256", plan.getString("acquired_inputs_sha256")).put("message", "Required tools verified in private storage."));
+    }
     static void run(Context app, OwnerInputImport.Observer observer, Access access) throws Exception {
-        JSONObject plan = ToolHostActivity.readJson(new File(app.getFilesDir(), "owner-input/install-inputs.json"));
+        JSONObject plan = ToolHostActivity.readInstallInputs(new File(app.getFilesDir(), "owner-input/install-inputs.json"));
         if (plan.getInt("schema") != 1 || !"import".equals(plan.getString("import_root"))) throw new IOException("Check a signed install release first");
         List<OwnerInputImport.Version> versions = new ArrayList<>();
         for (String field : new String[]{"supported_versions", "recognized_versions"}) {

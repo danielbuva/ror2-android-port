@@ -104,6 +104,9 @@ class AlphaPackagingTests(unittest.TestCase):
         for unexpected in ("dev.ror2lab.installertest.acquisition", "com.android.providers.downloads.documents"):
             self.assertFalse(ACQUISITION.selected_document(tree.replace(ACQUISITION.EXTERNAL_PROVIDER, unexpected), "tree", folder))
         self.assertFalse(ACQUISITION.selected_document(tree.replace("primary", "other"), "tree", folder))
+        tool_grant = tree.replace('"source_uri"', '"tool_source_uri"').replace("Supported", "Tools")
+        self.assertTrue(ACQUISITION.selected_document(tool_grant, "tree", "Download/Lab/Tools", tools=True))
+        self.assertFalse(ACQUISITION.selected_document(tree, "tree", folder, tools=True))
 
     def test_acquisition_picks_exact_enabled_document_in_focused_package(self):
         package = ACQUISITION.DOCUMENTS[0]

@@ -15,7 +15,11 @@ internal static class GameAudioOriginalAcceptedRequestProvider
     private const string AcceptedAdaptedApiSha256 = "2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272";
     private const string AcceptedObservedApiSha256 = "a2914ace8e2a7338010f8e9a9515911d68489bf0ad467bc7f73f4de293a19fe9";
     private const string AcceptedInstrumentedApiSha256 = "1cedc89f59f44f91deea8b07fcdf289e5fec9448ba87d4d68519d6658bba942b";
+#if ROR2LAB_BUILT_WWISE
+    private const string AcceptedNativeLibrarySha256 = GameAudioOriginalNativeBuildPin.LibrarySha256;
+#else
     private const string AcceptedNativeLibrarySha256 = "9075b5a4d3718a209eb244760d2b251a59ef2f5c486a2d2fc0e83b90240cbba3";
+#endif
     private const string AcceptedAdaptedInitSha256 = "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90";
 
     internal static GameAudioOriginalRequest Create()

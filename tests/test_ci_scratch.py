@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import plistlib
 import selectors
+import shutil
 import signal
 import subprocess
 import sys
@@ -42,7 +43,13 @@ class ScratchTests(unittest.TestCase):
         os.utime(self.path, (0, 0))
         self.state = self.root / "state.plist"
         self.log = self.root / "commands.jsonl"
-        data = {"images": [{"image-path": str(image), "system-entities": [{"dev-entry": "/dev/disk71"}]}] if attached else []}
+        data = {
+            "images": (
+                [{"image-path": str(image), "system-entities": [{"dev-entry": "/dev/disk71", "mount-point": str(self.path / "case-sensitive")}]}]
+                if attached
+                else []
+            )
+        }
         self.state.write_bytes(plistlib.dumps(data))
         binary = self.root / "hdiutil"
         binary.write_text(
@@ -59,6 +66,11 @@ class ScratchTests(unittest.TestCase):
             "state.write_bytes(plistlib.dumps({'images':[]}))\n"
         )
         binary.chmod(0o755)
+        lsof = self.root / "lsof"
+        lsof.write_text(
+            '#!/bin/sh\ncase "$FAKE_MODE:$*" in\n  busy:*+f*) echo 123; exit 0 ;;\n  bad-lsof:*) echo "selection failed" >&2; exit 1 ;;\nesac\nexit 1\n'
+        )
+        lsof.chmod(0o755)
         self.env = mock.patch.dict(
             os.environ, PATH=str(self.root) + os.pathsep + os.environ["PATH"], FAKE_LOG=str(self.log), FAKE_STATE=str(self.state), FAKE_MODE=mode
         )
@@ -116,9 +128,27 @@ class ScratchTests(unittest.TestCase):
 
     def test_force_fallback(self):
         self.fake_hdiutil(mode="force")
+        (self.path / "owner.pid").write_text(str(os.getpid()))
+        (self.path / "owner.json").write_text(json.dumps({"pid": os.getpid(), "pgid": 99999992, "completed": False}))
         with mock.patch.object(cleanup.sys, "platform", "darwin"):
-            self.assertEqual(self.reclaim(), "removed")
+            self.assertEqual(self.reclaim(own=True), "removed")
         self.assertIn('["detach", "-force", "/dev/disk71"]', self.log.read_text())
+
+    def test_abandoned_incomplete_owner_swept(self):
+        self.fake_hdiutil()
+        (self.path / "owner.json").write_text(json.dumps({"pid": 99999991, "pgid": 99999992, "completed": False}))
+        with mock.patch.object(cleanup.sys, "platform", "darwin"), mock.patch.object(cleanup, "alive", return_value=False):
+            cleanup.sweep(self.root)
+        self.assertFalse(self.path.exists())
+        self.assertIn('["detach", "/dev/disk71"]', self.log.read_text())
+
+    def test_busy_or_uninspectable_mount_preserved(self):
+        self.fake_hdiutil()
+        for mode, outcome in (("busy", "open-files"), ("bad-lsof", "preserved")):
+            with mock.patch.dict(os.environ, FAKE_MODE=mode), mock.patch.object(cleanup.sys, "platform", "darwin"):
+                self.assertEqual(self.reclaim(), outcome)
+            self.assertTrue(self.path.exists())
+        self.assertNotIn("detach", self.log.read_text())
 
     def test_known_completed_attach_without_saved_device_reconciles(self):
         # No saved device result: only hdiutil's current exact image mapping counts.
@@ -131,6 +161,7 @@ class ScratchTests(unittest.TestCase):
         with mock.patch.object(cleanup.sys, "platform", "darwin"):
             self.assertEqual(self.reclaim(), "preserved")
         self.assertTrue(self.path.exists())
+        self.assertNotIn("-force", self.log.read_text())
 
     def test_bad_inventory_preserves(self):
         self.fake_hdiutil(mode="bad-info")
@@ -142,6 +173,7 @@ class ScratchTests(unittest.TestCase):
         self.fake_hdiutil()
         data = plistlib.loads(self.state.read_bytes())
         data["images"][0]["image-path"] = str(self.root / "unrelated.sparseimage")
+        data["images"][0]["system-entities"][0].pop("mount-point")
         self.state.write_bytes(plistlib.dumps(data))
         with mock.patch.object(cleanup.sys, "platform", "darwin"):
             self.assertEqual(self.reclaim(), "removed")
@@ -200,7 +232,7 @@ class ScratchTests(unittest.TestCase):
         with mock.patch.object(cleanup.sys, "platform", "darwin"):
             self.assertEqual(self.reclaim(), "uncertain-attach")
         self.assertTrue(self.path.exists())
-        self.assertFalse(self.log.exists(), "empty inventory cannot prove pending attachment quiescent")
+        self.assertNotIn("detach", self.log.read_text(), "empty inventory cannot prove pending attachment quiescent")
         # The service can publish its delayed mount after the rejected cleanup.
         self.state.write_bytes(
             plistlib.dumps(
@@ -215,7 +247,7 @@ class ScratchTests(unittest.TestCase):
             )
         )
         with mock.patch.object(cleanup.sys, "platform", "darwin"):
-            self.assertEqual(self.reclaim(), "uncertain-attach")
+            self.assertEqual(self.reclaim(), "removed")
 
     def test_same_device_linux_bind_mount_refuses(self):
         with (
@@ -365,6 +397,7 @@ class ScratchTests(unittest.TestCase):
         self.assertIsNotNone(process.poll())
 
     def test_normal_and_failure_exit_clean_synchronously(self):
+        self.fake_hdiutil(attached=False)
         # Existing fixture belongs to a fake dead PID; leave it recent so the
         # real startup sweep does not rely on assumptions about host PID ranges.
         os.utime(self.path, None)
@@ -372,17 +405,17 @@ class ScratchTests(unittest.TestCase):
             process = self.launch(f"exit {status}\n")
             out, err = process.communicate(timeout=10)
             self.assertEqual(process.returncode, status, out + err)
-            self.assertEqual(list(self.root.glob("ci-local.*")), [self.path])
             self.assertIn(b"cleanup: removed", err)
+            self.assertEqual(list(self.root.glob("ci-local.*")), [self.path])
 
-    def test_shell_signal_style_exit_preserves_uncertainty(self):
+    def test_shell_signal_style_exit_cleans_scratch(self):
         os.utime(self.path, None)
         process = self.launch("exit 143\n")
         _, err = process.communicate(timeout=10)
         self.assertEqual(process.returncode, 143)
-        self.assertIn(b"uncertain-descendants", err)
+        self.assertIn(b"cleanup: removed", err)
 
-    def test_signals_preserve_uncertain_descendants(self):
+    def test_signals_clean_scratch(self):
         os.utime(self.path, None)
         for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
             process = self.launch("echo ready; exec sleep 30\n")
@@ -390,17 +423,17 @@ class ScratchTests(unittest.TestCase):
             process.send_signal(sig)
             _, err = process.communicate(timeout=10)
             self.assertEqual(process.returncode, 128 + sig, err)
-            self.assertIn(b"uncertain-descendants", err)
+            self.assertIn(b"cleanup: removed", err)
 
-    def test_killed_child_is_reaped_but_preserved(self):
+    def test_killed_child_is_reaped_and_scratch_removed(self):
         os.utime(self.path, None)
         process = self.launch("echo ready; exec sleep 30\n")
         scratch, record = self.ready(process)
         os.killpg(record["pgid"], signal.SIGKILL)
         _, err = process.communicate(timeout=10)
         self.assertEqual(process.returncode, 137, err)
-        self.assertTrue(scratch.exists())
-        self.assertIn(b"uncertain-descendants", err)
+        self.assertFalse(scratch.exists())
+        self.assertIn(b"cleanup: removed", err)
 
     def test_macos_supervisor_detaches_after_normal_and_terminated_runs(self):
         self.fake_hdiutil()
@@ -429,18 +462,23 @@ class ScratchTests(unittest.TestCase):
                 process.terminate()
             _, err = process.communicate(timeout=10)
             self.assertEqual(process.returncode, 143 if terminate else 19, err)
-            if terminate:
-                self.assertIn(b"uncertain-descendants", err)
-            else:
-                self.assertEqual(list(self.root.glob("ci-local.*")), [self.path])
-                self.assertIn(b"cleanup: removed", err)
-        self.assertEqual(sum(json.loads(line)[0] == "detach" for line in self.log.read_text().splitlines()), 1)
+            self.assertEqual(list(self.root.glob("ci-local.*")), [self.path])
+            self.assertIn(b"cleanup: removed", err)
+        self.assertEqual(sum(json.loads(line)[0] == "detach" for line in self.log.read_text().splitlines()), 2)
 
-    def test_shell_term_trap_cannot_certify_detached_grandchild(self):
+    @unittest.skipUnless(shutil.which("lsof"), "open-file veto requires lsof")
+    def test_shell_term_preserves_scratch_open_in_detached_grandchild(self):
         os.utime(self.path, None)
         pidfile = self.root / "detached.pid"
         self.addCleanup(self.stop_detached, pidfile)
-        body = f"trap 'exit 143' TERM\n{sys.executable} - <<'CHILD'\nimport subprocess,pathlib\np=subprocess.Popen(['sleep','30'],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\npathlib.Path({str(pidfile)!r}).write_text(str(p.pid))\nCHILD\necho ready; while :; do sleep 0.1; done\n"
+        body = (
+            f"trap 'exit 143' TERM\n{sys.executable} - <<'CHILD'\n"
+            "import os, pathlib, subprocess\n"
+            "p=subprocess.Popen(['sleep','30'],cwd=os.environ['CI_LOCAL_OWNED_SCRATCH'],start_new_session=True,"
+            "stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\n"
+            f"pathlib.Path({str(pidfile)!r}).write_text(str(p.pid))\n"
+            "CHILD\necho ready; while :; do sleep 0.1; done\n"
+        )
         process = self.launch(body)
         scratch, record = self.ready(process)
         detached = int(pidfile.read_text())
@@ -450,29 +488,21 @@ class ScratchTests(unittest.TestCase):
             self.assertEqual(process.returncode, 143, err)
             os.kill(detached, 0)
             os.utime(scratch, (0, 0))
-            self.assertEqual(cleanup.reclaim(scratch), "uncertain-descendants")
+            self.assertEqual(cleanup.reclaim(scratch), "open-files")
         finally:
             self.stop_detached(pidfile)
 
-    def test_detached_grandchild_keeps_abnormal_scratch_uncertain(self):
-        os.utime(self.path, None)
-        pidfile = self.root / "detached.pid"
-        self.addCleanup(self.stop_detached, pidfile)
-        body = f"{sys.executable} - <<'CHILD'\nimport subprocess,pathlib\np=subprocess.Popen(['sleep','30'],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\npathlib.Path({str(pidfile)!r}).write_text(str(p.pid))\nCHILD\necho ready; exec sleep 30\n"
-        process = self.launch(body)
-        scratch, record = self.ready(process)
-        detached = int(pidfile.read_text())
-        try:
-            process.kill()
-            process.wait(timeout=5)
-            os.killpg(record["pgid"], signal.SIGTERM)
-            process.communicate(timeout=5)
-            os.kill(detached, 0)
-            os.utime(scratch, (0, 0))
-            self.assertEqual(cleanup.reclaim(scratch), "uncertain-descendants")
-            self.assertTrue(scratch.exists())
-        finally:
-            self.stop_detached(pidfile)
+    @unittest.skipUnless(shutil.which("lsof"), "open-file veto requires lsof")
+    def test_sweep_preserves_dead_owner_scratch_open_in_detached_process(self):
+        # Reap the process directly so this test does not depend on when the
+        # runner reaps an orphan from a killed supervisor's process group.
+        with subprocess.Popen(["sleep", "30"], cwd=self.path, start_new_session=True) as detached:
+            try:
+                self.assertEqual(self.reclaim(), "open-files")
+                self.assertTrue(self.path.exists())
+            finally:
+                detached.terminate()
+        self.assertEqual(self.reclaim(), "removed")
 
     def test_sigkill_leaves_recorded_live_child_untouched(self):
         os.utime(self.path, None)
@@ -482,11 +512,7 @@ class ScratchTests(unittest.TestCase):
         process.wait(timeout=5)
         os.utime(scratch, (0, 0))
         try:
-            self.assertEqual(cleanup.reclaim(scratch), "uncertain-descendants")
+            self.assertEqual(cleanup.reclaim(scratch), "live")
         finally:
             os.killpg(record["pgid"], signal.SIGTERM)
             process.communicate(timeout=5)
-        # Even when no recorded process remains, abnormal completion cannot
-        # certify escaped descendants; age alone never clears the marker.
-        with mock.patch.object(cleanup, "alive", return_value=False):
-            self.assertEqual(cleanup.reclaim(scratch), "uncertain-descendants")
