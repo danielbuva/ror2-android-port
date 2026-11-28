@@ -241,6 +241,23 @@ class TranslatedShaderPack(unittest.TestCase):
             [(fragment | 4, fragment | 3, 2), (fragment | 7, fragment, 4), (fragment | 5, fragment | 3, 2)],
         )
 
+    def test_shared_vertex_texture_uses_fragment_image_slot_and_visibility(self):
+        with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
+            import shader_translate as translator
+
+        texture = dict(name="shared", slot=0, sampler=1, dimension=None, native_texture_descriptor=4)
+        vertex_textures = [texture]
+        fragment_textures = [dict(texture, slot=3), dict(name="fragment", slot=0, sampler=5, dimension=2)]
+        slots = translator.shared_texture_slots(vertex_textures, fragment_textures)
+        vertex_rows, vertex_descriptors = translator.stage_parameters({"buffers": [], "textures": vertex_textures}, True, shared_textures=slots)
+        fragment_rows, fragment_descriptors = translator.stage_parameters({"buffers": [], "textures": fragment_textures}, False, shared_textures=slots)
+        self.assertEqual(vertex_rows, [])
+        self.assertEqual(vertex_descriptors, ["texture", "0", "0", "9", "sampler", "1", "0", "1"])
+        self.assertEqual(fragment_descriptors[:8], ["texture", "3", "0", "9", "sampler", "1", "0", "1"])
+        shared, fragment = N.reflection(fragment_rows)["textures"]
+        self.assertEqual((shared["texture"], shared["sampler"]), (0x0C000009, 0x0C000001))
+        self.assertEqual((fragment["texture"], fragment["sampler"]), (0x08000006, 0x08000005))
+
     def test_profile_receipt_admits_two_original_records(self):
         import hashlib
         import json
