@@ -8293,6 +8293,13 @@ the Fungal native Material profile, select 52 original class-21 bodies through
 pointers against the signed Shader and existing texture suppliers. The exact
 editor fixture checks the bindings and unloads its bundles after each cohort.
 
+The Fungal triplanar and Wavy Cloth Material profiles use `record_produce.py`
+to select 27 more original class-21 bodies. `bundle_preload.py` resolves the
+saved Shader and texture pointers using the linked supplier graph. Scoped
+readback verified all 124 relocations. The Unity 2021.3.45f2 content fixture
+loaded the Materials, checked their saved bindings and unloaded the bundles.
+Canonical admission and linked Android draw checks remain open.
+
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
 texture declarations (`any`). Setup takes explicit original/SDK/template/codec
