@@ -8719,6 +8719,13 @@ suppliers, including two RGB mip textures. The scoped exact-editor fixture
 loads the GameObject and unloads the bundle. Canonical intake preserves the
 source preload order and verifies the full dependency closure.
 
+The ScavSackGhost profile feeds its original Light, prefab hierarchy,
+Material and managed components to `record_produce.py`. Bundle preparation
+resolves their PPtrs and reuses the existing Mesh and built-in Shader.
+The scoped exact-editor fixture loads the GameObject and unloads the bundle.
+Release admission keeps the original 33 preload slots in order and appends
+any additional destinations required by the release graph.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
