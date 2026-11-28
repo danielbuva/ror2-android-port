@@ -4090,3 +4090,14 @@ programs. No original body, program, copied source, private path or credential
 is included. Legitimate PC input and independently acquired SDK remain required;
 generated records and evidence stay ignored. The persisted 301,384 B record is
 host raw-exact to J850; complete-scene and phone gates remain separate.
+
+## Computational Exchange whole-object selection (hold checkpoint)
+
+`owner-computationalexchange-whole-objects.json` SHA-256
+`7f76a47065416c33a1606186da9c10e9bf6bdc22cea0aaecbb2611eb29433413`.
+
+The profile was reviewed for provenance, licensing, privacy and sensitive
+content. It contains source and SDK selectors, hashes, pointer relocations and
+authored import settings. The source records and SDK files remain external
+inputs. The profile contains no original object bodies, media, programs,
+credentials or private paths. Runtime qualification is pending.
