@@ -8049,6 +8049,24 @@ ignored `work/`.
 | --- | --- |
 | `owner-evis-projectile-ghost-native-records.json` | `3142468797cf82a2a16a2673f2c8b65ea4f094cbafe0ea8450caaf1f7b2ba50d` |
 
+## PeaceFlowerOld native records (2026-11-28)
+
+`owner-peace-flower-old-native-records.json` selects 64 original records
+through `record_produce.py`, including both Lights and their owning
+GameObjects. Persisted readback verifies the two original Light bodies and
+reciprocal GameObject references. The scoped bundle preserves all 78 original
+preload slots before 14 additional endpoints. Unity 2021.3.45f2 loaded the
+scoped prefab as a GameObject and unloaded the bundle.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-peace-flower-old-native-records.json` | `86461d186d5368bb537c2732f0ab8624289aaffc95ddecfadda7d8bbdb4994d3` |
+
 ## Solus Heart wireframe Shader profile (2026-11-27)
 
 The signed qualification selects the original Texture Scrolling Wireframe
