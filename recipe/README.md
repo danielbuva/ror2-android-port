@@ -8049,6 +8049,24 @@ ignored `work/`.
 | --- | --- |
 | `owner-evis-projectile-ghost-native-records.json` | `3142468797cf82a2a16a2673f2c8b65ea4f094cbafe0ea8450caaf1f7b2ba50d` |
 
+## PeaceFlowerOld native records (2026-11-28)
+
+`owner-peace-flower-old-native-records.json` selects 64 original records
+through `record_produce.py`, including both Lights and their owning
+GameObjects. Persisted readback verifies the two original Light bodies and
+reciprocal GameObject references. The scoped bundle preserves all 78 original
+preload slots before 14 additional endpoints. Unity 2021.3.45f2 loaded the
+scoped prefab as a GameObject and unloaded the bundle.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-peace-flower-old-native-records.json` | `86461d186d5368bb537c2732f0ab8624289aaffc95ddecfadda7d8bbdb4994d3` |
+
 ## Solus Heart wireframe Shader profile (2026-11-27)
 
 The signed qualification selects the original Texture Scrolling Wireframe
@@ -8085,6 +8103,23 @@ and writes the record pack under ignored `work/`.
 | --- | --- |
 | `owner-whole-game-fungal-triplanar-material-records.json` | `7ae3dd60664d93a5165c0dc7bcd65fd10a124c649a08494872317e78c3ec7890` |
 | `owner-whole-game-wavy-cloth-material-records.json` | `f15515bd5860846b37827eba56050debaee8fc42e942280966c5e94a61a2e995` |
+
+## Fungal HGStandard Material records (2026-11-28)
+
+The profile selects six original Fungal Material bodies through
+`record_produce.py`. Scoped bundle readback verified 44 Shader and texture
+pointer relocations and recovered every source body. Unity 2021.3.45f2
+loaded all six Materials, checked their 38 saved texture links, and unloaded
+the bundles. Both signed Shader fallback records retain their source order.
+
+Manual provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, serialized member and object identities, classes,
+sizes, and hashes. The producer requires legitimate PC input. It writes the
+original record bytes and receipts under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-fungal-hgstandard-material-records.json` | `89114dfc7a459c6164a2c1e1fc5561b034b53b971187a3547af1af52410ae7da` |
 
 ## Soul1 Cloud Remap Material records (2026-11-28)
 
@@ -8231,3 +8266,48 @@ and writes its record pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-soul1-damage-zone-material-record.json` | `c16848f5a932787995cbf5ffdb2d854f8419800764d29f6fef9b0f20edef00e0` |
+
+## HGStandard graphics translation (2026-11-28)
+
+The profile selects the original Deferred Standard Shader for the signed
+graphics translation producer and keeps its Commando destination. The
+provenance, privacy, licensing and sensitive-content audit covered the
+native record selector, destination, public compiler bindings and hashes.
+The producer reads the accepted PC installation and emits its Vulkan record
+under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-hgstandard-graphics-translation.json` | `9bf7d2ed28c3cdaefcc8698378fba849f0ca86773e69e0310bff8e993596ef78` |
+| `jobs/owner-hgstandard-graphics-translation.json` | `d46182ff7205d14a1727cb54b95debc7f783db1509609cadd4a210571855d221` |
+
+## CrystalShader graphics translation (2026-11-28)
+
+The signed graphics job selects the original DLC4 Deferred Crystal Shader at
+its whole-game destination. The review covered source and destination
+selectors, public tool bindings and verification hashes for provenance,
+privacy, licensing and sensitive content. The job reads the accepted PC
+installation and emits the Vulkan record under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-crystalshader-graphics-translation.json` | `f6ffd4f5bc42384dad4395b6b89903361f65d89e52e1e145aaaad4c93186f578` |
+| `jobs/owner-crystalshader-graphics-translation.json` | `62bedee5d7a2201398bc0677df39e6ad8db00d28dca5d8b2a1afc80ec0489fa8` |
+
+## Soul1 Crystal Material records (2026-11-28)
+
+The profile selects two original Materials used by 87 Soul1 scene fields.
+Scoped bundle readback reverses 16 Material pointers and verifies the two
+ordered fallback links in the signed Crystal Shader. Unity 2021.3.45f2 loads
+the two Materials and three Shaders, checks all 14 saved texture links,
+including the CustomRenderTexture, and unloads the bundles. Canonical
+admission and linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+the relative source bundle path, member and object identities, class,
+length and hashes. The public producer reads the user's accepted PC
+installation and writes its record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-soul1-crystal-material-records.json` | `d5068d735ec5237b34b05a4bbb399efc3df31a11cf599cc48fbf436085177476` |

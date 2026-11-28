@@ -25,24 +25,29 @@ SIGNED_PROFILES = {
 }
 
 
-def vertex_channels(dxbc):
-    """Map D3D inputs to Unity channels and serialized Vulkan bindings."""
+def signature_rows(dxbc, chunk_kind):
+    """Read the original D3D11 input or output signature."""
     chunk_count = struct.unpack_from("<I", dxbc, 28)[0]
     for offset in struct.unpack_from(f"<{chunk_count}I", dxbc, 32):
         kind, size = struct.unpack_from("<4sI", dxbc, offset)
-        if kind == b"ISGN":
+        if kind == chunk_kind:
             signature = dxbc[offset + 8 : offset + 8 + size]
             break
     else:
-        raise ValueError("vertex translation requires an ISGN input signature")
+        raise ValueError(f"graphics translation requires a {chunk_kind.decode()} signature")
     count, start = struct.unpack_from("<2I", signature)
-    channels = []
     for index in range(count):
         name_offset, semantic_index, system_value, _, register = struct.unpack_from("<5I", signature, start + 24 * index)
+        end = signature.index(b"\0", name_offset)
+        yield signature[name_offset:end].upper(), semantic_index, system_value, register
+
+
+def vertex_channels(dxbc):
+    """Map D3D inputs to Unity channels and serialized Vulkan bindings."""
+    channels = []
+    for name, semantic_index, system_value, register in signature_rows(dxbc, b"ISGN"):
         if system_value:
             continue
-        end = signature.index(b"\0", name_offset)
-        name = signature[name_offset:end].upper()
         if name == b"TEXCOORD" and semantic_index < 8:
             channel = 4 + semantic_index
         elif name in (b"POSITION", b"NORMAL", b"TANGENT", b"COLOR") and semantic_index == 0:
@@ -55,9 +60,34 @@ def vertex_channels(dxbc):
     return sorted(channels)
 
 
-def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=None):
+def fragment_color_mask(dxbc):
+    mask = 0
+    for name, semantic_index, _, _ in signature_rows(dxbc, b"OSGN"):
+        if name == b"SV_TARGET":
+            mask |= 1 << semantic_index
+    # The exact-editor envelope keeps bit zero set for depth-only passes.
+    return mask or 1
+
+
+def shared_constant_bindings(vertex_layout, fragment_layout):
+    """Keep one Unity-owned buffer declaration for two-stage consumers."""
+    vertices = {buffer["name"]: buffer for buffer in vertex_layout["buffers"]}
+    bindings = {}
+    for fragment in fragment_layout["buffers"]:
+        name = fragment["name"]
+        if name not in vertices or not (name == "UnityDrawCallInfo" or name.startswith("UnityInstancing_")):
+            continue
+        vertex = vertices[name]
+        if name != "UnityDrawCallInfo" and dict(vertex, slot=fragment["slot"]) != fragment:
+            raise ValueError(f"Vulkan stages disagree on the layout of {name}")
+        bindings[name] = fragment["slot"]
+    return bindings
+
+
+def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_bindings=None):
     """Route source-layout resources to the linked pass's descriptor sets."""
     stage_flag = 0x04000000 if vertex else 0x08000000
+    shared_bindings = shared_bindings or {}
     rows, descriptors = [], []
 
     def constant_row(name, variable):
@@ -69,12 +99,13 @@ def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=
         slot = buffer["slot"] + (vertex_binding_base if vertex else 0)
         name = buffer["name"]
         draw_call = name == "UnityDrawCallInfo"
+        shared = name in shared_bindings
         if not draw_call and not name.startswith("UnityInstancing_"):
             name = ("vs_" if vertex else "fs_") + name
-        if draw_call and shared_draw_call is not None:
-            slot = shared_draw_call
+        if shared:
+            slot = shared_bindings[name]
         descriptors.extend(("cbv", str(buffer["slot"]), "1", str(slot)))
-        if draw_call and shared_draw_call is not None and vertex:
+        if shared and vertex:
             continue  # The fragment metadata declares the binding for both stages.
         variables = buffer["variables"]
         # The SDK's Vulkan runtime binding exposes two integers. DXBC pads
@@ -86,7 +117,7 @@ def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=
             name_prefix = structure["name"]
             rows.append(f"const: {name_prefix} {structure['offset']} 0 2 {structure['stride']} 0 {structure['array_size']}")
             rows.extend(constant_row(f"{name_prefix}.{variable['name']}", variable) for variable in structure["variables"])
-        visibility = 0x0C000000 if draw_call and shared_draw_call is not None else stage_flag
+        visibility = 0x0C000000 if shared else stage_flag
         rows.append(f"cbbind: {name} {visibility | 0x10000 | slot}")
     textures = layout["textures"]
     image_base = max(3, 1 + max((texture["sampler"] for texture in textures), default=-1))
@@ -172,9 +203,7 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
     variants = []
     for keywords, vertex_stage in vertices.items():
         fragment_stage = fragments[fragment_keys[keywords]]
-        vertex_draw_call = next((buffer for buffer in vertex_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
-        fragment_draw_call = next((buffer for buffer in fragment_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
-        shared_draw_call = fragment_draw_call["slot"] if vertex_draw_call and fragment_draw_call else None
+        shared_bindings = shared_constant_bindings(vertex_stage[2], fragment_stage[2])
         reflection, codes, requirements = [], {}, 0
         sources = [("vert", vertex_stage), ("frag", fragment_stage)]
         if has_geometry:
@@ -186,7 +215,7 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
                 rows, descriptors = [], []
             else:
                 vertex = stage == "vert"
-                rows, descriptors = stage_parameters(layout, vertex, vertex_binding_base=vertex_binding_base, shared_draw_call=shared_draw_call)
+                rows, descriptors = stage_parameters(layout, vertex, vertex_binding_base=vertex_binding_base, shared_bindings=shared_bindings)
                 if vertex:
                     rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))
             glsl_stage = stage if stage in ("vert", "geom") else None
@@ -194,7 +223,13 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
             codes[stage] = subprocess.run([tools["smolv"]], input=spirv, capture_output=True, check=True).stdout
             reflection.extend(rows)
             requirements |= stage_requirements
-        executable = shader.linked_vulkan_program(codes["vert"], codes["frag"], alpha_clip="UNITY_UI_ALPHACLIP" in keywords, geometry=codes.get("geom"))
+        executable = shader.linked_vulkan_program(
+            codes["vert"],
+            codes["frag"],
+            alpha_clip="UNITY_UI_ALPHACLIP" in keywords,
+            color_mask=fragment_color_mask(fragment_stage[1]),
+            geometry=codes.get("geom"),
+        )
         compilation = {"reflection": reflection, "data": executable, "gpu_program_type": 25}
         variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
     return variants

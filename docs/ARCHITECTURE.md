@@ -2549,6 +2549,9 @@ specifies the exact path in `scene`.
 the bundle additively, selects the scene and reads native occlusion settings.
 It records loaded roots, MeshRenderer counts, the resolved data reference
 and Umbra sizes around activation, then unloads the scene and its bundles.
+The fixture requires a resolved occlusion data reference by default. Set
+`expectedOcclusionDataResolved: false` when the pinned source scene proves
+that the reference is absent, as in Bazaar.
 The optional `loadMode: "Single"` control loads the same inputs alone and
 creates a blank scene for teardown. The receipt records which mode ran.
 The editor exposes the data reference. Serialized scene checks cover the
@@ -8337,12 +8340,27 @@ readback verified all 124 relocations. The Unity 2021.3.45f2 content fixture
 loaded the Materials, checked their saved bindings and unloaded the bundles.
 Canonical admission and linked Android draw checks remain open.
 
+The Fungal HGStandard Material profile selects six original class-21 bodies
+through `record_produce.py`. Scoped preparation binds the signed Deferred
+Standard Shader and its two ordered fallbacks to the retained texture
+suppliers. Persisted readback recovers all six source bodies after reversing
+44 pointer relocations. The exact editor checked 38 saved texture links and
+unloaded the bundles. Canonical graph admission and Android scene draws
+remain open.
+
 The Ancient Loft pillar Material profile selects two original class-21
 bodies through `record_produce.py`. Bundle preparation binds the saved
 Shader to the signed Terrain Blend and restores the saved texture links
 using pinned Android suppliers. The exact-editor fixture checks those links
 and unloads its bundles. Release composition preserves both Material slots
 in the original animated pillar preload groups.
+
+The Soul1 Crystal Material profile selects two original class-21 bodies
+through `record_produce.py`. Scoped bundle preparation joins the signed
+Crystal Shader and its ordered fallbacks to the retained texture suppliers.
+The exact-editor fixture checks both Materials and their saved texture links
+and unloads the bundles. Canonical composition preserves 87 original scene
+fields. Crystal_opt uses its own Shader route and remains pending.
 
 The Ancient Loft animated pillar FBX profiles use `record_produce.py` for
 the original hierarchy, Animator, SkinnedMeshRenderer and AnimationClip
@@ -8640,6 +8658,9 @@ both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform wi
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
 linked envelope. It feeds source layouts through the existing
 `shader_produce.py` parameter writer and emits a typed replacement pack.
+The linker derives the Vulkan color attachment mask from each original
+fragment output signature. Deferred G-buffer variants enable every declared
+target. Depth-only variants keep bit zero, as in the exact editor's envelope.
 For shaders with ordinary vertex and fragment passes, the translator retains
 subshader and pass order and render state. The shared record writer merges
 the per-pass Vulkan tables and relocates their program and parameter indices
@@ -8662,7 +8683,9 @@ constant arrays, member offsets and strides through the same native parameter
 writer. Unity typed-loaded the additional texture and instancing variants.
 The graphics linker assigns distinct vertex and fragment uniform bindings and
 preserves the native Unity instancing buffer names. When both stages consume
-`UnityDrawCallInfo`, they share its binding with both stage flags. The Android
+`UnityDrawCallInfo` or the same `UnityInstancing_` buffer, the linker serializes
+one declaration with both stage flags and routes both programs to its binding.
+Unity assigns Vulkan constant buffer bindings by name. The Android
 Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
 instances. It also draws Cloud Intersection Remap with the directional plain
 and instanced variants and depth fade disabled. The same fixture draws both
@@ -8839,6 +8862,12 @@ prefab hierarchy through `record_produce.py`. Bundle preparation preserves
 the 40 source preload slots before 31 additional endpoints. Five MeshFilter
 references resolve through the two source Meshes and three retained Commando
 records. The scoped editor fixture loads the prefab and unloads the bundle.
+
+The PeaceFlowerOld profile supplies both original Lights and their prefab
+hierarchy through `record_produce.py`. The scoped bundle keeps 78 original
+preload slots in order before 14 additional endpoints. Persisted readback
+verifies each Light and its reciprocal GameObject component reference. The
+scoped exact-editor fixture loads the prefab and unloads the bundle.
 
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It

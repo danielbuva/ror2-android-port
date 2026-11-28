@@ -1,0 +1,106 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-fungal_assets_all_02ebe219595cd36e25215b25d9e114a5.bundle",
+      "sha256": "afa9c89e4c8cc6aa918e19a9d80f72209fa575e185c0ce8ffd6a7c4b2163b4d3",
+      "members": [
+        {
+          "name": "CAB-674aeb7179f0413a005ef00cbe750146",
+          "objects": [
+            {
+              "path_id": -6909060280473789110,
+              "class_id": 21,
+              "sha256": "c89ea246608fcc74d514881dc7edf6bafefc2cf1c47e9d0fb3b67c090277b870",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1970330036303715216,
+                  "bytes": 2380,
+                  "sha256": "c89ea246608fcc74d514881dc7edf6bafefc2cf1c47e9d0fb3b67c090277b870",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -4958803620747660758,
+              "class_id": 21,
+              "sha256": "c0e6f643d879bcbf8ac46a82a419bb54c75831b3f8f321172ddfb30d5f3cd982",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3594811534658127691,
+                  "bytes": 2388,
+                  "sha256": "c0e6f643d879bcbf8ac46a82a419bb54c75831b3f8f321172ddfb30d5f3cd982",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -3544684836293025732,
+              "class_id": 21,
+              "sha256": "a9231d0a68aae2f2b55e7f1c27cd392423f82a87e016220e57cea0640e68475b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5083621665279063217,
+                  "bytes": 2396,
+                  "sha256": "a9231d0a68aae2f2b55e7f1c27cd392423f82a87e016220e57cea0640e68475b",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -3311986039969557788,
+              "class_id": 21,
+              "sha256": "a51a514ff7b5156c25307d200fcee77690f95992ac43f66c71731fe6cec58bed",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 604405830404579660,
+                  "bytes": 2388,
+                  "sha256": "a51a514ff7b5156c25307d200fcee77690f95992ac43f66c71731fe6cec58bed",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": 1531437574672819685,
+              "class_id": 21,
+              "sha256": "64b76c671b76cee1c53db4ffa37faba524e8a0933233aaefd47121ce201438a8",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5091348225618975420,
+                  "bytes": 2388,
+                  "sha256": "64b76c671b76cee1c53db4ffa37faba524e8a0933233aaefd47121ce201438a8",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": 5631806990001931431,
+              "class_id": 21,
+              "sha256": "5c715280ef513976b6f2af69c647458180bad606d2a89da73f9b35899dde07e2",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 301322304033259324,
+                  "bytes": 2388,
+                  "sha256": "5c715280ef513976b6f2af69c647458180bad606d2a89da73f9b35899dde07e2",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

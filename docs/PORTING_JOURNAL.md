@@ -4956,6 +4956,21 @@ Evidence: `work/coordination/p1-phonepipe/2026-11-27/replay/terminal.done.json`.
 The runner removed its attempt scratch, preserved staged inputs, slept the
 display and released the lease. Typed load and gameplay remain open.
 
+## J1584 — Restore Artificer's native Fire Bolt ghost materials
+
+2026-11-28. The body visual owner prepares the configured Fire Bolt projectile
+and detached ghost before the native state fires. Assisted Distant Roost recorded
+one paired Primary activation, zero on other slots, and all slots back at Idle.
+Four active ghost slots used Android variants 0/36 and two inactive enabled
+slots used variant 105. All six used queue 3000. The trace matched the native
+Quick impact pool and recorded its point light.
+Frozen 266-member payload, APK SHA-256 `9ec4c90f3e6f3e50197141ef717aa5adf9bb101fa99b1071e4556177ace4da40` (source `741d7673`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/artificer-fire-bolt-full-binding-main-nova/`
+includes the terminal receipt, launch video, snapshot and terminal Unity log.
+Final snapshot was 95.23 FPS / 10.50 ms. CPU/GPU peaked at 96.7 °C without a
+three-second threshold crossing. Battery held 31 °C. Adopted placement, scratch
+cleanup, OLED sleep and lease release passed. Matched PC rendering remains open.
+
 ## J1545 — Return to the menu after End Run in converted Distant Roost
 
 2026-11-27. V46 ordinary Start gave Commando native authority in Distant Roost.
@@ -5308,3 +5323,21 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `snow-topped-draw-device-01/terminal.done.json` and
 `signed-snow-topped-device-01/terminal.done.json`. Linked scene draws,
 ShadowCaster readback and whole-game scoring remain open.
+
+## J1583 — Preserve Deferred Vulkan attachments and shared instance buffers
+
+2026-11-28 UTC. The source linker uses DXBC fragment output masks for
+Vulkan color attachments and declares shared instance buffers once.
+HGStandard APK `43a9cfd58a0f8f3ee795f5e82201a8396446e5ee15e7a828d20e2f7caf037bef`
+matched six albedo samples, specular values 51 and 204, and distinct
+red and green per-instance light probes with a blue background.
+Crystal APK `41826200086f23414ba0f5bb3db75f1a91bb68862e99b5cc63f23c966a31c323`
+matched ordinary Deferred and both per-instance fade swaps. Both packages
+were removed. Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `hgstandard-draw-device-03/terminal.done.json` and
+`crystalshader-draw-device-02/terminal.done.json`.
+Signed Crystal and HGStandard replays matched all host outputs in
+`signed-crystalshader-device-02/` and `signed-hgstandard-device-05/`. HGStandard
+bundle `17f40a04990689fc0a08d29a60b5c3e707d46db26973d276b72a56215a7eb02a`
+took 1056.21 s at 221.83 MiB peak RSS and 64.5 °C peak CPU/GPU. Both signed
+apps were removed. Linked scene draws and whole-game scoring remain open.
