@@ -7919,6 +7919,25 @@ and hashes, following the pinned AssetRipper member and saved-property
 lookup. Serialized bodies, generated packs and local paths stay under
 ignored `work/`.
 
+## MolotovClusterGhost native records (2026-11-28)
+
+`owner-molotov-cluster-ghost-native-records.json` selects 35 original
+records through `record_produce.py`, including the Light and its reciprocal
+GameObject owner. The scoped bundle preserves 37 ordered source preload
+slots before three additional destinations. Persisted readback reverses
+all 81 relocated PPtrs to recover the original record hashes. Preparation
+uses the existing source MonoScript registry supplier for the two managed
+components.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-molotov-cluster-ghost-native-records.json` | `130fe57ad33b5a793a7e41d8e43fdfe5d3769c8b88919a03df2a91f79d0f2e85` |
+
 ## PlasmaCoreGhost native records (2026-11-27)
 
 `owner-plasmacore-ghost-native-records.json` selects 23 original records
