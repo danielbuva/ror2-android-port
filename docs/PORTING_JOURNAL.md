@@ -5293,3 +5293,18 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `solus-heart-geometry-draw-device-02/terminal.done.json` and
 `signed-solus-heart-device-01/signed_artifact.json`. Linked
 gameplay draws and whole-game scoring remain open.
+
+## J1582 — Draw original Snow Topped variants on Android Vulkan
+
+2026-11-28 UTC. Translated 296 Deferred and 148 ShadowCaster variant pairs.
+Exact Unity typed-loaded Snow Topped and its original Diffuse and VertexLit
+fallbacks. Ordinary and instanced Vulkan Deferred draws both read half
+magenta, clear blue and half yellow using the Void Island SE keyword pair.
+APK `e5428b06e96052a02b42d35d46473be7f46e7268df5c4c4b5fe9edfc9209d1c4`.
+Signed bundle `29ad48261ef21bf4e2f14fe1dc02da52e9e37861002373eec5716065e0c6e9c7`
+matched all host artifacts in 286.48 s at 112.22 MiB peak child RSS and
+66.5 °C peak CPU/GPU. Package removal and lease release passed for both runs.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`snow-topped-draw-device-01/terminal.done.json` and
+`signed-snow-topped-device-01/terminal.done.json`. Linked scene draws,
+ShadowCaster readback and whole-game scoring remain open.

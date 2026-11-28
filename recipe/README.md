@@ -8047,3 +8047,17 @@ and writes its record pack under ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-whole-game-soul1-fungal-material-records.json` | `093ac4aa8d802f42955c58044261d0fbd848eb64f3abd3a1d763c2de37b4c6b1` |
+
+## Snow Topped graphics translation (2026-11-28)
+
+The profile selects the original Snow Topped Shader and supplies the existing
+Commando fallback alias through the signed graphics translation producer.
+The provenance, privacy, licensing and sensitive-content review covered
+native record selectors, destination identity, public tool bindings and
+verification hashes. The producer reads the user's accepted PC installation
+and writes regenerated Shader data under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-snow-topped-graphics-translation.json` | `4ccb0361513a69c752ef710328d01cf721321354ea876669c5563d4a3feb0c85` |
+| `jobs/owner-snow-topped-graphics-translation.json` | `938398c73789394deec7e2636cde730b9aca028b80e471e6bc54987b9d36c392` |
