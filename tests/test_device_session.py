@@ -1928,6 +1928,53 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(result["install_to_pid_seconds"], 25)
         self.assertEqual(json.loads((self.output / "launch.json").read_text())["pid"], "73")
 
+    def test_fresh_install_launch_releases_lease_without_game_runtime_directory(self):
+        request = dict(self.request, mode=runner.INSTALL_LAUNCH, install_transport="streaming")
+        target = mock.Mock(package=request["package"])
+        target.exists.return_value = False
+        target.receipt.side_effect = lambda name: self.root / name
+        target.install.return_value = {"dispatch_monotonic": 0}
+        target.owned.return_value = {"package_path": "package:/fixture/base.apk", "apk_sha256": self.digest}
+        target.sh.side_effect = lambda command, *args, **kwargs: {
+            "sh": process_snapshot(),
+            "sha256sum": self.digest + "  /fixture/base.apk",
+            "am": "",
+        }[command]
+        target.reset.return_value = {"removed": True}
+        independent = mock.Mock()
+        independent.exists.return_value = False
+        independent.storage.return_value = {"mode": "internal"}
+        independent.display.return_value = True
+        stale_runtime = target.receipt("runtime.json")
+        stale_runtime.touch()
+        thermal = mock.Mock(error=None, admission_battery={}, peak_cpu_gpu_celsius=30, time_above_80_seconds=0)
+
+        with (
+            mock.patch.object(runner, "source_environment"),
+            mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=32 * 1024**3)),
+            mock.patch.object(device_module, "Device", side_effect=[target, independent]),
+            mock.patch.object(runner, "placement", return_value={}),
+            mock.patch.object(runner, "prepare_launch") as prepare,
+            mock.patch.object(runner, "ensure_runtime", side_effect=FileNotFoundError("runtime files")) as runtime,
+            mock.patch.object(runner, "reset_idle") as reset,
+            mock.patch.object(runner, "launch", return_value={"pid": "73"}),
+            mock.patch.object(batch, "_GameThermalOwner", return_value=thermal),
+            mock.patch.object(batch, "_prune"),
+        ):
+            result = runner.execute(request)
+
+        self.assertTrue(result["success"], result.get("error") or result.get("cleanup_errors"))
+        self.assertEqual(result["terminal_readback"], {"installed": False, "oled_asleep": True})
+        self.assertTrue(result["lease_released"])
+        self.assertIn("install_to_pid_seconds", result)
+        target.install.assert_called_once_with(self.apk, mode="streaming")
+        target.reset.assert_called_once_with()
+        prepare.assert_called_once_with(target, result["prelaunch"], verify_display=True)
+        independent.display.assert_called_once_with(False)
+        runtime.assert_not_called()
+        reset.assert_not_called()
+        self.assertFalse(stale_runtime.exists())
+
     def test_only_resumed_peer_is_reset_before_converted_launch(self):
         peer = "dev.ror2lab.arm64"
         target = mock.Mock(package="dev.ror2lab.converted")

@@ -512,9 +512,13 @@ def keyguard_state(device):
     return dict(showing=any(flag == "true" for flag in flags) if flags else None, secure=secure[0] == "true" if secure else None)
 
 
-def prepare_launch(device, record):
+def prepare_launch(device, record, *, verify_display=False):
     """Dismiss an unsecured keyguard before either owned launcher runs."""
-    device.sh("input", "keyevent", "KEYCODE_WAKEUP")
+    if verify_display:
+        if not device.display(True):
+            raise RuntimeError("Display wake verification failed")
+    else:
+        device.sh("input", "keyevent", "KEYCODE_WAKEUP")
     record["before"] = keyguard_state(device)
     if record["before"]["showing"] is not False and record["before"]["secure"] is True:
         raise RuntimeError("Secure keyguard requires user credential; device run aborted before launch")
@@ -1633,6 +1637,7 @@ def execute(request, *, queued=False):
     active_hash = None
     temporary_package_was_present = False
     initial_hash_pending = False
+    start_attempt = None
     started = time.monotonic()
     prior_selectors = command_selectors()
     try:
@@ -1723,36 +1728,36 @@ def execute(request, *, queued=False):
             active_hash = request["apk_sha256"]
             check_lab_processes(device, result["process_checkpoints"], "install")
             result["storage_after"] = placement(device, payload_size + DEVICE_RESERVE_BYTES)
-            runtime = ensure_runtime(device)
-            if "payload_directory" in request:
-                result["sync"] = device.sync(Path(request["payload_directory"]), replace_previous=True, cleanup=cleanup)
-                if "install_recovery" in result:
-                    result["install_recovery"]["payload_resynced"] = True
-                result["storage_after_sync"] = placement(device, DEVICE_RESERVE_BYTES)
-            result["installed_idle"] = _idle_readback(device, active_hash)
-            exception_log = runtime + "/exceptions.jsonl"
-            initial_exception_bytes = exception_log_size(device, exception_log)
-            initial_scratch = diagnostic_scratch(device, runtime)
-            mapping = checked_mapping(request) if "input_mapping" in request else None
-            start_attempt = None
-            if request.get("start_from_menu") or request.get("capture_video"):
-                # APK inspection can starve the in-process thermal sampler. A checked
-                # mapping already binds its attempt to the installed APK hash.
-                start_attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(device.owned())
-            for name, payload in (
-                ("diagnostics.json", request.get("diagnostics")),
-                ("movement-batch-selection.json", request.get("selection") if request["mode"] == "launch" else None),
-                ("nova-input-mapping.json", mapping),
-            ):
-                if payload is None:
-                    continue
-                remote = runtime + "/" + name
-                previous = device.sh("cat", remote, check=False)
-                restore[remote] = previous if previous.lstrip().startswith("{") else None
-                save(output / name, payload)
-                device.cmd("push", str(output / name), remote)
-                if json.loads(device.sh("cat", remote)) != payload:
-                    raise RuntimeError("Uploaded config differs: " + name)
+            if not install_launch:
+                runtime = ensure_runtime(device)
+                if "payload_directory" in request:
+                    result["sync"] = device.sync(Path(request["payload_directory"]), replace_previous=True, cleanup=cleanup)
+                    if "install_recovery" in result:
+                        result["install_recovery"]["payload_resynced"] = True
+                    result["storage_after_sync"] = placement(device, DEVICE_RESERVE_BYTES)
+                result["installed_idle"] = _idle_readback(device, active_hash)
+                exception_log = runtime + "/exceptions.jsonl"
+                initial_exception_bytes = exception_log_size(device, exception_log)
+                initial_scratch = diagnostic_scratch(device, runtime)
+                mapping = checked_mapping(request) if "input_mapping" in request else None
+                if request.get("start_from_menu") or request.get("capture_video"):
+                    # APK inspection can starve the in-process thermal sampler. A checked
+                    # mapping already binds its attempt to the installed APK hash.
+                    start_attempt = mapping["attempt"] if mapping is not None else attempt_from_installed(device.owned())
+                for name, payload in (
+                    ("diagnostics.json", request.get("diagnostics")),
+                    ("movement-batch-selection.json", request.get("selection") if request["mode"] == "launch" else None),
+                    ("nova-input-mapping.json", mapping),
+                ):
+                    if payload is None:
+                        continue
+                    remote = runtime + "/" + name
+                    previous = device.sh("cat", remote, check=False)
+                    restore[remote] = previous if previous.lstrip().startswith("{") else None
+                    save(output / name, payload)
+                    device.cmd("push", str(output / name), remote)
+                    if json.loads(device.sh("cat", remote)) != payload:
+                        raise RuntimeError("Uploaded config differs: " + name)
         # Each invocation starts its own cooldown budget here, never a caller's clock.
         if thermal is None:
             thermal = _GameThermalOwner(
@@ -1767,8 +1772,11 @@ def execute(request, *, queued=False):
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600
         thermal.phase = request["mode"]
         prelaunch = result.setdefault("prelaunch", {})
-        prepare_launch(device, prelaunch)
-        if request.get("dismiss_usb_chooser"):
+        if install_launch:
+            prepare_launch(device, prelaunch, verify_display=True)
+        else:
+            prepare_launch(device, prelaunch)
+        if not install_launch and request.get("dismiss_usb_chooser"):
             dismiss_usb_chooser(device, runtime, prelaunch.setdefault("usb_chooser", {}))
         if request["mode"] == "owner-unplugged":
             zones = [(kind, path) for name, path in thermal.runtime_zones if (kind := thermal_sensor_kind(name))]
@@ -1814,7 +1822,7 @@ def execute(request, *, queued=False):
                 except BaseException:
                     cleanup_errors.append(name + ": " + traceback.format_exc())
 
-            if device and active_hash and not installed_alpha:
+            if device and active_hash and not (installed_alpha or install_launch):
                 try:
                     pid = next(
                         (checkpoint["verified_launch_pid"] for checkpoint in reversed(result["process_checkpoints"]) if "verified_launch_pid" in checkpoint),
@@ -1894,7 +1902,7 @@ def execute(request, *, queued=False):
                     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
                     retain_diagnostic_scratch(device, runtime, initial_scratch, output, cleanup)
 
-                if not installed_alpha:
+                if not (installed_alpha or install_launch):
                     clean("diagnostic-scratch", retain_scratch)
                     clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {}), cleanup))
                     clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {}), cleanup))
