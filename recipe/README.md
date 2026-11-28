@@ -8232,6 +8232,33 @@ and writes its record pack under ignored `work/`.
 | --- | --- |
 | `owner-whole-game-soul1-damage-zone-material-record.json` | `c16848f5a932787995cbf5ffdb2d854f8419800764d29f6fef9b0f20edef00e0` |
 
+## HGStandard graphics translation (2026-11-28)
+
+The profile selects the original Deferred Standard Shader for the signed
+graphics translation producer and keeps its Commando destination. The
+provenance, privacy, licensing and sensitive-content audit covered the
+native record selector, destination, public compiler bindings and hashes.
+The producer reads the accepted PC installation and emits its Vulkan record
+under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-hgstandard-graphics-translation.json` | `9bf7d2ed28c3cdaefcc8698378fba849f0ca86773e69e0310bff8e993596ef78` |
+| `jobs/owner-hgstandard-graphics-translation.json` | `d46182ff7205d14a1727cb54b95debc7f783db1509609cadd4a210571855d221` |
+
+## CrystalShader graphics translation (2026-11-28)
+
+The signed graphics job selects the original DLC4 Deferred Crystal Shader at
+its whole-game destination. The review covered source and destination
+selectors, public tool bindings and verification hashes for provenance,
+privacy, licensing and sensitive content. The job reads the accepted PC
+installation and emits the Vulkan record under ignored `work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-crystalshader-graphics-translation.json` | `f6ffd4f5bc42384dad4395b6b89903361f65d89e52e1e145aaaad4c93186f578` |
+| `jobs/owner-crystalshader-graphics-translation.json` | `62bedee5d7a2201398bc0677df39e6ad8db00d28dca5d8b2a1afc80ec0489fa8` |
+
 ## Soul1 Crystal Material records (2026-11-28)
 
 The profile selects two original Materials used by 87 Soul1 scene fields.
