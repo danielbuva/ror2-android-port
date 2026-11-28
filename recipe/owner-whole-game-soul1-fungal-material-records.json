@@ -1,0 +1,72 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-soul-common_assets_all_2f11e141aea0fd7416f52bc8397a3249.bundle",
+      "sha256": "15ecdf7bb32beb7ca46d6b9d4afe03c0e919cbc327268ec4cba55786f9a50727",
+      "members": [
+        {
+          "name": "CAB-5a54ed2ad025ce33628377374bf548d2",
+          "objects": [
+            {
+              "path_id": -3793260776140898031,
+              "class_id": 21,
+              "sha256": "a498a0056f9d7ad2db35b5d27ca892c00b9a836aaeeeab88709336c9abef878d",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6274305037308483646,
+                  "bytes": 2396,
+                  "sha256": "a498a0056f9d7ad2db35b5d27ca892c00b9a836aaeeeab88709336c9abef878d",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -1346252942685707513,
+              "class_id": 21,
+              "sha256": "f480d7da24e8f5f2bbb9c5dce76231ff2043877445f85c431de66f295ac9c15b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 432333192874557757,
+                  "bytes": 2368,
+                  "sha256": "f480d7da24e8f5f2bbb9c5dce76231ff2043877445f85c431de66f295ac9c15b",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4_static_assets_all_0697ff54b6972e7083342648968fda1a.bundle",
+      "sha256": "41e13315987059fdc06089f66e02a4e8958a807886aee13c183f5e9eb1831b86",
+      "members": [
+        {
+          "name": "CAB-9a62a3c3d5e29edc0f59db4d01a2119e",
+          "objects": [
+            {
+              "path_id": 6870530351931882764,
+              "class_id": 21,
+              "sha256": "ff80b7011d1a4b926bbc54dcb6f07a0ab748425de3f4fcded595260b1fc25839",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5032964778905423794,
+                  "bytes": 2368,
+                  "sha256": "ff80b7011d1a4b926bbc54dcb6f07a0ab748425de3f4fcded595260b1fc25839",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
