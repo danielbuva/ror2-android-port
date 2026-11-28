@@ -7898,6 +7898,27 @@ from the user's installation and writes the pack under ignored `work/`.
 | --- | --- |
 | `owner-nest-fbx-native-records.json` | `00330558b4b1fad6131bd4d34dfb3d1dba7699f835ea963457d97e005b7c8545` |
 
+## Void Infestor FBX records (2026-11-28)
+
+The three profiles select 64 hierarchy records, three Meshes and one
+Avatar from the original Void Infestor FBX. The scoped bundle resolved three
+retained Commando Materials and preserved 222 pointer fields and 71 ordered
+preload slots. Unity 2021.3.45f2 loaded and unloaded five GameObjects, three
+Meshes and the Avatar. Canonical catalog routing and Android acceptance
+remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative original bundle selectors, member and object IDs, class IDs,
+record extents, verification hashes and existing Mesh producer options.
+The producers read the user's original installation and write derived
+records and evidence under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-void-infestor-fbx-avatar.json` | `99258ba8ea5402c951b223dd786a8516fdb61c939913b5472d2ebc7eda870c35` |
+| `owner-void-infestor-fbx-meshes.json` | `2eb65846e6ede91fcb1f302cd6293cfbedaafa10e24bab100ea50f57892c654c` |
+| `owner-void-infestor-fbx-native-records.json` | `f3dd10f836d8ea7ee3bc28beb55a18fb4b7eeef38b0387c90cfbcaf5e80a0e2e` |
+
 ## Sad1 and Fungal native Material records (2026-11-27)
 
 | Profile | SHA-256 |

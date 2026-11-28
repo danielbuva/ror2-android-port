@@ -8820,6 +8820,14 @@ The exact-editor fixture loads each advertised GameObject and Mesh and
 unloads the bundle. The source preload sequence remains a release graph
 admission requirement for this cohort.
 
+The Void Infestor FBX profiles use `record_produce.py` for 64 hierarchy
+records, `mesh_produce.py` for three Meshes and `avatar_produce.py` for the
+Animator's Avatar. The existing scoped bundle preparer resolves three
+Materials through the Commando bundle and keeps the 71 original preload
+slots in order. Unity 2021.3.45f2 loads and unloads nine typed subassets.
+Canonical preparation owns the original GUID and path routes and verifies
+the retained order before signed delivery.
+
 The MolotovClusterGhost profile feeds the original Light, owning prefab
 hierarchy, particle system and managed components to `record_produce.py`.
 Bundle preparation uses the existing MonoScript registry supplier and keeps

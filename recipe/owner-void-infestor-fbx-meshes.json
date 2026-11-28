@@ -1,0 +1,67 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-elitevoid_static_assets_all_4402a3bc80c4d94b9bca1ca5d1bc2801.bundle",
+      "sha256": "9c900ee923be00a45695ca3186b7eacd4aca1fa60fb37b26f928c1938f5fed63",
+      "members": [
+        {
+          "name": "CAB-25f2ce8d5e19a650b6e6483f39cee3ae",
+          "meshes": [
+            {
+              "path_id": -4976647068891632973,
+              "sha256": "ebc1a32f6e1578444878319bb628afee144883904869128b5584566d2d99c5e4",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2747695831386467361,
+                  "sha256": "cf4a1380940aa8431fdce1dd30dbd941412b702526306e0d2b4e39eef4c1de2d",
+                  "bytes": 17624,
+                  "ops": {
+                    "m_KeepVertices": true,
+                    "m_KeepIndices": true,
+                    "m_MeshUsageFlags": 0
+                  }
+                }
+              ]
+            },
+            {
+              "path_id": -2377759181498635597,
+              "sha256": "672c43f294d1b2fe26b7f5f9a434db9ec8c96022204e399d30d1ef9d17c7babc",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4493468709291202391,
+                  "sha256": "d30d629d451af4e2efda96ea1dc012865b3062e74460291c65d7ca02d42204ee",
+                  "bytes": 368664,
+                  "ops": {
+                    "m_MeshUsageFlags": 0
+                  }
+                }
+              ]
+            },
+            {
+              "path_id": 407839963365419699,
+              "sha256": "6b70fcbfdd94727d74aa2bb377c88bfbb59c478d79082988673464247f18f51e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5149903891919585433,
+                  "sha256": "3cac9606318e4fc45a1df19e8ea26e32ef39622fe179d893094706d02c620b70",
+                  "bytes": 170680,
+                  "ops": {
+                    "m_MeshUsageFlags": 0
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "excluded": []
+}
