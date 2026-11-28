@@ -130,6 +130,11 @@ namespace EntityStates.Mage.Weapon
         public static GameObject configuredProjectile;
         public GameObject projectilePrefab = configuredProjectile;
     }
+    public class FireFireBolt
+    {
+        public static GameObject configuredProjectile;
+        public GameObject projectilePrefab = configuredProjectile;
+    }
 }
 namespace EntityStates.Treebot.Weapon
 {
@@ -377,6 +382,7 @@ static partial class Fixture
         };
         var mortarExpander = new Renderer { sharedMaterials = new[] { mortarCharge } };
         var bombGhost = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
+        var boltGhost = new ParticleSystemRenderer { sharedMaterials = new[] { original }, trailMaterial = original };
         var mercNormal = new Renderer { sharedMaterials = new[] { original } };
         var mercFinisher = new Renderer { sharedMaterials = new[] { original } };
         var normal = new Renderer { sharedMaterials = new[] { original } };
@@ -394,6 +400,10 @@ static partial class Fixture
         EntityStates.Mage.Weapon.ThrowNovabomb.configuredProjectile = new GameObject { components = new[] {
             new RoR2.Projectile.ProjectileController { ghostPrefab = new GameObject { components = new[] { bombGhost } } }
         } };
+        var fireBolt = new GameObject { components = new[] {
+            new RoR2.Projectile.ProjectileController { ghostPrefab = new GameObject { components = new[] { boltGhost } } }
+        } };
+        EntityStates.Mage.Weapon.FireFireBolt.configuredProjectile = fireBolt;
         WholeCatalogComposed.mercNormal = new GameObject { components = new[] { mercNormal } };
         WholeCatalogComposed.mercFinisher = new GameObject { components = new[] { mercFinisher } };
         EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
@@ -437,6 +447,10 @@ static partial class Fixture
         Check(bombGhost.trailMaterial.shader.name == "Recovered/" + original.shader.name &&
               session.worldLootSourceTrails[bombGhost] == original,
               "Mage Nano-Bomb ghost trail should be prepared and its original retained");
+        Check(EntityStates.Mage.Weapon.FireFireBolt.configuredProjectile == fireBolt &&
+              boltGhost.trailMaterial.shader.name == "Recovered/" + original.shader.name &&
+              session.worldLootSourceTrails[boltGhost] == original,
+              "Mage Fire Bolt should keep its native projectile and recover the ghost trail");
         var recoveredRim = mortarSphere.sharedMaterials[0];
         Check(EntityStates.Treebot.Weapon.AimMortar2.configuredEndpoint == mortarEndpoint &&
               recoveredRim.shader.name == "Recovered/Intersection" && recoveredRim.srcBlend == 5 &&
@@ -452,7 +466,7 @@ static partial class Fixture
               "Mortar projectile must retain its native prefab and additive charge material properties");
         Check(!EntityStates.Merc.GroundLight.comboSwingEffectPrefab && !EntityStates.Merc.GroundLight.comboFinisherSwingEffectPrefab,
               "Merc presentation must leave native state configuration to the game");
-        foreach (var renderer in new Renderer[] { flame, charge, disperseGlow, bombGhost, mercNormal, mercFinisher })
+        foreach (var renderer in new Renderer[] { flame, charge, disperseGlow, bombGhost, boltGhost, mercNormal, mercFinisher })
         {
             var material = renderer.sharedMaterials[0];
             Check(material.shader.name == "Recovered/" + original.shader.name &&
@@ -479,7 +493,7 @@ static partial class Fixture
         queenOperation.Status = AsyncOperationStatus.Succeeded;
         Check(!prepare.MoveNext() && unavailable.Count == 0 &&
               EntityStates.BeetleQueenMonster.FireSpit.projectilePrefab == queenReference &&
-              session.worldLootSourceMaterials.Count == 14, "Queen preparation must retain native state configuration");
+              session.worldLootSourceMaterials.Count == 15, "Queen preparation must retain native state configuration");
         foreach (var renderer in new[] { queenGas, queenSpittle })
             Check(renderer.sharedMaterials[0].shader.name == "Recovered/" + original.shader.name &&
                   session.worldLootSourceMaterials[renderer][0] == original,
@@ -551,30 +565,30 @@ static partial class Fixture
         foreach (var copy in session.worldMaterials) UnityEngine.Object.Destroy(copy);
         Check(indicator.teamMaterialPairs == pairs && enemy && unrelated && unrenderable, "team material source ownership did not unwind");
     }
-    static void CheckMortarImpactIdentity()
+    static void CheckNativeImpactIdentity()
     {
         var prefab = new GameObject();
         var instance = new GameObject { scene = new GameObject.Scene { valid = true }, activeInHierarchy = true };
         var pool = new EffectPool { PrefabObject = prefab };
         var helper = new EffectManagerHelper { OwningPool = pool };
         var effect = new EffectComponent { gameObject = instance, helper = helper };
-        Check(MortarImpactIdentity(effect, prefab, 275) == "pool prefab", "unindexed pooled impact was missed");
+        Check(NativeImpactIdentity(effect, prefab, 275) == "pool prefab", "unindexed pooled impact was missed");
         pool.PrefabObject = new GameObject();
         effect.effectIndex = 275;
-        Check(MortarImpactIdentity(effect, prefab, 275) == null, "foreign pool matched the impact");
+        Check(NativeImpactIdentity(effect, prefab, 275) == null, "foreign pool matched the impact");
         helper.OwningPool = null;
-        Check(MortarImpactIdentity(effect, prefab, 275) == "instance index", "direct impact was missed");
-        Check(MortarImpactIdentity(effect, prefab, 276) == null, "unrelated direct instance matched the impact");
+        Check(NativeImpactIdentity(effect, prefab, 275) == "instance index", "direct impact was missed");
+        Check(NativeImpactIdentity(effect, prefab, 276) == null, "unrelated direct instance matched the impact");
         instance.activeInHierarchy = false;
-        Check(MortarImpactIdentity(effect, prefab, 275) == null, "inactive impact was observed");
+        Check(NativeImpactIdentity(effect, prefab, 275) == null, "inactive impact was observed");
         instance.activeInHierarchy = true;
         instance.scene.valid = false;
-        Check(MortarImpactIdentity(effect, prefab, 275) == null, "asset was observed as a live impact");
+        Check(NativeImpactIdentity(effect, prefab, 275) == null, "asset was observed as a live impact");
     }
 
     static void Main()
     {
-        CheckMortarImpactIdentity();
+        CheckNativeImpactIdentity();
         var body = new Material("Hopoo Games/Deferred/Standard", "source tint/textures/queue/keywords");
         var trail = new Material("Hopoo Games/FX/Cloud Remap", "source trail properties");
         var unknown = new Material("Unknown shader", "untouched");

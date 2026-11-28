@@ -149,6 +149,25 @@ public sealed partial class PortSession
         public string effectIdentity;
         public Vector3 position;
         public ObjectiveRendererObservation[] renderers;
+        public NativeEffectLightObservation[] lights;
+    }
+    [Serializable]
+    public sealed class NativeEffectLightObservation
+    {
+        public bool enabled, active;
+        public float intensity, range;
+        public Color color;
+        public Vector3 position;
+    }
+    [Serializable]
+    public sealed class MageFireBoltReleaseReport
+    {
+        public int releaseFrame, projectileIndex = -1, impactIndex = -1, screenWidth, screenHeight;
+        public float releaseRealSeconds;
+        public string projectile, impact, error;
+        public bool completed;
+        [NonSerialized] public GameObject impactPrefab;
+        public List<NativeEffectTraceFrame> frames = new List<NativeEffectTraceFrame>();
     }
     [Serializable]
     public sealed class TreebotDisperseReport
@@ -183,6 +202,7 @@ public sealed partial class PortSession
         public int nativeEffectSourceRenderers, nativeEffectSourceMaterials;
         public ObjectiveRendererObservation[] nativeEffectViews;
         public MageBombReleaseReport mageBombRelease;
+        public MageFireBoltReleaseReport mageFireBoltRelease;
         public TreebotDisperseReport treebotDisperse;
         public TreebotMortarReport treebotMortar;
 
@@ -2480,7 +2500,7 @@ public sealed partial class PortSession
                     {
                         foreach (var effect in Resources.FindObjectsOfTypeAll<EffectComponent>())
                         {
-                            var identity = MortarImpactIdentity(effect, treebotMortarImpactPrefab, report.impactIndex);
+                            var identity = NativeImpactIdentity(effect, treebotMortarImpactPrefab, report.impactIndex);
                             if (identity == null)
                                 continue;
                             var root = ObserveNativeEffectRoot(effect.gameObject, "impact");
@@ -2502,7 +2522,89 @@ public sealed partial class PortSession
             }
         }
 
-        static string MortarImpactIdentity(EffectComponent effect, GameObject prefab, int index)
+        void ObserveMageFireBoltRelease(CharacterBody player, float elapsed)
+        {
+            var world = coordinator.r.world;
+            var report = world.mageFireBoltRelease;
+            if (report != null && report.completed)
+                return;
+            var frame = Time.frameCount;
+            var now = Time.realtimeSinceStartup;
+            FireFireBolt release = null;
+            if (report == null)
+            {
+                var primary = player.skillLocator ? player.skillLocator.primary : null;
+                if (!primary || !primary.stateMachine)
+                    return;
+                release = primary.stateMachine.state as FireFireBolt;
+                if (release == null)
+                    return;
+                world.mageFireBoltRelease = report = new MageFireBoltReleaseReport
+                {
+                    releaseFrame = frame, releaseRealSeconds = now,
+                    screenWidth = Screen.width, screenHeight = Screen.height
+                };
+            }
+            try
+            {
+                if (release != null)
+                {
+                    var prefab = release.projectilePrefab;
+                    var explosion = prefab ? prefab.GetComponent<ProjectileImpactExplosion>() : null;
+                    report.projectile = prefab ? prefab.name : null;
+                    report.projectileIndex = prefab ? ProjectileCatalog.GetProjectileIndex(prefab) : -1;
+                    report.impactPrefab = explosion ? explosion.impactEffect ?? explosion.explosionEffect : null;
+                    report.impactIndex = (int)RecordNativeEffect(report.impactPrefab, out report.impact);
+                    Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null,
+                                    "lab-mage-fire-bolt-release frame={0} worldSeconds={1:F3} realSeconds={2:F3}", frame, elapsed, now);
+                }
+                if (now - report.releaseRealSeconds >= 1.25f || report.frames.Count == 120)
+                {
+                    report.completed = true;
+                    report.impactPrefab = null;
+                    coordinator.Save();
+                    return;
+                }
+                if (report.frames.Count != 0 && report.frames[report.frames.Count - 1].frame == frame)
+                    return;
+                var sample = new NativeEffectTraceFrame { frame = frame, worldSeconds = elapsed, realSeconds = now };
+                foreach (var projectile in InstanceTracker.GetInstancesList<ProjectileController>())
+                {
+                    if (!projectile || projectile.owner != player.gameObject || report.projectileIndex < 0 ||
+                        projectile.catalogIndex != report.projectileIndex || !projectile.ghost)
+                        continue;
+                    sample.roots.Add(ObserveNativeEffectRoot(projectile.ghost.gameObject, "ghost", includeInactiveRenderers: true));
+                }
+                if (report.impactPrefab)
+                {
+                    foreach (var effect in Resources.FindObjectsOfTypeAll<EffectComponent>())
+                    {
+                        var identity = NativeImpactIdentity(effect, report.impactPrefab, report.impactIndex);
+                        if (identity == null)
+                            continue;
+                        var root = ObserveNativeEffectRoot(effect.gameObject, "impact");
+                        root.effectIndex = (int)effect.effectIndex;
+                        root.effectIdentity = identity;
+                        root.lights = effect.GetComponentsInChildren<Light>(true).Select(light => new NativeEffectLightObservation
+                        {
+                            enabled = light.enabled, active = light.gameObject.activeInHierarchy,
+                            intensity = light.intensity, range = light.range, color = light.color, position = light.transform.position
+                        }).ToArray();
+                        sample.roots.Add(root);
+                    }
+                }
+                report.frames.Add(sample);
+            }
+            catch (Exception error)
+            {
+                report.error = error.GetBaseException().Message;
+                report.completed = true;
+                report.impactPrefab = null;
+                coordinator.Save();
+            }
+        }
+
+        static string NativeImpactIdentity(EffectComponent effect, GameObject prefab, int index)
         {
             if (!effect || !effect.gameObject.scene.IsValid() || !effect.gameObject.activeInHierarchy)
                 return null;
@@ -2520,12 +2622,12 @@ public sealed partial class PortSession
             return prefab ? EffectCatalog.FindEffectIndexFromPrefab(prefab) : EffectIndex.Invalid;
         }
 
-        NativeEffectTraceRoot ObserveNativeEffectRoot(GameObject root, string role)
+        NativeEffectTraceRoot ObserveNativeEffectRoot(GameObject root, string role, bool includeInactiveRenderers = false)
         {
             var surfaceObserver = coordinator.GetTeleporterWorldSession();
             return new NativeEffectTraceRoot { instanceId = root.GetInstanceID(), role = role, name = root.name,
                                              position = root.transform.position,
-                                             renderers = root.GetComponentsInChildren<Renderer>()
+                                             renderers = root.GetComponentsInChildren<Renderer>(includeInactiveRenderers)
                                                              .Where(renderer => renderer.enabled)
                                                              .Select(renderer => surfaceObserver.ObserveOwnedSurface(renderer, false))
                                                              .ToArray() };
@@ -2569,6 +2671,8 @@ public sealed partial class PortSession
             coordinator.r.performance.clientUpdateMs += PortSession.PerformanceMs(performancePart);
             if (coordinator.r.diagnosticMageBombRelease)
                 ObserveMageBombRelease(player, elapsed);
+            if (coordinator.r.diagnosticMageFireBoltRelease)
+                ObserveMageFireBoltRelease(player, elapsed);
             if (coordinator.r.detailedVisualDiagnostics)
             {
                 ObserveTreebotDisperse(player, elapsed);
