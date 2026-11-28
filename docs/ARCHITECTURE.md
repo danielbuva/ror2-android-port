@@ -8870,10 +8870,14 @@ retains its native table position, configured renderer targets and imported
 material and shader identity. The editor reads the prefab fields without
 starting the components. `TeleporterWorldBoundary` owns runtime preparation
 and restores the source tables during teardown.
-The audit resolves the Vagrant default skin's addressed body material and
-also inspects the direct Mercenary Expose and Acrid disease impact effects. It
-records exposed blend operands and selects recovered resources from saved source
-keywords, as the runtime owner does.
+The audit resolves the Vagrant default skin's addressed body material. For
+null `CharacterModel` defaults with valid material keys, it reports the typed
+address and matching renderer row in skin zero's own `SkinDefParams` in a
+separate table. The five Enforcer defaults verify that join while the source
+slot inventory retains the direct null references. The audit also inspects
+the direct Mercenary Expose and Acrid disease impact effects. It records exposed
+blend operands and selects recovered resources from saved source keywords, as
+the runtime owner does.
 Setup requires the prepared lab project and generated catalog. The private
 editor receipt records typed bindings and resource coverage. Android rendering
 and pixel attribution require matched captures.

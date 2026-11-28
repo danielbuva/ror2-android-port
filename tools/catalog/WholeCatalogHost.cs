@@ -171,6 +171,11 @@ public static class WholeCatalogHost
                 .Where(asset => asset).Distinct().Take(2).ToArray();
             return matches.Length == 1 ? matches[0] : null;
         }
+
+        public T Resolve<T>(AssetReferenceT<T> reference) where T : UnityEngine.Object
+        {
+            return reference != null && reference.RuntimeKeyIsValid() ? Resolve<T>(reference.AssetGUID, reference.SubObjectName) : null;
+        }
     }
 
     static void InspectAnimationSkin(RoR2.SkinDef skin, CatalogAddresses addresses, HashSet<RoR2.SkinDef> visited, JArray rows,
@@ -284,6 +289,7 @@ public static class WholeCatalogHost
         var roots = new JArray();
         var rows = new JArray();
         var runtimeOverrides = new JArray();
+        var addressedSkinMaterials = new JArray();
         var errors = new JArray();
         var families = new Dictionary<string, JObject>(StringComparer.Ordinal);
         var otherFamilies = Resources.Load<TextAsset>("AndroidNativeMaterialFamilies");
@@ -425,6 +431,7 @@ public static class WholeCatalogHost
             if (category == "Projectile")
                 InspectProjectileImpacts(root, path);
             InspectCombatMaterialOverrides(root, path, category, id, Mapping, runtimeOverrides);
+            var models = root.GetComponentsInChildren<RoR2.CharacterModel>(true);
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 var hierarchy = HierarchyPath(renderer.transform);
@@ -436,13 +443,15 @@ public static class WholeCatalogHost
                 for (int slot = 0; slot < materials.Length; slot++)
                     AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", slot,
                                       materials[slot]);
-                foreach (var model in root.GetComponentsInChildren<RoR2.CharacterModel>(true))
+                foreach (var model in models)
                     foreach (var info in model.baseRendererInfos.Where(info => info.renderer == renderer))
                     {
                         var row = AddCombatMaterial(rows, Mapping, id, category, path, renderer, hierarchy, particle, streams,
                                                     "CharacterModel.defaultMaterial", 0, info.defaultMaterial);
                         row["materialAddress"] =
                             info.defaultMaterialAddress == null ? null : Convert.ToString(info.defaultMaterialAddress.RuntimeKey);
+                        if (!info.defaultMaterial && info.defaultMaterialAddress != null && info.defaultMaterialAddress.RuntimeKeyIsValid())
+                            InspectAddressedSkinMaterial(addressedSkinMaterials, addresses, Mapping, id, category, path, model, info);
                     }
                 var billboard = renderer as BillboardRenderer;
                 if (billboard && billboard.billboard)
@@ -507,7 +516,7 @@ public static class WholeCatalogHost
         var skinInfo = parameters.rendererInfos.Single(row => row.renderer && row.renderer.name == "VagrantMesh");
         var reference = skinInfo.defaultMaterialAddress;
         var material = reference != null && reference.RuntimeKeyIsValid()
-                           ? addresses.Resolve<Material>(Convert.ToString(reference.RuntimeKey))
+                           ? addresses.Resolve(reference)
                            : skinInfo.defaultMaterial;
         var vagrant = Location("VagrantBody.prefab");
         if (!material || AssetPath(skinInfo.renderer) != (string)vagrant["path"])
@@ -517,11 +526,18 @@ public static class WholeCatalogHost
                                              "SkinDefParams.defaultMaterial", 0, material);
         skinMaterial["materialAddress"] = reference == null ? null : Convert.ToString(reference.RuntimeKey);
 
+        string enforcer = (string)Location("Enforcer2Body.prefab")["path"];
+        var enforcerBindings = addressedSkinMaterials.Where(row => (string)row["root"] == enforcer).ToArray();
+        if (enforcerBindings.Length != 5 || enforcerBindings.Any(row => (string)row["shader"] == null ||
+                                                                       (bool?)row["matchesBodyAddress"] != true))
+            errors.Add(enforcer + ": default skin does not supply the five addressed body materials");
+
         var result = new JObject {
             ["scope"] =
                 "Native-provider bodies and projectiles, configured ghosts and ProjectileImpactExplosion effects, registered effects, " +
                 "runtime material overrides and targeted source bindings; Android rendering and reference comparison remain open",
             ["roots"] = roots, ["slots"] = rows, ["errors"] = errors, ["runtimeMaterialOverrides"] = runtimeOverrides,
+            ["addressedSkinMaterials"] = addressedSkinMaterials,
             ["projectileGhostBindings"] = new JArray(ghostBindings.Values),
             ["projectileImpactBindings"] = impactBindings,
             ["titanGhostBinding"] = titanGhost, ["fireBoltGhostBinding"] = fireBoltGhost, ["vagrantSkinBinding"] = skinBinding,
@@ -530,6 +546,30 @@ public static class WholeCatalogHost
         };
         File.WriteAllText(outputPath, result.ToString());
         return new { roots = roots.Count, slots = rows.Count, runtimeOverrides = runtimeOverrides.Count, errors = errors.Count, output = outputPath };
+    }
+
+    static void InspectAddressedSkinMaterial(JArray rows, CatalogAddresses addresses, Func<Material, JObject> mapping, int id,
+                                             string category, string path, RoR2.CharacterModel model,
+                                             RoR2.CharacterModel.RendererInfo bodyInfo)
+    {
+        var controller = model.GetComponent<RoR2.ModelSkinController>();
+        var skin = controller ? controller.skins?.FirstOrDefault() : null;
+        var parameters = skin ? addresses.Inspect(new SerializedObject(skin), "skinDefParamsAddress", null, skin.skinDefParams, out _) : null;
+        // Record the selected skin's own parameter row, rather than inferring an applied skin from a catalog hit.
+        var skinInfo = parameters ? parameters.rendererInfos.LastOrDefault(info => info.renderer == bodyInfo.renderer) : default;
+        var reference = skinInfo.defaultMaterialAddress;
+        var material = reference != null && reference.RuntimeKeyIsValid() ? addresses.Resolve(reference) : skinInfo.defaultMaterial;
+        var bodyMaterial = addresses.Resolve(bodyInfo.defaultMaterialAddress);
+        var renderer = bodyInfo.renderer;
+        var row = AddCombatMaterial(rows, mapping, id, category, path, renderer, HierarchyPath(renderer.transform), null,
+                                    new List<ParticleSystemVertexStream>(), "SkinDefParams.defaultMaterial", 0, material);
+        row["skin"] = AssetPath(skin);
+        row["parameters"] = AssetPath(parameters);
+        row["directMaterial"] = AssetPath(skinInfo.defaultMaterial);
+        row["materialAddress"] = reference == null ? null : Convert.ToString(reference.RuntimeKey);
+        row["bodyMaterialAddress"] = Convert.ToString(bodyInfo.defaultMaterialAddress.RuntimeKey);
+        row["bodyAddressMaterial"] = AssetPath(bodyMaterial);
+        row["matchesBodyAddress"] = bodyMaterial && bodyMaterial == material;
     }
 
     static void InspectCombatMaterialOverrides(GameObject prefab, string path, string category, int id,
