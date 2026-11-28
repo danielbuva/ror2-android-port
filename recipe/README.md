@@ -7875,3 +7875,13 @@ ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-plasmacore-ghost-native-records.json` | `e17630d949545d281a49f33bca5ef78656bce30a58144dc11717f5001241b0df` |
+
+## Solus Heart wireframe Shader profile (2026-11-27)
+
+The signed qualification selects the original Texture Scrolling Wireframe
+Shader by its source bundle and native object identity. The profile and job
+retain selectors, hashes and the public producer closure. The producer reads
+D3D11 programs from the legitimate installation, translates the measured
+Vulkan geometry variants locally and retains original property and dependency
+metadata. The signed job witnesses the rebuilt pack. No compiled shader data,
+private paths or device details enter the recipe.
