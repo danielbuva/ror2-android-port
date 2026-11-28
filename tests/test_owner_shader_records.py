@@ -64,7 +64,7 @@ class TranslatedShaderPack(unittest.TestCase):
             entries = [{"m_BlobIndex": index, "m_ShaderRequirements": 1 << index} for index in indices]
             return {"m_PlayerSubPrograms": [[], [], [], entries]}
 
-        shader_pass = {"progVertex": stage(0, 1), "progFragment": stage(2)}
+        shader_pass = {"m_ProgramMask": 6, "progVertex": stage(0, 1), "progFragment": stage(2)}
         records = [{"keywords": keys} for keys in [("FOG_LINEAR",), ("FOG_LINEAR", "VERTEXLIGHT_ON"), ("FOG_LINEAR",), ("UNKNOWN",)]]
         programs = [b"vertex", b"vertex_lit", b"fragment", b"unknown"]
         layout = {"buffers": [], "textures": []}
@@ -116,7 +116,10 @@ class TranslatedShaderPack(unittest.TestCase):
                 },
             }
 
-        source_passes = [source_pass("first"), source_pass("second")]
+        source_passes = [
+            source_pass("first"),
+            dict(source_pass("second"), m_ProgramMask=14, progGeometry={"m_CommonParameters": {"m_TextureParams": []}, "m_PlayerSubPrograms": [[1]]}),
+        ]
         keywords = ["ALT"]
         source = {
             "m_ParsedForm": {
@@ -152,6 +155,7 @@ class TranslatedShaderPack(unittest.TestCase):
         for target, original_pass, variants in zip(result_passes, source_passes, variants_by_pass):
             local, _, programs, parameters = N.variant_records(variants, keywords)
             self.assertEqual(target["m_State"], original_pass["m_State"])
+            self.assertEqual(target["m_ProgramMask"], original_pass["m_ProgramMask"])
             self.assertEqual(target["m_SerializedKeywordStateMask"], [0])
             self.assertEqual(target["m_Platforms"], [18])
             self.assertEqual(target["m_EditorDataHash"], [{f"bytes[{index}]": byte for index, byte in enumerate(N.spooky(local))}])
@@ -162,6 +166,9 @@ class TranslatedShaderPack(unittest.TestCase):
                     [record(raw, p["m_BlobIndex"]) for p in vertex["m_PlayerSubPrograms"][tier]], [record(local, p["m_BlobIndex"]) for p in programs]
                 )
                 self.assertEqual([record(raw, i) for i in vertex["m_ParameterBlobIndices"][tier]], [record(local, i) for i in parameters])
+        self.assertEqual(
+            result_passes[1]["progGeometry"], {"m_CommonParameters": {"m_TextureParams": []}, "m_PlayerSubPrograms": [], "m_ParameterBlobIndices": []}
+        )
 
     def test_vertex_preserves_native_structure_array_and_member_offsets(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
@@ -532,6 +539,17 @@ class NativeRecords(unittest.TestCase):
         self.assertEqual(result[fragment_offset:vertex_offset], fragment)
         self.assertEqual(result[vertex_offset : vertex_offset + vertex_size], vertex)
         self.assertEqual(struct.unpack_from("<I", result, 76), (1,))
+
+    def test_geometry_envelope_uses_the_exact_sdk_extent(self):
+        vertex = b"LOMS" + b"v" * 23
+        fragment = b"LOMS" + b"f" * 25
+        geometry = b"LOMS" + b"g" * 31
+        result = N.linked_vulkan_program(vertex, fragment, geometry=geometry, alpha_clip=False)
+        header = struct.unpack_from("<44I", result)
+        self.assertEqual(header[0], 0x02000020)
+        self.assertEqual(header[9:11], (176 + len(fragment) + len(vertex), len(geometry)))
+        self.assertEqual(header[19], 1)
+        self.assertEqual(result[176:], fragment + vertex + geometry)
 
     def test_inline_sampler_is_written_to_serialized_common_parameters(self):
         compilation = {"reflection": ["sampler: 85 42"], "data": b"gpu", "gpu_program_type": 25}
