@@ -38,14 +38,32 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32[] intersectionSamples;
         public Color32[] cloudRemapSamples;
         public Color32[] terrainDetailOutside;
+        public Color32[] clothDeferredSamples;
+        public Color32[] clothShadowSamples;
+        public Color32[] triplanarSamples;
+        public Color32[] wireframeSamples;
         public bool passed;
         public string failure;
     }
 
-    [Serializable] sealed class ShaderDrawPairReport
+    [Serializable] sealed class ShaderDrawBatchReport
     {
         public string graphics;
         public ShaderDrawReport[] draws;
+        public bool passed;
+    }
+
+    [Serializable] sealed class TriplanarDrawReport
+    {
+        public string shader;
+        public Color32[] triplanarSamples;
+        public bool passed;
+    }
+
+    [Serializable] sealed class TriplanarDrawBatchReport
+    {
+        public string graphics;
+        public TriplanarDrawReport[] draws;
         public bool passed;
     }
 
@@ -302,11 +320,29 @@ public sealed class ContentFixture : MonoBehaviour
             return;
         }
 
-        var secondDraw = CheckShaderDraw(bundle, loadError, graphics, shaderAddresses[1]);
-        var pair = new ShaderDrawPairReport {
-            graphics = graphics, draws = new[] { firstDraw, secondDraw }, passed = firstDraw.passed && secondDraw.passed
+        var draws = new ShaderDrawReport[shaderAddresses.Length];
+        draws[0] = firstDraw;
+        for (int i = 1; i < draws.Length; ++i)
+            draws[i] = CheckShaderDraw(bundle, loadError, graphics, shaderAddresses[i]);
+        bool passed = Array.TrueForAll(draws, draw => draw.passed);
+        if (draws.Length == 3 && Array.TrueForAll(shaderAddresses, address => address.Contains("/triplanar-")))
+        {
+            // Keep the three triplanar samples in one Android log entry.
+            foreach (var draw in draws)
+                if (!string.IsNullOrEmpty(draw.failure)) Debug.LogWarning(draw.failure);
+            var compact = new TriplanarDrawBatchReport {
+                graphics = graphics, passed = passed,
+                draws = Array.ConvertAll(draws, draw => new TriplanarDrawReport {
+                    shader = draw.shader, triplanarSamples = draw.triplanarSamples, passed = draw.passed
+                })
+            };
+            Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(compact));
+            return;
+        }
+        var batch = new ShaderDrawBatchReport {
+            graphics = graphics, draws = draws, passed = passed
         };
-        Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(pair));
+        Debug.Log("PHONE_SHADER_DRAW " + JsonUtility.ToJson(batch));
     }
 
     static ShaderDrawReport CheckShaderDraw(AssetBundle bundle, string loadError, string graphics, string address)
@@ -324,6 +360,13 @@ public sealed class ContentFixture : MonoBehaviour
             else if (shader.name == "Hopoo Games/FX/Cloud Remap") DrawCloudRemap(shader, report);
             else if (shader.name == "Hidden/TerrainEngine/Details/WavingDoublePass") DrawTerrainDetail(shader, report, false);
             else if (shader.name == "Hidden/TerrainEngine/Details/BillboardWavingDoublePass") DrawTerrainDetail(shader, report, true);
+            else if (shader.name == "Hopoo Games/Deferred/Wavy Cloth") DrawWavyCloth(shader, report);
+            else if (shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend" ||
+                shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend Emissive")
+                DrawTriplanar(shader, report, new[] { "_RedChannelSideTex", "_RedChannelTopTex", "_GreenChannelTex", "_BlueChannelTex" });
+            else if (shader.name == "Hopoo Games/Deferred/Standard Triplanar Splat")
+                DrawTriplanar(shader, report, new[] { "_MainTex", "_RedSplatTex" });
+            else if (shader.name == "Hopoo Games/Transparent/Texture Scrolling Wireframe") DrawWireframe(shader, report);
             else DrawAnimateAlpha(shader, report);
         }
         catch (Exception error) { report.failure = error.Message; }
@@ -653,6 +696,77 @@ public sealed class ContentFixture : MonoBehaviour
         }
     }
 
+    static void DrawWireframe(Shader shader, ShaderDrawReport report)
+    {
+        const int size = 64;
+        var material = new Material(shader);
+        var mesh = new Mesh();
+        var pixels = new Texture2D(size, size, TextureFormat.RGBA32, false, true);
+        var target = RenderTexture.GetTemporary(size, size, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        var previous = RenderTexture.active;
+        try
+        {
+            // Keep the triangle below the center so the upper sample also detects a clip-space Y inversion.
+            mesh.vertices = new[] {
+                new Vector3(-0.75f, -0.6875f, 0.5f), new Vector3(0.625f, -0.6875f, 0.5f),
+                new Vector3(-0.40625f, -0.09375f, 0.5f)
+            };
+            mesh.triangles = new[] { 0, 1, 2 };
+            var uv = new[] { Vector2.zero, Vector2.right, Vector2.up };
+            mesh.uv = uv;
+            mesh.uv2 = uv;
+            mesh.colors = new[] { Color.white, Color.white, Color.white };
+
+            material.SetTexture("_MainTex", Texture2D.whiteTexture);
+            material.SetTexture("_EmTex", Texture2D.whiteTexture);
+            material.SetTexture("_ScrollTex", Texture2D.whiteTexture);
+            material.SetTexture("_RemapTex", Texture2D.blackTexture);
+            material.SetColor("_Color", Color.blue);
+            material.SetColor("_EmColor", Color.black);
+            material.SetColor("_WireframeColor", Color.red);
+            material.SetColor("_VertColor", Color.red);
+            material.SetFloat("_EmBoost", 1);
+            material.SetFloat("_EmPower", 1);
+            material.SetFloat("_WireframeThickness", 0.1f);
+            material.SetFloat("_WireframeSmoothing", 1);
+            material.SetFloat("_Cull", (float)CullMode.Off);
+            material.SetFloat("_ZTest", (float)CompareFunction.Always);
+            material.SetFloat("_SrcBlend", (float)BlendMode.One);
+            material.SetFloat("_DstBlend", (float)BlendMode.Zero);
+
+            using var commands = new CommandBuffer();
+            commands.SetRenderTarget(target);
+            commands.ClearRenderTarget(true, true, Color.green);
+            commands.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+            // The first source pass writes depth only.
+            commands.DrawMesh(mesh, Matrix4x4.identity, material, 0, 1);
+            Graphics.ExecuteCommandBuffer(commands);
+            RenderTexture.active = target;
+            pixels.ReadPixels(new Rect(0, 0, size, size), 0, 0, false);
+            report.wireframeSamples = new Color32[] {
+                pixels.GetPixel(23, 10), pixels.GetPixel(23, 17), pixels.GetPixel(23, 53)
+            };
+            var expected = new Color32[] { Color.magenta, Color.blue, Color.green };
+            for (int i = 0; i < expected.Length; ++i)
+            {
+                var sample = report.wireframeSamples[i];
+                var match = expected[i];
+                if (Mathf.Abs(sample.r - match.r) > 5 || Mathf.Abs(sample.g - match.g) > 5 ||
+                    Mathf.Abs(sample.b - match.b) > 5)
+                    throw new Exception("Wireframe sample " + i + " did not match the expected RGB");
+            }
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(target);
+            Destroy(material);
+            Destroy(mesh);
+            Destroy(pixels);
+        }
+    }
+
     static void DrawIntersection(Shader shader, ShaderDrawReport report)
     {
         const string directional = "DIRECTIONAL";
@@ -814,6 +928,227 @@ public sealed class ContentFixture : MonoBehaviour
             Destroy(transparent);
             Destroy(ramp);
             Destroy(mesh);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawWavyCloth(Shader shader, ShaderDrawReport report)
+    {
+        const string shadowKeyword = "SHADOWS_DEPTH";
+        int lightDirection = Shader.PropertyToID("_WorldSpaceLightPos0");
+        int shadowBias = Shader.PropertyToID("unity_LightShadowBias");
+        var previousDirection = Shader.GetGlobalVector(lightDirection);
+        var previousBias = Shader.GetGlobalVector(shadowBias);
+        bool previousShadowKeyword = Shader.IsKeywordEnabled(shadowKeyword);
+        var previousTarget = RenderTexture.active;
+        var mesh = new Mesh();
+        var material = new Material(shader);
+        var transparent = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var normal = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var pixels = new Texture2D(32, 1, TextureFormat.RGBA32, false, true);
+        var color = new RenderTexture[4];
+        try
+        {
+            int deferred = material.FindPass("DEFERRED");
+            int shadowCaster = material.FindPass("ShadowCaster");
+            if (deferred < 0 || shadowCaster < 0)
+                throw new Exception("Wavy Cloth Deferred or ShadowCaster pass is missing");
+
+            var targets = new RenderTargetIdentifier[color.Length];
+            for (int i = 0; i < color.Length; ++i)
+            {
+                color[i] = RenderTexture.GetTemporary(32, 32, i == 0 ? 24 : 0,
+                    RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+                targets[i] = color[i];
+            }
+            mesh.vertices = new[] {
+                new Vector3(-0.16f, -0.2f, 0), new Vector3(-0.16f, 0.2f, 0),
+                new Vector3(0.16f, 0.2f, 0), new Vector3(0.16f, -0.2f, 0)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            mesh.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
+            var tangent = new Vector4(1, 0, 0, 1);
+            mesh.tangents = new[] { tangent, tangent, tangent, tangent };
+            mesh.colors = new[] { Color.white, Color.white, Color.white, Color.white };
+            var uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+            mesh.uv = uv;
+            mesh.uv2 = uv;
+            mesh.uv3 = uv;
+            mesh.uv4 = uv;
+
+            transparent.SetPixel(0, 0, Color.clear);
+            transparent.Apply();
+            normal.SetPixel(0, 0, new Color(0.5f, 0.5f, 1, 0.5f));
+            normal.Apply();
+            material.SetTexture("_MainTex", Texture2D.whiteTexture);
+            material.SetTexture("_ScrollingNormalMap", normal);
+            material.SetColor("_Color", Color.green);
+            material.SetFloat("_Cutoff", 0.5f);
+            material.SetFloat("_VertexOffsetStrength", 0);
+            material.SetFloat("_NormalStrength", 0);
+            material.SetInt("_EnableVertexColorDistortion", 0);
+            material.SetVector("_WindVector", Vector4.zero);
+            material.SetVector("_Scroll", Vector4.zero);
+            var cutout = new MaterialPropertyBlock();
+            cutout.SetTexture("_MainTex", transparent);
+
+            var nearLeft = Matrix4x4.Translate(new Vector3(-0.6f, 0, -1));
+            var nearRight = Matrix4x4.Translate(new Vector3(0.6f, 0, -1));
+            var farLeft = Matrix4x4.Translate(new Vector3(-0.6f, 0, -2));
+            var farRight = Matrix4x4.Translate(new Vector3(0.6f, 0, -2));
+            var projection = Matrix4x4.Ortho(-1, 1, -1, 1, 0.1f, 10);
+            using var commands = new CommandBuffer();
+
+            Color32[] ReadPair()
+            {
+                Graphics.ExecuteCommandBuffer(commands);
+                commands.Clear();
+                RenderTexture.active = color[0];
+                pixels.ReadPixels(new Rect(0, 16, 32, 1), 0, 0, false);
+                return new Color32[] { pixels.GetPixel(6, 0), pixels.GetPixel(25, 0) };
+            }
+
+            void BeginPair()
+            {
+                commands.SetRenderTarget(targets, targets[0]);
+                commands.ClearRenderTarget(true, true, Color.blue);
+                commands.SetViewProjectionMatrices(Matrix4x4.identity, projection);
+                commands.DisableShaderKeyword(shadowKeyword);
+            }
+
+            BeginPair();
+            commands.DrawMesh(mesh, farLeft, material, 0, deferred);
+            commands.DrawMesh(mesh, farRight, material, 0, deferred);
+            var baseline = ReadPair();
+            if (!baseline[0].Equals((Color32)Color.green) || !baseline[1].Equals((Color32)Color.green))
+                throw new Exception("Wavy Cloth Deferred baseline did not cover both samples");
+
+            BeginPair();
+            commands.DrawMesh(mesh, farLeft, material, 0, deferred);
+            commands.DrawMesh(mesh, farRight, material, 0, deferred, cutout);
+            report.clothDeferredSamples = ReadPair();
+            if (!report.clothDeferredSamples[0].Equals((Color32)Color.green) ||
+                !report.clothDeferredSamples[1].Equals((Color32)Color.blue))
+                throw new Exception("Wavy Cloth Deferred alpha-cutout samples differ");
+
+            BeginPair();
+            commands.SetGlobalVector(lightDirection, new Vector4(0, 0, 1, 0));
+            commands.SetGlobalVector(shadowBias, Vector4.zero);
+            commands.EnableShaderKeyword(shadowKeyword);
+            commands.DrawMesh(mesh, nearLeft, material, 0, shadowCaster);
+            commands.DrawMesh(mesh, nearRight, material, 0, shadowCaster, cutout);
+            commands.ClearRenderTarget(false, true, Color.blue);
+            commands.DisableShaderKeyword(shadowKeyword);
+            commands.DrawMesh(mesh, farLeft, material, 0, deferred);
+            commands.DrawMesh(mesh, farRight, material, 0, deferred);
+            report.clothShadowSamples = ReadPair();
+            if (!report.clothShadowSamples[0].Equals((Color32)Color.blue) ||
+                !report.clothShadowSamples[1].Equals((Color32)Color.green))
+                throw new Exception("Wavy Cloth ShadowCaster depth samples differ");
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            if (previousShadowKeyword) Shader.EnableKeyword(shadowKeyword);
+            else Shader.DisableKeyword(shadowKeyword);
+            Shader.SetGlobalVector(lightDirection, previousDirection);
+            Shader.SetGlobalVector(shadowBias, previousBias);
+            RenderTexture.active = previousTarget;
+            foreach (var target in color)
+                if (target != null) RenderTexture.ReleaseTemporary(target);
+            Destroy(mesh);
+            Destroy(material);
+            Destroy(transparent);
+            Destroy(normal);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawTriplanar(Shader shader, ShaderDrawReport report, string[] albedoProperties)
+    {
+        var previous = RenderTexture.active;
+        var material = new Material(shader);
+        var mesh = new Mesh();
+        var red = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var green = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var normal = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var pixels = new Texture2D(32, 1, TextureFormat.RGBA32, false, true);
+        var color = new RenderTexture[4];
+        try
+        {
+            int deferred = material.FindPass("DEFERRED");
+            if (deferred < 0) throw new Exception("Triplanar Deferred pass is missing");
+            var targets = new RenderTargetIdentifier[color.Length];
+            for (int i = 0; i < color.Length; ++i)
+            {
+                color[i] = RenderTexture.GetTemporary(32, 32, i == 0 ? 24 : 0,
+                    RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+                targets[i] = color[i];
+            }
+
+            mesh.vertices = new[] {
+                new Vector3(-0.16f, -0.2f, 0), new Vector3(-0.16f, 0.2f, 0),
+                new Vector3(0.16f, 0.2f, 0), new Vector3(0.16f, -0.2f, 0)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            mesh.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
+            var tangent = new Vector4(1, 0, 0, 1);
+            mesh.tangents = new[] { tangent, tangent, tangent, tangent };
+            mesh.colors = new[] { Color.white, Color.white, Color.white, Color.white };
+            var uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+            mesh.uv = uv;
+            mesh.uv2 = uv;
+            mesh.uv3 = uv;
+            mesh.uv4 = uv;
+
+            material.SetFloat("_Cull", (float)CullMode.Off);
+            material.SetColor("_Color", Color.white);
+            red.SetPixel(0, 0, Color.red);
+            red.Apply();
+            green.SetPixel(0, 0, Color.green);
+            green.Apply();
+            normal.SetPixel(0, 0, new Color(0.5f, 0.5f, 1, 0.5f));
+            normal.Apply();
+            material.SetTexture("_SplatmapTex", red);
+            material.SetTexture("_NormalTex", normal);
+            foreach (var property in new[] { "_overallColor", "_RedTint", "_RColor", "_GColor", "_BColor" })
+                if (material.HasProperty(property)) material.SetColor(property, Color.white);
+            var redAlbedo = new MaterialPropertyBlock();
+            var greenAlbedo = new MaterialPropertyBlock();
+            foreach (var property in albedoProperties)
+            {
+                redAlbedo.SetTexture(property, red);
+                greenAlbedo.SetTexture(property, green);
+            }
+
+            using var commands = new CommandBuffer();
+            commands.SetRenderTarget(targets, targets[0]);
+            commands.ClearRenderTarget(true, true, Color.blue);
+            commands.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.Ortho(-1, 1, -1, 1, 0.1f, 10));
+            commands.DrawMesh(mesh, Matrix4x4.Translate(new Vector3(-0.6f, 0, -1)), material, 0, deferred, redAlbedo);
+            commands.DrawMesh(mesh, Matrix4x4.Translate(new Vector3(0.6f, 0, -1)), material, 0, deferred, greenAlbedo);
+            Graphics.ExecuteCommandBuffer(commands);
+            RenderTexture.active = color[0];
+            pixels.ReadPixels(new Rect(0, 16, 32, 1), 0, 0, false);
+            Color32 left = pixels.GetPixel(6, 0);
+            Color32 middle = pixels.GetPixel(16, 0);
+            Color32 right = pixels.GetPixel(25, 0);
+            report.triplanarSamples = new[] { left, middle, right };
+            if (left.r <= 64 || left.g != 0 || left.b != 0 || !middle.Equals((Color32)Color.blue) ||
+                right.g <= 64 || right.r != 0 || right.b != 0)
+                throw new Exception("Triplanar Deferred albedo or clear samples differ");
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            foreach (var target in color)
+                if (target != null) RenderTexture.ReleaseTemporary(target);
+            Destroy(mesh);
+            Destroy(material);
+            Destroy(red);
+            Destroy(green);
+            Destroy(normal);
             Destroy(pixels);
         }
     }

@@ -6,6 +6,8 @@ import json
 import os
 from pathlib import Path
 import shlex
+import shutil
+import struct
 import subprocess
 import sys
 import tarfile
@@ -13,6 +15,9 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 import zipfile
+
+from test_phone_mesh_producer import bundle, serialized, vector
+from test_phone_texture_native_profile import texture_schema
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/lab"))
@@ -156,6 +161,47 @@ class EmissionTests(unittest.TestCase):
         self.assertEqual(STAGE.run(*args), 1)
         self.assertIn("staged input hash differs", json.loads(receipt.read_bytes())["first_failure"])
         self.assertEqual(source.read_text(), "authored")
+
+    def test_texture_discovery_stage_runs_from_its_staged_sources(self):
+        producer = STAGE.ACCEPTED_OUTPUT + "texture_native_profile.py"
+        self.assertIn(producer, STAGE.JOBS.PRODUCERS)
+        repo = self.root / "repo"
+        for name in (producer, *STAGE.PRODUCER_SUPPORT[producer]):
+            path = repo / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / name, path)
+
+        owner_input = self.root / "owner-input"
+        inputs = owner_input / "staged"
+        pc = inputs / "pc"
+        pc.mkdir(parents=True)
+        source = pc / "authored.bundle"
+        body = vector(b"Fixture", 7) + struct.pack("<8i", 1, 2, 2, 1, 1, 2, 4, 0) + bytes(12)
+        body += vector(b"\x01\x02\x03\x04", 4) + bytes(16)
+        source.write_bytes(bundle([("CAB-test", serialized(body, texture_schema(), path_id=6, class_id=28), 4)]))
+        ledger = inputs / "coverage.jsonl"
+        ledger.write_text(json.dumps(dict(source=[source.name, "CAB-test", 6], status="exact")) + "\n")
+        output = self.output / "stage"
+        output.mkdir()
+        descriptor = self.root / "stage.json"
+        EMISSION.write(
+            descriptor,
+            dict(
+                producer=producer,
+                input_root="staged",
+                input_pins={path.relative_to(inputs).as_posix(): EMISSION.digest(path) for path in (source, ledger)},
+                arguments=[dict(inputs="pc"), dict(inputs=ledger.name), "--all-originals", "--output", dict(output="profile.json")],
+                artifacts=dict(profile="profile.json"),
+            ),
+        )
+        receipt = self.output / "receipt.json"
+        result = STAGE.run(STAGE.load_stage(descriptor), repo, owner_input, output, self.root, self.root, [sys.executable, "-I", "-S", "-B"], receipt)
+        measured = json.loads(receipt.read_bytes())
+        self.assertEqual(result, 0, measured)
+        profile = output / "profile.json"
+        records = json.loads(profile.read_bytes())["bundles"]
+        self.assertEqual([row["path"] for row in records], [source.name])
+        self.assertEqual(measured["artifacts"], {"profile": dict(sha256=EMISSION.digest(profile), bytes=profile.stat().st_size)})
 
     def test_converter_stage_streams_exactly_pinned_inputs_to_fresh_toolhost(self):
         def pin(source):

@@ -2517,6 +2517,12 @@ relative paths and checksums. The private fixture stages the pinned files with
 the provider licensing requirements in the managed app-host setup. The Unity
 codec comes from the owner-acquired SDK archive at conversion time.
 
+2026-11-27: the `texture-sdk-codec` pin selects the authored batch-band
+guest qualified in [J1576](../docs/PORTING_JOURNAL.md#j1576--batch-sdk-etc2-colour-encoding-per-mip-on-android).
+The signed release graph pairs this hash with `batch_bands`. The installer
+stages the guest under the existing GNU runtime and SDK licensing boundaries.
+The change tracks one hash for the public tool source's compiled output.
+
 
 The app-host profile source pins were refreshed on 2026-10-24 for the integrated
 public profile: `assembly_transforms.py` and `common.py` changed while the
@@ -2791,6 +2797,18 @@ local. Provenance, privacy, licensing and sensitive-content review completed
 | --- | --- |
 | `owner-cloud-remap-graphics-translation.json` | `59fe8c20139b0b1763f13e4eb84f4cd3c45b2e67f8d93c5a8839410878c045c1` |
 
+The Fungal Triplanar profile selects the original Terrain Blend, Terrain
+Blend Emissive and Standard Triplanar Splat Shader records for the signed
+graphics translator. The Wavy Cloth profile supplies their original
+Diffuse and VertexLit fallbacks during bundle preparation. The recipe
+contains source pins and destination object identifiers. Original programs,
+translated bodies and raw receipts stay local. Provenance, privacy, licensing
+and sensitive-content review completed 2026-11-28.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-fungal-triplanar-graphics-translation.json` | `3ca308144a0b0c2bf28cc29f92743c56ec4888677cee25b919bf97f497e47022` |
+
 The Terrain detail graphics profile selects two original WavingDoublePass
 Shader records for the signed graphics translator. It reuses the Terrain detail
 source pins and destinations. It contains only provenance and routing metadata.
@@ -2800,6 +2818,16 @@ privacy, licensing and sensitive-content review completed 2026-11-27.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-terrain-detail-graphics-translation.json` | `188503c1e3ea62346ad84f614174720990d62785a26297da1ee92f424df0ace6` |
+
+The Wavy Cloth profile selects the original Shader and its Diffuse and VertexLit
+fallbacks for the signed graphics translator. It records only source pins and
+destination object identifiers. DXBC, translated programs and raw receipts stay
+local. Provenance, privacy, licensing and sensitive-content review completed
+2026-11-27.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-wavy-cloth-graphics-translation.json` | `00f47587b31204049683836cd98257d35bbdaf31fb95c10c9b42538ed4711821` |
 
 The fixed-target Burst policy adds generic SDK compiler option/define metadata,
 root names and exact acquired-tool hashes only. These define lists are the SDK
@@ -6297,6 +6325,22 @@ Pinned AssetRipper `AssetCollection.TryGetAsset` informed the external
 member lookup. Unity 2021.3.45f2 loaded and unloaded all eight Materials
 in the isolated fixture and verified eight Shader and 33 texture bindings.
 
+### Void Island SE Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-void-island-se-native-material-records.json` | `ee004f2a900d0c47d5b425f42174699164063f9ec45a9b8da517d46816e75557` |
+
+Audit date 2026-11-28. The recipe selects three original Materials from
+the legitimate Steam input. It contains relative source paths, serialized
+identities, sizes and hashes. The source bodies, dependency binaries and
+fixture logs stay in ignored storage. Pinned AssetRipper PPtr and Material
+extensions informed source member and saved texture lookup. The fixture
+verified all 17 pointer relocations and preserved the original type trees
+and other bytes. Unity 2021.3.45f2 loaded the three Materials, resolved
+three Shader and fourteen texture bindings, and unloaded the fixture.
+Ordered release admission and Android rendering remain open.
+
 ### Whole-game Mire Material records
 
 | Recipe | SHA-256 |
@@ -7875,6 +7919,45 @@ ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-plasmacore-ghost-native-records.json` | `e17630d949545d281a49f33bca5ef78656bce30a58144dc11717f5001241b0df` |
+
+## ChefDisplayFrost native records (2026-11-27)
+
+`owner-chef-display-frost-native-records.json` selects 24 original records
+through `record_produce.py`. Scoped bundle readback checked 12 relocated
+PPtrs and the byte-exact Light with its reciprocal GameObject link. Unity
+2021.3.45f2 loaded the prefab and unloaded the bundle. Release admission
+must preserve the 30 original preload slots in order and resolve the six
+additional saved Material references. The two BC1 textures reuse the
+outputs of `owner-rgb-mip-textures.json`.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-chef-display-frost-native-records.json` | `33d4819cfaf738b928df483235fd24844338df4a65ccc18b61e2b492ffdfb308` |
+
+## ScavSackGhost native records (2026-11-27)
+
+`owner-scav-sack-ghost-native-records.json` selects 29 original records
+through `record_produce.py`, including the Light, its owning GameObject
+and the hierarchy needed to resolve its references. The Material uses a
+separate destination ID to avoid a collision with another source Material.
+Scoped readback checked 65 PPtrs and all 33 original preload slots in order
+before five additional destinations. Unity 2021.3.45f2 loaded the GameObject
+and unloaded the bundle. Release admission resolves the dependency closure
+against the release graph while retaining the original preload prefix.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-scav-sack-ghost-native-records.json` | `e1768fe06a17b4c42368ce57de3fb6531031de3e829d3dca81a438a0c33d65d6` |
 
 ## Solus Heart wireframe Shader profile (2026-11-27)
 

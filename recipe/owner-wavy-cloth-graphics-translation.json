@@ -1,0 +1,51 @@
+{
+  "schema": "owner-graphics-shader-translation-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "typed_records": [
+    {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -6170440028897955187,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "4d19b4fa73d4667f343aabf7147a42f1f55b39d2f8397371c721ec6dea9bb374"
+      },
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -6170440028897955187
+      }
+    },
+    {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": -5858093835050610868,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "77bc8f07e602b9d21f5879c0c8e6044e4fca8236fc9c1bb6a0fc02e08d7e6bbe"
+      },
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": -5858093835050610868
+      }
+    },
+    {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": 1219581832943046476,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "4295a8e57788e60291c97244b22a42a1263f8acd44f36b11f04fe49baf276881"
+      },
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 1219581832943046476
+      }
+    }
+  ]
+}

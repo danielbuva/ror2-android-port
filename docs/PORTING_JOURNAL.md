@@ -5236,3 +5236,34 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `terrain-detail-forward-device-01/terminal.done.json` and
 `signed-terrain-detail-device-01/signed_artifact.json`. Linked scene draws and
 whole-game scoring remain open.
+
+## J1578 — Draw Wavy Cloth cutout and shadows on Android Vulkan
+
+2026-11-28. The producer linked 170 variants across Wavy Cloth and its
+Diffuse and VertexLit fallbacks. Exact Unity loaded all three Shader records.
+APK `c664ae6b99021ef2d6335496bb1d7d9b47245c98e87388a3bcbf7a73e0b67312`
+read green and blue for opaque and cutout Deferred samples. ShadowCaster
+occluded the sentinel behind opaque cloth and left it visible behind cutout.
+Signed Android bundle `40e41bb5c9c943448da6f91167ad2a98361f543e4d77c4b11a81a175444d6aa2`
+matched the host in 109.30 s at 90.6 MiB peak child RSS, with
+15.9 MiB stage storage and 69.2 °C peak CPU/GPU.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`wavy-cloth-draw-device-01/terminal.done.json` and
+`signed-wavy-cloth-device-02/signed_artifact.json`. Linked gameplay and
+whole-game scoring remain open.
+
+## J1579 — Draw original Fungal Triplanar shaders on Android Vulkan
+
+- Linked 732 original Vulkan variant pairs for Terrain Blend, Terrain Blend
+  Emissive and Standard Triplanar Splat. Exact Unity typed-loaded all three
+  roots and their original Diffuse and VertexLit fallbacks.
+- Plain Deferred readback returned opaque red, clear blue and opaque green
+  on all three roots. APK SHA-256 `716fb6dd24a6ce4d59cbd84853b9a45069c8fc4e524b7304f7a49d8004a36627`.
+- Signed conversion reproduced the host index, object stream and types.
+  Bundle SHA-256 `a0377710be572cf28021eb7a45a20f844776149177ef7048ec231ee1523a8526`.
+  Producer ran for 453.62 s at 122.28 MiB peak child RSS, 64.53 MiB stage
+  and 71.2 °C peak CPU/GPU. Both disposable packages were removed.
+- Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+  in `fungal-triplanar-draw-device-03/terminal.done.json` and
+  `signed-fungal-triplanar-device-01/terminal.done.json`. Linked scene
+  Material draws and the active emissive variation remain open.

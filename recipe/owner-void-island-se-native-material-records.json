@@ -1,0 +1,61 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidstage_assets_all_e2cacf541af02bcdb5d5849af7612319.bundle",
+      "sha256": "22b179b1ab64664c81d09c25bec25efa4210578c117452326961cbda6ab83947",
+      "members": [
+        {
+          "name": "CAB-47d337ee3f3c1d9054e0516f2c4caa2f",
+          "objects": [
+            {
+              "path_id": -3629073585392656830,
+              "class_id": 21,
+              "sha256": "287427a3c738cc26c7006e6b028b8917d4e64adad91f9127cbeaeb52585ff8fe",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3629073585392656830,
+                  "bytes": 2432,
+                  "sha256": "287427a3c738cc26c7006e6b028b8917d4e64adad91f9127cbeaeb52585ff8fe",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -2378542982384194018,
+              "class_id": 21,
+              "sha256": "f46d06016f3d9d84b07b6aa035b58f1379c68e3fa9cd6b388fa5601b45e88450",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2378542982384194018,
+                  "bytes": 1420,
+                  "sha256": "f46d06016f3d9d84b07b6aa035b58f1379c68e3fa9cd6b388fa5601b45e88450",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -646745319091738538,
+              "class_id": 21,
+              "sha256": "ecde7f7b7d048292713e15642df62f45be55236a1776ce60b4d29491712925a9",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -646745319091738538,
+                  "bytes": 948,
+                  "sha256": "ecde7f7b7d048292713e15642df62f45be55236a1776ce60b4d29491712925a9",
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -882,6 +882,7 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertEqual(arguments[arguments.index("--sdk-toolchain") + 1], str(request_path))
             self.assertEqual(pin, G.digest(request_path))
             verified = texture.sdk_inputs(request_path, pin, pc)
+            self.assertIs(verified["batch_bands"], True)
             self.assertEqual(verified["command"][0], str(native / "libqemu-x86_64.so"))
             self.assertEqual(verified["command"][-1], str(codec))
             self.assertEqual(verified["pixels"], str(native / "libtexture-pixels.so"))
