@@ -8808,6 +8808,12 @@ Bundle preparation keeps the 39 source preload slots in order and resolves
 four additional Shader and texture providers from the existing graph. The
 scoped editor fixture loads the GameObject and unloads the bundle.
 
+The PickupAfterburner profile feeds the original Light and its owning
+prefab hierarchy to `record_produce.py`. Bundle preparation preserves the
+37 original preload slots before ten additional endpoints. The shared
+Material uses the existing graph route after verifying its source Shader
+identity. The scoped editor fixture loads the prefab and unloads the bundle.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,

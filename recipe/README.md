@@ -8011,6 +8011,25 @@ ignored `work/`.
 | --- | --- |
 | `owner-croco-leap-acid-ghost-native-records.json` | `b6c1473d08a66c1e0a4085e6f7811527c55597dd9703a449f8637d8003e20978` |
 
+## PickupAfterburner native records (2026-11-28)
+
+`owner-pickup-afterburner-native-records.json` selects 38 original
+records through `record_produce.py`, including the Light and its
+reciprocal GameObject owner. The scoped bundle preserves 37 ordered
+source preload slots before ten additional destinations. Persisted
+readback reverses all 92 relocated PPtrs to recover the original
+record hashes. The shared Material route uses the original Shader
+identity after resolving the two source file-ID tables.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-pickup-afterburner-native-records.json` | `c28e92ec6a4af223e68b553f4c9ec04277e02515f8d95417103e97915e6344ca` |
+
 ## Solus Heart wireframe Shader profile (2026-11-27)
 
 The signed qualification selects the original Texture Scrolling Wireframe
