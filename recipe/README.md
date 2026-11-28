@@ -7994,6 +7994,23 @@ ignored `work/`.
 | --- | --- |
 | `owner-scav-sack-ghost-native-records.json` | `e1768fe06a17b4c42368ce57de3fb6531031de3e829d3dca81a438a0c33d65d6` |
 
+## CrocoLeapAcidGhost native records (2026-11-28)
+
+`owner-croco-leap-acid-ghost-native-records.json` selects 28 original
+records through `record_produce.py`, including the Light, its owning
+GameObject, particle systems and the Material. Bundle preparation preserves
+the 39 source preload slots and appends four additional Shader and texture
+destinations from the existing graph.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-croco-leap-acid-ghost-native-records.json` | `b6c1473d08a66c1e0a4085e6f7811527c55597dd9703a449f8637d8003e20978` |
+
 ## Solus Heart wireframe Shader profile (2026-11-27)
 
 The signed qualification selects the original Texture Scrolling Wireframe

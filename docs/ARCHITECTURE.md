@@ -8795,6 +8795,12 @@ The scoped exact-editor fixture loads the GameObject and unloads the bundle.
 Release admission keeps the original 33 preload slots in order and appends
 any additional destinations required by the release graph.
 
+The CrocoLeapAcidGhost profile feeds the original Light, prefab hierarchy,
+particle systems, Material and managed components to `record_produce.py`.
+Bundle preparation keeps the 39 source preload slots in order and resolves
+four additional Shader and texture providers from the existing graph. The
+scoped editor fixture loads the GameObject and unloads the bundle.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
