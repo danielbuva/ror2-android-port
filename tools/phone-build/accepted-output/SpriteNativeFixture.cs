@@ -1,6 +1,7 @@
 // Current SDK-only diagnostic. Inputs and generated geometry remain private.
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
 using UnityEngine;
@@ -28,8 +29,14 @@ public static class SpriteNativeFixture
     [Serializable] public sealed class Results
     {
         public bool success;
-        public string unity_version;
+        public string unity_version, request_sha256;
         public Result[] items;
+    }
+
+    static string Sha256(byte[] bytes)
+    {
+        using (var sha = SHA256.Create())
+            return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
     }
 
     static int Bits(float value) { return BitConverter.ToInt32(BitConverter.GetBytes(value), 0); }
@@ -48,14 +55,24 @@ public static class SpriteNativeFixture
     public static void Run(string requestPath, string outputPath)
     {
         if (Application.unityVersion != "2021.3.45f2") throw new InvalidOperationException("Exact SDK version required");
-        var request = JsonUtility.FromJson<Request>(File.ReadAllText(requestPath));
+        requestPath = Path.GetFullPath(requestPath);
+        byte[] requestBytes = File.ReadAllBytes(requestPath);
+        Request request;
+        using (var reader = new StreamReader(new MemoryStream(requestBytes)))
+            request = JsonUtility.FromJson<Request>(reader.ReadToEnd());
         var results = new List<Result>();
-        foreach (var item in request.items)
+        for (int itemIndex = 0; itemIndex < request.items.Length; ++itemIndex)
         {
-            byte[] png = File.ReadAllBytes(item.png);
-            using (var sha = SHA256.Create())
-                if (BitConverter.ToString(sha.ComputeHash(png)).Replace("-", "").ToLowerInvariant() != item.sha256)
-                    throw new InvalidOperationException("Source image hash changed");
+            var item = request.items[itemIndex];
+            string imagePath = item.png;
+            if (!Path.IsPathRooted(imagePath))
+            {
+                if (imagePath != "images/" + itemIndex.ToString(CultureInfo.InvariantCulture) + ".png")
+                    throw new InvalidOperationException("Source image path does not match its request index");
+                imagePath = Path.Combine(Path.GetDirectoryName(requestPath), imagePath);
+            }
+            byte[] png = File.ReadAllBytes(imagePath);
+            if (Sha256(png) != item.sha256) throw new InvalidOperationException("Source image hash changed");
             Texture2D texture = null;
             Sprite sprite = null;
             try
@@ -92,6 +109,7 @@ public static class SpriteNativeFixture
                 if (texture) UnityEngine.Object.DestroyImmediate(texture);
             }
         }
-        File.WriteAllText(outputPath, JsonUtility.ToJson(new Results { success = true, unity_version = Application.unityVersion, items = results.ToArray() }, true));
+        File.WriteAllText(outputPath, JsonUtility.ToJson(new Results { success = true, unity_version = Application.unityVersion,
+            request_sha256 = Sha256(requestBytes), items = results.ToArray() }, true));
     }
 }

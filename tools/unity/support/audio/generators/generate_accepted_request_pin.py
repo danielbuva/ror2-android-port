@@ -61,11 +61,14 @@ def work_root(owner_work: Path | None) -> Path:
     return work
 
 
-def expected_sources(owner_work: Path | None) -> dict:
+def expected_sources(owner_work: Path | None, *, built_native_sha256: str | None = None) -> dict:
+    if built_native_sha256 is not None and (owner_work is None or not HASH_RE.fullmatch(built_native_sha256)):
+        raise ValueError("produced Wwise pin requires a verified owner build hash")
     if owner_work is None:
         return EXPECTED
     return {
         **EXPECTED,
+        "native_library_sha256": built_native_sha256 or EXPECTED["native_library_sha256"],
         "current_bank_index_sha256": OWNER_BANK_INDEX_SHA256,
         "init_adaptation_receipt_sha256": json.loads(INIT_RECIPE.read_text())["owner_receipt_sha256"],
     }
@@ -88,8 +91,8 @@ def checked_work_file(path: Path, label: str, work: Path) -> Path:
     return resolved
 
 
-def validate_input_contract(path: Path, *, owner_work: Path | None = None) -> str:
-    work, pins = work_root(owner_work), expected_sources(owner_work)
+def validate_input_contract(path: Path, *, owner_work: Path | None = None, built_native_sha256: str | None = None) -> str:
+    work, pins = work_root(owner_work), expected_sources(owner_work, built_native_sha256=built_native_sha256)
     path = checked_work_file(path, "build input contract", work)
     raw = path.read_bytes()
     contract = json.loads(raw)
@@ -159,8 +162,8 @@ def validate_pcm_capture_options(request: dict) -> tuple[bool, bool, bool]:
     return capture, music, after_skill
 
 
-def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner_work: Path | None = None) -> dict:
-    work, pins = work_root(owner_work), expected_sources(owner_work)
+def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner_work: Path | None = None, built_native_sha256: str | None = None) -> dict:
+    work, pins = work_root(owner_work), expected_sources(owner_work, built_native_sha256=built_native_sha256)
     request_path = checked_work_file(request_path, "opt-in request", work)
     stage_path = checked_work_file(stage_path, "stage receipt", work)
     raw = request_path.read_bytes()
@@ -182,7 +185,7 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner
         raise ValueError("request_id must be a UUID in compact hex form") from error
     if len(request_id) != 32:
         raise ValueError("request_id must use compact N form")
-    contract_sha = validate_input_contract(manifest_path, owner_work=owner_work)
+    contract_sha = validate_input_contract(manifest_path, owner_work=owner_work, built_native_sha256=built_native_sha256)
     if request.get("build_input_contract_sha256") != contract_sha:
         raise ValueError("request does not bind the exact build input contract")
     stage_raw = stage_path.read_bytes()
@@ -274,14 +277,22 @@ def validate(request_path: Path, manifest_path: Path, stage_path: Path, *, owner
     }
 
 
-def emit(request_path: Path, manifest_path: Path, stage_path: Path, output: Path, *, owner_work: Path | None = None) -> dict:
+def emit(
+    request_path: Path,
+    manifest_path: Path,
+    stage_path: Path,
+    output: Path,
+    *,
+    owner_work: Path | None = None,
+    built_native_sha256: str | None = None,
+) -> dict:
     work = work_root(owner_work)
     output = output.absolute()
     if output.resolve(strict=False) != output or not output.is_relative_to(work):
         raise ValueError("generated source output must remain under ignored work/")
     if output.exists():
         raise ValueError("generated source output must be a new file")
-    result = validate(request_path, manifest_path, stage_path, owner_work=owner_work)
+    result = validate(request_path, manifest_path, stage_path, owner_work=owner_work, built_native_sha256=built_native_sha256)
     request = result["request"]
     capture_requested, music_output_requested, after_authority_skill_requested = validate_pcm_capture_options(request)
     fields = {

@@ -701,14 +701,14 @@ def preload_seeds(selected, group, endpoint_record):
     External seeds have no parent field to qualify their endpoint. Read and
     check their actual staged body/type even when a complete output is cached.
     """
-    local, external, seen = [], [], set()
+    resolved, seen = [], set()
     for value in group.get("preload_roots", []):
         target = tuple(value)
         if len(target) != 3 or not isinstance(target[2], int) or not target[2] or target in seen:
             raise ValueError("Preload roots require distinct nonnull destination triples")
         seen.add(target)
         if target[:2] == (selected["name"], selected["member"]):
-            local.append(target[2])
+            resolved.append((0, target[2]))
         else:
             if target[1] == selected["member"] or target[1] not in selected["externals"]:
                 raise ValueError("Preload root serialized member absent or ambiguous")
@@ -718,14 +718,17 @@ def preload_seeds(selected, group, endpoint_record):
             if tuple(record["destination"]) != target:
                 raise ValueError("Preload root endpoint identity differs")
             checked_fields(record, raw, native)
-            external.append((selected["externals"].index(target[1]) + 1, target[2]))
-    return local, external
+            resolved.append((selected["externals"].index(target[1]) + 1, target[2]))
+    if group.get("preserve_preload_order") and len(set(resolved)) != len(resolved):
+        raise ValueError("Ordered preload roots require distinct resolved pointers")
+    return resolved
 
 
 def check_preload_seeds(required, endpoint_record):
+    identities = set(required["path_ids"])
     for group in required["asset_groups"]:
-        local, _ = preload_seeds(required, group, endpoint_record)
-        if any(identity not in required["path_ids"] for identity in [*group["roots"], *local]):
+        local = [path_id for file_id, path_id in preload_seeds(required, group, endpoint_record) if not file_id]
+        if not identities.issuperset([*group["roots"], *local]):
             raise ValueError("Required asset group root or preload root absent")
 
 
@@ -880,15 +883,16 @@ def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_rec
         roots = group["roots"]
         if not roots or len(set(roots)) != len(roots):
             raise ValueError("Prefab asset group requires distinct imported roots")
-        local, external = preload_seeds(selected, group, endpoint_record)
-        seeds = sorted(set(roots) | set(local))
+        resolved = preload_seeds(selected, group, endpoint_record)
+        preserve_order = group.get("preserve_preload_order", False)
+        seeds = sorted(set(roots) | {path_id for file_id, path_id in resolved if not file_id})
         if any(identity not in graph for identity in seeds):
             raise ValueError("Required asset group root or preload root absent")
-        external = set(external)
+        external = {pointer for pointer in resolved if pointer[0]}
         external.update(owners[pointer] for pointer in list(external) if pointer in owners)
         packed = None
         if emission_cache is not None:
-            group_scope = EmissionCache.key([scope, roots, seeds, sorted(external)])
+            group_scope = EmissionCache.key([scope, roots, seeds, sorted(external), preserve_order, resolved if preserve_order else None])
             previous = emission_cache.get("group_members", group_scope)
             members = [row[0] for row in struct.iter_unpack("<q", previous)] if previous is not None else seeds
             key = EmissionCache.key([group_scope, [(identity, node_keys.get(identity)) for identity in members]])
@@ -900,7 +904,13 @@ def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_rec
                     dependencies.update(prefab_preloads[root])
             if any(file_id not in ranks for file_id, _ in dependencies):
                 raise ValueError("Prefab preload references an absent serialized file")
-            ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
+            if preserve_order:
+                if set(resolved) != dependencies:
+                    missing = sorted(dependencies.difference(resolved))
+                    raise ValueError(f"Ordered preload roots differ from dependency closure for {group['path']}: missing {missing[:8]}")
+                ordered = resolved
+            else:
+                ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
             packed = b"".join(struct.pack("<iq", *pointer) for pointer in ordered)
             if emission_cache is not None:
                 # Old reachable members are an invalidation witness, not closure
@@ -2604,11 +2614,10 @@ def repack_canonical_aliases(
             skin_group_preloads = {}
             for group in preload_required["asset_groups"]:
                 seeds = group.setdefault("preload_roots", [])
+                retained = []
                 for root in group["roots"]:
                     for skin in skins_by_root.get(root, ()):
-                        seed = [name, member, skin]
-                        if seed not in seeds:
-                            seeds.append(seed)
+                        retained.append([name, member, skin])
                         skin_group_preloads.setdefault(group["path"].lower(), set()).add((0, skin))
                     alias = mapping.get((name, member, root))
                     if alias is None or alias["duplicate_class_id"] != 114:
@@ -2618,9 +2627,13 @@ def repack_canonical_aliases(
                     native.managed_identity(target[1], typ, body)
                     script_member, script = native.resolve(target[1], struct.unpack_from("<iq", body, 16))
                     script_bundle = next(bundle for bundle, members in native.bundles.items() if script_member in members)
-                    for seed in (target, [script_bundle, script_member, script["path_id"]]):
-                        if seed not in seeds:
-                            seeds.append(seed)
+                    retained.extend((target, [script_bundle, script_member, script["path_id"]]))
+                for seed in retained:
+                    if seed in seeds:
+                        continue
+                    if group.get("preserve_preload_order"):
+                        raise ValueError(f"Ordered preload roots omit a retained canonical seed for {group['path']}: {seed}")
+                    seeds.append(seed)
 
             def preload_endpoint(target):
                 if target[1] not in native.members:

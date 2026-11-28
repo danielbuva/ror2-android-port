@@ -1,4 +1,4 @@
-#include "PcmReadbackRingV1.hpp"
+#include "PcmReadbackRingV1.h"
 
 #include <cmath>
 #include <cstdlib>

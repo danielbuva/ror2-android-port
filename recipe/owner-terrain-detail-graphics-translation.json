@@ -1,0 +1,36 @@
+{
+  "schema": "owner-graphics-shader-translation-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "typed_records": [
+    {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": 9015162528297324364,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "9c3f91d4431b6e9b598e6bcc6c971b994646ac75ece9482bf833fca8cbed173a"
+      },
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 2152402734523175926
+      }
+    },
+    {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": -2820224755109654708,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "054bf6a430de6616a001e491c9d3d31c5bc3bbfcd1b3d95727e5e199dee94834"
+      },
+      "output": {
+        "bundle": "whole-game-content",
+        "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        "path_id": 6744968036880419126
+      }
+    }
+  ]
+}
