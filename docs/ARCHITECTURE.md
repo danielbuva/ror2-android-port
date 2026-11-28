@@ -8599,6 +8599,9 @@ both DXBC stages via `shader_dxbc.cpp`, applies the Vulkan position transform wi
 SPIRV-Cross, validates the modules, and uses `shader_smolv.cpp` to encode the
 linked envelope. It feeds source layouts through the existing
 `shader_produce.py` parameter writer and emits a typed replacement pack.
+The linker derives the Vulkan color attachment mask from each original
+fragment output signature. Deferred G-buffer variants enable every declared
+target. Depth-only variants keep bit zero, as in the exact editor's envelope.
 For shaders with ordinary vertex and fragment passes, the translator retains
 subshader and pass order and render state. The shared record writer merges
 the per-pass Vulkan tables and relocates their program and parameter indices

@@ -25,24 +25,29 @@ SIGNED_PROFILES = {
 }
 
 
-def vertex_channels(dxbc):
-    """Map D3D inputs to Unity channels and serialized Vulkan bindings."""
+def signature_rows(dxbc, chunk_kind):
+    """Read the original D3D11 input or output signature."""
     chunk_count = struct.unpack_from("<I", dxbc, 28)[0]
     for offset in struct.unpack_from(f"<{chunk_count}I", dxbc, 32):
         kind, size = struct.unpack_from("<4sI", dxbc, offset)
-        if kind == b"ISGN":
+        if kind == chunk_kind:
             signature = dxbc[offset + 8 : offset + 8 + size]
             break
     else:
-        raise ValueError("vertex translation requires an ISGN input signature")
+        raise ValueError(f"graphics translation requires a {chunk_kind.decode()} signature")
     count, start = struct.unpack_from("<2I", signature)
-    channels = []
     for index in range(count):
         name_offset, semantic_index, system_value, _, register = struct.unpack_from("<5I", signature, start + 24 * index)
+        end = signature.index(b"\0", name_offset)
+        yield signature[name_offset:end].upper(), semantic_index, system_value, register
+
+
+def vertex_channels(dxbc):
+    """Map D3D inputs to Unity channels and serialized Vulkan bindings."""
+    channels = []
+    for name, semantic_index, system_value, register in signature_rows(dxbc, b"ISGN"):
         if system_value:
             continue
-        end = signature.index(b"\0", name_offset)
-        name = signature[name_offset:end].upper()
         if name == b"TEXCOORD" and semantic_index < 8:
             channel = 4 + semantic_index
         elif name in (b"POSITION", b"NORMAL", b"TANGENT", b"COLOR") and semantic_index == 0:
@@ -53,6 +58,15 @@ def vertex_channels(dxbc):
         # location itself is still the original register.
         channels.append((channel, 13 + register))
     return sorted(channels)
+
+
+def fragment_color_mask(dxbc):
+    mask = 0
+    for name, semantic_index, _, _ in signature_rows(dxbc, b"OSGN"):
+        if name == b"SV_TARGET":
+            mask |= 1 << semantic_index
+    # The exact-editor envelope keeps bit zero set for depth-only passes.
+    return mask or 1
 
 
 def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=None):
@@ -194,7 +208,13 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
             codes[stage] = subprocess.run([tools["smolv"]], input=spirv, capture_output=True, check=True).stdout
             reflection.extend(rows)
             requirements |= stage_requirements
-        executable = shader.linked_vulkan_program(codes["vert"], codes["frag"], alpha_clip="UNITY_UI_ALPHACLIP" in keywords, geometry=codes.get("geom"))
+        executable = shader.linked_vulkan_program(
+            codes["vert"],
+            codes["frag"],
+            alpha_clip="UNITY_UI_ALPHACLIP" in keywords,
+            color_mask=fragment_color_mask(fragment_stage[1]),
+            geometry=codes.get("geom"),
+        )
         compilation = {"reflection": reflection, "data": executable, "gpu_program_type": 25}
         variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
     return variants
