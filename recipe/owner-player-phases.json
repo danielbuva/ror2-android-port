@@ -50,7 +50,7 @@
   },
   "manager": {
     "profile": "recipe/owner-player-managers.json",
-    "sha256": "4ba6964baf8957b95c2e1396b681245b5c907989b20e24a7a242cc045b52f3af",
+    "sha256": "d60b586ef6cf3363bddb1499f8550a5b2967c9dd5a7d933b00f8dff5b24b8a5e",
     "outputs": [
       "globalgamemanagers"
     ]
@@ -58,7 +58,7 @@
   "scene": {
     "profile": "recipe/owner-default-scene.json",
     "environment": "original",
-    "sha256": "07a486908bd40c2adb1a44679c8c650197b46d1f8d8f303a3be6954713750a9e",
+    "sha256": "1252fa03dc505010e89e20f14932f07d7725fa1efc34725a4b5a7a85dc9eb825",
     "outputs": [
       "level0"
     ]

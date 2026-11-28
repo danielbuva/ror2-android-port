@@ -9,7 +9,7 @@
   "public_inputs": {
     "shaders": {
       "path": "recipe/owner-player-shaders.json",
-      "sha256": "950e49b10fa9776e1b0eb31d97db2b6efeee0cd22de1d9ee05f78355339b8cde"
+      "sha256": "ff27db9c491cb90039314c7b7090321163ee203443f6fbcc39cf8866392df796"
     },
     "contexts": {
       "path": "recipe/owner-stage-contexts.json",
@@ -41,7 +41,7 @@
     },
     "build": {
       "path": "android/Assets/Editor/LabBuild.cs",
-      "sha256": "15e344c014a4cb00b850026855c3eb7339a874b5bebe1d54afe9368d2486de82"
+      "sha256": "9cfd0aec4dd17c33c291bf8ee218b197e626a27d1182c385e337bfe09ea6b700"
     },
     "requirements": {
       "path": "tools/lab-requirements.txt",
