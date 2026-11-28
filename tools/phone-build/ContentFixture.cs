@@ -722,9 +722,10 @@ public sealed class ContentFixture : MonoBehaviour
             material.SetTexture("_ScrollTex", Texture2D.whiteTexture);
             material.SetTexture("_RemapTex", Texture2D.blackTexture);
             material.SetColor("_Color", Color.blue);
-            material.SetColor("_EmColor", Color.black);
+            // Keep both height-gradient endpoints neutral so the lower edge retains the wireframe tint.
+            material.SetColor("_EmColor", Color.white);
             material.SetColor("_WireframeColor", Color.red);
-            material.SetColor("_VertColor", Color.red);
+            material.SetColor("_VertColor", Color.white);
             material.SetFloat("_EmBoost", 1);
             material.SetFloat("_EmPower", 1);
             material.SetFloat("_WireframeThickness", 0.1f);
