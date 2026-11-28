@@ -218,27 +218,35 @@ class TranslatedShaderPack(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "exceeds native buffer"):
             parameter_layout(invalid, structured=True)
 
-    def test_instancing_preserves_native_names_and_links_draw_call_binding(self):
+    def test_instancing_preserves_native_names_and_shares_two_stage_bindings(self):
         with patch.object(sys, "path", [str(Path(SPEC.origin).parent), *sys.path]):
             import shader_translate as translator
 
         buffers = [
             dict(name="UnityDrawCallInfo", slot=1, size=16, variables=[]),
             dict(name="UnityInstancing_PerDraw0", slot=2, size=256, variables=[]),
+            dict(name="UnityInstancing_PerDraw2", slot=3, size=128, variables=[]),
         ]
-        layout = {"buffers": buffers, "textures": []}
-        vertex, vertex_descriptors = translator.stage_parameters(layout, True, vertex_binding_base=3, shared_draw_call=1)
-        fragment, fragment_descriptors = translator.stage_parameters({**layout, "buffers": buffers[:1]}, False, shared_draw_call=1)
-        self.assertEqual(vertex_descriptors, ["cbv", "1", "1", "1", "cbv", "2", "1", "5"])
-        self.assertEqual(fragment_descriptors, ["cbv", "1", "1", "1"])
+        vertex_layout = {"buffers": buffers, "textures": []}
+        fragment_layout = {"buffers": [dict(buffers[0], slot=0), dict(buffers[1], slot=4)], "textures": []}
+        shared = translator.shared_constant_bindings(vertex_layout, fragment_layout)
+        self.assertEqual(shared, {"UnityDrawCallInfo": 0, "UnityInstancing_PerDraw0": 4})
+        vertex, vertex_descriptors = translator.stage_parameters(vertex_layout, True, vertex_binding_base=5, shared_bindings=shared)
+        fragment, fragment_descriptors = translator.stage_parameters(fragment_layout, False, shared_bindings=shared)
+        self.assertEqual(vertex_descriptors, ["cbv", "1", "1", "0", "cbv", "2", "1", "4", "cbv", "3", "1", "8"])
+        self.assertEqual(fragment_descriptors, ["cbv", "0", "1", "0", "cbv", "4", "1", "4"])
+        native = N.reflection(vertex + fragment)
         self.assertEqual(
-            vertex + fragment,
+            native["bindings"],
             [
-                "cb: UnityInstancing_PerDraw0 256 0",
-                "cbbind: UnityInstancing_PerDraw0 67174405",
-                "cb: UnityDrawCallInfo 8 0",
-                "cbbind: UnityDrawCallInfo 201392129",
+                {"name": "UnityInstancing_PerDraw2", "index": 0x04010008},
+                {"name": "UnityDrawCallInfo", "index": 0x0C010000},
+                {"name": "UnityInstancing_PerDraw0", "index": 0x0C010004},
             ],
+        )
+        self.assertEqual(
+            [(row["name"], row["size"]) for row in native["buffers"]],
+            [("UnityInstancing_PerDraw2", 128), ("UnityDrawCallInfo", 8), ("UnityInstancing_PerDraw0", 256)],
         )
 
     def test_fragment_uses_independent_sampler_registers_and_native_variant_shape(self):

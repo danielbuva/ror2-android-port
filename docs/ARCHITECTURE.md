@@ -8638,7 +8638,9 @@ constant arrays, member offsets and strides through the same native parameter
 writer. Unity typed-loaded the additional texture and instancing variants.
 The graphics linker assigns distinct vertex and fragment uniform bindings and
 preserves the native Unity instancing buffer names. When both stages consume
-`UnityDrawCallInfo`, they share its binding with both stage flags. The Android
+`UnityDrawCallInfo` or the same `UnityInstancing_` buffer, the linker serializes
+one declaration with both stage flags and routes both programs to its binding.
+Unity assigns Vulkan constant buffer bindings by name. The Android
 Vulkan fixture draws OutlineHighlightNew with an ordinary draw and two colored
 instances. It also draws Cloud Intersection Remap with the directional plain
 and instanced variants and depth fade disabled. The same fixture draws both

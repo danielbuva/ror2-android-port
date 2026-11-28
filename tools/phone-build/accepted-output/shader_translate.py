@@ -69,9 +69,25 @@ def fragment_color_mask(dxbc):
     return mask or 1
 
 
-def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=None):
+def shared_constant_bindings(vertex_layout, fragment_layout):
+    """Keep one Unity-owned buffer declaration for two-stage consumers."""
+    vertices = {buffer["name"]: buffer for buffer in vertex_layout["buffers"]}
+    bindings = {}
+    for fragment in fragment_layout["buffers"]:
+        name = fragment["name"]
+        if name not in vertices or not (name == "UnityDrawCallInfo" or name.startswith("UnityInstancing_")):
+            continue
+        vertex = vertices[name]
+        if name != "UnityDrawCallInfo" and dict(vertex, slot=fragment["slot"]) != fragment:
+            raise ValueError(f"Vulkan stages disagree on the layout of {name}")
+        bindings[name] = fragment["slot"]
+    return bindings
+
+
+def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_bindings=None):
     """Route source-layout resources to the linked pass's descriptor sets."""
     stage_flag = 0x04000000 if vertex else 0x08000000
+    shared_bindings = shared_bindings or {}
     rows, descriptors = [], []
 
     def constant_row(name, variable):
@@ -83,12 +99,13 @@ def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=
         slot = buffer["slot"] + (vertex_binding_base if vertex else 0)
         name = buffer["name"]
         draw_call = name == "UnityDrawCallInfo"
+        shared = name in shared_bindings
         if not draw_call and not name.startswith("UnityInstancing_"):
             name = ("vs_" if vertex else "fs_") + name
-        if draw_call and shared_draw_call is not None:
-            slot = shared_draw_call
+        if shared:
+            slot = shared_bindings[name]
         descriptors.extend(("cbv", str(buffer["slot"]), "1", str(slot)))
-        if draw_call and shared_draw_call is not None and vertex:
+        if shared and vertex:
             continue  # The fragment metadata declares the binding for both stages.
         variables = buffer["variables"]
         # The SDK's Vulkan runtime binding exposes two integers. DXBC pads
@@ -100,7 +117,7 @@ def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=
             name_prefix = structure["name"]
             rows.append(f"const: {name_prefix} {structure['offset']} 0 2 {structure['stride']} 0 {structure['array_size']}")
             rows.extend(constant_row(f"{name_prefix}.{variable['name']}", variable) for variable in structure["variables"])
-        visibility = 0x0C000000 if draw_call and shared_draw_call is not None else stage_flag
+        visibility = 0x0C000000 if shared else stage_flag
         rows.append(f"cbbind: {name} {visibility | 0x10000 | slot}")
     textures = layout["textures"]
     image_base = max(3, 1 + max((texture["sampler"] for texture in textures), default=-1))
@@ -186,9 +203,7 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
     variants = []
     for keywords, vertex_stage in vertices.items():
         fragment_stage = fragments[fragment_keys[keywords]]
-        vertex_draw_call = next((buffer for buffer in vertex_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
-        fragment_draw_call = next((buffer for buffer in fragment_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
-        shared_draw_call = fragment_draw_call["slot"] if vertex_draw_call and fragment_draw_call else None
+        shared_bindings = shared_constant_bindings(vertex_stage[2], fragment_stage[2])
         reflection, codes, requirements = [], {}, 0
         sources = [("vert", vertex_stage), ("frag", fragment_stage)]
         if has_geometry:
@@ -200,7 +215,7 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
                 rows, descriptors = [], []
             else:
                 vertex = stage == "vert"
-                rows, descriptors = stage_parameters(layout, vertex, vertex_binding_base=vertex_binding_base, shared_draw_call=shared_draw_call)
+                rows, descriptors = stage_parameters(layout, vertex, vertex_binding_base=vertex_binding_base, shared_bindings=shared_bindings)
                 if vertex:
                     rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))
             glsl_stage = stage if stage in ("vert", "geom") else None
