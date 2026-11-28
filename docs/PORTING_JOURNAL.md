@@ -5308,3 +5308,17 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `snow-topped-draw-device-01/terminal.done.json` and
 `signed-snow-topped-device-01/terminal.done.json`. Linked scene draws,
 ShadowCaster readback and whole-game scoring remain open.
+
+## J1584 — Draw Dread Fog B vertex displacement on Android Vulkan
+
+2026-11-28 UTC. Translated 88 Shader stage pairs, including 24 vertex
+texture variants. Exact Unity 2021.3.45f2 loaded the Shader and the original
+VertexLit fallback. APK `da52e95bfe48cffa97cea570249c6e14f66064bf231ae9ac8ae24f73c7d863d4`
+read displacement bounds [37,45], [39,53], [39,53] and [42,60].
+Signed bundle `0458830fdad534c3111d04ee1135da9a6ad0d16ab46cd2212e4390cc6e1d36080`
+matched all host artifacts in 67.66 s at 93.59 MiB peak child RSS,
+12.66 MiB stage storage and 61.3 °C peak CPU/GPU. Both packages were removed.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`dread-fog-b-draw-device-01/terminal.done.json` and
+`signed-dread-fog-b-device-02/terminal.done.json`. Linked scene draws and
+whole-game scoring remain open.
