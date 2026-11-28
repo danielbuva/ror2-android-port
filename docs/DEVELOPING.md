@@ -23,8 +23,10 @@ and device support are available. Set `install_transport` to `streaming` or
 `incremental` for a strict transport comparison. Use `mode: "install-launch"`
 with a standalone lab APK and an absent lab package to measure ADB install
 time and time from install dispatch to a verified launcher PID. The runner
-removes the installation after the measurement. Other optional fields include
-`cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
+removes the installation after the measurement. `mode: "install-only"` uses the
+same disposable package and measures ADB install time with the OLEDs asleep.
+Use it on Thor while the physical top-only launch gate is unavailable. Other
+optional fields include `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
 `settings-save-failure`, `profile-write-interrupt` or `profile-save-failure`,
 or fixture modes `shader-draw`, `shader-compute` and `texture-readback`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by

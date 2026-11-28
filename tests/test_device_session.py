@@ -1929,7 +1929,13 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((self.output / "launch.json").read_text())["pid"], "73")
 
     def test_fresh_install_launch_releases_lease_without_game_runtime_directory(self):
-        request = dict(self.request, mode=runner.INSTALL_LAUNCH, install_transport="streaming")
+        self.check_fresh_install_probe(runner.INSTALL_LAUNCH)
+
+    def test_install_only_keeps_displays_asleep_and_removes_package(self):
+        self.check_fresh_install_probe(runner.INSTALL_ONLY)
+
+    def check_fresh_install_probe(self, mode):
+        request = dict(self.request, mode=mode, install_transport="streaming")
         target = mock.Mock(package=request["package"])
         target.exists.return_value = False
         target.receipt.side_effect = lambda name: self.root / name
@@ -1957,7 +1963,7 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner, "prepare_launch") as prepare,
             mock.patch.object(runner, "ensure_runtime", side_effect=FileNotFoundError("runtime files")) as runtime,
             mock.patch.object(runner, "reset_idle") as reset,
-            mock.patch.object(runner, "launch", return_value={"pid": "73"}),
+            mock.patch.object(runner, "launch", return_value={"pid": "73"}) as launch,
             mock.patch.object(batch, "_GameThermalOwner", return_value=thermal),
             mock.patch.object(batch, "_prune"),
         ):
@@ -1966,10 +1972,17 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["success"], result.get("error") or result.get("cleanup_errors"))
         self.assertEqual(result["terminal_readback"], {"installed": False, "oled_asleep": True})
         self.assertTrue(result["lease_released"])
-        self.assertIn("install_to_pid_seconds", result)
+        if mode == runner.INSTALL_LAUNCH:
+            self.assertIn("install_to_pid_seconds", result)
+            prepare.assert_called_once_with(target, result["prelaunch"], verify_display=True)
+        else:
+            self.assertNotIn("install_to_pid_seconds", result)
+            prepare.assert_not_called()
+            launch.assert_not_called()
+            thermal.cool.assert_called_once_with()
+        target.display.assert_not_called()
         target.install.assert_called_once_with(self.apk, mode="streaming")
         target.reset.assert_called_once_with()
-        prepare.assert_called_once_with(target, result["prelaunch"], verify_display=True)
         independent.display.assert_called_once_with(False)
         runtime.assert_not_called()
         reset.assert_not_called()

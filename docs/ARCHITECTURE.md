@@ -3683,8 +3683,9 @@ advertised incremental delivery use incremental install with `--wait`.
 The install owner retries definite rejections with streaming after verifying
 the prior ownership state. Adopted installs stream to the freshly resolved UUID.
 The `install-launch` workload measures ADB time and dispatch-to-PID time on a
-fresh standalone lab install. The shared runner verifies ownership before
-removing the package and putting the display to sleep.
+fresh standalone lab install. `install-only` measures ADB time with the OLEDs
+asleep when a launch cannot meet the display policy. The shared runner verifies
+ownership before removing the package and verifies OLED sleep during teardown.
 The shared runner checks APK, private data and
 shared payload backing. The internal install estimate must leave at least 15 GiB
 free. Both profiles reserve APK and payload inputs plus 20 GiB before install,

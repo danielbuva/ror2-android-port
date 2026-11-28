@@ -40,6 +40,8 @@ UNPLUGGED_SECONDS = 30 * 60
 UNPLUGGED_REQUEST = "owner-unplugged-request.json"
 INSTALLED_ALPHA = "installed-alpha"
 INSTALL_LAUNCH = "install-launch"
+INSTALL_ONLY = "install-only"
+INSTALL_PROBE_MODES = {INSTALL_LAUNCH, INSTALL_ONLY}
 CONTENT_FIXTURE_MODES = {"shader-draw", "shader-compute", "texture-readback"}
 
 
@@ -126,7 +128,7 @@ def load_request(path, serial=None, *, queued=False):
         raise ValueError("Unknown install transport")
     if value["mode"] not in {
         "launch",
-        INSTALL_LAUNCH,
+        *INSTALL_PROBE_MODES,
         "sustained",
         "settings-save-failure",
         "profile-write-interrupt",
@@ -146,8 +148,8 @@ def load_request(path, serial=None, *, queued=False):
             raise ValueError("Probe requires the disposable content fixture and its standalone workload")
     elif value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
-    if value["mode"] == INSTALL_LAUNCH and "payload_directory" in value:
-        raise ValueError("Install-to-launch measurement requires a standalone APK")
+    if value["mode"] in INSTALL_PROBE_MODES and "payload_directory" in value:
+        raise ValueError("Install measurement requires a standalone APK")
     if value["mode"] in {"settings-save-failure", "profile-write-interrupt", "profile-save-failure"} and "selection" in value:
         raise ValueError("Persistence workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
@@ -1617,6 +1619,8 @@ def execute(request, *, queued=False):
     (output / ".prune-keep").touch()
     installed_alpha = request["mode"] == INSTALLED_ALPHA
     install_launch = request["mode"] == INSTALL_LAUNCH
+    install_probe = request["mode"] in INSTALL_PROBE_MODES
+    install_only = request["mode"] == INSTALL_ONLY
     apk = None if installed_alpha else Path(request["apk"])
     cleanup = dict(bytes_removed=0, files=[])
     result = dict(
@@ -1671,7 +1675,7 @@ def execute(request, *, queued=False):
             device = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
             reset_other_lab(request, lease, result.setdefault("initial_lab_reset", {}), cleanup)
             if device.exists():
-                if device.package == PHONE_CONTENT_PACKAGE or install_launch:
+                if device.package == PHONE_CONTENT_PACKAGE or install_probe:
                     temporary_package_was_present = True
                     raise RuntimeError("A fresh install requires the selected disposable package to be absent")
                 if not device.receipt("installed.json").exists() and "prior_receipt" in request:
@@ -1690,7 +1694,7 @@ def execute(request, *, queued=False):
                 save(output / "initial-reset.json", result["initial_reset"])
                 result["initial_idle"] = _idle_readback(device, active_hash)
             check_lab_processes(device, result["process_checkpoints"], "before-install")
-            if install_launch:
+            if install_probe:
                 thermal = _GameThermalOwner(
                     device,
                     request["apk_sha256"],
@@ -1728,7 +1732,10 @@ def execute(request, *, queued=False):
             active_hash = request["apk_sha256"]
             check_lab_processes(device, result["process_checkpoints"], "install")
             result["storage_after"] = placement(device, payload_size + DEVICE_RESERVE_BYTES)
-            if not install_launch:
+            if install_only:
+                result["success"] = True
+                return result
+            if not install_probe:
                 runtime = ensure_runtime(device)
                 if "payload_directory" in request:
                     result["sync"] = device.sync(Path(request["payload_directory"]), replace_previous=True, cleanup=cleanup)
@@ -1822,7 +1829,7 @@ def execute(request, *, queued=False):
                 except BaseException:
                     cleanup_errors.append(name + ": " + traceback.format_exc())
 
-            if device and active_hash and not (installed_alpha or install_launch):
+            if device and active_hash and not (installed_alpha or install_probe):
                 try:
                     pid = next(
                         (checkpoint["verified_launch_pid"] for checkpoint in reversed(result["process_checkpoints"]) if "verified_launch_pid" in checkpoint),
@@ -1848,7 +1855,7 @@ def execute(request, *, queued=False):
                         result["thermal_finish_error"] = traceback.format_exc()
                         result["success"] = False
 
-                if not install_launch or active_hash:
+                if not install_probe or active_hash:
                     clean("thermal", finish_thermal)
                 result["thermal"] = dict(
                     error=thermal.error,
@@ -1902,11 +1909,11 @@ def execute(request, *, queued=False):
                     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
                     retain_diagnostic_scratch(device, runtime, initial_scratch, output, cleanup)
 
-                if not (installed_alpha or install_launch):
+                if not (installed_alpha or install_probe):
                     clean("diagnostic-scratch", retain_scratch)
                     clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {}), cleanup))
                     clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {}), cleanup))
-                if device.package == PHONE_CONTENT_PACKAGE or install_launch:
+                if device.package == PHONE_CONTENT_PACKAGE or install_probe:
 
                     def remove_temporary_package():
                         verify_owned(device, active_hash)
