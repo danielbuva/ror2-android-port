@@ -80,6 +80,65 @@ python3 tools/pc-reference/compare.py "$pc_manifest" loader-roost loader-terrain
   --android-state "$phone_gameplay_json" --side-by-side "$private_output_png"
 ```
 
+### Batch comparison (offline)
+
+Use the existing PC manifest and a private version-1 pairing file. Android
+paths are relative to the pairing file and must stay inside its directory.
+Example (scenario and step IDs must match the PC manifest):
+
+```json
+{
+  "schema_version": 1,
+  "pairs": [{
+    "scenario": "example",
+    "step": "cast",
+    "android_frame": "cast.png",
+    "android_state": "cast-state.json",
+    "offset": [0, 0],
+    "background": {"pc_step": "before-cast", "android_frame": "before.png"},
+    "android_audio": "events.jsonl",
+    "audio_markers": {"pc_seconds": 12.4, "android_seconds": 31.0, "window_seconds": 1}
+  }],
+  "thresholds": {"effect_delta": 18, "audio_tolerance_ms": 100},
+  "event_aliases": {"27": "example_event"}
+}
+```
+
+```sh
+./dev pc-reference compare batch "$pc_manifest" "$pairings_json" \
+  --output "$new_private_report_directory" --diff-images
+```
+
+The original single-pair command still works. A batch writes JSON and Markdown,
+plus optional absolute RGB difference PNGs. Keep all inputs and outputs under
+ignored `work/` or outside the repository. The tool needs Pillow from the lab
+environment, not the game, Steam, or a device. PC images, state, and event logs
+are verified against existing capture hashes. New capture manifests also record
+the saved plan hash and capture resolution.
+
+Comparable frame aspect ratios must match. Resizing and the explicit integer
+offset place Android in PC pixel coordinates; metrics are limited to the common
+overlap. Optional `pc_frame` values select a timeline PNG for the primary or
+background frame; the default is the first listed frame. Known scene or seed
+mismatches suppress metrics. Use matched camera poses and matched effect-free
+backgrounds for the candidate flags. The image metrics are mean absolute RGB
+difference and a tiled luminance SSIM-style score. Background subtraction
+estimates changed area, flat nearly square fills, and change in effect intensity.
+Threshold keys are `effect_delta`, `missing_ratio`, `opaque_fill`,
+`opaque_range`, `blend_change`, and `audio_tolerance_ms`. The JSON report records
+the effective values. Missing backgrounds leave flags unavailable.
+
+Android audio is optional JSONL with `step`, `seconds`, and `event_name` or
+`event_id`. Use the capture's own elapsed clock. `event_aliases` maps numeric
+Wwise IDs to names when monitors expose different forms. Optional
+`playing_id` and `frame` help collapse duplicate observations of one post
+within a capture. Counts are per event identity; repeated occurrences pair in
+time order. Timing deltas require two markers for the same point in the step
+and are not a match of actual audio waveforms. Markers alone preserve every
+post in the step. Set `window_seconds` to keep only posts from each marker
+(inclusive) until the end of its window (exclusive). No timestamps are compared
+across unaligned clocks.
+
 CrossOver translates the Windows D3D11 renderer, which can shift color and
 lighting relative to native Windows. Its captures can be used for presence,
 blend and effect comparisons. For a native Windows color comparison, use a

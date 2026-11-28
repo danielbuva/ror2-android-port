@@ -25,29 +25,42 @@ def png_info(path):
         return {"width": width, "height": height, "sha256": hashlib.file_digest(image, "sha256").hexdigest()}
 
 
-def pair(manifest_path, scenario_id, step_id, android_frame, android_state_path, frame):
-    manifest = read(manifest_path)
+def artifact(manifest_path, scenario, name):
+    root = manifest_path.resolve().parent
+    folder = (root / scenario["id"]).resolve()
+    path = (folder / name).resolve()
+    if folder == root or not folder.is_relative_to(root) or not path.is_relative_to(folder) or name not in scenario["sha256"]:
+        raise ValueError("Artifact is absent from the PC manifest")
+    with path.open("rb") as source:
+        if hashlib.file_digest(source, "sha256").hexdigest() != scenario["sha256"][name]:
+            raise ValueError(f"PC artifact changed since capture: {path.name}")
+    return path
+
+
+def select(manifest, scenario_id, step_id):
     if manifest.get("schema_version", 1) != 1:
         raise ValueError("Unsupported PC capture manifest version")
-    scenario = next((entry for entry in manifest["scenarios"] if entry["id"] == scenario_id), None)
-    if not scenario or scenario["status"] != "passed" or "sha256" not in scenario:
-        raise ValueError("PC scenario has no completed capture")
-    step = next((entry for entry in scenario["steps"] if entry["id"] == step_id), None)
-    if not step or frame not in [entry["frame"] for entry in step["timeline"]]:
-        raise ValueError("Frame is not present in the selected PC step")
-    root = manifest_path.resolve().parent
+    scenarios = [entry for entry in manifest["scenarios"] if entry["id"] == scenario_id]
+    if len(scenarios) != 1 or scenarios[0]["status"] != "passed" or "sha256" not in scenarios[0]:
+        raise ValueError("PC scenario has no unique completed capture")
+    scenario = scenarios[0]
+    steps = [entry for entry in scenario["steps"] if entry["id"] == step_id]
+    if len(steps) != 1:
+        raise ValueError("No unique PC step in the selected capture")
+    return scenario, steps[0]
 
-    def artifact(name):
-        path = (root / scenario_id / name).resolve()
-        if not path.is_relative_to(root) or name not in scenario["sha256"]:
-            raise ValueError("Artifact is absent from the PC manifest")
-        with path.open("rb") as source:
-            if hashlib.file_digest(source, "sha256").hexdigest() != scenario["sha256"][name]:
-                raise ValueError(f"PC artifact changed since capture: {path.name}")
-        return path
 
-    pc_frame = artifact(f"{step_id}/{frame}")
-    pc_state = read(artifact(step["state"]))
+def timeline_frame(manifest_path, scenario, step, frame):
+    if sum(entry["frame"] == frame for entry in step["timeline"]) != 1:
+        raise ValueError("Frame is not present exactly once in the selected PC step")
+    return artifact(manifest_path, scenario, f"{step['id']}/{frame}")
+
+
+def pair(manifest_path, scenario_id, step_id, android_frame, android_state_path, frame):
+    manifest = read(manifest_path)
+    scenario, step = select(manifest, scenario_id, step_id)
+    pc_frame = timeline_frame(manifest_path, scenario, step, frame)
+    pc_state = read(artifact(manifest_path, scenario, step["state"]))
     phone = read(android_state_path) if android_state_path else {}
     android_camera = phone.get("world", {}).get("camera", {})
     android_scene = phone.get("stage", {}).get("scene") or None
@@ -77,8 +90,13 @@ def pair(manifest_path, scenario_id, step_id, android_frame, android_state_path,
     return report, pc_frame
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["batch"]:
+        from compare_batch import main as batch_main
+
+        return batch_main(argv[1:])
+    parser = argparse.ArgumentParser(description=__doc__, epilog="For batch reports: compare.py batch --help.")
     parser.add_argument("manifest", type=Path)
     parser.add_argument("scenario")
     parser.add_argument("step")
@@ -86,7 +104,7 @@ def main():
     parser.add_argument("--android-state", type=Path, help="Optional Android gameplay state JSON")
     parser.add_argument("--pc-frame", default="frame.png", help="Select a named PNG from the PC step timeline")
     parser.add_argument("--side-by-side", type=Path, help="Write a PNG with PC left and Android right (requires ffmpeg)")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         report, pc_frame = pair(args.manifest, args.scenario, args.step, args.android_frame, args.android_state, args.pc_frame)
         if args.side_by_side:

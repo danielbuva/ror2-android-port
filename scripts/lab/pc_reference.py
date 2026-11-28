@@ -326,7 +326,15 @@ def run_plan(args, clone, identity, command, plan, scenarios):
         raise RuntimeError("Reference video capture requires ffmpeg")
     root = Path(tempfile.mkdtemp(prefix=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-"), dir=LOCAL))
     write(root / "plan.json", plan)
-    manifest = {"schema_version": 1, "status": "running", "platform": "crossover-d3d11", **identity, "scenarios": []}
+    manifest = {
+        "schema_version": 1,
+        "status": "running",
+        "platform": "crossover-d3d11",
+        **identity,
+        "plan_sha256": sha(root / "plan.json"),
+        "resolution": {axis: plan["settings"][axis] for axis in ("width", "height")},
+        "scenarios": [],
+    }
     try:
         for index, scenario in enumerate(scenarios):
             if index:
@@ -391,7 +399,16 @@ def run_plan(args, clone, identity, command, plan, scenarios):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Current: record the Steam PC reference from a separate CrossOver clone")
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["compare"]:
+        sys.path.insert(0, str(TOOLS))
+        from compare import main as compare_main
+
+        return compare_main(argv[1:])
+    parser = argparse.ArgumentParser(
+        description="Current: record the Steam PC reference from a separate CrossOver clone",
+        epilog="Offline comparison: ./dev pc-reference compare --help (batch --help for reports).",
+    )
     parser.add_argument("plan", type=Path, nargs="?", help="Capture plan JSON")
     parser.add_argument("--prepare-only", action="store_true", help="APFS-clone the input and compile the recorder without launching Steam or the game")
     parser.add_argument("--validate-plan", action="store_true", help="Validate a plan without accessing the local game")
