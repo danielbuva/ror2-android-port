@@ -6297,6 +6297,22 @@ Pinned AssetRipper `AssetCollection.TryGetAsset` informed the external
 member lookup. Unity 2021.3.45f2 loaded and unloaded all eight Materials
 in the isolated fixture and verified eight Shader and 33 texture bindings.
 
+### Void Island SE Material records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-void-island-se-native-material-records.json` | `ee004f2a900d0c47d5b425f42174699164063f9ec45a9b8da517d46816e75557` |
+
+Audit date 2026-11-28. The recipe selects three original Materials from
+the legitimate Steam input. It contains relative source paths, serialized
+identities, sizes and hashes. The source bodies, dependency binaries and
+fixture logs stay in ignored storage. Pinned AssetRipper PPtr and Material
+extensions informed source member and saved texture lookup. The fixture
+verified all 17 pointer relocations and preserved the original type trees
+and other bytes. Unity 2021.3.45f2 loaded the three Materials, resolved
+three Shader and fourteen texture bindings, and unloaded the fixture.
+Ordered release admission and Android rendering remain open.
+
 ### Whole-game Mire Material records
 
 | Recipe | SHA-256 |

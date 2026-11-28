@@ -8203,6 +8203,13 @@ original member references to Shader and texture providers. The isolated
 fixture checks the typed bindings and unloads the Material bundle and its
 dependencies after the check.
 
+`recipe/owner-void-island-se-native-material-records.json` selects three
+original Materials referenced by the Void Island SE prefab. The shared
+record producer keeps the native bodies for checked pointer relocation by
+`bundle_preload.py`. The fixture resolves Shader and texture providers,
+including the SDK built-in texture, and unloads them after typed validation.
+Scene intake owns the prefab's 108-slot preload order.
+
 `recipe/owner-whole-game-mire-native-material-records.json` uses the same
 producer and preparation owners for nine Mire and Access Codes Node
 Materials. It supplies two of the Material destinations referenced by
