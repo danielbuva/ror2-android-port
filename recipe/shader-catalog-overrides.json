@@ -7,7 +7,7 @@
       "candidate_schema": "private-outline-highlight-generated-candidate-r1",
       "generator": "shader_outline.py",
       "generator_recipe": "recipe/shader-outline-candidate.json",
-      "generator_recipe_sha256": "49d9890b97bb96531c7a83a07f2086a8b46235f41775929d985272747a6c8a64",
+      "generator_recipe_sha256": "6230d1ec0d1be86da6637abc582d478d7e45cae4651c502aa48271534100154c",
       "generator_sha256": "7cd674a8f0081a5e47669810c65e69c86349e91d280c1e4129c73111ec3ad608",
       "guid": "41e90cbc5ad198a438128b019f8d8553",
       "location_id": 16022,

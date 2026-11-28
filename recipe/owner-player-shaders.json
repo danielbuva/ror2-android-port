@@ -90,7 +90,7 @@
       "sha256": "15a39afd3922cfa7c8279afcdff7252b895349fe8713d67f2bb6831719e22002"
     },
     "scripts/lab/shader_segments.py": {
-      "bytes": 12742,
+      "bytes": 13894,
       "sha256": "fa11fe49ac585c4976584e467a44e336dad98169d1d5f370d30a0355619832bc"
     },
     "scripts/lab/shader_source.py": {
@@ -162,8 +162,8 @@
       "sha256": "fb78c2e3cc299dd9933479b7952b635fa6062453364fa1c42f3aac6b055d2f4d"
     },
     "recipe/project-layout.json": {
-      "bytes": 12608,
-      "sha256": "e12bf69b2f148cfaa3703d2dd21f1be1f55738f6495cf15b29d7553ba4ee9447"
+      "bytes": 12959,
+      "sha256": "bd08565de2e2a1d9fc05cbde62d5f807454b5929a3f8f2424163d20e473988f3"
     },
     "tools/phone-build/accepted-output/shader_sdk.py": {
       "bytes": 11819,
