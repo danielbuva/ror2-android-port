@@ -8178,6 +8178,23 @@ and writes regenerated Shader data under ignored `work/`.
 | `owner-snow-topped-graphics-translation.json` | `4ccb0361513a69c752ef710328d01cf721321354ea876669c5563d4a3feb0c85` |
 | `jobs/owner-snow-topped-graphics-translation.json` | `938398c73789394deec7e2636cde730b9aca028b80e471e6bc54987b9d36c392` |
 
+## Abandoned Aqueduct Orbiting Goo Material record (2026-11-28)
+
+The profile selects the original Material used by the Orbiting Goo FBX.
+Scoped bundle readback reverses five relocated pointers and recovers the
+source body. Unity 2021.3.45f2 verifies the signed Standard Shader and four
+saved Texture2D links, then unloads the bundles. The FBX's canonical
+composition and linked Android rendering remain open.
+
+The provenance, privacy, licensing and sensitive-content review covered the
+relative source bundle path, member and object identities, class, length and
+hashes. The public producer reads the user's accepted PC installation and
+writes the record pack under ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-whole-game-itgoolake-orbiting-goo-material-record.json` | `6c283424d3de95c5a042f4f4f5603099b231ee48c7c913ff8a8e56d4f9f81111` |
+
 ## EvisProjectileGhost Mesh records (2026-11-28)
 
 Run `mesh_produce.py` with this profile to supply two original Mercenary
