@@ -8324,6 +8324,13 @@ readback verified all 124 relocations. The Unity 2021.3.45f2 content fixture
 loaded the Materials, checked their saved bindings and unloaded the bundles.
 Canonical admission and linked Android draw checks remain open.
 
+The Ancient Loft pillar Material profile selects two original class-21
+bodies through `record_produce.py`. Bundle preparation binds the saved
+Shader to the signed Terrain Blend and restores the saved texture links
+using pinned Android suppliers. The exact-editor fixture checks those links
+and unloads its bundles. Release composition preserves both Material slots
+in the original animated pillar preload groups.
+
 `owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
 property owner and pinned exporter template to retain native dimension-one
 texture declarations (`any`). Setup takes explicit original/SDK/template/codec
