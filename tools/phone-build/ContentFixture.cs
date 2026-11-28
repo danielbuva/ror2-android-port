@@ -42,6 +42,8 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32[] clothShadowSamples;
         public Color32[] triplanarSamples;
         public Color32[] wireframeSamples;
+        public Color32[] standardAlbedoSamples;
+        public int[] standardSpecularSamples;
         public bool passed;
         public string failure;
     }
@@ -361,6 +363,7 @@ public sealed class ContentFixture : MonoBehaviour
             else if (shader.name == "Hidden/TerrainEngine/Details/WavingDoublePass") DrawTerrainDetail(shader, report, false);
             else if (shader.name == "Hidden/TerrainEngine/Details/BillboardWavingDoublePass") DrawTerrainDetail(shader, report, true);
             else if (shader.name == "Hopoo Games/Deferred/Wavy Cloth") DrawWavyCloth(shader, report);
+            else if (shader.name == "Hopoo Games/Deferred/Standard") DrawStandard(shader, report);
             else if (shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend" ||
                 shader.name == "Hopoo Games/Deferred/Triplanar Terrain Blend Emissive")
                 DrawTriplanar(shader, report, new[] { "_RedChannelSideTex", "_RedChannelTopTex", "_GreenChannelTex", "_BlueChannelTex" });
@@ -929,6 +932,138 @@ public sealed class ContentFixture : MonoBehaviour
             Destroy(transparent);
             Destroy(ramp);
             Destroy(mesh);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawStandard(Shader shader, ShaderDrawReport report)
+    {
+        var previous = RenderTexture.active;
+        var material = new Material(shader);
+        var mesh = new Mesh();
+        var opaque = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var cutout = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var normal = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var ramp = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
+        var pixels = new Texture2D(32, 1, TextureFormat.RGBA32, false, true);
+        var color = new RenderTexture[4];
+        try
+        {
+            int deferred = material.FindPass("DEFERRED");
+            if (deferred < 0) throw new Exception("Standard Deferred pass is missing");
+            var targets = new RenderTargetIdentifier[color.Length];
+            for (int i = 0; i < color.Length; ++i)
+            {
+                color[i] = RenderTexture.GetTemporary(32, 32, i == 0 ? 24 : 0,
+                    RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+                targets[i] = color[i];
+            }
+
+            mesh.vertices = new[] {
+                new Vector3(-0.16f, -0.2f, 0), new Vector3(-0.16f, 0.2f, 0),
+                new Vector3(0.16f, 0.2f, 0), new Vector3(0.16f, -0.2f, 0)
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            mesh.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
+            var tangent = new Vector4(1, 0, 0, 1);
+            mesh.tangents = new[] { tangent, tangent, tangent, tangent };
+            mesh.colors = new[] { Color.white, Color.white, Color.white, Color.white };
+            var uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+            mesh.uv = mesh.uv2 = mesh.uv3 = mesh.uv4 = uv;
+
+            opaque.SetPixel(0, 0, new Color(0.25f, 0.25f, 0, 0.75f));
+            opaque.Apply();
+            cutout.SetPixel(0, 0, new Color(0.25f, 0.25f, 0, 0.25f));
+            cutout.Apply();
+            normal.SetPixel(0, 0, new Color(0.5f, 0.5f, 1, 1));
+            normal.Apply();
+            ramp.SetPixel(0, 0, Color.green);
+            ramp.Apply();
+            material.SetTexture("_MainTex", opaque);
+            material.SetTexture("_NormalTex", normal);
+            material.SetTexture("_EmTex", Texture2D.blackTexture);
+            material.SetColor("_Color", Color.white);
+            material.SetFloat("_Cull", (float)CullMode.Off);
+            material.SetFloat("_SpecularStrength", 0.8f);
+
+            var rightProperties = new MaterialPropertyBlock();
+            rightProperties.SetTexture("_MainTex", cutout);
+            var left = Matrix4x4.Translate(new Vector3(-0.6f, 0, -1));
+            var right = Matrix4x4.Translate(new Vector3(0.6f, 0, -1));
+            var projection = Matrix4x4.Ortho(-1, 1, -1, 1, 0.1f, 10);
+            report.standardAlbedoSamples = new Color32[6];
+            report.standardSpecularSamples = new int[2];
+            using var commands = new CommandBuffer();
+
+            void ReadTarget(int target)
+            {
+                RenderTexture.active = color[target];
+                pixels.ReadPixels(new Rect(0, 16, 32, 1), 0, 0, false);
+            }
+
+            void DrawPair(int sample)
+            {
+                commands.SetRenderTarget(targets, targets[0]);
+                commands.ClearRenderTarget(true, true, Color.blue);
+                commands.SetViewProjectionMatrices(Matrix4x4.identity, projection);
+                commands.DrawMesh(mesh, left, material, 0, deferred);
+                commands.DrawMesh(mesh, right, material, 0, deferred, rightProperties);
+                Graphics.ExecuteCommandBuffer(commands);
+                commands.Clear();
+                ReadTarget(0);
+                report.standardAlbedoSamples[sample] = pixels.GetPixel(6, 0);
+                report.standardAlbedoSamples[sample + 1] = pixels.GetPixel(25, 0);
+            }
+
+            material.EnableKeyword("CUTOUT");
+            for (int sample = 0; sample < 2; ++sample)
+            {
+                if (sample == 1) material.EnableKeyword("FORCE_SPEC");
+                DrawPair(2 * sample);
+                ReadTarget(1);
+                Color32 specular = pixels.GetPixel(6, 0);
+                report.standardSpecularSamples[sample] = specular.r;
+            }
+
+            material.DisableKeyword("CUTOUT");
+            material.DisableKeyword("FORCE_SPEC");
+            material.EnableKeyword("FRESNEL_EMISSION");
+            material.SetTexture("_FresnelMask", Texture2D.whiteTexture);
+            material.SetTexture("_FresnelRamp", ramp);
+            material.SetFloat("_FresnelPower", 1);
+            material.SetFloat("_FresnelBoost", 1);
+            rightProperties.Clear();
+            rightProperties.SetTexture("_FresnelRamp", Texture2D.blackTexture);
+            DrawPair(4);
+
+            var albedo = new Color32(64, 64, 0, 255);
+            var fresnel = new Color32(64, 128, 0, 255);
+            var expected = new Color32[] { albedo, Color.blue, albedo, Color.blue, fresnel, albedo };
+            for (int i = 0; i < expected.Length; ++i)
+            {
+                var sample = report.standardAlbedoSamples[i];
+                var match = expected[i];
+                if (Mathf.Abs(sample.r - match.r) > 1 || Mathf.Abs(sample.g - match.g) > 1 ||
+                    Mathf.Abs(sample.b - match.b) > 1 || sample.a != match.a)
+                    throw new Exception("Standard Deferred albedo sample " + i + " differs");
+            }
+            // CUTOUT weights specular by inverse alpha. FORCE_SPEC uses the unweighted value.
+            if (Mathf.Abs(report.standardSpecularSamples[0] - 51) > 1 ||
+                Mathf.Abs(report.standardSpecularSamples[1] - 204) > 1)
+                throw new Exception("Standard Deferred specular samples differ");
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            foreach (var target in color)
+                if (target != null) RenderTexture.ReleaseTemporary(target);
+            Destroy(material);
+            Destroy(mesh);
+            Destroy(opaque);
+            Destroy(cutout);
+            Destroy(normal);
+            Destroy(ramp);
             Destroy(pixels);
         }
     }
