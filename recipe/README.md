@@ -7875,3 +7875,22 @@ ignored `work/`.
 | Profile | SHA-256 |
 | --- | --- |
 | `owner-plasmacore-ghost-native-records.json` | `e17630d949545d281a49f33bca5ef78656bce30a58144dc11717f5001241b0df` |
+
+## ChefDisplayFrost native records (2026-11-27)
+
+`owner-chef-display-frost-native-records.json` selects 24 original records
+through `record_produce.py`. Scoped bundle readback checked 12 relocated
+PPtrs and the byte-exact Light with its reciprocal GameObject link. Unity
+2021.3.45f2 loaded the prefab and unloaded the bundle. Release admission
+must preserve the 30 original preload slots in order and resolve the six
+additional saved Material references. The two BC1 textures reuse the
+outputs of `owner-rgb-mip-textures.json`.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-chef-display-frost-native-records.json` | `33d4819cfaf738b928df483235fd24844338df4a65ccc18b61e2b492ffdfb308` |
