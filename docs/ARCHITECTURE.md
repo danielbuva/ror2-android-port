@@ -8223,6 +8223,12 @@ record producer keeps the native bodies for checked pointer relocation by
 including the SDK built-in texture, and unloads them after typed validation.
 Scene intake owns the prefab's 108-slot preload order.
 
+`recipe/owner-voidstage-crystal-material-records.json` supplies the original
+Crystal Material body through `record_produce.py`, preserving the canonical
+scene's destination ID. `bundle_preload.py` resolves its Shader and five
+Texture2D pointers from the original member identities. The isolated fixture
+checks those typed links and unloads the bundle and dependencies.
+
 `recipe/owner-whole-game-mire-native-material-records.json` uses the same
 producer and preparation owners for nine Mire and Access Codes Node
 Materials. It supplies two of the Material destinations referenced by
