@@ -41,6 +41,7 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32[] clothDeferredSamples;
         public Color32[] clothShadowSamples;
         public Color32[] triplanarSamples;
+        public Color32[] wireframeSamples;
         public bool passed;
         public string failure;
     }
@@ -365,6 +366,7 @@ public sealed class ContentFixture : MonoBehaviour
                 DrawTriplanar(shader, report, new[] { "_RedChannelSideTex", "_RedChannelTopTex", "_GreenChannelTex", "_BlueChannelTex" });
             else if (shader.name == "Hopoo Games/Deferred/Standard Triplanar Splat")
                 DrawTriplanar(shader, report, new[] { "_MainTex", "_RedSplatTex" });
+            else if (shader.name == "Hopoo Games/Transparent/Texture Scrolling Wireframe") DrawWireframe(shader, report);
             else DrawAnimateAlpha(shader, report);
         }
         catch (Exception error) { report.failure = error.Message; }
@@ -689,6 +691,78 @@ public sealed class ContentFixture : MonoBehaviour
             RenderTexture.ReleaseTemporary(target);
             Destroy(plain);
             Destroy(instanced);
+            Destroy(mesh);
+            Destroy(pixels);
+        }
+    }
+
+    static void DrawWireframe(Shader shader, ShaderDrawReport report)
+    {
+        const int size = 64;
+        var material = new Material(shader);
+        var mesh = new Mesh();
+        var pixels = new Texture2D(size, size, TextureFormat.RGBA32, false, true);
+        var target = RenderTexture.GetTemporary(size, size, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        var previous = RenderTexture.active;
+        try
+        {
+            // Keep the triangle below the center so the upper sample also detects a clip-space Y inversion.
+            mesh.vertices = new[] {
+                new Vector3(-0.75f, -0.6875f, 0.5f), new Vector3(0.625f, -0.6875f, 0.5f),
+                new Vector3(-0.40625f, -0.09375f, 0.5f)
+            };
+            mesh.triangles = new[] { 0, 1, 2 };
+            var uv = new[] { Vector2.zero, Vector2.right, Vector2.up };
+            mesh.uv = uv;
+            mesh.uv2 = uv;
+            mesh.colors = new[] { Color.white, Color.white, Color.white };
+
+            material.SetTexture("_MainTex", Texture2D.whiteTexture);
+            material.SetTexture("_EmTex", Texture2D.whiteTexture);
+            material.SetTexture("_ScrollTex", Texture2D.whiteTexture);
+            material.SetTexture("_RemapTex", Texture2D.blackTexture);
+            material.SetColor("_Color", Color.blue);
+            // Keep both height-gradient endpoints neutral so the lower edge retains the wireframe tint.
+            material.SetColor("_EmColor", Color.white);
+            material.SetColor("_WireframeColor", Color.red);
+            material.SetColor("_VertColor", Color.white);
+            material.SetFloat("_EmBoost", 1);
+            material.SetFloat("_EmPower", 1);
+            material.SetFloat("_WireframeThickness", 0.1f);
+            material.SetFloat("_WireframeSmoothing", 1);
+            material.SetFloat("_Cull", (float)CullMode.Off);
+            material.SetFloat("_ZTest", (float)CompareFunction.Always);
+            material.SetFloat("_SrcBlend", (float)BlendMode.One);
+            material.SetFloat("_DstBlend", (float)BlendMode.Zero);
+
+            using var commands = new CommandBuffer();
+            commands.SetRenderTarget(target);
+            commands.ClearRenderTarget(true, true, Color.green);
+            commands.SetViewProjectionMatrices(Matrix4x4.identity, Matrix4x4.identity);
+            // The first source pass writes depth only.
+            commands.DrawMesh(mesh, Matrix4x4.identity, material, 0, 1);
+            Graphics.ExecuteCommandBuffer(commands);
+            RenderTexture.active = target;
+            pixels.ReadPixels(new Rect(0, 0, size, size), 0, 0, false);
+            report.wireframeSamples = new Color32[] {
+                pixels.GetPixel(23, 10), pixels.GetPixel(23, 17), pixels.GetPixel(23, 53)
+            };
+            var expected = new Color32[] { Color.magenta, Color.blue, Color.green };
+            for (int i = 0; i < expected.Length; ++i)
+            {
+                var sample = report.wireframeSamples[i];
+                var match = expected[i];
+                if (Mathf.Abs(sample.r - match.r) > 5 || Mathf.Abs(sample.g - match.g) > 5 ||
+                    Mathf.Abs(sample.b - match.b) > 5)
+                    throw new Exception("Wireframe sample " + i + " did not match the expected RGB");
+            }
+            report.passed = report.graphics == "Vulkan";
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(target);
+            Destroy(material);
             Destroy(mesh);
             Destroy(pixels);
         }

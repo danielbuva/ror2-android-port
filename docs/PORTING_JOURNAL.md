@@ -5279,3 +5279,17 @@ whole-game scoring remain open.
   in `fungal-triplanar-draw-device-03/terminal.done.json` and
   `signed-fungal-triplanar-device-01/terminal.done.json`. Linked scene
   Material draws and the active emissive variation remain open.
+
+## J1581 — Draw the Solus Heart wireframe on Android Vulkan
+
+2026-11-28. Linked 12 original vertex, fragment and geometry variants.
+Exact Unity typed-loaded the Shader and its original VertexLit fallback.
+APK `a66a304915ec42706ed04839ba60989caf624a51944fe4fb01c8bc378fcfc646`
+read a magenta edge, blue interior and green mirrored background.
+Signed bundle `bc63c317ddc1fa4d2ac9c58291c804c17f61a8a12658eabb3b7f224e704d8073`
+matched all host outputs in 25.83 s at 89.93 MiB peak child RSS,
+7.91 MiB stage storage and 70 °C peak CPU/GPU. Both packages were removed.
+Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
+`solus-heart-geometry-draw-device-02/terminal.done.json` and
+`signed-solus-heart-device-01/signed_artifact.json`. Linked
+gameplay draws and whole-game scoring remain open.

@@ -7975,6 +7975,23 @@ ignored `work/`.
 | --- | --- |
 | `owner-scav-sack-ghost-native-records.json` | `e1768fe06a17b4c42368ce57de3fb6531031de3e829d3dca81a438a0c33d65d6` |
 
+## Solus Heart wireframe Shader profile (2026-11-27)
+
+The signed qualification selects the original Texture Scrolling Wireframe
+Shader by its source bundle and native object identity. The profile and job
+retain selectors, hashes and the public producer closure. The producer reads
+D3D11 programs from the legitimate installation, translates the measured
+Vulkan geometry variants locally and retains original property and dependency
+metadata. The signed job witnesses the rebuilt pack. The provenance, privacy,
+licensing and sensitive-content review covered the original identity, public
+tool bindings and verification hashes. Compiled Shader data stays under ignored
+`work/`.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-solus-heart-graphics-translation.json` | `ca411f413c3ac13917c3adf58ccb546166fce63bbad9b1d111def7efbe529535` |
+| `jobs/owner-solus-heart-graphics-translation.json` | `100a81579703d5c6fe9622139dab40d5b2c41a326318a47c7bb0dc06bf4eda07` |
+
 ## Fungal triplanar and Wavy Cloth Material records (2026-11-27)
 
 The two profiles select 16 Fungal triplanar and 11 Wavy Cloth Material

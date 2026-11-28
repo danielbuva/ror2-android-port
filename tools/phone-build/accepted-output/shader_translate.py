@@ -5,6 +5,7 @@ from collections import defaultdict
 import hashlib
 import json
 from pathlib import Path
+import re
 import struct
 import subprocess
 import sys
@@ -109,14 +110,27 @@ def stage_parameters(layout, vertex, *, vertex_binding_base=2, shared_draw_call=
     return rows, descriptors
 
 
-def compile_spirv(tools, directory, index, dxbc, descriptors, *, vertex=False):
+def compile_spirv(tools, directory, index, dxbc, descriptors, *, glsl_stage=None, flip_vertex_y=True):
     source = directory / f"{index}.dxbc"
     spirv = directory / f"{index}.spv"
     source.write_bytes(dxbc)
     subprocess.run([tools["dxbc"], source, spirv, *descriptors], check=True)
-    if vertex:
-        glsl = directory / f"{index}.vert"
-        subprocess.run([tools["spirv_cross"], spirv, "--version", "450", "--vulkan-semantics", "--flip-vert-y", "--output", glsl], check=True)
+    if glsl_stage:
+        glsl = directory / f"{index}.{glsl_stage}"
+        flip = ["--flip-vert-y"] if glsl_stage == "vert" and flip_vertex_y else []
+        subprocess.run([tools["spirv_cross"], spirv, "--version", "450", "--vulkan-semantics", *flip, "--output", glsl], check=True)
+        if glsl_stage == "geom":
+            # Match the SDK: flip each emitted position, then restore the
+            # source value in case the shader reads it again after emission.
+            source_code, emissions = re.subn(
+                r"(?m)^([ \t]*)EmitVertex\(\);[ \t]*$",
+                r"\1{\n\1    float sourceY = gl_Position.y;\n\1    gl_Position.y = -sourceY;\n"
+                r"\1    EmitVertex();\n\1    gl_Position.y = sourceY;\n\1}",
+                glsl.read_text(),
+            )
+            if not emissions:
+                raise ValueError("geometry translation requires standalone EmitVertex calls")
+            glsl.write_text(source_code)
         subprocess.run([tools["glslang"], "-V", "--target-env", "vulkan1.0", "-o", spirv, glsl], check=True)
     subprocess.run([tools["spirv_val"], "--target-env", "vulkan1.0", spirv], check=True)
     return spirv.read_bytes()
@@ -125,10 +139,12 @@ def compile_spirv(tools, directory, index, dxbc, descriptors, *, vertex=False):
 def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
     from shader_segments import selected_layout
 
+    has_geometry = shader_pass["m_ProgramMask"] == 14
+    stage_names = ("progVertex", "progFragment", "progGeometry") if has_geometry else ("progVertex", "progFragment")
     stages = {}
-    # Both stages share descriptor set 1. Keep the vertex range above all
+    # Vertex and fragment share descriptor set 1. Keep the vertex range above all
     # fragment constant buffers, including those in instanced variants.
-    for stage in ("progVertex", "progFragment"):
+    for stage in stage_names:
         entries = shader_pass[stage]["m_PlayerSubPrograms"][3]
         stages[stage] = {}
         for entry in entries:
@@ -144,10 +160,13 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
     fragment_keys = {keywords: keywords for keywords in vertices}
     # Terrain forward passes keep VERTEXLIGHT_ON in the vertex table only.
     # Use the matching original fragment while retaining the full vertex key.
-    if vertices.keys() != fragments.keys() and all("VERTEXLIGHT_ON" not in keywords for keywords in fragments):
+    if not has_geometry and vertices.keys() != fragments.keys() and all("VERTEXLIGHT_ON" not in keywords for keywords in fragments):
         fragment_keys = {keywords: tuple(key for key in keywords if key != "VERTEXLIGHT_ON") for keywords in vertices}
     if not vertices or set(fragment_keys.values()) != fragments.keys():
         raise ValueError("Vulkan translation requires paired source keyword variants")
+    geometry = stages.get("progGeometry")
+    if has_geometry and vertices.keys() != geometry.keys():
+        raise ValueError("Vulkan translation requires matching geometry source keyword variants")
     fragment_slots = (buffer["slot"] for _, _, layout, _ in fragments.values() for buffer in layout["buffers"])
     vertex_binding_base = max(2, max(fragment_slots, default=-1) + 1)
     variants = []
@@ -156,16 +175,26 @@ def translate_pass(original, shader_pass, raw, records, dxbc, directory, tools):
         vertex_draw_call = next((buffer for buffer in vertex_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
         fragment_draw_call = next((buffer for buffer in fragment_stage[2]["buffers"] if buffer["name"] == "UnityDrawCallInfo"), None)
         shared_draw_call = fragment_draw_call["slot"] if vertex_draw_call and fragment_draw_call else None
-        reflection, codes, requirements = [], [], 0
-        for vertex, (index, program, layout, stage_requirements) in ((True, vertex_stage), (False, fragment_stage)):
-            rows, descriptors = stage_parameters(layout, vertex, vertex_binding_base=vertex_binding_base, shared_draw_call=shared_draw_call)
-            if vertex:
-                rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))
-            spirv = compile_spirv(tools, directory, index, program, descriptors, vertex=vertex)
-            codes.append(subprocess.run([tools["smolv"]], input=spirv, capture_output=True, check=True).stdout)
+        reflection, codes, requirements = [], {}, 0
+        sources = [("vert", vertex_stage), ("frag", fragment_stage)]
+        if has_geometry:
+            sources.append(("geom", geometry[keywords]))
+        for stage, (index, program, layout, stage_requirements) in sources:
+            if stage == "geom":
+                if layout["buffers"] or layout["textures"]:
+                    raise ValueError("geometry translation requires a resource-free stage")
+                rows, descriptors = [], []
+            else:
+                vertex = stage == "vert"
+                rows, descriptors = stage_parameters(layout, vertex, vertex_binding_base=vertex_binding_base, shared_draw_call=shared_draw_call)
+                if vertex:
+                    rows.extend(f"input: {channel} {register}" for channel, register in vertex_channels(program))
+            glsl_stage = stage if stage in ("vert", "geom") else None
+            spirv = compile_spirv(tools, directory, index, program, descriptors, glsl_stage=glsl_stage, flip_vertex_y=not has_geometry)
+            codes[stage] = subprocess.run([tools["smolv"]], input=spirv, capture_output=True, check=True).stdout
             reflection.extend(rows)
             requirements |= stage_requirements
-        executable = shader.linked_vulkan_program(*codes, alpha_clip="UNITY_UI_ALPHACLIP" in keywords)
+        executable = shader.linked_vulkan_program(codes["vert"], codes["frag"], alpha_clip="UNITY_UI_ALPHACLIP" in keywords, geometry=codes.get("geom"))
         compilation = {"reflection": reflection, "data": executable, "gpu_program_type": 25}
         variants.append({"keywords": keywords, "requirements": requirements, "compilation": compilation})
     return variants
@@ -177,8 +206,8 @@ def translate_tree(original, directory, tools):
 
     form = original["m_ParsedForm"]
     passes = [shader_pass for subshader in form["m_SubShaders"] for shader_pass in subshader["m_Passes"]]
-    if not passes or any(p["m_Type"] != 0 or p["m_ProgramMask"] != 6 for p in passes):
-        raise ValueError("translation requires ordinary vertex/fragment passes")
+    if not passes or any(p["m_Type"] != 0 or p["m_ProgramMask"] not in (6, 14) for p in passes):
+        raise ValueError("translation requires ordinary vertex/fragment passes with optional geometry")
     source, records, dxbc = read_segments(original, bytes(original["compressedBlob"]))
     groups = []
     for ordinal, shader_pass in enumerate(passes):
@@ -202,12 +231,14 @@ def translate_tree(original, directory, tools):
             m_PlayerSubPrograms=[shader.deepcopy(programs) for _ in range(3)] + [[]],
             m_ParameterBlobIndices=[parameters[:] for _ in range(3)] + [[]],
         )
-        fragment = target["progFragment"]
-        fragment.update(
-            m_CommonParameters={key: [] for key in fragment["m_CommonParameters"]},
-            m_PlayerSubPrograms=[],
-            m_ParameterBlobIndices=[],
-        )
+        linked_stages = ("progFragment", "progGeometry") if target["m_ProgramMask"] == 14 else ("progFragment",)
+        for stage in linked_stages:
+            program = target[stage]
+            program.update(
+                m_CommonParameters={key: [] for key in program["m_CommonParameters"]},
+                m_PlayerSubPrograms=[],
+                m_ParameterBlobIndices=[],
+            )
     compressed = lz4.block.compress(raw, mode="high_compression", compression=9, store_size=False)
     tree.update(
         platforms=[18],
