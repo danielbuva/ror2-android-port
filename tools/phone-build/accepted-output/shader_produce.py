@@ -214,16 +214,18 @@ def native_executable(payload, gpu_type, reflect, keywords=()):
     return head + payload + bytes(-len(payload) % 4) + words(mask, len(channels)) + b"".join(words(*row) for row in channels)
 
 
-def linked_vulkan_program(vertex, fragment, *, alpha_clip):
-    """Pack the measured Unity 2021.3 linked envelope around two SMOL-V stages."""
-    if any(len(stage) < 24 or stage[:4] != b"LOMS" for stage in (vertex, fragment)):
+def linked_vulkan_program(vertex, fragment, *, alpha_clip, geometry=None):
+    """Pack the measured Unity 2021.3 linked envelope around SMOL-V stages."""
+    stages = (fragment, vertex) if geometry is None else (fragment, vertex, geometry)
+    if any(len(stage) < 24 or stage[:4] != b"LOMS" for stage in stages):
         raise ValueError("linked Vulkan stages must be SMOL-V")
     fragment_offset = 176
     vertex_offset = fragment_offset + len(fragment)
     header = words(0x02000020 | int(alpha_clip), vertex_offset, len(vertex), fragment_offset, len(fragment))
+    geometry_extent = bytes(8) if geometry is None else words(vertex_offset + len(vertex), len(geometry))
     # The measured control uses a stage-specific 16-byte pair after word 19.
     # Leave the fields empty for the independent player qualification.
-    return header + bytes(56) + words(1) + bytes(96) + fragment + vertex
+    return header + bytes(16) + geometry_extent + bytes(32) + words(1) + bytes(96) + b"".join(stages)
 
 
 def segment(records):
