@@ -446,7 +446,7 @@ def local_packaging(path, *, dry_run=False, detach=False):
             # The signed native producer alone took 9,158 seconds in J1512.
             command["args"].extend([f"--{operation}-request", str(Path(path).resolve()), "--timeout", str(STAGED_UPDATE_STEP_TIMEOUT)])
             command["timeout_seconds"] = 2 * STAGED_UPDATE_STEP_TIMEOUT + 3000 if operation == "nightly" else 3 * STAGED_UPDATE_STEP_TIMEOUT + 1800
-            if operation == "staged-update" and request.get("acquire_on_phone") is True:
+            if request.get("acquire_on_phone") is True:
                 command["timeout_seconds"] += STAGED_UPDATE_STEP_TIMEOUT
         else:
             command["args"].extend(["--package-only", "--qualify-install-prompts"])

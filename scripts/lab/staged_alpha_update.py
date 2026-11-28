@@ -62,13 +62,16 @@ def verify_incremental(receipt, source, changed, unchanged, attempts, require):
 
 
 class StagedTools(FolderImport):
+    def folder_tool_hashes(self):
+        return {name.removeprefix("acquired/"): pin["sha256"] for name, pin in self.acquired_inventory.items() if "url" not in pin}
+
     def stage_tool_folder(self, phone):
         if not self.acquired:
             return
         target = self.stage_root + "/Tools"
         phone.shell("mkdir", target, label="staged-create-tool-folder")
         self.transfer_acquired(phone, target, private=False)
-        self.verify_tree(phone, target, {name.removeprefix("acquired/"): pin["sha256"] for name, (_, pin) in self.acquired.items()})
+        self.verify_tree(phone, target, self.folder_tool_hashes())
 
     def transfer_acquired(self, phone, root, *, private):
         prefix = ["run-as", self.installer.PACKAGE] if private else []
@@ -97,7 +100,7 @@ class StagedTools(FolderImport):
     def acquire_tools(self, phone, plan):
         phone.require_owned_installer()
         phone.shell("run-as", self.installer.PACKAGE, "test", "!", "-e", "files/owner-input/acquired", label="staged-acquired-must-be-fresh")
-        if self.acquired:
+        if self.folder_tool_hashes():
             self.choose(phone, "tree", "Tools", tools=True)
         phone.tap("Acquire / resume required tools")
         deadline = time.monotonic() + phone.timeout
@@ -200,12 +203,16 @@ class StagedUpdate(StagedTools):
         importer = owner.module("staged_update_importer", owner.HERE / "game_import.py")
         inputs = owner.module("staged_update_inputs", owner.HERE / "install_inputs.py")
         self.acquire_on_phone = request.get("acquire_on_phone", False)
-        require(type(self.acquire_on_phone) is bool and not (self.acquire_on_phone and nightly), "staged-invalid-acquire-on-phone-mode")
+        require(type(self.acquire_on_phone) is bool, "staged-invalid-acquire-on-phone-mode")
         inventories = [self.pair[name].get("acquired_inputs", {}) for name in names]
         self.acquired_inventory = inventories[0]
         if self.acquire_on_phone:
             require(bool(self.acquired_inventory) and "acquired_inputs_sha256" in self.pair["baseline"]["input_plan"], "staged-on-phone-tool-plan-required")
-        self.acquired = acquired_sources(inventories, request.get("acquired_source"), inputs, on_phone=self.acquire_on_phone)
+        if nightly and self.acquire_on_phone:
+            require(request.get("acquired_source") is None, "nightly-tools-must-already-be-on-phone")
+            self.acquired = {}
+        else:
+            self.acquired = acquired_sources(inventories, request.get("acquired_source"), inputs, on_phone=self.acquire_on_phone)
         self.acquired_bytes = sum(pin["bytes"] for pin in self.acquired_inventory.values())
         self.tool_stage_bytes = sum(pin["bytes"] for _, pin in self.acquired.values()) if self.acquire_on_phone else 0
         self.current = cohort(request["current_inventory"], None if nightly else request["current_source"], importer)
@@ -242,6 +249,8 @@ class StagedUpdate(StagedTools):
         phone.storage()
         if self.nightly:
             self.verify_tree(phone, self.stage_target, hashes)
+            if self.acquire_on_phone and (tool_hashes := self.folder_tool_hashes()):
+                self.verify_tree(phone, self.stage_root + "/Tools", tool_hashes)
             return
         free = phone.available(phone.shell("df", "-k", self.external_root, label="staged-shared-free-before"))
         self.require(free >= 20 * GIB + size + self.tool_stage_bytes, "staged-shared-storage-reserve")

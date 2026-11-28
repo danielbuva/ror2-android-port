@@ -5201,6 +5201,16 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `signed-cloud-remap-device-04/signed_artifact.json`. Whole-game scoring and
 linked Material rendering remain open.
 
+## J1577 — Verify all signed Crunch and BC7 producer artifacts on Android
+
+2026-11-27. The Android toolhost matched the expected byte counts and SHA-256
+hashes for the index, types, objects and resources of the signed four-record
+Crunch and BC7 fixture. Producer time was 684.75 s with 47.7 MiB peak child RSS
+and 17.28 MiB net stage use. Peak CPU/GPU was 60.5 °C at admission, with
+0 s above 80 °C. The runner removed the toolhost and verified OLED sleep.
+Toolhost APK SHA-256 `796eb086574bb5598f98d6c65cb369cec205b05869bfcd075bdad86665ffe2a8`.
+Evidence `work/coordination/p1-phonepipe/2026-11-27/signed-texture-pins/terminal.done.json`.
+Unity typed load and gameplay for this fixture remain open.
 ## J1576 — Batch SDK ETC2 colour encoding per mip on Android
 
 2026-11-27. The pinned SDK adapter reuses one process per ETC2 colour mip.
