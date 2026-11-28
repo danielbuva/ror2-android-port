@@ -1085,6 +1085,12 @@ original inline Meshes from the ConstructionArm FBX and prefab preload tables
 through the same producer. The exact-editor fixture loads those eleven and the
 two previously supplied Meshes at scoped addresses. Complete original preload
 groups and their signed catalog routes still depend on non-Mesh records.
+`recipe/owner-whole-game-evis-projectile-meshes.json` supplies two original
+EvisProjectileGhost Meshes at their source PathIDs. Both keep their packed
+vertex data and complete native types. The other three original MeshFilter
+references can use the byte- and type-matched endpoints in the existing
+Commando bundle. The checked whole-game graph owns those field routes and
+prefab admission.
 The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
 excluded MercSwordSwipe record through the same setup/teardown. The optional
 `unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
