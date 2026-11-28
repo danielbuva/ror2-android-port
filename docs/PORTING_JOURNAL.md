@@ -5263,3 +5263,19 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `wavy-cloth-draw-device-01/terminal.done.json` and
 `signed-wavy-cloth-device-02/signed_artifact.json`. Linked gameplay and
 whole-game scoring remain open.
+
+## J1579 — Draw original Fungal Triplanar shaders on Android Vulkan
+
+- Linked 732 original Vulkan variant pairs for Terrain Blend, Terrain Blend
+  Emissive and Standard Triplanar Splat. Exact Unity typed-loaded all three
+  roots and their original Diffuse and VertexLit fallbacks.
+- Plain Deferred readback returned opaque red, clear blue and opaque green
+  on all three roots. APK SHA-256 `716fb6dd24a6ce4d59cbd84853b9a45069c8fc4e524b7304f7a49d8004a36627`.
+- Signed conversion reproduced the host index, object stream and types.
+  Bundle SHA-256 `a0377710be572cf28021eb7a45a20f844776149177ef7048ec231ee1523a8526`.
+  Producer ran for 453.62 s at 122.28 MiB peak child RSS, 64.53 MiB stage
+  and 71.2 °C peak CPU/GPU. Both disposable packages were removed.
+- Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+  in `fungal-triplanar-draw-device-03/terminal.done.json` and
+  `signed-fungal-triplanar-device-01/terminal.done.json`. Linked scene
+  Material draws and the active emissive variation remain open.
