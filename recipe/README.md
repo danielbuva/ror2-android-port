@@ -2818,6 +2818,7 @@ and sensitive-content review completed 2026-11-28.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-soul1-terrain-a-opt-graphics-translation.json` | `dce52a3d864612e223bf841ad88b68b902a20277f9e3219ef95a7b61e513b8b5` |
+| `jobs/owner-soul1-terrain-a-opt-graphics-translation.json` | `e3d79f1546adc97d74f50eb7922b96a33812a3e36736a7ceb8249fdb94a49590` |
 
 The Terrain detail graphics profile selects two original WavingDoublePass
 Shader records for the signed graphics translator. It reuses the Terrain detail
