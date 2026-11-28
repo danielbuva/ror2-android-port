@@ -1,10 +1,10 @@
 """Current shared device lifecycle. Private requests/evidence stay under work/.
 
 python3 scripts/lab/device_session.py --request work/.../request.json --dry-run
-python3 scripts/lab/device_session.py --request work/.../request.json --detach
+python3 scripts/lab/device_session.py --request work/.../request.json --queue --detach
 
-The dispatcher grants the device before invocation. This runner acquires its
-lease atomically; it never waits for a peer, publishes, or grants itself a slot.
+Queued jobs claim the atomic lease at the head of the dispatcher FIFO.
+Legacy jobs continue to use the dispatcher grant.
 """
 
 import argparse
@@ -39,6 +39,7 @@ INTERNAL_INSTALL_FLOOR_BYTES = 15 * 1024**3
 UNPLUGGED_SECONDS = 30 * 60
 UNPLUGGED_REQUEST = "owner-unplugged-request.json"
 INSTALLED_ALPHA = "installed-alpha"
+CONTENT_FIXTURE_MODES = {"shader-draw", "shader-compute", "texture-readback"}
 
 
 def save(path, value):
@@ -49,7 +50,7 @@ def save(path, value):
     temporary.replace(path)
 
 
-def load_request(path, serial=None):
+def load_request(path, serial=None, *, queued=False):
     path = Path(path).resolve(strict=True)
     value = json.loads(path.read_text())
     required = {"canonical_root", "output", "workstream", "package", "apk", "apk_sha256", "duration_seconds"}
@@ -100,7 +101,7 @@ def load_request(path, serial=None):
     value["serial"] = validate_serial(serial if serial is not None else value.get("serial"))
     if not re.fullmatch(r"[a-z0-9-]+", value["workstream"]):
         raise ValueError("Explicit serial and workstream required")
-    if serial is not None:
+    if serial is not None and not queued:
         grant = root / ".local/orchestrator/devqueue" / (serial + ".granted")
         if not grant.is_file() or grant.read_text().strip() != value["workstream"]:
             raise ValueError("Selected device queue grant does not name this workstream")
@@ -128,18 +129,16 @@ def load_request(path, serial=None):
         "software-notices",
         "player-screens",
         "owner-unplugged",
-        "shader-draw",
-        "shader-compute",
+        *CONTENT_FIXTURE_MODES,
     }:
         raise ValueError("Unknown device workload mode")
-    shader_modes = {"shader-draw", "shader-compute"}
-    if value["mode"] in shader_modes or value["package"] == PHONE_CONTENT_PACKAGE:
+    if value["mode"] in CONTENT_FIXTURE_MODES or value["package"] == PHONE_CONTENT_PACKAGE:
         if (
-            value["mode"] not in shader_modes
+            value["mode"] not in CONTENT_FIXTURE_MODES
             or value["package"] != PHONE_CONTENT_PACKAGE
             or value.keys() - required - {"mode", "serial", "adopted_install", "cooldown_seconds", "capture_interval_seconds"}
         ):
-            raise ValueError("Shader probe requires the disposable content fixture and its standalone workload")
+            raise ValueError("Probe requires the disposable content fixture and its standalone workload")
     elif value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
     if value["mode"] in {"settings-save-failure", "profile-write-interrupt", "profile-save-failure"} and "selection" in value:
@@ -1190,6 +1189,27 @@ def observe_unplugged(device, request, output, result, pid):
     result["owner_unplugged"].update(unplugged_summary(capture_path, config, pid))
 
 
+def retain_texture_readback(device, output, result, marker):
+    from device import retain_device_file
+    from phone_texture_readback import validate_texture_mip
+
+    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    cleanup = result["device_cleanup"]
+    receipt = output / "texture-readback.json"
+    if retain_device_file(device, runtime + "/texture-readback.json", receipt, cleanup) != marker["sha256"]:
+        raise RuntimeError("Vulkan texture readback receipt hash differs from the process report")
+    report = result["texture_readback"] = json.loads(receipt.read_text())
+    if report["graphics"] != "Vulkan" or report["passed"] is not True or report["unloaded"] is not True or not report["samples"]:
+        raise RuntimeError("Vulkan texture readback receipt contract failed")
+    for index, sample in enumerate(report["samples"]):
+        name = f"texture-{index}.rgba"
+        local = output / name
+        retain_device_file(device, runtime + "/" + name, local, cleanup)
+        if sample["graphics"] != "Vulkan":
+            raise RuntimeError("Vulkan texture readback sample used different graphics")
+        validate_texture_mip(local, sample, sample)
+
+
 def run_workload(device, thermal, request, output, result, *, _reset_idle=None, start_attempt=None):
     process_checks = result.setdefault("process_checkpoints", [])
     checked_launch = partial(launch, process_checks=process_checks)
@@ -1253,7 +1273,7 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
     launched = checked_launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
-    if request["mode"] in {"shader-draw", "shader-compute"}:
+    if request["mode"] in CONTENT_FIXTURE_MODES:
         report_name = request["mode"].replace("-", "_")
         report_marker = "PHONE_" + report_name.upper() + " "
         deadline = time.monotonic() + request["duration_seconds"]
@@ -1261,17 +1281,19 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None, 
             if thermal.cancelled.is_set():
                 raise RuntimeError(thermal.error)
             if device.sh("pidof", device.package, check=False).strip() != pid:
-                raise RuntimeError("Shader fixture process exited or changed")
+                raise RuntimeError("Content fixture process exited or changed")
             log = device.cmd("logcat", "-d", "--pid=" + pid, "Unity:I", "AndroidRuntime:E", "*:S")
             for line in log.splitlines():
                 _, marker, payload = line.partition(report_marker)
                 if marker:
                     report = result[report_name] = json.loads(payload)
                     if report.get("passed") is not True or report.get("graphics") != "Vulkan":
-                        raise RuntimeError("Shader fixture failed; inspect its Vulkan report")
+                        raise RuntimeError("Content fixture failed; inspect its Vulkan report")
+                    if request["mode"] == "texture-readback":
+                        retain_texture_readback(device, output, result, report)
                     return
             thermal.cancelled.wait(1)
-        raise RuntimeError("Shader fixture produced no report before the deadline")
+        raise RuntimeError("Content fixture produced no report before the deadline")
 
     if request["mode"] == INSTALLED_ALPHA:
         tour = result["tour"] = {"native_title": "unobserved", "phase": "bootstrap"}
@@ -1562,7 +1584,7 @@ def observe_pacing(device, output, pid, snapshot):
         (output / ("latency-%02d.txt" % index)).write_text(device.sh("dumpsys", "SurfaceFlinger", "--latency", layer, check=False))
 
 
-def execute(request):
+def execute(request, *, queued=False):
     import common
 
     root, output = Path(request["canonical_root"]), Path(request["output"])
@@ -1605,7 +1627,14 @@ def execute(request):
         result["host_storage"] = dict(estimated_output_bytes=1024**3, margin_bytes=20 * 1024**3, free_bytes=shutil.disk_usage(output).free)
         if result["host_storage"]["free_bytes"] < 21 * 1024**3:
             raise RuntimeError("Host capture output plus 20 GiB margin unavailable")
-        lease.acquire()
+        if queued:
+            from device_queue import DeviceQueue
+
+            queued_at = time.monotonic()
+            DeviceQueue(lease.path.parent.parent, request["serial"]).wait(lease.acquire)
+            result["queue_wait_seconds"] = time.monotonic() - queued_at
+        else:
+            lease.acquire()
         set_command_selector(request["serial"], None)
         if installed_alpha:
             from installed_alpha import InstalledAlphaDevice, verify_installed
@@ -1918,12 +1947,13 @@ def execute(request):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--request", type=Path, required=True)
-    parser.add_argument("--device", metavar="SERIAL", help="Select the serial granted to the request's workstream")
+    parser.add_argument("--device", metavar="SERIAL", help="Select the configured device serial")
+    parser.add_argument("--queue", action="store_true", help="Wait for the device at the head of the shared FIFO")
     parser.add_argument("--dry-run", action="store_true", help="Validate request, imports and APK bytes without device access")
     parser.add_argument("--detach", action="store_true", help="Start the same tracked runner in a new session; terminal receipt is always written")
     args = parser.parse_args(argv)
     try:
-        request = load_request(args.request, args.device)
+        request = load_request(args.request, args.device, queued=args.queue)
     except BaseException:
         if args.dry_run or args.detach:
             raise
@@ -1954,29 +1984,42 @@ def main(argv=None):
     if args.detach:
         output = Path(request["output"])
         output.mkdir(parents=True, exist_ok=True)
-        if (output / "job.json").exists() or (output / "terminal.done.json").exists():
+        done = output / "terminal.done.json"
+        job_file = output / "job.json"
+        if done.exists():
             raise RuntimeError("Run already dispatched; consume its terminal receipt")
+        with job_file.open("x") as reservation:
+            json.dump(dict(done_file=str(done)), reservation)
         command = [sys.executable, str(Path(__file__).resolve()), "--request", str(args.request.resolve())]
         if args.device is not None:
             command.extend(("--device", args.device))
-        with (output / "runner.log").open("w") as log:
-            job = subprocess.Popen(
-                command,
-                start_new_session=True,
-                stdin=subprocess.DEVNULL,
-                stdout=log,
-                stderr=subprocess.STDOUT,
-            )
-        save(output / "job.json", dict(pid=job.pid, done_file=str(output / "terminal.done.json")))
-        print("WAITING done-file " + str(output / "terminal.done.json"))
+        if args.queue:
+            command.append("--queue")
+        try:
+            with (output / "runner.log").open("w") as log:
+                job = subprocess.Popen(
+                    command,
+                    start_new_session=True,
+                    stdin=subprocess.DEVNULL,
+                    stdout=log,
+                    stderr=subprocess.STDOUT,
+                )
+        except OSError:
+            save(done, dict(success=False, lease_released=False, error=traceback.format_exc()))
+            print("WAITING done-file " + str(done), flush=True)
+            return 1
+        else:
+            save(job_file, dict(pid=job.pid, done_file=str(done)))
+        print("WAITING done-file " + str(done), flush=True)
         return 0
 
     def interrupted(signum, frame):
         raise RuntimeError("Device runner interrupted by signal " + str(signum))
 
-    signal.signal(signal.SIGTERM, interrupted)
+    for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(number, interrupted)
     try:
-        return 0 if execute(request)["success"] else 1
+        return 0 if execute(request, queued=args.queue)["success"] else 1
     except BaseException:
         done = Path(request["output"]) / "terminal.done.json"
         if not done.exists():

@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import tempfile
@@ -245,6 +246,25 @@ class HostTestRunnerTests(unittest.TestCase):
         self.assertEqual(process.returncode, 1)
         self.assertIn("exceeded 0.1 seconds", process.stderr)
         self.assertTrue(report["infrastructure_errors"])
+
+    def test_sigterm_reaps_separate_worker_session(self):
+        pidfile = self.root / "worker.pid"
+        self.module(
+            "test_interrupt",
+            f"""
+            import os, signal, time, unittest
+            from pathlib import Path
+            class Fixture(unittest.TestCase):
+                def test_interrupt(self):
+                    Path({str(pidfile)!r}).write_text(str(os.getpid()))
+                    os.kill(os.getppid(), signal.SIGTERM)
+                    time.sleep(4)
+            """,
+        )
+        process = subprocess.run([sys.executable, str(SCRIPT), "--root", str(self.root)], capture_output=True, timeout=15)
+        self.assertEqual(process.returncode, 128 + signal.SIGTERM, process.stderr)
+        with self.assertRaises(ProcessLookupError):
+            os.kill(int(pidfile.read_text()), 0)
 
     def test_comparison_fails_when_tests_or_outcomes_change(self):
         source = "import unittest\nclass Fixture(unittest.TestCase):\n    def test_control(self): {}\n"

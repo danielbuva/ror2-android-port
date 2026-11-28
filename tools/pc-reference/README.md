@@ -134,8 +134,10 @@ Wwise IDs to names when monitors expose different forms. Optional
 `playing_id` and `frame` help collapse duplicate observations of one post
 within a capture. Counts are per event identity; repeated occurrences pair in
 time order. Timing deltas require two markers for the same point in the step
-and are not a match of actual audio waveforms. An optional window excludes
-posts at or after its end. No timestamps are compared across unaligned clocks.
+and are not a match of actual audio waveforms. Markers alone preserve every
+post in the step. Set `window_seconds` to keep only posts from each marker
+(inclusive) until the end of its window (exclusive). No timestamps are compared
+across unaligned clocks.
 
 CrossOver translates the Windows D3D11 renderer, which can shift color and
 lighting relative to native Windows. Its captures can be used for presence,

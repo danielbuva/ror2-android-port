@@ -35,9 +35,20 @@ class ReferenceComparisonTests(unittest.TestCase):
         self.image(self.android / "frame.png", "square")
         self.write(self.android / "state.json", {"stage": {"scene": "example"}, "runSeedOverride": "4"})
         self.write_events(
-            self.scene / "audio-events.jsonl", [(10.1, "cast", "launch"), (10.2, "cast", "launch"), (10.4, "cast", "vanished"), (2, "before", "ignore")]
+            self.scene / "audio-events.jsonl",
+            [
+                (9.9, "cast", "lead_in"),
+                (10.1, "cast", "launch"),
+                (10.2, "cast", "launch"),
+                (10.4, "cast", "vanished"),
+                (11, "cast", "at_window_end"),
+                (2, "before", "ignore"),
+            ],
         )
-        self.write_events(self.android / "events.jsonl", [(20.5, "cast", "launch"), (20.14, "cast", "launch"), (20.6, "cast", "added")])
+        self.write_events(
+            self.android / "events.jsonl",
+            [(19.92, "cast", "lead_in"), (20.5, "cast", "launch"), (20.14, "cast", "launch"), (20.6, "cast", "added"), (21, "cast", "at_window_end")],
+        )
         self.manifest = self.pc / "manifest.json"
         self.write(
             self.manifest,
@@ -115,7 +126,20 @@ class ReferenceComparisonTests(unittest.TestCase):
         self.assertEqual(audio["name:added"]["pc_count"], 0)
         self.assertEqual(audio["name:vanished"]["android_count"], 0)
         self.assertNotIn("name:ignore", audio)
+        self.assertNotIn("name:lead_in", audio)
+        self.assertNotIn("name:at_window_end", audio)
         self.assertIn("name:launch", (self.output / "comparison.md").read_text())
+
+    def test_audio_alignment_alone_preserves_events_across_the_step(self):
+        self.pair["audio_markers"].pop("window_seconds")
+        audio = self.batch(self.pair)["steps"][0]["audio"]
+        self.assertTrue(audio["timing_aligned"])
+        self.assertIsNone(audio["window_seconds"])
+        events = {row["event"]: row for row in audio["events"]}
+        for name, count, deltas in (("lead_in", 1, [20]), ("launch", 2, [40, 300]), ("at_window_end", 1, [0])):
+            row = events[f"name:{name}"]
+            self.assertEqual((row["pc_count"], row["android_count"], row["android_minus_pc_ms"]), (count, count, deltas))
+        self.assertNotIn("name:ignore", events)
 
     def test_missing_effect_and_unaligned_audio_are_distinct(self):
         self.image(self.android / "frame.png")

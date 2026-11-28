@@ -76,10 +76,11 @@ class SourcePinsTests(unittest.TestCase):
         )
 
     def install_hook_fixture(self):
-        for name in ("scripts/lab/source_pins.py", "scripts/journal-pre-push.py", "scripts/journal-renumber.py", "scripts/journal-index.py"):
-            path = self.root / name
+        for name in ("lab/source_pins.py", "journal-index.py", "journal-renumber.py", "journal-pre-push.py"):
+            source = Path("scripts") / name
+            path = self.root / source
             path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(ROOT / name, path)
+            shutil.copyfile(ROOT / source, path)
         self.put("scripts/ci-local.sh", "#!/bin/sh\ntouch ci-ran\n")
         (self.root / "scripts/ci-local.sh").chmod(0o755)
 

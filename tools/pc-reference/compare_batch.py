@@ -195,10 +195,13 @@ def audio(pc, android, step, marks, tolerance, aliases):
         markers = [number(marks[key], key) for key in ("pc_seconds", "android_seconds")]
         if "window_seconds" in marks:
             duration = number(marks["window_seconds"], "audio window", 0.001, 86400)
-    origins = markers or [None, None]
-    (p, dropped_pc), (a, dropped_android) = [
-        events(path, step, aliases, origin, origin + duration if duration is not None else None) for path, origin in zip((pc, android), origins)
-    ]
+
+    def load_events(path, marker):
+        if duration is None:
+            return events(path, step, aliases)
+        return events(path, step, aliases, marker, marker + duration)
+
+    (p, dropped_pc), (a, dropped_android) = [load_events(path, marker) for path, marker in zip((pc, android), markers or (None, None))]
     rows = []
     for key in sorted(p.keys() | a.keys()):
         pc_times, android_times = p.get(key, []), a.get(key, [])
