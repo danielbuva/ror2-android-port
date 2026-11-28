@@ -215,6 +215,9 @@ def run_pool(modules, workers, timeout, scratch):
     else:
         shared = [row for row in modules if row[1].split(".")[-1] in SHARED_BUILD_MODULES]
         jobs = [[row] for row in modules if row not in shared]
+        # Hosted timings consistently put the release graph on the critical
+        # path. Start it early and preserve discovery order for the rest.
+        jobs.sort(key=lambda job: job[0][1] != "test_release_graph")
         if shared:
             jobs.insert(0, shared)
     active = []

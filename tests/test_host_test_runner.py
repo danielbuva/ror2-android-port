@@ -183,7 +183,8 @@ class HostTestRunnerTests(unittest.TestCase):
         self.assertEqual([event["id"] for event in report["modules"][0]["events"]], ["test_fixture_ids.A.test_pass", "setUpClass (test_fixture_ids.B)"])
 
     def test_worker_temporary_directories_are_unique_and_removed(self):
-        for name in ("test_first", "test_second"):
+        discovery_order = ("test_first", "test_release_graph", "test_second")
+        for name in discovery_order:
             self.module(
                 name,
                 f"""
@@ -199,10 +200,11 @@ class HostTestRunnerTests(unittest.TestCase):
                         Path({str(self.root / (name + ".tmp"))!r}).write_text(str(root))
                 """,
             )
-        process, _, _ = self.run_suite()
+        process, report, _ = self.run_suite()
         self.assertEqual(process.returncode, 0, process.stderr)
-        paths = [Path((self.root / (name + ".tmp")).read_text()) for name in ("test_first", "test_second")]
-        self.assertNotEqual(*paths)
+        paths = [Path((self.root / (name + ".tmp")).read_text()) for name in discovery_order]
+        self.assertEqual([path.name for path in paths], ["worker-1", "worker-0", "worker-2"])
+        self.assertEqual([module["module"] for module in report["modules"]], list(discovery_order))
         self.assertTrue(all(not path.exists() for path in paths))
 
     def test_shared_source_build_modules_do_not_overlap(self):

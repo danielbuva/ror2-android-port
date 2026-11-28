@@ -6719,6 +6719,7 @@ enforce it, because other clang-format versions format C# differently.
 isolation, per-test/module timing and explicit serial/parallel outcome comparison.
 It runs every discovered test, groups the known shared-project compiler fixtures,
 reaps worker families on failure/timeout and retains native skip/failure semantics.
+Parallel runs schedule the slow release graph module first among standalone jobs.
 GitHub runs the full suite and the local hook can select affected modules.
 Neither caches test results. `scripts/audit-public.py` streams every index blob
 by its staged object ID and validates every compressed recipe row. Its UUID
