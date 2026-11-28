@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1580 — Verify v4 incremental lab APK installation
+
+2026-11-28 UTC. The pinned Unity editor emitted an APK with a verified v4
+sidecar. The shared runner installed the v4-signed J1500 APK on the Thor
+with `adb install --incremental --wait` and verified internal placement.
+ADB took 31.047 s incremental and 31.475 s streaming for the same 1.1 GiB
+APK. Both tests began at 31 °C and ended with package removal, OLED sleep
+and lease release. Adopted installs keep the streaming path.
+APK SHA-256 `56840f9b2c1a4921ae6ee7ac8b594604b587b477435da28fcc7b5cad6d46ac57`.
+Evidence `work/coordination/p1-phonepipe/2026-11-27/incremental-thor/`.
+Install-to-launch timing remains open behind the J1071 lower-panel gate.
+
 ## J1559 — Play converted Distant Roost with source occlusion data
 
 2026-11-27. The staged converter retains the original native occlusion data,
