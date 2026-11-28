@@ -6341,6 +6341,22 @@ and other bytes. Unity 2021.3.45f2 loaded the three Materials, resolved
 three Shader and fourteen texture bindings, and unloaded the fixture.
 Ordered release admission and Android rendering remain open.
 
+### Voidstage Crystal Material record
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-voidstage-crystal-material-records.json` | `7c820974ff40cad488b8efee1b882196ace25619b7c7a0518de44b7babfaf73d` |
+
+Audit date 2026-11-28. The recipe selects one original Material from the
+legitimate Steam input and retains the destination ID used by the Voidstage
+scene. It lists relative source paths, identities, sizes and hashes. Pinned
+AssetRipper's `AssetCollection.TryGetAsset` and `MaterialExtensions` informed
+member and saved texture lookup. The scoped fixture verified six relocated
+pointers and preserved all other bytes, including the original keywords.
+Unity 2021.3.45f2 loaded the Material with Solid Parallax and five saved
+Texture2D links, then unloaded it. Bodies, dependencies and raw evidence stay
+local. Canonical scene admission and Android rendering remain open.
+
 ### Whole-game Mire Material records
 
 | Recipe | SHA-256 |
