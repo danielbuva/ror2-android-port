@@ -223,32 +223,38 @@ def patch(data, wire, *, version_code=None, version_name=None, application_id=No
         raise ValueError("exported attribute resource differs")
     resources[exported] = 0x01010010
 
-    # The public launcher must not permit a cold explicit Unity launch to bypass
-    # preparation. Preserve every other original activity attribute/value.
-    original = activities[0]["start"]
-    node_header = struct.unpack_from("<H", original, 2)[0]
-    relative, stride, count = struct.unpack_from("<HHH", original, node_header + 8)
-    offset = node_header + relative
-    existing = [(i, original[offset + i * stride : offset + (i + 1) * stride]) for i in range(count)]
-    value = struct.pack("<IIIHBBI", android, exported, NONE, 8, 0, 0x12, 0)
-    exported_rows = [i for i, raw in existing if struct.unpack_from("<II", raw) == (android, exported)]
-    if len(exported_rows) > 1:
-        raise ValueError("duplicate Unity export attribute")
-    if exported_rows:
-        existing = [(i, value if i in exported_rows else raw) for i, raw in existing]
-    else:
-        existing.append((-1, value))
-    existing.sort(key=lambda item: resources[struct.unpack_from("<I", item[1], 4)[0]] if struct.unpack_from("<I", item[1], 4)[0] < len(resources) else 0)
-    prefix = bytearray(original[:offset])
-    struct.pack_into("<H", prefix, node_header + 12, len(existing))
-    for special in (node_header + 14, node_header + 16, node_header + 18):
-        previous = struct.unpack_from("<H", prefix, special)[0]
-        if previous:
-            position = next(i + 1 for i, item in enumerate(existing) if item[0] == previous - 1)
-            struct.pack_into("<H", prefix, special, position)
-    changed = prefix + b"".join(raw for _, raw in existing) + original[offset + count * stride :]
-    struct.pack_into("<I", changed, 4, len(changed))
-    activities[0]["start"] = bytes(changed)
+    def set_android_attribute(node, key, kind, value, duplicate_message):
+        original = node["start"]
+        header = struct.unpack_from("<H", original, 2)[0]
+        relative, stride, count = struct.unpack_from("<HHH", original, header + 8)
+        offset = header + relative
+        rows = [(i, original[offset + i * stride : offset + (i + 1) * stride]) for i in range(count)]
+        replacement = struct.pack("<IIIHBBI", android, key, NONE, 8, 0, kind, value)
+        matches = [i for i, raw in rows if struct.unpack_from("<II", raw) == (android, key)]
+        if len(matches) > 1:
+            raise ValueError(duplicate_message)
+        if matches:
+            rows[matches[0]] = (matches[0], replacement)
+        else:
+            rows.append((-1, replacement))
+
+        def resource_id(item):
+            attribute = struct.unpack_from("<I", item[1], 4)[0]
+            return resources[attribute] if attribute < len(resources) else 0
+
+        rows.sort(key=resource_id)
+        prefix = bytearray(original[:offset])
+        struct.pack_into("<H", prefix, header + 12, len(rows))
+        for special in (header + 14, header + 16, header + 18):
+            previous = struct.unpack_from("<H", prefix, special)[0]
+            if previous:
+                struct.pack_into("<H", prefix, special, next(i + 1 for i, item in enumerate(rows) if item[0] == previous - 1))
+        changed = prefix + b"".join(raw for _, raw in rows) + original[offset + count * stride :]
+        struct.pack_into("<I", changed, 4, len(changed))
+        node["start"] = bytes(changed)
+
+    # The public launcher must not permit a cold explicit Unity launch to bypass preparation.
+    set_android_attribute(activities[0], exported, 0x12, 0, "duplicate Unity export attribute")
     if retention:
 
         def android_attributes(node):
@@ -268,37 +274,17 @@ def patch(data, wire, *, version_code=None, version_name=None, application_id=No
             key = index(text)
             resources.extend([0] * max(0, key + 1 - len(resources)))
             if resources[key] not in (0, resource):
-                raise ValueError("retention attribute resource differs")
+                raise ValueError(f"Android attribute resource differs for {text}")
             resources[key] = resource
             return key
 
+        set_android_attribute(manifests[0], attribute_id("installLocation", 0x010102B7), 0x10, 2, "duplicate installLocation attribute")  # preferExternal
         allow_backup = attribute_id("allowBackup", 16843392)
         authorities = attribute_id("authorities", 16842776)
         multiprocess = attribute_id("multiprocess", 16842771)
         grant = attribute_id("grantUriPermissions", 16842779)
         attribute_id("name", 16842755)
-        raw = applications[0]["start"]
-        header = struct.unpack_from("<H", raw, 2)[0]
-        relative, stride, count = struct.unpack_from("<HHH", raw, header + 8)
-        offset = header + relative
-        rows = [(i, raw[offset + i * stride : offset + (i + 1) * stride]) for i in range(count)]
-        backup_rows = [i for i, row in rows if struct.unpack_from("<II", row) == (android, allow_backup)]
-        if len(backup_rows) > 1:
-            raise ValueError("duplicate backup attribute")
-        backup = struct.pack("<IIIHBBI", android, allow_backup, NONE, 8, 0, 0x12, 0)
-        rows = [(i, backup if i in backup_rows else row) for i, row in rows]
-        if not backup_rows:
-            rows.append((-1, backup))
-        rows.sort(key=lambda item: resources[struct.unpack_from("<I", item[1], 4)[0]])
-        prefix = bytearray(raw[:offset])
-        struct.pack_into("<H", prefix, header + 12, len(rows))
-        for special in (header + 14, header + 16, header + 18):
-            previous = struct.unpack_from("<H", prefix, special)[0]
-            if previous:
-                struct.pack_into("<H", prefix, special, next(i + 1 for i, row in enumerate(rows) if row[0] == previous - 1))
-        changed = prefix + b"".join(row for _, row in rows) + raw[offset + count * stride :]
-        struct.pack_into("<I", changed, 4, len(changed))
-        applications[0]["start"] = bytes(changed)
+        set_android_attribute(applications[0], allow_backup, 0x12, 0, "duplicate backup attribute")
         provider = index("provider")
         provider_name = index("dev.ror2owner.bootstrap.ProfileRetentionProvider")
         authority = index(application_id + ".retention")

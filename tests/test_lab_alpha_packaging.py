@@ -174,6 +174,7 @@ class AlphaPackagingTests(unittest.TestCase):
             self.assertTrue(device.display_awakened)
 
         device.display.side_effect = set_display
+        device.settings = {"storage_mode": "adopted"}
         with (
             patch("sys.path", [str(ROOT / "scripts/lab"), *A.sys.path]),
             patch("alpha_stability_batch._GameThermalOwner", Thermal),
@@ -188,6 +189,7 @@ class AlphaPackagingTests(unittest.TestCase):
             raise A.INSTALLER.Failure("fixture failure")
 
         self.assertEqual(calls, [True, "launch", "launch", False, "finish"])
+        self.assertTrue(phone.require_adopted)
 
     def test_installed_identity_and_complete_binding(self):
         receipt, ledger = bound()

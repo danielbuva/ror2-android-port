@@ -15,6 +15,7 @@ import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.system.Os;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.io.*;
@@ -31,6 +32,7 @@ public final class ToolHostActivity extends Activity {
     private TextView statusView;
     private final OwnerUpdateState.StatusRender statusRender = new OwnerUpdateState.StatusRender();
     private Button permissionButton, confirmationButton;
+    private CheckBox adoptedStorage;
     private static ToolHostActivity resumedActivity;
     private Button checkButton, rollbackButton, recoveryButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
     private Button toolFolderButton, acquireToolsButton;
@@ -60,7 +62,19 @@ public final class ToolHostActivity extends Activity {
         graphicsPicker = new OwnerGraphicsPicker(this);
         button(layout, "Graphics drivers", new Runnable() { public void run() { graphicsPicker.show(); } });
         permissionButton = button(layout, "Allow installs from this app in Android settings", new Runnable() { public void run() { requestInstallPermission(); } });
-        confirmationButton = button(layout, "Open Android install confirmation", new Runnable() { public void run() { OwnerInstaller.openConfirmation(ToolHostActivity.this); refreshStatus(); } });
+        confirmationButton = button(layout, "Open Android confirmation", new Runnable() { public void run() { OwnerInstaller.openConfirmation(ToolHostActivity.this); refreshStatus(); } });
+        adoptedStorage = new CheckBox(this);
+        adoptedStorage.setText("Require adopted storage");
+        adoptedStorage.setChecked(OwnerInstallPlacement.required(this));
+        adoptedStorage.setOnClickListener(new android.view.View.OnClickListener() {
+            @Override public void onClick(android.view.View view) {
+                if (!OwnerInstallPlacement.select(ToolHostActivity.this, adoptedStorage.isChecked())) {
+                    adoptedStorage.setChecked(!adoptedStorage.isChecked());
+                    updateStatus(ToolHostActivity.this, "ERROR", "Could not save the install placement setting.");
+                }
+            }
+        });
+        layout.addView(adoptedStorage);
         checkButton = button(layout, "Check for updates", new Runnable() { public void run() { startUpdate("release-check"); } });
         rollbackButton = button(layout, "Rebuild and install previous release (same key)", new Runnable() { public void run() { startUpdate("release-rollback"); } });
         recoveryButton = button(layout, "Recover and verify retained profile/settings", new Runnable() { public void run() { OwnerBuildService.launch(ToolHostActivity.this, "profile-recover"); } });
@@ -435,7 +449,7 @@ public final class ToolHostActivity extends Activity {
             String installation = OwnerInstaller.state(this);
             if (!OwnerBuildService.isRunning() && OwnerInstaller.busy(this)) { OwnerInstaller.reconcile(this); installation = OwnerInstaller.state(this); }
             if (OwnerInstaller.busy(this)) model.observe(installation, OwnerInstaller.status(this));
-            else if (!OwnerBuildService.isRunning() && (model.phase() == OwnerUpdateState.Phase.READY || model.phase() == OwnerUpdateState.Phase.INSTALLING || model.phase() == OwnerUpdateState.Phase.AWAITING_CONFIRMATION || model.phase() == OwnerUpdateState.Phase.VERIFYING_PROFILE || model.phase() == OwnerUpdateState.Phase.RECOVERING_PROFILE)) {
+            else if (!OwnerBuildService.isRunning() && (model.phase() == OwnerUpdateState.Phase.READY || model.phase() == OwnerUpdateState.Phase.INSTALLING || model.phase() == OwnerUpdateState.Phase.AWAITING_CONFIRMATION || model.phase() == OwnerUpdateState.Phase.VERIFYING_PROFILE || model.phase() == OwnerUpdateState.Phase.RECOVERING_PROFILE || model.phase() == OwnerUpdateState.Phase.REMOVING_MISPLACED)) {
                 if ("INSTALLED".equals(installation)) { model.observe(installation, OwnerInstaller.status(this)); }
                 else if ("ERROR".equals(installation) || "RECOVERY_REQUIRED".equals(installation)) model.observe(installation, OwnerInstaller.status(this));
             }
@@ -555,7 +569,10 @@ public final class ToolHostActivity extends Activity {
             OwnerUpdateState.resumableAction(previous), OwnerBuildService.hasLiveControls());
         boolean needsPermission = !installPermissionGranted() && !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this);
         permissionButton.setVisibility(needsPermission ? android.view.View.VISIBLE : android.view.View.GONE);
+        boolean removing = "REMOVING_MISPLACED".equals(OwnerInstaller.state(this));
+        confirmationButton.setText(removing ? "Open Android removal confirmation" : "Open Android install confirmation");
         confirmationButton.setVisibility(OwnerInstaller.hasConfirmation(this) ? android.view.View.VISIBLE : android.view.View.GONE);
+        adoptedStorage.setEnabled(!OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && !OwnerAlphaInstall.pending(this));
         String statusText = screen.text + (needsPermission ? "\nAndroid install permission is required before reconstruction." : "") + flowDetail;
         if (statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())) statusView.setText(statusText);
         rollbackButton.setEnabled(screen.rollback); recoveryButton.setEnabled(screen.recover);

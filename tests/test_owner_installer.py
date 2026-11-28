@@ -13,7 +13,7 @@ STATE_SOURCE = SOURCE.with_name("OwnerUpdateState.java")
 
 STUBS = {
     "dev/ror2lab/phonebuildhostfixture/OwnerBuildService.java": """package dev.ror2lab.phonebuildhostfixture;public class OwnerBuildService {public static boolean isRunning(){return false;}public static void launch(android.content.Context c,String action){OwnerInstaller.finishVerification(c);}}""",
-    "dev/ror2lab/phonebuildhostfixture/OwnerAlphaInstall.java": """package dev.ror2lab.phonebuildhostfixture; public class OwnerAlphaInstall {public static final String PACKAGE="dev.ror2lab.alpha";public static boolean pending(android.content.Context c){return false;}public static void prepare(android.content.Context c,java.io.File f,String h,android.content.pm.PackageInfo n,android.content.pm.PackageInfo o){}public static void complete(android.content.Context c,android.content.pm.PackageInfo p){}public static boolean recover(android.content.Context c){return false;}}""",
+    "dev/ror2lab/phonebuildhostfixture/OwnerAlphaInstall.java": """package dev.ror2lab.phonebuildhostfixture; public class OwnerAlphaInstall {public static final String PACKAGE="dev.ror2lab.alpha";public static boolean pending(android.content.Context c){return false;}public static void prepare(android.content.Context c,java.io.File f,String h,android.content.pm.PackageInfo n,android.content.pm.PackageInfo o,java.util.UUID u){}public static void complete(android.content.Context c,android.content.pm.PackageInfo p)throws MisplacedFreshInstall{}public static boolean recover(android.content.Context c)throws MisplacedFreshInstall{return false;}static boolean finishPlacementRefusal(android.content.Context c){return false;}static class MisplacedFreshInstall extends java.io.IOException {long version;}}""",
     "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
 public class ToolHostActivity extends android.content.Context {public static String checkpointState;
 public static ToolHostActivity active;
@@ -26,11 +26,24 @@ if(failDiagnostic)throw new IllegalStateException("synthetic diagnostic error");
 diagnosticEvents.add(stage==null?"callback:"+callback+":"+match:stage);}
 public static void updateInstallCheckpoint(android.content.Context c,String state,String message){checkpointState=state;}}""",
     "android/os/Build.java": "package android.os; public class Build { public static class VERSION { public static int SDK_INT=33; } }",
+    "android/os/Environment.java": 'package android.os; public class Environment { public static final String MEDIA_MOUNTED="mounted"; }',
+    "android/os/storage/StorageManager.java": """package android.os.storage; import java.util.*; public class StorageManager {
+        public static final UUID UUID_DEFAULT=new UUID(0,0);
+        public List<StorageVolume> volumes=new ArrayList<>(); public Map<UUID,Long> free=new HashMap<>();
+        public List<StorageVolume> getStorageVolumes(){return volumes;}
+        public long getAllocatableBytes(UUID u){return free.getOrDefault(u,0L);} }""",
+    "android/os/storage/StorageVolume.java": """package android.os.storage; import java.util.UUID; public class StorageVolume {
+        private final UUID uuid; private final boolean emulated; private final String state;
+        public StorageVolume(UUID u,boolean e,String s){uuid=u;emulated=e;state=s;}
+        public UUID getStorageUuid(){return uuid;} public boolean isEmulated(){return emulated;} public String getState(){return state;} }""",
+    "android/content/pm/VersionedPackage.java": """package android.content.pm; public class VersionedPackage {
+        public final String name; public final long version;
+        public VersionedPackage(String n,long v){name=n;version=v;} }""",
     "android/content/ComponentName.java": """package android.content; public class ComponentName {
         public final String packageName; public final Class<?> target;
         public ComponentName(Context c,Class<?> t){packageName=c.getPackageName();target=t;}}
     """,
-    "android/content/pm/ApplicationInfo.java": "package android.content.pm; public class ApplicationInfo {public boolean enabled=true;}",
+    "android/content/pm/ApplicationInfo.java": "package android.content.pm; public class ApplicationInfo {public boolean enabled=true; public String sourceDir,dataDir; public java.util.UUID storageUuid;}",
     "android/content/pm/ActivityInfo.java": """package android.content.pm; public class ActivityInfo {
         public boolean enabled=true,exported;public ApplicationInfo applicationInfo=new ApplicationInfo();}
     """,
@@ -47,13 +60,14 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
         public static final String EXTRA_INTENT="intent"; public static final int FLAG_ACTIVITY_NEW_TASK=1;
         public int code=1,session=7,flags; public Intent confirmation; public Class<?> target; public String action;
         public Intent(){} public Intent(Context c,Class<?> t){target=t;}
-        public Intent setAction(String a){action=a;return this;} public Intent addFlags(int f){flags|=f;return this;}
+        public Intent setAction(String a){action=a;return this;} public String getAction(){return action;} public Intent addFlags(int f){flags|=f;return this;}
         public int getIntExtra(String k,int d){return k.equals("session")?session:k.equals("status")?code:d;} public String getStringExtra(String k){return "denied";}
         public Intent getParcelableExtra(String k){return EXTRA_INTENT.equals(k)?confirmation:null;}
     }""",
     "android/content/BroadcastReceiver.java": "package android.content; public abstract class BroadcastReceiver {public abstract void onReceive(Context c,Intent i);}",
     "android/content/Context.java": """package android.content; import android.content.pm.*;
         public class Context {public PackageManager manager=new PackageManager(); public Intent started;
+        public android.os.storage.StorageManager storage=new android.os.storage.StorageManager(); public <T> T getSystemService(Class<T> kind){return kind.cast(storage);}
         public boolean startFails,prefsFail; public String stateAtStart;
         public Prefs prefs=new Prefs(); public PackageManager getPackageManager(){return manager;}
         public String getPackageName(){return "authored.tool";} public Prefs getSharedPreferences(String s,int m){if(prefsFail)throw new IllegalStateException("synthetic preference failure");return prefs;}
@@ -69,6 +83,7 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
         public IntentSender getIntentSender(){return sender;}}
     """,
     "android/content/pm/PackageInfo.java": """package android.content.pm; public class PackageInfo {
+        public static final int INSTALL_LOCATION_PREFER_EXTERNAL=2; public ApplicationInfo applicationInfo=new ApplicationInfo();
         public String packageName="authored.game"; public int versionCode=2; public Signature[] signatures={new Signature("same-key")};
         public long getLongVersionCode(){return versionCode;}}
     """,
@@ -96,12 +111,14 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
         public class PackageInstaller {public static final String EXTRA_STATUS="status",EXTRA_STATUS_MESSAGE="message",EXTRA_SESSION_ID="session";
         public static final int STATUS_FAILURE=1,STATUS_SUCCESS=0,STATUS_PENDING_USER_ACTION=-1;
         public SessionParams params; public Session session=new Session(); public Runnable beforeOpen; public int created; public boolean abandoned,fail; public SessionInfo info=new SessionInfo();
+        public VersionedPackage removed; public IntentSender removalReceiver;
+        public void uninstall(VersionedPackage p,IntentSender s){removed=p;removalReceiver=s;}
         public SessionInfo getSessionInfo(int id){return info;}
         public static class SessionInfo {public boolean sealed=true; public boolean isSealed(){return sealed;}}
         public int createSession(SessionParams p){created++;params=p;return 7;} public Session openSession(int id) throws IOException {
         if(fail)throw new IOException("open failed");if(beforeOpen!=null)beforeOpen.run();return session;} public void abandonSession(int id){abandoned=true;}
         public static class SessionParams {public static final int MODE_FULL_INSTALL=1,USER_ACTION_NOT_REQUIRED=2;
-        public int action,mode; public String name; public long size; public SessionParams(int m){mode=m;}
+        public int action,mode,location; public void setInstallLocation(int l){location=l;} public String name; public long size; public SessionParams(int m){mode=m;}
         public void setAppPackageName(String n){name=n;} public void setSize(long s){size=s;} public void setRequireUserAction(int a){action=a;}}
         public static class Session implements AutoCloseable {public boolean committed,synced,closed,writeFail,syncFail,commitFail;
         public IntentSender receiver; public ByteArrayOutputStream bytes=new ByteArrayOutputStream(); public OutputStream openWrite(String n,long o,long s) throws IOException {
@@ -242,7 +259,10 @@ public class Harness {
         check(OwnerInstaller.busy(c));c.manager.current=new PackageInfo();
         i.code=0;receiver.onReceive(c,i);check(OwnerInstaller.status(c).contains("complete"));
         check(!OwnerInstaller.busy(c) && OwnerInstaller.state(c).equals("INSTALLED"));
+        receiver.onReceive(c,i);check(OwnerInstaller.state(c).equals("INSTALLED"));
+        c=new Context();OwnerInstaller.install(c,apk,hash);c.manager.current=new PackageInfo();
         c.manager.current.versionCode=1;receiver.onReceive(c,i);check(OwnerInstaller.state(c).equals("ERROR"));
+        c=new Context();OwnerInstaller.install(c,apk,hash);
         i.code=1;receiver.onReceive(c,i);check(OwnerInstaller.status(c).contains("denied"));
         OwnerInstaller.clearTerminalStatus(c);check(OwnerInstaller.state(c).equals("IDLE"));
         i.code=0;receiver.onReceive(c,i);check(OwnerInstaller.state(c).equals("IDLE"));
@@ -440,7 +460,11 @@ class OwnerInstallerTests(unittest.TestCase):
                 paths.append(str(path))
             harness = root / "Harness.java"
             harness.write_text(HARNESS)
-            compiled = subprocess.run([str(compiler), "-d", str(root), *paths, str(SOURCE), str(STATE_SOURCE), str(harness)], capture_output=True, text=True)
+            compiled = subprocess.run(
+                [str(compiler), "-d", str(root), *paths, str(SOURCE), str(STATE_SOURCE), str(harness)],
+                capture_output=True,
+                text=True,
+            )
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             result = subprocess.run(
                 [str(compiler.with_name("java")), "-cp", str(root), "dev.ror2lab.phonebuildhostfixture.Harness", str(root / "owner-stream.bin")],

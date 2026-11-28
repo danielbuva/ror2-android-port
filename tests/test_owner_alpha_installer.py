@@ -37,7 +37,6 @@ EXTRA = {
             if(method.equals("release"))released=true;
             if(method.equals("restore"))mismatch=false;Bundle b=new Bundle();b.putString("status","verified");if(method.equals("status"))b.putString("state",released?"released":"active");b.putInt("data_schema",extras.getInt("expected_schema",-1));
             b.putString("snapshot","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");return b;}}""",
-    "android/content/pm/ApplicationInfo.java": """package android.content.pm; public class ApplicationInfo {public String sourceDir;public boolean enabled=true;}""",
     "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
         import org.json.JSONObject;import java.io.*;public class ToolHostActivity extends android.content.Context {
         public static ToolHostActivity activeForConfirmation(){return null;}
@@ -51,7 +50,7 @@ EXTRA = {
 }
 
 HARNESS = r"""
-import android.content.*; import android.content.pm.*; import dev.ror2lab.phonebuildhostfixture.*;
+import android.content.*; import android.content.pm.*; import android.os.storage.*; import dev.ror2lab.phonebuildhostfixture.*;
 import org.json.*; import java.io.*; import java.nio.file.*; import java.security.*;
 public class AlphaHarness {
     static int checks; static File base; static void check(boolean b){checks++;if(!b)throw new AssertionError("check "+checks);}
@@ -81,6 +80,38 @@ public class AlphaHarness {
         File old=stream(c,"old-stream.bin");c.manager.current.applicationInfo.sourceDir=old.getPath();put(c,"installed-release.json",ready(c,1,old).put("installed_readback_verified",true));return c;}
     static void install(Context c,File f)throws Exception{OwnerInstaller.install(c,f,hash(f),OwnerAlphaInstall.PACKAGE,2);}
     static void success(Context c,File f){c.manager.current=c.manager.next;c.manager.current.applicationInfo.sourceDir=f.getPath();Intent i=new Intent();i.code=0;new OwnerInstaller.Result().onReceive(c,i);}
+    static final java.util.UUID ADOPTED=new java.util.UUID(11,22);
+    static void adopted(Context c, boolean emulated, long free) {
+        c.prefs.putString("require_adopted_storage","true").commit();
+        c.storage.volumes.add(new StorageVolume(ADOPTED,emulated,"mounted"));
+        c.storage.free.put(ADOPTED,free);c.storage.free.put(StorageManager.UUID_DEFAULT,100L);
+    }
+    static void placement() throws Exception {
+        Context missing=context();adopted(missing,false,1000);File absent=issue(missing);
+        refuse("No eligible mounted adopted volume",()->install(missing,absent));check(missing.manager.installer.created==0);
+        Context tooSmall=context();adopted(tooSmall,true,99);File small=issue(tooSmall);
+        refuse("No eligible mounted adopted volume",()->install(tooSmall,small));check(tooSmall.manager.installer.created==0);
+        Context internal=update();adopted(internal,true,1000);File update=issue(internal);
+        refuse("existing game is not on adopted storage",()->install(internal,update));
+        check(internal.manager.installer.created==0);check(internal.resolver.calls.isEmpty());check(internal.manager.installer.removed==null);
+        Context fallback=context();adopted(fallback,true,1000);File built=issue(fallback);install(fallback,built);
+        check(fallback.manager.installer.params.location==PackageInfo.INSTALL_LOCATION_PREFER_EXTERNAL);
+        check(fallback.manager.installer.params.size==built.length());
+        check(get(fallback,"pending-install.json").getString("adopted_volume").equals(ADOPTED.toString()));
+        success(fallback,built);check("REMOVING_MISPLACED".equals(OwnerInstaller.state(fallback)));
+        check(fallback.manager.installer.removed.name.equals(OwnerAlphaInstall.PACKAGE));check(fallback.manager.installer.removed.version==2);
+        check(!new File(fallback.getFilesDir(),"owner-input/installed-release.json").exists());
+        fallback.manager.installer.removalReceiver.send(fallback,-1,PackageInstaller.STATUS_PENDING_USER_ACTION,new Intent());
+        fallback.manager.installer.removalReceiver.send(fallback,-1,PackageInstaller.STATUS_FAILURE,null);
+        check("RECOVERY_REQUIRED".equals(OwnerInstaller.state(fallback)));check(OwnerAlphaInstall.pending(fallback));
+        OwnerInstaller.recoverProfiles(fallback);check("REMOVING_MISPLACED".equals(OwnerInstaller.state(fallback)));
+        fallback.manager.current=null;fallback.manager.installer.removalReceiver.send(fallback,-1,PackageInstaller.STATUS_SUCCESS,null);
+        check("ERROR".equals(OwnerInstaller.state(fallback)));check(!OwnerAlphaInstall.pending(fallback));
+        check(get(fallback,"placement-refusal.json").getString("sha256").equals(hash(built)));
+        Context unknown=context();adopted(unknown,true,1000);File issued=issue(unknown);install(unknown,issued);
+        success(unknown,stream(unknown,"untrusted.bin"));check(unknown.manager.installer.removed==null);
+        check("RECOVERY_REQUIRED".equals(OwnerInstaller.state(unknown)));
+    }
     public static void main(String[] args)throws Exception{base=new File(args[0]);base.mkdirs();
         Context first=context();File f=issue(first);install(first,f);success(first,f);check("INSTALLED".equals(OwnerInstaller.state(first)));check(first.resolver.calls.isEmpty());
         check(get(first,"installed-release.json").getLong("version_code")==2);check(!OwnerAlphaInstall.pending(first));
@@ -124,6 +155,7 @@ public class AlphaHarness {
         check(cancelled.resolver.calls.toString().equals("[status]"));check(cancelled.resolver.mismatch);check(get(cancelled,"installed-release.json").getLong("version_code")==1);
         Context waiting=update();File wf=issue(waiting);install(waiting,wf);Intent confirmation=new Intent();confirmation.code=-1;new OwnerInstaller.Result().onReceive(waiting,confirmation);
         check(OwnerInstaller.busy(waiting));check(OwnerAlphaInstall.pending(waiting));check(!waiting.resolver.calls.contains("release"));
+        placement();
         System.out.println("alpha install retention contracts PASS "+checks);
     }
 }"""
@@ -159,9 +191,6 @@ class AlphaInstallerTests(unittest.TestCase):
             "public class Context {",
             "public class Context {public java.io.File root;public java.io.File getFilesDir(){return root;}public ContentResolver resolver=new ContentResolver();public ContentResolver getContentResolver(){return resolver;}",
         )
-        stubs["android/content/pm/PackageInfo.java"] = stubs["android/content/pm/PackageInfo.java"].replace(
-            "public class PackageInfo {", "public class PackageInfo {public ApplicationInfo applicationInfo=new ApplicationInfo();"
-        )
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             sources = []
@@ -173,7 +202,15 @@ class AlphaInstallerTests(unittest.TestCase):
             harness = root / "AlphaHarness.java"
             harness.write_text(HARNESS)
             compile_result = subprocess.run(
-                [str(compiler), "-d", str(root), *sources, str(SOURCE / "OwnerInstaller.java"), str(SOURCE / "OwnerAlphaInstall.java"), str(harness)],
+                [
+                    str(compiler),
+                    "-d",
+                    str(root),
+                    *sources,
+                    str(SOURCE / "OwnerInstaller.java"),
+                    str(SOURCE / "OwnerAlphaInstall.java"),
+                    str(harness),
+                ],
                 capture_output=True,
                 text=True,
             )

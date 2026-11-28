@@ -396,8 +396,8 @@ installer rather than reconstructing completed stages. After an explicitly start
 reconstruction succeeds, the service hands the ready APK to `OwnerInstaller` if
 Android permits installation; otherwise the UI asks the user to grant permission
 and continue. The notification remains through a pending session/consent; only
-package/version/signer readback marks installation complete. No uninstall or save
-reset is added.
+package/version/signer readback marks installation complete. An adopted-storage
+session also requires placement readback.
 
 Synthetic JVM import/session tests, source/manifest lifecycle contracts and Android
 API compilation do not establish real SAF-provider behavior, Android process-death
@@ -426,8 +426,13 @@ private signed-APK references, not copies of game data. Only verified successful
 installation rotates these references. The UI reports retained APK bytes,
 installer-filesystem free bytes and schema/key eligibility; release operations
 prune older unreferenced generated APK artifacts while protecting current,
-previous and the active ready build. Android chooses install placement; observed
-installer free space does not certify the final game's data backing.
+previous and the active ready build. Alpha APKs and sessions request external
+placement. Turn on **Require adopted storage** to check mounted capacity before
+dispatch and verify the installed APK and private data backing before success.
+An existing install must already be on the selected adopted volume before an
+update. A misplaced fresh install requires exact receipt and APK checks before
+the installer asks Android to remove it. Confirm the Android dialog to finish
+recording the refused placement.
 
 Before an update/rollback, the certificate-bound game provider at
 `dev.ror2lab.alpha.retention` snapshots the allowlisted Android-local profile and

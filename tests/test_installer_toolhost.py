@@ -15,6 +15,25 @@ SPEC.loader.exec_module(fixture)
 
 
 class InstallerToolhostTest(unittest.TestCase):
+    def test_repack_accepts_only_the_changed_codec_with_an_explicit_pinned_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            codec = Path(directory) / fixture.TEXTURE_CODEC
+            codec.write_bytes(b"new codec")
+            old, new = "a" * 64, fixture.digest(codec)
+
+            def profile(codec_hash, loader="b" * 64):
+                return dict(texture_sdk_guest={fixture.TEXTURE_CODEC: codec_hash, "loader": loader}, public_profile_source_hashes={})
+
+            staging = mock.Mock()
+            staging.load_metadata.side_effect = [profile(new), profile(new, "c" * 64), profile(new)]
+            with mock.patch.object(fixture, "git", side_effect=["", json.dumps(profile(old)), "", "", json.dumps(profile(old)), "", json.dumps(profile(old))]):
+                self.assertEqual(fixture.verify_runtime_inputs(codec.parent, "old", "new", staging, codec), (old, new))
+                with self.assertRaisesRegex(ValueError, "retained Android tool profile differs"):
+                    fixture.verify_runtime_inputs(codec.parent, "old", "new", staging, codec)
+                codec.write_bytes(b"unverified codec")
+                with self.assertRaisesRegex(ValueError, "must match the changed profile pin"):
+                    fixture.verify_runtime_inputs(codec.parent, "old", "new", staging, codec)
+
     def test_repack_accepts_updated_repo_pins_and_refuses_runtime_or_source_drift(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

@@ -92,6 +92,13 @@ def retained(data, **options):
 
 
 class AlphaBinaryRetentionTests(unittest.TestCase):
+    def test_adopted_preference_replaces_existing_binary_attribute(self):
+        original = extended_manifest(attributes=[("manifest", "installLocation", 0, 0x10, 0x010102B7)])
+        modified = retained(original)
+        self.assertEqual(M.read(modified)[2][0]["attributes"][(ANDROID, "installLocation")], 2)
+        rollback = M.PATCH.reversion(modified, M.WIRE, version_code=102)
+        self.assertEqual(M.read(rollback)[2][0]["attributes"][(ANDROID, "installLocation")], 2)
+
     def test_exact_provider_privacy_and_launch_gate_preserve_original_metadata(self):
         for utf8 in (True, False):
             original = extended_manifest(utf8=utf8, attributes=[("application", "allowBackup", 1, 0x12, 0x01010280)])
@@ -101,6 +108,7 @@ class AlphaBinaryRetentionTests(unittest.TestCase):
             root = after[0]
             self.assertEqual(attrs(root)[(None, "package")], ALPHA)
             self.assertEqual(attrs(root)[(ANDROID, "versionCode")], 101)
+            self.assertEqual(attrs(root)[(ANDROID, "installLocation")], 2)
             app = next(node for node in after if node["tag"] == "application")
             self.assertEqual(attrs(app)[(ANDROID, "allowBackup")], 0)
             self.assertEqual(attrs(app)[(ANDROID, "name")], "dev.owner.authoredfixture.AuthoredApplication")

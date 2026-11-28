@@ -938,6 +938,7 @@ class Phone:
         self.alpha_hash = None
         self.reverse_port = None
         self.install_volume = None
+        self.require_adopted = False
         self.settings_focus_key = None
         self.install_focus_key = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
@@ -1108,7 +1109,10 @@ class Phone:
                 choices.append((fields[2], "/mnt/expand/" + fields[2]))
         observed = [(self.available(self.shell("df", "-k", path, label="device-storage-volume-free")), volume) for volume, path in choices]
         if not self.owned_installer:
-            available, self.install_volume = max(observed)
+            candidates = [row for row in observed if not self.require_adopted or row[1] != "internal"]
+            if not candidates:
+                raise Failure("device-adopted-storage-unavailable")
+            available, self.install_volume = max(candidates)
             if available < self.storage_reserve:
                 raise Failure("device-storage-reserve")
             return
@@ -1118,10 +1122,22 @@ class Phone:
             paths = self.package_paths(package)
             if len(paths) != 1 or not paths[0].startswith("package:"):
                 raise Failure("device-package-placement-unavailable")
+            if package == GAME and self.require_adopted:
+                private = self.shell("run-as", package, "pwd", label="device-game-private-backing").decode().strip()
+                if not any(
+                    paths[0].startswith("package:" + root + "/app/") and private.startswith(root + "/") for volume, root in choices if volume != "internal"
+                ):
+                    raise Failure("device-game-not-on-adopted-storage")
             code = self.available(self.shell("df", "-k", paths[0][8:], label="device-storage-code-free"))
             data = self.available(self.shell("run-as", package, "df", "-k", ".", label="device-storage-data-free"))
             if min(code, data) < self.storage_reserve:
                 raise Failure("device-storage-reserve")
+
+    def select_game_placement(self):
+        if self.require_adopted:
+            self.tap("Require adopted storage")
+            if not any(node.get("text") == "Require adopted storage" and node.get("checked") == "true" for node in self.ui().iter("node")):
+                raise Failure("device-adopted-placement-selection-unverified")
 
     def reserve_install_outputs(self, apk, inputs, releases):
         # Cover the installed/staged installer and APKs plus retained inputs
@@ -1501,6 +1517,8 @@ class Phone:
                     if old["sha256"] != previous["sha256"]:
                         raise Failure("previous-release-not-retained")
                 self.alpha_hash = receipt["sha256"]
+                if self.require_adopted and receipt.get("adopted_storage_verified") is not True:
+                    raise Failure("game-adopted-storage-receipt-unverified")
                 if require_pending_prompt and not (pending_observed and consent_observed):
                     raise Failure("install-pending-prompt-not-observed")
                 self.storage()
@@ -1945,6 +1963,7 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
             phone.put("import-state.json", encoded({"state": "IMPORTED", "message": "Synthetic test inputs only"}))
             set_phase("baseline-N-check")
             phone.start()
+            phone.select_game_placement()
             phone.check(1)
             if not any("TEST RELEASE SOURCE" in node.get("text", "") for node in phone.ui().iter("node")):
                 raise Failure("debug-source-warning-not-visible")

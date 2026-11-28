@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import java.io.*;
+import java.util.UUID;
 import java.security.MessageDigest;
 import java.util.Locale;
 import org.json.*;
@@ -84,7 +85,7 @@ public final class OwnerAlphaInstall {
         for (String key : new String[]{"source_sha256", "input_sha256", "toolchain_sha256", "payload_sha256"})
             if (!issue.getString(key).equals(ready.getString(key))) throw new IOException("Issued build binding differs: " + key);
     }
-    public static void prepare(Context app, File apk, String hash, PackageInfo next, PackageInfo current) throws Exception {
+    public static void prepare(Context app, File apk, String hash, PackageInfo next, PackageInfo current, UUID adoptedVolume) throws Exception {
         if (pending(app)) throw new IOException("A previous profile transaction requires recovery before another installation");
         JSONObject ready = read(app, "owner-apk-ready.json");
         String certificate = OwnerInstaller.signer(next);
@@ -100,6 +101,7 @@ public final class OwnerAlphaInstall {
         long attempted = Long.parseLong(app.getSharedPreferences(OwnerInstaller.STATUS, 0).getString("last_dispatched_version", "0"));
         if (code <= attempted) throw new IOException("This issued code was already dispatched. Rebuild to allocate a higher code; do not retry a second install session.");
         JSONObject transaction = new JSONObject().put("ready", ready).put("installer_free_bytes_before", app.getFilesDir().getUsableSpace()).put("data_schema", ready.getJSONObject("release").getJSONObject("data_schema").getInt("writes"));
+        if (adoptedVolume != null) transaction.put("adopted_volume", adoptedVolume.toString());
         if (current != null) {
             JSONObject previous = owned(app, current);
             if (!certificate.equals(previous.getString("signer_sha256"))) throw new IOException("Rollback/update must use the same owner signing key");
@@ -142,6 +144,15 @@ public final class OwnerAlphaInstall {
             !digest(new File(installed.applicationInfo.sourceDir)).equals(ready.getString("sha256")))
             throw new IOException("Installed alpha package, code, certificate or APK hash did not match exact readback");
         verifyIssued(app, ready);
+        if (transaction.has("adopted_volume")) {
+            UUID volume = UUID.fromString(transaction.getString("adopted_volume"));
+            if (!OwnerInstallPlacement.matches(installed.applicationInfo, volume)) {
+                if (transaction.has("previous")) throw new IOException(OwnerInstallPlacement.REFUSED + " The update's backing could not be verified. The profile snapshot is retained.");
+                write(app, "pending-install.json", transaction.put("placement_refused", true));
+                throw new MisplacedFreshInstall(OwnerInstaller.version(installed));
+            }
+            ready.put("adopted_storage_verified", true);
+        }
         boolean released = retainProfiles(app, transaction);
         if (transaction.has("previous")) write(app, "previous-installed-release.json", transaction.getJSONObject("previous"));
         ready.put("installed_readback_verified", true).put("profile_retention_verified", transaction.has("previous"));
@@ -150,6 +161,30 @@ public final class OwnerAlphaInstall {
         if (transaction.has("snapshot") && !released) provider(app, "release", transaction);
         removePending(app);
     }
+    static final class MisplacedFreshInstall extends IOException {
+        final long version;
+        MisplacedFreshInstall(long version) { super(OwnerInstallPlacement.REFUSED); this.version = version; }
+    }
+
+    /** Finalize only an absent, previously identified fresh fallback. */
+    static boolean finishPlacementRefusal(Context app) throws Exception {
+        if (!pending(app)) return false;
+        JSONObject transaction = read(app, "pending-install.json");
+        if (!transaction.has("placement_refused") || transaction.has("previous")) return false;
+        try { app.getPackageManager().getPackageInfo(PACKAGE, 0); return false; }
+        catch (PackageManager.NameNotFoundException absent) { /* Confirmed absent. */ }
+        JSONObject ready = transaction.getJSONObject("ready");
+        write(app, "placement-refusal.json", new JSONObject().put("version_code", ready.getLong("version_code")).put("sha256", ready.getString("sha256")));
+        invalidateReady(app);
+        return true;
+    }
+
+    private static void invalidateReady(Context app) throws IOException {
+        File ready = file(app, "owner-apk-ready.json");
+        if (ready.exists() && !ready.delete()) throw new IOException("Could not invalidate the failed ready installation");
+        removePending(app);
+    }
+
     /** Recovery never uninstalls, downgrades or clears data. A failed restore keeps the lock and receipt. */
     public static boolean recover(Context app) throws Exception {
         if (!pending(app)) return false;
@@ -168,9 +203,7 @@ public final class OwnerAlphaInstall {
             boolean released = retainProfiles(app, transaction);
             if (transaction.has("snapshot") && !released) provider(app, "release", transaction);
         }
-        File readyFile = file(app, "owner-apk-ready.json");
-        if (readyFile.exists() && !readyFile.delete()) throw new IOException("Could not invalidate the failed ready installation");
-        removePending(app);
+        invalidateReady(app);
         return false;
     }
     public static String rollbackStatus(Context app) {

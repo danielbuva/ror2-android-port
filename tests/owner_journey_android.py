@@ -39,9 +39,6 @@ def compile_installer(root, command):
         "public class Context {",
         "public class Context {public java.io.File root;public java.io.File getFilesDir(){return root;}public ContentResolver resolver=new ContentResolver();public ContentResolver getContentResolver(){return resolver;}",
     )
-    stubs["android/content/pm/PackageInfo.java"] = stubs["android/content/pm/PackageInfo.java"].replace(
-        "public class PackageInfo {", "public class PackageInfo {public ApplicationInfo applicationInfo=new ApplicationInfo();"
-    )
     stubs["org/json/JSONObject.java"] = stubs["org/json/JSONObject.java"].replace("private Map<String,Object> values", "public Map<String,Object> values")
     stubs["org/json/JSONArray.java"] = (
         stubs["org/json/JSONArray.java"]
@@ -129,7 +126,15 @@ System.out.println("consent -> verified installed receipt PASS");}}
     path = root / "Journey.java"
     path.write_text(harness)
     result = subprocess.run(
-        [*command, "-d", str(root), *paths, str(SOURCE / "OwnerInstaller.java"), str(SOURCE / "OwnerAlphaInstall.java"), str(path)],
+        [
+            *command,
+            "-d",
+            str(root),
+            *paths,
+            str(SOURCE / "OwnerInstaller.java"),
+            str(SOURCE / "OwnerAlphaInstall.java"),
+            str(path),
+        ],
         capture_output=True,
         text=True,
         timeout=30,

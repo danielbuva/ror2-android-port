@@ -433,6 +433,7 @@ class StagedUpdate(StagedTools):
             phone.put("debug-release-source.json", installer.encoded({"enabled": True, "base_url": base}))
             with stage("signed-source-import"):
                 phone.start()
+                phone.select_game_placement()
                 phone.check(baseline)
                 self.require(any("TEST RELEASE SOURCE" in node.get("text", "") for node in phone.ui().iter("node")), "debug-source-warning-not-visible")
                 self.import_originals(phone)

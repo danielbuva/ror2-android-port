@@ -1905,6 +1905,13 @@ confirmation can be retried in the foreground and never creates a second session
 The platform intent is process-local; missing confirmation retains the session
 and does not imply success or authorize recovery. Android 12+ same-key updates
 request `USER_ACTION_NOT_REQUIRED`, with actual Android consent authoritative.
+`OwnerInstallPlacement` in the same file owns the optional adopted-storage
+requirement. Alpha APKs and sessions request external preference. The policy
+checks mounted adopted capacity before dispatch and records the expected
+volume in the pending transaction. Completion verifies the installed APK and
+private data backing against that volume. A misplaced fresh installation can
+be removed through Android consent after exact receipt and APK verification.
+An occupied package retains its profile and is never removed by this path.
 `reconcile` recovers persisted session state after recreation; installed identity
 and required profile readback gate success and advancement of the installed
 manifest. Session/receiver diagnostics observe these transitions without changing

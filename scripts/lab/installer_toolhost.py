@@ -21,6 +21,8 @@ SIGNER = Path("tools/phone-build/owner-apk/build_owner_apk.py")
 REPO_ASSETS = ("scripts", "tools", "recipe", "environment", "launcher", ".gitignore", "dev")
 HOST_TOOL_PROFILE = "recipe/owner-app-host-tools.json"
 RELEASE_TRUST = "assets/release-trust.json"
+TEXTURE_CODEC = "texture-sdk-codec"
+TEXTURE_CODEC_ASSET = "assets/texture-sdk/" + TEXTURE_CODEC
 RUNTIME_INPUTS = (
     MANAGED / "stage.py",
     MANAGED / "build_fixture.py",
@@ -99,13 +101,21 @@ def git(checkout, *args):
     return subprocess.check_output(["git", "-C", checkout, *args]).decode().strip()
 
 
-def verify_runtime_inputs(checkout, base_commit, version, staging):
+def verify_runtime_inputs(checkout, base_commit, version, staging, texture_sdk_codec=None):
     git(checkout, "diff", "--quiet", base_commit, version, "--", *RUNTIME_INPUTS)
     base = json.loads(git(checkout, "show", f"{base_commit}:{HOST_TOOL_PROFILE}"))
     current = staging.load_metadata()
     # Each pinned repo asset is replaced during assembly; the Android runtime is retained.
     base.pop("public_profile_source_hashes")
     pins = current.pop("public_profile_source_hashes")
+    retained_codec = expected = None
+    if texture_sdk_codec is not None:
+        old = base.get("texture_sdk_guest", {})
+        expected = current.get("texture_sdk_guest", {}).get(TEXTURE_CODEC)
+        retained_codec = old.get(TEXTURE_CODEC)
+        if retained_codec is None or expected is None or retained_codec == expected or digest(texture_sdk_codec) != expected:
+            raise ValueError("Texture SDK codec replacement must match the changed profile pin")
+        old[TEXTURE_CODEC] = expected
     if base != current:
         raise ValueError("retained Android tool profile differs")
     tracked = set(git(checkout, "ls-tree", "-rz", "--name-only", version, "--", *REPO_ASSETS).split("\0"))
@@ -113,6 +123,7 @@ def verify_runtime_inputs(checkout, base_commit, version, staging):
         path = checkout / name
         if name not in tracked or path != path.resolve() or digest(path) != expected:
             raise ValueError("public fixture source differs: " + name)
+    return retained_codec, expected
 
 
 def base_receipt(base):
@@ -195,7 +206,7 @@ def provisioned_trust(checkout, source, retained):
     return public.RELEASE.signed_bytes(trust)
 
 
-def build(checkout, base, zipalign, check=False, *, release_trust=None):
+def build(checkout, base, zipalign, check=False, *, release_trust=None, texture_sdk_codec=None):
     checkout = checkout.resolve(strict=True)
     version = git(checkout, "rev-parse", "HEAD")
     work = (checkout / "work").resolve(strict=True)
@@ -206,7 +217,9 @@ def build(checkout, base, zipalign, check=False, *, release_trust=None):
     receipt, native_hashes = base_receipt(base)
     git(checkout, "diff", "--quiet", "HEAD", "--", *REPO_ASSETS)
     staging = load_module("toolhost_staging", checkout / MANAGED / "stage.py")
-    verify_runtime_inputs(checkout, receipt["source_commit"], version, staging)
+    if texture_sdk_codec is not None:
+        texture_sdk_codec = texture_sdk_codec.resolve(strict=True)
+    retained_codec, expected_codec = verify_runtime_inputs(checkout, receipt["source_commit"], version, staging, texture_sdk_codec)
     java = Path(os.environ["JAVA_HOME"]) / "bin/java"
     sdk = Path(os.environ["ANDROID_HOME"])
     tools = sdk / "build-tools/34.0.0"
@@ -215,6 +228,10 @@ def build(checkout, base, zipalign, check=False, *, release_trust=None):
         raise ValueError("host key does not match the retained installer-test certificate")
     with zipfile.ZipFile(base / "signed.apk") as original:
         retained_trust = json.loads(original.read(RELEASE_TRUST))
+        if retained_codec is not None:
+            with original.open(TEXTURE_CODEC_ASSET) as codec:
+                if hashlib.file_digest(codec, "sha256").hexdigest() != retained_codec:
+                    raise ValueError("Retained Texture SDK codec differs from its original profile")
     trust_data = provisioned_trust(checkout, release_trust, retained_trust) if release_trust is not None else None
     cache_key = version
     if trust_data is not None:
@@ -262,6 +279,8 @@ def build(checkout, base, zipalign, check=False, *, release_trust=None):
         names = git(checkout, "ls-tree", "-rz", "--name-only", version, "--", *REPO_ASSETS).split("\0")
         source_assets = {"assets/repo/" + name: checkout / name for name in names if name}
         source_assets["assets/run_profile.py"] = checkout / MANAGED / "run_profile.py"
+        if texture_sdk_codec is not None:
+            source_assets[TEXTURE_CODEC_ASSET] = texture_sdk_codec
         if trust_data is not None:
             trust_file = output / "release-trust.json"
             trust_file.write_bytes(trust_data)
@@ -277,6 +296,8 @@ def build(checkout, base, zipalign, check=False, *, release_trust=None):
                 native_hashes,
                 signer.ASSEMBLY.obsolete_signature,
             )
+        if expected_codec is not None and assets[TEXTURE_CODEC_ASSET.removeprefix("assets/")] != expected_codec:
+            raise ValueError("Texture SDK codec changed during assembly")
         request = output / "sign-request.json"
         save(
             request,
@@ -335,5 +356,6 @@ if __name__ == "__main__":
     parser.add_argument("--zipalign", type=Path, required=True, help="Mac Android Build Tools zipalign with -P 16 support")
     parser.add_argument("--check", action="store_true", help="validate the base, tracked source and local fixture certificate")
     parser.add_argument("--release-trust", type=Path, help="explicit public publisher key configuration for a local staged release")
+    parser.add_argument("--texture-sdk-codec", type=Path, help="explicit codec input matching the updated Texture SDK profile pin")
     args = parser.parse_args()
-    build(Path(__file__).resolve().parents[2], args.base, args.zipalign, args.check, release_trust=args.release_trust)
+    build(Path(__file__).resolve().parents[2], args.base, args.zipalign, args.check, release_trust=args.release_trust, texture_sdk_codec=args.texture_sdk_codec)

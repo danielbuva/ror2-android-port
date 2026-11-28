@@ -165,6 +165,7 @@ class Phone(INSTALLER.Phone):
         diagnostics = INSTALLER.DIAGNOSTICS
         thermal = PackagingThermal(Device(self.serial), None, diagnostics.directory / "thermal.jsonl", time.monotonic() + duration)
         self.thermal = thermal
+        self.require_adopted = thermal.device.settings["storage_mode"] == "adopted"
         try:
             thermal.cool()
             thermal.start()

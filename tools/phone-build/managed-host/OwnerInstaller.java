@@ -6,16 +6,22 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.VersionedPackage;
 import android.os.Build;
+import android.os.Environment;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import java.io.*;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.UUID;
 
-/** Installs a completed owner build without uninstalling or touching game data. */
+/** Owns sessions and exact readback for completed owner builds. */
 public final class OwnerInstaller {
     public static final String STATUS = "owner-install";
     // The framework-owned intent is process-local and handled on the main thread.
@@ -23,23 +29,34 @@ public final class OwnerInstaller {
     private static String confirmationSession;
     private static Intent pendingConfirmation;
     private static boolean confirmationOpened;
+    private static volatile boolean removalInFlight;
+    private static final String REMOVING = "REMOVING_MISPLACED";
+
+    private static String removalAction(Context app) {
+        return app.getPackageName() + ".REMOVE_MISPLACED." + app.getSharedPreferences(STATUS, 0).getString("version", "");
+    }
 
     static boolean hasConfirmation(Context app) {
-        return pendingConfirmation != null && !confirmationOpened && "AWAITING_CONFIRMATION".equals(state(app))
-            && confirmationSession.equals(app.getSharedPreferences(STATUS, 0).getString("session", ""));
+        if (pendingConfirmation == null || confirmationOpened) return false;
+        return REMOVING.equals(state(app)) ? confirmationSession.equals(removalAction(app)) :
+            "AWAITING_CONFIRMATION".equals(state(app)) && confirmationSession.equals(app.getSharedPreferences(STATUS, 0).getString("session", ""));
     }
 
     static void openConfirmation(Context activity) {
         if (!hasConfirmation(activity)) return;
+        boolean removal = REMOVING.equals(state(activity));
         try {
             activity.startActivity(pendingConfirmation);
         } catch (RuntimeException unavailable) {
-            status(activity, "AWAITING_CONFIRMATION", "Android confirmation could not open. Tap Open Android install confirmation to retry the existing session.");
+            status(activity, removal ? REMOVING : "AWAITING_CONFIRMATION", removal ?
+                OwnerInstallPlacement.REFUSED + " Tap Open Android removal confirmation to retry." :
+                "Android confirmation could not open. Tap Open Android install confirmation to retry the existing session.");
             return;
         }
         confirmationOpened = true;
         pendingConfirmation = null;
-        status(activity, "AWAITING_CONFIRMATION", "Complete the Android install confirmation, then return here.");
+        status(activity, removal ? REMOVING : "AWAITING_CONFIRMATION", removal ?
+            OwnerInstallPlacement.REFUSED + " Confirm removal of the rejected fresh install in Android." : "Complete the Android install confirmation, then return here.");
     }
 
     public static String state(Context app) {
@@ -47,7 +64,8 @@ public final class OwnerInstaller {
     }
 
     public static boolean busy(Context app) {
-        return "INSTALLING".equals(state(app)) || "AWAITING_CONFIRMATION".equals(state(app)) || "VERIFYING_PROFILE".equals(state(app)) || "RECOVERING_PROFILE".equals(state(app));
+        String state = state(app);
+        return "INSTALLING".equals(state) || "AWAITING_CONFIRMATION".equals(state) || "VERIFYING_PROFILE".equals(state) || "RECOVERING_PROFILE".equals(state) || REMOVING.equals(state);
     }
 
     public static void clearTerminalStatus(Context app) {
@@ -93,6 +111,10 @@ public final class OwnerInstaller {
     /** Called only when this process has no install thread; reconcile after recreation. */
     public static void reconcile(Context app) {
         if (!busy(app)) return;
+        if (REMOVING.equals(state(app))) {
+            if (!removalInFlight) finishRemoval(app);
+            return;
+        }
         if ("VERIFYING_PROFILE".equals(state(app)) || "RECOVERING_PROFILE".equals(state(app))) { OwnerBuildService.launch(app, "install-verify"); return; }
         try {
             int id = Integer.parseInt(app.getSharedPreferences(STATUS, 0).getString("session", "-1"));
@@ -187,14 +209,20 @@ public final class OwnerInstaller {
         // package session; keep the streamed hash below to catch later drift.
         verifyPreparedBytes(apk, expectedHash);
         diagnostic(app, "prepare", null, false);
-        if (OwnerAlphaInstall.PACKAGE.equals(next.packageName)) {
-            try { OwnerAlphaInstall.prepare(app, apk, expectedHash, next, current); }
+        boolean alpha = OwnerAlphaInstall.PACKAGE.equals(next.packageName);
+        if (alpha) {
+            try {
+                UUID adopted = OwnerInstallPlacement.required(app) ? OwnerInstallPlacement.preflight(app,
+                    current == null ? null : current.applicationInfo, apk.length()) : null;
+                OwnerAlphaInstall.prepare(app, apk, expectedHash, next, current, adopted);
+            }
             catch (Exception error) { failed(app, error.getMessage()); throw error; }
         }
         PackageInstaller installer = manager.getPackageInstaller();
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(next.packageName);
         params.setSize(apk.length());
+        if (alpha) params.setInstallLocation(PackageInfo.INSTALL_LOCATION_PREFER_EXTERNAL);
         if (Build.VERSION.SDK_INT >= 31 && current != null)
             params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
         int id;
@@ -252,24 +280,71 @@ public final class OwnerInstaller {
 
     private static void failed(Context app, String message) {
         try {
+            if (OwnerAlphaInstall.finishPlacementRefusal(app)) { placementRefused(app); return; }
             boolean installed = OwnerAlphaInstall.recover(app);
             status(app, installed ? "INSTALLED" : "ERROR", installed ? "Installation complete after verified profile/settings recovery." : message);
         }
+        catch (OwnerAlphaInstall.MisplacedFreshInstall refused) { removeMisplaced(app, refused.version); }
         catch (Exception error) { status(app, "RECOVERY_REQUIRED", message + " Profile recovery remains pending. Fully stop the game, ensure free space, then tap Recover and verify retained profile/settings: " + error.getMessage()); }
     }
 
     public static void finishVerification(Context app) {
         if ("RECOVERING_PROFILE".equals(state(app))) { failed(app, status(app)); return; }
         try { verifyInstalled(app); }
+        catch (OwnerAlphaInstall.MisplacedFreshInstall refused) { removeMisplaced(app, refused.version); }
         catch (Exception error) { failed(app, "Could not verify installation: " + error.getMessage()); }
     }
 
     public static void recoverProfiles(Context app) {
         try {
+            if (OwnerAlphaInstall.finishPlacementRefusal(app)) { placementRefused(app); return; }
             boolean installed = OwnerAlphaInstall.recover(app);
             status(app, installed ? "INSTALLED" : "ERROR", installed ? "Installation complete after verified profile/settings recovery." :
                 "Previous profile/settings verified and released. Rebuild before retrying installation.");
-        } catch (Exception error) { status(app, "RECOVERY_REQUIRED", "Profile recovery remains pending. Fully stop the game, ensure free space, then retry recovery: " + error.getMessage()); }
+        } catch (OwnerAlphaInstall.MisplacedFreshInstall refused) { removeMisplaced(app, refused.version); }
+        catch (Exception error) { status(app, "RECOVERY_REQUIRED", "Profile recovery remains pending. Fully stop the game, ensure free space, then retry recovery: " + error.getMessage()); }
+    }
+
+    private static void placementRefused(Context app) {
+        status(app, "ERROR", OwnerInstallPlacement.REFUSED + " The rejected fresh install was removed.");
+    }
+
+    private static void finishRemoval(Context app) {
+        removalInFlight = false;
+        confirmationSession = null;
+        pendingConfirmation = null;
+        confirmationOpened = false;
+        try {
+            if (OwnerAlphaInstall.finishPlacementRefusal(app)) { placementRefused(app); return; }
+        } catch (Exception ignored) { /* Recover from the persisted refusal. */ }
+        status(app, "RECOVERY_REQUIRED", OwnerInstallPlacement.REFUSED + " Removal is unverified. Tap Recover and verify retained profile/settings to retry and confirm in Android.");
+    }
+
+    private static void removeMisplaced(Context app, long version) {
+        removalInFlight = true;
+        status(app, REMOVING, OwnerInstallPlacement.REFUSED + " Requesting removal of the rejected fresh install.");
+        try {
+            Intent callback = new Intent(app, RemovalResult.class).setAction(removalAction(app));
+            PendingIntent result = PendingIntent.getBroadcast(app, 0, callback, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+            app.getPackageManager().getPackageInstaller().uninstall(new VersionedPackage(OwnerAlphaInstall.PACKAGE, version), result.getIntentSender());
+        } catch (RuntimeException unavailable) { finishRemoval(app); }
+    }
+
+    public static final class RemovalResult extends BroadcastReceiver {
+        @Override public void onReceive(Context app, Intent intent) {
+            String action = removalAction(app);
+            if (!REMOVING.equals(state(app)) || !action.equals(intent.getAction())) return;
+            if (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE) == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                if (confirmationOpened) return;
+                pendingConfirmation = intent.getParcelableExtra(Intent.EXTRA_INTENT);
+                if (pendingConfirmation == null) { finishRemoval(app); return; }
+                confirmationSession = action;
+                removalInFlight = true;
+                status(app, REMOVING, OwnerInstallPlacement.REFUSED + " Tap Open Android removal confirmation to remove the rejected fresh install.");
+                ToolHostActivity visible = ToolHostActivity.activeForConfirmation();
+                if (visible != null) openConfirmation(visible);
+            } else finishRemoval(app);
+        }
     }
 
     public static final class Result extends BroadcastReceiver {
@@ -279,9 +354,8 @@ public final class OwnerInstaller {
             boolean matches = session.equals(Integer.toString(intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)));
             int code = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
             diagnostic(app, null, code == PackageInstaller.STATUS_PENDING_USER_ACTION ? "pending-user-action" : code == PackageInstaller.STATUS_SUCCESS ? "success" : code == PackageInstaller.STATUS_FAILURE ? "failure" : "unknown", matches);
-            if (!matches) return;
+            if (!matches || (!"INSTALLING".equals(state(app)) && !"AWAITING_CONFIRMATION".equals(state(app)))) return;
             if (code == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-                if (!"INSTALLING".equals(state(app)) && !"AWAITING_CONFIRMATION".equals(state(app))) return;
                 if (!session.equals(confirmationSession)) {
                     confirmationSession = session;
                     pendingConfirmation = null;
@@ -312,11 +386,57 @@ public final class OwnerInstaller {
                 }
                 try {
                     verifyInstalled(app);
+                } catch (OwnerAlphaInstall.MisplacedFreshInstall refused) {
+                    removeMisplaced(app, refused.version);
                 } catch (Exception error) { failed(app, "Could not verify installation: " + error.getMessage()); }
             } else {
                 String message = "Installation failed: " + intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
                 recoverLater(app, message);
             }
         }
+    }
+}
+
+/** Preflight and readback for an explicitly adopted-only alpha installation. */
+final class OwnerInstallPlacement {
+    static final String REFUSED = "Installation unavailable on this placement.";
+    private static final String REQUIRE_ADOPTED = "require_adopted_storage";
+
+    static boolean required(Context app) {
+        return "true".equals(app.getSharedPreferences(OwnerInstaller.STATUS, 0).getString(REQUIRE_ADOPTED, "false"));
+    }
+
+    static boolean select(Context app, boolean required) {
+        return app.getSharedPreferences(OwnerInstaller.STATUS, 0).edit().putString(REQUIRE_ADOPTED, Boolean.toString(required)).commit();
+    }
+
+    static boolean matches(ApplicationInfo installed, UUID volume) {
+        if (installed == null || volume == null || StorageManager.UUID_DEFAULT.equals(volume) || !volume.equals(installed.storageUuid)) return false;
+        String root = "/mnt/expand/" + volume + "/";
+        return installed.sourceDir != null && installed.sourceDir.startsWith(root + "app/") &&
+            installed.dataDir != null && installed.dataDir.startsWith(root);
+    }
+
+    static UUID preflight(Context app, ApplicationInfo current, long apkBytes) throws IOException {
+        if (Build.VERSION.SDK_INT < 31) throw new IOException(REFUSED + " Adopted-only installation requires Android 12 or newer.");
+        if (current != null && !matches(current, current.storageUuid))
+            throw new IOException(REFUSED + " The existing game is not on adopted storage. Its data is unchanged.");
+        StorageManager storage = app.getSystemService(StorageManager.class);
+        UUID selected = null;
+        // Android ranks the mounted volumes by allocatable bytes for a fresh session.
+        // Refuse when internal storage would win or tie.
+        long best = current == null ? storage.getAllocatableBytes(StorageManager.UUID_DEFAULT) : -1;
+        for (StorageVolume candidate : storage.getStorageVolumes()) {
+            if (!candidate.isEmulated() || !Environment.MEDIA_MOUNTED.equals(candidate.getState())) continue;
+            UUID volume = candidate.getStorageUuid();
+            if (volume == null || StorageManager.UUID_DEFAULT.equals(volume) || (current != null && !volume.equals(current.storageUuid))) continue;
+            long bytes = storage.getAllocatableBytes(volume);
+            if (bytes >= apkBytes && bytes > best) {
+                selected = volume;
+                best = bytes;
+            }
+        }
+        if (selected == null) throw new IOException(REFUSED + " No eligible mounted adopted volume has enough allocatable space.");
+        return selected;
     }
 }

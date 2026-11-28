@@ -4,7 +4,7 @@ package dev.ror2lab.phonebuildhostfixture;
 public final class OwnerUpdateState {
     public enum Phase { IDLE, CHECKING, UP_TO_DATE, UPDATE_AVAILABLE, DOWNLOADING, VERIFYING,
         BUILDING, SIGNING, READY, INSTALLING, AWAITING_CONFIRMATION, INSTALLED, INPUT_REQUIRED, VALIDATING, IMPORTING, IMPORTED,
-        ACQUIRING_TOOLS, TOOLS_READY, TOOLS_UNAVAILABLE, PAUSED, CANCELLED, INTERRUPTED, VERIFYING_PROFILE, RECOVERING_PROFILE, RECOVERY_REQUIRED, ERROR }
+        ACQUIRING_TOOLS, TOOLS_READY, TOOLS_UNAVAILABLE, PAUSED, CANCELLED, INTERRUPTED, VERIFYING_PROFILE, RECOVERING_PROFILE, REMOVING_MISPLACED, RECOVERY_REQUIRED, ERROR }
     private Phase phase = Phase.IDLE;
     private String message = "Check for a signed public release.";
     /** Presentation only: preserve accessibility quiet time between live-detail updates. */
@@ -104,7 +104,7 @@ public final class OwnerUpdateState {
     public boolean busy() {
         switch (phase) {
             case CHECKING: case VALIDATING: case ACQUIRING_TOOLS: case DOWNLOADING: case VERIFYING: case BUILDING: case SIGNING:
-            case INSTALLING: case AWAITING_CONFIRMATION: case VERIFYING_PROFILE: case RECOVERING_PROFILE: return true;
+            case INSTALLING: case AWAITING_CONFIRMATION: case VERIFYING_PROFILE: case RECOVERING_PROFILE: case REMOVING_MISPLACED: return true;
             default: return false;
         }
     }
