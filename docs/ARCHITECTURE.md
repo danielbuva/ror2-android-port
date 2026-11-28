@@ -8337,6 +8337,14 @@ readback verified all 124 relocations. The Unity 2021.3.45f2 content fixture
 loaded the Materials, checked their saved bindings and unloaded the bundles.
 Canonical admission and linked Android draw checks remain open.
 
+The Fungal HGStandard Material profile selects six original class-21 bodies
+through `record_produce.py`. Scoped preparation binds the signed Deferred
+Standard Shader and its two ordered fallbacks to the retained texture
+suppliers. Persisted readback recovers all six source bodies after reversing
+44 pointer relocations. The exact editor checked 38 saved texture links and
+unloaded the bundles. Canonical graph admission and Android scene draws
+remain open.
+
 The Ancient Loft pillar Material profile selects two original class-21
 bodies through `record_produce.py`. Bundle preparation binds the saved
 Shader to the signed Terrain Blend and restores the saved texture links
