@@ -8986,7 +8986,9 @@ renderer slots for up to 1.25 seconds or 120 frames in the world report.
 The same diagnostics sample the first REX Mortar aim endpoint and read the
 configured projectile and impact indices before the native state fires on exit.
 For up to two seconds after release, the trace records the owned projectile,
-its ghost and matching pooled impact roots for comparison with the video.
+its ghost and live impact roots for comparison with the video. It matches an
+active scene instance by its pool's exact configured impact prefab or, for
+direct instances, by its effect index. The root records which identity matched.
 For the Wandering Vagrant body, the observer also records flash, elite index,
 limb mask, fade and emission color by slot at the same Unity frame. It reads the
 slot block when populated, otherwise the renderer block, then falls back to
