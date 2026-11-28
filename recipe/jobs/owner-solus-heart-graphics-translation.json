@@ -11,7 +11,7 @@
   },
   "needs": [],
   "outputs": {
-    "job/owner-solus-heart-graphics-translation": "objects.bin"
+    "payload/owner-solus-heart-graphics-translation": "objects.bin"
   },
   "request": {
     "output": "${output}",
