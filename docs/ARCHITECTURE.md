@@ -8847,6 +8847,12 @@ the 40 source preload slots before 31 additional endpoints. Five MeshFilter
 references resolve through the two source Meshes and three retained Commando
 records. The scoped editor fixture loads the prefab and unloads the bundle.
 
+The PeaceFlowerOld profile supplies both original Lights and their prefab
+hierarchy through `record_produce.py`. The scoped bundle keeps 78 original
+preload slots in order before 14 additional endpoints. Persisted readback
+verifies each Light and its reciprocal GameObject component reference. The
+scoped exact-editor fixture loads the prefab and unloads the bundle.
+
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It
 verifies the catalog input bundles, registry and resources against the APK,
