@@ -5308,3 +5308,16 @@ Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/` in
 `snow-topped-draw-device-01/terminal.done.json` and
 `signed-snow-topped-device-01/terminal.done.json`. Linked scene draws,
 ShadowCaster readback and whole-game scoring remain open.
+
+## J1583 — Preserve Deferred Vulkan attachments and shared instance buffers
+
+2026-11-28 UTC. The source linker uses DXBC fragment output masks for
+Vulkan color attachments and declares shared instance buffers once.
+HGStandard APK `48caad02229e19a910d5420c9856b3101d9a0659e9e5e0dd196011ecb100e3b3`
+matched six albedo samples and specular values 51 and 204.
+Crystal APK `41826200086f23414ba0f5bb3db75f1a91bb68862e99b5cc63f23c966a31c323`
+matched ordinary Deferred and both per-instance fade swaps. Both packages
+were removed. Evidence under `work/coordination/p1-shaderx-ui-alpha-1127.qBAuMfWs/`
+in `hgstandard-draw-device-02/terminal.done.json` and
+`crystalshader-draw-device-02/terminal.done.json`.
+Corrected signed replays, linked scene draws and whole-game scoring remain open.

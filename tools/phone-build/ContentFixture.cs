@@ -45,6 +45,7 @@ public sealed class ContentFixture : MonoBehaviour
         public Color32[] wireframeSamples;
         public Color32[] standardAlbedoSamples;
         public int[] standardSpecularSamples;
+        public Color32[] standardProbeSamples;
         public bool passed;
         public string failure;
     }
@@ -941,6 +942,7 @@ public sealed class ContentFixture : MonoBehaviour
 
     static void DrawStandard(Shader shader, ShaderDrawReport report)
     {
+        const string hdrKeyword = "UNITY_HDR_ON";
         var previous = RenderTexture.active;
         var material = new Material(shader);
         var mesh = new Mesh();
@@ -1054,6 +1056,45 @@ public sealed class ContentFixture : MonoBehaviour
             if (Mathf.Abs(report.standardSpecularSamples[0] - 51) > 1 ||
                 Mathf.Abs(report.standardSpecularSamples[1] - 204) > 1)
                 throw new Exception("Standard Deferred specular samples differ");
+
+            material.DisableKeyword("FRESNEL_EMISSION");
+            material.EnableKeyword("LIGHTPROBE_SH");
+            material.enableInstancing = true;
+            var probes = new MaterialPropertyBlock();
+            var linear = new Vector4(0, 0, 0, 0.5f);
+            var quadratic = new Vector4(0, 0, 0.5f, 0);
+            // Each probe contributes half its signal in each shader stage.
+            probes.SetVectorArray("unity_SHAr", new[] { linear, Vector4.zero });
+            probes.SetVectorArray("unity_SHAg", new[] { Vector4.zero, linear });
+            probes.SetVectorArray("unity_SHAb", new Vector4[2]);
+            probes.SetVectorArray("unity_SHBr", new[] { quadratic, Vector4.zero });
+            probes.SetVectorArray("unity_SHBg", new[] { Vector4.zero, quadratic });
+            probes.SetVectorArray("unity_SHBb", new Vector4[2]);
+            probes.SetVectorArray("unity_SHC", new Vector4[2]);
+            var transforms = new[] { left, right };
+            bool hdrWasEnabled = Shader.IsKeywordEnabled(hdrKeyword);
+            commands.EnableShaderKeyword(hdrKeyword);
+            commands.SetRenderTarget(targets, targets[0]);
+            commands.ClearRenderTarget(true, true, Color.blue);
+            commands.SetViewProjectionMatrices(Matrix4x4.identity, projection);
+            commands.DrawMeshInstanced(mesh, 0, material, deferred, transforms, transforms.Length, probes);
+            if (!hdrWasEnabled) commands.DisableShaderKeyword(hdrKeyword);
+            Graphics.ExecuteCommandBuffer(commands);
+            ReadTarget(3);
+            report.standardProbeSamples = new Color32[] {
+                pixels.GetPixel(6, 0), pixels.GetPixel(16, 0), pixels.GetPixel(25, 0)
+            };
+            var expectedProbes = new Color32[] {
+                new Color32(64, 0, 0, 255), Color.blue, new Color32(0, 64, 0, 255)
+            };
+            for (int i = 0; i < expectedProbes.Length; ++i)
+            {
+                var sample = report.standardProbeSamples[i];
+                var match = expectedProbes[i];
+                if (Mathf.Abs(sample.r - match.r) > 1 || Mathf.Abs(sample.g - match.g) > 1 ||
+                    Mathf.Abs(sample.b - match.b) > 1)
+                    throw new Exception("Standard instanced light probe sample " + i + " differs");
+            }
             report.passed = report.graphics == "Vulkan";
         }
         finally
