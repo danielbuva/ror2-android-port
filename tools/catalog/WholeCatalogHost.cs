@@ -343,6 +343,7 @@ public static class WholeCatalogHost
         Include((string)Location("MercExposeEffect.prefab")["path"], "DirectEffect");
         Include((string)Location("CrocoDiseaseImpactEffect.prefab")["path"], "DirectEffect");
         var ghostBindings = new Dictionary<string, JObject>(StringComparer.Ordinal);
+        var impactBindings = new JArray();
         void InspectProjectileGhost(GameObject prefab, string path)
         {
             var projectile = prefab ? prefab.GetComponent<RoR2.Projectile.ProjectileController>() : null;
@@ -373,7 +374,37 @@ public static class WholeCatalogHost
             }
         }
 
-        // Ghost edges append unique visual roots for the same slot census.
+        string IncludeImpactEffect(GameObject effect, string projectilePath)
+        {
+            if (!effect)
+                return null;
+            string path = AssetPath(effect);
+            if (string.IsNullOrEmpty(path))
+                errors.Add(projectilePath + ": projectile impact effect asset path missing for " + effect.name);
+            else
+                Include(path, "ProjectileImpactEffect");
+            return path;
+        }
+
+        void InspectProjectileImpacts(GameObject prefab, string path)
+        {
+            foreach (var impact in prefab.GetComponentsInChildren<RoR2.Projectile.ProjectileImpactExplosion>(true))
+            {
+                string impactEffect = IncludeImpactEffect(impact.impactEffect, path);
+                string explosionEffect = IncludeImpactEffect(impact.explosionEffect, path);
+                impactBindings.Add(new JObject {
+                    ["projectile"] = path,
+                    ["component"] = HierarchyPath(impact.transform),
+                    ["impactEffect"] = impactEffect,
+                    ["explosionEffect"] = explosionEffect,
+                    ["detonationEffect"] = impactEffect ?? explosionEffect,
+                    ["expiredEffect"] = IncludeImpactEffect(impact.expiredEffect, path),
+                    ["blastImpactEffect"] = IncludeImpactEffect(impact.blastImpactEffect, path)
+                });
+            }
+        }
+
+        // Projectile edges append unique visual roots for the same slot census.
         for (int i = 0; i < candidates.Count; i++)
         {
             var location = candidates[i];
@@ -390,6 +421,8 @@ public static class WholeCatalogHost
                 errors.Add("Typed prefab missing: " + category + "/" + path);
                 continue;
             }
+            if (category == "Projectile")
+                InspectProjectileImpacts(root, path);
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 var hierarchy = HierarchyPath(renderer.transform);
@@ -443,6 +476,25 @@ public static class WholeCatalogHost
         var fireBoltGhost = RequireProjectileGhost(AssetPath(fireBolt.projectilePrefab), "MageFireboltGhost");
         fireBoltGhost["configuration"] = AssetPath(fireBoltConfig);
 
+        JObject RequireProjectileDetonation(string projectilePath, string effectFile, bool useExplosionFallback = false)
+        {
+            string effectPath = (string)Location(effectFile)["path"];
+            var binding = impactBindings.OfType<JObject>().SingleOrDefault(row => (string)row["projectile"] == projectilePath);
+            string configuredField = useExplosionFallback ? "explosionEffect" : "impactEffect";
+            if (binding == null || (string)binding[configuredField] != effectPath ||
+                (string)binding["detonationEffect"] != effectPath ||
+                (useExplosionFallback && (string)binding["impactEffect"] != null) ||
+                !rows.Any(row => (string)row["root"] == effectPath))
+                throw new Exception("Projectile detonation material binding missing for " + effectFile);
+            return (JObject)binding.DeepClone();
+        }
+
+        var mortarImpact = RequireProjectileDetonation((string)Location("TreebotMortar2.prefab")["path"],
+                                                       "OmniExplosionVFXTreebotMortar.prefab");
+        var fireBoltImpact = RequireProjectileDetonation(AssetPath(fireBolt.projectilePrefab), "OmniExplosionVFXQuick.prefab");
+        var drifterImpact = RequireProjectileDetonation((string)Location("DrifterJunkCubeProjectile.prefab")["path"],
+                                                        "DrifterBluntForceSlamGroundImpVFX.prefab", useExplosionFallback: true);
+
         var vagrantSkin = AssetDatabase.LoadAssetAtPath<RoR2.SkinDef>((string)Location("skinVagrantBodyDefault.asset")["path"]);
         if (!vagrantSkin)
             throw new Exception("Vagrant default skin missing");
@@ -465,10 +517,12 @@ public static class WholeCatalogHost
 
         var result = new JObject {
             ["scope"] =
-                "Native-provider bodies and projectiles, their configured projectile ghosts, registered effects and targeted source bindings; Android rendering and reference comparison remain open",
+                "Native-provider bodies and projectiles, configured ghosts and ProjectileImpactExplosion effects, registered effects and targeted source bindings; Android rendering and reference comparison remain open",
             ["roots"] = roots, ["slots"] = rows, ["errors"] = errors,
             ["projectileGhostBindings"] = new JArray(ghostBindings.Values),
+            ["projectileImpactBindings"] = impactBindings,
             ["titanGhostBinding"] = titanGhost, ["fireBoltGhostBinding"] = fireBoltGhost, ["vagrantSkinBinding"] = skinBinding,
+            ["mortarImpactBinding"] = mortarImpact, ["fireBoltImpactBinding"] = fireBoltImpact, ["drifterImpactBinding"] = drifterImpact,
             ["surfaceObservationContract"] = VerifySurfaceMaterialObservation()
         };
         File.WriteAllText(outputPath, result.ToString());
@@ -480,7 +534,13 @@ public static class WholeCatalogHost
         // No session, catalog, scene or presentation adapter is initialized.
         var type = typeof(PortSession).GetNestedType("TeleporterWorldSession", System.Reflection.BindingFlags.NonPublic);
         var observer = Activator.CreateInstance(type, new object[] { null });
-        var method = type.GetMethod("ObserveSurfaceMaterial");
+        PortSession.SurfaceMaterialObservation Observe(Material source)
+        {
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
+                                                         System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.OptionalParamBinding;
+            return (PortSession.SurfaceMaterialObservation)type.InvokeMember("ObserveSurfaceMaterial", flags, null, observer,
+                                                                            new object[] { source });
+        }
         var material = new Material(Shader.Find("Standard"));
         var texture = new Texture2D(2, 2) { name = "Authored census fixture texture" };
         try
@@ -490,13 +550,13 @@ public static class WholeCatalogHost
             material.SetTexture("_MainTex", texture);
             material.SetTextureScale("_MainTex", new Vector2(2, 3));
             material.EnableKeyword("_EMISSION");
-            var row = (PortSession.SurfaceMaterialObservation)method.Invoke(observer, new object[] { material, true });
+            var row = Observe(material);
             var main = row.properties.Single(property => property.name == "_MainTex");
             if (row.material != material.name || row.shader != material.shader.name || row.queue != 3123 ||
                 row.supported != material.shader.isSupported || !row.keywords.Contains("_EMISSION") ||
                 main.textureId != texture.GetInstanceID() || main.width != 2 || main.height != 2 ||
                 main.scale != new Vector2(2, 3) || material.GetTexture("_MainTex") != texture || material.renderQueue != 3123 ||
-                method.Invoke(observer, new object[] { null, true }) != null)
+                Observe(null) != null)
                 throw new Exception("Live surface material observation contract failed");
             VerifyEffectiveSurfaceProperties(type, material);
             return new JObject { ["liveMaterialState"] = true, ["nullSlot"] = true, ["sourceUnchanged"] = true,
