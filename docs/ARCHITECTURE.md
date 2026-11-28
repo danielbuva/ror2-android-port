@@ -1429,7 +1429,12 @@ read each original mip, including the texels stored in its boundary blocks.
 Both write ETC2 RGBA8 for colour textures and ETC1 RGB with usage 4 for
 packed A/G normal maps. They use the existing pinned native decoder, ETC2 colour and
 EAC alpha encoders, and public numeric ETC1 path. The pack and release graph
-use the same codec pins and output checks. `texture_native_profile.py` selects
+use the same codec pins and output checks. SDK toolchains built by
+`build_texture_sdk.py` advertise `batch_bands`. The pipe adapter initializes the
+SDK once per mip and reuses bounded buffers for the existing colour bands. The
+producer verifies the complete extent before interleaving EAC alpha. Toolchain
+manifests without the capability invoke the SDK once per band.
+`texture_native_profile.py` selects
 original Alpha8, RGB24, RGBA32, ARGB32, native Cubemap, BC1, BC3 and BC7 records
 from the PC texture coverage ledger. The same selector and producer support
 standalone player records. They pin the original serialized file, any sibling resource
@@ -2544,8 +2549,13 @@ device evidence.
 ordered preload groups in a private SQLite file. Record keys bind source bodies,
 complete types, qualified routes, external allocation, resource placement and
 producer code. Every changed emission still runs endpoint, managed and persisted
-body checks. Group keys bind roots, reachable edge/owner identities and file
-ordering. Cached reachable-member lists witness invalidation: changed pointers rebuild
+body checks. Source-ordered groups retain the exact resolved preload sequence
+once its membership matches the complete graph and external owner closure.
+Canonical repack requires retained skin, alias and donor dependencies to occupy
+their source slots in those groups. Other groups keep the existing file order.
+Group keys bind roots, reachable edge/owner identities, the order policy and
+the resolved sequence for source-ordered groups. Cached reachable-member lists
+witness invalidation: changed pointers rebuild
 only groups that reach them; disjoint groups and scalar body changes reuse
 their pointer bytes. The current graph and original external ownership are
 validated before any group lookup. Complete output reuse hashes provider
@@ -8679,6 +8689,12 @@ bundle graph joins them to the existing Mesh and built-in shader suppliers.
 The exact-editor fixture loads each advertised GameObject and Mesh and
 unloads the bundle. The source preload sequence remains a release graph
 admission requirement for this cohort.
+
+The PlasmaCoreGhost record profile feeds its original Light, prefab
+hierarchy, particle systems, Material and managed components to
+`record_produce.py`. Bundle preparation resolves their PPtrs against the
+existing suppliers. The scoped editor fixture loads the prefab and unloads
+the bundle. Release admission requires the original 30-slot preload order.
 
 After assembly, `catalog_complete.py --player-apk` checks prefab and scene
 components against the APK's serialized script tables and IL2CPP images. It

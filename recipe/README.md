@@ -7858,3 +7858,20 @@ The review covered source and destination selectors, class IDs, sizes
 and hashes, following the pinned AssetRipper member and saved-property
 lookup. Serialized bodies, generated packs and local paths stay under
 ignored `work/`.
+
+## PlasmaCoreGhost native records (2026-11-27)
+
+`owner-plasmacore-ghost-native-records.json` selects 23 original records
+through `record_produce.py`, including the Light and its owning GameObject.
+The scoped fixture verifies 51 relocated PPtrs. Unity 2021.3.45f2 loaded
+the GameObject and unloaded the bundle. Canonical admission must preserve
+the original 30-slot preload sequence.
+
+The provenance, privacy, licensing and sensitive-content review covered
+relative bundle paths, member and object IDs, classes, sizes and hashes.
+The producer reads the user's installed PC data and writes the pack under
+ignored `work/`.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-plasmacore-ghost-native-records.json` | `e17630d949545d281a49f33bca5ef78656bce30a58144dc11717f5001241b0df` |
